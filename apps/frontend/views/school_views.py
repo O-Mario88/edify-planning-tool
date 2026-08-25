@@ -53,6 +53,7 @@ from apps.projects.models import (
 )
 from apps.core.enums import ClusterRecordStatus
 from apps.core.scoping import (
+    assert_may_write_school,
     cluster_queryset,
     resolve_user_scope,
     school_queryset,
@@ -1790,6 +1791,16 @@ def school_edit_drawer_view(request, school_id):
         return value
 
     if request.method == "POST":
+        # `get_scoped_object_or_404` above is the READ gate — a Programme Lead
+        # passes it for a supervised CCEO's school, which is correct and is what
+        # oversight is for. It is not an ownership answer, and this branch
+        # rewrites ownership: it sets account_owner_id and then deletes and
+        # recreates StaffSchoolAssignment, the row resolve_user_scope reads to
+        # build own_school_ids. Gating the write on the read helper let a
+        # supervisor move a supervised school's planning, target and budget
+        # scope onto themselves. The write asks the direct-portfolio question
+        # every other school-row write asks.
+        assert_may_write_school(request.user, school, action="edit")
         try:
             official_school_id = (request.POST.get("school_id") or "").strip()
             if not official_school_id:
