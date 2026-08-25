@@ -840,7 +840,22 @@ partner-delivered work: where the responsible actor is somebody else, the ask is
 of staff, because "manufacturing one against a CCEO for work a partner has not done would
 hold the wrong person to it." Work the platform itself blocks is the same case.
 
-**Two existing tests failed, and that was the point.** `test_a_clean_platform_is_green`
+**A third test failed, and it was right to.** `test_the_supervisor_can_send_an_action_to_the_responsible_cceo`
+is titled for what a Programme Lead "must NOT lose", and the first version of this fix took
+it away: refusing the unsendable ask meant a supervisor clicking Send on a core school got
+an error instead of an action, because the assessment is the more severe of the two
+blockers and the view stopped at the first one. That is a worse trade than the defect —
+a silent unresolvable ask replaced by a loud refusal of a capability that should work.
+
+The send now falls through to the next blocker instead of refusing. The package ask IS
+resolvable — schedule the outstanding visits and trainings — so the supervisor keeps the
+capability, and nobody is handed the ask they cannot close. The test's assertion moved from
+`core_assessment_missing` to `core_package_behind` with the reason written into it, and the
+service-level refusal stays as the backstop the view no longer reaches. Configure the
+catalogue item and the assessment ask becomes sendable again and wins on severity, which
+the test also says.
+
+**Two other existing tests failed, and that was the point.** `test_a_clean_platform_is_green`
 asserted a seeded platform has no failing scheduling checks. It now has one, because the
 platform genuinely ships unable to schedule a mandatory Core slot. The temptation is to
 narrow the new check until the old test passes again; what happened instead is that the old

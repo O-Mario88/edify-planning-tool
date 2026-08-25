@@ -558,7 +558,18 @@ class ApprovalAndOversightRemainTest(ProgramLeadDirectPortfolioBase):
         action = TeamAction.objects.get(school_id=self.team_core.id)
         self.assertEqual(action.state, ActionState.OPEN)
         self.assertEqual(action.recipient_id, self.cceo.id)
-        self.assertEqual(action.issue_type, "core_assessment_missing")
+        self.assertEqual(
+            action.issue_type,
+            "core_package_behind",
+            # CORE-01. This asserted `core_assessment_missing`, the more severe
+            # of the two core blockers, and that ask is currently unsendable:
+            # no Activity Catalogue item can schedule a core assessment, so
+            # nobody could ever close it. The send falls through to the next
+            # blocker instead of refusing, which is what keeps THIS test's
+            # actual subject — that a supervisor can send an action to the
+            # responsible CCEO — true. Configure the catalogue item and the
+            # assessment ask becomes sendable again and wins on severity.
+        )
         self.assertIsNotNone(action.due_date)
 
     def test_sending_creates_no_activity_and_moves_no_work(self):
