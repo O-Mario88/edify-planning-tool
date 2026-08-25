@@ -37,7 +37,7 @@ Everything in this table was run, not inferred.
 | 50,000-school scale | `test_load_scale` @ 50k | **NOT ESTABLISHED** — see below |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
-Suite size measured at HEAD: **425 test files, 5,604 test methods.**
+Suite size at HEAD: **425 test files; the runner collected and ran 5,721 tests.**
 
 ### The scale gate result must be read carefully
 
@@ -438,6 +438,31 @@ asserted a bare `BadRequest` and **passed against the unfixed code** — `resche
 refuses on the scheduling policy long before it reaches the lock. It was only by running
 the test against the reverted guard that the tautology showed up. Every regression test
 here was checked that way.
+## 7a. Deliverable coverage — what this audit did not produce
+
+The mandate asks for twelve deliverables. Nine are in this document: the executive
+assessment, defect register, journey report, financial reconciliation, target and
+performance reconciliation, data-integrity report, security report, frontend and
+responsive report, and the deployment and rollback report. The scale report is here with
+its result recorded as not established rather than passed.
+
+Two are **not** built, and saying so is part of the assessment:
+
+- **The complete requirements traceability matrix (§11, §45.2).** Every approved
+  requirement mapped to its role, page, API, service, model, permission, notification,
+  metric, test and evidence. This audit prioritised the highest-risk domains and the
+  platform's own invariants instead. The internal audit of 2026-08-16 also recorded this
+  gate as NOT DONE, so it has now been deferred twice.
+- **The exhaustive permission and scope matrix (§45.5)** covering every role against every
+  page, action and record scope. What exists is the route/permission scanner (536 of 1,028
+  resolver entries; DRF excluded by design) plus targeted denial suites. That found a live
+  privilege escalation, which is evidence the coverage is worth completing rather than
+  evidence it is sufficient.
+
+Neither omission changes the verdict — the release is already blocked on evidence that
+cannot be produced here — but both would have to exist before a Go could be called
+complete on the mandate's own terms.
+
 ## 8. Release Requirements Conflict Register
 
 ## CONFLICT-001 · Leadership and the Programme Lead read different achievement percentages for the same team
