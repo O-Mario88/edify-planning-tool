@@ -172,6 +172,20 @@ class NetSuiteExpenseRecord(TimeStampedModel):
 
 
 class FinanceReturn(TimeStampedModel):
+    """Legacy. Nothing in this codebase has ever written one of these rows.
+
+    The correction flow it was designed for is real and live, but it runs on
+    the advance ledger: `disbursement_dashboard_service.return_weekly_request`
+    moves the advance to RETURNED and records the reason on `last_note`. This
+    table was the parallel design that never got a writer.
+
+    It was left standing while /accounts/returned/ read it, which meant the
+    Accountant's Returned queue was structurally empty beneath a live returned
+    balance (FIN-05). That page now reads the ledger. The table stays for the
+    same reason `ReimbursementClaim` does — old rows, if any deployment has
+    them, remain readable — but nothing should be built on it.
+    """
+
     id = CuidField()
     activity = models.ForeignKey(
         Activity, on_delete=models.CASCADE, related_name="finance_returns"

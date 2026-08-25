@@ -14,7 +14,6 @@ from apps.fund_requests.models import (
     AdvanceRequestStatus,
     ReimbursementClaim,
     AccountabilityRecord,
-    FinanceReturn,
     VarianceReview,
     FinanceAuditLog,
     WeeklyFundRequest,
@@ -735,12 +734,24 @@ def variance_review_view(request):
 
 @require_page_permission("disbursements")
 def returned_view(request):
-    """Returned Finance Items Page."""
-    returns = FinanceReturn.objects.filter(status="pending").select_related(
-        "activity", "activity__school"
+    """Returned Finance Items Page.
+
+    FIN-05: this read `FinanceReturn.objects.filter(status="pending")`, and
+    nothing in this codebase writes a FinanceReturn — no service, no view, no
+    command, not even a test. The queue was structurally empty while the
+    Accountant dashboard row linking here carried a real, non-zero returned
+    balance from the AdvanceRequest ledger, and the empty state announced
+    "All corrections resolved."
+
+    `returned_correction_queue` reads that same ledger, so the page now answers
+    the question the click asked. See its docstring for why the queue is
+    standing rather than month-scoped.
+    """
+    from apps.fund_requests.disbursement_dashboard_service import (
+        returned_correction_queue,
     )
 
-    context = {"returns": returns}
+    context = {"returns": returned_correction_queue()}
     return render(request, "pages/accounts/returned.html", context)
 
 
