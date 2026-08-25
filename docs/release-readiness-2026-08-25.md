@@ -271,7 +271,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | Four workspaces a user can navigate to can never hold data — Compensation & Benefits, Succession Planning, the Maintenance Calendar, and recurring analytics report schedules | A build in each case, or a decision to retire them. See §4a |
-| P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
+| P2 | GAP-02 | IA cannot edit Master Priority rows | **Not unbuilt — built the other way, deliberately.** The matrix gives IA import/allocate/view and withholds edit/define; the cascade explains why. Recorded as CONFLICT-002 |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
 | P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
 | P3 | RC-002 | `AUTHZ_MODE` is vestigial but named in the posture dashboard | Cosmetic; object-level authz is enforced unconditionally |
@@ -984,11 +984,22 @@ Nothing on the approved-extensions list is fully absent — a genuinely strong r
 Special Projects, SSA impact measurement and the partner workflow. Three are partial:
 
 - **GAP-02 ·** IA **cannot** edit Master Priority rows. `_assert_master_author` requires
-  Country Director, IA's RBAC block has no `STRATEGIC_PRIORITIES_EDIT` or
-  `MILESTONES_DEFINE`, and a passing test pins the exclusion. There is no row-level
-  create/edit/delete for priorities or milestones in any UI; the master arrives by import
-  or seeding, and after publication cannot be amended at all. This sits at the head of the
-  chain the release is meant to prove.
+  Country Director, and IA's RBAC block has neither `STRATEGIC_PRIORITIES_EDIT` nor
+  `MILESTONES_DEFINE` — both sit with Admin, the Country Director and the RVP. There is no
+  row-level create/edit/delete for priorities or milestones in any UI; the master arrives
+  by import or seeding, and after publication cannot be amended at all. This sits at the
+  head of the chain the release is meant to prove.
+
+  This entry said "never built" in an earlier draft, and that was the wrong reading. IA
+  holds `strategicPriorities.import`, `strategicPriorities.allocate`,
+  `strategicPriorities.view`, `milestones.allocate` and `milestones.viewProgress` — a
+  precise and deliberate set around the same objects. The exclusion is the design, stated
+  in `priority_cascade`: "The RVP and CD author STRATEGY … They never write an individual's
+  milestones." Granting the extension as written would let the role that VERIFIES delivered
+  work also author what that work is measured against, which is the conflict SEC-03 spent a
+  P0 closing one layer down. Now **CONFLICT-002**, with a recommended re-scope: the real
+  gap is that an imported master cannot be corrected afterwards, and that wants an
+  amendment path, not a wider grant.
 - **GAP-15 ·** Offline — see FE-01.
 - **GAP-10 ·** "Send School to" builds the non-ownership ask correctly (notification,
   To-Do, audit, idempotent, auto-resolving) but the recipient is never chosen — it resolves
