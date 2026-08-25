@@ -783,10 +783,32 @@ def approve_accountability(advance_id: str, principal) -> dict:
             activity.ia_verification_status == "confirmed"
             or activity.status in ("ia_verified", "closed")
         )
-        if not ia_verified:
+        # Called-off work asks a different question. IA verification certifies
+        # that work was DELIVERED, so a cancelled or deferred activity can
+        # never obtain it — and requiring it here left every advance disbursed
+        # against work later called off stuck at accountability_pending for
+        # ever. The advance deliberately survives cancellation so the
+        # financial record persists (sync_advances_for_activity says so), but
+        # nothing could then settle it: real cash stayed recorded as
+        # outstanding and the accountant's queue carried an item that could
+        # not be cleared by anyone. Found by walking Journey 8 end to end.
+        #
+        # The substitute control is stronger than the one it replaces, not
+        # weaker: where money is coming back, the accountant must already have
+        # VERIFIED the return (verify_return) before this can clear. Cancelling
+        # therefore buys nothing — the achievement credit is reversed on
+        # cancellation, the settlement identity below still has to hold, and an
+        # over-spend still routes to the reimbursement pipeline and its gates.
+        called_off = activity.status in ("cancelled", "deferred")
+        if not ia_verified and not called_off:
             raise BadRequest(
                 "Cannot final-clear — IA has not verified this activity yet. "
                 "Finance clearance requires IA verification."
+            )
+        if called_off and adv.returned_amount and not adv.return_verified_at:
+            raise BadRequest(
+                "Cannot final-clear called-off work until the returned amount "
+                "is verified — confirm the money came back before settling."
             )
 
         variance = (adv.accounted_amount or 0) - _effective_disbursed(adv)

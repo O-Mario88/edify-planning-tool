@@ -164,6 +164,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Recovery",
             "No achievement",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_cancel_after_disbursement:"
+            "CancelAfterDisbursementJourneyTest."
+            "test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement",
+        ),
     ),
     Journey(
         9,
