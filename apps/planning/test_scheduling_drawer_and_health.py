@@ -743,11 +743,39 @@ class SchedulingHealthTest(TestCase):
             school_type="client",
         )
 
-    def test_a_clean_platform_is_green(self):
+    #: CORE-01. A freshly seeded platform is NOT green, and pretending
+    #: otherwise is what this audit found. The Core package declares a
+    #: mandatory core assessment and the seeded catalogue carries no item that
+    #: can schedule one, so `scheduling_core_package_slot_unschedulable` fails
+    #: out of the box. That is a real, reported configuration gap — what a
+    #: Core Assessment costs is a Country Director decision — and the check
+    #: exists precisely to say so rather than let it stay silent.
+    #:
+    #: Pinned as an exact set, both directions: a NEW failing check has to be
+    #: looked at, and configuring the catalogue item empties this list and
+    #: fails the test until somebody removes the entry. Neither can drift.
+    KNOWN_SEED_GAPS = ["scheduling_core_package_slot_unschedulable"]
+
+    def test_a_clean_platform_is_green_apart_from_its_known_seed_gap(self):
         report = scheduling_health()
-        failing = [c["key"] for c in report["checks"] if c["status"] == "fail"]
+        failing = sorted(c["key"] for c in report["checks"] if c["status"] == "fail")
+        self.assertEqual(
+            failing,
+            self.KNOWN_SEED_GAPS,
+            "the seeded platform's failing checks changed — either something "
+            "regressed, or the core assessment became schedulable and this "
+            "list should shrink",
+        )
+
+    def test_every_check_except_the_seed_gap_passes_on_a_clean_platform(self):
+        """The original assertion, kept as what it was actually testing."""
+        report = scheduling_health()
+        failing = [
+            c["key"]
+            for c in report["checks"]
+            if c["status"] == "fail" and c["key"] not in self.KNOWN_SEED_GAPS
+        ]
         self.assertEqual(failing, [])
-        self.assertTrue(report["healthy"])
 
     def test_it_notices_when_standard_support_loses_its_catalogue_item(self):
         """The early-warning check for the original defect.
@@ -813,7 +841,22 @@ class SchedulingHealthTest(TestCase):
             executor_type=ExecutorType.CERTIFIED_PARTNER_AGENCY,
             assigned_partner_id=agency.id,
         )
-        self.assertTrue(scheduling_health()["healthy"])
+        # Asserted against the agency checks rather than the report's overall
+        # `healthy`, which is False on a seeded platform for a reason that has
+        # nothing to do with cancelled bookings (CORE-01, see
+        # KNOWN_SEED_GAPS above). Naming the checks this test is actually
+        # about is stronger than the flag it used to read.
+        agency_checks = [
+            c
+            for c in scheduling_health()["checks"]
+            if c["key"].startswith("scheduling_agency_")
+        ]
+        self.assertTrue(agency_checks)
+        self.assertEqual(
+            [c["key"] for c in agency_checks if c["status"] == "fail"],
+            [],
+            "a cancelled booking is history, not a live agency fault",
+        )
 
 
 class RepairCommandTest(TestCase):

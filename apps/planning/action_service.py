@@ -290,6 +290,44 @@ def parse_oversight_condition_key(key: str) -> tuple[str, str] | None:
     return parts[2], parts[3]
 
 
+#: Issue keys whose ask depends on platform configuration that may be absent,
+#: mapped to the Core package workflow kind that has to be schedulable for the
+#: ask to make sense.
+#:
+#: CORE-01. `core_assessment_missing` is registered here, is the FIRST and most
+#: severe blocker on every core school row, and its condition re-reads
+#: `CorePlan.assessment_completed` — which no core school can ever move,
+#: because no active catalogue item carries `core_assessment_visit` and no
+#: drawer offers one. So the platform told a CCEO to complete a core
+#: assessment, routed them to a page with no control that schedules one, and
+#: kept the accountability record open for ever.
+#:
+#: The principle that settles it is already stated a few lines above, about
+#: partner-delivered work: where the responsible actor is somebody else the ask
+#: is not made of staff, because "manufacturing one against a CCEO for work a
+#: partner has not done would hold the wrong person to it." Work the platform
+#: itself blocks is the same case.
+#:
+#: This withholds the ask rather than deleting it. The moment a Country
+#: Director configures the catalogue item, the gap closes and the ask returns
+#: — a genuinely missing assessment is still worth chasing.
+CONFIGURATION_DEPENDENT_KEYS = {
+    "core_assessment_missing": "core_assessment_visit",
+}
+
+
+def sendable_issue_keys() -> frozenset[str]:
+    """Registered asks that somebody could actually act on right now."""
+    from apps.activity_catalogue.scheduling_health import core_package_kind_gaps
+
+    gaps = set(core_package_kind_gaps())
+    return frozenset(
+        key
+        for key in ISSUE_PLAYBOOK
+        if CONFIGURATION_DEPENDENT_KEYS.get(key) not in gaps
+    )
+
+
 # Conditions the system can settle by querying. Everything outside this set
 # needs a human to say why it is closed, and says so in the audit trail.
 SYSTEM_VERIFIABLE = (
@@ -379,6 +417,17 @@ def send_action(
         raise ActionError(
             f"'{issue_type}' has no defined follow-up action, so it cannot be "
             "delegated. Register it in ISSUE_PLAYBOOK first."
+        )
+    if issue_type not in sendable_issue_keys():
+        # CORE-01: registered, but nobody can do it. See
+        # CONFIGURATION_DEPENDENT_KEYS above.
+        raise ActionError(
+            f"'{issue_type}' cannot be delegated while the platform gives "
+            "nobody a way to do it. No active Activity Catalogue item can "
+            "schedule a core assessment, so this is a Country Director "
+            "configuration gap rather than a school's outstanding work — see "
+            "the Scheduling Health check 'Mandatory Core package slot with no "
+            "schedulable Catalogue item'."
         )
 
     resolved_role = ""

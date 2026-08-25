@@ -235,6 +235,7 @@ rewritten, not accepted.
 | P1 | FIN-05 | The Accountant's **Returned** money figure linked to a queue reading a table nothing writes; its empty state read "All corrections resolved" beneath a live returned balance |
 | P1 | PROJ-01 | `refresh_follow_up` had no caller, so no Special Project could ever report a measured school — and the reminder designed to chase the missing assessment could never fire either |
 | P1 | GOV-01 | **Both** Business Transformation school-assessment registers were read-only — three surfaces read each, nothing wrote either. The government-requirements register a Country Director opens was structurally empty for every school |
+| P1 | CORE-01 | The Core package's assessment blocker was a **critical nobody could ever clear**, sent as an accountability record to a CCEO the platform gives no way to act |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
 
 **The shape most of these share.** One definition, written out in several places, where a
@@ -268,7 +269,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
-| P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
+| P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | Four workspaces a user can navigate to can never hold data — Compensation & Benefits, Succession Planning, the Maintenance Calendar, and recurring analytics report schedules | A build in each case, or a decision to retire them. See §4a |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
@@ -772,6 +773,51 @@ expired certificate counting as action required rather than as compliance.
 Mutation-tested on both: making `nearest_expiry` read unverified rows fails the walk, and
 handing a financial-health weakness the compliance recommendation as well fails it. Each
 mutation was confirmed present in the file before the exit code was read.
+
+### CORE-01: a critical nobody could clear, on every core school
+
+D5 said `CorePlan.assessment_completed` is unreachable. Walking what the readers do with
+that turned a dormant gap into a P1.
+
+`core_assessment_missing` is the **first and most severe** blocker on every core school
+row, rendered critical. It is a registered sendable TeamAction whose ask is "Complete the
+core assessment" and whose stated reason is that the package cannot be planned until the
+assessment is on file. And `condition_still_holds` re-reads `plan.assessment_completed`,
+which no core school can ever move: no active catalogue item carries
+`core_assessment_visit`, no drawer offers one, and `resolve_item_for_workflow_kind` returns
+None.
+
+Put together, the platform told a CCEO to do something, routed them to a page with no
+control that does it, and kept the accountability record open for ever. On every core
+school. In every financial year.
+
+**What this audit fixed, and what it deliberately did not.** It did not create the
+catalogue item. What a Core Assessment costs is a Country Director configuration decision,
+and the costing layer says so in as many words — an unknown profile raises "Country
+Director configuration must be repaired before scheduling". Inventing a price to make a
+test pass would be manufacturing a passing result, which the mandate forbids in terms.
+
+What it fixed is the platform's behaviour while the decision is outstanding. The gap is now
+reported in the module that exists to catch exactly this class — whose own docstring says
+"If any of these has no active costed catalogue item, ordinary work is blocked again —
+which is the entire defect this module exists to catch early" — and it goes green by itself
+the moment the item is configured. And the ask is withheld rather than deleted, on the
+principle this codebase had already written down a few lines from the registration, about
+partner-delivered work: where the responsible actor is somebody else, the ask is not made
+of staff, because "manufacturing one against a CCEO for work a partner has not done would
+hold the wrong person to it." Work the platform itself blocks is the same case.
+
+**Two existing tests failed, and that was the point.** `test_a_clean_platform_is_green`
+asserted a seeded platform has no failing scheduling checks. It now has one, because the
+platform genuinely ships unable to schedule a mandatory Core slot. The temptation is to
+narrow the new check until the old test passes again; what happened instead is that the old
+test was corrected to state the truth, with the gap named as an exact set so it is pinned
+in both directions — a new failing check has to be looked at, and configuring the item
+empties the list and fails the test until somebody removes the entry. A companion test
+keeps the original assertion for every other check. The second failure,
+`test_a_cancelled_booking_is_history_not_a_fault`, was reading the report's overall
+`healthy` flag for a question about agency bookings; it now asserts against the agency
+checks it is actually about, which is stronger than the flag it used to read.
 
 ## 5. Path to a defensible Go
 
