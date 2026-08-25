@@ -1005,6 +1005,150 @@ class IaWorkspaceCreditTests(DistributionFixture):
         self.assertIn("1 of 10", body)
 
 
+class UniqueSchoolRollupTests(DistributionFixture):
+    """TGT-03 — a "unique schools" figure must not grow when the SAME school
+    is reached again in a later period.
+
+    Each stored month row is a distinct count for its own month, which is
+    right for the monthly view. Adding those rows up is not a distinct count
+    of anything: a school supported in October and again in November is one
+    unique school across the quarter and across the year, not two.
+    """
+
+    def _unique_school_allocation(self, code):
+        """A count milestone measured in UNIQUE SCHOOLS, allocated to Alpha."""
+        milestone = self._milestone(code, target="10")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="CLA_CHARACTER_DEVELOPMENT"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=milestone,
+            catalogue_item=item,
+            counting_basis="UNIQUE_SCHOOLS_TRAINED",
+            minimum_completion_state="ia_verified",
+            weight=1,
+        )
+        team = self._team_allocation(milestone, self.pl_sp, 10)
+        approve_allocation(team, principal=self.ia)
+        child = self._employee_allocation(milestone, self.cceo_a_sp, 10, parent=team)
+        approve_allocation(child, principal=self.pl)
+        return milestone, item, child
+
+    def _verify_visit(self, item, school, when, reference):
+        activity = Activity.objects.create(
+            activity_type=item.workflow_kind,
+            status="ia_verified",
+            salesforce_activity_id=reference,
+            planned_date=when,
+            fy=FY,
+            school=school,
+            responsible_staff_id=self.cceo_a_sp.id,
+            focus_intervention="christlike_behaviour",
+        )
+        apply_catalogue_snapshot(
+            activity, item=item, requested_intervention="christlike_behaviour"
+        )
+        record_activity_progress(activity)
+        return activity
+
+    def _figures(self, allocation):
+        """The three roll-ups a CCEO's achievement is read from."""
+        from .milestone_allocations import personal_milestone_targets
+        from .performance_scores import milestone_scores
+
+        # month_of_fy 2 = November 2026, so the quarter window is Q1
+        # (October–December) — the window both visits fall inside.
+        projection = next(
+            row
+            for row in personal_milestone_targets(
+                staff=self.cceo_a_sp, fy=FY, month_of_fy=2
+            )
+            if row["allocationId"] == allocation.id
+        )
+        scored = next(
+            row
+            for row in milestone_scores(str(self.cceo_a_sp.id), FY)
+            if row.allocation_id == allocation.id
+        )
+        return projection, scored
+
+    def test_one_school_reached_in_two_months_counts_once_for_the_year(self):
+        _milestone, item, allocation = self._unique_school_allocation("UNIQ_REPEAT")
+        school = self.schools_by_staff[self.cceo_a_sp.id][0]
+        self._verify_visit(item, school, date(2026, 10, 14), "VS-UNIQ-OCT")
+        self._verify_visit(item, school, date(2026, 11, 18), "VS-UNIQ-NOV")
+
+        october, november = list(
+            allocation.period_targets.filter(period_type="month").order_by(
+                "period_start"
+            )
+        )[:2]
+        # Each month is honestly 1 — the month view is unaffected.
+        self.assertEqual(october.actual_value, Decimal("1"))
+        self.assertEqual(november.actual_value, Decimal("1"))
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("1"))
+        self.assertEqual(projection["quarterActual"], Decimal("1"))
+        self.assertEqual(scored.achieved, Decimal("1"))
+
+    def test_one_school_reached_in_two_quarters_counts_once_for_the_year(self):
+        _milestone, item, allocation = self._unique_school_allocation("UNIQ_QUARTERS")
+        school = self.schools_by_staff[self.cceo_a_sp.id][0]
+        self._verify_visit(item, school, date(2026, 10, 14), "VS-UNIQQ-OCT")
+        self._verify_visit(item, school, date(2027, 1, 20), "VS-UNIQQ-JAN")
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("1"))
+        # Q1 holds only the October visit, so the quarter reads 1 either way —
+        # the year is where the repeat visit was being added on.
+        self.assertEqual(projection["quarterActual"], Decimal("1"))
+        self.assertEqual(scored.achieved, Decimal("1"))
+
+    def test_two_different_schools_in_two_months_still_total_two(self):
+        """The control. A fix that simply collapses every roll-up to the best
+        single month would pass the tests above and destroy the measure."""
+        _milestone, item, allocation = self._unique_school_allocation("UNIQ_CONTROL")
+        first, second = self.schools_by_staff[self.cceo_a_sp.id][:2]
+        self._verify_visit(item, first, date(2026, 10, 14), "VS-UNIQC-OCT")
+        self._verify_visit(item, second, date(2026, 11, 18), "VS-UNIQC-NOV")
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("2"))
+        self.assertEqual(projection["quarterActual"], Decimal("2"))
+        self.assertEqual(scored.achieved, Decimal("2"))
+
+    def test_an_additive_count_still_sums_across_months(self):
+        """The second control. VERIFIED_ACTIVITIES counts events, not
+        entities: two visits to the same school in two months really are two
+        activities, and that must keep summing."""
+        milestone = self._milestone("UNIQ_ADDITIVE", target="10")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="CLA_CHARACTER_DEVELOPMENT"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=milestone,
+            catalogue_item=item,
+            counting_basis="VERIFIED_ACTIVITIES",
+            minimum_completion_state="ia_verified",
+            weight=1,
+        )
+        team = self._team_allocation(milestone, self.pl_sp, 10)
+        approve_allocation(team, principal=self.ia)
+        allocation = self._employee_allocation(
+            milestone, self.cceo_a_sp, 10, parent=team
+        )
+        approve_allocation(allocation, principal=self.pl)
+        school = self.schools_by_staff[self.cceo_a_sp.id][0]
+        self._verify_visit(item, school, date(2026, 10, 14), "VS-UNIQA-OCT")
+        self._verify_visit(item, school, date(2026, 11, 18), "VS-UNIQA-NOV")
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("2"))
+        self.assertEqual(projection["quarterActual"], Decimal("2"))
+        self.assertEqual(scored.achieved, Decimal("2"))
+
+
 class PlannedOutputTests(DistributionFixture):
     def test_scheduling_raises_planned_output_and_cancelling_returns_it(self):
         milestone = self._milestone("PLN_1", target="10")

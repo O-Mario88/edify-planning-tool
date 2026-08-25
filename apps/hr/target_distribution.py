@@ -1767,7 +1767,13 @@ def _milestone_progress(milestone: PriorityMilestone, approved_rows) -> dict | N
     Counts sum; rates are tracked per holder (their coverage denominators
     differ), so a rate milestone reports holder count instead of a fabricated
     country percentage.
+
+    TGT-03: each holder's own year figure comes from `range_actual`, so a
+    school one CCEO reached twice is one school before the holders are added
+    together. Holders are still added — their portfolios are disjoint by
+    assignment, so no school sits in two of them.
     """
+    from .milestone_progress import range_actual
 
     if not approved_rows:
         return None
@@ -1786,10 +1792,11 @@ def _milestone_progress(milestone: PriorityMilestone, approved_rows) -> dict | N
     plan = Decimal("0")
     actual = Decimal("0")
     for allocation in approved_rows:
-        for row in allocation.period_targets.all():
-            if row.period_type == "month":
-                plan += row.planned_value
-                actual += row.actual_value
+        months = [
+            row for row in allocation.period_targets.all() if row.period_type == "month"
+        ]
+        plan += sum((row.planned_value for row in months), Decimal("0"))
+        actual += range_actual(allocation, months, milestone=milestone)
     pct = round(float(actual / plan * 100), 1) if plan else None
     return {
         "summable": True,
@@ -2260,6 +2267,8 @@ def team_distribution_workspace(fy: str, *, principal) -> dict:
 
     from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 
+    from .milestone_progress import range_actual
+
     role = getattr(principal, "active_role", "")
     lead_id = getattr(principal, "staff_profile_id", None)
     if role == EdifyRole.ADMIN.value and not lead_id:
@@ -2355,13 +2364,18 @@ def team_distribution_workspace(fy: str, *, principal) -> dict:
             if spread_pending:
                 pending_spreads += 1
             child_planned = planned_output(child)
-            child_verified = sum(
-                (
-                    row.actual_value
+            # TGT-03: the year does not come from adding the month rows up when
+            # the measure counts distinct schools. The milestone is handed over
+            # from the parent allocation, whose rules are already prefetched —
+            # a child is always carved from its parent's milestone.
+            child_verified = range_actual(
+                child,
+                [
+                    row
                     for row in child.period_targets.all()
                     if row.period_type == "month"
-                ),
-                Decimal("0"),
+                ],
+                milestone=allocation.milestone,
             )
             child_target = _q2(child.allocated_target)
             member_rows.append(

@@ -31,6 +31,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from decimal import Decimal
 
+from apps.hr.milestone_progress import range_actual
 from apps.hr.models import MilestoneAllocation
 from apps.hr.target_distribution import classify_achievement, rate_achievement_ceiling
 
@@ -109,6 +110,11 @@ def _achieved(allocation) -> Decimal:
     Counts never accumulate a rate: a 90% coverage commitment is 90% in every
     period, so its year figure is the best period reading, not their sum.
 
+    Counts of DISTINCT entities do not accumulate either — TGT-03. `range_actual`
+    adds the period rows up for an additive count and re-reads the year with one
+    distinct query for a unique-schools count, so a school reached twice in the
+    year is one school on the scorecard.
+
     For a rate the period rows store raw units in `actual_value` and the
     denominator-aware figure in `achievement_percentage`, so the achieved
     RATE is read back off the achievement — units divided by a percentage
@@ -120,7 +126,7 @@ def _achieved(allocation) -> Decimal:
     months = [p for p in periods if p.period_type == "month"]
     source = months or periods
     if allocation.milestone.measurement_type in {"count", "currency"}:
-        return sum((p.actual_value for p in source), Decimal("0"))
+        return range_actual(allocation, source)
     best = max((p.achievement_percentage for p in source), default=Decimal("0"))
     rate = allocation.allocated_target or Decimal("0")
     return (best * rate / 100).quantize(Decimal("0.01"))
@@ -133,7 +139,9 @@ def milestone_scores(staff_id: str, fy: str) -> list[MilestoneScore]:
             employee_id=staff_id, status="approved", milestone__priority__fy=fy
         )
         .select_related("milestone__priority", "milestone__metric_definition")
-        .prefetch_related("period_targets")
+        # The rules come along because `range_actual` reads the counting basis
+        # off them to decide whether the year sums or is re-read distinct.
+        .prefetch_related("period_targets", "milestone__activity_rules")
         .order_by("milestone__priority__sequence", "milestone__source_order")
     )
     rows = []
