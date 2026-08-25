@@ -45,7 +45,7 @@ Everything in this table was run, not inferred.
 | Production boot gate | `manage.py check --deploy` (prod settings) | **PASS — fails closed** |
 | CSS bundle reproducibility | `npm run build:css` + `git diff --exit-code` | **PASS** — byte-for-byte |
 | Design-system / mobile contracts | 101 contract tests | **PASS** |
-| Full test suite | `manage.py test --parallel 4` | **PASS** — 5,900 tests, 0 failures, 0 skips |
+| Full test suite | `manage.py test --parallel 4` | **PASS** — 5,921 tests, 0 failures, 0 skips |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **FAIL** — 5 of 22, 2 unbuildable |
@@ -62,8 +62,8 @@ CVE-2026-53612 through -53615), none carrying a fixed version, and nothing in th
 branch's diff touches the Dockerfile or dependency pins. It is a base-image refresh, not a
 code fix, and it is counted as a blocker on the rollout rather than on this branch.
 
-Suite size at HEAD: **425 test files; the runner collected and ran 5,900 tests.** The run
-on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 1,006s. The single
+Suite size at HEAD: **429 test files; the runner collected and ran 5,921 tests.** The run
+on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 921s. The single
 expected failure is CONFLICT-001 below, quarantined deliberately and documented at the
 test.
 
