@@ -244,26 +244,34 @@ class RolePermissionService:
 
     @staticmethod
     def can_update(user, obj) -> bool:
+        """Advisory. The school branch delegates to the rule writes enforce.
+
+        This function's comment used to say "the API, the HTMX endpoints and
+        the bulk actions all resolve here", and the tests beside it were
+        written believing that. None of it was true: a repo-wide grep finds no
+        production caller at all. So the contract stayed green while the school
+        edit drawer gated its write on a READ helper, and a Programme Lead
+        could take ownership of a supervised CCEO's school.
+
+        Answering the school question with `may_write_school` — the guard every
+        real school-row write now calls — is what stops the two drifting again.
+        They had already drifted: this branch refused the Country Director,
+        while `may_write_school` grants them the whole programme by design.
+        """
         role = getattr(user, "active_role", None)
         if role == EdifyRole.ADMIN.value:
             return True
         obj_type = obj.__class__.__name__
+        if obj_type == "School":
+            from apps.core.scoping import may_write_school, resolve_user_scope
+
+            return may_write_school(resolve_user_scope(user), obj)
         if role == "CountryDirector" and obj_type in [
-            "School",
             "Cluster",
             "Activity",
             "CorePlan",
             "CoreActivitySlot",
         ]:
-            return False
-        # Supervision is not ownership. A Program Lead sees their team's
-        # schools so they can monitor them; this function used to end at
-        # can_view_record, so seeing one meant being able to edit it — every
-        # school of every CCEO they supervise. No page offered those controls,
-        # which is why it stayed invisible, but the API, the HTMX endpoints and
-        # the bulk actions all resolve here, and a hidden button is not an
-        # authorization decision.
-        if obj_type == "School" and not RolePermissionService._owns_school(user, obj):
             return False
         return RolePermissionService.can_view_record(user, obj)
 

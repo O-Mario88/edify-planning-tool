@@ -8,9 +8,17 @@ is theirs to watch.
 was view permission. Every school a PL could see, a PL could edit, which for a
 Program Lead means every school belonging to every CCEO on their team. Nothing
 in the interface offered those controls, so the hole was invisible until
-someone reached the endpoint directly; template hiding is not authorization,
-and the API, the HTMX endpoints and the bulk actions all resolve through this
-one function.
+someone reached the endpoint directly; template hiding is not authorization.
+
+That first fix was written believing "the API, the HTMX endpoints and the bulk
+actions all resolve through this one function". They do not — `can_update` has
+no production caller. So these tests went green over an edit drawer that was
+still gating its write on a READ helper, and a supervisor could take ownership
+of a supervised school for months afterwards.
+
+Both halves are held here now. The endpoint tests are the ones that would have
+caught it, and `can_update` delegates the school question to `may_write_school`
+so the advisory answer and the enforced one cannot drift apart again.
 
 The distinction these tests hold: a PL keeps every authorized action on their
 own schools, and loses only mutation on their team's.
