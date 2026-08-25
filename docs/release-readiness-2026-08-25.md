@@ -96,11 +96,13 @@ every journey as its own commit meant each run superseded the one before it, so 
 while the newest CI evidence on this branch predated SEC-03 and Journeys 9 and 22. That
 was recorded here as an evidence gap rather than covered by the earlier green.
 
-It is closed. Run 916 on head `fe75c79` completed with **every job green** — Django lint
-and test suite, Security Scans (including `Scan the image`), CodeQL, `Analyze python` and
-`Analyze javascript-typescript`. That is the first fully green CI run on this branch that
-includes all twenty fixes and all seven journey walks, and it confirms the container scan
-independently of the 08:38 result.
+It is closed, twice over. Run 916 on head `fe75c79` completed with every job green, and
+run 935 on head **`304b0ce`** — the head this assessment describes — completed with **all
+five jobs green**: Django Lint & Test Suite, Security Scans (including `Scan the image`),
+CodeQL, `Analyze python` and `Analyze javascript-typescript`. That second run is the one
+that matters, because it is the first fully green CI on a head carrying every fix and every
+journey walk in this report, and it is the fourth independent execution of this code to
+disagree with run 932.
 
 The lesson is worth keeping: a branch that is pushed to faster than CI can run is a branch
 whose CI status is always about an older commit than the one you are looking at. Pushes
