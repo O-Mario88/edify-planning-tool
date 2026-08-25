@@ -49,8 +49,8 @@ Everything in this table was run, not inferred.
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **FAIL** — 7 of 22, 2 unbuildable |
-| Container vulnerability scan | Trivy, in CI | **PASS** as of 2026-08-25 08:38 — was failing; see below |
-| Branch CI on the fixed tree | GitHub Actions, head `693530f` | **PASS** — every job, whole workflow green |
+| Container vulnerability scan | Trivy, in CI | **PASS** — confirmed twice, 08:38 and 10:14 |
+| Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
 **The container scan has since started passing, and this section said otherwise.** Through
@@ -68,13 +68,20 @@ database did. The gate is recorded as **PASS** on that evidence and the earlier 
 kept here rather than deleted, because a blocker that resolves itself is worth being able
 to see resolve.
 
-**A caveat on CI coverage of the most recent work.** Runs 911 through 914 were each
-*cancelled* by the next push rather than completing — pushing every journey as its own
-commit meant each run superseded the one before it. So the last CI run to complete on this
-branch was run 910 at `693530f` (Journey 5). SEC-03 and Journeys 9 and 22 have passed the
-full local suite (5,927 tests, no failures, no skips) but have **not** yet been verified by
-CI. That is a gap in the evidence for those three, and it is stated here rather than
-covered by the earlier green.
+**On CI coverage of the most recent work — a gap that was real and is now closed.** Runs
+911 through 915 were each *cancelled* by the next push rather than completing: pushing
+every journey as its own commit meant each run superseded the one before it, so for a
+while the newest CI evidence on this branch predated SEC-03 and Journeys 9 and 22. That
+was recorded here as an evidence gap rather than covered by the earlier green.
+
+It is closed. Run 916 on head `fe75c79` completed with **every job green** — Django lint
+and test suite, Security Scans (including `Scan the image`), CodeQL, `Analyze python` and
+`Analyze javascript-typescript`. That is the first fully green CI run on this branch that
+includes all twenty fixes and all seven journey walks, and it confirms the container scan
+independently of the 08:38 result.
+
+The lesson is worth keeping: a branch that is pushed to faster than CI can run is a branch
+whose CI status is always about an older commit than the one you are looking at.
 
 Suite size at HEAD: **431 test files; the runner collected and ran 5,927 tests.** The run
 on the fixed tree is clean — `OK (skipped=0, expected failures=1)` in 910s. The single
