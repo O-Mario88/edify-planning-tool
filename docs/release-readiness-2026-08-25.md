@@ -66,7 +66,7 @@ Everything in this table was run, not inferred.
 | Production boot gate | `manage.py check --deploy` (prod settings) | **PASS — fails closed** |
 | CSS bundle reproducibility | `npm run build:css` + `git diff --exit-code` | **PASS** — byte-for-byte |
 | Design-system / mobile contracts | 101 contract tests | **PASS** |
-| Full test suite | `manage.py test` | **PASS** — 6,028 tests, 0 failures, 0 skips, 1 documented expected failure (CONFLICT-001) |
+| Full test suite | `manage.py test` | **PASS** — 6,037 tests, 0 failures, 0 skips, 1 documented expected failure (CONFLICT-001) |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
@@ -107,7 +107,7 @@ whose CI status is always about an older commit than the one you are looking at.
 were paced after that, in batches rather than per commit.
 
 **The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
-was first written and 6,028 at the last full run, with no failures, no skips, and one
+was first written and 6,037 at the last full run, with no failures, no skips, and one
 documented expected failure — CONFLICT-001, quarantined on purpose and self-removing.
 The GOV-01 guard's expected failure is gone because the gap it marked was closed: it
 reported an UNEXPECTED SUCCESS on the run after the write path landed, which failed the
