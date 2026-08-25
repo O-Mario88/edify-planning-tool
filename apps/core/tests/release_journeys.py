@@ -71,6 +71,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Impact measured",
             "Leadership view updated",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_ssa_improvement:"
+            "SsaToImprovementJourneyTest."
+            "test_a_school_that_improves_between_confirmed_assessments_is_measured",
+        ),
     ),
     Journey(
         3,
