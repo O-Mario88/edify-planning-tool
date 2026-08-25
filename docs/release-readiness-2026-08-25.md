@@ -48,7 +48,7 @@ Everything in this table was run, not inferred.
 | Full test suite | `manage.py test --parallel 4` | **PASS** — 5,921 tests, 0 failures, 0 skips |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
-| E2E journey census | `test_release_journey_census` | **FAIL** — 6 of 22, 2 unbuildable |
+| E2E journey census | `test_release_journey_census` | **FAIL** — 7 of 22, 2 unbuildable |
 | Container vulnerability scan | Trivy, in CI | **FAIL** — pre-existing; see below |
 | Branch CI on the fixed tree | GitHub Actions, head `922e3a1` | **PASS** on every job this branch owns |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
@@ -242,7 +242,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
-| P1 | RC-003 | 6 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
+| P1 | RC-003 | 7 of 22 mandated end-to-end journeys have a real test | 21 journey tests is a work programme, not a fix. The 22 are now enumerated and the count machine-checked — see below |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | Needs a catalogue item and a scheduling route — a workflow, not a patch |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | An approved extension that was never built |
@@ -275,7 +275,7 @@ rather than counting them as merely unwritten:
 - **Journey 21, Integration outage** — INTG-01. There is no outward transport, so
   "external system fails" and "retry succeeds" have nothing to exercise.
 
-That leaves **14 journeys that are unwritten rather than unbuildable**, which is a work
+That leaves **13 journeys that are unwritten rather than unbuildable**, which is a work
 programme with a known shape rather than an open question.
 
 ### Journey 8 was walked, and it found a defect on its first run

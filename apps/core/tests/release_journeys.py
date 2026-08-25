@@ -384,6 +384,11 @@ JOURNEYS: tuple[Journey, ...] = (
             "Generate new draft planning",
             "Historical reports remain unchanged",
         ),
+        covered_by=(
+            "apps.core.tests.test_journey_fy_rollover:"
+            "FiscalYearRolloverJourneyTest."
+            "test_the_year_closes_without_changing_what_the_old_year_reports",
+        ),
     ),
 )
 
