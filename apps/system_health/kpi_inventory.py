@@ -197,8 +197,8 @@ class KpiInventory:
             "payload_groups_with_repeated_categories": sum(
                 bool(group.repeated_categories) for group in self.payload_groups
             ),
-            "professional_headline_limit": 6,
-            "professional_compact_limit": 2,
+            "professional_headline_limit": _measured_tray_limit(None),
+            "professional_compact_limit": _measured_tray_limit("compact"),
             "professional_category_limit": None,
             "supporting_metric_disclosures": 0,
         }
@@ -781,3 +781,24 @@ def build_inventory() -> KpiInventory:
             )
 
     return inventory
+
+
+def _measured_tray_limit(density) -> int | None:
+    """How many headline cards the tray actually admits, by asking it.
+
+    These two numbers were hard-coded literals here — 6 and 2 — which made
+    this generated manifest assert a policy rather than record one. FE-02 was
+    partly that: the stated rule said four, the code did six, and nothing
+    reconciled the two because nothing measured either.
+
+    So it is measured. The tag is handed more items than any plausible cap and
+    the result counted; ``None`` means it returned all of them, which is now
+    the answer for the dashboard tray. If somebody reintroduces a cap, this
+    file records the real one on the next build instead of repeating a number
+    that was true once.
+    """
+    from apps.core.templatetags.kpi_metrics import professional_kpis
+
+    probe = [{"label": f"probe-{index}", "value": index} for index in range(1, 41)]
+    admitted = len(professional_kpis(probe, density=density))
+    return None if admitted == len(probe) else admitted

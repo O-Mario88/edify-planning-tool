@@ -1999,6 +1999,15 @@ select:not([multiple]):not(.select-native) {
   .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(6)) {
     grid-template-columns: repeat(6, minmax(0, 1fr));
   }
+
+  /* Seven or more (FE-02, decided: the tray no longer caps at six, because the
+     count follows the work rather than the layout). Six fixed columns would
+     wrap correctly but strand a lone card on a second row, so past six the
+     grid distributes instead. Nothing is dropped either way -- the container
+     grows with its rows, and `overflow: clip` above only trims decoration. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)) {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
 }
 
 /* Phones never scroll a KPI strip horizontally. Two compact tracks keep the

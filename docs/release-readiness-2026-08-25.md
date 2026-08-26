@@ -431,9 +431,9 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | --- | --- | --- | --- |
 | P0 | DEP-03 | No restore from a production backup has ever been performed | Needs the managed database. The rehearsal harness exists and is rigorous |
 | P0 | DEP-01 | The repository's two records of the live app describe **two different applications**, by UUID | Needs `doctl apps spec get`. Now quarantined by `test_deployment_record_is_singular`, and the asymmetry between the two records is recorded — see §6.1 |
-| P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
+| P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | **Scope decided, 2026-08-26: reconciliation happens IN Salesforce and NetSuite; the platform only stores the IDs that close it there.** Current behaviour is correct by design, so this stops being a defect. It remains a release-note obligation: the gate is a typed reference, not a verified one |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
-| P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
+| P1 | FE-01 | Offline field operation does not exist | **Descoped by the product owner, 2026-08-26: "for now, there is no need for offline operation."** No longer a release blocker. The release notes must say plainly that field staff need connectivity, because the platform cancels an offline action rather than queuing it |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
 | P1 | JRN-01 | **18 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and is closing one journey at a time. Journey 19 sweeps four endpoints as all thirteen roles and reproduces SEC-01 where it lived; journey 7 walks five money endpoints and **found FIN-06 on its first run**. Both mutation-verified. The remaining eighteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
 | P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one was Python and Markdown only. **Decided and fixed** — the product owner chose to rebuild before go-live, and the runtime stage now pins the three OpenSSL packages forward. CI's own image build and scan is the verifier; open until that run is green |
@@ -441,7 +441,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | **Not unbuilt — built the other way, deliberately.** The matrix gives IA import/allocate/view and withholds edit/define; the cascade explains why. Recorded as CONFLICT-002 |
-| P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | Needs the owner to say which number is the rule |
+| P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | **Decided and fixed.** The owner's answer was that the count follows the work, not a fixed number, so the dashboard tray has no cap; seven registered metrics render as seven. The compact tray keeps two, which is its real width, and `dropped_kpi_items` now exists so a genuinely capped tray can disclose the remainder. The inventory measures both limits rather than asserting them |
 | P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
 | P3 | RC-002 | `AUTHZ_MODE` branches nothing at runtime, and `security.summary()` still reports `authzMode` over the API | Smaller than first recorded: no template renders it, and production **cannot boot** unless it is `enforce` (`config/settings/prod.py`). Object-level authz is unconditional either way, so the field describes a boot assertion rather than a mode |
 
@@ -1137,6 +1137,42 @@ infrastructure gates and three product decisions. JRN-01 does not add a blocker;
 subtracts confidence from evidence already recorded, and this report would be
 misrepresenting that evidence if it left the reading at "20 of 22 journeys covered" without
 saying which layer those twenty cover.
+
+## 4c. The product-owner decisions, made
+
+All six questions this report escalated were answered on 2026-08-26. Recording them here
+rather than only inside each finding, because the shape of what remains changed when they
+landed — three of them were the reason the verdict named "decisions" as a blocker class at
+all.
+
+| | Question | Decision | State |
+| --- | --- | --- | --- |
+| D-1 | Which achievement number is the true one? | The Country Director weights against **agreed** priority areas. A team with no signed agreements reads Not Assigned, not 200% | **Fixed** (CONFLICT-001) |
+| D-2 | May Impact Assessment edit Master Priority rows? | **Yes.** IA works with the CD to assign priorities and monitors progress against them | **Fixed** (CONFLICT-002) |
+| D-3 | Does Salesforce reconciliation stay manual? | Reconciliation happens **in** Salesforce and NetSuite; the platform only stores the IDs that close it there | **Scope confirmed** (INTG-01) |
+| D-4 | What does a Core Assessment cost? | Nothing extra — it uses the same staff-visit cost | **Fixed** (D5) |
+| D-5 | Offline field operation: build or descope? | **Descoped for now** | **Descoped** (FE-01) |
+| D-6 | Is the KPI headline limit four, or six? | Neither. The count follows how many things need tracking | **Fixed** (FE-02) |
+| — | DEP-08: ship with the OpenSSL CVE, or rebuild first? | **Rebuild first** | **Patched**, awaiting CI's scan |
+
+Two of these are release-note obligations rather than code, and they should not be lost
+because nothing in the codebase will remind anyone:
+
+- **Salesforce and NetSuite reconciliation is manual.** What the platform gates on is a
+  human-typed reference that it checks for shape and local uniqueness. Nothing contacts
+  either system. That is now the intended design rather than a gap, but a reader of the
+  release notes has to be told, because "Confirm Salesforce" does not read like a filing
+  step.
+- **There is no offline operation.** An action attempted offline is cancelled, not queued.
+  Field staff need connectivity, and the notes should say so in those words.
+
+**One recommendation was not taken, and it is recorded rather than argued.** The operations
+actions were placed after a successful deploy. For log retention, the error tracker and
+naming an incident owner that is reasonable. For two of them it inverts the point: no
+restore from a production backup has ever been performed, and a restore drill that runs
+after the deploy protects nothing during it. The same holds for the rollback rehearsal.
+Both are cheap before and expensive after. The decision stands; this paragraph exists so
+that if the question is ever asked, the answer is on the record.
 
 ## 5. Path to a defensible Go
 

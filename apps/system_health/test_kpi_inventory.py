@@ -125,8 +125,19 @@ class InventoryTests(SimpleTestCase):
         self.assertEqual(
             summary["distinct_labels"], len({s.label for s in tiles if s.label})
         )
-        self.assertEqual(summary["professional_headline_limit"], 6)
-        self.assertEqual(summary["professional_compact_limit"], 2)
+        # FE-02, decided: the dashboard tray has no cap, so the measured
+        # limit is None. This asserted 6, which was the number the code
+        # enforced while the stated rule said four -- and the manifest
+        # repeated it as a literal, so nothing ever reconciled the two. Both
+        # figures are measured from the real template tag now, which is why
+        # this assertion moves by itself if a cap ever comes back.
+        self.assertIsNone(summary["professional_headline_limit"])
+        self.assertEqual(
+            summary["professional_compact_limit"],
+            2,
+            "the compact tray's limit is a layout fact -- two cards is its "
+            "real width -- so unlike the dashboard cap it stays",
+        )
         self.assertIsNone(summary["professional_category_limit"])
         self.assertEqual(summary["supporting_metric_disclosures"], 0)
 
@@ -236,7 +247,24 @@ class InventoryTests(SimpleTestCase):
         self.assertIn("kpi-strip--executive", component)
         self.assertIn('data-component="kpi-card"', component)
 
-    def test_executive_renderer_removes_surplus_values_from_the_html(self):
+    def test_the_executive_renderer_drops_nothing(self):
+        """FE-02, decided: the tray shows what the page registered.
+
+        This asserted the opposite — six cards and no "Metric 7" — and it was
+        the clearest statement of the defect. The stated rule was a maximum of
+        four; the code enforced six; fourteen payload groups fed more than six
+        into it; and the surplus was not summarised, linked or disclosed. It
+        was sliced off the end, so a page could calculate a number, register
+        it as worth showing, and then drop it with nothing on screen to say so.
+
+        The product owner's answer was that the count should follow the work.
+        So seven registered metrics render as seven cards, and the assertion
+        that used to prove truncation now proves its absence.
+
+        The tray still refuses to hide anything in CSS, which is what
+        `kpi-supporting-metrics` would have been: past six columns the grid
+        distributes and wraps rather than clipping.
+        """
         from django.template.loader import render_to_string
 
         items = [
@@ -247,11 +275,35 @@ class InventoryTests(SimpleTestCase):
             {"items": items, "variant": "executive", "title": "Decision metrics"},
         )
 
-        self.assertEqual(html.count('data-component="kpi-card"'), 6)
-        self.assertIn("Metric 5", html)
-        self.assertIn("Metric 6", html)
-        self.assertNotIn("Metric 7", html)
+        self.assertEqual(html.count('data-component="kpi-card"'), 7)
+        for number in range(1, 8):
+            self.assertIn(f"Metric {number}", html)
         self.assertNotIn("kpi-supporting-metrics", html)
+
+    def test_the_compact_tray_keeps_its_layout_limit_and_says_what_it_dropped(self):
+        """The one cap left is a layout fact, and it is accountable.
+
+        Two cards is the mobile tray's real width, not a policy about how many
+        numbers matter. Because it genuinely truncates, `dropped_kpi_items`
+        exists so a surface can disclose the remainder instead of discarding
+        it — silent truncation was the actual defect in FE-02, not the number.
+        """
+        from apps.core.metrics import consolidate_kpi_items, dropped_kpi_items
+
+        items = [
+            {"label": f"Metric {number}", "value": number} for number in range(1, 6)
+        ]
+        shown = consolidate_kpi_items(items, max_items=2)
+        dropped = dropped_kpi_items(items, max_items=2)
+
+        self.assertEqual(len(shown), 2)
+        self.assertEqual(len(dropped), 3)
+        self.assertEqual(
+            [item["label"] for item in shown] + [item["label"] for item in dropped],
+            [item["label"] for item in items],
+            "shown plus dropped must account for every metric the page "
+            "registered -- otherwise something went missing again",
+        )
 
     def test_every_remaining_kpi_card_uses_the_shared_tray_visual(self):
         from pathlib import Path

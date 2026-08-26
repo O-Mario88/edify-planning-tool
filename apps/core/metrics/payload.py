@@ -137,23 +137,41 @@ def render_strip(
     return [tile.as_dict() for tile in tiles]
 
 
-def consolidate_kpi_items(items, *, max_items: int = 6) -> list[dict]:
-    """Return a bounded, identity-deduplicated headline set.
+def consolidate_kpi_items(items, *, max_items: int | None = None) -> list[dict]:
+    """Return an identity-deduplicated headline set.
 
-    A professional headline tray is not an inventory of every number a page
-    can calculate. Registered metrics are deduplicated by stable identity and
-    retained in product-authored source order. Categories remain useful audit
-    metadata, but are deliberately not a deletion rule: two scale, finance or
-    progress metrics can answer different business questions. Legacy items use
-    their normalized label as the temporary identity. The returned list is a
-    new render payload; surplus values are not hidden in CSS or moved into a
-    disclosure.
+    Registered metrics are deduplicated by stable identity and retained in
+    product-authored source order. Categories remain useful audit metadata,
+    but are deliberately not a deletion rule: two scale, finance or progress
+    metrics can answer different business questions. Legacy items use their
+    normalized label as the temporary identity.
+
+    **``max_items`` now defaults to no limit, and that is a decision (FE-02).**
+    The stated rule was "operational 0-2, dashboard max 4, mobile max 2". The
+    dashboard cap was implemented at 6 rather than 4, the operational one was
+    never implemented at all, and fourteen payload groups fed more than six
+    metrics into a six-slot tray. The surplus was not summarised, linked or
+    disclosed — it was sliced off the end, so a page could calculate a number,
+    decide it mattered enough to register, and then drop it with nothing on
+    screen to say so.
+
+    The product owner's answer was that the count should follow the work: "it
+    should not limit to 4 or 6 based on how many things need to be tracked."
+    So the default is no cap. A caller that genuinely has room for a fixed
+    number — the mobile tray is two cards wide and reflows badly beyond that —
+    still passes ``max_items`` explicitly, which makes every remaining limit a
+    stated layout constraint rather than an unexplained policy.
+
+    Truncation, where a caller asks for it, is still truncation: see
+    ``dropped_kpi_items`` for what a surface must do with the remainder rather
+    than discarding it.
     """
 
-    if max_items < 0:
-        raise ValueError("max_items must be zero or greater")
-    if max_items == 0:
-        return []
+    if max_items is not None:
+        if max_items < 0:
+            raise ValueError("max_items must be zero or greater")
+        if max_items == 0:
+            return []
 
     prepared: list[dict] = []
     seen_identities: set[str] = set()
@@ -172,7 +190,22 @@ def consolidate_kpi_items(items, *, max_items: int = 6) -> list[dict]:
 
         prepared.append(item)
 
-    return prepared[:max_items]
+    return prepared if max_items is None else prepared[:max_items]
+
+
+def dropped_kpi_items(items, *, max_items: int | None = None) -> list[dict]:
+    """The metrics a capped tray leaves out, so a surface can account for them.
+
+    The counterpart to ``consolidate_kpi_items``. Silent truncation was the
+    real defect in FE-02 — not the number six itself, but that nothing on the
+    page said anything had been left out. A caller that must cap its tray for
+    layout reasons can now ask what it dropped and disclose it, and a test can
+    assert the two lists together account for every input.
+    """
+    if max_items is None:
+        return []
+    everything = consolidate_kpi_items(items)
+    return everything[max_items:]
 
 
 def render_metric(
