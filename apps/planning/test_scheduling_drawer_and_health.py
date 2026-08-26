@@ -87,7 +87,7 @@ class AvailableActivityTypeServiceTest(TestCase):
         self.assertIn("cluster_training", kinds)
         self.assertNotIn("school_visit", kinds)
 
-    def test_training_options_are_linked_to_intervention_and_delivery_context(self):
+    def test_training_options_carry_governed_metadata_and_delivery_context(self):
         school_rows = {
             row["stableCode"]: row
             for row in training_activity_options(planning_context=SCHOOL)
@@ -99,8 +99,8 @@ class AvailableActivityTypeServiceTest(TestCase):
 
         self.assertTrue(school_rows)
         self.assertTrue(cluster_rows)
-        self.assertTrue(all(row["priorityTitles"] for row in school_rows.values()))
-        self.assertTrue(all(row["priorityTitles"] for row in cluster_rows.values()))
+        self.assertTrue(all(row["category"] for row in school_rows.values()))
+        self.assertTrue(all(row["ssaIndicator"] for row in school_rows.values()))
 
         self.assertIn("EDTECH_FOUNDATIONS", school_rows)
         self.assertEqual(
@@ -112,7 +112,13 @@ class AvailableActivityTypeServiceTest(TestCase):
         self.assertIn("TAM_I", cluster_rows)
         self.assertEqual(
             cluster_rows["TAM_I"]["interventions"],
-            [SsaIntervention.TEACHING_ENVIRONMENT],
+            [SsaIntervention.EXPOSURE_TO_WORD_OF_GOD],
+        )
+        self.assertEqual(
+            cluster_rows["TAM_I"]["category"], "Christian Transformation"
+        )
+        self.assertEqual(
+            cluster_rows["TAM_I"]["ssaIndicator"], "Exposure to God's Word"
         )
         self.assertEqual(
             cluster_rows["LITERACY_NUMERACY_PROJECT"]["interventions"],
@@ -122,7 +128,7 @@ class AvailableActivityTypeServiceTest(TestCase):
 
         tam = ActivityCatalogueItem.objects.get(stable_code="TAM_I")
         with self.assertRaisesMessage(
-            BadRequest, "not linked to that SSA intervention"
+            BadRequest, "does not match the selected Training Catalogue course"
         ):
             validate_priority_training_selection(
                 tam.id,
@@ -494,9 +500,11 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertIn('name="focus_intervention"', html)
         self.assertIn('name="catalogue_item_id"', html)
         self.assertNotIn('name="project_id"', html)
-        self.assertIn("Teaching as a Mission (TAM) I", html)
-        self.assertIn("Literacy/Numeracy Project", html)
-        self.assertIn("activity.interventions.includes(this.intervention)", html)
+        self.assertIn("Teaching as Mission (TAM)", html)
+        self.assertIn("Literacy/ Numeracy", html)
+        self.assertIn("SSA intervention association", html)
+        self.assertIn("selectedActivity.ssaIntervention", html)
+        self.assertNotIn("Select an intervention first", html)
         self.assertNotIn("Activity Goal / Purpose", html)
 
     def test_cluster_card_drawer_uses_the_same_activity_training_contract(self):
@@ -512,8 +520,11 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertNotIn('name="project_id"', html)
         self.assertIn('name="focus_intervention"', html)
         self.assertIn('name="catalogue_item_id"', html)
-        self.assertIn("Teaching as a Mission (TAM) I", html)
-        self.assertIn("Literacy/Numeracy Project", html)
+        self.assertIn("Teaching as Mission (TAM)", html)
+        self.assertIn("Literacy/ Numeracy", html)
+        self.assertIn("Category", html)
+        self.assertIn("SSA association", html)
+        self.assertNotIn("Select an intervention first", html)
         self.assertNotIn('name="schools_invited"', html)
         self.assertIn('name="invited_school_ids"', html)
         self.assertIn('name="teachers_per_school"', html)
@@ -629,7 +640,7 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200)
         return response.content.decode("utf-8")
 
-    def test_training_post_cannot_bypass_the_required_intervention_and_activity(self):
+    def test_training_post_requires_a_governed_training_and_derives_intervention(self):
         client = Client()
         client.force_login(self.user)
         response = client.post(
@@ -644,7 +655,7 @@ class ClusterDrawerDeliveryTest(TestCase):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn("Select the SSA intervention", response.content.decode("utf-8"))
+        self.assertIn("Select the Training", response.content.decode("utf-8"))
 
         response = client.post(
             "/planning/schedule-action",
@@ -659,9 +670,7 @@ class ClusterDrawerDeliveryTest(TestCase):
             HTTP_HX_REQUEST="true",
         )
         self.assertEqual(response.status_code, 400)
-        self.assertIn(
-            "Select the Activity / Training", response.content.decode("utf-8")
-        )
+        self.assertIn("Select the Training", response.content.decode("utf-8"))
 
     def test_the_posted_categories_become_the_per_school_figure(self):
         """The whole seam, drawer to database: the form posts who comes from
@@ -721,7 +730,7 @@ class ClusterDrawerDeliveryTest(TestCase):
         self.assertEqual(response.status_code, 200, response.content)
         activity = Activity.objects.get(catalogue_item=self.tam_cluster_training)
         self.assertEqual(
-            activity.focus_intervention, SsaIntervention.TEACHING_ENVIRONMENT
+            activity.focus_intervention, SsaIntervention.EXPOSURE_TO_WORD_OF_GOD
         )
         self.assertIsNone(activity.project_id)
         self.assertEqual(activity.schools_invited, 2)

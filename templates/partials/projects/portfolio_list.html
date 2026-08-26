@@ -16,27 +16,28 @@
     </div>
 
     <div class="overflow-x-auto">
-      <table class="w-full text-left border-collapse text-[12px]">
+      <table class="edify-record-table w-full text-left border-collapse text-[12px]">
+        <caption class="sr-only">Projects in your current scope with delivery, progress, budget and follow-up status</caption>
         <thead>
           <tr class="border-b border-slate-100 edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/40">
-            <th class="px-5 py-3">Project</th>
-            <th class="px-4 py-3 hidden md:table-cell">Type</th>
-            <th class="px-4 py-3 hidden lg:table-cell">Scope</th>
-            <th class="px-4 py-3 text-center">Schools</th>
-            <th class="px-4 py-3 hidden lg:table-cell">Target Interventions</th>
-            <th class="px-4 py-3 hidden lg:table-cell">Lead / Delivery</th>
-            <th class="px-4 py-3 min-w-[120px]">Progress</th>
-            <th class="px-4 py-3 hidden lg:table-cell">Budget</th>
-            <th class="px-4 py-3">Status</th>
-            <th class="px-4 py-3 hidden lg:table-cell">Next Follow-Up</th>
-            <th class="px-3 py-3 text-right"><span class="sr-only">Actions</span></th>
+            <th scope="col" class="px-5 py-3">Project</th>
+            <th scope="col" class="px-4 py-3 hidden md:table-cell">Type</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Scope</th>
+            <th scope="col" class="px-4 py-3 text-center" data-type="number">Schools</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Target Interventions</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Lead / Delivery</th>
+            <th scope="col" class="px-4 py-3 min-w-[120px]">Progress</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell" data-align="end">Budget</th>
+            <th scope="col" class="px-4 py-3">Status</th>
+            <th scope="col" class="px-4 py-3 hidden lg:table-cell">Next Follow-Up</th>
+            <th scope="col" class="px-3 py-3 text-right"><span class="sr-only">Actions</span></th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-100">
           {% for row in portfolio %}
           <tr class="hover:bg-slate-50/50 transition-colors group">
             <!-- Project -->
-            <td class="px-5 py-4 align-top">
+            <td class="px-5 py-4 align-top" data-record-title>
               <a href="/projects/{{ row.id }}" class="font-bold edify-primary-text edify-primary-text-hover hover:underline leading-tight">{{ row.name }}</a>
               {% if row.code %}<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">{{ row.code }}</p>{% endif %}
             </td>
@@ -50,7 +51,7 @@
               <p class="edify-text-caption text-slate-400 mt-0.5">{{ row.district }}</p>
             </td>
             <!-- Schools -->
-            <td class="px-4 py-4 align-top text-center">
+            <td class="px-4 py-4 align-top text-center" data-type="number">
               <span class="text-[14px] font-bold text-slate-700">{{ row.schools }}</span>
             </td>
             <!-- Target Interventions -->
@@ -83,7 +84,7 @@
               </div>
             </td>
             <!-- Budget -->
-            <td class="px-4 py-4 align-top hidden lg:table-cell">
+            <td class="px-4 py-4 align-top hidden lg:table-cell" data-align="end">
               <span class="text-slate-700 font-semibold tabular-nums">{{ row.budget }}</span>
             </td>
             <!-- Status -->
@@ -99,7 +100,7 @@
               {% endif %}
             </td>
             <!-- Action menu -->
-            <td class="px-3 py-4 align-top text-right relative" x-data="{ open: false }">
+            <td class="px-3 py-4 align-top text-right relative" data-record-action x-data="{ open: false }">
               <button type="button" @click="open = !open" @click.outside="open = false" class="h-7 w-7 inline-flex items-center justify-center rounded-control text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" :aria-expanded="open" aria-label="Project actions">
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/></svg>
               </button>

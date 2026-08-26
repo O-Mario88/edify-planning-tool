@@ -803,7 +803,7 @@ def schedule_modal_view(request):
         )
 
         training_options = (
-            training_activity_options(planning_context=CLUSTER)
+            training_activity_options(planning_context=CLUSTER, cluster=cluster)
             if action == "training"
             else []
         )
@@ -972,7 +972,10 @@ def schedule_modal_view(request):
         training_activity_options,
     )
 
-    training_options = training_activity_options(planning_context=SCHOOL)
+    training_options = training_activity_options(
+        planning_context=SCHOOL,
+        school=school,
+    )
     follow_up_options = _school_training_follow_up_options(school)
     responsible_staff_id, responsible_staff_name = resolve_monitoring_staff(
         school, request.user
@@ -1074,14 +1077,9 @@ def schedule_action_view(request):
     # `or None`, so an unset field arrived as "" instead of None.
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
     if cluster_id and activity_type == "cluster_training":
-        if focus_intervention not in SsaIntervention.values:
-            return error_fragment(
-                BadRequest("Select the SSA intervention this Group Training targets."),
-                status=400,
-            )
         if not catalogue_item_id:
             return error_fragment(
-                BadRequest("Select the Activity / Training to deliver."),
+                BadRequest("Select the Training to deliver."),
                 status=400,
             )
         try:
@@ -1090,22 +1088,17 @@ def schedule_action_view(request):
                 validate_priority_training_selection,
             )
 
-            validate_priority_training_selection(
+            selected_training = validate_priority_training_selection(
                 catalogue_item_id,
                 planning_context=CLUSTER,
-                intervention=focus_intervention,
             )
+            focus_intervention = selected_training["ssaIntervention"] or None
         except BadRequest as exc:
             return error_fragment(exc, status=400)
     if school_id and purpose_of_visit == "in_school_training":
-        if focus_intervention not in SsaIntervention.values:
-            return error_fragment(
-                BadRequest("Select the SSA intervention this Training targets."),
-                status=400,
-            )
         if not catalogue_item_id:
             return error_fragment(
-                BadRequest("Select the Activity / Training to deliver."),
+                BadRequest("Select the Training to deliver."),
                 status=400,
             )
         try:
@@ -1114,11 +1107,11 @@ def schedule_action_view(request):
                 validate_priority_training_selection,
             )
 
-            validate_priority_training_selection(
+            selected_training = validate_priority_training_selection(
                 catalogue_item_id,
                 planning_context=SCHOOL,
-                intervention=focus_intervention,
             )
+            focus_intervention = selected_training["ssaIntervention"] or None
         except BadRequest as exc:
             return error_fragment(exc, status=400)
     if request.POST.get("require_catalogue") == "yes" and not catalogue_item_id:
@@ -1410,7 +1403,11 @@ def assign_partner_modal_view(request):
 
     partner_training_options = [
         option
-        for option in training_activity_options(planning_context=SCHOOL)
+        for option in training_activity_options(
+            planning_context=SCHOOL,
+            school=school,
+            executor_type="partner",
+        )
         if option["partnerDeliveryAllowed"]
     ]
     follow_up_options = _school_training_follow_up_options(school) if school else []
@@ -1599,15 +1596,22 @@ def assign_partner_action_view(request):
                     selected_training = validate_priority_training_selection(
                         catalogue_item_id,
                         planning_context=SCHOOL,
-                        intervention=focus_intervention,
+                    )
+                    focus_intervention = (
+                        selected_training["ssaIntervention"] or None
                     )
                     if not selected_training["partnerDeliveryAllowed"]:
                         raise BadRequest(
                             "The selected Activity / Training is not approved for "
                             "Partner delivery."
                         )
-                    recommendation_reason = "Priority activity: " + ", ".join(
+                    linked_priorities = ", ".join(
                         selected_training["priorityTitles"]
+                    )
+                    recommendation_reason = (
+                        f"Priority activity: {linked_priorities}"
+                        if linked_priorities
+                        else f"Governed {selected_training['category']} training."
                     )
                 else:
                     derived = resolve_assignment_item(

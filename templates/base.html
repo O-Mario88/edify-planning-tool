@@ -79,9 +79,9 @@ inset themselves — see components/mobile-shell.css.
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260823aura1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260823press2">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260731readabletype1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260826tables1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260826editorial2">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbaralign2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260823aura1">
 <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260823aura2">
@@ -100,12 +100,12 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260823float4">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260731readabletype1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260823inline6">
+<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260826editorial1">
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260824notice2">
+<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260826tables1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260823inline1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on

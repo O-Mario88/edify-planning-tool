@@ -9,31 +9,81 @@ hx-post="/core-schools/assign-partner/action"
 hx-target="#partner-form-errors"
 class="space-y-4 text-[12px] font-bold text-slate-600 "
 x-data="{
-  sourceActivityId: '{% if catalogue_items %}{{ catalogue_items.0.sourceActivityId|default:'' }}{% endif %}',
-  recommendationReason: '{% if catalogue_items %}{{ catalogue_items.0.recommendationReason|escapejs }}{% endif %}',
-  focusIntervention: '{% if catalogue_items %}{{ catalogue_items.0.targetIntervention|default:'' }}{% endif %}',
-  supportType: '{% if catalogue_items and catalogue_items.0.stableCode == "CORE_SCHOOL_FOLLOWUP_VISIT" %}Visit{% else %}Training{% endif %}'
+  sourceActivityId: '',
+  recommendationReason: '',
+  focusIntervention: '',
+  supportType: '',
+  catalogueItemId: '',
+  trainingCategory: '',
+  ssaIndicator: '',
+  resetSelection() {
+    this.catalogueItemId = '';
+    this.focusIntervention = '';
+    this.sourceActivityId = '';
+    this.recommendationReason = '';
+    this.trainingCategory = '';
+    this.ssaIndicator = '';
+  },
+  selectTraining(event) {
+    const option = event.target.options[event.target.selectedIndex];
+    this.catalogueItemId = event.target.value;
+    this.focusIntervention = option ? option.dataset.intervention || '' : '';
+    this.trainingCategory = option ? option.dataset.category || '' : '';
+    this.ssaIndicator = option ? option.dataset.indicator || '' : '';
+    this.recommendationReason = option ? option.dataset.reason || '' : '';
+  },
+  selectVisit(event) {
+    const option = event.target.options[event.target.selectedIndex];
+    this.catalogueItemId = event.target.value;
+    this.focusIntervention = option ? option.dataset.intervention || '' : '';
+    this.sourceActivityId = option ? option.dataset.source || '' : '';
+    this.recommendationReason = option ? option.dataset.reason || '' : '';
+  }
 }"
 >
 {% csrf_token %}
 <input type="hidden" name="school_id" value="{{ school.school_id }}">
 <input type="hidden" name="source_activity_id" :value="sourceActivityId">
 <input type="hidden" name="recommendation_reason" :value="recommendationReason">
+<input type="hidden" name="catalogue_item_id" :value="catalogueItemId">
+<input type="hidden" name="focus_intervention" :value="focusIntervention">
 
 <!-- Form Error Container -->
 <div id="partner-form-errors"></div>
 
-<fieldset class="space-y-2">
-  <legend class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved Partner Activity</legend>
-  {% for item in catalogue_items %}
-  <label class="edify-surface block cursor-pointer rounded-control border border-slate-200 p-3">
-    <span class="flex items-start gap-3">
-      <input type="radio" name="catalogue_item_id" value="{{ item.catalogueItemId }}" required {% if forloop.first %}checked{% endif %} @change="sourceActivityId='{{ item.sourceActivityId|default:'' }}'; recommendationReason='{{ item.recommendationReason|escapejs }}'; focusIntervention='{{ item.targetIntervention|default:'' }}'; supportType='{% if item.stableCode == "CORE_SCHOOL_FOLLOWUP_VISIT" %}Visit{% else %}Training{% endif %}'">
-      <span><strong class="text-slate-800">{{ item.displayName }}</strong><span class="mt-1 block font-medium text-slate-500">{{ item.recommendationReason }}</span></span>
-    </span>
-  </label>
-  {% empty %}<div class="rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Partner-deliverable Catalogue Activity is currently eligible.</div>{% endfor %}
-</fieldset>
+<div>
+<label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
+<select id="support_type" name="support_type" x-model="supportType" @change="resetSelection()" required class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
+<option value="">Select support type…</option>
+<option value="Visit">Core Visit</option>
+<option value="Training">Core Training</option>
+</select>
+</div>
+
+<template x-if="supportType === 'Training'">
+  <div>
+    <label for="partner_core_training" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training <span class="text-rose-500">*</span></label>
+    <select id="partner_core_training" required @change="selectTraining($event)" class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+      <option value="">Select a training…</option>
+      {% for item in training_options %}<option value="{{ item.id }}" data-category="{{ item.category }}" data-indicator="{{ item.ssaIndicator }}" data-intervention="{{ item.ssaIntervention }}" data-reason="{% if item.priorityTitles %}Priority activity: {{ item.priorityTitles|join:', ' }}{% else %}Governed {{ item.category }} training.{% endif %}">{{ item.label }}</option>{% endfor %}
+    </select>
+    <div x-show="catalogueItemId" style="display:none" class="mt-2 grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
+      <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="trainingCategory"></strong></div>
+      <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="ssaIndicator"></strong></div>
+    </div>
+  </div>
+</template>
+
+<template x-if="supportType === 'Visit'">
+  <div>
+    <label for="partner_core_visit" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Approved visit <span class="text-rose-500">*</span></label>
+    <select id="partner_core_visit" required @change="selectVisit($event)" class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
+      <option value="">Select a visit…</option>
+      {% for item in catalogue_items %}<option value="{{ item.catalogueItemId }}" data-source="{{ item.sourceActivityId|default:'' }}" data-intervention="{{ item.targetIntervention|default:'' }}" data-reason="{{ item.recommendationReason|escape }}">{{ item.displayName }}</option>{% endfor %}
+    </select>
+    {% if not catalogue_items %}<p class="mt-2 rounded-control border border-amber-200 bg-amber-50 p-3 text-amber-900">No Partner-deliverable Core Visit is currently eligible.</p>{% endif %}
+  </div>
+</template>
 
 <!-- Core School Name (Read Only) -->
 <div>
@@ -42,22 +92,11 @@ x-data="{
 </div>
 
 <div
-  class="grid grid-cols-2 gap-4"
   x-data="{
     visitSlots: [{% for slot in available_visit_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}],
     trainingSlots: [{% for slot in available_training_slots %}{ sequence: {{ slot.sequence }}, label: '{{ slot.label }}' }{% if not forloop.last %}, {% endif %}{% endfor %}]
   }"
 >
-<!-- Support Type -->
-<div>
-<label for="support_type" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Support Type</label>
-<input type="hidden" name="support_type" :value="supportType">
-<select id="support_type" x-model="supportType" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
-<option value="Visit">Core Visit</option>
-<option value="Training">Core Training</option>
-</select>
-</div>
-
 <!-- Sequence Number -->
 <div>
 <label for="visit_training_number" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Available Slot</label>
@@ -77,18 +116,6 @@ x-data="{
 <option value="">Select Partner...</option>
 {% for p in partners %}
 <option value="{{ p.id }}">{{ p.name }}</option>
-{% endfor %}
-</select>
-</div>
-
-<!-- Focus Intervention -->
-<div>
-<label for="focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Focus Intervention</label>
-<input type="hidden" name="focus_intervention" :value="focusIntervention">
-<select id="focus_intervention" x-model="focusIntervention" disabled class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-not-allowed">
-<option value="">Select Intervention...</option>
-{% for code, label in interventions %}
-<option value="{{ code }}">{{ label }}</option>
 {% endfor %}
 </select>
 </div>

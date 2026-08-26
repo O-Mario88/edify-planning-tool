@@ -204,6 +204,32 @@ class UgandaMasterSeedTests(DistributionFixture):
         self.assertEqual(regional.target_value, 730)
         self.assertEqual(uganda.target_value, 500)
 
+    def test_every_governed_training_is_linked_to_a_country_priority_activity(self):
+        courses = ActivityCatalogueItem.objects.filter(is_training_course=True)
+        self.assertEqual(courses.count(), 21)
+        for course in courses:
+            self.assertTrue(
+                MilestoneActivityRule.objects.filter(
+                    catalogue_item=course,
+                    milestone__priority__level="country",
+                    milestone__priority__country_id="Uganda",
+                    active=True,
+                ).exists(),
+                f"{course.stable_code} is missing its Uganda priority link",
+            )
+
+        new_school = ActivityCatalogueItem.objects.get(
+            stable_code="NEW_SCHOOL_ORIENTATION"
+        )
+        self.assertTrue(
+            MilestoneActivityRule.objects.filter(
+                catalogue_item=new_school,
+                milestone__code="NEW_SCHOOLS",
+                milestone__priority__country_id="Uganda",
+                active=True,
+            ).exists()
+        )
+
     def test_training_milestones_carry_core_client_and_participant_dimensions(self):
         dc = PriorityMilestone.objects.get(
             code="DC_TRAINING", priority__level="country"

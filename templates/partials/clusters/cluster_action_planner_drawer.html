@@ -114,8 +114,8 @@ hx-include="#action-planner-form"
 {% if activity_type == 'training' %}
 {% comment %}
   Group Training is selected from the governed Activity Catalogue. The
-  intervention is chosen first and the Activity / Training list is restricted
-  to catalogue rows actively mapped to it; the service repeats that check.
+  course is chosen first; category and SSA association are governed catalogue
+  metadata and the service derives them again on submission.
 
   Participants are planned per school × schools INVITED, not per school ×
   cluster membership. A Literacy training does not reach the secondary and
@@ -130,25 +130,14 @@ hx-include="#action-planner-form"
 <div
   x-data="{
     activities: {{ training_activity_options_json|default:'[]' }},
-    intervention: '{{ selected_focus_intervention|default:""|escapejs }}',
     activityId: '{{ selected_training_activity_id|default:""|escapejs }}',
     teachers: {{ teachers_per_school|default:2 }},
     leaders: {{ leaders_per_school|default:0 }},
     other: {{ other_per_school|default:0 }},
     clusterSchools: {{ cluster_school_count|default:0 }},
     schoolsInvited: {{ schools_invited|default:0 }},
-    get availableActivities() {
-      if (!this.intervention) return [];
-      return this.activities.filter(activity =>
-        activity.staffDeliveryAllowed
-        && activity.interventions.includes(this.intervention)
-      );
-    },
-    ensureActivity() {
-      if (!this.availableActivities.some(activity => activity.id === this.activityId)) {
-        this.activityId = this.availableActivities.length ? this.availableActivities[0].id : '';
-      }
-    },
+    get availableActivities() { return this.activities.filter(activity => activity.staffDeliveryAllowed); },
+    get selectedTraining() { return this.availableActivities.find(activity => activity.id === this.activityId) || null; },
     get perSchool() { return (Number(this.teachers) || 0) + (Number(this.leaders) || 0) + (Number(this.other) || 0); },
     get total() { return this.perSchool * (Number(this.schoolsInvited) || 0); },
     allChecked: {% if schools_invited == cluster_school_count and cluster_school_count %}true{% else %}false{% endif %},
@@ -164,31 +153,29 @@ hx-include="#action-planner-form"
       this.syncInvited();
     }
   }"
-  x-init="ensureActivity()"
   class="space-y-4"
 >
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div>
-      <label for="planner_intervention" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">SSA Intervention <span class="text-rose-500">*</span></label>
-      <select id="planner_intervention" name="focus_intervention" x-model="intervention" @change="ensureActivity()" required
-        class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer">
-        <option value="">Select an intervention…</option>
-        {% for item in interventions %}
-        <option value="{{ item.value }}">{{ item.label }}</option>
-        {% endfor %}
-      </select>
-    </div>
-    <div>
-      <label for="planner_training_activity" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Activity / Training <span class="text-rose-500">*</span></label>
+  <div>
+    <label for="planner_training_activity" class="block edify-text-caption uppercase tracking-wider text-slate-400 mb-1">Training <span class="text-rose-500">*</span></label>
       <select id="planner_training_activity" name="catalogue_item_id" x-model="activityId" required
-        :disabled="!intervention || availableActivities.length === 0"
         class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer disabled:cursor-not-allowed disabled:opacity-50">
-        <option value="" x-text="intervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
+        <option value="">Select a training…</option>
         <template x-for="activity in availableActivities" :key="activity.id">
           <option :value="activity.id" x-text="activity.label"></option>
         </template>
       </select>
-      <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only priority activities linked to the selected intervention are shown.</p>
+      <p id="planner-training-help" class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Choose from the governed training catalogue. Category and SSA association are filled automatically.</p>
+      <input type="hidden" name="focus_intervention" :value="selectedTraining ? selectedTraining.ssaIntervention : ''">
+  </div>
+
+  <div x-show="selectedTraining" x-cloak aria-live="polite" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div class="rounded-control border border-slate-200 edify-surface-subtle px-3 py-2">
+      <span class="block edify-text-caption uppercase tracking-wider text-slate-400">Category</span>
+      <span class="block mt-1 text-[12px] font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.category : '—'"></span>
+    </div>
+    <div class="rounded-control border border-slate-200 edify-surface-subtle px-3 py-2">
+      <span class="block edify-text-caption uppercase tracking-wider text-slate-400">SSA association</span>
+      <span class="block mt-1 text-[12px] font-semibold text-slate-700" x-text="selectedTraining ? selectedTraining.ssaIndicator : '—'"></span>
     </div>
   </div>
 

@@ -16,7 +16,7 @@
 
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if logs %}{% paginate logs "logs_page" as logs_pager %}
-<table class="edify-record-table w-full text-[12px]"><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th class="text-left px-5 py-3 edify-text-caption font-bold uppercase text-slate-400">Action</th><th class="text-left px-4 py-3 edify-text-caption font-bold uppercase text-slate-400">Time</th></tr></thead>
+<table class="edify-record-table w-full text-[12px]"><caption class="sr-only">Recorded platform actions ordered from newest to oldest</caption><thead><tr class="bg-slate-50/60 border-b border-slate-100"><th scope="col" class="text-left px-5 py-3">Action</th><th scope="col" class="text-left px-4 py-3">Time</th></tr></thead>
 <tbody class="divide-y divide-slate-100">{% for l in logs_pager.rows %}<tr>{% comment %}
 "Action" here is the event that was recorded, not a control — the audit log has
 no row actions at all. It is the record's identity; the timestamp is metadata

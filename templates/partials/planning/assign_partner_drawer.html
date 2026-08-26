@@ -22,6 +22,9 @@
     get selectedSource() {
       return this.followUpActivities.find(item => item.id === this.sourceActivityId) || null;
     },
+    get selectedTraining() {
+      return this.trainingActivities.find(item => item.id === this.catalogueItemId) || null;
+    },
     onPurposeChange() {
       this.catalogueItemId = '';
       this.activityType = '';
@@ -32,7 +35,7 @@
       const item = this.trainingActivities.find(option => option.id === id);
       this.catalogueItemId = id;
       this.activityType = item ? 'in_school_training' : '';
-      this.focusIntervention = item && item.interventions.length ? item.interventions[0] : '';
+      this.focusIntervention = item ? item.ssaIntervention : '';
     }
   }"
 >
@@ -66,14 +69,20 @@
 
   <template x-if="showTraining">
     <div>
-      <label for="partner_training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity / Training</label>
+      <label for="partner_training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training</label>
       <select id="partner_training_activity" required @change="selectTraining($event.target.value)"
+        aria-describedby="partner-training-help"
         class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 focus:outline-none focus:ring-2 edify-primary-focus">
-        <option value="">Select an approved priority activity…</option>
+        <option value="">Select a training…</option>
         <template x-for="activity in trainingActivities" :key="activity.id">
           <option :value="activity.id" x-text="activity.label"></option>
         </template>
       </select>
+      <p id="partner-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The category and SSA association come from the governed Training Catalogue.</p>
+      <div x-show="selectedTraining" style="display:none" class="mt-2 grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
+        <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedTraining ? selectedTraining.category : ''"></strong></div>
+        <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedTraining ? selectedTraining.ssaIndicator : ''"></strong></div>
+      </div>
       <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Scheduling creates a School Training automatically. After delivery, it is confirmed with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
     </div>
   </template>

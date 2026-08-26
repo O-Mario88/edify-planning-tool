@@ -422,6 +422,21 @@ def cluster_schedule_activity_view(request):
             data["invitedSchoolIds"] = invited_school_ids
             data["schoolsInvited"] = str(len(invited_school_ids))
         try:
+            if activity_type == "training":
+                from apps.activity_catalogue.availability import (
+                    CLUSTER,
+                    validate_priority_training_selection,
+                )
+
+                selected_training = validate_priority_training_selection(
+                    catalogue_item_id,
+                    planning_context=CLUSTER,
+                )
+                # Catalogue authority wins over any stale or crafted hidden
+                # input. "Other" courses deliberately save no SSA dimension.
+                data["focusIntervention"] = (
+                    selected_training["ssaIntervention"] or None
+                )
             ClusterActionPlannerService.schedule_activity(data, request.user)
             messages.success(
                 request,
@@ -478,7 +493,10 @@ def cluster_schedule_activity_view(request):
                 )
                 retry_invited = set(invited_school_ids) or {s.id for s in retry_members}
                 training_options = (
-                    training_activity_options(planning_context=CLUSTER)
+                    training_activity_options(
+                        planning_context=CLUSTER,
+                        cluster=selected_cluster,
+                    )
                     if activity_type == "training"
                     else []
                 )
@@ -882,7 +900,10 @@ def planner_drawer_view(request):
     )
 
     training_options = (
-        training_activity_options(planning_context=CLUSTER)
+        training_activity_options(
+            planning_context=CLUSTER,
+            cluster=selected_cluster,
+        )
         if activity_type == "training"
         else []
     )

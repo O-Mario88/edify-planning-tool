@@ -530,7 +530,7 @@
 
 .theme-dark .app-sidebar__item:hover {
   color: var(--edify-text) !important;
-  background: rgba(255, 255, 255, .045) !important;
+  background: var(--edify-surface-hover) !important;
 }
 
 .theme-dark .app-sidebar__item--active {
@@ -549,7 +549,7 @@
 }
 
 .theme-dark .app-sidebar__brand-divider {
-  background: rgba(255, 255, 255, .16);
+  background: var(--edify-border);
 }
 
 .theme-dark .app-sidebar__brand-product {

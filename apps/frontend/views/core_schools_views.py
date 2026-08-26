@@ -545,20 +545,18 @@ def core_schedule_training_drawer(request):
 
     reco = CoreInterventionRecommendationService.recommend(school)
     recommendations = reco["rows"]
-    from apps.activity_catalogue.services import recommend_activities
-
-    catalogue_result = recommend_activities(
-        school=school,
-        principal=request.user,
-        executor_type="staff",
-        limit=3,
+    from apps.activity_catalogue.availability import (
+        SCHOOL,
+        training_activity_options,
     )
-    training_catalogue_items = [
-        row
-        for row in catalogue_result["primary"]
-        if row["workflowKind"]
-        not in {"core_visit", "follow_up_visit", "baseline_ssa_visit"}
-    ]
+
+    # Course choice is governed by the 21-row Training Catalogue.  SSA
+    # recommendations remain visible as advice, but they no longer replace
+    # the user's training decision or ask them to restate its association.
+    training_catalogue_items = training_activity_options(
+        planning_context=SCHOOL,
+        school=school,
+    )
 
     staff_members = (
         StaffProfile.objects.all().select_related("user").order_by("user__name")
@@ -608,6 +606,19 @@ def core_schedule_training_action(request):
             BadRequest("Select an eligible approved Catalogue Training."),
             status=400,
         )
+    try:
+        from apps.activity_catalogue.availability import (
+            SCHOOL,
+            validate_priority_training_selection,
+        )
+
+        selected_training = validate_priority_training_selection(
+            catalogue_item_id,
+            planning_context=SCHOOL,
+        )
+        focus_intervention = selected_training["ssaIntervention"] or None
+    except BadRequest as exc:
+        return error_fragment(exc, status=400)
 
     try:
         training_sequence = int(train_seq)
@@ -731,13 +742,23 @@ def core_assign_partner_drawer(request):
         limit=3,
     )
     catalogue_items = [
-        *catalogue_result["primary"],
-        *[
-            row
-            for row in catalogue_result["otherEligible"]
-            if row["stableCode"] == "CORE_SCHOOL_FOLLOWUP_VISIT"
-        ],
+        row
+        for row in [
+            *catalogue_result["primary"],
+            *catalogue_result["otherEligible"],
+        ]
+        if row["stableCode"] == "CORE_SCHOOL_FOLLOWUP_VISIT"
     ]
+    from apps.activity_catalogue.availability import (
+        SCHOOL,
+        training_activity_options,
+    )
+
+    training_options = training_activity_options(
+        planning_context=SCHOOL,
+        school=school,
+        executor_type="partner",
+    )
 
     context = {
         "school": school,
@@ -747,6 +768,7 @@ def core_assign_partner_drawer(request):
         "available_training_slots": available_training_slots,
         "partner_visit_purposes": PARTNER_VISIT_PURPOSES,
         "catalogue_items": catalogue_items,
+        "training_options": training_options,
     }
     return render(request, "partials/core_schools/assign_partner_drawer.html", context)
 
@@ -807,39 +829,52 @@ def core_assign_partner_action(request):
             if not catalogue_item_id:
                 raise BadRequest("Select an eligible approved Catalogue Activity.")
             catalogue_item = get_selectable_item(catalogue_item_id)
-            recommendation_result = recommend_activities(
-                school=school,
-                principal=request.user,
-                executor_type="partner",
-                limit=3,
-            )
-            recommendation_rows = [
-                *recommendation_result["primary"],
-                *recommendation_result["otherEligible"],
-            ]
-            recommendation = next(
-                (
-                    row
-                    for row in recommendation_rows
-                    if row["catalogueItemId"] == catalogue_item.id
-                ),
-                None,
-            )
             override_reason = (request.POST.get("override_reason") or "").strip()
-            if recommendation is None and not override_reason:
-                raise BadRequest(
-                    "The selected Partner Activity is not eligible in the "
-                    "current Core School SSA context."
+            recommendation = None
+            if support_type == "Training":
+                from apps.activity_catalogue.availability import (
+                    SCHOOL,
+                    validate_priority_training_selection,
                 )
-            if (
-                recommendation
-                and focus_intervention != recommendation["targetIntervention"]
-                and not override_reason
-            ):
-                raise BadRequest(
-                    "The selected intervention does not match this Catalogue "
-                    "recommendation."
+
+                selected_training = validate_priority_training_selection(
+                    catalogue_item_id,
+                    planning_context=SCHOOL,
                 )
+                focus_intervention = selected_training["ssaIntervention"] or None
+            else:
+                recommendation_result = recommend_activities(
+                    school=school,
+                    principal=request.user,
+                    executor_type="partner",
+                    limit=3,
+                )
+                recommendation_rows = [
+                    *recommendation_result["primary"],
+                    *recommendation_result["otherEligible"],
+                ]
+                recommendation = next(
+                    (
+                        row
+                        for row in recommendation_rows
+                        if row["catalogueItemId"] == catalogue_item.id
+                    ),
+                    None,
+                )
+                if recommendation is None and not override_reason:
+                    raise BadRequest(
+                        "The selected Partner Activity is not eligible in the "
+                        "current Core School SSA context."
+                    )
+                if (
+                    recommendation
+                    and focus_intervention != recommendation["targetIntervention"]
+                    and not override_reason
+                ):
+                    raise BadRequest(
+                        "The selected intervention does not match this Catalogue "
+                        "recommendation."
+                    )
             source_activity = (
                 Activity.objects.filter(
                     id=source_activity_id,

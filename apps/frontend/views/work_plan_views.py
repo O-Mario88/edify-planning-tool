@@ -125,6 +125,9 @@ def _programme_item_metadata(item):
                 else "Administrative / not applicable"
             )
         ),
+        "is_training_course": item.is_training_course,
+        "training_category": item.training_category,
+        "ssa_indicator_label": item.ssa_indicator_label,
     }
 
 

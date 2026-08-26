@@ -371,67 +371,65 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1
 </div>
 
 {% if action != 'meeting' %}
-{% comment %}
-The planner first names the SSA intervention, then chooses an approved training
-whose active catalogue mapping includes that intervention. The backend repeats
-the same mapping check before saving, so a crafted POST cannot create drift.
-{% endcomment %}
+{% comment %}Training first. Category and SSA association are fetched from the
+governed course row; the backend repeats that derivation before saving.{% endcomment %}
 <div
 x-data="{
 activities: {{ training_activity_options_json|default:'[]' }},
-intervention: '',
-activityId: '',
+intervention: '{{ selected_focus_intervention|default:'' }}',
+activityId: '{{ selected_training_activity_id|default:'' }}',
 get availableActivities() {
-  if (!this.intervention) return [];
   return this.activities.filter(activity =>
-    activity.interventions.includes(this.intervention)
-    && (this.executorType === 'certified_partner_agency'
+    (this.executorType === 'certified_partner_agency'
       ? activity.certifiedAgencyDeliveryAllowed
       : activity.staffDeliveryAllowed)
   );
 },
+get selectedActivity() {
+  return this.availableActivities.find(activity => activity.id === this.activityId) || null;
+},
+onActivityChange() {
+  this.intervention = this.selectedActivity ? this.selectedActivity.ssaIntervention : '';
+},
 ensureActivity() {
   if (!this.availableActivities.some(activity => activity.id === this.activityId)) {
-    this.activityId = this.availableActivities.length ? this.availableActivities[0].id : '';
+    this.activityId = '';
   }
+  this.onActivityChange();
 }
 }"
 x-init="ensureActivity()"
 @training-delivery-changed.window="ensureActivity()"
-class="grid grid-cols-1 sm:grid-cols-2 gap-3"
+class="space-y-3"
 >
 <div>
-<label for="training_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA Intervention <span class="text-rose-500">*</span></label>
-<select
-name="focus_intervention"
-id="training_intervention"
-x-model="intervention"
-@change="ensureActivity()"
-required
-class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
->
-<option value="">Select an intervention…</option>
-{% for code, label in interventions %}
-<option value="{{ code }}">{{ label }}</option>
-{% endfor %}
-</select>
-</div>
-<div>
-<label for="training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity / Training <span class="text-rose-500">*</span></label>
+<label for="training_activity" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training <span class="text-rose-500">*</span></label>
 <select
 name="catalogue_item_id"
 id="training_activity"
 x-model="activityId"
+@change="onActivityChange()"
 required
-:disabled="!intervention || availableActivities.length === 0"
 class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
+aria-describedby="cluster-training-help"
 >
-<option value="" x-text="intervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
+<option value="">Select a training…</option>
 <template x-for="activity in availableActivities" :key="activity.id">
 <option :value="activity.id" x-text="activity.label"></option>
 </template>
 </select>
-<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only priority activities linked to the selected intervention are shown.</p>
+<p id="cluster-training-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Approved trainings available for Cluster delivery.</p>
+</div>
+<input type="hidden" name="focus_intervention" :value="intervention">
+<div x-show="selectedActivity" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
+  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
+    <span class="block edify-text-caption font-semibold text-slate-400">Training category</span>
+    <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedActivity ? selectedActivity.category : ''"></strong>
+  </div>
+  <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
+    <span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span>
+    <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedActivity ? selectedActivity.ssaIndicator : ''"></strong>
+  </div>
 </div>
 </div>
 {% endif %}
