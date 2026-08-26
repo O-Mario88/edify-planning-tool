@@ -66,7 +66,7 @@ Everything in this table was run, not inferred.
 | Production boot gate | `manage.py check --deploy` (prod settings) | **PASS — fails closed** |
 | CSS bundle reproducibility | `npm run build:css` + `git diff --exit-code` | **PASS** — byte-for-byte |
 | Design-system / mobile contracts | 101 contract tests | **PASS** |
-| Full test suite | `manage.py test` | **PASS** — 6,037 tests, 0 failures, 0 skips, 1 documented expected failure (CONFLICT-001) |
+| Full test suite | `manage.py test` | **PASS** — 0 failures, 0 skips, 3 documented expected failures (CONFLICT-001 and the two halves of DEP-01), each quarantined at the test and self-removing |
 | 50,000-school scale | `test_load_scale` @ 50k, quiet machine | **PASS** — 21 tests |
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
@@ -135,8 +135,9 @@ audit environment, stated rather than papered over, and it is the reason this en
 "unexplained" instead of naming a cause.
 
 **The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
-was first written and 6,037 at the last full run, with no failures, no skips, and one
-documented expected failure — CONFLICT-001, quarantined on purpose and self-removing.
+was first written and 6,037 at the last full run before the DEP-01 guard was added, with
+no failures, no skips, and expected failures only where a defect is deliberately
+quarantined — CONFLICT-001 and, now, the two halves of DEP-01. Each is self-removing.
 The GOV-01 guard's expected failure is gone because the gap it marked was closed: it
 reported an UNEXPECTED SUCCESS on the run after the write path landed, which failed the
 build and forced the marker off, exactly as its docstring said it would.
@@ -321,7 +322,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | Sev | ID | Finding | Why it is still open |
 | --- | --- | --- | --- |
 | P0 | DEP-03 | No restore from a production backup has ever been performed | Needs the managed database. The rehearsal harness exists and is rigorous |
-| P0 | DEP-01 | The repository's two records of the live app contradict each other | Needs `doctl apps spec get` against the live app |
+| P0 | DEP-01 | The repository's two records of the live app describe **two different applications**, by UUID | Needs `doctl apps spec get`. Now quarantined by `test_deployment_record_is_singular`, and the asymmetry between the two records is recorded — see §6.1 |
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | Needs credentials, or a scope decision that reconciliation stays manual |
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
@@ -949,11 +950,43 @@ know what is deployed.**
 - **DEP-01 · P0 ·** `.do/app.yaml` carries a "DO NOT APPLY THIS FILE TO THE RUNNING APP"
   banner, and `.do/README.md:17` states the spec "had never been applied since the app was
   created". Worse, the repository's two records of the live application contradict each
-  other: `.do/README.md:45-57` describes app `edify-planning-app` with **1** web instance,
-  a **dev-tier** database and no Redis; `docs/live-production-audit-2026-08-09.md:3-33`
-  describes a *different* app, `edify-planning-fra`, with **2** web instances, managed
-  PostgreSQL 17 + Valkey, and a dedicated pre-deploy migration job. Both cannot be true,
-  and nothing in a source-only audit can settle it.
+  other: `.do/README.md` describes app `edify-planning-app`
+  (`dacdc3eb-0ebe-4b47-bea2-88fe1155347b`) with **1** web instance, a **dev-tier** database
+  and no Redis; `docs/live-production-audit-2026-08-09.md` describes
+  `edify-planning-fra` (`8f8682cd-a00a-42d9-b9a6-4fa4b4140bde`) with **2** web instances,
+  managed PostgreSQL 17 + Valkey 8, and a dedicated pre-deploy migration job. Both cannot
+  be true, and nothing in a source-only audit can settle it.
+
+  **They are not two descriptions of one app that drifted — they name different UUIDs.** A
+  name can be renamed; a UUID cannot. Either the application was recreated between 4 and 9
+  August, or one of these documents is not describing production.
+
+  **The two records do not claim equal authority, and this report previously treated them
+  as if they did.** `.do/README.md` labels its own topology section "Recorded 2026-08-04
+  after the spec repair. *Treat as documentation, not as input*." The live audit is five
+  days newer, was taken against the running application, and labels its infrastructure
+  table **LIVE PRODUCTION VERIFIED** — a label that document distinguishes deliberately
+  from "REPAIRED IN SOURCE" and "NOT VERIFIED", adding that "a passing local test is not
+  treated as production evidence."
+
+  That asymmetry changes what DEP-02 means. **If the newer, live-verified record is
+  right, production runs two web instances** — and DEP-02 recorded `RUN_MIGRATIONS=true`
+  on the web service, so migrations run on container boot. Two instances booting together
+  with no advisory lock is the exact configuration `DEPLOY.md` calls unsafe. The advisory
+  lock added in this audit was therefore not theoretical hardening; on the more credible
+  of the two records it was closing a live exposure. The reassuring single-instance number
+  is the one from the document that disclaims itself.
+
+  What this audit could do about it, it did. `apps/core/tests/test_deployment_record_is_singular.py`
+  fails the build while the two records disagree, carrying `expectedFailure` so it reports
+  an UNEXPECTED SUCCESS — and forces its own removal — the moment somebody reconciles them.
+  `.do/README.md` now carries a warning naming the other record, so a reader who opens only
+  that file cannot be quietly misled. Five control tests keep the quarantine honest: the
+  facts cannot be reconciled by deleting them from one side, and a blockquoted
+  cross-reference does not count as agreement. That last rule exists because the first
+  version of the guard had no such distinction, and adding the warning to `.do/README.md`
+  made the UUID check pass — an unexpected success produced by one document quoting the
+  other, which would have read exactly like somebody having resolved DEP-01.
 - **DEP-02 · P0 ·** `.do/README.md:87-89` records `RUN_MIGRATIONS=true` on the *web*
   service — migrations run on container boot, making `instance_count: 1` load-bearing.
   There is no advisory lock around migrate (grep for `pg_advisory_lock` finds only two
