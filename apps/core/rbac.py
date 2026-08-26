@@ -559,6 +559,21 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.PROJECT_ASSIGN_SCHOOL,
         P.STRATEGIC_PRIORITIES_VIEW,
         P.STRATEGIC_PRIORITIES_IMPORT,
+        # CONFLICT-002, decided by the product owner: Impact Assessment may
+        # edit Master Priority rows. IA already brings the master in, so being
+        # unable to correct what it imported was the practical complaint.
+        #
+        # This audit argued against it and was overruled, which is recorded
+        # rather than hidden: IA is also the role that VERIFIES delivered work,
+        # and letting the verifier author what the work is measured against is
+        # the same class of conflict SEC-03 spent a P0 closing one layer down.
+        # Two things keep that narrow. Editing is not approving or publishing:
+        # STRATEGIC_PRIORITIES_APPROVE stays with the CD and the RVP, and
+        # publication remains the Country Director's alone at the act
+        # (_assert_master_author). And every confirmation is audited with the
+        # actor and their role, so "who changed this figure" stays answerable.
+        P.STRATEGIC_PRIORITIES_EDIT,
+        P.MILESTONES_DEFINE,
         # IA distributes the approved Uganda annual targets to Program Leads
         # and approves their quarterly spreads (Uganda Master Priority Plan).
         P.STRATEGIC_PRIORITIES_ALLOCATE,

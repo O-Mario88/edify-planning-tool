@@ -1178,7 +1178,7 @@
    "audit_id": "KPI-SOURCE-061",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2195,
+   "line": 2220,
    "label": null,
    "keys": [
     "aging",
@@ -1198,7 +1198,7 @@
    "audit_id": "KPI-SOURCE-062",
    "kind": "other",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 973,
+   "line": 998,
    "label": null,
    "keys": [
     "achieved",
@@ -1221,7 +1221,7 @@
    "audit_id": "KPI-SOURCE-063",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1155,
+   "line": 1180,
    "label": null,
    "keys": [
     "band",
@@ -1245,7 +1245,7 @@
    "audit_id": "KPI-SOURCE-064",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2113,
+   "line": 2138,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1263,7 +1263,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2114,
+   "line": 2139,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1281,7 +1281,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2115,
+   "line": 2140,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1299,7 +1299,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2116,
+   "line": 2141,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1317,7 +1317,7 @@
    "audit_id": "KPI-SOURCE-068",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2117,
+   "line": 2142,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1335,7 +1335,7 @@
    "audit_id": "KPI-SOURCE-069",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2118,
+   "line": 2143,
    "label": "Returned",
    "keys": [
     "amount",
@@ -1353,7 +1353,7 @@
    "audit_id": "KPI-SOURCE-070",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 1119,
+   "line": 1144,
    "label": null,
    "keys": [
     "band",
@@ -4872,7 +4872,7 @@
    "audit_id": "KPI-SOURCE-251",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 886,
+   "line": 962,
    "label": null,
    "keys": [
     "achieved",
@@ -4898,7 +4898,7 @@
    "audit_id": "KPI-SOURCE-252",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 1039,
+   "line": 1115,
    "label": null,
    "keys": [
     "count",
@@ -4915,7 +4915,7 @@
    "audit_id": "KPI-SOURCE-253",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
-   "line": 967,
+   "line": 1043,
    "label": null,
    "keys": [
     "achieved",
@@ -4939,7 +4939,7 @@
    "audit_id": "KPI-SOURCE-254",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
-   "line": 1153,
+   "line": 1229,
    "label": null,
    "keys": [
     "label",
@@ -4956,7 +4956,7 @@
    "audit_id": "KPI-SOURCE-255",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 207,
+   "line": 208,
    "label": null,
    "keys": [
     "achieved",
@@ -4979,7 +4979,7 @@
    "audit_id": "KPI-SOURCE-256",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 619,
+   "line": 616,
    "label": "Team Target Achievement",
    "keys": [
     "delta",
@@ -5000,7 +5000,7 @@
    "audit_id": "KPI-SOURCE-257",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 627,
+   "line": 624,
    "label": "Monthly Targets Achieved",
    "keys": [
     "delta",
@@ -5021,7 +5021,7 @@
    "audit_id": "KPI-SOURCE-258",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 635,
+   "line": 632,
    "label": "Quarterly Targets Achieved",
    "keys": [
     "delta",
@@ -5042,7 +5042,7 @@
    "audit_id": "KPI-SOURCE-259",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 643,
+   "line": 640,
    "label": "Staff On Track",
    "keys": [
     "delta",
@@ -5063,7 +5063,7 @@
    "audit_id": "KPI-SOURCE-260",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 660,
+   "line": 657,
    "label": "Core Schools On Track",
    "keys": [
     "delta",
@@ -5084,7 +5084,7 @@
    "audit_id": "KPI-SOURCE-261",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 717,
+   "line": 714,
    "label": "Staff Behind Target",
    "keys": [
     "action",
@@ -5106,7 +5106,7 @@
    "audit_id": "KPI-SOURCE-262",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 726,
+   "line": 723,
    "label": "Staff at Critical Risk",
    "keys": [
     "action",
@@ -5128,7 +5128,7 @@
    "audit_id": "KPI-SOURCE-263",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 735,
+   "line": 732,
    "label": "SSA Target Gap",
    "keys": [
     "action",
@@ -5150,7 +5150,7 @@
    "audit_id": "KPI-SOURCE-264",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 744,
+   "line": 741,
    "label": "Valid Visit Gap",
    "keys": [
     "action",
@@ -5172,7 +5172,7 @@
    "audit_id": "KPI-SOURCE-265",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 753,
+   "line": 750,
    "label": "Core School Target Gap",
    "keys": [
     "action",
@@ -5194,7 +5194,7 @@
    "audit_id": "KPI-SOURCE-266",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 794,
+   "line": 791,
    "label": null,
    "keys": [
     "count",
@@ -5211,7 +5211,7 @@
    "audit_id": "KPI-SOURCE-267",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 191,
+   "line": 192,
    "label": null,
    "keys": [
     "achieved",
@@ -5233,7 +5233,7 @@
    "audit_id": "KPI-SOURCE-268",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 775,
+   "line": 772,
    "label": null,
    "keys": [
     "achieved",
@@ -5256,7 +5256,7 @@
    "audit_id": "KPI-SOURCE-269",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 1150,
+   "line": 1147,
    "label": null,
    "keys": [
     "label",
@@ -5274,7 +5274,7 @@
    "audit_id": "KPI-SOURCE-270",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 1201,
+   "line": 1198,
    "label": null,
    "keys": [
     "label",
@@ -5291,7 +5291,7 @@
    "audit_id": "KPI-SOURCE-271",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
-   "line": 289,
+   "line": 290,
    "label": null,
    "keys": [
     "achieved",
@@ -5315,7 +5315,7 @@
    "audit_id": "KPI-SOURCE-272",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 1145,
+   "line": 1142,
    "label": "Overall weighted performance",
    "keys": [
     "label",
@@ -5332,7 +5332,7 @@
    "audit_id": "KPI-SOURCE-273",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
-   "line": 1147,
+   "line": 1144,
    "label": null,
    "keys": [
     "label",
@@ -27002,7 +27002,7 @@
   {
    "audit_id": "KPI-PAYLOAD-036",
    "module": "apps/targets/team_targets.py",
-   "line": 618,
+   "line": 615,
    "function": "get_page",
    "target": "kpis",
    "source_item_count": 2,
@@ -27022,7 +27022,7 @@
   {
    "audit_id": "KPI-PAYLOAD-037",
    "module": "apps/targets/team_targets.py",
-   "line": 946,
+   "line": 943,
    "function": "get_page",
    "target": "validation_issues",
    "source_item_count": 3,
@@ -27044,7 +27044,7 @@
   {
    "audit_id": "KPI-PAYLOAD-038",
    "module": "apps/targets/team_targets.py",
-   "line": 1050,
+   "line": 1047,
    "function": "get_page",
    "target": "summary_kpis",
    "source_item_count": 6,

@@ -1681,9 +1681,9 @@ with a known, bounded test cost.
 | Affected roles | Impact Assessment (the authority in question); Country Director and RVP (the authors today) |
 | Affected workflow | Strategic priority → cascade → agreement → My Targets → verified performance |
 | Financial/data risk | Not financial. The risk runs the other way: Impact Assessment is the role that VERIFIES delivered work, and `Permission.IA_VERIFY` sits in `ADMIN_EXCLUDED_PERMISSIONS` precisely so no account both certifies work and releases money for it. Letting the verifier author the priorities their verification is measured against is the same class of conflict, one layer up |
-| Product-owner decision | **REQUIRED — NOT YET MADE** |
-| Resolution | Blocked on the decision below |
-| Test proving the resolution | None yet. The current exclusion is enforced by the matrix itself and by `_assert_master_author` |
+| Product-owner decision | **MADE, 2026-08-26: granted.** Impact Assessment may edit Master Priority rows |
+| Resolution | **Implemented.** IA holds `strategicPriorities.edit` and `milestones.define`; `confirm_milestone` reads `milestones.define` at the act; publication stays the Country Director's |
+| Test proving the resolution | `apps/hr/test_target_distribution.py::MasterGovernanceTests` — IA confirms and cannot publish, a role with neither permission is refused at both the service and the door, and the audit row names the actor. Mutation-verified in both directions |
 
 ### Why this is a conflict and not an unbuilt feature
 
@@ -1709,8 +1709,29 @@ blocked from work they are entitled to do. But it should not be carried as a to-
 item, because implementing it as written would weaken a separation this audit spent a P0
 establishing.
 
-**Recommended decision** (for the owner, not for engineering to take): keep the current
-split, and re-scope the extension. If the underlying need is that a master priority cannot
+**Decided by the product owner on 2026-08-26: granted.** The stated reason is that Impact
+Assessment works *with* the Country Director to assign priorities and is the role that
+monitors everyone's progress against them — and IA already imports the master, so being
+unable to correct what it brought in was the practical complaint. This audit argued the
+other way and was overruled; the argument is kept below because a reader deserves to see
+what was weighed, not because the decision is in doubt.
+
+**What was actually built, and what deliberately was not.** IA now holds
+`strategicPriorities.edit` and `milestones.define`. Confirming a source figure reads
+`milestones.define` from the permission matrix at the act — SEC-03's lesson, since two roles
+now hold it and a hard-coded role comparison would be a second place to keep in step.
+Publication did **not** move: `_assert_master_author` still restricts it to the Country
+Director, IA does not hold `strategicPriorities.approve`, and a test fails if publication is
+ever widened to editors. Working with somebody is not signing on their behalf.
+
+**One thing nearly shipped broken, and it is the reason JRN-01 matters.** The view carried
+its own copy of the rule — `if not _is_cd(request)` — so granting the permission and opening
+the service would have left IA refused at the door while the act allowed them. Every
+service-level test would have passed. The duplicate is gone (the `publish_master` branch
+beside it never had one and trusts its service), and a test now drives the real endpoint as
+IA. Restoring the duplicate turns it red.
+
+**The original recommendation, for the record** (not taken): keep the split and re-scope. If the underlying need is that a master priority cannot
 be corrected after import — which is true today, and the more likely real complaint — the
 answer is an amendment path owned by the Country Director, with IA able to propose. That
 is the shape the platform already uses for loan purposes: `purpose.request` on the partner,

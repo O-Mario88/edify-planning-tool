@@ -30,7 +30,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
-from apps.core.rbac import EdifyRole
+from apps.core.rbac import EdifyRole, Permission
 from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
 
 from .models import (
@@ -1490,7 +1490,7 @@ def confirm_milestone(milestone: PriorityMilestone, *, data: dict, principal):
     needs-confirmation flag. Blocked once the master is published — after
     that, changes are amendments."""
 
-    _assert_master_author(principal)
+    _assert_master_editor(principal)
     milestone = PriorityMilestone.objects.select_for_update().get(pk=milestone.pk)
     if milestone.priority.status == StrategicPriorityStatus.PUBLISHED:
         raise BadRequest(
@@ -1634,13 +1634,41 @@ def publish_uganda_master(fy: str, *, principal, country_id: str = "Uganda"):
 
 
 def _assert_master_author(principal) -> None:
-    # §4.4 (audit R5): publication and source confirmation are the COUNTRY
-    # DIRECTOR'S authority alone — Admin supports, but must not publish on
-    # the CD's behalf.
+    # §4.4 (audit R5): PUBLICATION is the COUNTRY DIRECTOR'S authority alone —
+    # Admin supports, but must not publish on the CD's behalf.
+    #
+    # Editing a figure is a different act and has a different guard below.
+    # CONFLICT-002 was decided in favour of Impact Assessment being able to
+    # edit Master Priority rows, on the stated basis that IA works WITH the
+    # Country Director to assign priorities. Working with somebody is not
+    # signing on their behalf, so publication did not move.
     role = getattr(principal, "active_role", "")
     if role != EdifyRole.COUNTRY_DIRECTOR.value:
+        raise BadRequest("The Uganda master is published by the Country Director.")
+
+
+def _assert_master_editor(principal) -> None:
+    """Who may amend a source figure before the master is published.
+
+    CONFIRMED by the permission matrix rather than by comparing role strings,
+    which is SEC-03's lesson: that P0 existed because an act checked no
+    authority at all, and the fix was to read the matrix at the act. A second
+    role now holds this, so a hard-coded comparison here would be a second
+    place to keep in step with the first.
+
+    Editing is deliberately separable from approving and publishing. IA holds
+    ``milestones.define`` and does not hold ``strategicPriorities.approve``,
+    and ``_assert_master_author`` above still restricts publication to the
+    Country Director. Every confirmation is audited with the actor and their
+    role, which is what keeps "who changed this figure" answerable now that
+    the answer is not always the same person.
+    """
+    from apps.core.permissions import has_permission
+
+    if not has_permission(principal, Permission.MILESTONES_DEFINE.value):
         raise BadRequest(
-            "The Uganda master is owned and confirmed by the Country Director."
+            "Master Priority figures are set by the Country Director and "
+            "Impact Assessment."
         )
 
 

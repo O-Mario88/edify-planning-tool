@@ -537,10 +537,18 @@ def target_distribution_action(request):
     action = request.POST.get("action", "")
     try:
         if action == "confirm_milestone":
-            if not _is_cd(request):
-                raise BadRequest(
-                    "Source figures are confirmed by the Country Director."
-                )
+            # No role check here. `engine.confirm_milestone` calls
+            # `_assert_master_editor`, which reads `milestones.define` from the
+            # permission matrix, and the BadRequest it raises is caught below
+            # and shown to the user exactly like any other refusal.
+            #
+            # This used to duplicate the rule as `if not _is_cd(request)`, and
+            # when CONFLICT-002 was decided in favour of Impact Assessment
+            # editing Master Priority rows, granting the permission and opening
+            # the service would have changed nothing: the door would still have
+            # refused IA while the act allowed them. The `publish_master`
+            # branch immediately below never had a duplicate and trusts its
+            # service the same way, which is the pattern followed here.
             milestone = PriorityMilestone.objects.get(id=request.POST.get("milestone"))
             engine.confirm_milestone(
                 milestone, data=request.POST.dict(), principal=request.user

@@ -1213,15 +1213,127 @@ class MasterGovernanceTests(DistributionFixture):
             engine.publish_uganda_master(FY, principal=self.cd)
         self.assertIn("Confirm these source figures", str(ctx.exception))
 
-    def test_only_the_cd_confirms_and_publishes(self):
+    def test_ia_confirms_alongside_the_cd_but_only_the_cd_publishes(self):
+        """CONFLICT-002, decided: IA may edit Master Priority rows.
+
+        The product owner's reason was that IA works WITH the Country Director
+        to assign priorities, and IA is the role that monitors everyone's
+        progress against them. IA already imports the master, so being unable
+        to correct what it brought in was the practical complaint.
+
+        Working with somebody is not signing on their behalf, so the two acts
+        are split and both halves are asserted here. Confirming a source figure
+        now reads ``milestones.define`` from the permission matrix, which IA
+        holds. Publication still compares against the Country Director alone,
+        and IA does not hold ``strategicPriorities.approve``.
+
+        This audit argued the other way — IA verifies delivered work, and
+        letting the verifier author what that work is measured against is the
+        conflict SEC-03 closed one layer down — and was overruled. The
+        narrowing above is what remains of the objection, together with the
+        audit row every confirmation writes.
+        """
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        engine.confirm_milestone(milestone, data={}, principal=self.ia)
+        milestone.refresh_from_db()
+        self.assertFalse(
+            milestone.needs_confirmation,
+            "Impact Assessment could not confirm a source figure",
+        )
+
+        self._confirm_all()
+        with self.assertRaises(BadRequest) as ctx:
+            engine.publish_uganda_master(FY, principal=self.ia)
+        self.assertIn("Country Director", str(ctx.exception))
+
+    def test_ia_can_confirm_through_the_real_endpoint(self):
+        """The decision, at the door a real user actually touches.
+
+        JRN-01's lesson, applied while the change was being made rather than
+        found afterwards. The service guard and the permission grant are not
+        the whole of this decision: the view had its own copy of the rule
+        (``if not _is_cd(request)``), so opening the service and granting the
+        permission would have left Impact Assessment refused at the door while
+        the act allowed them. Nothing in the service-level tests above would
+        have noticed.
+
+        The duplicate is gone -- the view now lets ``confirm_milestone`` refuse
+        and surfaces the message, which is how the ``publish_master`` branch
+        beside it always worked -- and this proves it end to end.
+        """
+        from django.test import Client
+
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        self.assertTrue(milestone.needs_confirmation)
+
+        client = Client()
+        client.force_login(self.ia)
+        response = client.post(
+            "/target-distribution/action",
+            {"action": "confirm_milestone", "milestone": str(milestone.id), "fy": FY},
+        )
+        self.assertIn(response.status_code, (200, 302), response.content[:300])
+
+        milestone.refresh_from_db()
+        self.assertFalse(
+            milestone.needs_confirmation,
+            "Impact Assessment was refused at the door even though the "
+            "permission matrix and the service both allow the act",
+        )
+
+    def test_the_door_still_refuses_a_role_without_the_permission(self):
+        """The control: the door was widened, not opened."""
+        from django.test import Client
+
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        client = Client()
+        client.force_login(self.pl)
+        client.post(
+            "/target-distribution/action",
+            {"action": "confirm_milestone", "milestone": str(milestone.id), "fy": FY},
+        )
+        milestone.refresh_from_db()
+        self.assertTrue(
+            milestone.needs_confirmation,
+            "a Programme Lead confirmed a Master Priority figure",
+        )
+
+    def test_a_role_with_neither_permission_still_cannot_touch_the_master(self):
+        """The guard must refuse somebody, or it is not a guard.
+
+        Splitting confirmation off from publication widened who may edit; this
+        is the control that it did not widen it to everybody.
+        """
         milestone = PriorityMilestone.objects.get(
             code="ECD_TEACHERS", priority__level="country"
         )
         with self.assertRaises(BadRequest):
-            engine.confirm_milestone(milestone, data={}, principal=self.ia)
-        self._confirm_all()
-        with self.assertRaises(BadRequest):
-            engine.publish_uganda_master(FY, principal=self.ia)
+            engine.confirm_milestone(milestone, data={}, principal=self.pl)
+
+    def test_every_confirmation_records_who_made_it(self):
+        """Now that two roles can edit, the audit row is what answers 'who'."""
+        from apps.audit.models import AuditLog
+
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        engine.confirm_milestone(milestone, data={}, principal=self.ia)
+        row = (
+            AuditLog.objects.filter(
+                action="hr.uganda_master_milestone_confirmed",
+                subject_id=str(milestone.id),
+            )
+            .order_by("-seq")
+            .first()
+        )
+        self.assertIsNotNone(row, "confirming a master figure wrote no audit row")
+        self.assertEqual(row.actor_role, "ImpactAssessment")
 
     def test_publication_locks_the_master_and_activates_scoreable_milestones(self):
         self._confirm_all()
