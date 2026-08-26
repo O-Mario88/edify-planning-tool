@@ -101,6 +101,26 @@ def get_selectable_item(item_id_or_code: str, *, on_date=None) -> ActivityCatalo
     return item
 
 
+#: Workflow kinds that are costed as another kind, by decision rather than by
+#: accident.
+#:
+#: ``core_assessment_visit`` is here because of D5. No catalogue item carried
+#: that kind, so ``resolve_item_for_workflow_kind`` returned None, the costing
+#: layer refused with "Country Director configuration must be repaired before
+#: scheduling", and a mandatory Core package slot could not be scheduled at all.
+#: The Country Director's answer was that a Core Assessment costs nothing extra
+#: because the staff are already making a school visit — so it is costed as one.
+#:
+#: An alias rather than a seeded catalogue row on purpose. A row would need
+#: money values invented here, and the whole point of the answer is that there
+#: is no separate amount: whatever a school visit costs in a given country and
+#: financial year, a Core Assessment costs exactly that, and it stays correct
+#: when the visit's costing is revised.
+COSTED_AS = {
+    "core_assessment_visit": "school_visit",
+}
+
+
 def resolve_item_for_workflow_kind(
     workflow_kind: str, *, on_date=None
 ) -> ActivityCatalogueItem | None:
@@ -129,6 +149,7 @@ def resolve_item_for_workflow_kind(
     """
     if not workflow_kind:
         return None
+    workflow_kind = COSTED_AS.get(workflow_kind, workflow_kind)
     standard = list(
         effective_items(on_date)
         .filter(workflow_kind=workflow_kind, standard_support=True)

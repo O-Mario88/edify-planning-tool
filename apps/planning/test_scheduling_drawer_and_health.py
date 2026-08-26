@@ -754,7 +754,13 @@ class SchedulingHealthTest(TestCase):
     #: Pinned as an exact set, both directions: a NEW failing check has to be
     #: looked at, and configuring the catalogue item empties this list and
     #: fails the test until somebody removes the entry. Neither can drift.
-    KNOWN_SEED_GAPS = ["scheduling_core_package_slot_unschedulable"]
+    # Was ["scheduling_core_package_slot_unschedulable"], because a seeded
+    # platform genuinely shipped unable to schedule a mandatory Core slot.
+    # D5 answered it -- a Core Assessment is costed as the school visit the
+    # staff are already making -- so the seed is clean again. Pinned as an
+    # exact list in both directions: a new failing check has to be looked at,
+    # and re-adding one has to be deliberate.
+    KNOWN_SEED_GAPS = []
 
     def test_a_clean_platform_is_green_apart_from_its_known_seed_gap(self):
         report = scheduling_health()

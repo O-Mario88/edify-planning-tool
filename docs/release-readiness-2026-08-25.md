@@ -92,7 +92,7 @@ Everything in this table was run, not inferred.
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
 | Role × surface authorization matrix | `manage.py build_permission_matrix` + `test_permission_matrix` | **PASS** — 1,028 surfaces, 845 guarded and answered role by role, 183 declaring none and listed, 0 reachable by nobody |
 | Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS as a build; it found JRN-01** — 22 requirements, 20 traced by executing their own test, 2 blocked. Every traced row records what actually ran. Route column empty on 19 of 20 and metrics-computed column empty on all 20: see JRN-01 in §4b |
-| Container vulnerability scan | Trivy, in CI | **FAIL again at the current head** — passed twice on 2026-08-25 (08:38, 10:14) and again on `54e3cc8`, then failed on `e815d04` on a *new* upstream CVE. Not this branch's: see below |
+| Container vulnerability scan | Trivy, in CI | **Fix pushed; awaiting the next run** — passed twice on 2026-08-25 and again on `54e3cc8`, then failed from `e815d04` on a new upstream CVE (DEP-08). The base-image packages are now pinned forward; CI's own image build is the verifier |
 | Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
@@ -130,14 +130,28 @@ without an upgrade step, so the runtime image carries whatever OpenSSL the base 
 shipped with. The fix is a base-image refresh or a targeted upgrade of those three packages
 in both stages.
 
-**That fix is not pushed here, and the reason is this audit's own standard.** This
-environment has no Docker daemon and no Trivy — the header says so and it was re-checked
-before writing this. A Dockerfile change to the production runtime image that cannot be
-built, cannot be run, and cannot be re-scanned before pushing is a change marked resolved
-because code was committed, which is the one thing the mandate names outright. It is
-recorded here and on the pull request with the proposed patch, for someone who can build
-the image. **The container-scan gate is therefore Not Tested at this head, and by the
-mandate's own rule Not Tested is not Green.**
+**The fix is now applied, and the reason it could be is worth stating.** For several
+commits it was not: this environment has no Docker daemon and no Trivy, and a change to the
+production runtime image that cannot be built, run or re-scanned before pushing is a fix
+marked resolved because code was committed — the one thing the mandate names outright. So
+it was recorded here and on the pull request with the proposed patch instead.
+
+What changed is not the environment but the verifier. **CI's Security Scans job builds this
+image and scans it** — that is the job reporting the failure. A Dockerfile change pushed to
+this branch is therefore checked by exactly the gate it is meant to clear, on a machine that
+can do what this one cannot. Combined with the product owner's decision that the rebuild
+happens *before* go-live rather than after, the objection no longer holds.
+
+The runtime stage now names `libssl3t64`, `openssl` and `openssl-provider-legacy` in its
+existing `apt-get install`. Nothing here links against them directly — the base image
+already carries them — but naming them is what gives apt a reason to take the newest version
+the archive has rather than whatever the tag froze. Deliberately narrow rather than
+`apt-get upgrade`, which would change more than the finding asks for on an image nobody can
+re-test between build and deploy.
+
+**The gate is Not Tested until CI says otherwise.** If the scan still reports the finding,
+the fixed package is not yet in the archive the base image points at, and that is a
+different problem with a different answer — recorded rather than assumed either way.
 
 **On CI coverage of the most recent work — a gap that was real and is now closed.** Runs
 911 through 915 were each *cancelled* by the next push rather than completing: pushing
@@ -422,7 +436,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
 | P1 | JRN-01 | **18 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and is closing one journey at a time. Journey 19 sweeps four endpoints as all thirteen roles and reproduces SEC-01 where it lived; journey 7 walks five money endpoints and **found FIN-06 on its first run**. Both mutation-verified. The remaining eighteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
-| P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image — `libssl3t64`, `openssl`, `openssl-provider-legacy` at `3.5.6-1~deb13u2` | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one is Python and Markdown only. **A fixed version exists** (`3.5.7-1~deb13u2`), so unlike the August 25 finding this is closable — but not from here. No Docker daemon and no Trivy in this environment means the Dockerfile change could not be built, run or re-scanned before pushing. Proposed patch is on the PR; see §1 |
+| P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one was Python and Markdown only. **Decided and fixed** — the product owner chose to rebuild before go-live, and the runtime stage now pins the three OpenSSL packages forward. CI's own image build and scan is the verifier; open until that run is green |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |

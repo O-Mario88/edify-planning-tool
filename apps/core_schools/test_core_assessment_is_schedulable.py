@@ -50,24 +50,50 @@ from django.test import TestCase
 class CoreAssessmentSchedulabilityTest(TestCase):
     """The gap itself, and the check that has to notice it."""
 
-    def test_the_core_package_declares_a_slot_the_catalogue_cannot_serve(self):
-        """The premise, stated so the rest of this file cannot drift from it.
+    def test_every_core_package_slot_can_now_be_scheduled(self):
+        """D5, answered: a Core Assessment costs what a school visit costs.
 
-        If somebody adds the catalogue item, this test tells them — and the
-        two below become vacuous in the right direction rather than silently
-        asserting a world that no longer exists.
+        This test used to assert the opposite — that the Core package declared
+        a slot no catalogue item could serve — and said that if the list ever
+        came back empty, the assessment had become schedulable and the rest of
+        CORE-01 could be closed. That is what happened. The Country Director's
+        answer was that a Core Assessment adds no cost because the staff are
+        already making the visit, so ``COSTED_AS`` routes the kind to the
+        school-visit costing and the gap closed.
+
+        Kept rather than deleted, pointing the other way: if this list grows
+        again, a mandatory slot has lost its costing and every core school is
+        about to start collecting a blocker nobody can clear.
         """
         from apps.activity_catalogue.scheduling_health import core_package_kind_gaps
 
         self.assertEqual(
             core_package_kind_gaps(),
-            ["core_assessment_visit"],
-            "if this list is empty the assessment became schedulable and the "
-            "rest of CORE-01 can be closed; if it grew, another mandatory "
-            "slot lost its catalogue item",
+            [],
+            "a mandatory Core package slot has no costed catalogue item again",
         )
 
-    def test_scheduling_health_reports_it_rather_than_staying_green(self):
+    def test_the_assessment_resolves_to_the_school_visit_costing(self):
+        """The decision itself, not just its effect.
+
+        The gap could close for the wrong reason — somebody seeding a separate
+        Core Assessment item with a made-up price, which is exactly what the
+        Country Director said not to do. This asserts the answer that was
+        actually given: the same item that costs a school visit costs this.
+        """
+        from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+
+        assessment = resolve_item_for_workflow_kind("core_assessment_visit")
+        visit = resolve_item_for_workflow_kind("school_visit")
+        self.assertIsNotNone(assessment, "the Core Assessment has no costing")
+        self.assertEqual(
+            assessment.stable_code,
+            visit.stable_code,
+            "the Core Assessment is being costed as something other than a "
+            "school visit -- the decision was that it adds no separate cost",
+        )
+
+    def test_scheduling_health_is_green_on_the_core_package(self):
         from apps.activity_catalogue.scheduling_health import scheduling_health
 
         checks = {c["key"]: c for c in scheduling_health()["checks"]}
@@ -77,9 +103,9 @@ class CoreAssessmentSchedulabilityTest(TestCase):
             "the module whose whole purpose is catching a slot type with no "
             "costed item must actually check the Core package's own slots",
         )
-        check = checks["scheduling_core_package_slot_unschedulable"]
-        self.assertEqual(check["status"], "fail")
-        self.assertIn("core_assessment_visit", check["detail"])
+        self.assertEqual(
+            checks["scheduling_core_package_slot_unschedulable"]["status"], "pass"
+        )
 
     def test_the_check_is_green_when_every_mandatory_slot_can_be_scheduled(self):
         """Guard the check from being a constant.
@@ -121,21 +147,27 @@ class CoreAssessmentSchedulabilityTest(TestCase):
 class TheUnresolvableAskIsNotSentToStaffTest(TestCase):
     """CORE-01's second half: nobody is held to work the platform blocks."""
 
-    def test_the_core_assessment_ask_is_withheld_while_it_cannot_be_done(self):
+    def test_the_core_assessment_ask_is_sendable_now_the_slot_can_be_scheduled(self):
+        """The withholding was conditional, and the condition has lifted.
+
+        This asserted the ask was NOT sendable, because the platform blocked
+        the work: a CCEO was told to complete a core assessment and routed to
+        a page with no control that schedules one. The withholding was written
+        to lift by itself — "the moment a Country Director configures the
+        catalogue item, the gap closes and the ask returns" — and D5 is that
+        configuration. A genuinely missing assessment is worth chasing again.
+
+        The mechanism still has to be present, so both halves are asserted:
+        the ask is registered, and it is now sendable.
+        """
         from apps.planning.action_service import ISSUE_PLAYBOOK, sendable_issue_keys
 
+        self.assertIn("core_assessment_missing", ISSUE_PLAYBOOK)
         self.assertIn(
             "core_assessment_missing",
-            ISSUE_PLAYBOOK,
-            "the ask is still registered — it becomes sendable again the "
-            "moment the catalogue can serve the slot",
-        )
-        self.assertNotIn(
-            "core_assessment_missing",
             sendable_issue_keys(),
-            "a critical nobody can clear must not be sent to a CCEO; the "
-            "codebase already says why, about partner work: manufacturing one "
-            "'would hold the wrong person to it'",
+            "the Core Assessment is schedulable now, so withholding the ask "
+            "leaves a real gap unchased",
         )
 
     def test_it_becomes_sendable_again_once_the_slot_can_be_scheduled(self):
