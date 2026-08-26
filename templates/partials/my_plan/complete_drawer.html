@@ -1,8 +1,8 @@
 {% extends "components/drawers/base_drawer.html" %}
 {% load frontend_filters %}
 
-{% block drawer_title %}Complete Activity{% endblock %}
-{% block drawer_subtitle %}Complete and submit evidence for {{ act.activityType|title|replace_underscore }}{% if act.school %} @ {{ act.school.name }}{% endif %}{% endblock %}
+{% block drawer_title %}{% if is_paired_in_school_training %}Complete Training + Visit{% else %}Complete Activity{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if is_paired_in_school_training %}Submit both Salesforce records for {{ act.activityName }} at {{ act.schoolName }}{% else %}Complete and submit evidence for {{ act.activityType|title|replace_underscore }}{% if act.schoolName %} @ {{ act.schoolName }}{% endif %}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <form
@@ -20,9 +20,25 @@ class="space-y-5 text-[12px] font-bold text-slate-600"
 Upload Verification Evidence
 </h4>
 <p class="edify-text-caption text-slate-500 font-semibold leading-normal">
-Upload a photo of the meeting, participant list, stamp, or report. This is required to complete verification.
+{% if is_paired_in_school_training %}Add the Training Attendance Form and School Visit Form. Each file is attached to its correct Salesforce activity automatically.{% else %}Upload a photo of the meeting, participant list, stamp, or report. This is required to complete verification.{% endif %}
 </p>
 
+{% if is_paired_in_school_training %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+<label class="p-3 bg-slate-50 rounded-surface border border-slate-200/60 space-y-2">
+<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Training Attendance Form</span>
+<span class="block edify-text-caption font-medium text-slate-400">Evidence for the TS- Training record</span>
+<input type="file" name="training_evidence_file" accept="application/pdf"
+class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
+</label>
+<label class="p-3 bg-slate-50 rounded-surface border border-slate-200/60 space-y-2">
+<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">School Visit Form</span>
+<span class="block edify-text-caption font-medium text-slate-400">Evidence for the SVE- Visit record</span>
+<input type="file" name="visit_evidence_file" accept="application/pdf"
+class="w-full edify-text-caption text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
+</label>
+</div>
+{% else %}
 <div class="mt-2 p-3 bg-slate-50 rounded-surface border border-slate-200/60 flex items-center justify-between">
 <input
 type="file"
@@ -40,6 +56,18 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 </select>
 {% if evidence_checklist %}<p class="mt-1 edify-text-caption font-medium text-slate-400 normal-case tracking-normal">This activity needs {% for item in evidence_checklist %}{{ item.label }}{% if not forloop.last %}, {% endif %}{% endfor %} before it can be submitted.</p>{% endif %}
 </div>
+{% endif %}
+
+{% if is_paired_in_school_training and evidence_checklist %}
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+{% for item in evidence_checklist %}
+<div class="flex items-center gap-2 rounded-control border px-3 py-2 {% if item.uploaded %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-slate-200 bg-slate-50 text-slate-500{% endif %}">
+<span aria-hidden="true">{% if item.uploaded %}✓{% else %}○{% endif %}</span>
+<span class="edify-text-caption font-semibold">{{ item.recordLabel }} · {{ item.label }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
 
 
 <!-- Listed uploaded evidence files if any exist -->
@@ -123,6 +151,28 @@ Finalize details
 </h4>
 
 <!-- Salesforce ID -->
+{% if is_paired_in_school_training %}
+<div class="rounded-surface border border-slate-200 bg-slate-50/70 p-3 space-y-3">
+<div>
+<p class="text-[13px] font-semibold text-slate-800">Two linked Salesforce records</p>
+<p class="edify-text-caption font-medium text-slate-500 mt-0.5">Both IDs are validated and submitted together. Neither record completes unless both are valid.</p>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+<div>
+<label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Training ID <span class="text-rose-500">*</span></label>
+<input type="text" name="salesforce_id" id="salesforce_id" required autocomplete="off"
+placeholder="TS-…" value="{{ act.salesforceActivityId|default:'' }}"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 edify-primary-focus">
+</div>
+<div>
+<label for="visit_salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">School Visit ID <span class="text-rose-500">*</span></label>
+<input type="text" name="visit_salesforce_id" id="visit_salesforce_id" required autocomplete="off"
+placeholder="SVE-…" value="{{ paired_school_visit.salesforceActivityId|default:'' }}"
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 edify-primary-focus">
+</div>
+</div>
+</div>
+{% else %}
 <div>
 <label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Salesforce Activity ID</label>
 <input
@@ -135,6 +185,7 @@ value="{{ act.salesforceActivityId|default:'' }}"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus"
 >
 </div>
+{% endif %}
 
 <!-- Accountability (If accountability pending) — submits for Accountant review,
      it does not close accountability itself (see advance_service.approve_accountability). -->
@@ -188,7 +239,7 @@ class="w-full px-3 py-2 rounded-control border border-slate-200 text-[12px] mt-1
 {% endif %}
 
 <!-- Attendance (for trainings/meetings) -->
-{% if act.activityType == 'training' or act.activityType == 'cluster_training' or act.activityType == 'cluster_meeting' or act.activityType == 'core_training' %}
+{% if act.activityType == 'training' or act.activityType == 'in_school_training' or act.activityType == 'school_improvement_training' or act.activityType == 'cluster_training' or act.activityType == 'cluster_meeting' or act.activityType == 'core_training' %}
 <div class="grid grid-cols-2 gap-4">
 <div>
 <label for="teachers_attended" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Teachers Attended <span class="text-rose-500">*</span></label>
@@ -347,7 +398,7 @@ Cancel
 type="submit"
 class="edify-action-button primary h-9 transition-colors shadow-sm"
 >
-Submit Activity Completion
+{% if is_paired_in_school_training %}Submit Training + Visit{% else %}Submit Activity Completion{% endif %}
 </button>
 </div>
 </form>

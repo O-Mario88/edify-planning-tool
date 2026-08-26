@@ -218,8 +218,7 @@ def training_activity_options(
     )
     items = _executor_filtered(items, executor_type)
     items = (
-        items
-        .prefetch_related(
+        items.prefetch_related(
             "intervention_mappings",
             Prefetch(
                 "milestone_rules",
@@ -230,22 +229,31 @@ def training_activity_options(
         .distinct()
         .order_by("display_name", "stable_code")
     )
+    if school is None and cluster is None:
+        return _serialize_training_courses(items)
 
+    from .services import validate_context
+
+    eligible = []
+    for item in items:
+        try:
+            validate_context(
+                item,
+                school=school,
+                cluster=cluster,
+                project=None,
+                executor_type=executor_type,
+            )
+        except Exception:  # noqa: BLE001 — unavailable here is not an error
+            continue
+        eligible.append(item)
+    return _serialize_training_courses(eligible)
+
+
+def _serialize_training_courses(items) -> list[dict]:
+    """Serialize course identity independently of its delivery workflow."""
     options = []
     for item in items:
-        if school is not None or cluster is not None:
-            from .services import validate_context
-
-            try:
-                validate_context(
-                    item,
-                    school=school,
-                    cluster=cluster,
-                    project=None,
-                    executor_type=executor_type,
-                )
-            except Exception:  # noqa: BLE001 — unavailable here is not an error
-                continue
         mappings = [
             mapping for mapping in item.intervention_mappings.all() if mapping.active
         ]
@@ -253,9 +261,7 @@ def training_activity_options(
             (mapping for mapping in mappings if mapping.is_primary),
             mappings[0] if mappings else None,
         )
-        ssa_intervention = (
-            primary_mapping.intervention if primary_mapping else None
-        )
+        ssa_intervention = primary_mapping.intervention if primary_mapping else None
         interventions = [ssa_intervention] if ssa_intervention else []
         options.append(
             {
@@ -293,6 +299,63 @@ def training_activity_options(
     )
 
 
+def in_school_training_course_options(*, school=None, on_date=None) -> list[dict]:
+    """All 21 governed courses available inside an in-school delivery.
+
+    Course identity and delivery workflow are deliberately different axes.
+    A course may normally be delivered to a cluster, but staff can still
+    select it for the standard in-school Training workflow.  The latter owns
+    costing, evidence, Salesforce and entitlement rules; the selected course
+    owns the name, category, SSA association and priority linkage.
+    """
+    from django.db.models import Prefetch
+
+    from apps.hr.models import MilestoneActivityRule
+
+    priority_rules = MilestoneActivityRule.objects.filter(active=True).select_related(
+        "milestone__priority"
+    )
+    items = (
+        effective_items(on_date)
+        .filter(is_training_course=True, staff_delivery_allowed=True)
+        .prefetch_related(
+            "intervention_mappings",
+            Prefetch(
+                "milestone_rules",
+                queryset=priority_rules,
+                to_attr="active_priority_rules",
+            ),
+        )
+        .distinct()
+        .order_by("display_name", "stable_code")
+    )
+    return _serialize_training_courses(items)
+
+
+def validate_in_school_training_course_selection(
+    item_id: str, *, intervention: str | None = None, on_date=None
+) -> dict:
+    """Reject a forged/stale course selection from the in-school picker."""
+    from apps.core.exceptions import BadRequest
+
+    selected = next(
+        (
+            option
+            for option in in_school_training_course_options(on_date=on_date)
+            if option["id"] == str(item_id)
+        ),
+        None,
+    )
+    if selected is None:
+        raise BadRequest("Select a training from the governed Training Catalogue.")
+    if intervention and intervention != selected["ssaIntervention"]:
+        raise BadRequest(
+            "The submitted SSA intervention does not match the selected "
+            "Training Catalogue course."
+        )
+    return selected
+
+
 def validate_priority_training_selection(
     item_id: str,
     *,
@@ -320,9 +383,7 @@ def validate_priority_training_selection(
         None,
     )
     if selected is None:
-        raise BadRequest(
-            "Select a training from the governed Training Catalogue."
-        )
+        raise BadRequest("Select a training from the governed Training Catalogue.")
     if intervention and intervention != selected["ssaIntervention"]:
         raise BadRequest(
             "The submitted SSA intervention does not match the selected "
@@ -339,7 +400,9 @@ __all__ = [
     "SCHOOL",
     "available_activity_types",
     "available_catalogue_items",
+    "in_school_training_course_options",
     "training_activity_options",
+    "validate_in_school_training_course_selection",
     "validate_priority_training_selection",
     "workflow_profile_for",
 ]

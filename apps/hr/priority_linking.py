@@ -50,10 +50,8 @@ def link_activity(
             "catalogue_item_id", flat=True
         )
     )
-    if (
-        allowed_catalogue_ids
-        and activity.catalogue_item_id not in allowed_catalogue_ids
-    ):
+    governed_selection_id = activity.training_course_id or activity.catalogue_item_id
+    if allowed_catalogue_ids and governed_selection_id not in allowed_catalogue_ids:
         raise BadRequest(
             "The selected Activity Catalogue item is not approved for this priority milestone."
         )
