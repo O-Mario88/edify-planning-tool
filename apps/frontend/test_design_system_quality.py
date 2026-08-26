@@ -435,6 +435,38 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("background-image: none !important", components)
         self.assertIn("backdrop-filter: none", components)
 
+    def test_drawers_use_the_centered_reference_modal_and_form_contract(self):
+        base_drawer = _read("templates/components/drawers/base_drawer.html")
+        drawers = _read("static/css/drawers.css")
+        consistency = _read("static/css/consistency.css")
+        base = _read("templates/base.html")
+
+        # The shared shell powers every drawer, so the reference treatment is
+        # implemented once rather than copied into individual feature forms.
+        self.assertIn('class="drawer-required-note"', base_drawer)
+        self.assertIn("REFERENCE-ALIGNED FLOATING WORKSPACE", drawers)
+        self.assertIn("container: drawer / inline-size", drawers)
+        self.assertIn("@container drawer (min-width: 44rem)", drawers)
+        self.assertIn(
+            "grid-template-columns: repeat(2, minmax(0, 1fr))", drawers
+        )
+        self.assertIn(
+            'form:not(.cluster-create-form):not([data-drawer-layout="stack"])',
+            drawers,
+        )
+        self.assertIn("max-height: calc(100dvh - 7rem) !important", drawers)
+        self.assertIn("scrollbar-gutter: stable", drawers)
+        self.assertIn("overscroll-behavior: contain", drawers)
+        self.assertIn(":user-invalid", drawers)
+
+        # Blue and dark modes may flatten page cards, but must not erase the
+        # modal hierarchy and focus separation of an active workflow.
+        self.assertIn(
+            ":is(.theme-blue, .theme-dark) .drawer-surface", consistency
+        )
+        self.assertIn("box-shadow: var(--drawer-shadow) !important", consistency)
+        self.assertIn("20260826modal1", base)
+
     def test_blue_primary_actions_use_white_ink_on_saturated_blue(self):
         components = _read("static/css/components.css")
         consistency = _read("static/css/consistency.css")
