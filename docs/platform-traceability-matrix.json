@@ -594,31 +594,43 @@
         "Partner tracking"
       ],
       "tests": [
-        "apps.core.tests.test_journey_partner_payment:PartnerAssignmentToPaymentJourneyTest.test_partner_work_is_payable_only_once_ia_has_verified_it"
+        "apps.core.tests.test_journey_partner_payment:PartnerAssignmentToPaymentJourneyTest.test_partner_work_is_payable_only_once_ia_has_verified_it",
+        "apps.core.tests.test_journey_partner_payment:PartnerAssignmentToPaymentJourneyTest.test_the_same_journey_through_the_partner_payment_endpoint"
       ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
         "ImpactAssessment"
       ],
-      "routes": [],
+      "routes": [
+        "POST /accounts/partner-payments/{id}/pay"
+      ],
       "services": [
+        "apps/accounts/auth_backend.py",
+        "apps/accounts/lockout_service.py",
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/closure_services.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/services.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
         "apps/core/calendar_policy.py",
         "apps/core/cuid.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
+        "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/documents/gate.py",
+        "apps/frontend/views/finance_operating_views.py",
         "apps/fund_requests/finance_services.py",
         "apps/hr/milestone_progress.py",
         "apps/integrations/services.py",
@@ -630,7 +642,9 @@
         "apps/partners/withdrawal_service.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -658,13 +672,16 @@
         "outbox.OutboxEvent",
         "partners.Partner",
         "partners.PartnerAssignment",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [
         "ia.verify",
         "payment.act"
       ],
-      "pages": [],
+      "pages": [
+        "disbursements"
+      ],
       "objectGuards": [],
       "notifications": [
         "partner_scheduled_activity"
@@ -968,9 +985,7 @@
         "POST /my-plan/{id}/confirm-reimbursement-receipt"
       ],
       "services": [
-        "apps/accounts/auth_backend.py",
         "apps/accounts/jwt.py",
-        "apps/accounts/lockout_service.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/ia_services.py",
