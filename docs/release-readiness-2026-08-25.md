@@ -183,9 +183,15 @@ audit environment, stated rather than papered over, and it is the reason this en
 "unexplained" instead of naming a cause.
 
 **The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
-was first written and 6,037 at the last full run before the DEP-01 guard was added, with
-no failures, no skips, and expected failures only where a defect is deliberately
-quarantined — CONFLICT-001 and, now, the two halves of DEP-01. Each is self-removing.
+was first written, 6,037 at the last full run before the DEP-01 guard was added, and
+**6,081 at HEAD `8739af6`** — `OK (expected failures=3)` in 3,600s, with no failures, no
+errors and no skips. Expected failures appear only where a defect is deliberately
+quarantined — CONFLICT-001 and the two halves of DEP-01. Each is self-removing.
+
+That HEAD run was corroborated rather than trusted: CI's Django Lint & Test Suite passed on
+the same commit, on a different machine, in 21 minutes. Two independent executions of the
+same tree agreeing is what the count above rests on — which matters here, because run 932
+on `9a201c4` remains the one Django failure this audit could never reproduce or explain.
 The GOV-01 guard's expected failure is gone because the gap it marked was closed: it
 reported an UNEXPECTED SUCCESS on the run after the write path landed, which failed the
 build and forced the marker off, exactly as its docstring said it would.
