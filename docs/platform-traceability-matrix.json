@@ -2278,26 +2278,48 @@
         "Accountant",
         "ImpactAssessment"
       ],
-      "routes": [],
+      "routes": [
+        "GET /disbursements",
+        "POST /accounts/partner-payments/xr-no-such-activity/pay",
+        "POST /fund-requests/weekly/xr-no-such-request/disburse",
+        "POST /schools/{id}/edit-drawer"
+      ],
       "services": [
+        "apps/accounts/auth_backend.py",
+        "apps/accounts/lockout_service.py",
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/staff_matching.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
+        "apps/admin_ops/detection.py",
+        "apps/audit/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
+        "apps/core/audit_hash.py",
         "apps/core/calendar_policy.py",
         "apps/core/cuid.py",
+        "apps/core/logging_filters.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
+        "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/session_backend.py",
+        "apps/documents/gate.py",
+        "apps/frontend/views/finance_operating_views.py",
+        "apps/frontend/views/school_views.py",
         "apps/fund_requests/finance_services.py",
         "apps/fund_requests/weekly_service.py",
         "apps/partners/services.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -2306,20 +2328,28 @@
         "accounts.User",
         "activities.Activity",
         "activities.ActivityScheduleCostLine",
+        "audit.AuditLog",
         "geography.District",
         "geography.Region",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [
         "ia.verify",
         "payment.act"
       ],
-      "pages": [],
+      "pages": [
+        "disbursements",
+        "school_directory",
+        "weekly_fund_request_disburse"
+      ],
       "objectGuards": [
         "apps/core/scoping.py::assert_may_write_school"
       ],
       "notifications": [],
-      "auditActions": [],
+      "auditActions": [
+        "unauthorized_page_access"
+      ],
       "metricsComputed": [],
       "metricsAffected": [
         "bt_schools_financed",

@@ -19,9 +19,26 @@ grows automatically when a role is added — a new role is denied everywhere by
 default and someone has to say otherwise, which is the direction that fails
 safe.
 
-`MINIMUM_WORKFLOWS` guards the table itself. A denial sweep is only as good as
-its coverage, and coverage that can quietly shrink is the failure mode this
-whole journey exists to catch.
+**It asks at two layers, and the second one was added late.** The first version
+of this sweep called services directly, and the traceability matrix later found
+that neither this journey nor any of the other nineteen ever issued an HTTP
+request — so the platform's 810 route-level authority gates were exercised by no
+mandated journey at all (JRN-01). That is a strange gap for a journey whose
+whole subject is unauthorized access, because the route is the layer a real
+attacker actually reaches. `_route_workflows` now attempts the same acts through
+the real endpoints, logged in as each role, and the two sweeps are kept separate
+on purpose: the door and the act are different questions, and SEC-01 was a
+defect in neither one but in the join between them.
+
+The school edit drawer probe is that join, reproduced. A Programme Lead who
+supervises the school's CCEO passes the read gate — correctly; that is what
+oversight is for — and must still be refused a POST that rewrites ownership.
+Delete `assert_may_write_school` from the view and this test reports the
+takeover with a 200.
+
+`MINIMUM_WORKFLOWS` and `MINIMUM_ROUTES` guard the tables themselves. A denial
+sweep is only as good as its coverage, and coverage that can quietly shrink is
+the failure mode this whole journey exists to catch.
 """
 
 from __future__ import annotations
@@ -46,6 +63,10 @@ from apps.schools.models import School
 
 #: The table must never quietly shrink. Raise it when a workflow is added.
 MINIMUM_WORKFLOWS = 6
+
+#: The same rule for the route table. Separate because the two sweeps answer
+#: two different questions and one must not be allowed to cover for the other.
+MINIMUM_ROUTES = 4
 
 #: Refusal is refusal however it is spelled — some services raise Forbidden,
 #: some BadRequest with an authority message. What must never happen is the
@@ -207,7 +228,117 @@ class CrossRoleSecurityJourneyTest(TestCase):
             ("partner activity allowance", {"Admin"}, grant_partner_allowance),
         )
 
+    # ── the same acts, at the door ───────────────────────────────────────
+    def _route_workflows(self):
+        """(name, roles the ROUTE should admit, method, path, payload).
+
+        JRN-01: until this existed, no mandated journey issued a single HTTP
+        request, so the platform's 810 route-level authority gates were
+        exercised by none of them. The table above proves the *services*
+        refuse. This one proves the *routes* do — and the two are different
+        questions, because SEC-01 was a defect in neither half but in the join
+        between them.
+
+        Two conventions keep these probes honest:
+
+        * The "allowed" set is the set the ROUTE should admit, which is not
+          always the set that may perform the act. Both money routes admit
+          Admin and then the service refuses it — that is the separation of
+          duties working, not a gap, and the two sweeps state the two layers
+          separately rather than blurring them.
+        * Where a probe names a record that does not exist, that is
+          deliberate. ``require_page_permission`` runs before the view body,
+          so an unauthorised role is refused at the door either way, and an
+          authorised one reaches a harmless 404 instead of moving real money
+          to prove the door opened.
+        """
+        return (
+            (
+                # THE SEC-01 endpoint, at the layer SEC-01 lived in. The
+                # Programme Lead supervises this school's CCEO, passes the
+                # read gate that oversight needs, and must still be refused
+                # the write that rewrites ownership. The payload names the
+                # Programme Lead as the new owner, so any unrefused write by
+                # anyone shows up in the ownership assertion below as the
+                # takeover SEC-01 actually allowed.
+                "school edit drawer",
+                {"CCEO", "CountryDirector", "Admin"},
+                "post",
+                f"/schools/{self.school.id}/edit-drawer",
+                {
+                    "school_id": "XR-SCH",
+                    "name": "XR School",
+                    "school_type": "client",
+                    "account_owner_id": self.by_role["Program Lead"].staff_profile.id,
+                },
+            ),
+            (
+                # Admin is admitted to the disbursements PAGE and refused
+                # this ACT, by _lacks_payment_authority inside the view — the
+                # FIN-03 fix, one layer below the door. So the set a probe at
+                # this route must state is the set the route as a whole
+                # admits, which is the Accountant alone.
+                "partner payment action",
+                {"Accountant"},
+                "post",
+                "/accounts/partner-payments/xr-no-such-activity/pay",
+                {
+                    "partner_name": "XR Partner",
+                    "amount_paid": "100000",
+                    "payment_method": "Bank Transfer",
+                    "payment_reference": "XR-REF",
+                },
+            ),
+            (
+                # Here the separation of duties sits in the service instead,
+                # so the door admits Admin and the act refuses it. Both
+                # shapes are correct; stating them separately is what stops
+                # this table quietly agreeing with whatever the code does.
+                "weekly fund disbursement action",
+                {"Accountant", "Admin"},
+                "post",
+                "/fund-requests/weekly/xr-no-such-request/disburse",
+                {},
+            ),
+            (
+                "disbursements register",
+                {"Accountant", "Admin"},
+                "get",
+                "/disbursements",
+                {},
+            ),
+        )
+
+    def _assert_refused_at_the_door(self, response, *, where, role):
+        """Refusal has two spellings here, and both are the platform's own.
+
+        ``render_access_denied`` returns 403 for an action or an HTMX request
+        and, for a plain page GET, a flash message plus a redirect to the
+        dashboard. A probe demanding 403 everywhere would report the page
+        contract as a security hole. What must never happen is the request
+        being served.
+        """
+        if response.status_code == 403:
+            return
+        location = response.headers.get("Location", "")
+        if response.status_code == 302 and location.startswith("/dashboard"):
+            return
+        self.fail(
+            f"{role} reached '{where}' with {response.status_code} "
+            f"{location and f'-> {location} '}instead of a refusal. The route "
+            "is the layer a real user actually touches."
+        )
+
     # ── the sweep ────────────────────────────────────────────────────────
+    def test_the_route_table_has_not_shrunk(self):
+        self.assertGreaterEqual(
+            len(self._route_workflows()),
+            MINIMUM_ROUTES,
+            "the door sweep covers fewer routes than it used to. JRN-01 was "
+            "the finding that no mandated journey touched the request path at "
+            "all; letting this table shrink walks back toward it.",
+        )
+
     def test_the_table_has_not_shrunk(self):
         self.assertGreaterEqual(
             len(self._workflows()),
@@ -246,6 +377,36 @@ class CrossRoleSecurityJourneyTest(TestCase):
                             "This is the SEC-01/FIN-03 shape: the workflow is "
                             "gated somewhere other than at the act itself."
                         )
+
+        # The same question at the door. The mandate's wording for this
+        # journey is "attempt unauthorized access for every sensitive
+        # workflow", and until JRN-01 was found this test read that as the
+        # service layer alone.
+        owner_before = self.school.account_owner_id
+        for name, allowed, method, path, payload in self._route_workflows():
+            for role in EdifyRole.values():
+                if role in allowed:
+                    continue
+                with self.subTest(route=name, role=role):
+                    self.client.force_login(self.by_role[role])
+                    try:
+                        response = getattr(self.client, method)(path, payload)
+                    finally:
+                        self.client.logout()
+                    self._assert_refused_at_the_door(
+                        response,
+                        where=f"{name} ({method.upper()} {path})",
+                        role=role,
+                    )
+
+        self.school.refresh_from_db()
+        self.assertEqual(
+            self.school.account_owner_id,
+            owner_before,
+            "a refused request still moved the school's ownership. A 403 that "
+            "does not also leave the record alone is not a refusal — this is "
+            "exactly the takeover SEC-01 allowed.",
+        )
 
     def test_the_permitted_role_is_not_refused_by_the_same_probe(self):
         """The guard against a sweep that passes because nothing works.
@@ -292,4 +453,36 @@ class CrossRoleSecurityJourneyTest(TestCase):
             checked,
             MINIMUM_WORKFLOWS,
             "no workflow was checked positively",
+        )
+
+    def test_the_permitted_role_is_not_refused_at_the_door_either(self):
+        """The same guard, for the route probes.
+
+        A door sweep where every path 404s would refuse everyone and report
+        perfect security. So each route must admit the role it is meant to
+        admit: not 403, whatever else it then does. What the view does after
+        the door is the service sweep's question, not this one's.
+        """
+        checked = 0
+        for name, allowed, method, path, payload in self._route_workflows():
+            for role in sorted(allowed):
+                actor = self.by_role.get(role)
+                if actor is None:
+                    continue
+                checked += 1
+                with self.subTest(route=name, role=role):
+                    self.client.force_login(actor)
+                    try:
+                        response = getattr(self.client, method)(path, payload)
+                    finally:
+                        self.client.logout()
+                    self.assertNotEqual(
+                        response.status_code,
+                        403,
+                        f"the permitted role {role} was refused at the door "
+                        f"for '{name}'. This probe denies everyone, so its "
+                        "denial sweep proves nothing.",
+                    )
+        self.assertGreaterEqual(
+            checked, MINIMUM_ROUTES, "no route was checked positively"
         )

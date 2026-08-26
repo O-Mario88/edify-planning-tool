@@ -33,7 +33,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-16` | Government Requirements | ✓ | 0 | 28 | 16 | 2 | 4 | 1 | 5 | 14 |
 | `journey-17` | Loan | ✓ | 0 | 18 | 24 | 11 | 7 | 3 | 17 | 22 |
 | `journey-18` | Repeat borrower and student reach | ✓ | 0 | 18 | 20 | 7 | 6 | 1 | 9 | 18 |
-| `journey-19` | Cross-role security | ✓ | 0 | 18 | 9 | 2 | 2 | 0 | 0 | 49 |
+| `journey-19` | Cross-role security | ✓ | 4 | 35 | 11 | 2 | 2 | 0 | 1 | 49 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-22` | Financial-year rollover | ✓ | 0 | 20 | 16 | 0 | 0 | 1 | 3 | 49 |
@@ -409,14 +409,14 @@ Steps: Attempt unauthorized access for every sensitive workflow → All attempts
 | Dimension | Traced to |
 | --- | --- |
 | Roles that hold the checked permissions | `Accountant`, `ImpactAssessment` |
-| Routes / API | — |
+| Routes / API | `GET /disbursements`, `POST /accounts/partner-payments/xr-no-such-activity/pay`, `POST /fund-requests/weekly/xr-no-such-request/disburse`, `POST /schools/{id}/edit-drawer` |
 | Permissions checked | `ia.verify`, `payment.act` |
-| Page gates checked | — |
+| Page gates checked | `disbursements`, `school_directory`, `weekly_fund_request_disburse` |
 | Object-level guards | `apps/core/scoping.py::assert_may_write_school` |
-| Services executed | `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/calendar_policy.py`, `apps/core/cuid.py`, `apps/core/models.py`, `apps/core/permissions.py`, `apps/core/rbac.py` _+8 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `geography.District`, `geography.Region`, `schools.School` |
+| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/staff_matching.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py` _+25 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `geography.District`, `geography.Region`, `schools.School`, `sessions.Session` |
 | Notifications raised | — |
-| Audit actions (evidence) | — |
+| Audit actions (evidence) | `unauthorized_page_access` |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget`, `fund_request_monthly_total`, `fund_request_monthly_trainings_budget` _+41 more_ |
 

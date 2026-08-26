@@ -36,6 +36,7 @@ from apps.system_health.traceability import (
     Recording,
     TestPointerError,
     _metrics_for,
+    normalise_route,
     split_service_path,
     trace_test,
 )
@@ -212,6 +213,46 @@ class ServicePathResolutionTest(SimpleTestCase):
         self.assertEqual(unresolved, [], "a metric names a service module that is gone")
 
 
+class RouteNormalisationTest(SimpleTestCase):
+    """Opaque ids out, route words kept.
+
+    Both halves matter. Leaving fixture ids in makes the committed artefact
+    differ from itself on every rebuild, and a matrix that churns without the
+    platform changing teaches its readers to skip its diffs. Normalising too
+    eagerly is worse the other way: two genuinely different routes would
+    collapse into one and the door coverage would be overstated.
+    """
+
+    def test_it_replaces_a_cuid(self):
+        self.assertEqual(
+            normalise_route("/schools/cmt9slehb0050amdjhi8o/edit-drawer"),
+            "/schools/{id}/edit-drawer",
+        )
+
+    def test_it_replaces_a_uuid(self):
+        self.assertEqual(
+            normalise_route("/apps/8f8682cd-1111-2222-3333-444455556666/spec"),
+            "/apps/{id}/spec",
+        )
+
+    def test_it_replaces_a_bare_integer(self):
+        self.assertEqual(normalise_route("/reports/2026/"), "/reports/{id}/")
+
+    def test_it_keeps_route_words(self):
+        for path in (
+            "/disbursements",
+            "/fund-requests/weekly/xr-no-such-request/disburse",
+            "/core-schools/schedule-visit/action",
+            "/accounts/partner-payments/xr-no-such-activity/pay",
+        ):
+            with self.subTest(path=path):
+                self.assertEqual(normalise_route(path), path)
+
+    def test_it_is_stable_under_repetition(self):
+        once = normalise_route("/schools/cmt9slehb0050amdjhi8o/edit-drawer")
+        self.assertEqual(normalise_route(once), once)
+
+
 class MetricAttributionTest(SimpleTestCase):
     """Prove the metric join before reading anything into an empty metric cell.
 
@@ -346,70 +387,98 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
         )
 
 
-class TheJourneysNeverKnockTest(unittest.TestCase):
-    """Every mandated journey is proven below the door, and none at it.
+#: Journeys whose covering test drives the platform through its own routes.
+#: JRN-01 was the finding that this set was EMPTY — all twenty walked journeys
+#: proved the domain and none of them ever knocked on the door, leaving the
+#: platform's 810 route-level authority gates exercised by no mandated journey
+#: at all. Journey 19 is the first converted, and it was chosen because its
+#: whole subject is unauthorized access, so proving it only below the door was
+#: the least defensible instance of the gap.
+#:
+#: Add to this set as journeys are converted, and update §4b of
+#: docs/release-readiness-2026-08-25.md in the same commit. It is pinned rather
+#: than derived so that neither growing nor losing door coverage can happen
+#: without somebody saying so.
+JOURNEYS_THAT_KNOCK = {"journey-19"}
 
-    This is the finding the matrix produced, pinned so it cannot fade. All
-    twenty walked journeys drive services directly; not one issues an HTTP
-    request. So no journey exercises URL routing, ``require_page_permission``,
-    ``RequirePermissions``, view-level scoping, serializers or templates — the
-    entire surface a real user actually touches. A defect living between the
-    door and the service (an ungated route, a view handing a service the wrong
-    principal, a serializer widening a field) is invisible to all of them.
 
-    That is not an argument the journeys are worthless: the domain logic they
-    prove is the hard part, and the object-level denial suite covers the door
-    separately. It is an argument that the two have never been proven to meet,
-    which is exactly the seam this audit has found defects in every time it
-    looked.
+class WhichJourneysReachTheDoorTest(unittest.TestCase):
+    """Exactly which journeys are proven at the request path, and no other.
 
-    When a journey is rewritten to go through the client, this test fails. That
-    is the point: raise the count here and record the improvement in
-    docs/release-readiness-2026-08-25.md in the same commit.
+    This holds JRN-01 in both directions. A journey that stops driving the
+    platform over HTTP fails it, which is the regression. A journey that starts
+    also fails it, which is the improvement — and the failure is how the
+    assessment gets updated in the same commit instead of the gain going
+    unrecorded.
+
+    The gap it describes is real and mostly still open: for the nineteen
+    journeys not listed above, nothing exercises URL routing,
+    ``require_page_permission``, ``RequirePermissions``, view-level scoping,
+    serializers or templates. A defect living between the door and the service
+    — an ungated route, a view handing a service the wrong principal, a
+    serializer widening a field — is invisible to all of them. SEC-01 was
+    exactly that defect, and journey 19's route sweep now reproduces it: delete
+    ``assert_may_write_school`` from the school edit drawer and the sweep
+    reports the Programme Lead's takeover with a 200.
     """
 
-    def test_no_traced_journey_issues_an_http_request(self):
+    def _journey_numbers_by_module(self) -> dict[str, set[str]]:
+        by_module: dict[str, set[str]] = {}
+        for journey in JOURNEYS:
+            if not journey.covered_by:
+                continue
+            module_path = journey.covered_by[0].split(":", 1)[0]
+            by_module.setdefault(module_path, set()).add(
+                f"journey-{journey.number:02d}"
+            )
+        return by_module
+
+    def test_the_matrix_records_routes_for_exactly_these_journeys(self):
         rows = load_matrix()["requirements"]
-        with_routes = {
-            row["requirement"]: row["routes"] for row in rows if row["routes"]
-        }
+        with_routes = {row["requirement"] for row in rows if row["routes"]}
         self.assertEqual(
             with_routes,
-            {},
-            "a journey now exercises the request path — good. Update this test "
-            "and the assessment's §4b together.",
+            JOURNEYS_THAT_KNOCK,
+            "door coverage changed. If a journey was converted, re-run "
+            "`manage.py build_traceability_matrix`, add it to "
+            "JOURNEYS_THAT_KNOCK and update the assessment's §4b in the same "
+            "commit. If coverage was lost, that is the regression.",
         )
 
-    def test_no_journey_module_calls_the_test_client(self):
-        """The same finding by a second method that does not read the artefact.
+    def test_the_journey_modules_agree_without_reading_the_artefact(self):
+        """The same question by a second method that does not read the matrix.
 
-        The pin below reads the committed matrix, so on its own it only
-        notices a journey that starts knocking once somebody also regenerates
-        the matrix — and the regeneration is a command nobody runs per commit.
-        This one reads the journey tests themselves, so the two disagree
-        immediately rather than quietly agreeing on a stale file.
+        The pin above reads the committed matrix, so on its own it only
+        notices a change once somebody also regenerates the matrix — and the
+        regeneration is a command nobody runs per commit. This one reads the
+        journey tests themselves, so a converted journey and a stale artefact
+        disagree immediately rather than quietly agreeing.
+
+        It matches ``self.client`` rather than ``self.client.get(`` and the
+        other four verbs, and the difference is not cosmetic. The first
+        version of this check looked for the literal method calls, and journey
+        19's route sweep — which dispatches with ``getattr(self.client,
+        method)`` so one table can drive GETs and POSTs alike — went straight
+        past it. It reported the journey as not knocking while the matrix,
+        which records what actually ran, reported four routes. The two methods
+        disagreeing is what surfaced it; a narrower pattern here would have
+        meant a second method that agrees with the first only by accident.
         """
         import re
 
-        modules = {
-            journey.covered_by[0].split(":", 1)[0]
-            for journey in JOURNEYS
-            if journey.covered_by
-        }
-        knocking = {}
-        for module_path in sorted(modules):
+        knocking: set[str] = set()
+        for module_path, numbers in self._journey_numbers_by_module().items():
             source = Path(module_path.replace(".", "/") + ".py").read_text(
                 encoding="utf-8"
             )
-            hits = re.findall(r"\.client\.(get|post|put|patch|delete)\(", source)
-            if hits:
-                knocking[module_path] = len(hits)
+            if re.search(r"self\.client\b", source):
+                knocking |= numbers
         self.assertEqual(
             knocking,
-            {},
-            "a journey module now drives the platform over HTTP — good. "
-            "Re-run `manage.py build_traceability_matrix`, then update this "
-            "test and the assessment's §4b together.",
+            JOURNEYS_THAT_KNOCK,
+            "the journey tests and JOURNEYS_THAT_KNOCK disagree. Re-run "
+            "`manage.py build_traceability_matrix` and update this set and "
+            "the assessment's §4b together.",
         )
 
     def test_no_traced_journey_computes_a_registered_metric(self):

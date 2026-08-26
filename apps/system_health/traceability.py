@@ -64,6 +64,7 @@ from __future__ import annotations
 import importlib
 import json
 import os
+import re
 import sys
 import threading
 from dataclasses import dataclass, field
@@ -119,6 +120,29 @@ def _is_evidence_source(rel: str) -> bool:
             "build_traceability_matrix.py",
         ),
     }
+
+
+#: A path segment that is an opaque record identifier rather than a route word:
+#: a CUID (this platform's own id format), a UUID, or a bare integer.
+_OPAQUE_SEGMENT = re.compile(
+    r"^(?:c[a-z0-9]{19,}"
+    r"|[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"
+    r"|\d+)$"
+)
+
+
+def normalise_route(path: str) -> str:
+    """``/schools/cmt9sle.../edit-drawer`` -> ``/schools/{id}/edit-drawer``.
+
+    Fixture identifiers are freshly generated on every run, so recording the
+    raw path would make the committed artefact differ from itself on every
+    rebuild. A matrix that churns without the platform changing teaches its
+    readers to ignore its diffs, which is how a real change goes unnoticed.
+    """
+    return "/".join(
+        "{id}" if _OPAQUE_SEGMENT.match(segment) else segment
+        for segment in path.split("/")
+    )
 
 
 @dataclass
@@ -200,7 +224,7 @@ class Instrumentation:
         if not environ:
             return
         method = environ.get("REQUEST_METHOD", "?")
-        path = environ.get("PATH_INFO", "?")
+        path = normalise_route(environ.get("PATH_INFO", "?"))
         self.recording.routes.add(f"{method} {path}")
 
     def _on_save(self, sender, instance=None, created=None, **kwargs):

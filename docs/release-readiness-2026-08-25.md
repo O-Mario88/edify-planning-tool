@@ -27,11 +27,13 @@ by two prior audits and built here. It asserts nothing: it executes each journey
 with the platform instrumented and records the routes, services, models, permissions,
 notifications, audit actions and metrics the run genuinely touched. Doing that immediately
 produced a finding about the evidence itself — **JRN-01**: not one of the twenty journeys
-issues an HTTP request or computes a registered metric. The platform's 810 route-level
-authority gates are exercised by no mandated journey at all, and neither is any number a
-user is actually shown. The door is proven, the domain is proven, the display is proven,
-and nothing proves they meet — which is precisely where SEC-01, the one live privilege
-escalation found here, turned out to live. See §4b.
+issued an HTTP request or computed a registered metric. The platform's 810 route-level
+authority gates were exercised by no mandated journey at all, and neither was any number
+a user is actually shown. The door is proven, the domain is proven, the display is
+proven, and nothing proved they meet — which is precisely where SEC-01, the one live
+privilege escalation found here, turned out to live. Journey 19 has since been taken
+through the door and now reproduces SEC-01 at the endpoint it lived at; the other
+nineteen are still below it. See §4b.
 
 What remains is not a list of defects nobody has looked at. The No-Go rests on three
 things a deadline cannot convert into evidence:
@@ -88,8 +90,8 @@ Everything in this table was run, not inferred.
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
 | Role × surface authorization matrix | `manage.py build_permission_matrix` + `test_permission_matrix` | **PASS** — 1,028 surfaces, 845 guarded and answered role by role, 183 declaring none and listed, 0 reachable by nobody |
-| Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS as a build; it found JRN-01** — 22 requirements, 20 traced by executing their own test, 2 blocked. Every traced row records what actually ran. Route column and metrics-computed column empty on all 20: see §4b |
-| Container vulnerability scan | Trivy, in CI | **PASS** — confirmed twice, 08:38 and 10:14 |
+| Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS as a build; it found JRN-01** — 22 requirements, 20 traced by executing their own test, 2 blocked. Every traced row records what actually ran. Route column empty on 19 of 20 and metrics-computed column empty on all 20: see JRN-01 in §4b |
+| Container vulnerability scan | Trivy, in CI | **FAIL again at the current head** — passed twice on 2026-08-25 (08:38, 10:14) and again on `54e3cc8`, then failed on `e815d04` on a *new* upstream CVE. Not this branch's: see below |
 | Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
@@ -104,9 +106,37 @@ than a code fix.
 At 08:38 on the same day it passed, on run 910 (head `693530f`) — the whole workflow green,
 every job including `Scan the image`. Nothing in this branch touched the Dockerfile or the
 dependency pins, so what changed was upstream: the fixed packages landed, or the scanner's
-database did. The gate is recorded as **PASS** on that evidence and the earlier FAIL is
-kept here rather than deleted, because a blocker that resolves itself is worth being able
-to see resolve.
+database did. The earlier FAIL is kept here rather than deleted, because a blocker that
+resolves itself is worth being able to see resolve.
+
+**And on 2026-08-26 it went red again, on a different CVE, which is why this row now reads
+FAIL.** The scan passed on `54e3cc8` at 06:12 and failed on `e815d04` at 07:14. The finding
+is **CVE-2026-14456** — an OpenSSL denial of service through unbounded memory growth in the
+QUIC server path, HIGH — against three Debian 13.6 base-image packages: `libssl3t64`,
+`openssl` and `openssl-provider-legacy`, installed at `3.5.6-1~deb13u2`.
+
+It is not this branch's, and that is established rather than assumed: the diff between the
+green head and the red one contains **no Dockerfile, no requirements file, no CI workflow
+and no package manifest** — 4,439 lines of Python and Markdown and nothing else. An
+OS-package CVE in the base image is not reachable from that diff. What changed in the
+sixty-two minutes between the two runs was the vulnerability database.
+
+**This one differs from the August 25 failure in the way that matters: a fixed version
+exists.** Trivy reports the status as `fixed`, with `3.5.7-1~deb13u2` available. So unlike
+the `util-linux` finding, this is closable now rather than blocked on upstream. The
+Dockerfile builds `FROM python:3.13-slim` and runs `apt-get update && apt-get install`
+without an upgrade step, so the runtime image carries whatever OpenSSL the base image tag
+shipped with. The fix is a base-image refresh or a targeted upgrade of those three packages
+in both stages.
+
+**That fix is not pushed here, and the reason is this audit's own standard.** This
+environment has no Docker daemon and no Trivy — the header says so and it was re-checked
+before writing this. A Dockerfile change to the production runtime image that cannot be
+built, cannot be run, and cannot be re-scanned before pushing is a change marked resolved
+because code was committed, which is the one thing the mandate names outright. It is
+recorded here and on the pull request with the proposed patch, for someone who can build
+the image. **The container-scan gate is therefore Not Tested at this head, and by the
+mandate's own rule Not Tested is not Green.**
 
 **On CI coverage of the most recent work — a gap that was real and is now closed.** Runs
 911 through 915 were each *cancelled* by the next push rather than completing: pushing
@@ -345,7 +375,8 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
-| P1 | JRN-01 | Not one of the 20 walked journeys issues an HTTP request or computes a registered metric, so **810 route-level authority gates** and every displayed number are exercised by zero mandated journeys | An evidence gap this audit produced and is naming. The door and the domain are each proven; nothing proves they meet, and SEC-01 lived exactly in that join. Pinned by `TheJourneysNeverKnockTest` — see §4b |
+| P1 | JRN-01 | **19 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and has begun closing. Journey 19 now sweeps four real endpoints as all thirteen roles and reproduces SEC-01 at the endpoint it lived at (mutation-verified). The remaining nineteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
+| P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image — `libssl3t64`, `openssl`, `openssl-provider-legacy` at `3.5.6-1~deb13u2` | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one is Python and Markdown only. **A fixed version exists** (`3.5.7-1~deb13u2`), so unlike the August 25 finding this is closable — but not from here. No Docker daemon and no Trivy in this environment means the Dockerfile change could not be built, run or re-scanned before pushing. Proposed patch is on the PR; see §1 |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |
@@ -928,26 +959,51 @@ keeps the original assertion for every other check. The second failure,
 `healthy` flag for a question about agency bookings; it now asserts against the agency
 checks it is actually about, which is stronger than the flag it used to read.
 
-## 4b. JRN-01 · Every mandated journey is proven below the door, and none at it
+## 4b. JRN-01 · The mandated journeys are proven below the door, and one of twenty at it
 
-**P1 · evidence gap, not a platform defect · open**
+**P1 · evidence gap, not a platform defect · partially closed, 1 of 20**
 
 The traceability matrix's first finding is about the evidence, and it is one this audit
 produced itself, because most of these journey tests were written in this audit.
 
-All twenty walked journeys drive services directly. **Not one issues an HTTP request.**
-The matrix's route column is empty for every row, and that reading is not the tracer
-failing to look: a control test proves it records a route when one happens, and an
-independent static pass over the twenty journey modules finds zero calls to the test
-client. Two methods, same answer.
+As the matrix first found it, all twenty walked journeys drove services directly and **not
+one issued an HTTP request.** The route column was empty for every row, and that reading
+was not the tracer failing to look: a control test proves it records a route when one
+happens, and an independent static pass over the twenty journey modules found zero calls to
+the test client. Two methods, same answer.
+
+**Journey 19 has since been taken through the door**, and it was the right one to take
+first: its entire subject is unauthorized access, so proving it only below the door was the
+least defensible instance of the gap. Its covering test now runs a second sweep through the
+real endpoints, logged in as each of the thirteen roles, and requires a refusal from every
+role that should not hold the act. The two sweeps are kept separate on purpose — the door
+and the act are different questions, and the platform answers them at different layers:
+the partner-payment route refuses Admin *inside the view* (the FIN-03 check), while the
+weekly-disbursement route admits Admin at the door and refuses it in the service. Stating
+those separately is what stops the table quietly agreeing with whatever the code happens to
+do.
+
+The probe that matters most reproduces SEC-01 at the endpoint SEC-01 lived at. A Programme
+Lead who supervises the school's CCEO POSTs to `/schools/<id>/edit-drawer` naming
+themselves as the new account owner. They pass the read gate — correctly; that is what
+oversight is for — and must be refused the write. **This was verified by mutation:**
+deleting `assert_may_write_school` from the view makes the sweep report the takeover with a
+200 for the Programme Lead and for Impact Assessment, the two roles that hold
+`school_directory` but not ownership. Every other role is stopped at the door. That is the
+layered design working, and it is the first time any mandated journey has proven the two
+layers meet.
+
+**Nineteen of the twenty still do not knock**, so the finding stands and stays open.
 
 The consequence is a seam. This platform declares **810 route-level authority gates** — 526
 `require_page_permission` / `require_any_page_permission` decorations and 284 views
-carrying `required_permissions` — and no mandated journey exercises a single one of them.
+carrying `required_permissions` — and until journey 19 was converted, no mandated journey
+exercised a single one of them. Four are exercised now.
 The permission matrix (§45.5) proves those declarations are coherent: every guarded route
 is answered role by role, and none is reachable by nobody. The journeys prove the domain
-logic underneath. Nothing proves the two **meet** — that the view hands the service the
-principal it just checked, in the scope it just checked it for.
+logic underneath. On four routes, journey 19 now proves the two **meet** — that the view
+hands the service the principal it just checked, in the scope it just checked it for. On
+the other 806, still nothing does.
 
 That is not a hypothetical seam. SEC-01, the one live privilege escalation this audit
 found, lived exactly there: the school edit drawer gated a *write* on the *read* helper.
@@ -985,14 +1041,18 @@ layer. This is the same shape as the defect class this audit has been chasing al
 capability with scrupulously honest readers and a gap nobody's instrument was pointed at.
 It took an instrument that records what ran, rather than what passed, to see it.
 
-**What would close it.** Rewriting a journey to drive the platform through its own routes
-— logging in as each role, requesting the real URLs, posting the real payloads, and reading
+**What would close the rest.** The same conversion applied to the remaining nineteen —
+logging in as each role, requesting the real URLs, posting the real payloads, and reading
 the numbers off the surface the user reads them from — so that the door, the domain and the
-display are proven to meet on at least the highest-risk paths. That is real work and it is
-not done here. It is pinned instead: `TheJourneysNeverKnockTest` holds both halves of the
-finding, and either one fails the moment a journey starts knocking or starts computing a
-metric, which forces this section to be rewritten in the same commit rather than the
-improvement going unrecorded.
+display are proven to meet on every high-risk path rather than one. The money journeys (5,
+7, 8, 17) are the ones to take next, and journey 17 is the largest prize: eleven
+permissions across seven roles, the widest authorization surface in the platform.
+
+It is pinned in both directions meanwhile. `JOURNEYS_THAT_KNOCK` in
+`apps/system_health/test_traceability_matrix.py` names the journeys proven at the door, and
+`WhichJourneysReachTheDoorTest` fails if that set grows *or* shrinks — the regression and
+the improvement both force this section to be rewritten in the same commit, rather than
+either going unrecorded. The metric half is pinned separately and is still at zero.
 
 **Why it does not change the verdict.** The release is already **No-Go** on nine
 infrastructure gates and three product decisions. JRN-01 does not add a blocker; it
@@ -1454,13 +1514,30 @@ checks a permission, one that fails on purpose — and asserts it saw each, that
 record evidence from a red test, and that it never appears in its own results.
 
 And it **found its own defects twice before it was allowed to say anything**, which is now
-the fifth and sixth time in this audit. Its first version attributed metrics by module
+the fifth, sixth and seventh time in this audit. Its first version attributed metrics by module
 file, and credited one journey with twelve analytics metrics because an unrelated function
 in the same file had run; attribution is function-level now, and that journey's true count
 is zero. Its service-path resolver walked a dotted path down until something existed, which
 for any unresolvable path was `apps/__init__.py` — so a metric pointing at a deleted module
-would have looked perfectly traceable. Both were caught by checking the output against the
-thing it claimed to describe, and both are now pinned by tests.
+would have looked perfectly traceable. And its static second-method check for JRN-01
+matched `self.client.get(` and the other four verbs, which journey 19's route sweep walked
+straight past — it dispatches with `getattr(self.client, method)` so one table can drive
+GETs and POSTs alike — so the check reported that journey as not knocking while the matrix,
+which records what actually ran, reported four routes. All three were caught by checking
+the output against the thing it claimed to describe, and all three are now pinned by tests.
+
+The third is the one worth dwelling on, because it is the argument for keeping two methods
+rather than one. The static check exists precisely so a converted journey and a stale
+artefact cannot quietly agree — and it only earned that keep by *disagreeing* with the
+matrix and losing. A narrower pattern would have agreed with the artefact by accident and
+gone on looking like corroboration.
+
+One more thing was fixed before the artefact was committed: recorded routes carried raw
+fixture CUIDs, so two builds of an unchanged platform produced different files. Identifiers
+are normalised to `{id}` now, with controls in both directions — opaque ids replaced, real
+route words kept, since collapsing two distinct routes into one would overstate door
+coverage. Two independent full builds are byte-identical, which was checked rather than
+assumed.
 
 What the matrix found is **JRN-01**, in §4b — and it is about this report's own
 evidence base rather than about the platform.
