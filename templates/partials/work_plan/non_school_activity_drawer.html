@@ -34,12 +34,20 @@ stays but only appears for the few items that require one.{% endcomment %}
       <optgroup label="{{ category.grouper|default:'Programme' }}">
         {% for item in category.list %}
         <option value="{{ item.stable_code }}"
-                data-requires-intervention="{{ item.programme_metadata.requires_intervention|yesno:'true,false' }}">{{ item.display_name }}</option>
+                data-requires-intervention="{{ item.programme_metadata.requires_intervention|yesno:'true,false' }}"
+                data-training-course="{{ item.programme_metadata.is_training_course|yesno:'true,false' }}"
+                data-training-category="{{ item.programme_metadata.training_category }}"
+                data-ssa-indicator="{{ item.programme_metadata.ssa_indicator_label }}">{{ item.display_name }}</option>
         {% endfor %}
       </optgroup>
       {% endfor %}
     </select>
   </label>
+
+  <div x-cloak x-show="selected.trainingCourse === 'true'" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
+    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">Training category</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selected.trainingCategory || ''"></strong></div>
+    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3"><span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span><strong class="mt-1 block text-[13px] text-slate-800" x-text="selected.ssaIndicator || ''"></strong></div>
+  </div>
 
   <label class="block" x-cloak x-show="selected.requiresIntervention === 'true'">Follow-up intervention
     <select name="focus_intervention"

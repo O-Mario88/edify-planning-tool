@@ -327,42 +327,49 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             f"login.css must use the radius token scale, found: {off_system}",
         )
 
-    def test_dark_workspace_matches_the_elevated_surface_contract(self):
+    def test_dark_workspace_matches_the_editorial_surface_contract(self):
         tokens = _read("static/css/design-system.css")
         platform = _read("static/css/platform.css")
         consistency = _read("static/css/consistency.css")
         night_tokens = tokens.split(":root.theme-dark {", 1)[1].split("\n}", 1)[0]
 
         for declaration in (
-            "--edify-bg: #000000",
-            "--edify-surface: #0d0d0f",
-            "--edify-surface-muted: #0d0d0f",
-            "--edify-surface-raised: #0d0d0f",
-            "--edify-surface-hover: #151518",
-            "--edify-border: rgba(255, 255, 255, 0.10)",
+            "--edify-bg: #0e151c",
+            "--edify-section-bg: #111a22",
+            "--edify-surface-muted: #121c25",
+            "--edify-surface: #151f29",
+            "--edify-surface-raised: #1a2732",
+            "--edify-surface-hover: #1e2e3a",
+            "--edify-border: #31404d",
+            "--edify-border-strong: #566d7d",
+            "--edify-control-border: var(--edify-border-strong)",
             "--edify-surface-treatment: none",
             "--edify-button-primary-treatment: none",
             "--edify-button-secondary-treatment: none",
             "--edify-card-surface: var(--edify-surface)",
-            "--edify-card-border: transparent",
+            "--edify-card-border: #2d3d49",
+            "--edify-table-header: #1a2833",
+            "--edify-table-row-alt: #14212b",
+            "--edify-table-row-hover: #1b3446",
             "--edify-card-shadow:",
             "--edify-card-shadow-hover:",
             "--edify-shadow-sm: none",
             "--edify-shadow-md: none",
             "--edify-shadow-lg: none",
             "--edify-shadow-drawer: none",
-            "--edify-text: #f5f7fa",
-            "--edify-text-muted: #d6dde7",
-            "--edify-text-subtle: #aeb9c7",
+            "--edify-text: #edf3f7",
+            "--edify-text-muted: #bdc9d4",
+            "--edify-text-subtle: #8fa0ad",
             "--edify-accent: var(--brand-primary)",
-            "--edify-warning: #fb923c",
+            "--edify-warning: #e7b45a",
         ):
             self.assertIn(declaration, night_tokens)
 
-        self.assertGreaterEqual(_contrast_ratio("#f5f7fa", "#000000"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#d6dde7", "#000000"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#aeb9c7", "#000000"), 4.5)
-        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#0e5da3"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#edf3f7", "#0e151c"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#bdc9d4", "#151f29"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#8fa0ad", "#151f29"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#ffffff", "#2f78b7"), 4.5)
+        self.assertGreaterEqual(_contrast_ratio("#566d7d", "#151f29"), 3.0)
         self.assertIn(
             "DARK WORKSPACE — QUIET NIGHT CANVAS, OPERATIONAL CLARITY", platform
         )
@@ -597,6 +604,62 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn('[aria-selected="true"]', platform)
         self.assertIn("var(--edify-table-row-selected)", platform)
         self.assertIn("scrollbar-color: var(--edify-scrollbar-thumb)", platform)
+
+    def test_record_grids_follow_the_premium_operational_contract(self):
+        tokens = _read("static/css/design-system.css")
+        consistency = _read("static/css/consistency.css")
+
+        for declaration in (
+            "--edify-table-cell-padding-block: 0.625rem",
+            "--edify-table-cell-padding-inline: 0.875rem",
+            "--edify-table-header-weight: 600",
+            "--edify-table-body-weight: 450",
+            "--edify-table-identity-weight: 600",
+            "--edify-table-action-size: 2rem",
+            "--edify-table-header-divider:",
+        ):
+            self.assertIn(declaration, tokens)
+
+        self.assertIn("PREMIUM OPERATIONAL TABLE SYSTEM", consistency)
+        self.assertIn(".edify-record-table tbody tr:nth-child(even)", consistency)
+        self.assertIn("var(--edify-table-canvas", consistency)
+        self.assertIn("var(--edify-table-row-hover", consistency)
+        self.assertIn("var(--edify-table-row-selected", consistency)
+        self.assertIn('[aria-selected="true"]', consistency)
+        self.assertIn('th[aria-sort="ascending"]', consistency)
+        self.assertIn('th[aria-sort="descending"]', consistency)
+        self.assertIn("[data-record-title]", consistency)
+        self.assertIn("[data-record-action]", consistency)
+        self.assertIn("@media (pointer: coarse)", consistency)
+
+    def test_priority_matrix_uses_theme_safe_table_surfaces(self):
+        matrix = _read("static/css/pages/ia-master.css")
+
+        for declaration in (
+            "background: var(--edify-table-header",
+            "background: var(--edify-table-canvas",
+            "background: var(--edify-table-row-hover",
+            "border-bottom: 1px solid var(--edify-table-divider",
+            "color: var(--edify-text-muted",
+        ):
+            self.assertIn(declaration, matrix)
+
+        desktop_table = matrix.split(".ia-master-table th", 1)[1].split(
+            ".ia-priority-chip", 1
+        )[0]
+        self.assertNotIn("background: #fff", desktop_table)
+        self.assertNotIn("background: #f8fbfe", desktop_table)
+
+    def test_reference_record_grids_expose_table_semantics(self):
+        for relative_path in (
+            "templates/pages/trainings/index.html",
+            "templates/pages/admin/audit_log.html",
+            "templates/partials/projects/portfolio_list.html",
+        ):
+            template = _read(relative_path)
+            self.assertIn("<caption", template, relative_path)
+            self.assertIn('scope="col"', template, relative_path)
+            self.assertIn("edify-record-table", template, relative_path)
 
     def test_light_workspace_uses_the_approved_edify_reference_treatment(self):
         tokens = _read("static/css/design-system.css")

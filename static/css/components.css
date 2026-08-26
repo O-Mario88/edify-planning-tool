@@ -386,9 +386,8 @@ main .bg-white {
   box-shadow: var(--edify-shadow-sm) !important;
 }
 
-/* Every workspace uses Geist Sans. Dark mode changes surfaces and contrast—not the
-   product typeface—so moving between themes never changes the information
-   density or visual language. */
+/* Every workspace uses Geist Sans. Editorial Night changes surfaces, contrast
+   and emphasis without changing the type metrics that dense workflows rely on. */
 .theme-dark main h1,
 .theme-dark main .edify-page-header h1 {
   color: var(--edify-text) !important;
@@ -397,7 +396,7 @@ main .bg-white {
   letter-spacing: -0.018em !important;
 }
 
-.theme-dark main :is(.edify-section-heading, .edify-editorial-heading) {
+.theme-dark main :is(.edify-section-heading, .edify-editorial-heading, .admin-command__section-heading) {
   color: var(--edify-text) !important;
   font-family: var(--edify-font-sans) !important;
   font-weight: 700 !important;
@@ -450,7 +449,7 @@ main .divide-y > * + * {
    Premium form styling across ALL pages. Token-driven, theme-aware. */
 main input[type="text"], main input[type="email"], main input[type="password"],
 main input[type="number"], main input[type="date"], main select, main textarea {
-  border: 1px solid var(--edify-border) !important;
+  border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
   background: var(--edify-surface) !important;
   border-radius: var(--edify-radius-md) !important;
   color: var(--edify-text) !important;
@@ -2733,7 +2732,7 @@ select:not([multiple]):not(.select-native) {
   min-width: 0 !important;
   height: 39px !important;
   background: var(--edify-surface) !important;
-  border: 1px solid var(--edify-border) !important;
+  border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
   border-radius: var(--radius-control, 8px);
   font-size: var(--edify-text-label-size);
   font-weight: 600;

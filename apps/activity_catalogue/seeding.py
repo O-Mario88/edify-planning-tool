@@ -14,6 +14,7 @@ from .models import (
     ActivityEligibilityRule,
     ActivityInterventionMapping,
     CatalogueStatus,
+    MappingRelationship,
 )
 from .seed_data import ALTERNATE_STABLE_CODES, CATALOGUE_ITEMS
 
@@ -72,6 +73,24 @@ def seed_activity_catalogue(*, actor_id: str = "system", dry_run: bool = False) 
             else:
                 result["unchanged"] += 1
 
+        # When the governed source changes a course's canonical SSA mapping,
+        # release the previous primary before installing the new one.
+        # PostgreSQL enforces one primary per catalogue item, so doing this
+        # after ``update_or_create`` is one statement too late on an already-
+        # seeded database. Alternate human-authored mappings stay active and
+        # reviewable; only the source-of-truth primary designation changes.
+        ActivityInterventionMapping.objects.filter(
+            catalogue_item=item,
+            active=True,
+            relationship=MappingRelationship.PRIMARY,
+        ).exclude(
+            intervention=intervention,
+            mapping_mode=mapping_mode,
+        ).update(
+            is_primary=False,
+            relationship=MappingRelationship.SECONDARY,
+        )
+
         mapping, _ = ActivityInterventionMapping.objects.update_or_create(
             catalogue_item=item,
             intervention=intervention,
@@ -79,6 +98,7 @@ def seed_activity_catalogue(*, actor_id: str = "system", dry_run: bool = False) 
             defaults={
                 "priority": 10,
                 "is_primary": True,
+                "relationship": MappingRelationship.PRIMARY,
                 "active": True,
                 "authored_by": MappingAuthor.SEED,
             },

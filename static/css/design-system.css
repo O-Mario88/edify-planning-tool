@@ -207,6 +207,7 @@
   --edify-surface-hover: #e9eef1;
   --edify-surface-selected: #dfe8ed;
   --edify-border: #c7d1d7;
+  --edify-control-border: var(--edify-border);
   --edify-border-strong: #aebcc4;
   --edify-divider: #d7dee2;
   /* Four-step text hierarchy, all verified against the surfaces above:
@@ -222,6 +223,13 @@
   --edify-text-subtle: #5a6b75;
   --edify-text-disabled: #6b7b84;
   --edify-text-secondary: var(--edify-text-muted);
+  --edify-table-canvas: var(--edify-surface);
+  --edify-table-header: #edf1f3;
+  --edify-table-row-alt: transparent;
+  --edify-table-row-hover: #edf4f8;
+  --edify-table-row-selected: #e2eef6;
+  --edify-table-divider: #d2dbe0;
+  --edify-table-header-divider: #c4cfd5;
   /* Requested light-mode canvas. A faint blue tint rather than the old
      neutral grey: white cards separate from it at 1.14:1, which is low as
      a contrast figure but is doing the right job — a page background must
@@ -339,9 +347,22 @@
   --edify-text-tile-label-size: 0.875rem;
   --edify-text-tile-helper-size: 0.8125rem;
   --edify-text-table-size: 0.875rem;
-  /* Headers sit one step below cells — 13px medium and muted against 14px
-     data. The band separates itself by weight and colour, not by bolding. */
+  /* Headers sit one step below cells — 13px semibold and muted against 14px
+     data. The stronger weight gives dense grids a dependable scanning rail
+     without falling back to shouty all-caps labels. */
   --edify-text-table-heading-size: 0.8125rem;
+
+  /* ── OPERATIONAL TABLE CONTRACT ─────────────────────────────────────────
+     Record grids are compact enough for sustained work, but every row and
+     action remains comfortably targetable. Matrices may override density;
+     they inherit the same type, colour, focus and numeric rhythm. */
+  --edify-table-cell-padding-block: 0.625rem;
+  --edify-table-cell-padding-inline: 0.875rem;
+  --edify-table-header-weight: 600;
+  --edify-table-body-weight: 450;
+  --edify-table-identity-weight: 600;
+  --edify-table-action-size: 2rem;
+  --edify-table-radius: 0.5rem;
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
@@ -651,6 +672,7 @@
   --edify-table-row-hover: rgba(24, 114, 189, 0.28);
   --edify-table-row-selected: rgba(123, 189, 232, 0.18);
   --edify-table-divider: rgba(123, 189, 232, 0.30);
+  --edify-table-header-divider: rgba(189, 216, 233, 0.28);
 
   --color-edify-divider: rgba(189, 216, 233, 0.12);
   --bg-page: var(--edify-bg);
@@ -693,26 +715,26 @@ html.theme-blue body {
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
-   NIGHT BLACK — true-black canvas with near-invisible content chrome.
+   EDITORIAL NIGHT — ink canvas with a restrained blue-slate surface ladder.
 
-   The page canvas is pure black so OLED displays can switch those pixels off.
-   Resting cards inherit that canvas; typography, spacing and interaction states
-   carry the hierarchy instead of opaque charcoal slabs, shadows or gradients.
-   It is not a dimmed Light theme or the translucent, image-backed Blue theme.
+   The release-readiness reference is the visual north star: deep navy rather
+   than absolute black, clear tonal elevation, quiet borders, softened white
+   type and semantic colour used as information rather than decoration. The
+   operational shell, density, focus states and Geist UI typography stay intact.
    ════════════════════════════════════════════════════════════════════════════ */
 :root.theme-dark {
   color-scheme: dark;
 
   /* AA-safe accent for TEXT on this theme's dark surfaces. */
-  --edify-accent-text: #93c5fd;
+  --edify-accent-text: #8fbfe3;
 
-  --brand-primary: #1872bd;
-  --brand-primary-hover: #0d5b9e;
-  --brand-primary-active: #0a4d86;
+  --brand-primary: #2f78b7;
+  --brand-primary-hover: #28699f;
+  --brand-primary-active: #225986;
   --brand-primary-press: var(--brand-primary-active);
-  --brand-primary-soft: rgba(24, 114, 189, 0.16);
-  --brand-primary-border: rgba(113, 197, 244, 0.50);
-  --brand-primary-focus: rgba(113, 197, 244, 0.48);
+  --brand-primary-soft: rgba(83, 145, 194, 0.18);
+  --brand-primary-border: rgba(143, 191, 227, 0.54);
+  --brand-primary-focus: rgba(111, 174, 220, 0.48);
 
   --edify-primary: var(--brand-primary);
   --edify-primary-hover: var(--brand-primary-hover);
@@ -724,26 +746,26 @@ html.theme-blue body {
   --edify-on-accent: var(--text-on-brand, #ffffff);
   --edify-accent-light: var(--brand-primary-soft);
   --edify-accent-border: var(--brand-primary-border);
-  --brand-primary-text: #bdd8e9;
+  --brand-primary-text: #a9cee8;
   --brand-primary-text-hover: #ffffff;
 
   --edify-success: #79ca98;
-  --edify-success-light: rgba(43, 126, 75, 0.22);
+  --edify-success-light: rgba(48, 123, 77, 0.22);
   --edify-success-border: rgba(121, 202, 152, 0.30);
   --edify-success-text: var(--edify-success);
-  --edify-warning: #fb923c;
-  --edify-warning-light: rgba(154, 52, 18, 0.34);
-  --edify-warning-border: rgba(251, 146, 60, 0.38);
+  --edify-warning: #e7b45a;
+  --edify-warning-light: rgba(137, 92, 24, 0.28);
+  --edify-warning-border: rgba(231, 180, 90, 0.34);
   --edify-warning-text: var(--edify-warning);
-  --edify-danger: #e88c91;
-  --edify-danger-solid: #e88c91;
+  --edify-danger: #f18f8a;
+  --edify-danger-solid: #f18f8a;
   --edify-danger-on-solid: #241012;
-  --edify-danger-light: rgba(121, 43, 47, 0.34);
-  --edify-danger-border: rgba(232, 140, 145, 0.30);
+  --edify-danger-light: rgba(124, 50, 51, 0.30);
+  --edify-danger-border: rgba(241, 143, 138, 0.34);
   --edify-danger-text: var(--edify-danger);
-  --edify-info: #8fb1e8;
-  --edify-info-light: rgba(41, 73, 119, 0.48);
-  --edify-info-border: rgba(143, 177, 232, 0.28);
+  --edify-info: #9bbbd6;
+  --edify-info-light: rgba(69, 103, 132, 0.30);
+  --edify-info-border: rgba(155, 187, 214, 0.30);
   --edify-info-text: var(--edify-info);
   --edify-purple: #b7a6f4;
   --edify-purple-light: rgba(183, 166, 244, 0.11);
@@ -757,10 +779,9 @@ html.theme-blue body {
   --edify-notification-text: #ffffff;
   --edify-notification-glow: rgba(240, 138, 62, 0.32);
 
-  /* Night uses the filter-control plane as its single content surface. The
-     page stays true black; cards, fields, tiles and overlays share one barely
-     lifted charcoal so nesting never creates a stack of grey rectangles. */
-  --edify-bg: #000000;
+  /* Four deliberate planes reproduce the reference's hierarchy without
+     changing the geometry of any existing page or HTMX partial. */
+  --edify-bg: #0e151c;
 
   /* ── Page header: tonal elevation ──────────────────────────────────────
      The header is the page's context band, and it should read as part of
@@ -776,7 +797,7 @@ html.theme-blue body {
      Transparency lives in these colours only, never on the container: an
      opacity on the header would fade the title and the controls with it,
      and the whole point is a quiet surface carrying legible content. */
-  --page-header-surface: color-mix(in oklab, #ffffff 9%, var(--edify-bg));
+  --page-header-surface: #111b24;
   --page-header-border: transparent;
   --page-header-shadow:
     0 22px 50px -26px rgba(0, 0, 0, 0.72),
@@ -787,39 +808,51 @@ html.theme-blue body {
   --page-header-padding-x: 1rem;
   --page-header-padding-y: 1rem;
   --page-header-gap: 0.75rem;
-  --edify-section-bg: #000000;
-  --edify-surface-muted: #0d0d0f;
-  --edify-surface: #0d0d0f;
-  --edify-surface-raised: #0d0d0f;
-  --edify-surface-hover: #151518;
-  --edify-surface-selected: #172237;
-  --edify-border: rgba(255, 255, 255, 0.10);
-  --edify-border-strong: rgba(255, 255, 255, 0.18);
-  --edify-divider: rgba(255, 255, 255, 0.075);
+  --edify-section-bg: #111a22;
+  --edify-surface-muted: #121c25;
+  --edify-surface: #151f29;
+  --edify-surface-raised: #1a2732;
+  --edify-surface-hover: #1e2e3a;
+  --edify-surface-selected: #18364b;
+  --edify-border: #31404d;
+  --edify-border-strong: #566d7d;
+  --edify-control-border: var(--edify-border-strong);
+  --edify-divider: #283640;
 
   /* Text remains comfortably above WCAG AA on both canvas and card planes. */
-  --edify-text: #f5f7fa;
-  --edify-text-muted: #d6dde7;
-  --edify-text-subtle: #aeb9c7;
-  --edify-text-disabled: #7f8b9a;
+  --edify-text: #edf3f7;
+  --edify-text-muted: #bdc9d4;
+  --edify-text-subtle: #8fa0ad;
+  --edify-text-disabled: #748591;
 
   --edify-canvas-treatment: none;
   --edify-surface-treatment: none;
   --edify-button-primary-treatment: none;
   --edify-button-secondary-treatment: none;
-  --edify-glass-highlight: rgba(255, 255, 255, 0.055);
+  --edify-glass-highlight: rgba(211, 230, 242, 0.08);
 
-  /* Near-black content planes rely on elevation, while fields and tables
-     retain their functional boundaries. */
+  /* Content planes rely on a tonal step and quiet outline, while fields and
+     tables retain stronger functional boundaries. */
   --edify-card-surface: var(--edify-surface);
-  --edify-card-border: transparent;
+  --edify-card-border: #2d3d49;
   --edify-card-shadow:
-    0 22px 50px -26px rgba(0, 0, 0, 0.82),
-    0 7px 18px -10px rgba(0, 0, 0, 0.62);
+    0 18px 42px -30px rgba(0, 0, 0, 0.78),
+    inset 0 1px 0 rgba(225, 239, 248, 0.025);
   --edify-card-shadow-hover:
-    0 26px 58px -26px rgba(0, 0, 0, 0.88),
-    0 10px 24px -10px rgba(0, 0, 0, 0.68);
+    0 22px 48px -28px rgba(0, 0, 0, 0.82),
+    inset 0 1px 0 rgba(225, 239, 248, 0.04);
   --edify-card-backdrop-filter: none;
+
+  /* Dense tables retain explicit row states while adopting the reference's
+     blue-slate table plane and header band. */
+  --edify-table-canvas: #121c25;
+  --edify-table-header: #1a2833;
+  --edify-table-row-alt: #14212b;
+  --edify-table-row-hover: #1b3446;
+  --edify-table-row-selected: #1d4057;
+  --edify-table-divider: #314451;
+  --edify-table-header-divider: #405666;
+
   --edify-font-display-family: var(--edify-font-sans);
   --color-edify-divider: var(--edify-divider);
   --bg-page: var(--edify-bg);
@@ -829,15 +862,25 @@ html.theme-blue body {
   --edify-shadow-lg: none;
   --edify-shadow-drawer: none;
 
-  --edify-topbar-bg: rgba(0, 0, 0, 0.94);
+  --edify-topbar-bg: rgba(11, 18, 25, 0.96);
   --edify-topbar-border: var(--edify-border);
   --edify-topbar-shadow: none;
-  --edify-scrim: rgba(0, 2, 6, 0.82);
+  --edify-scrim: rgba(4, 10, 15, 0.82);
   --edify-focus-ring: 0 0 0 3px color-mix(in oklab, var(--edify-accent) 32%, transparent);
   --edify-sidebar-bg:
-    radial-gradient(circle at 16% 0%, rgba(143, 177, 232, 0.05), transparent 22rem),
-    linear-gradient(180deg, #030303 0%, #000000 100%);
-  --edify-scrollbar-thumb: #34343a;
+    radial-gradient(circle at 14% 0%, rgba(143, 191, 227, 0.08), transparent 24rem),
+    linear-gradient(180deg, #0a1118 0%, #0b141c 100%);
+  --edify-scrollbar-thumb: #506676;
+}
+
+/* `custom.css` still carries the former near-black gradient on `html.dark`.
+   Reassert the Editorial Night canvas so the token palette reaches the actual
+   viewport, not only its child surfaces. */
+html.theme-dark,
+html.theme-dark body {
+  background-color: var(--edify-bg);
+  background-image: none;
+  background-attachment: fixed;
 }
 
 /* Theme changes feel immediate but not abrupt. Avoid overriding component

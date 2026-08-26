@@ -36,7 +36,12 @@ from .models import (
     StrategicPriorityLevel,
     StrategicPriorityStatus,
 )
-from .uganda_master_seed import NON_SCOREABLE, SOURCE_DOCUMENT, UGANDA_MASTER
+from .uganda_master_seed import (
+    NON_SCOREABLE,
+    SOURCE_DOCUMENT,
+    TRAINING_PRIORITY_LINKS,
+    UGANDA_MASTER,
+)
 
 UGANDA = "Uganda"
 
@@ -350,6 +355,71 @@ def seed_uganda_master(*, fy: str = "2027", actor_id="system", dry_run=False) ->
                     },
                 )
                 report["rules"] += 1
+
+    # Complete the governed training → priority bridge.  Several courses are
+    # valid responses to a priority without being named verbatim in the source
+    # milestone row (Budgeting contributes to Annual Plan and Budgets; SSA
+    # Training contributes to both Core and Client transformation).  Keeping
+    # the crosswalk in reference data makes those relationships reviewable and
+    # ensures new training creation enters milestone reporting automatically.
+    milestone_basis = {
+        row["code"]: row.get("basis", "VERIFIED_ACTIVITIES")
+        for rows in UGANDA_MASTER.values()
+        for row in rows
+    }
+    milestone_codes = {
+        code for codes in TRAINING_PRIORITY_LINKS.values() for code in codes
+    }
+    milestones = {
+        milestone.code: milestone
+        for milestone in PriorityMilestone.objects.filter(
+            priority__fy=fy,
+            priority__level=StrategicPriorityLevel.COUNTRY,
+            priority__country_id=UGANDA,
+            code__in=milestone_codes,
+        )
+    }
+    training_items = {
+        item.stable_code: item
+        for item in ActivityCatalogueItem.objects.filter(
+            stable_code__in=TRAINING_PRIORITY_LINKS,
+            is_training_course=True,
+        ).prefetch_related("intervention_mappings")
+    }
+    for stable_code, linked_codes in TRAINING_PRIORITY_LINKS.items():
+        item = training_items.get(stable_code)
+        if item is None:
+            continue
+        primary_mapping = next(
+            (
+                mapping
+                for mapping in item.intervention_mappings.all()
+                if mapping.active and mapping.is_primary
+            ),
+            None,
+        )
+        for milestone_code in linked_codes:
+            milestone = milestones.get(milestone_code)
+            if milestone is None:
+                continue
+            MilestoneActivityRule.objects.update_or_create(
+                milestone=milestone,
+                catalogue_item=item,
+                project=None,
+                defaults={
+                    "counting_basis": milestone_basis.get(
+                        milestone_code, "VERIFIED_ACTIVITIES"
+                    ),
+                    "target_intervention": (
+                        primary_mapping.intervention if primary_mapping else ""
+                    )
+                    or "",
+                    "minimum_completion_state": "ia_verified",
+                    "weight": 1,
+                    "active": True,
+                },
+            )
+            report["rules"] += 1
     # The country master supersedes nothing regional — both stay visible; the
     # regional rows remain the RVP contract above the Uganda plan.
     StrategicPriority.objects.filter(

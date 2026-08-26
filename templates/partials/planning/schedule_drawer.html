@@ -36,31 +36,40 @@ trainingActivityId: '{{ selected_catalogue_item.catalogueItemId|default:""|escap
 defaultCatalogueItemId: '{{ selected_catalogue_item.catalogueItemId|default:""|escapejs }}',
 followUpActivities: {{ follow_up_activity_options_json|default:'[]' }},
 sourceActivityId: '',
-{% comment %}
-  General training is selected from the governed Activity Catalogue. The
-  intervention is chosen first and the list below contains only activities
-  whose active mapping includes it.
-{% endcomment %}
+{% comment %}The governed Training Catalogue owns category and SSA mapping.
+The planner chooses one course; Alpine presents its metadata immediately and
+the backend derives the same values again from the selected id.{% endcomment %}
 get showTrainingActivityPicker() { return this.purposeOfVisit === 'in_school_training'; },
 get showFollowUpPicker() { return this.purposeOfVisit === 'training_follow_up'; },
 get showSsaDataGathering() { return this.purposeOfVisit === 'ssa_support'; },
-get showManualIntervention() { return !this.showFollowUpPicker && !this.showSsaDataGathering; },
+get showManualIntervention() { return !this.showTrainingActivityPicker && !this.showFollowUpPicker && !this.showSsaDataGathering; },
 get selectedSourceActivity() {
   return this.followUpActivities.find(activity => activity.id === this.sourceActivityId) || null;
 },
 get availableTrainingActivities() {
-  if (!this.focusIntervention) return [];
   return this.trainingActivities.filter(activity =>
-    activity.interventions.includes(this.focusIntervention)
-    && (this.executorType === 'certified_partner_agency'
+    (this.executorType === 'certified_partner_agency'
       ? activity.certifiedAgencyDeliveryAllowed
       : activity.staffDeliveryAllowed)
   );
 },
+get selectedTrainingActivity() {
+  return this.availableTrainingActivities.find(activity => activity.id === this.trainingActivityId) || null;
+},
+onTrainingActivityChange() {
+  const selected = this.selectedTrainingActivity;
+  this.focusIntervention = selected ? selected.ssaIntervention : '';
+  if (selected) {
+    this.recommendationReason = selected.priorityTitles.length
+      ? `Priority activity: ${selected.priorityTitles.join(', ')}`
+      : `Governed ${selected.category} training.`;
+  }
+},
 ensureTrainingActivity() {
   if (!this.availableTrainingActivities.some(activity => activity.id === this.trainingActivityId)) {
-    this.trainingActivityId = this.availableTrainingActivities.length ? this.availableTrainingActivities[0].id : '';
+    this.trainingActivityId = '';
   }
+  this.onTrainingActivityChange();
 },
 profiles: {{ purpose_profiles|default:'{}' }},
 get profile() {
@@ -251,8 +260,6 @@ its costing on, so the costing link is derived server-side and never asked for.
     name="focus_intervention"
     id="focus_intervention"
     x-model="focusIntervention"
-    @change="ensureTrainingActivity()"
-    :required="showTrainingActivityPicker"
     class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none"
   >
     <option value="">Select Focus Intervention…</option>
@@ -300,23 +307,37 @@ its costing on, so the costing link is derived server-side and never asked for.
   Catalogue choice. The backend validates the selected item's mapping again.
 {% endcomment %}
 <template x-if="showTrainingActivityPicker">
-<div>
-  <label for="training_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Activity / Training <span class="text-rose-500">*</span></label>
+<div class="space-y-3">
+  <div>
+  <label for="training_activity_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Training <span class="text-rose-500">*</span></label>
   <select
     name="catalogue_item_id"
     id="training_activity_id"
     x-model="trainingActivityId"
+    @change="onTrainingActivityChange()"
     required
-    :disabled="!focusIntervention || availableTrainingActivities.length === 0"
     class="mt-1 h-10 w-full cursor-pointer rounded-control border border-slate-200 bg-slate-50 px-3 pr-9 edify-focus-surface edify-primary-focus focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+    aria-describedby="training-catalogue-help"
   >
-    <option value="" x-text="focusIntervention ? 'Select an activity / training…' : 'Select an intervention first…'"></option>
+    <option value="">Select a training…</option>
     <template x-for="activity in availableTrainingActivities" :key="activity.id">
       <option :value="activity.id" x-text="activity.label"></option>
     </template>
   </select>
-  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Only priority activities linked to the selected intervention are shown.</p>
+  <p id="training-catalogue-help" class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">The governed list contains the approved trainings available in this School context.</p>
   <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Scheduling creates this School Training automatically. After delivery, confirm it with its Salesforce Training ID beginning <strong>TS-</strong>.</p>
+  </div>
+  <input type="hidden" name="focus_intervention" :value="focusIntervention">
+  <div x-show="selectedTrainingActivity" style="display:none" class="grid gap-2 sm:grid-cols-2" aria-live="polite" aria-atomic="true">
+    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
+      <span class="block edify-text-caption font-semibold text-slate-400">Training category</span>
+      <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedTrainingActivity ? selectedTrainingActivity.category : ''"></strong>
+    </div>
+    <div class="rounded-control border border-[var(--edify-border)] bg-slate-50 p-3">
+      <span class="block edify-text-caption font-semibold text-slate-400">SSA intervention association</span>
+      <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedTrainingActivity ? selectedTrainingActivity.ssaIndicator : ''"></strong>
+    </div>
+  </div>
 </div>
 </template>
 {% else %}

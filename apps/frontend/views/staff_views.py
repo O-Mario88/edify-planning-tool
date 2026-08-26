@@ -300,7 +300,7 @@ def staff_profile_view(request, user_id):
             fy=fy,
             deleted_at__isnull=True,
         )
-        .select_related("school", "cluster")
+        .select_related("school", "cluster", "catalogue_item")
         .order_by("-planned_date")[:50]
     )
 

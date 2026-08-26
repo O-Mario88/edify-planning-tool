@@ -95,6 +95,9 @@ def _item(
     multi_day=False,
     participant_counts=False,
     programme_category="",
+    is_training_course=False,
+    training_category="",
+    ssa_indicator_label="",
     standard_support=False,
     participant_mode=None,
     certified_agency=False,
@@ -147,6 +150,9 @@ def _item(
         "multi_day_allowed": multi_day,
         "requires_participant_counts": participant_counts,
         "programme_category": programme_category,
+        "is_training_course": is_training_course,
+        "training_category": training_category,
+        "ssa_indicator_label": ssa_indicator_label,
     }
 
 
@@ -496,6 +502,95 @@ SOURCE_CATALOGUE_ITEMS = [
         client_training=True,
     ),
 ]
+
+
+#: The authoritative Training Catalogue supplied by programme operations on
+#: 2026-08-26.  These 21 rows — and only these rows — may appear in a new
+#: Training picker.  ``ssa_indicator`` preserves the source system's wording;
+#: ``intervention`` is the canonical eight-code SSA dimension used by Edify
+#: analytics.  "Other" is intentionally not forced into a score dimension.
+TRAINING_COURSE_REFERENCE = [
+    ("ACCOUNTING_FINANCIAL_MANAGEMENT", "Accounting and Financial Policies", "Business Transformation", "Fee/Budget/Accounts", INTERVENTION.FINANCIAL_HEALTH),
+    ("BIBLICAL_INTEGRATION", "Biblical Integration", "Christian Transformation", "Exposure to God's Word", INTERVENTION.EXPOSURE_TO_WORD_OF_GOD),
+    ("BUDGETING", "Budgeting", "Business Transformation", "Fee/Budget/Accounts", INTERVENTION.FINANCIAL_HEALTH),
+    ("CLA_CHARACTER_DEVELOPMENT", "Christ-like Character Training", "Christian Transformation", "Christ-Like Behavior", INTERVENTION.CHRISTLIKE_BEHAVIOUR),
+    ("CORE_SCHOOL_ORIENTATION", "Core School Orientation", "Other", "Other", None),
+    ("DISCIPLESHIP_DYNAMICS", "Discipleship Dynamics", "Christian Transformation", "Exposure to God's Word", INTERVENTION.EXPOSURE_TO_WORD_OF_GOD),
+    ("EARLY_CHILDHOOD_EDUCATION_PROJECT", "Early Childhood Education", "Education", "Teaching Environment", INTERVENTION.TEACHING_ENVIRONMENT),
+    ("EDTECH_FOUNDATIONS", "EdTech Foundations Training", "EdTech", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
+    ("EDTECH_INTEGRATION", "EdTech Integration", "EdTech", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
+    ("FEES_ENROLMENT_MARKETING", "Fees, Enrolment, and Marketing Management", "Business Transformation", "Enrollment", INTERVENTION.ENROLMENT),
+    ("FINANCIAL_MANAGEMENT", "Financial Management", "Business Transformation", "Access to Credit", INTERVENTION.FINANCIAL_HEALTH),
+    ("GOVERNMENT_STATUTORY_REQUIREMENTS", "Government and Statutory requirements", "Business Transformation", "Fulfill Government Requirements", INTERVENTION.GOVERNMENT_REQUIREMENT),
+    ("SCHOOL_LEADERSHIP", "Leadership", "Education", "Leadership Practices", INTERVENTION.LEADERSHIP),
+    ("LEARNING_ENVIRONMENT_TRAINING", "Learning environment", "Education", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
+    ("LITERACY_NUMERACY_PROJECT", "Literacy/ Numeracy", "Education", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
+    ("NEW_SCHOOL_ORIENTATION", "New School Orientation", "Other", "Other", None),
+    ("SSA_TRAINING", "SSA Training", "Other", "Other", None),
+    ("TECH_SKILLS_EMPLOYABLE_FUTURE", "Students Digital Skills Training", "EdTech", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
+    ("TEACHER_PEDAGOGY_PROFESSIONALISM", "Teacher Pedagogy/Professionalism", "Education", "Teaching Environment", INTERVENTION.TEACHING_ENVIRONMENT),
+    ("TAM_I", "Teaching as Mission (TAM)", "Christian Transformation", "Exposure to God's Word", INTERVENTION.EXPOSURE_TO_WORD_OF_GOD),
+    ("TEACHING_ENVIRONMENT", "Teaching Environment", "Education", "Teaching Environment", INTERVENTION.TEACHING_ENVIRONMENT),
+]
+
+
+def _new_cluster_training(code, name, category, indicator, intervention):
+    return _item(
+        code,
+        name,
+        Type.TRAINING,
+        Delivery.CLUSTER_TRAINING,
+        ActivityType.CLUSTER_TRAINING,
+        intervention=intervention,
+        mapping_mode=(MappingMode.FIXED if intervention else MappingMode.ADMINISTRATIVE),
+        cluster=True,
+        school=False,
+        requires_ssa=bool(intervention),
+        is_training_course=True,
+        training_category=category,
+        ssa_indicator_label=indicator,
+        programme_category=category,
+    )
+
+
+_existing_training_codes = {row["stable_code"] for row in SOURCE_CATALOGUE_ITEMS}
+TRAINING_CATALOGUE_ADDITIONS = [
+    _new_cluster_training(code, name, category, indicator, intervention)
+    for code, name, category, indicator, intervention in TRAINING_COURSE_REFERENCE
+    if code not in _existing_training_codes
+]
+
+# Repair the overlapping source rows in place.  Stable codes remain unchanged
+# so existing Activities and priority rules keep their identity; the governed
+# display name, category and SSA association now match the supplied source.
+_training_reference_by_code = {
+    code: (name, category, indicator, intervention)
+    for code, name, category, indicator, intervention in TRAINING_COURSE_REFERENCE
+}
+for _training_row in [*SOURCE_CATALOGUE_ITEMS, *TRAINING_CATALOGUE_ADDITIONS]:
+    _training_reference = _training_reference_by_code.get(
+        _training_row["stable_code"]
+    )
+    if _training_reference is None:
+        continue
+    _name, _category, _indicator, _intervention = _training_reference
+    _training_row.update(
+        display_name=_name,
+        is_training_course=True,
+        training_category=_category,
+        ssa_indicator_label=_indicator,
+        programme_category=_category,
+        intervention=_intervention,
+        mapping_mode=(
+            MappingMode.FIXED
+            if _intervention
+            else MappingMode.ADMINISTRATIVE
+        ),
+        requires_current_ssa=bool(_intervention),
+    )
+
+assert len(TRAINING_COURSE_REFERENCE) == 21
+assert len({row[0] for row in TRAINING_COURSE_REFERENCE}) == 21
 
 
 def _standard(
@@ -866,7 +961,12 @@ FIELD_EVENT_ITEMS = [
 ]
 
 
-CATALOGUE_ITEMS = [*SOURCE_CATALOGUE_ITEMS, *STANDARD_SUPPORT_ITEMS, *FIELD_EVENT_ITEMS]
+CATALOGUE_ITEMS = [
+    *SOURCE_CATALOGUE_ITEMS,
+    *TRAINING_CATALOGUE_ADDITIONS,
+    *STANDARD_SUPPORT_ITEMS,
+    *FIELD_EVENT_ITEMS,
+]
 
 
 ALTERNATE_STABLE_CODES = {
@@ -884,10 +984,12 @@ ALTERNATE_STABLE_CODES = {
 # curriculum change, not a code change. Standard field support is counted
 # separately so the two can never be confused for one another.
 assert len(SOURCE_CATALOGUE_ITEMS) == 28
+assert len(TRAINING_CATALOGUE_ADDITIONS) == 5
 assert len(STANDARD_SUPPORT_ITEMS) == 12
 assert len(FIELD_EVENT_ITEMS) == 4
-assert len(CATALOGUE_ITEMS) == 44
-assert len({row["stable_code"] for row in CATALOGUE_ITEMS}) == 44
+assert len(CATALOGUE_ITEMS) == 49
+assert len({row["stable_code"] for row in CATALOGUE_ITEMS}) == 49
+assert sum(bool(row["is_training_course"]) for row in CATALOGUE_ITEMS) == 21
 
 # One standard-support item per workflow kind (mirrored by a database
 # constraint). Without this the purpose → costing derivation has no single

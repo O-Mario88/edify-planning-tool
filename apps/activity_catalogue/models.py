@@ -212,6 +212,16 @@ class ActivityCatalogueItem(TimeStampedModel):
     # these flags (Salesforce ID + IA verification required).
     salesforce_id_required = models.BooleanField(default=True)
     ia_verification_required = models.BooleanField(default=True)
+    # The governed 21-course Training Catalogue is a deliberately narrower
+    # subset of the wider Activity Catalogue.  A catalogue row can describe a
+    # visit, meeting, programme event or operational support workflow; only
+    # rows marked here may appear in a "Which training?" control.
+    is_training_course = models.BooleanField(default=False)
+    training_category = models.CharField(max_length=64, blank=True, default="")
+    # Preserve the programme's exact source wording (for example
+    # "Fee/Budget/Accounts") while the intervention mapping carries the
+    # canonical eight-code SSA value used by analytics.
+    ssa_indicator_label = models.CharField(max_length=128, blank=True, default="")
     programme_category = models.CharField(max_length=64, blank=True, default="")
     requires_source_activity = models.BooleanField(default=False)
     new_school_only = models.BooleanField(default=False)
@@ -303,6 +313,9 @@ class ActivityCatalogueItem(TimeStampedModel):
             "nonSchoolAllowed": self.non_school_allowed,
             "salesforceIdRequired": self.salesforce_id_required,
             "iaVerificationRequired": self.ia_verification_required,
+            "isTrainingCourse": self.is_training_course,
+            "trainingCategory": self.training_category,
+            "ssaIndicatorLabel": self.ssa_indicator_label,
             "evidenceProfile": self.evidence_profile,
             "costingProfile": self.costing_profile,
         }
@@ -333,6 +346,9 @@ class ActivityCatalogueItem(TimeStampedModel):
             "costingProfile": self.costing_profile,
             "supportObjective": self.support_objective,
             "standardSupport": self.standard_support,
+            "isTrainingCourse": self.is_training_course,
+            "trainingCategory": self.training_category,
+            "ssaIndicatorLabel": self.ssa_indicator_label,
             "participantMode": self.participant_mode,
             "certifiedAgencyDeliveryAllowed": self.certified_agency_delivery_allowed,
             "mappingModes": list(mapping.values_list("mapping_mode", flat=True)),

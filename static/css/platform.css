@@ -1469,7 +1469,7 @@ main .platform-responsive-table [data-priority="low"] {
   input[type="date"], input[type="datetime-local"], input[type="time"], select, textarea) {
   background-color: var(--edify-surface) !important;
   background-image: none !important;
-  border-color: var(--edify-border) !important;
+  border-color: var(--edify-border-strong) !important;
   color: var(--edify-text) !important;
   box-shadow: none;
 }
@@ -1485,22 +1485,22 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 .theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) th {
-  background: transparent !important;
+  background: var(--edify-table-header) !important;
   color: var(--edify-text-subtle) !important;
-  border-block-end-color: color-mix(in oklab, var(--edify-border) 54%, transparent) !important;
+  border-block-end-color: var(--edify-table-divider) !important;
 }
 
 .theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) td {
   color: var(--edify-text-muted);
-  border-block-end-color: color-mix(in oklab, var(--edify-border) 38%, transparent) !important;
+  border-block-end-color: var(--edify-table-divider) !important;
 }
 
 .theme-dark main table:not(.mfr-matrix, .sp-matrix, .tt-matrix, .tt-area-matrix, .pl-ssa-matrix) tbody tr:nth-child(even) > :where(td, th) {
-  background-color: transparent !important;
+  background-color: var(--edify-table-row-alt) !important;
 }
 
 .theme-dark main table tbody tr:hover > :where(td, th) {
-  background-color: color-mix(in oklab, var(--edify-accent-light) 62%, var(--edify-surface)) !important;
+  background-color: var(--edify-table-row-hover) !important;
 }
 
 /* ── Blue workspace tables. ────────────────────────────────────────────────

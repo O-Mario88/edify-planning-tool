@@ -24,7 +24,6 @@ from __future__ import annotations
 from django.utils import timezone
 
 from apps.core.enums import (
-    ActivityType,
     DeliveryType,
     ExecutorType,
     PARTNER_EXECUTOR_TYPES,
@@ -33,9 +32,6 @@ from apps.core.enums import (
 
 from .models import (
     ActivityCatalogueItem,
-    CatalogueActivityType,
-    DeliveryMethod,
-    MappingMode,
 )
 from .services import effective_items
 
@@ -182,13 +178,20 @@ def workflow_profile_for(
     return resolve_item_for_workflow_kind(workflow_kind, on_date=on_date)
 
 
-def training_activity_options(*, planning_context: str, on_date=None) -> list[dict]:
-    """Return priority-backed training choices and their intervention links.
+def training_activity_options(
+    *,
+    planning_context: str,
+    school=None,
+    cluster=None,
+    executor_type: str = DeliveryType.STAFF,
+    on_date=None,
+) -> list[dict]:
+    """Return the governed 21-course Training Catalogue for this context.
 
-    This is presentation data for the dependent selects in the general
-    School and Cluster training drawers. Only catalogue items named by an
-    active ``MilestoneActivityRule`` in the strategic priorities inventory are
-    included. A Special Project is deliberately not part of the query.
+    The training is the user's decision; category and SSA association are
+    governed metadata fetched from that decision.  Priority rules remain in
+    the payload for traceability and reporting, but they do not hide an
+    approved course from the Training dropdown.
 
     The option payload still carries delivery permissions.  Alpine uses them
     to keep the list honest when the planner switches between Staff and a
@@ -202,32 +205,20 @@ def training_activity_options(*, planning_context: str, on_date=None) -> list[di
 
     from apps.hr.models import MilestoneActivityRule
 
-    delivery_method = (
-        DeliveryMethod.CLUSTER_TRAINING
-        if planning_context == CLUSTER
-        else DeliveryMethod.IN_SCHOOL_TRAINING
-    )
-    workflow_kind = (
-        ActivityType.CLUSTER_TRAINING
-        if planning_context == CLUSTER
-        else ActivityType.IN_SCHOOL_TRAINING
-    )
     priority_rules = MilestoneActivityRule.objects.filter(active=True).select_related(
         "milestone__priority"
     )
+    items = effective_items(on_date).filter(
+        is_training_course=True,
+        **(
+            {"cluster_delivery_allowed": True}
+            if planning_context == CLUSTER
+            else {"individual_school_allowed": True}
+        ),
+    )
+    items = _executor_filtered(items, executor_type)
     items = (
-        effective_items(on_date)
-        .filter(
-            milestone_rules__active=True,
-            activity_type=CatalogueActivityType.TRAINING,
-            delivery_method=delivery_method,
-            workflow_kind=workflow_kind,
-            **(
-                {"cluster_delivery_allowed": True}
-                if planning_context == CLUSTER
-                else {"individual_school_allowed": True}
-            ),
-        )
+        items
         .prefetch_related(
             "intervention_mappings",
             Prefetch(
@@ -242,38 +233,44 @@ def training_activity_options(*, planning_context: str, on_date=None) -> list[di
 
     options = []
     for item in items:
+        if school is not None or cluster is not None:
+            from .services import validate_context
+
+            try:
+                validate_context(
+                    item,
+                    school=school,
+                    cluster=cluster,
+                    project=None,
+                    executor_type=executor_type,
+                )
+            except Exception:  # noqa: BLE001 — unavailable here is not an error
+                continue
         mappings = [
             mapping for mapping in item.intervention_mappings.all() if mapping.active
         ]
-        any_intervention = any(
-            mapping.mapping_mode == MappingMode.ANY_SSA_INTERVENTION
-            for mapping in mappings
+        primary_mapping = next(
+            (mapping for mapping in mappings if mapping.is_primary),
+            mappings[0] if mappings else None,
         )
-        priority_interventions = sorted(
-            {
-                rule.target_intervention
-                for rule in item.active_priority_rules
-                if rule.target_intervention in SsaIntervention.values
-            }
+        ssa_intervention = (
+            primary_mapping.intervention if primary_mapping else None
         )
-        interventions = priority_interventions or (
-            list(SsaIntervention.values)
-            if any_intervention
-            else sorted(
-                {mapping.intervention for mapping in mappings if mapping.intervention}
-            )
-        )
-        # A training with no active SSA mapping cannot fulfil the dependent
-        # dropdown contract and would be refused at save time, so do not offer
-        # it as a selectable dead end.
-        if not interventions:
-            continue
+        interventions = [ssa_intervention] if ssa_intervention else []
         options.append(
             {
                 "id": str(item.id),
                 "label": item.display_name,
                 "stableCode": item.stable_code,
                 "interventions": interventions,
+                "ssaIntervention": ssa_intervention or "",
+                "ssaInterventionLabel": (
+                    SsaIntervention(ssa_intervention).label
+                    if ssa_intervention
+                    else "Not SSA-scored"
+                ),
+                "category": item.training_category,
+                "ssaIndicator": item.ssa_indicator_label,
                 "standardSupport": item.standard_support,
                 "staffDeliveryAllowed": item.staff_delivery_allowed,
                 "partnerDeliveryAllowed": item.partner_delivery_allowed,
@@ -303,7 +300,12 @@ def validate_priority_training_selection(
     intervention: str | None = None,
     on_date=None,
 ) -> dict:
-    """Return the selected priority-backed option or reject a forged choice."""
+    """Return one governed course or reject a forged/stale selection.
+
+    ``intervention`` remains accepted for legacy API callers, but it can only
+    confirm the catalogue mapping.  New forms do not ask for it: the selected
+    course supplies it automatically.
+    """
     from apps.core.exceptions import BadRequest
 
     selected = next(
@@ -319,12 +321,12 @@ def validate_priority_training_selection(
     )
     if selected is None:
         raise BadRequest(
-            "Select an Activity / Training linked to an active strategic priority."
+            "Select a training from the governed Training Catalogue."
         )
-    if intervention and intervention not in selected["interventions"]:
+    if intervention and intervention != selected["ssaIntervention"]:
         raise BadRequest(
-            "The selected Activity / Training is not linked to that SSA "
-            "intervention by an active strategic priority."
+            "The submitted SSA intervention does not match the selected "
+            "Training Catalogue course."
         )
     return selected
 

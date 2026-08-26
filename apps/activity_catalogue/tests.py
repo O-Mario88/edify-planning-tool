@@ -43,18 +43,19 @@ class CatalogueSeedContractTests(TestCase):
         seed_activity_catalogue(actor_id="test")
         seed_activity_catalogue(actor_id="test")
 
-        self.assertEqual(ActivityCatalogueItem.objects.count(), 60)
+        self.assertEqual(ActivityCatalogueItem.objects.count(), 65)
         self.assertEqual(
             ActivityCatalogueItem.objects.values("stable_code").distinct().count(),
-            60,
+            65,
         )
-        # The programme's 28 named interventions plus sixteen Uganda Business
+        # The programme's 28 source interventions, five governed training
+        # catalogue additions, sixteen Uganda Business
         # Transformation workflows plus four field-event titles (district
         # meeting, boot camp, workshop, conference). Standard field support is
         # counted separately because it is not a curriculum title.
         self.assertEqual(
             ActivityCatalogueItem.objects.filter(standard_support=False).count(),
-            48,
+            53,
         )
         self.assertEqual(
             ActivityCatalogueItem.objects.filter(standard_support=True).count(),
@@ -64,7 +65,7 @@ class CatalogueSeedContractTests(TestCase):
             ActivityCatalogueItem.objects.filter(
                 non_school_allowed=True, standard_support=False
             ).count(),
-            33,
+            38,
             "The general programme titles remain available for dated central "
             "budgeting — plus the Monthly MFI Review and the four field-event "
             "titles, venue work that belongs to no single school.",
@@ -91,6 +92,37 @@ class CatalogueSeedContractTests(TestCase):
                 intervention__isnull=True,
             ).exists()
         )
+        training_rows = ActivityCatalogueItem.objects.filter(is_training_course=True)
+        self.assertEqual(training_rows.count(), 21)
+        self.assertEqual(
+            set(training_rows.values_list("display_name", flat=True)),
+            {
+                "Accounting and Financial Policies",
+                "Biblical Integration",
+                "Budgeting",
+                "Christ-like Character Training",
+                "Core School Orientation",
+                "Discipleship Dynamics",
+                "Early Childhood Education",
+                "EdTech Foundations Training",
+                "EdTech Integration",
+                "Fees, Enrolment, and Marketing Management",
+                "Financial Management",
+                "Government and Statutory requirements",
+                "Leadership",
+                "Learning environment",
+                "Literacy/ Numeracy",
+                "New School Orientation",
+                "SSA Training",
+                "Students Digital Skills Training",
+                "Teacher Pedagogy/Professionalism",
+                "Teaching as Mission (TAM)",
+                "Teaching Environment",
+            },
+        )
+        new_school = training_rows.get(stable_code="NEW_SCHOOL_ORIENTATION")
+        self.assertEqual(new_school.training_category, "Other")
+        self.assertEqual(new_school.ssa_indicator_label, "Other")
         self.assertTrue(
             ActivityInterventionMapping.objects.filter(
                 catalogue_item__stable_code="PARTNER_MEETINGS_ADMIN",

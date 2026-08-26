@@ -880,7 +880,7 @@ main :is(
   .school-filter-canvas
 ) :is(input:not([type="checkbox"]):not([type="radio"]), select, textarea) {
   min-block-size: var(--edify-action-button-block-size) !important;
-  border: 1px solid var(--edify-border) !important;
+  border: 1px solid var(--edify-control-border, var(--edify-border)) !important;
   border-radius: var(--edify-radius-sm) !important;
   background: var(--edify-surface-raised) !important;
   color: var(--edify-text) !important;
@@ -946,7 +946,7 @@ main :is(
   .school-filter-canvas
 ) :is(input, select, textarea):disabled {
   color: var(--edify-text-disabled) !important;
-  border-color: var(--edify-border) !important;
+  border-color: var(--edify-control-border, var(--edify-border)) !important;
   background: var(--edify-surface-muted) !important;
   cursor: not-allowed !important;
 }
@@ -1419,7 +1419,7 @@ main .settings-detail-tile {
   textarea
 ) {
   background-color: var(--edify-surface) !important;
-  border-color: var(--edify-border) !important;
+  border-color: var(--edify-control-border, var(--edify-border)) !important;
   box-shadow: none !important;
 }
 
@@ -1581,6 +1581,53 @@ main .edify-card-action {
 
 :is(.theme-blue, .theme-dark) .kpi-strip__item::after {
   display: none;
+}
+
+/* Editorial Night keeps KPI semantics but removes the rainbow ambient washes.
+   A two-pixel inset rail carries each metric's existing tone, matching the
+   reference's status cards while the card itself stays on one calm surface. */
+.theme-dark .kpi-strip.kpi-strip--executive {
+  background-color: var(--edify-section-bg) !important;
+  border-color: var(--edify-border) !important;
+  box-shadow: var(--edify-card-shadow) !important;
+}
+
+.theme-dark .kpi-strip__item.kpi-strip__item--neutral {
+  --kpi-accent: var(--edify-text-subtle);
+}
+
+.theme-dark .kpi-strip__item[class*="kpi-strip__item--"] {
+  background-color: var(--edify-card-surface) !important;
+  background-image: none !important;
+  border-color: var(--edify-card-border) !important;
+  box-shadow:
+    inset 0 2px 0 color-mix(in srgb, var(--kpi-accent) 58%, transparent),
+    var(--edify-card-shadow) !important;
+}
+
+/* Functional controls keep a full 3:1 boundary against the slate field plane.
+   Decorative cards use the quieter border token; controls must remain obvious
+   without relying on their labels or hover state. */
+.theme-dark main :where(
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="search"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="date"],
+  input[type="datetime-local"],
+  input[type="time"],
+  select,
+  textarea
+) {
+  border-color: var(--edify-control-border, var(--edify-border-strong)) !important;
+}
+
+.theme-dark main :where(.overflow-x-auto, .overflow-auto):has(> table) {
+  background-color: var(--edify-table-canvas) !important;
+  border-color: var(--edify-table-divider) !important;
 }
 
 :is(.theme-blue, .theme-dark) .kpi-strip--band .kpi-strip__item {
@@ -2491,6 +2538,198 @@ main :is(.apexcharts-datalabel-value) {
   .edify-bottom-nav
 ) [class] {
   letter-spacing: normal !important;
+}
+
+/* ═══ PREMIUM OPERATIONAL TABLE SYSTEM ═══════════════════════════════════
+ * The reference is a serious working grid: compact mixed-case headings,
+ * high-x-height body type, one calm surface, precise horizontal rules and a
+ * predictable identity/action rhythm. `.edify-record-table` is the canonical
+ * record-list variant. Specialist matrices keep their own wrapping and sticky
+ * geometry, but inherit the same type, colour and interaction tokens.
+ *
+ * Component states: default · hover/focus-within · selected/checked · disabled.
+ * Sort styling activates only when real `aria-sort` semantics exist; this CSS
+ * never invents an affordance for behaviour a table does not implement. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) {
+  background-color: var(--edify-table-canvas, var(--edify-surface));
+  font-variant-numeric: tabular-nums;
+}
+
+/* Reclaim the heading role after legacy `.edify-text-caption` utilities. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) thead th {
+  padding: var(--edify-table-cell-padding-block) var(--edify-table-cell-padding-inline) !important;
+  border-block-end: 1px solid var(--edify-table-header-divider, var(--edify-border)) !important;
+  background-color: var(--edify-table-header, var(--edify-surface-muted)) !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-table-heading-size) !important;
+  font-weight: var(--edify-table-header-weight) !important;
+  line-height: 1.3 !important;
+  text-align: start;
+  text-transform: none !important;
+  vertical-align: middle;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) thead th:not(:last-child) {
+  border-inline-end: 1px solid color-mix(in srgb, var(--edify-table-header-divider, var(--edify-border)) 62%, transparent) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table {
+  inline-size: 100%;
+  border-collapse: separate !important;
+  border-spacing: 0 !important;
+  background-color: var(--edify-table-canvas, var(--edify-surface)) !important;
+  color: var(--edify-text);
+  font-size: var(--edify-text-table-size) !important;
+}
+
+/* The global label-weight contract has three class-level specificity arms.
+   Match it explicitly so record headers retain the semibold scanning rail. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table.edify-record-table:not(.edify-visually-hidden) thead th {
+  font-weight: var(--edify-table-header-weight) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody :is(td, th) {
+  padding: var(--edify-table-cell-padding-block) var(--edify-table-cell-padding-inline) !important;
+  border-block-end: 1px solid var(--edify-table-divider, var(--edify-border)) !important;
+  background-color: var(--edify-table-canvas, var(--edify-surface)) !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-table-size) !important;
+  font-weight: var(--edify-table-body-weight) !important;
+  line-height: 1.4 !important;
+  vertical-align: middle;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody tr:last-child > :is(td, th) {
+  border-block-end-color: transparent !important;
+}
+
+/* Record lists stay on one surface; alternating bands are reserved for long
+   analytical matrices where the eye genuinely needs a cross-row guide. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody tr:nth-child(even) > :is(td, th) {
+  background-color: var(--edify-table-canvas, var(--edify-surface)) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody tr:is(:hover, :focus-within) > :is(td, th) {
+  background-color: var(--edify-table-row-hover, var(--edify-surface-hover)) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody tr:is([aria-selected="true"], [data-selected="true"], :has(input[type="checkbox"]:checked)) > :is(td, th) {
+  background-color: var(--edify-table-row-selected, var(--edify-surface-selected)) !important;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table tbody tr:is(:hover, :focus-within, [aria-selected="true"], [data-selected="true"])
+  > :is(td, th):first-child {
+  box-shadow: inset 2px 0 0 color-mix(in srgb, var(--edify-accent) 72%, transparent);
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-record-title], th[scope="row"]) {
+  color: var(--edify-text) !important;
+  font-weight: var(--edify-table-identity-weight) !important;
+}
+
+/* The first line is the record identity; it yields with an ellipsis before it
+   makes the entire row taller. Secondary context may occupy one quiet line. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table [data-record-title] > :first-child {
+  display: block;
+  max-inline-size: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-record-title], th[scope="row"]) > a:any-link {
+  color: var(--brand-primary-text, var(--edify-accent-text)) !important;
+  font-weight: var(--edify-table-identity-weight) !important;
+  text-decoration-thickness: 0.075em;
+  text-underline-offset: 0.16em;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-record-title], th[scope="row"]) > a:any-link:hover {
+  color: var(--brand-primary-text-hover, var(--edify-text)) !important;
+  text-decoration-line: underline;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-record-action], .edify-table__actions) {
+  inline-size: 1%;
+  overflow: visible !important;
+  text-align: end;
+  white-space: nowrap;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-record-action], .edify-table__actions)
+  :is(button, summary, a:has(> svg)):not(.btn, [class*="button"]) {
+  min-inline-size: var(--edify-table-action-size);
+  min-block-size: var(--edify-table-action-size);
+  border-radius: var(--edify-radius-sm);
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-align="end"], [data-type="number"], .edify-table__numeric) {
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+}
+
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-align="center"], [data-type="boolean"], .edify-table__boolean) {
+  text-align: center;
+}
+
+/* Native, honest sorting: the arrow appears only when the backend/widget has
+   exposed a real sort state through aria-sort. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table th[aria-sort] > :is(a, button) {
+  display: flex;
+  inline-size: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--edify-space-2);
+  color: inherit;
+  font: inherit;
+  text-align: start;
+}
+
+.edify-record-table th[aria-sort] > :is(a, button)::after {
+  color: var(--edify-text-subtle);
+  content: "↕";
+}
+
+.edify-record-table th[aria-sort="ascending"] > :is(a, button)::after { content: "↑"; }
+.edify-record-table th[aria-sort="descending"] > :is(a, button)::after { content: "↓"; }
+
+/* The wrapper owns the small amount of chrome. It also remains the single
+   horizontal scroll affordance on tablet and phone. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(.overflow-x-auto, .overflow-auto, .edify-record-table-wrap, .edify-table-scroll-region):has(> .edify-record-table) {
+  border-radius: var(--edify-table-radius);
+  background-color: var(--edify-table-canvas, var(--edify-surface));
+  scrollbar-gutter: stable;
+  overscroll-behavior-inline: contain;
+}
+
+@media (pointer: coarse) {
+  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    .edify-record-table :is([data-record-action], .edify-table__actions)
+    :is(button, summary, a:has(> svg)) {
+    min-inline-size: 2.75rem;
+    min-block-size: 2.75rem;
+  }
 }
 
 /* ═══ DESKTOP TABLES DO NOT WRAP ════════════════════════════════════════
