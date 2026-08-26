@@ -434,9 +434,7 @@ def cluster_schedule_activity_view(request):
                 )
                 # Catalogue authority wins over any stale or crafted hidden
                 # input. "Other" courses deliberately save no SSA dimension.
-                data["focusIntervention"] = (
-                    selected_training["ssaIntervention"] or None
-                )
+                data["focusIntervention"] = selected_training["ssaIntervention"] or None
             ClusterActionPlannerService.schedule_activity(data, request.user)
             messages.success(
                 request,

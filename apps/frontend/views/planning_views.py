@@ -1597,17 +1597,13 @@ def assign_partner_action_view(request):
                         catalogue_item_id,
                         planning_context=SCHOOL,
                     )
-                    focus_intervention = (
-                        selected_training["ssaIntervention"] or None
-                    )
+                    focus_intervention = selected_training["ssaIntervention"] or None
                     if not selected_training["partnerDeliveryAllowed"]:
                         raise BadRequest(
                             "The selected Activity / Training is not approved for "
                             "Partner delivery."
                         )
-                    linked_priorities = ", ".join(
-                        selected_training["priorityTitles"]
-                    )
+                    linked_priorities = ", ".join(selected_training["priorityTitles"])
                     recommendation_reason = (
                         f"Priority activity: {linked_priorities}"
                         if linked_priorities

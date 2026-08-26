@@ -92,7 +92,7 @@ Everything in this table was run, not inferred.
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
 | Role × surface authorization matrix | `manage.py build_permission_matrix` + `test_permission_matrix` | **PASS** — 1,028 surfaces, 845 guarded and answered role by role, 183 declaring none and listed, 0 reachable by nobody |
 | Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS as a build; it found JRN-01** — 22 requirements, 20 traced by executing their own test, 2 blocked. Every traced row records what actually ran. Route column empty on 19 of 20 and metrics-computed column empty on all 20: see JRN-01 in §4b |
-| Container vulnerability scan | Trivy, in CI | **Fix pushed; awaiting the next run** — passed twice on 2026-08-25 and again on `54e3cc8`, then failed from `e815d04` on a new upstream CVE (DEP-08). The base-image packages are now pinned forward; CI's own image build is the verifier |
+| Container vulnerability scan | Trivy, in CI | **PASS on `adf92ec`** — passed twice on 2026-08-25 and again on `54e3cc8`, then failed from `e815d04` on a new upstream CVE (DEP-08). The base-image packages were pinned forward, and CI's Security Scans job has now run to completion on `adf92ec`: image build, non-root check, runtime import and image scan all green. Three earlier attempts never finished — two runs were cancelled by the next push and one hit `startup_failure` — so this is the first completed verification, not a repeat one |
 | Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
 
@@ -436,7 +436,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | FE-01 | Offline field operation does not exist | **Descoped by the product owner, 2026-08-26: "for now, there is no need for offline operation."** No longer a release blocker. The release notes must say plainly that field staff need connectivity, because the platform cancels an offline action rather than queuing it |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
 | P1 | JRN-01 | **18 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and is closing one journey at a time. Journey 19 sweeps four endpoints as all thirteen roles and reproduces SEC-01 where it lived; journey 7 walks five money endpoints and **found FIN-06 on its first run**. Both mutation-verified. The remaining eighteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
-| P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one was Python and Markdown only. **Decided and fixed** — the product owner chose to rebuild before go-live, and the runtime stage now pins the three OpenSSL packages forward. CI's own image build and scan is the verifier; open until that run is green |
+| P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one was Python and Markdown only. **Decided, fixed and verified** — the product owner chose to rebuild before go-live, and the runtime stage pins the three OpenSSL packages forward. CI's Security Scans job completed green on `adf92ec` (run 33011894980): the image builds, does not run as root, imports as the runtime user, and the scan passes. **Closed** |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |
@@ -1019,9 +1019,9 @@ keeps the original assertion for every other check. The second failure,
 `healthy` flag for a question about agency bookings; it now asserts against the agency
 checks it is actually about, which is stronger than the flag it used to read.
 
-## 4b. JRN-01 · The mandated journeys are proven below the door, and two of twenty at it
+## 4b. JRN-01 · The mandated journeys are proven below the door, and three of twenty at it
 
-**P1 · evidence gap · partially closed, 2 of 20 — and the second one found a defect**
+**P1 · evidence gap · partially closed, 3 of 20 — and the second one found a defect**
 
 The traceability matrix's first finding is about the evidence, and it is one this audit
 produced itself, because most of these journey tests were written in this audit.
@@ -1138,6 +1138,123 @@ subtracts confidence from evidence already recorded, and this report would be
 misrepresenting that evidence if it left the reading at "20 of 22 journeys covered" without
 saying which layer those twenty cover.
 
+## 4d. BASE-01 · The base branch is red, and it was pushed without a pull request
+
+**P1 · release-blocking for the branch, not caused by it · found 2026-08-27**
+
+`40b3136` ("Upgrade dark theme tables and governed training flows") was pushed **directly
+to `main`**, bypassing pull-request CI. It is red on its own. Verified by checking `main`
+out in an isolated worktree and running it there, so the finding does not depend on any
+merge with this branch:
+
+| Check | Result on `main` alone |
+| --- | --- |
+| `ruff format --check .` | **6 files would be reformatted** — all 6 are files that commit touched |
+| Django test suite | **8 failures** |
+
+Because GitHub runs pull-request CI against the *merge* of the branch and its base, that
+red arrived on this branch's PR looking like this branch's failure. It is worth stating the
+attribution precisely, since "CI is red" was about to be recorded against the wrong change:
+of the nine failures on the PR, **eight were `main`'s and one was this branch's.**
+
+The one that was this branch's is worth keeping visible. FE-02 removed the six-card cap on
+the KPI tray, and `test_main_dashboard_recommended_action_is_honest` asserted
+`html.count('data-component="kpi-card"') == 6`. That literal was the defect rather than the
+guard: it could not distinguish "the dashboard shows its six metrics" from "the dashboard
+registered seven and discarded one", and reported both as a pass — the exact failure FE-02
+existed to fix. It now compares the render against the payload the view handed the strip,
+through the same consolidation the template tag runs. Reintroducing a cap turns it red;
+verified by mutation.
+
+**None of `main`'s eight were new functional defects.** Each was triaged rather than
+assumed, and the triage mattered — one of them looked like a money defect and was not:
+
+| Failure | What it actually was |
+| --- | --- |
+| `test_cost_catalogue_projects_coverage_...` (`65 != 60`) | Five governed training courses added. **All 65 items are costed** — probed `activity_cost_coverage` directly: zero uncosted, zero missing. A count literal, nothing more. |
+| `test_drawer_contains_the_required_planning_fields` | The catalogue renamed "School Leadership" to "Leadership"; the test named four labels by hand. |
+| `test_switching_intervention_revalidates_the_activity_choice` | The drawer was rebuilt so the disagreement it guarded cannot be composed — see below. |
+| `test_bootstrap_and_runtime_keep_system_as_a_real_preference` | The dark ground moved off pure black. **This one carried a real defect** — BASE-02 below. |
+| `test_every_theme_defines_borderless_elevated_card_tokens` | The dark theme deliberately gained a hairline card border. |
+| Three inventory manifests | New pages and templates; regenerated with the repo's own commands. |
+
+Three of those tests were pinned to a *mechanism* rather than to the property the mechanism
+protected, and so failed a change that left the property intact or stronger. The clearest
+case is the schedule drawer. It asserted `@change="ensureTrainingActivity()"` on the Focus
+Intervention select. That handler is gone — and its absence is not a regression, because the
+drawer was rebuilt so a training and its stated intervention **cannot** disagree: the manual
+intervention picker and the training picker are now mutually exclusive
+(`showManualIntervention` is defined as `!showTrainingActivityPicker && …`), and choosing a
+training *derives* the intervention from it. The old test would have blocked a rework that
+made the invariant stronger, which is the wrong direction for a test to push. All three now
+assert the invariant.
+
+**What this means for the release.** `main` is the release candidate, and a release
+candidate that fails its own CI is not shippable, whatever this branch does. The mandate's
+rule applies to the base branch as much as to any change on it: *"Green" is an evidence-based
+release state.* This is also a process finding, not only a code one — the direct push is
+what let a red state reach `main` at all, and nothing prevents the next one.
+
+## 4e. BASE-02 · Settings promised a dark mode that no longer exists
+
+**P3 · UI accuracy · fixed 2026-08-27**
+
+`40b3136` moved the dark theme's `--edify-bg` from `#000000` to `#0e151c` and its
+`--edify-card-border` from `transparent` to `#2d3d49`. Both are defensible: on a dark ground
+a hairline is what separates stacked cards and table rows where a shadow alone does not
+read, and a deep navy gives elevation something to sit on.
+
+The Settings screen was not updated with them. It went on reading **"True-black, low-glare
+and OLED-friendly"** — and "OLED-friendly" is a claim only pure black can keep, since that
+is the condition under which OLED pixels are actually off. A screen describing a capability
+the code no longer implements is the same defect class as a button with no handler; it is
+only cheaper to fix.
+
+The copy now describes the theme that exists. More usefully, the contract test no longer
+pins a colour literal: it ties the token and the words to **each other**, so changing the
+ground fails until the description changes with it. Verified by mutation — restoring the old
+copy alone turns it red.
+
+## 4f. DARK-01 · Two dark-mode contrast failures, measured rather than reasoned
+
+**P3 · accessibility · open**
+
+The dark theme was measured in Chromium against the merged tree — real pages, real cascade,
+computed styles — because reasoning about CSS statically had already produced three false
+findings earlier in this audit. It produced a fourth on the first run, and the discipline
+caught it: light mode appeared to have **171 contrast failures**, all sharing one colour
+pair. They were not real. The sidebar is painted with a *gradient*, which
+`getComputedStyle(...).backgroundColor` reports as transparent, so the probe walked past it
+to the body and compared near-white sidebar links against a pale blue ground. A screenshot
+settled it in one look. (An earlier version of the probe was wrong in a second way: it read
+`color(srgb 0.24 0.31 0.36)` as integers and got `(0, 0, 0)` for every such value.)
+
+What survives that scrutiny — both opaque colours, no alpha and no gradient in the chain:
+
+| Element | Measured | Needs |
+| --- | --- | --- |
+| `.admin-panel__header a` ("View All", "View Calendar") | **3.56:1** — `#2f78b7` on `rgb(21,31,41)` | 4.5 |
+| `.app-sidebar__item--active` | **4.18:1** — `rgb(237,243,247)` on `#2f78b7` | 4.5 |
+
+Both trace to one cause: `--brand-primary: #2f78b7` is used *as* text and *under* white text,
+and it is not quite AA at either job. The theme's own author anticipated this — the dark
+block defines `--edify-accent-text: #8fbfe3`, commented "AA-safe accent for TEXT on this
+theme's dark surfaces", which measures **8.52:1** on the same card. The panel-header link
+simply does not consume it. For the active pill, the existing `--brand-primary-hover`
+(`#28699f`) measures **5.19:1** under the same white.
+
+Left open deliberately rather than fixed here: both are visual changes to design work that
+landed three hours ago, and the fix belongs with whoever chose the palette. The measurements
+and the two candidate tokens are recorded so that decision is a five-minute one.
+
+`/settings` measured **zero** failures across 204 sampled nodes in dark mode.
+
+**The harness is not committed.** It needs Playwright, which is not in `requirements/`, so
+adding it would turn CI red on a missing dependency — the very thing this section is about.
+It is kept at `scratchpad/dark_contrast_probe.py`. Putting contrast measurement into CI is a
+worthwhile piece of work and an honest prerequisite for ever calling dark mode "verified";
+it is not free, and it is not done.
+
 ## 4c. The product-owner decisions, made
 
 All six questions this report escalated were answered on 2026-08-26. Recording them here
@@ -1153,7 +1270,7 @@ all.
 | D-4 | What does a Core Assessment cost? | Nothing extra — it uses the same staff-visit cost | **Fixed** (D5) |
 | D-5 | Offline field operation: build or descope? | **Descoped for now** | **Descoped** (FE-01) |
 | D-6 | Is the KPI headline limit four, or six? | Neither. The count follows how many things need tracking | **Fixed** (FE-02) |
-| — | DEP-08: ship with the OpenSSL CVE, or rebuild first? | **Rebuild first** | **Patched**, awaiting CI's scan |
+| — | DEP-08: ship with the OpenSSL CVE, or rebuild first? | **Rebuild first** | **Patched and verified** — CI scan green on `adf92ec` |
 
 Two of these are release-note obligations rather than code, and they should not be lost
 because nothing in the codebase will remind anyone:

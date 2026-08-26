@@ -2255,7 +2255,7 @@
    "audit_id": "KPI-SOURCE-113",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 812,
+   "line": 828,
    "label": null,
    "keys": [
     "label",
@@ -2291,7 +2291,7 @@
    "audit_id": "KPI-SOURCE-115",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 460,
+   "line": 473,
    "label": null,
    "keys": [
     "label",

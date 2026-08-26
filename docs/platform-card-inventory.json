@@ -4,10 +4,10 @@
   "templates": 219,
   "distinct_titles": 584,
   "with_card_key": 13,
-  "untitled_surfaces": 1014,
+  "untitled_surfaces": 1016,
   "untitled_chrome": 237,
   "untitled_nested": 389,
-  "untitled_headless": 388,
+  "untitled_headless": 390,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 1
@@ -5919,7 +5919,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 131,
+   "line": 140,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,

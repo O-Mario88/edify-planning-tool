@@ -176,17 +176,26 @@ class CostReferenceTest(TestCase):
         )
         coverage = activity_cost_coverage(items)
 
-        # 28 governed curriculum titles + 12 standard field support items +
-        # sixteen Uganda Business Transformation workflows.
-        # Standard support draws from the same CD rate card as everything
-        # else — a school visit that nothing in the catalogue can price is
-        # exactly the state that made ordinary support unschedulable.
-        self.assertEqual(len(coverage), 60)
+        # EVERY governed item is priced, whatever the catalogue's size.
+        #
+        # This asserted a literal 60 and the literal was the weak part: adding
+        # five governed training courses turned it red without anything being
+        # wrong, and — worse — it would have stayed green if an item were
+        # added AND another dropped. The count is not the property worth
+        # holding. Coverage answering for exactly the catalogue's own items,
+        # each with real cost components, is: standard support draws from the
+        # same CD rate card as everything else, and an activity nothing in the
+        # catalogue can price is exactly the state that made ordinary support
+        # unschedulable.
+        self.assertEqual(len(coverage), len(items))
         self.assertEqual(
             {row["stable_code"] for row in coverage},
             {item.stable_code for item in items},
         )
         self.assertTrue(all(row["components"] for row in coverage))
+        # And the catalogue is not empty, so the three assertions above cannot
+        # all pass vacuously.
+        self.assertGreater(len(items), 50)
 
     def test_visit_costing_prefers_one_canonical_source_per_allowance(self):
         from apps.budget.costing import cost_for_activity

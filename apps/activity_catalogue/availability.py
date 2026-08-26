@@ -218,8 +218,7 @@ def training_activity_options(
     )
     items = _executor_filtered(items, executor_type)
     items = (
-        items
-        .prefetch_related(
+        items.prefetch_related(
             "intervention_mappings",
             Prefetch(
                 "milestone_rules",
@@ -253,9 +252,7 @@ def training_activity_options(
             (mapping for mapping in mappings if mapping.is_primary),
             mappings[0] if mappings else None,
         )
-        ssa_intervention = (
-            primary_mapping.intervention if primary_mapping else None
-        )
+        ssa_intervention = primary_mapping.intervention if primary_mapping else None
         interventions = [ssa_intervention] if ssa_intervention else []
         options.append(
             {
@@ -320,9 +317,7 @@ def validate_priority_training_selection(
         None,
     )
     if selected is None:
-        raise BadRequest(
-            "Select a training from the governed Training Catalogue."
-        )
+        raise BadRequest("Select a training from the governed Training Catalogue.")
     if intervention and intervention != selected["ssaIntervention"]:
         raise BadRequest(
             "The submitted SSA intervention does not match the selected "

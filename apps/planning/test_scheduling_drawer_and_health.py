@@ -114,9 +114,7 @@ class AvailableActivityTypeServiceTest(TestCase):
             cluster_rows["TAM_I"]["interventions"],
             [SsaIntervention.EXPOSURE_TO_WORD_OF_GOD],
         )
-        self.assertEqual(
-            cluster_rows["TAM_I"]["category"], "Christian Transformation"
-        )
+        self.assertEqual(cluster_rows["TAM_I"]["category"], "Christian Transformation")
         self.assertEqual(
             cluster_rows["TAM_I"]["ssaIndicator"], "Exposure to God's Word"
         )
