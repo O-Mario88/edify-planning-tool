@@ -276,18 +276,22 @@ def _prime_target_series(cd: CDScope) -> None:
     cd.pl_cceos: see _prime_pl_cceos. Primed here rather than at each of the
     six call sites, because every caller that needs one needs the other, and
     a site that forgot would silently reintroduce the growth."""
-    from apps.targets.my_targets import active_target_areas, per_user_monthly_series
+    from apps.targets.my_targets import agreed_target_areas, per_user_monthly_series
 
     _prime_pl_cceos(cd)
-    cd.areas = active_target_areas()
     if not cd.cceo_user_ids:
+        cd.areas = []
         cd.per_user_series = {}
         return
-    cd.per_user_series = per_user_monthly_series(
-        User.objects.filter(id__in=cd.cceo_user_ids),
-        cd.fy,
-        areas=cd.areas,
-    )
+    roster = list(User.objects.filter(id__in=cd.cceo_user_ids))
+    # CONFLICT-001, decided: the Country Director weights against the areas
+    # their people have AGREED, not the whole TargetArea catalogue. The
+    # catalogue fallback counted a CCEO's work against targets nobody had
+    # assigned, so a team with no signed agreements read 200% here while its
+    # own Programme Lead honestly read "Not Assigned". The CD still oversees
+    # everyone -- breadth of scope is the roster above, not the denominator.
+    cd.areas = agreed_target_areas(roster, cd.fy)
+    cd.per_user_series = per_user_monthly_series(roster, cd.fy, areas=cd.areas)
 
 
 class CDAnalyticsService:
@@ -881,10 +885,9 @@ class CDAnalyticsService:
         """
         from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
         from apps.targets.my_targets import (
-            active_target_areas,
-            pool_series,
-            pooled_monthly_series,
-            weighted_period_pct,
+            agreed_target_areas,
+            per_user_monthly_series,
+            team_weighted_pct,
         )
 
         # Resolve every distinct person from user_ids ∪ (staff_ids -> user_id)
@@ -905,14 +908,33 @@ class CDAnalyticsService:
         if not resolved_user_ids:
             return 0, 0, 0
 
-        areas = areas or active_target_areas()
         months = TCal.months_of_quarter(quarter) if quarter else list(range(1, 13))
-        if per_user_series is not None:
-            targets, achieved = pool_series(resolved_user_ids, per_user_series, areas)
-        else:
+        users = None
+        if areas is None:
+            # See _prime_target_series: agreed areas, never the catalogue.
             users = list(User.objects.filter(id__in=resolved_user_ids))
-            targets, achieved = pooled_monthly_series(users, fy, areas=areas)
-        return weighted_period_pct(areas, targets, achieved, months)
+            areas = agreed_target_areas(users, fy)
+        if not areas:
+            # Nobody in scope has agreed a measurable priority. Reporting 0 of
+            # 0 is the honest answer and matches PL Team Targets; inventing a
+            # denominator from the catalogue is the defect.
+            return 0, 0, 0
+        if per_user_series is None:
+            if users is None:
+                users = list(User.objects.filter(id__in=resolved_user_ids))
+            per_user_series = per_user_monthly_series(users, fy, areas=areas)
+        # Same rollup the Programme Lead's own Team Targets page uses: each
+        # person's weighted percentage first, then the average of those.
+        # Summing everyone's targets and achievements and dividing once is what
+        # made this surface disagree with the PL -- it let a CCEO with no
+        # target this month contribute their achievement to another's
+        # denominator (CONFLICT-001).
+        return team_weighted_pct(
+            list(resolved_user_ids),
+            per_user_series,
+            months,
+            lambda _user_id: areas,
+        )
 
     @staticmethod
     def _area_achievement_rows(cd, user_ids):
@@ -925,12 +947,15 @@ class CDAnalyticsService:
         """
         from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
         from apps.targets.my_targets import (
-            active_target_areas,
             pool_series,
             pooled_monthly_series,
         )
 
-        areas = cd.areas or active_target_areas()
+        # cd.areas is already the agreed-area union for this CD's roster
+        # (_prime_target_series). An empty list is a real answer -- nobody has
+        # agreed a measurable priority -- so it must NOT fall back to the
+        # catalogue, which is what CONFLICT-001 was.
+        areas = cd.areas
         resolved_user_ids = {user_id for user_id in user_ids if user_id}
         months = (
             TCal.months_of_quarter(cd.quarter) if cd.quarter else list(range(1, 13))

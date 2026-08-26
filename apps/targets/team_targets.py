@@ -39,6 +39,7 @@ from apps.targets.my_targets import (
     TargetAchievementService,
     _user_ids,
     active_target_areas,
+    agreed_target_areas,
     priority_target_areas_for_users,
     weighted_period_pct,
 )
@@ -361,14 +362,10 @@ class PLTeamTargetsService:
         m_start, m_end = Cal.month_range(fy, month_of_fy)
         all_team = supervised_users(pl_user)
         priority_areas_by_user = priority_target_areas_for_users(all_team, fy)
-        areas = []
-        seen_area_keys = set()
-        for user in all_team:
-            for area in priority_areas_by_user.get(str(user.id), []):
-                if area.key in seen_area_keys:
-                    continue
-                seen_area_keys.add(area.key)
-                areas.append(area)
+        # The union of agreed areas across the team. Shared with CD Analytics
+        # rather than duplicated: the two surfaces disagreeing about which
+        # areas count IS CONFLICT-001, so they now compute it in one place.
+        areas = agreed_target_areas(all_team, fy)
         valid_area_keys = {a.key for a in areas}
         category = category if category in valid_area_keys else "overall"
         metric_areas = (
