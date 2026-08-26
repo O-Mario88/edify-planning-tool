@@ -94,7 +94,7 @@ class MobileMicroUXContractTest(SimpleTestCase):
         self.assertNotIn("edify-mobile-table--cards", styles)
         self.assertIn("edify-mobile-table--scroll", styles)
         self.assertIn("tableNeedsInlineScroll(table)", behavior)
-        self.assertIn("tableColumnCount(table) > 3", behavior)
+        self.assertIn("Every visible table keeps single-line cells", behavior)
         self.assertIn("table.dataset.edifyTableColumns", behavior)
         self.assertIn("table.dataset.edifyTableWidth", behavior)
         self.assertIn('data-edify-table-width="standard"', styles)

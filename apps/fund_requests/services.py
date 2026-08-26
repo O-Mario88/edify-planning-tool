@@ -39,6 +39,10 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
     from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 
     qs = qs.exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+    # A paired School Visit is the evidence/Salesforce twin of one in-school
+    # Training mission. The Training owns the visit-equivalent cost, so the
+    # twin is not independently fundable and must not be treated as costless.
+    qs = qs.exclude(paired_in_school_training__isnull=False)
     qs = _filter_period(qs, period, period_key, data).prefetch_related(
         "schedule_cost_lines"
     )

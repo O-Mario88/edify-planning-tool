@@ -53,8 +53,8 @@ class MobileDensityContractTests(SimpleTestCase):
     def test_platform_typography_uses_one_responsive_semantic_scale(self):
         css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
 
-        self.assertIn("--edify-text-display-size: 1.5rem", css)
-        self.assertIn("--edify-text-display-size: 1.375rem", css)
+        self.assertIn("--edify-text-display-size: 1.125rem", css)
+        self.assertIn("--edify-text-display-size: 1rem", css)
         self.assertIn("--edify-text-display-size: 1.25rem", css)
         self.assertIn("--edify-text-body-size: 0.8125rem", css)
         self.assertIn('[class~="text-[18px]"]', css)

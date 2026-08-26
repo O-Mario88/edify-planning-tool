@@ -47,6 +47,29 @@ class Activity(SoftDeleteModel):
         blank=True,
         related_name="activities",
     )
+    # For an in-school delivery, ``catalogue_item`` is the operational
+    # workflow profile (cost, evidence, Salesforce kind and entitlement),
+    # while this field records WHICH of the governed 21 courses was taught.
+    # Keeping those two decisions separate lets a course that is normally
+    # cluster-delivered still be selected for an in-school session without
+    # changing its master-data delivery permissions or costing profile.
+    training_course = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="in_school_course_deliveries",
+    )
+    # One staff action creates two Salesforce facts: a TS- Training and an
+    # SVE- School Visit.  This explicit pair is not follow-up lineage — both
+    # records describe the same delivery and must complete together.
+    paired_school_visit = models.OneToOneField(
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="paired_in_school_training",
+    )
     catalogue_version = models.PositiveIntegerField(null=True, blank=True)
     activity_name_snapshot = models.CharField(max_length=255, null=True, blank=True)
     activity_type_snapshot = models.CharField(max_length=32, null=True, blank=True)
@@ -402,6 +425,10 @@ class Activity(SoftDeleteModel):
                 & ~models.Q(salesforce_activity_id="")
                 & models.Q(deleted_at__isnull=True),
                 name="uniq_activity_salesforce_id",
+            ),
+            models.CheckConstraint(
+                condition=~models.Q(id=models.F("paired_school_visit")),
+                name="activity_pair_cannot_reference_self",
             ),
         ]
 

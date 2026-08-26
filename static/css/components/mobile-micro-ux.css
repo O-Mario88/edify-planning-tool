@@ -78,7 +78,19 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
 }
 
 .edify-mobile-table--scroll {
-  min-inline-size: 100%;
+  inline-size: max-content !important;
+  min-inline-size: 100% !important;
+  table-layout: auto !important;
+}
+
+.edify-table-scroll-region > table:not(.sr-only, .edify-visually-hidden) :is(th, td),
+.edify-table-scroll-region > table:not(.sr-only, .edify-visually-hidden) :is(th, td) * {
+  max-inline-size: none !important;
+  overflow-wrap: normal !important;
+  text-overflow: clip !important;
+  text-wrap: nowrap !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
 }
 
 /* A scroll mode owns table anatomy, not merely overflow. Page-specific mobile
@@ -124,14 +136,14 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
   content: none !important;
 }
 
-/* Small comparison tables can declare their own column proportions and stay
-   as tables at phone widths. This mode deliberately avoids the 44rem scroll
-   floor. */
+/* Legacy fit declarations now follow the same no-wrap contract. The enhancer
+   adds the scroll class at runtime; these rules protect the first paint and
+   any table rendered before JavaScript executes. */
 .edify-mobile-table--fit,
 table[data-mobile-table="fit"] {
-  inline-size: 100% !important;
-  min-inline-size: 0 !important;
-  table-layout: fixed;
+  inline-size: max-content !important;
+  min-inline-size: 100% !important;
+  table-layout: auto !important;
 }
 
 @media (max-width: 63.999rem) {
@@ -147,12 +159,12 @@ table[data-mobile-table="fit"] {
     min-inline-size: max(68rem, 100%);
   }
 
-  /* Compact tables use the available width instead of inheriting roomy
-     desktop cell gutters that manufacture overflow on phones and tablets. */
   :is(.edify-mobile-table--fit, table[data-mobile-table="fit"]) :is(th, td) {
     padding-inline: clamp(0.25rem, 0.8vw, 0.5rem) !important;
-    white-space: normal !important;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal !important;
+    text-wrap: nowrap !important;
+    white-space: nowrap !important;
+    word-break: normal !important;
   }
 
   /* A scrollable table should expose its complete data set. Older templates
@@ -484,10 +496,10 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-icon-size: 0.9375rem;
     --edify-action-button-radius: var(--radius-control);
     --edify-mobile-list-title-size: 0.9375rem;
-    --edify-text-display-size: 1.5rem;
-    --edify-text-heading-size: 1.125rem;
+    --edify-text-display-size: 1.25rem;
+    --edify-text-heading-size: 1rem;
     --edify-text-title-size: 0.9375rem;
-    --edify-text-body-size: 0.875rem;
+    --edify-text-body-size: 0.8125rem;
     --edify-text-label-size: 0.8125rem;
     --edify-text-card-heading-size: 1rem;
     --edify-text-card-title-size: 0.9375rem;
@@ -661,10 +673,10 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
     --edify-mobile-list-title-size: 0.875rem;
-    --edify-text-display-size: 1.375rem;
-    --edify-text-heading-size: 1rem;
+    --edify-text-display-size: 1.125rem;
+    --edify-text-heading-size: 0.9375rem;
     --edify-text-title-size: 0.875rem;
-    --edify-text-body-size: 0.8125rem;
+    --edify-text-body-size: 0.75rem;
     --edify-text-label-size: 0.75rem;
     --edify-text-card-heading-size: 0.9375rem;
     --edify-text-card-title-size: 0.875rem;
@@ -722,10 +734,10 @@ main #filters-form .school-filter-grid > * {
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
     --edify-mobile-list-title-size: 0.8125rem;
-    --edify-text-display-size: 1.25rem;
-    --edify-text-heading-size: 0.9375rem;
-    --edify-text-title-size: 0.8125rem;
-    --edify-text-body-size: 0.8125rem;
+    --edify-text-display-size: 1rem;
+    --edify-text-heading-size: 0.875rem;
+    --edify-text-title-size: 0.75rem;
+    --edify-text-body-size: 0.75rem;
     --edify-text-label-size: 0.75rem;
     --edify-text-card-heading-size: 0.875rem;
     --edify-text-card-title-size: 0.8125rem;

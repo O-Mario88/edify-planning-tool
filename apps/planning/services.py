@@ -2,6 +2,9 @@
 
 from __future__ import annotations
 
+from datetime import datetime
+
+from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -634,6 +637,121 @@ def schedule_school_visit(data: dict, principal) -> dict:
     return create_activity(
         {**data, "activityType": act_type, "requireCatalogue": True}, principal
     )
+
+
+@transaction.atomic
+def schedule_in_school_training_pair(data: dict, principal) -> dict:
+    """Create one governed Training and its companion School Visit together.
+
+    Salesforce treats these as two completed facts (TS- and SVE-), while the
+    planner makes one decision.  The outer transaction guarantees that an
+    entitlement, validation or costing failure on either record leaves
+    neither behind.
+    """
+    from apps.activities.models import Activity
+    from apps.activities.services import create as create_activity
+    from apps.activity_catalogue.availability import (
+        validate_in_school_training_course_selection,
+    )
+    from apps.activity_catalogue.services import (
+        get_selectable_item,
+        resolve_item_for_workflow_kind,
+    )
+    from apps.core.enums import ActivityType
+
+    course_id = str(data.get("catalogueItemId") or "").strip()
+    if not course_id:
+        raise BadRequest("Select the Training to deliver.")
+
+    scheduled_date = None
+    if data.get("scheduledDate"):
+        try:
+            scheduled_date = datetime.fromisoformat(
+                str(data["scheduledDate"]).replace("Z", "+00:00")
+            ).date()
+        except ValueError as exc:
+            raise BadRequest("Choose a valid Training date.") from exc
+
+    selected = validate_in_school_training_course_selection(
+        course_id,
+        on_date=scheduled_date,
+    )
+    course = get_selectable_item(course_id, on_date=scheduled_date)
+    training_profile = resolve_item_for_workflow_kind(
+        ActivityType.IN_SCHOOL_TRAINING,
+        on_date=scheduled_date,
+    )
+    visit_profile = resolve_item_for_workflow_kind(
+        ActivityType.SCHOOL_VISIT,
+        on_date=scheduled_date,
+    )
+    if training_profile is None or visit_profile is None:
+        raise BadRequest(
+            "The standard In-school Training and School Visit profiles must "
+            "both be active before this work can be scheduled."
+        )
+
+    focus = selected["ssaIntervention"] or None
+    base = {
+        **data,
+        "focusIntervention": focus,
+        "purposeIntervention": focus,
+        "requireCatalogue": True,
+    }
+    training_result = create_activity(
+        {
+            **base,
+            "activityType": ActivityType.IN_SCHOOL_TRAINING,
+            "catalogueItemId": training_profile.id,
+            "purposeType": "in_school_training",
+        },
+        principal,
+        training_course=course,
+    )
+    training = Activity.objects.select_for_update().get(id=training_result["id"])
+
+    # Priority contribution belongs to the selected course once. The visit is
+    # the paired Salesforce/evidence record, not a second priority delivery.
+    visit_payload = {
+        key: value
+        for key, value in base.items()
+        if key
+        not in {
+            "priorityAllocationId",
+            "plannedContribution",
+            "expectedParticipants",
+            "teachersAttended",
+            "leadersAttended",
+            "otherParticipants",
+        }
+    }
+    visit_result = create_activity(
+        {
+            **visit_payload,
+            "activityType": ActivityType.SCHOOL_VISIT,
+            "catalogueItemId": visit_profile.id,
+            "purposeType": "in_school_training_delivery_visit",
+            "activityPurposeText": (f"School visit accompanying {course.display_name}"),
+            "expectedOutcome": data.get("expectedOutcome")
+            or (f"Complete the school visit and {course.display_name} training."),
+        },
+        principal,
+        # The Training is the financial owner of this one school mission. The
+        # companion Visit exists so staff can submit the required SVE- record
+        # and visit evidence at the same time; pricing it again would double
+        # the staff day pool or the partner visit lump sum.
+        skip_cost_snapshot=True,
+    )
+    training.paired_school_visit_id = visit_result["id"]
+    training.save(update_fields=["paired_school_visit", "updated_at"])
+
+    return {
+        **training_result,
+        "trainingCourseId": course.id,
+        "trainingCourseLabel": course.display_name,
+        "pairedSchoolVisitId": visit_result["id"],
+        "pairedSchoolVisit": visit_result,
+    }
 
 
 def assign_school_visit_to_partner(data: dict, principal) -> dict:

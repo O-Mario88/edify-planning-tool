@@ -642,6 +642,8 @@ def _serialize(a: Activity) -> dict:
         "id": a.id,
         "activityType": a.activity_type,
         "catalogueItemId": a.catalogue_item_id,
+        "trainingCourseId": a.training_course_id,
+        "pairedSchoolVisitId": a.paired_school_visit_id,
         "catalogueVersion": a.catalogue_version,
         "activityName": a.activity_name_snapshot or a.get_activity_type_display(),
         "catalogueActivityType": a.activity_type_snapshot,
@@ -1384,6 +1386,7 @@ def create(
     *,
     skip_cost_snapshot: bool = False,
     core_slot_verified: bool = False,
+    training_course=None,
 ) -> dict:
     """Create and cost one governed Activity.
 
@@ -1432,6 +1435,22 @@ def create(
 
     p_type = data.get("purposeType")
     focus = data.get("focusIntervention")
+    if training_course is not None:
+        if not getattr(training_course, "is_training_course", False):
+            raise BadRequest("Select a training from the governed Training Catalogue.")
+        from apps.activity_catalogue.services import resolve_activity_intervention
+
+        # The course owns the SSA association. The browser may display it,
+        # but this server-side derivation is the value that is stored.
+        focus = resolve_activity_intervention(
+            training_course,
+            requested_intervention=focus or None,
+        )
+        data = {
+            **data,
+            "focusIntervention": focus,
+            "purposeIntervention": focus,
+        }
     p_text = data.get("activityPurposeText")
     scheduled_date = (
         _parse_date(data["scheduledDate"]) if data.get("scheduledDate") else None
@@ -1875,9 +1894,14 @@ def create(
                 "mapping_mode", flat=True
             )
         )
+        requires_current_ssa = (
+            training_course.requires_current_ssa
+            if training_course is not None
+            else catalogue_item.requires_current_ssa
+        )
         if (
             school is not None
-            and catalogue_item.requires_current_ssa
+            and requires_current_ssa
             and source_ssa is None
             and MappingMode.ADMINISTRATIVE not in mapping_modes
             and MappingMode.SSA_COMPLETION_PREREQUISITE not in mapping_modes
@@ -2237,6 +2261,7 @@ def create(
         driver_type, driver_id, driver_reason = resolve_primary_driver(data)
         activity = Activity.objects.create(
             activity_type=activity_type,
+            training_course=training_course,
             school=school,
             cluster_id=cluster_id,
             project_id=data.get("projectId"),
@@ -2311,6 +2336,25 @@ def create(
                 override_reason=data.get("overrideReason", ""),
                 recommendation_source=governed_recommendation_source,
             )
+            if training_course is not None:
+                # Operational snapshots stay sourced from the standard
+                # in-school profile. Only course identity and its governed
+                # source metadata replace the generic display label.
+                activity.activity_name_snapshot = training_course.display_name
+                activity.recommendation_source = {
+                    **(activity.recommendation_source or {}),
+                    "trainingCourseId": training_course.id,
+                    "trainingCourseCode": training_course.stable_code,
+                    "trainingCategory": training_course.training_category,
+                    "ssaIndicator": training_course.ssa_indicator_label,
+                }
+                activity.save(
+                    update_fields=[
+                        "activity_name_snapshot",
+                        "recommendation_source",
+                        "updated_at",
+                    ]
+                )
         if data.get("priorityAllocationId"):
             from apps.hr.priority_linking import link_activity
 
@@ -2573,6 +2617,117 @@ def start_completion(
         update_fields.append("execution_started_at")
     a.save(update_fields=update_fields)
     return _serialize(a)
+
+
+def in_school_training_pair(
+    activity_id: str, principal, *, for_execution: bool = False
+) -> tuple[Activity, Activity] | None:
+    """Resolve a Training/Visit pair from either member, with scope checks."""
+    resolver = _get_for_execution if for_execution else _get_in_scope
+    selected = resolver(activity_id, principal)
+    training = None
+    visit = None
+    if (
+        selected.activity_type == "in_school_training"
+        and selected.paired_school_visit_id
+    ):
+        training = selected
+        visit = resolver(selected.paired_school_visit_id, principal)
+    elif selected.activity_type == "school_visit":
+        training_id = (
+            Activity.objects.filter(
+                paired_school_visit_id=selected.id,
+                deleted_at__isnull=True,
+            )
+            .values_list("id", flat=True)
+            .first()
+        )
+        if training_id:
+            training = resolver(training_id, principal)
+            visit = selected
+    if training is None or visit is None:
+        return None
+    if (
+        training.activity_type != "in_school_training"
+        or visit.activity_type != "school_visit"
+        or training.school_id != visit.school_id
+    ):
+        raise BadRequest(
+            "This in-school Training pair is inconsistent. Ask an administrator "
+            "to repair it before completion."
+        )
+    return training, visit
+
+
+@transaction.atomic
+def start_in_school_training_pair(activity_id: str, principal) -> tuple[dict, dict]:
+    """Move both members into completion entry as one operation."""
+    pair = in_school_training_pair(activity_id, principal, for_execution=True)
+    if pair is None:
+        raise BadRequest("This activity is not a paired in-school Training.")
+    results = []
+    for activity in pair:
+        Activity.objects.select_for_update().filter(id=activity.id).first()
+        if activity.status in STARTABLE_STATUSES:
+            results.append(start_completion(activity.id, principal=principal))
+        elif activity.status in COMPLETABLE_STATUSES:
+            results.append(_serialize(activity))
+        else:
+            raise BadRequest(
+                "The Training and School Visit must both be ready before "
+                "completion can start."
+            )
+    return results[0], results[1]
+
+
+@transaction.atomic
+def complete_in_school_training_pair(activity_id: str, data: dict, principal) -> dict:
+    """Submit the TS- Training and SVE- Visit atomically.
+
+    Both existing completion gates still run independently: each activity
+    needs its own evidence, Salesforce ID and authorization.  The enclosing
+    transaction means a failure on either side rolls back both reservations
+    and both lifecycle transitions.
+    """
+    pair = in_school_training_pair(activity_id, principal, for_execution=True)
+    if pair is None:
+        raise BadRequest("This activity is not a paired in-school Training.")
+    training, visit = pair
+    list(
+        Activity.objects.select_for_update()
+        .filter(id__in=[training.id, visit.id])
+        .order_by("id")
+    )
+
+    training_result = complete(
+        training.id,
+        {
+            **data,
+            "salesforceId": (data.get("trainingSalesforceId") or "").strip(),
+        },
+        principal,
+    )
+    visit_result = complete(
+        visit.id,
+        {
+            "salesforceId": (data.get("visitSalesforceId") or "").strip(),
+            "teachersAttended": 0,
+            "leadersAttended": 0,
+            "otherParticipants": 0,
+            "strict_validation": data.get("strict_validation", False),
+            "actualDeliveryDate": data.get("actualDeliveryDate"),
+            "actualOutcome": data.get("actualOutcome"),
+            "actualObservations": data.get("actualObservations"),
+            "followUpNote": data.get("followUpNote"),
+        },
+        principal,
+    )
+    return {
+        "training": training_result,
+        "schoolVisit": visit_result,
+        "trainingId": training.id,
+        "schoolVisitId": visit.id,
+    }
 
 
 def complete(activity_id: str, data: dict, principal) -> dict:

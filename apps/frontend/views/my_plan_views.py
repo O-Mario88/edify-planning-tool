@@ -23,7 +23,10 @@ from apps.activities.services import (
     get_activity,
     reschedule as reschedule_activity,
     start_completion,
+    start_in_school_training_pair,
     complete as complete_activity,
+    complete_in_school_training_pair,
+    in_school_training_pair,
     complete_partner_ssa_support,
     submit_for_review,
     record_attendance,
@@ -44,7 +47,7 @@ from apps.evidence.services import (
     infer_kind_from_upload,
     resolve_evidence_kind,
 )
-from apps.core.enums import ActivityType, SsaIntervention
+from apps.core.enums import ActivityType, EvidenceKind, SsaIntervention
 from apps.pl_review.services import (
     queue as pl_queue,
     confirm as pl_confirm,
@@ -388,10 +391,30 @@ def complete_drawer_view(request, activity_id):
     if is_partner_ssa_support_activity(a):
         return partner_ssa_completion_drawer_view(request, activity_id)
 
-    act = get_activity(activity_id, request.user)
+    pair = in_school_training_pair(activity_id, request.user)
+    paired_school_visit = None
+    if pair is not None:
+        a, paired_school_visit = pair
+        if not RolePermissionService.can_view_record(request.user, paired_school_visit):
+            return HttpResponseForbidden(
+                "Access Denied: You do not have permission to access the paired "
+                "School Visit."
+            )
+    act = get_activity(a.id, request.user)
 
     # Auto-start completion if in scheduling status to unlock files/codes
-    if act.get("status") in (
+    pair_needs_start = paired_school_visit is not None and (
+        act.get("status")
+        in (
+            "scheduled",
+            "in_progress",
+            "assigned_to_partner",
+            "partner_scheduled",
+        )
+        or paired_school_visit.status
+        in ("scheduled", "in_progress", "assigned_to_partner", "partner_scheduled")
+    )
+    if pair_needs_start or act.get("status") in (
         "scheduled",
         "in_progress",
         "assigned_to_partner",
@@ -401,12 +424,19 @@ def complete_drawer_view(request, activity_id):
         if forbidden:
             return forbidden
         try:
-            start_completion(activity_id, principal=request.user)
-            act = get_activity(activity_id, request.user)
+            if paired_school_visit is not None:
+                start_in_school_training_pair(a.id, request.user)
+            else:
+                start_completion(a.id, principal=request.user)
+            act = get_activity(a.id, request.user)
         except Exception as e:
             return error_fragment(e, action="Error starting completion", status=400)
 
-    evidence_list = evidence_records_for_activity(activity_id, request.user)
+    evidence_list = list(evidence_records_for_activity(a.id, request.user))
+    if paired_school_visit is not None:
+        evidence_list.extend(
+            evidence_records_for_activity(paired_school_visit.id, request.user)
+        )
 
     cluster_schools = []
     guest_rows = []
@@ -473,6 +503,12 @@ def complete_drawer_view(request, activity_id):
         "drawer_size": "md",
         "needs_netsuite_id": needs_netsuite_id,
         "disbursed_amount": disbursed_amount,
+        "is_paired_in_school_training": paired_school_visit is not None,
+        "paired_school_visit": (
+            get_activity(paired_school_visit.id, request.user)
+            if paired_school_visit is not None
+            else None
+        ),
     }
     # The platform already knows what this activity type needs, so the form
     # says so and pre-selects the outstanding one rather than offering twelve
@@ -482,8 +518,19 @@ def complete_drawer_view(request, activity_id):
     from apps.evidence.requirements import required_kinds
 
     _checklist = evidence_checklist(a)
+    if paired_school_visit is not None:
+        _checklist = [
+            *[{**item, "recordLabel": "Training"} for item in _checklist],
+            *[
+                {**item, "recordLabel": "School Visit"}
+                for item in evidence_checklist(paired_school_visit)
+            ],
+        ]
     context["evidence_checklist"] = _checklist
-    context["evidence_required_kinds"] = list(required_kinds(a.activity_type))
+    required = set(required_kinds(a.activity_type))
+    if paired_school_visit is not None:
+        required.update(required_kinds(paired_school_visit.activity_type))
+    context["evidence_required_kinds"] = list(required)
     context["evidence_kind_choices"] = EvidenceKind.choices
 
     return render(request, "partials/my_plan/complete_drawer.html", context)
@@ -820,51 +867,88 @@ def complete_activity_action(request, activity_id):
     if forbidden:
         return forbidden
 
-    act = get_activity(activity_id, request.user)
+    pair = in_school_training_pair(activity_id, request.user)
+    paired_school_visit = None
+    if pair is not None:
+        a, paired_school_visit = pair
+        if not RolePermissionService.can_upload_evidence(
+            request.user, paired_school_visit
+        ):
+            return HttpResponseForbidden(
+                "Access Denied: You are not authorized to complete the paired "
+                "School Visit."
+            )
+    act = get_activity(a.id, request.user)
 
     if request.method == "POST":
         # Handle start completion if still in scheduled status
-        if act.get("status") in (
+        pair_needs_start = paired_school_visit is not None and (
+            paired_school_visit.status
+            in ("scheduled", "in_progress", "assigned_to_partner", "partner_scheduled")
+        )
+        if pair_needs_start or act.get("status") in (
             "scheduled",
             "in_progress",
             "assigned_to_partner",
             "partner_scheduled",
         ):
             try:
-                start_completion(activity_id, principal=request.user)
+                if paired_school_visit is not None:
+                    start_in_school_training_pair(a.id, request.user)
+                else:
+                    start_completion(a.id, principal=request.user)
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
                     return error_fragment(
                         e, action="Error starting completion", status=400
                     )
                 messages.error(request, f"Error starting completion: {e}")
-                return local_redirect(f"/my-plan/{activity_id}")
+                return local_redirect(f"/my-plan/{a.id}")
 
+        uploads = []
         evidence_file = request.FILES.get("evidence_file")
-        if evidence_file:
+        if evidence_file is not None:
+            uploads.append(
+                (
+                    a,
+                    evidence_file,
+                    request.POST.get("evidence_kind"),
+                )
+            )
+        if paired_school_visit is not None:
+            training_file = request.FILES.get("training_evidence_file")
+            visit_file = request.FILES.get("visit_evidence_file")
+            if training_file is not None:
+                uploads.append((a, training_file, EvidenceKind.ATTENDANCE_FORM))
+            if visit_file is not None:
+                uploads.append(
+                    (paired_school_visit, visit_file, EvidenceKind.VISIT_FORM)
+                )
+        for target_activity, uploaded_file, asserted_kind in uploads:
             try:
                 record_upload(
                     principal=request.user,
-                    activity_id=activity_id,
+                    activity_id=target_activity.id,
                     # What the person selected, else what this activity still
                     # needs, else the file's shape. Inference alone can only say
                     # "pdf" or "photo", which no requirement asks for -- so
                     # completion was unreachable for every activity type that
                     # declares one.
                     kind=resolve_evidence_kind(
-                        evidence_file,
-                        activity=a,
-                        asserted=request.POST.get("evidence_kind"),
+                        uploaded_file,
+                        activity=target_activity,
+                        asserted=asserted_kind,
                     ),
-                    file_obj=evidence_file,
+                    file_obj=uploaded_file,
                 )
             except Exception as e:
                 if request.headers.get("HX-Request") == "true":
                     return error_fragment(e, action="Upload Error", status=400)
                 messages.error(request, f"Upload error: {e}")
-                return local_redirect(f"/my-plan/{activity_id}")
+                return local_redirect(f"/my-plan/{a.id}")
 
         salesforce_id = request.POST.get("salesforce_id", "").strip()
+        visit_salesforce_id = request.POST.get("visit_salesforce_id", "").strip()
         teachers = request.POST.get("teachers_attended", 0)
         leaders = request.POST.get("leaders_attended", 0)
         other = request.POST.get("other_participants", 0)
@@ -958,6 +1042,8 @@ def complete_activity_action(request, activity_id):
 
         payload = {
             "salesforceId": salesforce_id,
+            "trainingSalesforceId": salesforce_id,
+            "visitSalesforceId": visit_salesforce_id,
             "teachersAttended": int(teachers) if teachers else 0,
             "leadersAttended": int(leaders) if leaders else 0,
             "otherParticipants": int(other) if other else 0,
@@ -965,27 +1051,46 @@ def complete_activity_action(request, activity_id):
         }
 
         try:
-            complete_activity(activity_id, payload, request.user)
+            if paired_school_visit is not None:
+                complete_in_school_training_pair(a.id, payload, request.user)
+            else:
+                complete_activity(a.id, payload, request.user)
             audit_log(
-                action="complete_activity",
+                action=(
+                    "complete_in_school_training_pair"
+                    if paired_school_visit is not None
+                    else "complete_activity"
+                ),
                 subject_kind="Activity",
                 subject_id=str(a.id),
                 actor_id=str(request.user.id),
                 actor_role=request.user.active_role,
                 success=True,
-                payload=payload,
+                payload={
+                    **payload,
+                    "paired_school_visit_id": (
+                        paired_school_visit.id if paired_school_visit else None
+                    ),
+                },
             )
             if request.headers.get("HX-Request") == "true":
                 response = HttpResponse("<script>window.location.reload();</script>")
                 response["HX-Trigger"] = "close-drawer"
                 return response
-            messages.success(request, "Activity completion submitted successfully.")
+            messages.success(
+                request,
+                (
+                    "Training and School Visit completion submitted successfully."
+                    if paired_school_visit is not None
+                    else "Activity completion submitted successfully."
+                ),
+            )
         except Exception as e:
             if request.headers.get("HX-Request") == "true":
                 return error_fragment(e, action="Submission Error", status=400)
             messages.error(request, f"Submission error: {e}")
 
-    return local_redirect(f"/my-plan/{activity_id}")
+    return local_redirect(f"/my-plan/{a.id}")
 
 
 @require_page_permission("planning")

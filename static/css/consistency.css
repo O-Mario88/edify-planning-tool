@@ -1373,7 +1373,7 @@ main :is(.card, .panel, [class*="-card"], [class*="-panel"]):is(.p-12, .p-16) {
 /* Drawers and modal panels can be mounted outside <main>; keep them on the
    same filter plane as the rest of the workspace. */
 :is(.theme-blue, .theme-dark)
-  :is(.drawer-surface, .pto-drawer-panel, .tt-modal__panel) {
+  :is(.pto-drawer-panel, .tt-modal__panel) {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
   border: 1px solid var(--edify-card-border) !important;
@@ -1381,6 +1381,25 @@ main :is(.card, .panel, [class*="-card"], [class*="-panel"]):is(.p-12, .p-16) {
   box-shadow: none !important;
   -webkit-backdrop-filter: none !important;
   backdrop-filter: none !important;
+}
+
+/* Canonical action drawers are intentionally elevated modal workspaces. They
+   sit above the filter-plane surfaces governed by the rule above, so retain
+   their stronger perimeter and depth in blue and dark themes. */
+:is(.theme-blue, .theme-dark) .drawer-surface {
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: var(--drawer-radius) !important;
+  box-shadow: var(--drawer-shadow) !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+:is(.theme-blue, .theme-dark) .drawer-header,
+:is(.theme-blue, .theme-dark) .drawer-body {
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
 }
 
 main .settings-detail-tile {
@@ -2544,8 +2563,8 @@ main :is(.apexcharts-datalabel-value) {
  * The reference is a serious working grid: compact mixed-case headings,
  * high-x-height body type, one calm surface, precise horizontal rules and a
  * predictable identity/action rhythm. `.edify-record-table` is the canonical
- * record-list variant. Specialist matrices keep their own wrapping and sticky
- * geometry, but inherit the same type, colour and interaction tokens.
+ * record-list variant. Specialist matrices keep their sticky geometry while
+ * inheriting the same no-wrap type, colour and interaction tokens.
  *
  * Component states: default · hover/focus-within · selected/checked · disabled.
  * Sort styling activates only when real `aria-sort` semantics exist; this CSS
@@ -2732,53 +2751,42 @@ main :is(.apexcharts-datalabel-value) {
   }
 }
 
-/* ═══ DESKTOP TABLES DO NOT WRAP ════════════════════════════════════════
- * The reference design's tables read as single-line rows: a long identity
- * truncates with an ellipsis before any cell is allowed to fold, and column
- * width is spent on the columns that carry names. Wrapping is a small-screen
- * behaviour. The cap is generous — most cells never reach it. A cell that
- * genuinely must fold on desktop opts out with .edify-cell--wrap; a cell
- * hosting a popover menu is excluded automatically, because overflow:hidden
- * would clip the open menu. */
-@media (min-width: 64rem) {
-  /* Drawers and dialogs included: a drawer table wrapping while the page
-     behind it does not would read as two different products. */
-  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table
-    :is(td, th):not(.edify-cell--wrap):not(:has(details, dialog, [x-show])) {
-    white-space: nowrap;
-    max-inline-size: var(--edify-cell-max, 30ch);
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+/* ═══ EVERY TABLE STAYS ON ONE LINE ═════════════════════════════════════
+ * Operational rows never change meaning or height because the viewport is
+ * narrower. The complete value remains available by horizontal scrolling;
+ * no cell opts back into wrapping on phone, tablet, desktop, drawer or modal.
+ * The HTMX-aware table enhancer supplies a labelled, keyboard-focusable
+ * scroll region for every visible table. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) {
+  inline-size: max-content;
+  min-inline-size: 100%;
+  table-layout: auto;
+}
 
-  /* The cap has to fall as the column count rises, or the row simply grows
-     past its card and the last column — usually the one holding the row's
-     ACTION — is pushed out of sight behind an overflow scroller nobody
-     notices. That is exactly what happened to "Schools Needing Urgent
-     Attention": six columns at 30ch each, and the Send button left the
-     viewport. Counting columns off the header row keeps this automatic, so
-     a table that grows a column tightens itself instead of overflowing. */
-  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:has(thead th:nth-child(5)) {
-    --edify-cell-max: 22ch;
-  }
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th) {
+  max-inline-size: none !important;
+  overflow: visible !important;
+  overflow-wrap: normal !important;
+  text-overflow: clip !important;
+  text-wrap: nowrap !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+}
 
-  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:has(thead th:nth-child(7)) {
-    --edify-cell-max: 16ch;
-  }
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only, .edify-visually-hidden) :is(td, th)
+  :not(.sr-only, .edify-visually-hidden) {
+  overflow-wrap: normal !important;
+  text-wrap: nowrap !important;
+  white-space: nowrap !important;
+  word-break: normal !important;
+}
 
-  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:has(thead th:nth-child(9)) {
-    --edify-cell-max: 12ch;
-  }
-
-  /* An action cell is never the one that yields: it holds a control, not
-     prose, and a truncated button is an unusable button. */
-  :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table :is(td, th):last-child:has(button, a) {
-    max-inline-size: none;
-    overflow: visible;
-  }
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table [data-record-title] > :first-child {
+  max-inline-size: none !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
 }

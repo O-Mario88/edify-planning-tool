@@ -275,8 +275,15 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(
             scheduled_response.status_code, 200, scheduled_response.content
         )
-        activity = Activity.objects.get(school=self.school)
-        self.assertEqual(activity.catalogue_item_id, selected_item["id"])
+        activity = Activity.objects.get(
+            school=self.school,
+            activity_type="in_school_training",
+        )
+        self.assertEqual(activity.training_course_id, selected_item["id"])
+        self.assertEqual(
+            activity.catalogue_item.stable_code,
+            "STANDARD_IN_SCHOOL_TRAINING",
+        )
         self.assertEqual(
             activity.est_cost_cents,
             sum(activity.schedule_cost_lines.values_list("amount", flat=True)),

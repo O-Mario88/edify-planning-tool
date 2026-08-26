@@ -17,7 +17,11 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.utils import timezone
 from urllib.parse import urlencode
 
-from apps.planning.services import schedule_school_visit, schedule_cluster_activity
+from apps.planning.services import (
+    schedule_cluster_activity,
+    schedule_in_school_training_pair,
+    schedule_school_visit,
+)
 from apps.budget.costing_service import preview as cost_preview
 from apps.schools.models import School
 from apps.clusters.models import Cluster
@@ -968,12 +972,10 @@ def schedule_modal_view(request):
     )
 
     from apps.activity_catalogue.availability import (
-        SCHOOL,
-        training_activity_options,
+        in_school_training_course_options,
     )
 
-    training_options = training_activity_options(
-        planning_context=SCHOOL,
+    training_options = in_school_training_course_options(
         school=school,
     )
     follow_up_options = _school_training_follow_up_options(school)
@@ -1103,13 +1105,11 @@ def schedule_action_view(request):
             )
         try:
             from apps.activity_catalogue.availability import (
-                SCHOOL,
-                validate_priority_training_selection,
+                validate_in_school_training_course_selection,
             )
 
-            selected_training = validate_priority_training_selection(
+            selected_training = validate_in_school_training_course_selection(
                 catalogue_item_id,
-                planning_context=SCHOOL,
             )
             focus_intervention = selected_training["ssaIntervention"] or None
         except BadRequest as exc:
@@ -1326,8 +1326,12 @@ def schedule_action_view(request):
             # workflow as training and meetings.  Daily batching remains a
             # planning/reporting tool for deliberate bulk schedules, not a
             # set of rules that can prevent a field worker from booking work.
-            created = schedule_school_visit(payload, request.user)
-            noun = "School visit"
+            if purpose_of_visit == "in_school_training":
+                created = schedule_in_school_training_pair(payload, request.user)
+                noun = "In-school training and school visit"
+            else:
+                created = schedule_school_visit(payload, request.user)
+                noun = "School visit"
         else:
             created = schedule_cluster_activity(payload, request.user)
             noun = "Cluster activity"

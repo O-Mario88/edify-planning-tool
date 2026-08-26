@@ -136,6 +136,11 @@ class DrawerAsksForPurposeTest(TestCase):
         settable intervention alongside the training picker, or stops deriving
         it, this goes red — and those are the changes that would actually let a
         training and its stated intervention disagree.
+
+        `main` reached the same conclusion independently in the same hours,
+        as `test_switching_training_fetches_its_mapped_intervention`. This is
+        the union of both: its binding assertion is kept below, because the
+        derivation is only reached if something still calls the handler.
         """
         source = _drawer_source()
 
@@ -145,6 +150,8 @@ class DrawerAsksForPurposeTest(TestCase):
             "the manual intervention picker may coexist with the training "
             "picker again — a planner could set the two to disagree",
         )
+        # main's assertion: the handler is actually wired to the picker.
+        self.assertIn('@change="onTrainingActivityChange()"', source)
         self.assertIn(
             "this.focusIntervention = selected ? selected.ssaIntervention : '';",
             source,

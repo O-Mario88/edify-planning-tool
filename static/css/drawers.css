@@ -253,6 +253,349 @@
   }
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   REFERENCE-ALIGNED FLOATING WORKSPACE
+
+   The shared drawer is a modal workspace, not a side rail.  The visual model
+   is a calm centred sheet: quiet white/deep-navy surface, title-led header,
+   precise field borders, restrained blue focus and a persistent action row.
+   Container queries make the form two-column only when the panel itself has
+   enough room; small drawers and phones remain a natural single-column flow.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  --drawer-width-sm: 32rem;
+  --drawer-width-md: 50rem;
+  --drawer-width-lg: 64rem;
+  --drawer-width-xl: 76rem;
+  --drawer-width-workspace: 94rem;
+  --drawer-radius: 0.75rem;
+  --drawer-shadow:
+    0 2rem 5rem -1.5rem rgba(4, 15, 24, 0.48),
+    0 0.75rem 1.75rem -1rem rgba(4, 15, 24, 0.32),
+    0 1px 0 rgba(255, 255, 255, 0.72) inset;
+  --drawer-backdrop-color: rgba(7, 17, 26, 0.58);
+  --drawer-backdrop-blur: 2px;
+}
+
+.drawer-backdrop,
+.edify-popup-dialog__backdrop {
+  background: var(--drawer-backdrop-color);
+  backdrop-filter: blur(var(--drawer-backdrop-blur));
+  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur));
+}
+
+.drawer-surface {
+  container: drawer / inline-size;
+}
+
+.drawer-surface.type-center {
+  width: calc(100% - clamp(2rem, 7vw, 8rem));
+  max-height: calc(100dvh - 7rem);
+  overflow: visible;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: var(--drawer-radius) !important;
+  background: var(--edify-surface-raised) !important;
+  box-shadow: var(--drawer-shadow) !important;
+}
+
+.drawer-header {
+  position: relative;
+  min-height: 5.5rem;
+  justify-content: center;
+  padding: 1.15rem 4.5rem;
+  overflow: visible;
+  border-bottom: 1px solid var(--edify-border) !important;
+  border-radius: calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px) 0 0;
+  background: var(--edify-surface-raised) !important;
+}
+
+.drawer-header::before,
+.drawer-header__mark,
+.drawer-header__eyebrow {
+  display: none;
+}
+
+.drawer-header__identity,
+.drawer-header__copy {
+  width: 100%;
+  min-width: 0;
+}
+
+.drawer-header__identity {
+  justify-content: center;
+}
+
+.drawer-header__copy,
+.drawer-header__title-row {
+  text-align: center;
+}
+
+.drawer-header__title-row {
+  justify-content: center;
+}
+
+.drawer-header__title-row h3 {
+  color: var(--edify-text) !important;
+  font-size: clamp(1.125rem, 1.025rem + 0.35vw, 1.375rem) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.25 !important;
+}
+
+.drawer-header__subtitle {
+  max-width: 72ch;
+  margin: 0.35rem auto 0 !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: 1.45;
+}
+
+.drawer-close-btn {
+  position: absolute;
+  top: -3.65rem;
+  right: 0;
+  width: 3rem;
+  height: 3rem;
+  z-index: 5;
+  color: var(--edify-text-muted);
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.625rem;
+  background: var(--edify-surface-raised);
+  box-shadow: 0 0.5rem 1.25rem -0.75rem rgba(4, 15, 24, 0.42);
+}
+
+.drawer-close-btn:hover {
+  color: var(--edify-text);
+  border-color: var(--edify-accent);
+  background: var(--edify-surface-hover);
+}
+
+.drawer-close-btn:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--edify-accent) 30%, transparent);
+  outline-offset: 3px;
+}
+
+.drawer-body {
+  min-height: 0;
+  padding: clamp(1.25rem, 2.4vw, 2rem);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  border-radius: 0 0 calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px);
+  background: var(--edify-surface-raised) !important;
+}
+
+.drawer-required-note {
+  display: none;
+  margin: 0 0 1rem !important;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.35rem;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-micro-size) !important;
+  line-height: 1.3;
+}
+
+.drawer-required-note > :first-child {
+  color: var(--edify-danger) !important;
+  font-weight: 700 !important;
+}
+
+.drawer-body:has(form [required]) > .drawer-required-note,
+.drawer-body:has(> div form [required]) > .drawer-required-note {
+  display: flex;
+}
+
+.drawer-body label:not(:has(input[type="checkbox"], input[type="radio"])),
+.edify-popup-dialog__surface :where(label, legend) {
+  margin-bottom: 0.4rem;
+  color: var(--edify-text) !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  line-height: 1.35;
+  text-transform: none !important;
+}
+
+.drawer-body :where(
+  input[type="text"], input[type="email"], input[type="password"],
+  input[type="number"], input[type="tel"], input[type="url"],
+  input[type="search"], input[type="date"], input[type="time"],
+  input[type="datetime-local"], input[type="file"], select, textarea
+),
+.edify-popup-dialog__surface :where(input, select, textarea) {
+  width: 100%;
+  min-height: 3.125rem;
+  padding: 0.72rem 0.9rem;
+  color: var(--edify-text) !important;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: 0.5rem !important;
+  outline: 0;
+  background: var(--edify-surface-raised) !important;
+  box-shadow: 0 1px 2px color-mix(in srgb, #071f34 5%, transparent) inset !important;
+  font-size: 0.9375rem !important;
+  font-weight: 450 !important;
+  line-height: 1.35;
+}
+
+.drawer-body :where(input, select, textarea):hover:not(:disabled):not([readonly]),
+.edify-popup-dialog__surface :where(input, select, textarea):hover:not(:disabled):not([readonly]) {
+  border-color: color-mix(in srgb, var(--edify-accent) 48%, var(--edify-border-strong)) !important;
+}
+
+.drawer-body :where(input, select, textarea):focus,
+.drawer-body :where(input, select, textarea):focus-visible,
+.edify-popup-dialog__surface :where(input, select, textarea):focus-visible {
+  border-color: var(--edify-accent) !important;
+  background: var(--edify-surface-raised) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--edify-accent) 24%, transparent) !important;
+  outline: 1px solid var(--edify-accent) !important;
+  outline-offset: 0;
+}
+
+.drawer-body :where(input, select, textarea):is([aria-invalid="true"], :user-invalid) {
+  border-color: var(--edify-danger) !important;
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--edify-danger) 18%, transparent) !important;
+}
+
+.drawer-body :where(textarea) {
+  min-height: 7rem;
+  resize: vertical;
+}
+
+.drawer-body form:not(.cluster-create-form) > fieldset {
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.drawer-body form:not(.cluster-create-form) > fieldset > legend {
+  width: 100%;
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  color: var(--edify-text) !important;
+  border-radius: 0.375rem;
+  background: var(--edify-surface-muted);
+  font-size: 0.9375rem !important;
+  font-weight: 600 !important;
+}
+
+.drawer-footer {
+  grid-column: 1 / -1;
+  min-height: 4.75rem;
+  margin: 0 calc(clamp(1.25rem, 2.4vw, 2rem) * -1) calc(clamp(1.25rem, 2.4vw, 2rem) * -1);
+  padding: 0.875rem clamp(1.25rem, 2.4vw, 2rem) calc(0.875rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--edify-border);
+  border-radius: 0 0 calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px);
+  background: color-mix(in srgb, var(--edify-surface-raised) 94%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.drawer-footer :where(button, a) {
+  min-height: 2.875rem;
+  padding: 0.68rem 1.15rem;
+  border-radius: 0.5rem !important;
+  font-size: 0.875rem !important;
+}
+
+@container drawer (min-width: 44rem) {
+  .drawer-body form:not(.cluster-create-form):not([data-drawer-layout="stack"]) {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+    gap: 1.25rem 1.5rem;
+  }
+
+  .drawer-body form:not(.cluster-create-form):not([data-drawer-layout="stack"])[class*="space-y-"] > * + * {
+    margin-top: 0 !important;
+  }
+
+  .drawer-body form:not(.cluster-create-form):not([data-drawer-layout="stack"]) > :is(
+    fieldset,
+    section,
+    article,
+    table,
+    hr,
+    h1, h2, h3, h4,
+    p,
+    .drawer-footer,
+    .grid,
+    .flex,
+    .overflow-x-auto,
+    .overflow-auto,
+    [role="alert"],
+    [role="status"],
+    [aria-live],
+    [id*="error"],
+    [data-drawer-span="full"]
+  ) {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .drawer-surface.type-center {
+    top: 0.5rem;
+    right: 0.5rem;
+    bottom: 0.5rem;
+    left: 0.5rem;
+    width: auto;
+    max-width: none;
+    max-height: none !important;
+    height: auto;
+    border-radius: 0.75rem !important;
+    transform: translateY(1rem) scale(0.985);
+  }
+
+  .drawer-surface.type-center.active {
+    transform: translateY(0) scale(1);
+  }
+
+  .drawer-surface.type-center::after {
+    display: none;
+  }
+
+  .drawer-header {
+    min-height: 5.25rem;
+    padding: 1rem 3.75rem 1rem 1rem;
+  }
+
+  .drawer-header__copy,
+  .drawer-header__title-row {
+    text-align: left;
+  }
+
+  .drawer-header__title-row {
+    justify-content: flex-start;
+  }
+
+  .drawer-header__subtitle {
+    margin-inline: 0 !important;
+  }
+
+  .drawer-close-btn {
+    top: 50%;
+    right: 0.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    transform: translateY(-50%);
+    box-shadow: none;
+  }
+
+  .drawer-body {
+    padding: 1rem;
+  }
+
+  .drawer-footer {
+    margin: 0 -1rem -1rem;
+    padding-inline: 1rem;
+  }
+
+  .drawer-footer :where(button, a) {
+    min-height: 3rem;
+  }
+}
+
 /* ═══ DRAWER CONTENT OVERRIDES ════════════════════════════════════════════
    Force token-driven styling inside drawers so all 45+ drawer templates
    automatically get premium styling + dark mode — without editing each one.
@@ -1604,5 +1947,154 @@
     scroll-behavior: auto !important;
     transition-duration: 0.01ms !important;
     animation-duration: 0.01ms !important;
+  }
+}
+
+/* Cascade seal ------------------------------------------------------------
+   drawers.css still carries compatibility rules for pre-base_drawer panels.
+   Keep the canonical shell's final geometry here so those legacy rules can
+   coexist without pulling the shared modal back toward the old side-sheet
+   treatment. */
+.drawer-backdrop:not(.type-right_top) {
+  background-color: var(--drawer-backdrop-color) !important;
+  backdrop-filter: blur(var(--drawer-backdrop-blur)) !important;
+  -webkit-backdrop-filter: blur(var(--drawer-backdrop-blur)) !important;
+}
+
+.drawer-surface.type-center {
+  top: 50% !important;
+  right: 50% !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: calc(100% - clamp(2rem, 7vw, 8rem)) !important;
+  height: auto !important;
+  max-height: calc(100dvh - 7rem) !important;
+  overflow: visible !important;
+  border: 1px solid var(--edify-border-strong) !important;
+  border-radius: var(--drawer-radius) !important;
+  background: var(--edify-surface-raised) !important;
+  box-shadow: var(--drawer-shadow) !important;
+  transform: translate(50%, -48%) scale(0.985) !important;
+}
+
+.drawer-surface.type-center.active {
+  transform: translate(50%, -50%) scale(1) !important;
+}
+
+.drawer-header {
+  min-height: 5.5rem;
+  align-items: center;
+  justify-content: center;
+  padding: 1.15rem 4.5rem;
+  overflow: visible;
+  border-bottom: 1px solid var(--edify-border) !important;
+  border-radius: calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px) 0 0;
+  background: var(--edify-surface-raised) !important;
+}
+
+.drawer-header__identity,
+.drawer-header__title-row {
+  justify-content: center;
+}
+
+.drawer-header__copy,
+.drawer-header__title-row {
+  text-align: center;
+}
+
+.drawer-close-btn {
+  position: absolute;
+  top: -3.65rem;
+  right: 0;
+  z-index: 5;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+  color: var(--edify-text-muted);
+  border: 1px solid var(--edify-border-strong);
+  border-radius: 0.625rem;
+  background: var(--edify-surface-raised);
+  box-shadow: 0 0.5rem 1.25rem -0.75rem rgba(4, 15, 24, 0.42);
+}
+
+.drawer-close-btn:hover {
+  color: var(--edify-text);
+  border-color: var(--edify-accent);
+  background: var(--edify-surface-hover);
+}
+
+.drawer-body {
+  min-height: 0;
+  padding: clamp(1.25rem, 2.4vw, 2rem);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
+  border-radius: 0 0 calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px);
+  background: var(--edify-surface-raised) !important;
+}
+
+.drawer-footer {
+  min-height: 4.75rem;
+  margin: 0 calc(clamp(1.25rem, 2.4vw, 2rem) * -1) calc(clamp(1.25rem, 2.4vw, 2rem) * -1);
+  padding: 0.875rem clamp(1.25rem, 2.4vw, 2rem) calc(0.875rem + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--edify-border);
+  border-radius: 0 0 calc(var(--drawer-radius) - 1px) calc(var(--drawer-radius) - 1px);
+  background: color-mix(in srgb, var(--edify-surface-raised) 94%, transparent);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@media (max-width: 47.99rem) {
+  .drawer-surface.type-center {
+    top: 0.5rem !important;
+    right: 0.5rem !important;
+    bottom: 0.5rem !important;
+    left: 0.5rem !important;
+    width: auto !important;
+    max-width: none !important;
+    max-height: none !important;
+    border-radius: 0.75rem !important;
+    transform: translateY(1rem) scale(0.985) !important;
+  }
+
+  .drawer-surface.type-center.active {
+    transform: translateY(0) scale(1) !important;
+  }
+
+  .drawer-surface.type-center::after {
+    display: none;
+  }
+
+  .drawer-header {
+    min-height: 5.25rem;
+    padding: 1rem 3.75rem 1rem 1rem;
+  }
+
+  .drawer-header__identity,
+  .drawer-header__title-row {
+    justify-content: flex-start;
+  }
+
+  .drawer-header__copy,
+  .drawer-header__title-row {
+    text-align: left;
+  }
+
+  .drawer-close-btn {
+    top: 50%;
+    right: 0.75rem;
+    width: 2.75rem;
+    height: 2.75rem;
+    transform: translateY(-50%);
+    box-shadow: none;
+  }
+
+  .drawer-body {
+    padding: 1rem;
+  }
+
+  .drawer-footer {
+    margin: 0 -1rem -1rem;
+    padding-inline: 1rem;
   }
 }
