@@ -288,6 +288,199 @@ class OverspendReimbursementJourneyTest(TestCase):
                 "the settlement identity does not hold at the terminal state",
             )
 
+    def test_the_same_overspend_walks_the_real_endpoints(self):
+        """JRN-01: the same money path, driven through the platform's own doors.
+
+        The test above proves the *services* move an over-spend correctly. It
+        proves nothing about the layer a real user touches, and until JRN-01
+        was found no mandated journey did — the traceability matrix recorded an
+        empty route column for all twenty. The gap matters most here, because
+        this is the platform's only path where money leaves the organisation a
+        second time for the same activity.
+
+        The five steps are the five real endpoints, and between them they
+        exercise both guard families: four DRF views behind
+        ``RequirePermissions`` (accountability at ``planning.view``, the PL's
+        approval at ``budget.approve``, both accountant acts at
+        ``payment.act``), and one page view behind
+        ``@require_page_permission("my_plan")`` that also runs an object-level
+        ``can_view_record`` check before it will settle anything.
+
+        Splitting the money acts across ``budget.approve`` and ``payment.act``
+        is the separation of duties this journey rests on. Driving it over HTTP
+        is what proves the views hand the services the principal those
+        permissions were checked against — not merely that each layer is
+        correct alone, which was exactly the shape of SEC-01.
+        """
+        import json
+
+        activity, advances = self._delivered_and_verified()
+        advance = advances[0]
+        advance.refresh_from_db()
+        original_disbursed = advance.disbursed_amount
+        original_reference = advance.disburse_reference
+        self.assertGreater(original_disbursed, 0)
+
+        def post_json(path, payload, actor):
+            self.client.force_login(actor)
+            try:
+                return self.client.post(
+                    path, data=json.dumps(payload), content_type="application/json"
+                )
+            finally:
+                self.client.logout()
+
+        base = f"/api/fund-requests/advances/{advance.id}"
+
+        # ── 2-3. Over-spend declared, and routed through the PL ───────────
+        response = post_json(
+            f"{base}/account",
+            {
+                "amountSpent": original_disbursed + OVERSPEND,
+                "netsuiteId": "NS-OVER-HTTP",
+            },
+            self.cceo,
+        )
+        self.assertEqual(response.status_code, 200, response.content[:400])
+
+        response = post_json(f"{base}/pl-approve", {}, self.pl)
+        self.assertEqual(response.status_code, 200, response.content[:400])
+        advance.refresh_from_db()
+        self.assertEqual(advance.status, "accountability_pending")
+
+        # ── 4. The over-spend becomes a claim, not a silent clearance ─────
+        response = post_json(f"{base}/account-approve", {}, self.accountant)
+        self.assertEqual(response.status_code, 200, response.content[:400])
+        advance.refresh_from_db()
+        self.assertEqual(
+            advance.status,
+            "reimbursement_submitted",
+            "driven through the real endpoint, an over-spent advance cleared "
+            "without raising a claim",
+        )
+
+        # ── 5-6. The second payment ───────────────────────────────────────
+        response = post_json(
+            f"{base}/reimburse",
+            {"method": "Bank", "reference": "RMB-HTTP"},
+            self.accountant,
+        )
+        self.assertEqual(response.status_code, 200, response.content[:400])
+        advance.refresh_from_db()
+        self.assertEqual(advance.status, "reimbursement_disbursed")
+        self.assertEqual(advance.reimbursed_amount, OVERSPEND)
+
+        # ── 7. The employee's own receipt confirmation ────────────────────
+        # A page view rather than an API one: page gate, then an object-level
+        # can_view_record check, then the service.
+        self.client.force_login(self.cceo)
+        try:
+            response = self.client.post(
+                f"/my-plan/{activity.id}/confirm-reimbursement-receipt", {}
+            )
+        finally:
+            self.client.logout()
+        self.assertEqual(response.status_code, 200, response.content[:400])
+
+        advance.refresh_from_db()
+        self.assertEqual(
+            advance.status,
+            "reimbursed",
+            "the over-spend never reached a settled state through the doors a "
+            "real user actually uses",
+        )
+        self.assertEqual(
+            advance.accounted_amount,
+            advance.disbursed_amount
+            - (advance.returned_amount or 0)
+            + advance.reimbursed_amount,
+            "the settlement identity does not hold at the terminal state",
+        )
+        self.assertEqual(
+            advance.disbursed_amount,
+            original_disbursed,
+            "reimbursing through the endpoint overwrote the original disbursed "
+            "amount",
+        )
+        self.assertEqual(
+            advance.disburse_reference,
+            original_reference,
+            "reimbursing through the endpoint overwrote the original "
+            "disbursement reference",
+        )
+
+    def test_the_money_doors_refuse_at_whichever_layer_owns_the_rule(self):
+        """The doors above must be shut — and they are shut in two ways.
+
+        A walk that only drives the happy path proves the endpoints exist, not
+        that they are guarded, and an unguarded route on *this* journey
+        releases a second payment. So each money act is also attempted by
+        someone who must not complete it.
+
+        What this test has to get right, and what a status-code-only sweep gets
+        wrong, is that the platform answers at two different layers:
+
+        * ``payment.act`` is held by the Accountant alone, so the CCEO and the
+          Programme Lead are stopped **at the door** with a 403 on both
+          accountant acts.
+        * ``budget.approve`` is held by the CCEO *and* the Programme Lead, so
+          the CCEO passes the door at ``pl-approve`` and is stopped **by the
+          service**, which refuses self-approval. Demanding a 403 there would
+          report a working separation of duties as a security hole.
+
+        So the door probes assert 403 and the service probe asserts the money
+        did not move. The second assertion is the stronger one in both cases,
+        and it is applied to all of them: a refusal that still advances the
+        record is not a refusal.
+        """
+        _activity, advances = self._delivered_and_verified()
+        advance = advances[0]
+        advance.refresh_from_db()
+        status_before = advance.status
+        base = f"/api/fund-requests/advances/{advance.id}"
+
+        def post_as(path, actor):
+            self.client.force_login(actor)
+            try:
+                return self.client.post(path, {})
+            finally:
+                self.client.logout()
+
+        # ── Refused at the door: neither role holds payment.act ───────────
+        for act, path in (
+            ("the accountant's approval", f"{base}/account-approve"),
+            ("the second payment", f"{base}/reimburse"),
+        ):
+            for actor in (self.cceo, self.pl):
+                with self.subTest(door=path, actor=actor.email):
+                    response = post_as(path, actor)
+                    self.assertEqual(
+                        response.status_code,
+                        403,
+                        f"{actor.email} reached {act} at {path}. On this "
+                        "journey an unguarded route releases money a second "
+                        "time.",
+                    )
+
+        # ── Admitted at the door, refused by the service ──────────────────
+        # The CCEO holds budget.approve, so the gate lets them through and the
+        # self-approval rule stops them. The platform's HTMX actions render
+        # such a refusal in the page body rather than as a status, so the only
+        # assertion that means anything here is whether the record moved.
+        post_as(f"{base}/pl-approve", self.cceo)
+
+        advance.refresh_from_db()
+        self.assertEqual(
+            advance.status,
+            status_before,
+            "a refused attempt still advanced the advance. Whichever layer "
+            "owns the rule, a refusal that moves the record is not a refusal.",
+        )
+        self.assertFalse(
+            advance.reimbursed_amount,
+            "money was reimbursed by a request that should have been refused",
+        )
+
     def test_the_claim_cannot_be_paid_twice(self):
         """Duplicate payment is on the mandate's P0 list by name."""
         from apps.core.exceptions import BadRequest

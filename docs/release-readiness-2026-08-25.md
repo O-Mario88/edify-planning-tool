@@ -9,7 +9,7 @@ This is not a judgement that the platform is poor. It is a well-engineered syste
 unusually honest internal controls, and the audit found several defences better than most
 production codebases carry.
 
-**Twenty-seven entries in §4's fixed table were closed in this audit**, including three P0s — a rescheduling
+**Twenty-eight entries in §4's fixed table were closed in this audit**, including three P0s — a rescheduling
 path that could CASCADE-delete a disbursed advance, migrations that could run concurrently
 with no lock, and an IA certification service that asserted no authority at all, so any of
 the fourteen roles could stamp work verified. Every fix carries a regression test verified
@@ -31,9 +31,10 @@ issued an HTTP request or computed a registered metric. The platform's 810 route
 authority gates were exercised by no mandated journey at all, and neither was any number
 a user is actually shown. The door is proven, the domain is proven, the display is
 proven, and nothing proved they meet — which is precisely where SEC-01, the one live
-privilege escalation found here, turned out to live. Journey 19 has since been taken
-through the door and now reproduces SEC-01 at the endpoint it lived at; the other
-nineteen are still below it. See §4b.
+privilege escalation found here, turned out to live. Two journeys have since been taken through the door: journey 19 reproduces SEC-01 at
+the endpoint it lived at, and journey 7 — the money path — **found a defect on its
+first run**, an API endpoint that had never worked in a codebase with 6,081 passing
+tests (FIN-06). The other eighteen are still below the door. See §4b.
 
 What remains is not a list of defects nobody has looked at. The No-Go rests on three
 things a deadline cannot convert into evidence:
@@ -350,6 +351,7 @@ rewritten, not accepted.
 | P1 | GOV-01 | **Both** Business Transformation school-assessment registers were read-only — three surfaces read each, nothing wrote either. The government-requirements register a Country Director opens was structurally empty for every school |
 | P1 | CORE-01 | The Core package's assessment blocker was a **critical nobody could ever clear**, sent as an accountability record to a CCEO the platform gives no way to act |
 | P3 | — | The partner role-bridge failed **open** when its flag was absent |
+| P2 | FIN-06 | The Accountant's approval endpoint **returned 500 to every caller, always** — the step where an over-spent advance becomes a reimbursement claim, unreachable over the API since it was written |
 
 **The shape most of these share.** One definition, written out in several places, where a
 copy drifted: the money-moved status set, the rate-measurement set, the school-write rule,
@@ -368,6 +370,44 @@ report is worse than one no test covers, because the second is visibly absent fr
 coverage and the first is not. The suite now skips nothing, which makes any future skip
 a signal rather than noise.
 
+### FIN-06 · The Accountant's approval endpoint has never worked
+
+**P2 · fixed in this audit · found by taking journey 7 through the door**
+
+`POST /api/fund-requests/advances/<id>/account-approve` raised `TypeError` and returned
+**500 to every caller, always**. It is the step where an over-spent advance becomes a
+reimbursement claim — on the platform's only path where money leaves the organisation a
+second time for the same activity.
+
+The cause is three lines in `_advance_view`, the factory that turns an advance service
+call into a permission-gated endpoint. Its `takes_data=False` flag meant "pass an empty
+dict" rather than "pass no dict", so `approve_accountability(advance_id, principal)` — two
+parameters — was handed three. The flag has exactly one user, which is why exactly one
+endpoint was broken.
+
+The line immediately above it is the tell. `AdvancePlApproveView` wraps *its* two-argument
+service in a lambda that swallows the payload. The same arity problem, noticed and solved
+correctly one line earlier, and not noticed here.
+
+**Severity is P2, not P1, and the reason matters.** The frontend door works:
+`finance_views.py:456` calls `approve_accountability(adv.id, request.user)` with the right
+arity, so a real Accountant clearing accountability in the UI was never affected. What was
+broken is the API — routed, permission-gated, in the published surface, and returning 500
+to any integrator who called it. No money was mis-moved and nobody was blocked.
+
+**Why 6,081 tests did not catch it.** They never issued an HTTP request to it. The service
+beneath is correct and well covered; the view is routed and gated; only the *join* had
+never been executed by anything. A smoke test does exercise
+`/api/fund-requests/<id>/account-approve` — but that is the weekly fund request's endpoint,
+a different view on a similar path, and its passing said nothing about this one.
+
+This is JRN-01's thesis demonstrated on its first application. The prediction was that
+defects live between the door and the service and that no mandated journey looked there.
+The first journey taken through the door found one within minutes.
+
+Fixed by making the flag mean what it says. Verified by mutation: restoring the original
+two lines turns `test_the_same_overspend_walks_the_real_endpoints` red with the same 500.
+
 ### Still open
 
 Nothing below is now a defect nobody has looked at. Each is either infrastructure this
@@ -381,7 +421,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
-| P1 | JRN-01 | **19 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and has begun closing. Journey 19 now sweeps four real endpoints as all thirteen roles and reproduces SEC-01 at the endpoint it lived at (mutation-verified). The remaining nineteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
+| P1 | JRN-01 | **18 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and is closing one journey at a time. Journey 19 sweeps four endpoints as all thirteen roles and reproduces SEC-01 where it lived; journey 7 walks five money endpoints and **found FIN-06 on its first run**. Both mutation-verified. The remaining eighteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
 | P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image — `libssl3t64`, `openssl`, `openssl-provider-legacy` at `3.5.6-1~deb13u2` | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one is Python and Markdown only. **A fixed version exists** (`3.5.7-1~deb13u2`), so unlike the August 25 finding this is closable — but not from here. No Docker daemon and no Trivy in this environment means the Dockerfile change could not be built, run or re-scanned before pushing. Proposed patch is on the PR; see §1 |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
@@ -965,9 +1005,9 @@ keeps the original assertion for every other check. The second failure,
 `healthy` flag for a question about agency bookings; it now asserts against the agency
 checks it is actually about, which is stronger than the flag it used to read.
 
-## 4b. JRN-01 · The mandated journeys are proven below the door, and one of twenty at it
+## 4b. JRN-01 · The mandated journeys are proven below the door, and two of twenty at it
 
-**P1 · evidence gap, not a platform defect · partially closed, 1 of 20**
+**P1 · evidence gap · partially closed, 2 of 20 — and the second one found a defect**
 
 The traceability matrix's first finding is about the evidence, and it is one this audit
 produced itself, because most of these journey tests were written in this audit.
@@ -999,7 +1039,25 @@ deleting `assert_may_write_school` from the view makes the sweep report the take
 layered design working, and it is the first time any mandated journey has proven the two
 layers meet.
 
-**Nineteen of the twenty still do not knock**, so the finding stands and stays open.
+**Journey 7 followed, and it is why this finding was worth raising.** It is the money
+path — the platform's only route where funds leave a second time for the same activity —
+and its five endpoints reach the guard family journey 19 did not: four DRF views behind
+`RequirePermissions` at three different permissions, plus a page view that also runs an
+object-level check. Its first run returned a 500 from
+`POST /api/fund-requests/advances/<id>/account-approve`, and that is **FIN-06** above: an
+endpoint that had never worked, in a codebase with 6,081 passing tests, because nothing had
+ever knocked on it.
+
+The denial half of that journey taught something the route sweep needed. This platform
+refuses at whichever layer owns the rule, and a status-code-only probe gets it wrong:
+`payment.act` is the Accountant's alone, so the CCEO and the PL are stopped **at the door**
+with a 403 on both accountant acts — but `budget.approve` is held by the CCEO *and* the PL,
+so the CCEO passes the door at `pl-approve` and is stopped **by the service**, which refuses
+self-approval. Demanding a 403 there would have reported a working separation of duties as
+a security hole. The test asserts the door where the door owns the rule, and asserts *the
+money did not move* everywhere — which is the stronger claim in both cases.
+
+**Eighteen of the twenty still do not knock**, so the finding stands and stays open.
 
 The consequence is a seam. This platform declares **810 route-level authority gates** — 526
 `require_page_permission` / `require_any_page_permission` decorations and 284 views

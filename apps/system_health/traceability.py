@@ -12,7 +12,11 @@ So this module does not ask anyone to assert anything. It takes the twenty-two
 mandated journeys from ``apps.core.tests.release_journeys`` -- the one
 requirement set this platform has in machine-readable form -- and for each one
 that has a covering test, it RUNS that test with the platform instrumented, and
-records what was genuinely touched:
+records what was genuinely touched. A journey may list more than one full walk
+(journey 7 lists two: one through the services, one through the real HTTP
+endpoints); every one is traced and the evidence merged, because a
+requirement's record is the union of what its walks touched, not whichever was
+written first. What is recorded:
 
 * the HTTP routes requested (``request_started``),
 * the first-party source files executed (a ``sys.settrace`` call hook),
@@ -166,6 +170,28 @@ class Recording:
     def is_empty(self) -> bool:
         return not (self.routes or self.services or self.models_written)
 
+    def merge(self, other: "Recording") -> None:
+        """Fold another run's evidence in.
+
+        A requirement can have more than one test that walks the whole of it —
+        journey 7 has two, one through the services and one through the real
+        endpoints — and its traceability is the union of what they touched.
+        Tracing only the first would understate the requirement's evidence and,
+        worse, would do so silently.
+        """
+        for field_name in (
+            "routes",
+            "services",
+            "functions",
+            "models_written",
+            "permissions",
+            "pages",
+            "object_guards",
+            "notifications",
+            "audit_actions",
+        ):
+            getattr(self, field_name).update(getattr(other, field_name))
+
 
 class Instrumentation:
     """Record what the platform touches, for the duration of a ``with`` block.
@@ -289,7 +315,9 @@ class RequirementRow:
     requirement: str
     title: str
     steps: tuple[str, ...]
-    test: str
+    #: Every test that walks the whole requirement; all of them are traced
+    #: and their evidence merged.
+    tests: tuple[str, ...] = ()
     #: Empty for a traced requirement; the reason, for one that cannot be run.
     untraced_because: str = ""
     roles: tuple[str, ...] = ()
@@ -313,7 +341,7 @@ class RequirementRow:
             "requirement": self.requirement,
             "title": self.title,
             "steps": list(self.steps),
-            "test": self.test,
+            "tests": list(self.tests),
             "untracedBecause": self.untraced_because,
             "roles": list(self.roles),
             "routes": list(self.routes),
@@ -395,14 +423,14 @@ def _metrics_for(recording: Recording) -> tuple[tuple[str, ...], tuple[str, ...]
 
 
 def row_from_recording(
-    *, requirement: str, title: str, steps, test: str, recording: Recording
+    *, requirement: str, title: str, steps, tests, recording: Recording
 ) -> RequirementRow:
     computed, affected = _metrics_for(recording)
     return RequirementRow(
         requirement=requirement,
         title=title,
         steps=tuple(steps),
-        test=test,
+        tests=tuple(tests),
         roles=roles_holding(recording.permissions),
         routes=tuple(sorted(recording.routes)),
         services=tuple(sorted(recording.services)),
@@ -517,7 +545,6 @@ def build_traceability_matrix(*, progress=None) -> dict:
                     requirement=requirement,
                     title=journey.title,
                     steps=journey.steps,
-                    test="",
                     untraced_because=(
                         journey.blocked_by
                         or "no test walks this journey end to end, so there is "
@@ -526,15 +553,16 @@ def build_traceability_matrix(*, progress=None) -> dict:
                 )
             )
             continue
-        pointer = journey.covered_by[0]
-        recording = trace_test(pointer)
+        merged = Recording()
+        for pointer in journey.covered_by:
+            merged.merge(trace_test(pointer))
         rows.append(
             row_from_recording(
                 requirement=requirement,
                 title=journey.title,
                 steps=journey.steps,
-                test=pointer,
-                recording=recording,
+                tests=journey.covered_by,
+                recording=merged,
             )
         )
     return {
@@ -667,7 +695,8 @@ def matrix_as_markdown(matrix: dict) -> str:
             out.append(f"**Not traced.** {row['untracedBecause']}")
             out.append("")
             continue
-        out.append(f"**Evidence test:** `{row['test']}`")
+        label = "Evidence test" if len(row["tests"]) == 1 else "Evidence tests"
+        out.append(f"**{label}:** " + ", ".join(f"`{t}`" for t in row["tests"]))
         out.append("")
         out.append("| Dimension | Traced to |")
         out.append("| --- | --- |")

@@ -19,7 +19,9 @@
         "Performance updated",
         "Drill-down reconciles"
       ],
-      "test": "apps.core.tests.test_journey_priority_to_performance:PriorityToVerifiedPerformanceJourneyTest.test_steps_9_to_11_achievement_performance_and_drilldown_agree",
+      "tests": [
+        "apps.core.tests.test_journey_priority_to_performance:PriorityToVerifiedPerformanceJourneyTest.test_steps_9_to_11_achievement_performance_and_drilldown_agree"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -213,7 +215,9 @@
         "Impact measured",
         "Leadership view updated"
       ],
-      "test": "apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_a_school_that_improves_between_confirmed_assessments_is_measured",
+      "tests": [
+        "apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_a_school_that_improves_between_confirmed_assessments_is_measured"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -288,7 +292,9 @@
         "Accountability",
         "Closure"
       ],
-      "test": "apps.core.tests.test_journey_school_visit:SchoolVisitSpineJourneyTest.test_a_funded_visit_can_be_executed_verified_accounted_and_closed",
+      "tests": [
+        "apps.core.tests.test_journey_school_visit:SchoolVisitSpineJourneyTest.test_a_funded_visit_can_be_executed_verified_accounted_and_closed"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -479,7 +485,9 @@
         "Verification",
         "Unique-school and participant analytics"
       ],
-      "test": "apps.core.tests.test_journey_cluster_training:ClusterTrainingJourneyTest.test_two_trainings_count_twice_per_school_and_once_for_reach",
+      "tests": [
+        "apps.core.tests.test_journey_cluster_training:ClusterTrainingJourneyTest.test_two_trainings_count_twice_per_school_and_once_for_reach"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -585,7 +593,9 @@
         "Accountant payment",
         "Partner tracking"
       ],
-      "test": "apps.core.tests.test_journey_partner_payment:PartnerAssignmentToPaymentJourneyTest.test_partner_work_is_payable_only_once_ia_has_verified_it",
+      "tests": [
+        "apps.core.tests.test_journey_partner_payment:PartnerAssignmentToPaymentJourneyTest.test_partner_work_is_payable_only_once_ia_has_verified_it"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -738,7 +748,9 @@
         "Follow-up SSA",
         "Impact calculated"
       ],
-      "test": "apps.core.tests.test_journey_special_project:SpecialProjectJourneyTest.test_the_whole_special_project_in_order",
+      "tests": [
+        "apps.core.tests.test_journey_special_project:SpecialProjectJourneyTest.test_the_whole_special_project_in_order"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -931,21 +943,42 @@
         "Payment",
         "Final reconciliation"
       ],
-      "test": "apps.core.tests.test_journey_overspend_reimbursement:OverspendReimbursementJourneyTest.test_an_overspend_is_reimbursed_and_the_advance_still_reconciles",
+      "tests": [
+        "apps.core.tests.test_journey_overspend_reimbursement:OverspendReimbursementJourneyTest.test_an_overspend_is_reimbursed_and_the_advance_still_reconciles",
+        "apps.core.tests.test_journey_overspend_reimbursement:OverspendReimbursementJourneyTest.test_the_same_overspend_walks_the_real_endpoints"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
+        "Admin",
+        "BusinessTransformationOfficer",
+        "CCEO",
         "CountryDirector",
-        "ImpactAssessment"
+        "ImpactAssessment",
+        "PartnerAdmin",
+        "PartnerFieldOfficer",
+        "Program Lead",
+        "ProjectCoordinator"
       ],
-      "routes": [],
+      "routes": [
+        "POST /api/fund-requests/advances/{id}/account",
+        "POST /api/fund-requests/advances/{id}/account-approve",
+        "POST /api/fund-requests/advances/{id}/pl-approve",
+        "POST /api/fund-requests/advances/{id}/reimburse",
+        "POST /my-plan/{id}/confirm-reimbursement-receipt"
+      ],
       "services": [
+        "apps/accounts/auth_backend.py",
+        "apps/accounts/jwt.py",
+        "apps/accounts/lockout_service.py",
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
         "apps/activity_catalogue/services.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
@@ -955,20 +988,26 @@
         "apps/core/calendar_policy.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/session_backend.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
+        "apps/documents/gate.py",
+        "apps/frontend/views/my_plan_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
         "apps/fund_requests/monthly_service.py",
         "apps/fund_requests/vendor_channel.py",
+        "apps/fund_requests/views.py",
         "apps/fund_requests/weekly_service.py",
         "apps/hr/milestone_progress.py",
         "apps/integrations/services.py",
@@ -982,7 +1021,9 @@
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
         "apps/ssa/models.py",
-        "apps/ssa/services.py"
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -1011,15 +1052,20 @@
         "routes.DailyVisitRouteBatch",
         "routes.SchoolLocationConfidence",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecord",
         "ssa.SsaScore"
       ],
       "permissions": [
+        "budget.approve",
         "fundRequest.approveEscalated",
         "ia.verify",
-        "payment.act"
+        "payment.act",
+        "planning.view"
       ],
-      "pages": [],
+      "pages": [
+        "my_plan"
+      ],
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
@@ -1048,6 +1094,7 @@
         "notification.weekly_fund_request_ready",
         "notification.weekly_fund_request_submitted",
         "pl_review_confirm",
+        "reimbursement_receipt_confirmed",
         "weekly_fund_request.approve",
         "weekly_fund_request.disburse",
         "weekly_fund_request.receipt_confirmed",
@@ -1114,7 +1161,9 @@
         "Recovery",
         "No achievement"
       ],
-      "test": "apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement",
+      "tests": [
+        "apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -1282,7 +1331,9 @@
         "Return",
         "Access restoration"
       ],
-      "test": "apps.core.tests.test_journey_leave_coverage:LeaveCoverageJourneyTest.test_covered_access_arrives_with_the_leave_and_leaves_with_it",
+      "tests": [
+        "apps.core.tests.test_journey_leave_coverage:LeaveCoverageJourneyTest.test_covered_access_arrives_with_the_leave_and_leaves_with_it"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -1362,7 +1413,9 @@
         "Close",
         "Snapshot lock"
       ],
-      "test": "apps.core.tests.test_journey_quarterly_conversation:QuarterlyConversationJourneyTest.test_the_whole_conversation_in_order",
+      "tests": [
+        "apps.core.tests.test_journey_quarterly_conversation:QuarterlyConversationJourneyTest.test_the_whole_conversation_in_order"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -1566,7 +1619,9 @@
         "Accounting",
         "Impact review"
       ],
-      "test": "apps.core.tests.test_journey_professional_development:ProfessionalDevelopmentJourneyTest.test_a_funded_request_commits_against_the_envelope_when_submitted",
+      "tests": [
+        "apps.core.tests.test_journey_professional_development:ProfessionalDevelopmentJourneyTest.test_a_funded_request_commits_against_the_envelope_when_submitted"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -1616,7 +1671,9 @@
         "Reminder",
         "Superseding version"
       ],
-      "test": "apps.core.tests.test_journey_policy_lifecycle:PolicyLifecycleJourneyTest.test_a_material_new_version_obliges_the_person_who_agreed_to_the_old_one",
+      "tests": [
+        "apps.core.tests.test_journey_policy_lifecycle:PolicyLifecycleJourneyTest.test_a_material_new_version_obliges_the_person_who_agreed_to_the_old_one"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -1693,7 +1750,9 @@
         "Outcome",
         "Appeal"
       ],
-      "test": "apps.core.tests.test_journey_pip:PipJourneyTest.test_a_manager_proposes_and_only_hr_authorises",
+      "tests": [
+        "apps.core.tests.test_journey_pip:PipJourneyTest.test_a_manager_proposes_and_only_hr_authorises"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -1738,7 +1797,9 @@
         "Team Oversight updates",
         "Ownership remains correct"
       ],
-      "test": "apps.core.tests.test_journey_team_oversight:TeamOversightJourneyTest.test_delegating_an_urgent_school_never_transfers_its_ownership",
+      "tests": [
+        "apps.core.tests.test_journey_team_oversight:TeamOversightJourneyTest.test_delegating_an_urgent_school_never_transfers_its_ownership"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],
@@ -1816,7 +1877,9 @@
         "Follow-up",
         "Next SSA"
       ],
-      "test": "apps.business_transformation.test_journeys_school_support:FinancialHealthJourneyTest.test_the_whole_financial_health_chain_in_order",
+      "tests": [
+        "apps.business_transformation.test_journeys_school_support:FinancialHealthJourneyTest.test_the_whole_financial_health_chain_in_order"
+      ],
       "untracedBecause": "",
       "roles": [
         "CCEO",
@@ -1923,7 +1986,9 @@
         "Status update",
         "Expiry reminder"
       ],
-      "test": "apps.business_transformation.test_journeys_school_support:GovernmentRequirementsJourneyTest.test_the_whole_government_requirements_chain_in_order",
+      "tests": [
+        "apps.business_transformation.test_journeys_school_support:GovernmentRequirementsJourneyTest.test_the_whole_government_requirements_chain_in_order"
+      ],
       "untracedBecause": "",
       "roles": [
         "CCEO",
@@ -2032,7 +2097,9 @@
         "Impact",
         "Geographic analytics"
       ],
-      "test": "apps.business_transformation.test_journey_loan:LoanJourneyTest.test_the_whole_loan_in_order",
+      "tests": [
+        "apps.business_transformation.test_journey_loan:LoanJourneyTest.test_the_whole_loan_in_order"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -2165,7 +2232,9 @@
         "Student reach does not duplicate",
         "Loan history remains correct"
       ],
-      "test": "apps.core.tests.test_journey_repeat_borrower:RepeatBorrowerJourneyTest.test_a_second_loan_to_one_school_counts_twice_but_the_school_once",
+      "tests": [
+        "apps.core.tests.test_journey_repeat_borrower:RepeatBorrowerJourneyTest.test_a_second_loan_to_one_school_counts_twice_but_the_school_once"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -2272,7 +2341,9 @@
         "Attempt unauthorized access for every sensitive workflow",
         "All attempts must fail closed"
       ],
-      "test": "apps.core.tests.test_journey_cross_role_security:CrossRoleSecurityJourneyTest.test_every_sensitive_workflow_refuses_every_role_that_should_not_hold_it",
+      "tests": [
+        "apps.core.tests.test_journey_cross_role_security:CrossRoleSecurityJourneyTest.test_every_sensitive_workflow_refuses_every_role_that_should_not_hold_it"
+      ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
@@ -2285,8 +2356,6 @@
         "POST /schools/{id}/edit-drawer"
       ],
       "services": [
-        "apps/accounts/auth_backend.py",
-        "apps/accounts/lockout_service.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/staff_matching.py",
@@ -2417,7 +2486,7 @@
         "Sync",
         "No duplicate"
       ],
-      "test": "",
+      "tests": [],
       "untracedBecause": "FE-01: offline field operation does not exist. There is no IndexedDB queue, no replay and no server-side idempotency key, so there is no behaviour to walk. This journey cannot be covered by a test until the capability is built.",
       "roles": [],
       "routes": [],
@@ -2441,7 +2510,7 @@
         "Retry succeeds",
         "No duplicate"
       ],
-      "test": "",
+      "tests": [],
       "untracedBecause": "INTG-01: no Salesforce, NetSuite or MFI transport exists. There is no outward call to fail, so 'external system fails' and 'retry succeeds' have nothing to exercise.",
       "roles": [],
       "routes": [],
@@ -2467,7 +2536,9 @@
         "Generate new draft planning",
         "Historical reports remain unchanged"
       ],
-      "test": "apps.core.tests.test_journey_fy_rollover:FiscalYearRolloverJourneyTest.test_the_year_closes_without_changing_what_the_old_year_reports",
+      "tests": [
+        "apps.core.tests.test_journey_fy_rollover:FiscalYearRolloverJourneyTest.test_the_year_closes_without_changing_what_the_old_year_reports"
+      ],
       "untracedBecause": "",
       "roles": [],
       "routes": [],

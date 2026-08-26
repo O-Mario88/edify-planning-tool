@@ -325,13 +325,19 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
                 self.assertEqual(row["title"], journey.title)
                 self.assertEqual(row["steps"], list(journey.steps))
 
-    def test_each_row_names_the_test_the_census_names(self):
+    def test_each_row_names_every_test_the_census_names(self):
+        """All of a requirement's walks, not an arbitrary first one.
+
+        The builder traces every pointer and merges the evidence, because a
+        requirement with two walks — journey 7 has one through the services
+        and one through the real endpoints — has the union of what they
+        touched, and tracing only the first understates it silently.
+        """
         for row, journey in zip(self.rows, JOURNEYS):
             with self.subTest(requirement=row["requirement"]):
-                expected = journey.covered_by[0] if journey.covered_by else ""
                 self.assertEqual(
-                    row["test"],
-                    expected,
+                    row["tests"],
+                    list(journey.covered_by),
                     "the matrix was generated against a different manifest; "
                     "re-run `python manage.py build_traceability_matrix`",
                 )
@@ -356,7 +362,7 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
             if not row["untracedBecause"]:
                 continue
             with self.subTest(requirement=row["requirement"]):
-                self.assertEqual(row["test"], "")
+                self.assertEqual(row["tests"], [])
                 for column in ("routes", "services", "modelsWritten", "roles"):
                     self.assertEqual(row[column], [])
                 self.assertGreater(len(row["untracedBecause"]), 40)
@@ -399,7 +405,7 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
 #: docs/release-readiness-2026-08-25.md in the same commit. It is pinned rather
 #: than derived so that neither growing nor losing door coverage can happen
 #: without somebody saying so.
-JOURNEYS_THAT_KNOCK = {"journey-19"}
+JOURNEYS_THAT_KNOCK = {"journey-07", "journey-19"}
 
 
 class WhichJourneysReachTheDoorTest(unittest.TestCase):

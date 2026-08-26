@@ -11,10 +11,18 @@ either points at the test that walks it or says plainly that nothing does.
 pointer must resolve to a test that exists, and the covered count must match
 the number this module declares. Neither can drift quietly.
 
-A journey counts as covered only when ONE test walks the whole thing. Several
+A journey counts as covered only when a test walks the WHOLE thing. Several
 tests that each verify a step, with the seams between them faked, is exactly
 the coverage this platform cannot rely on: either half passes while the join
 is broken.
+
+A journey may list more than one such test, and journey 7 now does: one walk
+through the services and one through the platform's own HTTP endpoints. That is
+not the split this rule forbids — each walks the entire journey alone, and they
+prove different layers of it. The distinction is between two complete walks and
+two half-walks. The traceability matrix traces every pointer listed here and
+merges the evidence, so a requirement's record is the union of what its walks
+touched rather than whichever happened to be written first.
 """
 
 from __future__ import annotations
@@ -180,6 +188,14 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_overspend_reimbursement:"
             "OverspendReimbursementJourneyTest."
             "test_an_overspend_is_reimbursed_and_the_advance_still_reconciles",
+            # The same journey again, driven through the platform's own
+            # endpoints rather than its services (JRN-01). Both are listed
+            # because both walk the whole thing and they prove different
+            # layers; the traceability matrix traces each and merges the
+            # evidence. The second one found FIN-06 on its first run.
+            "apps.core.tests.test_journey_overspend_reimbursement:"
+            "OverspendReimbursementJourneyTest."
+            "test_the_same_overspend_walks_the_real_endpoints",
         ),
     ),
     Journey(
