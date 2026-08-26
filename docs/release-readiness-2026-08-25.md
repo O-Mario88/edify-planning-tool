@@ -21,6 +21,18 @@ an audit cannot close by writing code. Walking them is what found four of the fi
 including two that no surface would ever have complained about: a Special Project whose
 impact could never be measured, and an accountability record no CCEO could ever clear.
 
+**Those twenty are also now traced to the code that runs for them**, by the requirements
+traceability matrix (§11, §45.2) — the last of the twelve mandated deliverables, deferred
+by two prior audits and built here. It asserts nothing: it executes each journey's own test
+with the platform instrumented and records the routes, services, models, permissions,
+notifications, audit actions and metrics the run genuinely touched. Doing that immediately
+produced a finding about the evidence itself — **JRN-01**: not one of the twenty journeys
+issues an HTTP request or computes a registered metric. The platform's 810 route-level
+authority gates are exercised by no mandated journey at all, and neither is any number a
+user is actually shown. The door is proven, the domain is proven, the display is proven,
+and nothing proves they meet — which is precisely where SEC-01, the one live privilege
+escalation found here, turned out to live. See §4b.
+
 What remains is not a list of defects nobody has looked at. The No-Go rests on three
 things a deadline cannot convert into evidence:
 
@@ -52,6 +64,11 @@ GOV-01, FIN-05, PROJ-01 and GOV-02 — and the first three are closed. A repo-wi
 pins every model that remains in that state, with a written reason each, so a fifth cannot
 appear in silence (§4a).
 
+JRN-01 is the same shape one level up, and worth reading that way: the journey evidence has
+scrupulously honest readers — every test passes, every count is true — and the layer it
+does not reach was simply never something anyone's instrument pointed at. It took an
+instrument that records what *ran*, rather than what passed, to see it.
+
 ---
 
 ## 1. Gates executed in this audit
@@ -71,6 +88,7 @@ Everything in this table was run, not inferred.
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
 | Role × surface authorization matrix | `manage.py build_permission_matrix` + `test_permission_matrix` | **PASS** — 1,028 surfaces, 845 guarded and answered role by role, 183 declaring none and listed, 0 reachable by nobody |
+| Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS as a build; it found JRN-01** — 22 requirements, 20 traced by executing their own test, 2 blocked. Every traced row records what actually ran. Route column and metrics-computed column empty on all 20: see §4b |
 | Container vulnerability scan | Trivy, in CI | **PASS** — confirmed twice, 08:38 and 10:14 |
 | Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
@@ -327,6 +345,7 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
 | P1 | FE-01 | Offline field operation does not exist | A build: IndexedDB queue, replay, server-side idempotency keys |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
+| P1 | JRN-01 | Not one of the 20 walked journeys issues an HTTP request or computes a registered metric, so **810 route-level authority gates** and every displayed number are exercised by zero mandated journeys | An evidence gap this audit produced and is naming. The door and the domain are each proven; nothing proves they meet, and SEC-01 lived exactly in that join. Pinned by `TheJourneysNeverKnockTest` — see §4b |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
 | P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
 | P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |
@@ -909,6 +928,78 @@ keeps the original assertion for every other check. The second failure,
 `healthy` flag for a question about agency bookings; it now asserts against the agency
 checks it is actually about, which is stronger than the flag it used to read.
 
+## 4b. JRN-01 · Every mandated journey is proven below the door, and none at it
+
+**P1 · evidence gap, not a platform defect · open**
+
+The traceability matrix's first finding is about the evidence, and it is one this audit
+produced itself, because most of these journey tests were written in this audit.
+
+All twenty walked journeys drive services directly. **Not one issues an HTTP request.**
+The matrix's route column is empty for every row, and that reading is not the tracer
+failing to look: a control test proves it records a route when one happens, and an
+independent static pass over the twenty journey modules finds zero calls to the test
+client. Two methods, same answer.
+
+The consequence is a seam. This platform declares **810 route-level authority gates** — 526
+`require_page_permission` / `require_any_page_permission` decorations and 284 views
+carrying `required_permissions` — and no mandated journey exercises a single one of them.
+The permission matrix (§45.5) proves those declarations are coherent: every guarded route
+is answered role by role, and none is reachable by nobody. The journeys prove the domain
+logic underneath. Nothing proves the two **meet** — that the view hands the service the
+principal it just checked, in the scope it just checked it for.
+
+That is not a hypothetical seam. SEC-01, the one live privilege escalation this audit
+found, lived exactly there: the school edit drawer gated a *write* on the *read* helper.
+Both halves were individually correct and individually tested. The defect was the join.
+
+Eight of the twenty go further and consult no authority at all — no permission key, no page
+gate, no object-level guard anywhere in the run: journeys 2, 4, 9, 11, 12, 13, 14 and 22
+(SSA improvement, cluster training, leave and coverage, professional development, policy
+lifecycle, PIP, team oversight, financial-year rollover). This needs stating carefully. It
+does **not** mean those workflows are unauthorised. Services also refuse by comparing roles
+inline and raising `Forbidden`, at 232 sites, and those refusals carry no permission key
+for the tracer to record. What it means is narrower and still uncomfortable: for those
+eight domains, the release evidence contains no authorization decision of any kind.
+
+**The same gap has a second half, and it is the more surprising one.** No journey computes
+a registered metric either. The twenty runs between them move the source data of **75 of
+the platform's 417 registered metrics** — journey 1 alone moves 46 — and not one of them
+ever calls a metric's own computing function. So no mandated journey verifies a number a
+user is actually shown. They verify the domain state those numbers are derived from, and
+leave the derivation to the metric suite to check separately. It is the route gap again in
+different clothes: the join between what the platform knows and what it displays is proven
+by nothing end to end.
+
+That zero was checked before it was written down. Attribution is function-level, and three
+controls prove the join works — the tracer records functions and not merely files, a metric
+whose own function ran *is* credited, and a metric whose module ran without it is *not*.
+The last one is a regression pin: the first version of this tracer matched on the file and
+credited journey 1 with twelve analytics metrics it had never computed. Journey 1's true
+count is zero.
+
+**Why this was not visible before.** Each journey test passes, the journey census counts 20
+of 22 covered, and every one of those numbers is true. "Covered end to end" was defined as
+one test walking the whole journey — which these do — and that definition never said which
+layer. This is the same shape as the defect class this audit has been chasing all along: a
+capability with scrupulously honest readers and a gap nobody's instrument was pointed at.
+It took an instrument that records what ran, rather than what passed, to see it.
+
+**What would close it.** Rewriting a journey to drive the platform through its own routes
+— logging in as each role, requesting the real URLs, posting the real payloads, and reading
+the numbers off the surface the user reads them from — so that the door, the domain and the
+display are proven to meet on at least the highest-risk paths. That is real work and it is
+not done here. It is pinned instead: `TheJourneysNeverKnockTest` holds both halves of the
+finding, and either one fails the moment a journey starts knocking or starts computing a
+metric, which forces this section to be rewritten in the same commit rather than the
+improvement going unrecorded.
+
+**Why it does not change the verdict.** The release is already **No-Go** on nine
+infrastructure gates and three product decisions. JRN-01 does not add a blocker; it
+subtracts confidence from evidence already recorded, and this report would be
+misrepresenting that evidence if it left the reading at "20 of 22 journeys covered" without
+saying which layer those twenty cover.
+
 ## 5. Path to a defensible Go
 
 Six items, of which engineering has closed two outright and can close none of the rest
@@ -1119,6 +1210,16 @@ Nothing on the approved-extensions list is fully absent — a genuinely strong r
 16 items covering Business Transformation, loans and lending partners, the full HR suite,
 Special Projects, SSA impact measurement and the partner workflow. Three are partial:
 
+**A caveat this section owes the reader, raised by the traceability matrix.** The
+approved-extensions list exists **only as prose, in this document**. `GAP-01`..`GAP-16`
+appear in no machine-readable form anywhere in the repository — three of the sixteen are
+named below and the other thirteen are summarised as a count. So "nothing is fully absent
+across 16 items" is a claim nobody downstream can check, and it is the last claim of that
+shape left in this report. The traceability matrix records it as the one requirement set
+it cannot reach, and says why, rather than quietly omitting it: writing the sixteen down is
+a product-owner deliverable, and once they are written down they can be traced the same way
+the twenty-two journeys now are.
+
 - **GAP-02 ·** IA **cannot** edit Master Priority rows. `_assert_master_author` requires
   Country Director, and IA's RBAC block has neither `STRATEGIC_PRIORITIES_EDIT` nor
   `MILESTONES_DEFINE` — both sit with Admin, the Country Director and the RVP. There is no
@@ -1268,13 +1369,19 @@ refuses on the scheduling policy long before it reaches the lock. It was only by
 the test against the reverted guard that the tautology showed up. Every regression test
 here was checked that way — including the last one, where reverting the batch took the
 measurement from 69 back to 112 and the test failed as it should.
-## 7a. Deliverable coverage — what this audit did not produce
+## 7a. Deliverable coverage
 
-The mandate asks for twelve deliverables. Nine are in this document: the executive
-assessment, defect register, journey report, financial reconciliation, target and
-performance reconciliation, data-integrity report, security report, frontend and
-responsive report, and the deployment and rollback report. The scale report is here with
-its result recorded as not established rather than passed.
+The mandate asks for twelve deliverables, and **all twelve now exist.** Nine are in this
+document: the executive assessment, defect register, journey report, financial
+reconciliation, target and performance reconciliation, data-integrity report, security
+report, frontend and responsive report, and the deployment and rollback report. The scale
+report is here with its result recorded as not established rather than passed. The other
+two are generated artefacts held to the live source by tests, described below.
+
+That every deliverable exists is not the same as every gate passing, and this section is
+not a victory lap. Two of the twelve carry findings of their own — the permission matrix
+invented five before it was corrected, and the traceability matrix produced JRN-01 about
+the evidence base itself. The verdict is unchanged and remains **No-Go**.
 
 **The exhaustive permission and scope matrix (§45.5) is now built.**
 `docs/platform-permission-matrix.md` and its JSON twin are generated by
@@ -1309,17 +1416,54 @@ geography lookups — may well be guarded inside the view body, and this module 
 It says so instead of scoring them, because a coverage percentage that quietly excludes
 what it could not classify is the problem the old figure had.
 
-One is still **not** built, and saying so is part of the assessment:
+**The requirements traceability matrix (§11, §45.2) is now built too**, and it is the last
+of the twelve. Two prior audits deferred it, including the internal audit of 2026-08-16,
+and the reason is not hard to see: written by hand it is a spreadsheet of assertions, and a
+spreadsheet of assertions is the same evidence problem this audit has spent its time
+closing everywhere else. Nobody can check it, and it is wrong the first time a service is
+renamed.
 
-- **The complete requirements traceability matrix (§11, §45.2).** Every approved
-  requirement mapped to its role, page, API, service, model, permission, notification,
-  metric, test and evidence. This audit prioritised the highest-risk domains and the
-  platform's own invariants instead. The internal audit of 2026-08-16 also recorded this
-  gate as NOT DONE, so it has now been deferred twice.
+So `docs/platform-traceability-matrix.md` asserts nothing. For each of the twenty-two
+mandated journeys it **runs that journey's own covering test with the platform
+instrumented** and records what was genuinely touched: the HTTP routes requested, the
+first-party source files executed, the models written, the permissions and page gates
+consulted, the notifications raised, the audit actions written, and the metrics the run
+computes and moves. Roles come from the RBAC tables — the roles that hold the permissions
+the run actually checked. Every cell is a record of an execution, not a claim about one.
+Twenty requirements are traced this way; the two blocked journeys get a row carrying the
+reason and no trace at all, because there is nothing to run.
 
-That omission does not change the verdict — the release is already blocked on evidence that
-cannot be produced here — but it would have to exist before a Go could be called complete
-on the mandate's own terms.
+Three things about it are worth stating.
+
+It **had to be launched as a test run to mean anything.** `config/settings/base.py` decides
+`IS_TESTING` from `sys.argv` at import time, and with it fiscal-year rollover,
+platform-failure detection, interaction telemetry and the blocking-IO guard. Launched as an
+ordinary management command the tracer loaded the *production* configuration, post-migrate
+seeding took a different branch, and the policy-lifecycle journey failed inside the tracer
+while passing in the suite — seeding had published two extra mandatory policies whose
+audience then owed acknowledgements. The command now re-executes itself once with `test` in
+argv rather than trace a platform the suite has never proved. That is a real property of
+this codebase worth knowing: any tool that runs the suite from outside `manage.py test`
+gets a different platform.
+
+It **is held by controls, not by trust.** A tracer that records nothing produces a matrix
+full of honest-looking zeroes, and a zero reads exactly like "the platform does not do
+this". `apps/system_health/test_traceability_matrix.py` therefore runs the tracer against
+known-answer fixtures — one that makes an HTTP request, one that writes a model, one that
+checks a permission, one that fails on purpose — and asserts it saw each, that it refuses to
+record evidence from a red test, and that it never appears in its own results.
+
+And it **found its own defects twice before it was allowed to say anything**, which is now
+the fifth and sixth time in this audit. Its first version attributed metrics by module
+file, and credited one journey with twelve analytics metrics because an unrelated function
+in the same file had run; attribution is function-level now, and that journey's true count
+is zero. Its service-path resolver walked a dotted path down until something existed, which
+for any unresolvable path was `apps/__init__.py` — so a metric pointing at a deleted module
+would have looked perfectly traceable. Both were caught by checking the output against the
+thing it claimed to describe, and both are now pinned by tests.
+
+What the matrix found is **JRN-01**, in §4b — and it is about this report's own
+evidence base rather than about the platform.
 
 ## 8. Release Requirements Conflict Register
 
