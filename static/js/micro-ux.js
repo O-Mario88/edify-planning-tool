@@ -114,18 +114,11 @@
   }
 
   function tableNeedsInlineScroll(table) {
-    var mode = table.dataset.mobileTable;
-    if (mode === 'scroll') return true;
-    if (mode === 'fit') return false;
-
-    /* Only genuinely compact summaries fit safely on a phone without losing
-       scanability. Four-column operational tables often contain names,
-       statuses and actions rather than four short numbers; keep those rows
-       intact and let their labelled region scroll instead of crushing cells. */
-    var declaresWideMinimum = Array.from(table.classList).some(function (name) {
-      return name.indexOf('min-w-') === 0 || name.indexOf('min-inline-') === 0;
-    });
-    return declaresWideMinimum || tableColumnCount(table) > 3;
+    /* Every visible table keeps single-line cells at every breakpoint. Even a
+       two-column comparison can contain a long school or intervention name,
+       so column count is not a safe proxy for whether wrapping is acceptable.
+       Always provide the same labelled horizontal scroll affordance. */
+    return table.getAttribute('role') !== 'presentation';
   }
 
   function enhanceTableChoices(table) {
@@ -170,17 +163,11 @@
        a visual layout surface. Preserve its one-pixel hiding contract. */
     if (table.matches('.sr-only, .edify-visually-hidden')) return;
 
-    /* Compact tables keep every column visible on phones. Explicit fit/scroll
-       modes remain available for unusual content, while the default follows
-       the real column count instead of making every table scroll. */
-    if (!tableNeedsInlineScroll(table)) {
-      table.classList.add('edify-mobile-table--fit');
-      return;
-    }
+    if (!tableNeedsInlineScroll(table)) return;
 
     /* Keep every data set tangible at every viewport: the header and column
-       relationships stay visible, and narrow screens scroll the real table
-       horizontally. */
+       relationships stay visible, and every screen scrolls the real table
+       horizontally whenever its content is wider than the region. */
     table.classList.add('edify-mobile-table--scroll');
     makeScrollRegion(table, label);
   }

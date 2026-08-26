@@ -47,11 +47,12 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
         self.assertIn("> :is(thead, tbody, tfoot) > tr > :is(th, td) {", styles)
         self.assertIn("display: table-cell !important", styles)
 
-    def test_data_tables_get_readable_width_tiers_instead_of_crushed_cells(self):
+    def test_every_data_table_scrolls_and_wide_tables_get_readable_width_tiers(self):
         behavior = _read("static/js/micro-ux.js")
         styles = _read("static/css/components/mobile-micro-ux.css")
 
-        self.assertIn("tableColumnCount(table) > 3", behavior)
+        self.assertIn("Every visible table keeps single-line cells", behavior)
+        self.assertIn("return table.getAttribute('role') !== 'presentation'", behavior)
         self.assertIn("columnCount > 8 ? 'xwide'", behavior)
         self.assertIn("columnCount > 5 ? 'wide'", behavior)
         self.assertIn('data-edify-table-width="standard"', styles)

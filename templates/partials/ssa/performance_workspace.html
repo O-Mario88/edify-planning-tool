@@ -133,6 +133,48 @@
       <ul>{% for insight in dashboard.insights %}<li data-tone="{{ insight.tone }}"><span class="sp-insight-icon" aria-hidden="true">{% if insight.tone == 'success' %}<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>{% elif insight.tone == 'info' %}i{% else %}!{% endif %}</span><div><strong>{{ insight.title }}</strong><p>{{ insight.body }}</p><small>{{ insight.action }} →</small></div></li>{% endfor %}</ul>
     </aside>
 
+    <section class="sp-card sp-fy-comparison" aria-labelledby="sp-fy-comparison-title">
+      <header class="sp-card__header">
+        <div>
+          <span class="sp-card__eyebrow">Longitudinal improvement</span>
+          <h2 id="sp-fy-comparison-title">FY{{ dashboard.improvement_monitor.baseline_fy }} baseline → FY{{ dashboard.improvement_monitor.comparison_fy }} follow-up</h2>
+        </div>
+        <span class="sp-target-chip">
+          {% if dashboard.improvement_monitor.average_delta != None %}{{ dashboard.improvement_monitor.average_delta|floatformat:"+2" }} average change{% else %}Awaiting comparable scores{% endif %}
+        </span>
+      </header>
+      <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable FY2026 to FY2027 SSA improvement table">
+        <table class="sp-table sp-fy-comparison-table" data-mobile-table="scroll">
+          <caption>All confirmed SSA intervention scores tracked from FY{{ dashboard.improvement_monitor.baseline_fy }} to FY{{ dashboard.improvement_monitor.comparison_fy }}</caption>
+          <thead>
+            <tr>
+              <th scope="col">SSA intervention</th>
+              <th scope="col">FY{{ dashboard.improvement_monitor.baseline_fy }} average</th>
+              <th scope="col">FY{{ dashboard.improvement_monitor.comparison_fy }} average</th>
+              <th scope="col">Like-for-like change</th>
+              <th scope="col">Schools compared</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in dashboard.improvement_monitor.rows %}
+            <tr>
+              <th scope="row">{{ row.label }}</th>
+              <td>{% if row.baseline_average != None %}{{ row.baseline_average }}{% else %}—{% endif %}</td>
+              <td>{% if row.comparison_average != None %}{{ row.comparison_average }}{% else %}—{% endif %}</td>
+              <td>{% if row.delta != None %}<strong data-tone="{{ row.tone }}">{{ row.delta|floatformat:"+2" }}</strong>{% else %}Awaiting FY{{ dashboard.improvement_monitor.comparison_fy }}{% endif %}</td>
+              <td>{{ row.schools_compared }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <footer class="sp-fy-comparison__coverage">
+        <span>FY{{ dashboard.improvement_monitor.baseline_fy }}: {{ dashboard.improvement_monitor.baseline_scores }} scores across {{ dashboard.improvement_monitor.baseline_assessments }} school assessments</span>
+        <span>FY{{ dashboard.improvement_monitor.comparison_fy }}: {{ dashboard.improvement_monitor.comparison_scores }} scores across {{ dashboard.improvement_monitor.comparison_assessments }} school assessments</span>
+        <span>{{ dashboard.improvement_monitor.schools_compared }} schools currently have both confirmed annual cycles</span>
+      </footer>
+    </section>
+
     <section class="sp-card sp-trend" aria-labelledby="sp-trend-title">
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Multi-year progress</span><h2 id="sp-trend-title">SSA performance trend by year</h2></div><span class="sp-target-chip">Target {{ dashboard.engine.target_score }}</span></header>
       {% if dashboard.trend.has_data %}

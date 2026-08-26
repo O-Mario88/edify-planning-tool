@@ -416,7 +416,7 @@ def missing_cost_lines_count() -> int:
     active = Activity.objects.filter(deleted_at__isnull=True)
     scheduled = active.exclude(
         status__in=["not_planned", "cancelled", "deferred", "rejected"]
-    )
+    ).exclude(paired_in_school_training__isnull=False)
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
         .filter(cost_line_count=0)

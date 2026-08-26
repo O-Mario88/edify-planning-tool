@@ -27,6 +27,8 @@ from .platform_engine import (
 TARGET_SCORE = 6.0
 HIGH_RISK_SCORE = 4.0
 QUARTERS = ("Q1", "Q2", "Q3", "Q4")
+IMPROVEMENT_BASELINE_FY = "2026"
+IMPROVEMENT_COMPARISON_FY = "2027"
 
 RECOMMENDED_ACTIONS = {
     SsaIntervention.CHRISTLIKE_BEHAVIOUR.value: "Values coaching and follow-up",
@@ -209,6 +211,85 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
         ),
         "has_data": any(value is not None for value in values),
         "analysis": trend_analysis(values, stable_slope=0.02),
+    }
+
+
+def _fy_improvement_monitor(school_ids: list[str]) -> dict:
+    """Track every FY2026 score against the same school's FY2027 score.
+
+    Annual portfolio averages show coverage; improvement uses paired schools
+    only so a different school mix in FY2027 cannot manufacture a gain or
+    decline. The latest confirmed record in each FY is authoritative, matching
+    every other SSA performance surface.
+    """
+    baseline_records = _record_rows(school_ids, IMPROVEMENT_BASELINE_FY, None)
+    comparison_records = _record_rows(school_ids, IMPROVEMENT_COMPARISON_FY, None)
+    baseline_by_school = {row["school_id"]: row for row in baseline_records}
+    comparison_by_school = {row["school_id"]: row for row in comparison_records}
+    record_ids = [row["id"] for row in baseline_records + comparison_records]
+    scores = _scores_by_record(record_ids)
+    paired_school_ids = set(baseline_by_school) & set(comparison_by_school)
+
+    rows = []
+    baseline_score_count = 0
+    comparison_score_count = 0
+    all_paired_deltas: list[float] = []
+    for intervention in SsaIntervention:
+        baseline_values = [
+            scores.get(record["id"], {}).get(intervention.value)
+            for record in baseline_records
+        ]
+        comparison_values = [
+            scores.get(record["id"], {}).get(intervention.value)
+            for record in comparison_records
+        ]
+        baseline_values = [value for value in baseline_values if value is not None]
+        comparison_values = [value for value in comparison_values if value is not None]
+        baseline_score_count += len(baseline_values)
+        comparison_score_count += len(comparison_values)
+
+        paired_deltas = []
+        for school_id in paired_school_ids:
+            baseline = scores.get(baseline_by_school[school_id]["id"], {}).get(
+                intervention.value
+            )
+            comparison = scores.get(comparison_by_school[school_id]["id"], {}).get(
+                intervention.value
+            )
+            if baseline is not None and comparison is not None:
+                paired_deltas.append(comparison - baseline)
+        all_paired_deltas.extend(paired_deltas)
+        delta = _average(paired_deltas)
+        rows.append(
+            {
+                "code": intervention.value,
+                "label": intervention.label,
+                "baseline_average": _round(_average(baseline_values)),
+                "comparison_average": _round(_average(comparison_values)),
+                "delta": _round(delta),
+                "tone": (
+                    "success"
+                    if delta is not None and delta > 0
+                    else "danger"
+                    if delta is not None and delta < 0
+                    else "neutral"
+                ),
+                "schools_compared": len(paired_deltas),
+            }
+        )
+
+    return {
+        "baseline_fy": IMPROVEMENT_BASELINE_FY,
+        "comparison_fy": IMPROVEMENT_COMPARISON_FY,
+        "baseline_assessments": len(baseline_records),
+        "comparison_assessments": len(comparison_records),
+        "baseline_scores": baseline_score_count,
+        "comparison_scores": comparison_score_count,
+        "schools_compared": len(paired_school_ids),
+        "average_delta": _round(_average(all_paired_deltas)),
+        "has_baseline": bool(baseline_score_count),
+        "has_comparison": bool(comparison_score_count),
+        "rows": rows,
     }
 
 
@@ -572,6 +653,7 @@ def build_dashboard(principal, query: dict) -> dict:
     )
 
     trend = _trend(school_ids, selected_fy)
+    improvement_monitor = _fy_improvement_monitor(school_ids)
     analytics_engine = engine_metadata(
         "ssa_performance", record_count=assessed_count, confirmed_only=True
     )
@@ -623,6 +705,7 @@ def build_dashboard(principal, query: dict) -> dict:
         "urgent_total": len(high_risk),
         "insights": insights,
         "trend": trend,
+        "improvement_monitor": improvement_monitor,
         "analytics": {
             "score": score_summary,
             "completion": completion_summary,

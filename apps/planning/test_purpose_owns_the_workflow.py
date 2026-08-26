@@ -102,12 +102,19 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
         )
 
         self.assertIn(response.status_code, (200, 204))
-        activity = Activity.objects.order_by("-created_at").first()
+        activity = Activity.objects.filter(
+            activity_type="in_school_training"
+        ).first()
         self.assertIsNotNone(activity)
         self.assertEqual(activity.activity_type, "in_school_training")
-        self.assertEqual(activity.catalogue_item_id, pinned.id)
-        self.assertIn(
-            "Learning Environment",
+        self.assertEqual(activity.training_course_id, pinned.id)
+        self.assertEqual(
+            activity.catalogue_item.stable_code,
+            "STANDARD_IN_SCHOOL_TRAINING",
+        )
+        self.assertEqual(activity.focus_intervention, "learning_environment")
+        self.assertEqual(
             activity.recommendation_reason,
+            "SSA recommends in-school training.",
             "A matching priority activity must keep the governed SSA provenance.",
         )

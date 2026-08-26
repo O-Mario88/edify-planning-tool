@@ -309,12 +309,12 @@
      Type uses stable semantic steps instead of viewport/container arithmetic.
      Layout may reflow responsively; a label, table cell or KPI does not change
      size merely because its card or browser happens to be a few pixels wider.
-       hero    → the one number a card exists to show (30px bold)
-       display → page titles (22px bold)
-       heading → section titles (18px semibold)
-       title   → card/panel titles (16px semibold)
-       body    → default text and long-form copy (14px regular)
-       label   → controls, table cells and secondary copy (14px medium)
+       hero    → the one number a card exists to show (28px bold)
+       display → page titles (20px bold)
+       heading → section titles (16px semibold)
+       title   → card/panel titles (15px semibold)
+       body    → default text and long-form copy (13px regular)
+       label   → controls, table cells and secondary copy (13px medium)
        micro   → short overlines and compact badges only (12px) */
   --edify-font-sans: 'Geist Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   /* Compatibility alias only: themes must never introduce a second UI font. */
@@ -322,18 +322,18 @@
   --edify-font-display-family: var(--edify-font-sans);
   --edify-font-mono: var(--edify-font-sans);
 
-  --edify-text-display-size: 1.375rem;
+  --edify-text-display-size: 1.25rem;
   /* The rung above display, for the one number a card exists to show.
      30px bold, per the reference design this scale follows: the numeral is
      the largest text on the page, page titles sit two clear steps below it,
      and nothing else competes with the data. The executive strip scales
      fluidly up to this ceiling — declared here so the ladder owns the value
      instead of it living as an arbitrary clamp. */
-  --edify-text-hero-size: 1.875rem;
-  --edify-text-heading-size: 1.125rem;
-  --edify-text-title-size:   1rem;
-  --edify-text-body-size:    0.875rem;
-  --edify-text-label-size:   0.875rem;
+  --edify-text-hero-size: 1.75rem;
+  --edify-text-heading-size: 1rem;
+  --edify-text-title-size:   0.9375rem;
+  --edify-text-body-size:    0.8125rem;
+  --edify-text-label-size:   0.8125rem;
   /* No rendered interface text may fall below this floor. Keep the micro tier
      semantic so charts and compact controls share the same 12px contract. */
   --edify-text-floor:        0.75rem;
@@ -341,23 +341,23 @@
 
   /* Component roles share stable steps as well. Container queries still own
      layout changes (columns, icon visibility and stacking), never font size. */
-  --edify-text-card-heading-size: 1.125rem;
-  --edify-text-card-title-size: 1rem;
-  --edify-text-tile-value-size: 1.375rem;
-  --edify-text-tile-label-size: 0.875rem;
-  --edify-text-tile-helper-size: 0.8125rem;
-  --edify-text-table-size: 0.875rem;
-  /* Headers sit one step below cells — 13px semibold and muted against 14px
+  --edify-text-card-heading-size: 1rem;
+  --edify-text-card-title-size: 0.9375rem;
+  --edify-text-tile-value-size: 1.25rem;
+  --edify-text-tile-label-size: 0.8125rem;
+  --edify-text-tile-helper-size: 0.75rem;
+  --edify-text-table-size: 0.8125rem;
+  /* Headers sit one step below cells — 12px semibold and muted against 13px
      data. The stronger weight gives dense grids a dependable scanning rail
      without falling back to shouty all-caps labels. */
-  --edify-text-table-heading-size: 0.8125rem;
+  --edify-text-table-heading-size: 0.75rem;
 
   /* ── OPERATIONAL TABLE CONTRACT ─────────────────────────────────────────
      Record grids are compact enough for sustained work, but every row and
      action remains comfortably targetable. Matrices may override density;
      they inherit the same type, colour, focus and numeric rhythm. */
-  --edify-table-cell-padding-block: 0.625rem;
-  --edify-table-cell-padding-inline: 0.875rem;
+  --edify-table-cell-padding-block: 0.5rem;
+  --edify-table-cell-padding-inline: 0.75rem;
   --edify-table-header-weight: 600;
   --edify-table-body-weight: 450;
   --edify-table-identity-weight: 600;

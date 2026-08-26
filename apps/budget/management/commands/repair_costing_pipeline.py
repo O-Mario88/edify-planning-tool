@@ -148,6 +148,7 @@ class Command(BaseCommand):
                 deleted_at__isnull=True,
                 scheduled_date__isnull=False,
             )
+            .exclude(paired_in_school_training__isnull=False)
             .exclude(
                 status__in=[
                     "cancelled",

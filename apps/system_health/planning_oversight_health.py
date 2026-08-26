@@ -374,7 +374,7 @@ def _scheduled_activities_without_a_cost() -> dict:
     scheduled = Activity.objects.filter(
         deleted_at__isnull=True,
         status__in=("scheduled", "partner_scheduled", "planned"),
-    )
+    ).exclude(paired_in_school_training__isnull=False)
     costed = set(
         ActivityScheduleCostLine.objects.filter(
             activity_id__in=scheduled.values("id")

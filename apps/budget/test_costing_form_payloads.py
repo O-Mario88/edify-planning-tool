@@ -16,7 +16,7 @@ class CostingFormPayloadTest(SimpleTestCase):
     def test_training_accepts_expected_participants_from_a_number_input(self):
         cost = cost_for_activity(
             {
-                "activityType": "in_school_training",
+                "activityType": "cluster_training",
                 "expectedParticipants": "12",
             },
             TRAINING_RATES,
@@ -29,7 +29,7 @@ class CostingFormPayloadTest(SimpleTestCase):
     def test_training_sums_category_counts_from_number_inputs(self):
         cost = cost_for_activity(
             {
-                "activityType": "in_school_training",
+                "activityType": "cluster_training",
                 "teachersAttended": "8",
                 "leadersAttended": "2",
                 "otherParticipants": "",

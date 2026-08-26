@@ -736,6 +736,11 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
             or (f"Complete the school visit and {course.display_name} training."),
         },
         principal,
+        # The Training is the financial owner of this one school mission. The
+        # companion Visit exists so staff can submit the required SVE- record
+        # and visit evidence at the same time; pricing it again would double
+        # the staff day pool or the partner visit lump sum.
+        skip_cost_snapshot=True,
     )
     training.paired_school_visit_id = visit_result["id"]
     training.save(update_fields=["paired_school_visit", "updated_at"])

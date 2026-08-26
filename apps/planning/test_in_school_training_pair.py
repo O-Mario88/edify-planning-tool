@@ -6,7 +6,11 @@ from unittest.mock import patch
 
 from django.test import Client
 
-from apps.activities.models import Activity, ActivitySalesforceReference
+from apps.activities.models import (
+    Activity,
+    ActivitySalesforceReference,
+    ActivityScheduleCostLine,
+)
 from apps.activities.services import (
     complete_in_school_training_pair,
     start_in_school_training_pair,
@@ -16,6 +20,7 @@ from apps.core.enums import EvidenceKind, SsaIntervention
 from apps.core.exceptions import BadRequest
 from apps.evidence.models import EvidenceRecord
 from apps.planning.services import schedule_in_school_training_pair
+from apps.system_health.services import missing_cost_lines_count
 
 from .test_standard_support_scheduling import (
     StandardSupportBase,
@@ -125,6 +130,25 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
         self.assertIsNone(training.focus_intervention)
         self.assertIsNone(visit.focus_intervention)
+
+    def test_pair_carries_one_visit_equivalent_cost_on_the_training(self):
+        result = schedule_in_school_training_pair(self.payload(), self.user)
+        training = Activity.objects.get(id=result["id"])
+        visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
+
+        training_lines = list(
+            ActivityScheduleCostLine.objects.filter(activity=training)
+        )
+        self.assertTrue(training_lines)
+        self.assertEqual(
+            {line.cost_setting_key for line in training_lines},
+            {"primary_transport_per_day", "primary_lunch_per_day"},
+        )
+        self.assertFalse(
+            ActivityScheduleCostLine.objects.filter(activity=visit).exists()
+        )
+        self.assertEqual(visit.est_cost_cents, 0)
+        self.assertEqual(missing_cost_lines_count(), 0)
 
     def test_a_failure_creating_visit_rolls_back_training(self):
         before = Activity.objects.count()

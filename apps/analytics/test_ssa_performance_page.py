@@ -203,6 +203,43 @@ class SsaPerformancePageTest(TestCase):
         self.assertEqual(len(trend["points"]), 7)
         self.assertEqual(trend["points"][0]["fy"], oldest)
 
+    def test_fy2026_scores_are_tracked_against_fy2027_for_every_intervention(self):
+        for fy, average, year_offset in (("2026", 5.0, 365), ("2027", 6.0, 0)):
+            record = SsaRecord.objects.create(
+                school=self.own_school,
+                fy=fy,
+                quarter="Q1",
+                date_of_ssa=timezone.now() - timedelta(days=year_offset),
+                average_score=average,
+                verification_status="confirmed",
+            )
+            SsaScore.objects.bulk_create(
+                [
+                    SsaScore(
+                        ssa_record=record,
+                        intervention=intervention.value,
+                        score=average,
+                    )
+                    for intervention in SsaIntervention
+                ]
+            )
+
+        client = Client()
+        client.force_login(self.cceo)
+        response = client.get(f"/ssa?fy={self.fy}&quarter={self.quarter}")
+
+        monitor = response.context["dashboard"]["improvement_monitor"]
+        self.assertEqual(monitor["baseline_fy"], "2026")
+        self.assertEqual(monitor["comparison_fy"], "2027")
+        self.assertEqual(monitor["baseline_scores"], 8)
+        self.assertEqual(monitor["comparison_scores"], 8)
+        self.assertEqual(monitor["schools_compared"], 1)
+        self.assertEqual(monitor["average_delta"], 1.0)
+        self.assertEqual(len(monitor["rows"]), 8)
+        self.assertTrue(all(row["delta"] == 1.0 for row in monitor["rows"]))
+        self.assertContains(response, "FY2026 baseline")
+        self.assertContains(response, "FY2027 follow-up")
+
     def test_export_obeys_role_capability(self):
         self._ssa(self.own_school, 7.0)
         client = Client()

@@ -176,12 +176,11 @@ class CostReferenceTest(TestCase):
         )
         coverage = activity_cost_coverage(items)
 
-        # 28 governed curriculum titles + 12 standard field support items +
-        # sixteen Uganda Business Transformation workflows.
+        # Every governed catalogue row must be projected into costing coverage.
         # Standard support draws from the same CD rate card as everything
         # else — a school visit that nothing in the catalogue can price is
         # exactly the state that made ordinary support unschedulable.
-        self.assertEqual(len(coverage), 60)
+        self.assertEqual(len(coverage), len(items))
         self.assertEqual(
             {row["stable_code"] for row in coverage},
             {item.stable_code for item in items},
@@ -210,6 +209,46 @@ class CostReferenceTest(TestCase):
             ["primary_transport_per_day", "primary_lunch_per_day"],
         )
         self.assertEqual(result.amount, 86000)
+
+    def test_staff_in_school_training_has_the_same_recipe_as_a_school_visit(self):
+        from apps.budget.costing import cost_for_activity
+
+        rates = {
+            "primary_transport_per_day": 56000,
+            "primary_lunch_per_day": 30000,
+            "group_training_participant_meal_cost_per_head": 9000,
+            "group_training_facilitation_fee": 50000,
+            "group_training_venue_cost": 70000,
+        }
+        common = {"districtType": "primary", "deliveryType": "staff"}
+
+        training = cost_for_activity(
+            {**common, "activityType": "in_school_training"}, rates
+        )
+        visit = cost_for_activity({**common, "activityType": "school_visit"}, rates)
+
+        self.assertEqual(training.amount, visit.amount)
+        self.assertEqual(
+            [line.key for line in training.lines],
+            [line.key for line in visit.lines],
+        )
+
+    def test_partner_in_school_training_uses_the_partner_visit_rate(self):
+        from apps.budget.costing import cost_for_activity
+
+        rates = {
+            "partner_visit_lump_sum": 180000,
+            "partner_training_lump_sum": 420000,
+        }
+        common = {"deliveryType": "partner"}
+
+        training = cost_for_activity(
+            {**common, "activityType": "in_school_training"}, rates
+        )
+        visit = cost_for_activity({**common, "activityType": "school_visit"}, rates)
+
+        self.assertEqual(training.amount, visit.amount)
+        self.assertEqual(training.lines[0].key, "partner_visit_lump_sum")
 
 
 class CostReferenceSurvivesAFlushTest(TransactionTestCase):

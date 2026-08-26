@@ -137,6 +137,12 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
+    # An in-school training is delivered during the same school mission as a
+    # school visit. Its Salesforce Training record describes the programme
+    # result, not a second journey or a venue-based group training. Price it
+    # from the visit recipe for both staff and partner delivery so Planning,
+    # partner payments and the CD Cost Catalogue all tell the same story.
+    is_in_school_training = activity_type == "in_school_training"
 
     # Non-school programme events (conferences, camps, exhibitions, launches)
     # price from the configurable programme component keys. Days come from the
@@ -207,7 +213,11 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         # Each partner workflow has one canonical, CD-visible rate. Do not
         # substitute a different activity's rate merely because the required
         # row is missing; `add` will mark that exact item as a blocker.
-        if activity_type in TRAINING_TYPES:
+        if is_in_school_training:
+            key = "partner_visit_lump_sum"
+            basis = "per school mission"
+            label = "Partner visit rate"
+        elif activity_type in TRAINING_TYPES:
             key = "partner_training_lump_sum"
             basis = "per training"
             label = "Partner training rate"
@@ -232,7 +242,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     elif activity_type == "core_training":
         add("Core School Training", "core_school_training")
 
-    elif activity_type in VISIT_TYPES:
+    elif activity_type in VISIT_TYPES or is_in_school_training:
         if is_secondary:
             add("Transport (secondary)", "secondary_transport_per_day")
             add("Breakfast", "secondary_breakfast_per_day")

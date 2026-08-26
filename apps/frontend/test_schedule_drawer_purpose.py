@@ -113,10 +113,13 @@ class DrawerAsksForPurposeTest(TestCase):
         self.assertNotIn('id="training_project_id"', source)
         self.assertIn("purposeOfVisit === 'in_school_training'", source)
 
-    def test_switching_intervention_revalidates_the_activity_choice(self):
+    def test_switching_training_fetches_its_mapped_intervention(self):
         source = _drawer_source()
-        self.assertIn('@change="ensureTrainingActivity()"', source)
-        self.assertIn("activity.interventions.includes(this.focusIntervention)", source)
+        self.assertIn('@change="onTrainingActivityChange()"', source)
+        self.assertIn(
+            "this.focusIntervention = selected ? selected.ssaIntervention : '';",
+            source,
+        )
 
 
 class PurposeDrivesCostingTest(TestCase):

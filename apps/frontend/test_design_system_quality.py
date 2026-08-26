@@ -642,8 +642,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         consistency = _read("static/css/consistency.css")
 
         for declaration in (
-            "--edify-table-cell-padding-block: 0.625rem",
-            "--edify-table-cell-padding-inline: 0.875rem",
+            "--edify-table-cell-padding-block: 0.5rem",
+            "--edify-table-cell-padding-inline: 0.75rem",
             "--edify-table-header-weight: 600",
             "--edify-table-body-weight: 450",
             "--edify-table-identity-weight: 600",
@@ -1510,11 +1510,11 @@ class TypeScaleFloorTest(SimpleTestCase):
         self.assertIn("--edify-text-floor:        0.75rem;", tokens)
         self.assertIn("--edify-text-micro-size:   var(--edify-text-floor);", tokens)
         self.assertIn(
-            "--edify-text-label-size:   0.875rem;",
+            "--edify-text-label-size:   0.8125rem;",
             tokens,
         )
         self.assertIn(
-            "--edify-text-body-size:    0.875rem;",
+            "--edify-text-body-size:    0.8125rem;",
             tokens,
         )
 
@@ -1597,18 +1597,18 @@ class StableTypographyContractTest(SimpleTestCase):
         tokens = _read("static/css/design-system.css")
 
         for expected in (
-            "--edify-text-display-size: 1.375rem;",
-            "--edify-text-heading-size: 1.125rem;",
-            "--edify-text-tile-value-size: 1.375rem;",
-            "--edify-text-table-size: 0.875rem;",
+            "--edify-text-display-size: 1.25rem;",
+            "--edify-text-heading-size: 1rem;",
+            "--edify-text-tile-value-size: 1.25rem;",
+            "--edify-text-table-size: 0.8125rem;",
             "--edify-text-floor:        0.75rem;",
             "--edify-text-micro-size:   var(--edify-text-floor);",
         ):
             self.assertIn(expected, tokens)
-        # Headers sit one step below cells (13px medium, muted) per the
+        # Headers sit one step below cells (12px medium, muted) per the
         # reference dashboard — the band separates by weight and colour.
         self.assertIn(
-            "--edify-text-table-heading-size: 0.8125rem;",
+            "--edify-text-table-heading-size: 0.75rem;",
             tokens,
         )
 
@@ -1644,7 +1644,7 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn(".drawer-body table th {", platform)
         self.assertIn(".drawer-body table td {", platform)
         self.assertIn(
-            "--edify-text-table-heading-size: 0.8125rem;",
+            "--edify-text-table-heading-size: 0.75rem;",
             _read("static/css/design-system.css"),
         )
         self.assertIn("text-wrap: nowrap", platform)
@@ -1652,17 +1652,21 @@ class StableTypographyContractTest(SimpleTestCase):
         self.assertIn("overflow-x: auto", platform)
         self.assertIn("word-break: normal", platform)
 
-        # The desktop no-wrap contract must reach drawer and dialog tables,
+        # The all-screen no-wrap contract must reach drawer and dialog tables,
         # not only main — a drawer table wrapping while the page behind it
         # does not reads as two different products. This selector was
         # main-only when first written.
         consistency = _read("static/css/consistency.css")
         self.assertIn(
-            ':is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])\n'
-            "    table",
+            ':is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])',
             consistency,
         )
-        self.assertIn(".edify-cell--wrap", consistency)
+        self.assertIn(
+            "table:not(.sr-only, .edify-visually-hidden) :is(td, th)",
+            consistency,
+        )
+        self.assertIn("EVERY TABLE STAYS ON ONE LINE", consistency)
+        self.assertIn("white-space: nowrap !important", consistency)
 
 
 class TemplateFilterArgumentGuardTest(SimpleTestCase):
@@ -1722,34 +1726,13 @@ class TemplateFilterArgumentGuardTest(SimpleTestCase):
 
 
 class TableColumnBudgetTest(SimpleTestCase):
-    """A no-wrap row must still fit its card, and never hide its action.
+    """No table content is folded or truncated to satisfy a viewport."""
 
-    The desktop no-wrap contract caps each cell so a long value truncates
-    instead of folding. With one flat cap that arithmetic breaks down as
-    columns are added: six columns at 30ch outgrew the card on "Schools
-    Needing Urgent Attention", and the last column — the one holding the
-    Send button — was pushed outside the visible area behind a scroller
-    nobody notices. The cap therefore falls as the column count rises, and
-    a cell holding a control is exempt outright, because a truncated button
-    is an unusable button.
-    """
-
-    def test_the_cell_cap_tightens_as_columns_are_added(self):
+    def test_cells_keep_full_single_line_content_at_every_breakpoint(self):
         consistency = _read("static/css/consistency.css")
 
-        self.assertIn("--edify-cell-max, 30ch", consistency)
-        for selector, cap in (
-            ("table:has(thead th:nth-child(5))", "22ch"),
-            ("table:has(thead th:nth-child(7))", "16ch"),
-            ("table:has(thead th:nth-child(9))", "12ch"),
-        ):
-            self.assertIn(selector, consistency)
-            self.assertIn(f"--edify-cell-max: {cap}", consistency)
-
-    def test_an_action_cell_is_never_truncated(self):
-        consistency = _read("static/css/consistency.css")
-
-        self.assertIn(":last-child:has(button, a)", consistency)
-        block = consistency.split(":last-child:has(button, a)", 1)[1].split("}", 1)[0]
-        self.assertIn("max-inline-size: none", block)
-        self.assertIn("overflow: visible", block)
+        self.assertIn("inline-size: max-content", consistency)
+        self.assertIn("max-inline-size: none !important", consistency)
+        self.assertIn("overflow: visible !important", consistency)
+        self.assertIn("text-overflow: clip !important", consistency)
+        self.assertIn("white-space: nowrap !important", consistency)
