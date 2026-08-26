@@ -405,7 +405,7 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
 #: docs/release-readiness-2026-08-25.md in the same commit. It is pinned rather
 #: than derived so that neither growing nor losing door coverage can happen
 #: without somebody saying so.
-JOURNEYS_THAT_KNOCK = {"journey-07", "journey-19"}
+JOURNEYS_THAT_KNOCK = {"journey-05", "journey-07", "journey-19"}
 
 
 class WhichJourneysReachTheDoorTest(unittest.TestCase):
@@ -417,7 +417,7 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
     assessment gets updated in the same commit instead of the gain going
     unrecorded.
 
-    The gap it describes is real and mostly still open: for the nineteen
+    The gap it describes is real and mostly still open: for the eighteen
     journeys not listed above, nothing exercises URL routing,
     ``require_page_permission``, ``RequirePermissions``, view-level scoping,
     serializers or templates. A defect living between the door and the service

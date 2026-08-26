@@ -21,7 +21,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-04` | Cluster training | ✓ | 0 | 17 | 14 | 0 | 0 | 0 | 1 | 41 |
 | `journey-05` | Partner assignment and payment | ✓ | 0 | 28 | 26 | 2 | 2 | 1 | 4 | 54 |
 | `journey-06` | Special Project | ✓ | 0 | 54 | 31 | 4 | 5 | 5 | 15 | 46 |
-| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 56 | 29 | 5 | 10 | 8 | 21 | 46 |
+| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 55 | 29 | 5 | 10 | 8 | 21 | 46 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 0 | 40 | 22 | 2 | 2 | 7 | 16 | 45 |
 | `journey-09` | Leave and temporary coverage | ✓ | 0 | 20 | 14 | 0 | 0 | 1 | 4 | 10 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 0 | 55 | 36 | 3 | 3 | 5 | 22 | 46 |
@@ -33,7 +33,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-16` | Government Requirements | ✓ | 0 | 28 | 16 | 2 | 4 | 1 | 5 | 14 |
 | `journey-17` | Loan | ✓ | 0 | 18 | 24 | 11 | 7 | 3 | 17 | 22 |
 | `journey-18` | Repeat borrower and student reach | ✓ | 0 | 18 | 20 | 7 | 6 | 1 | 9 | 18 |
-| `journey-19` | Cross-role security | ✓ | 4 | 33 | 11 | 2 | 2 | 0 | 1 | 49 |
+| `journey-19` | Cross-role security | ✓ | 4 | 32 | 11 | 2 | 2 | 0 | 1 | 49 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-22` | Financial-year rollover | ✓ | 0 | 20 | 16 | 0 | 0 | 1 | 3 | 49 |
@@ -173,7 +173,7 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 | Permissions checked | `budget.approve`, `fundRequest.approveEscalated`, `ia.verify`, `payment.act`, `planning.view` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/jwt.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py` _+46 more_ |
+| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/jwt.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py` _+45 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+17 more_ |
 | Notifications raised | `activity_submitted_for_review`, `advance_accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability`, `notification.activity_submitted_for_review` _+13 more_ |
@@ -413,7 +413,7 @@ Steps: Attempt unauthorized access for every sensitive workflow → All attempts
 | Permissions checked | `ia.verify`, `payment.act` |
 | Page gates checked | `disbursements`, `school_directory`, `weekly_fund_request_disburse` |
 | Object-level guards | `apps/core/scoping.py::assert_may_write_school` |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/staff_matching.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py` _+23 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/staff_matching.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py` _+22 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `geography.District`, `geography.Region`, `schools.School`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `unauthorized_page_access` |

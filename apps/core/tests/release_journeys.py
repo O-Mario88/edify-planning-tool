@@ -16,8 +16,9 @@ tests that each verify a step, with the seams between them faked, is exactly
 the coverage this platform cannot rely on: either half passes while the join
 is broken.
 
-A journey may list more than one such test, and journey 7 now does: one walk
-through the services and one through the platform's own HTTP endpoints. That is
+A journey may list more than one such test, and journeys 5 and 7 now do: one
+walk through the services and one through the platform's own HTTP endpoints,
+for each. That is
 not the split this rule forbids — each walks the entire journey alone, and they
 prove different layers of it. The distinction is between two complete walks and
 two half-walks. The traceability matrix traces every pointer listed here and
@@ -150,6 +151,19 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_partner_payment:"
             "PartnerAssignmentToPaymentJourneyTest."
             "test_partner_work_is_payable_only_once_ia_has_verified_it",
+            # The same journey again through the platform's own endpoints
+            # rather than its services (JRN-01), listed alongside the service
+            # walk for the same reason journey 7 lists two: each walks the
+            # whole thing alone, they prove different layers, and the matrix
+            # merges their evidence.
+            #
+            # The authority sweep and the per-layer probe in the same module
+            # are deliberately NOT listed. They are worth having, but neither
+            # walks the journey — they assert refusals at one endpoint — and
+            # this manifest's rule is that a pointer means a whole walk.
+            "apps.core.tests.test_journey_partner_payment:"
+            "PartnerAssignmentToPaymentJourneyTest."
+            "test_the_same_journey_through_the_partner_payment_endpoint",
         ),
     ),
     Journey(
