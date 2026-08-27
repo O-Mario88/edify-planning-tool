@@ -1698,7 +1698,7 @@
    "audit_id": "KPI-SOURCE-087",
    "kind": "other",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 193,
+   "line": 195,
    "label": null,
    "keys": [
     "fy",
@@ -1718,7 +1718,7 @@
    "audit_id": "KPI-SOURCE-088",
    "kind": "other",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 374,
+   "line": 455,
    "label": null,
    "keys": [
     "band",
@@ -1737,7 +1737,7 @@
    "audit_id": "KPI-SOURCE-089",
    "kind": "breakdown-row",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 589,
+   "line": 671,
    "label": null,
    "keys": [
     "label",
@@ -2869,7 +2869,7 @@
    "audit_id": "KPI-SOURCE-145",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 127,
+   "line": 130,
    "label": "Search my plan by school, School ID, cluster, district or purpose",
    "keys": [
     "hx_get",
@@ -2892,7 +2892,7 @@
    "audit_id": "KPI-SOURCE-146",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1820,
+   "line": 1925,
    "label": null,
    "keys": [
     "count",
@@ -2910,7 +2910,7 @@
    "audit_id": "KPI-SOURCE-147",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 1931,
+   "line": 2036,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -3330,7 +3330,7 @@
    "audit_id": "KPI-SOURCE-168",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/services.py",
-   "line": 604,
+   "line": 608,
    "label": null,
    "keys": [
     "amount",
@@ -4096,7 +4096,7 @@
    "audit_id": "KPI-SOURCE-209",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 118,
+   "line": 121,
    "label": "Not clustered",
    "keys": [
     "count",
@@ -4115,7 +4115,7 @@
    "audit_id": "KPI-SOURCE-210",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 124,
+   "line": 127,
    "label": "Clustered, SSA required",
    "keys": [
     "count",
@@ -4134,7 +4134,7 @@
    "audit_id": "KPI-SOURCE-211",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 130,
+   "line": 133,
    "label": "SIT scheduled, SSA missing",
    "keys": [
     "count",
@@ -4153,7 +4153,7 @@
    "audit_id": "KPI-SOURCE-212",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 136,
+   "line": 139,
    "label": "Ready to plan",
    "keys": [
     "count",
@@ -4172,7 +4172,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
-   "line": 142,
+   "line": 145,
    "label": "Plan core package",
    "keys": [
     "count",

@@ -145,7 +145,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5485,
+      "bytes": 5595,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance",
@@ -5541,18 +5541,25 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15399,
+      "bytes": 19455,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/complete-drawer"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
       "forms": 1,
       "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Complete Drawer",
       "purpose": "Reusable complete drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "open"
@@ -7764,7 +7771,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13235,
+      "bytes": 16072,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7773,12 +7780,12 @@
       "kind": "application-partial",
       "name": "Performance Workspace",
       "purpose": "Reusable performance workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty"
       ],
-      "tables": 4,
+      "tables": 5,
       "template": "partials/ssa/performance_workspace.html",
       "variants": [
         "danger",
@@ -7789,7 +7796,8 @@
         "{{ cell.band.tone }}",
         "{{ district.band.tone }}",
         "{{ insight.tone }}",
-        "{{ intervention.band.tone }}"
+        "{{ intervention.band.tone }}",
+        "{{ row.tone }}"
       ]
     },
     {
@@ -41176,7 +41184,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.2,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.complete_drawer_view",
       "card_count": 0,
@@ -41188,8 +41196,16 @@
         "permission:my_plan"
       ],
       "filters": "none",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "finding_id": "UI-FINDING-27E9DF9EF9",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
@@ -41211,7 +41227,7 @@
       "primary_action": "Complete Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate complete drawer within the frontend workflow.",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Use the semantic card, elevated or muted surface token.",
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
@@ -41267,6 +41283,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]"
       ]
     },
@@ -76009,7 +76026,7 @@
       "critical": 0,
       "high": 0,
       "low": 0,
-      "medium": 0
+      "medium": 1
     },
     "tablet_contract_pass": 375,
     "test_referenced": 525,
