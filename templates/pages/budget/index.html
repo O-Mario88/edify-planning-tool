@@ -16,7 +16,7 @@
 <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Budget</p>
-<p class="text-[24px] font-semibold text-[var(--edify-primary)] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
+<p class="text-[24px] font-semibold text-[var(--edify-accent-text)] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
 </div>
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
 <p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Requested Budget</p>
@@ -78,7 +78,7 @@
 {% for m in monthly_data_pager.rows %}
 <tr class="hover:bg-slate-50/50">
 <td class="px-5 py-3.5 font-bold text-slate-800">{{ m.display_name }}</td>
-<td class="px-4 py-3.5 text-right font-bold text-[var(--edify-primary)]">{{ m.plannedBudget|ugx }}</td>
+<td class="px-4 py-3.5 text-right font-bold text-[var(--edify-accent-text)]">{{ m.plannedBudget|ugx }}</td>
 <td class="px-4 py-3.5 text-right edify-primary-text">{{ m.requestedBudget|ugx }}</td>
 <td class="px-4 py-3.5 text-right text-emerald-700">{{ m.approvedBudget|ugx }}</td>
 <td class="px-4 py-3.5 text-right text-violet-600">{{ m.disbursedAmount|ugx }}</td>

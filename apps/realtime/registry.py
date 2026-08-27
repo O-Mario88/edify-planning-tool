@@ -38,7 +38,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="weekly_fund_request",
         description="Upserts weekly draft FundRequest for the upcoming Mon-Sun.",
-        cron="Fri 06:00 Africa/Kampala",
+        cron="Fri 06:00 Africa/Nairobi",
         cron_kwargs={"day_of_week": "fri", "hour": 6},
         expected_runtime_seconds=30,
         max_interval_minutes=60 * 24 * 8,  # weekly + 1 day grace
@@ -50,7 +50,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="monthly_work_plan",
         description="Generates next month's MonthlyWorkPlanBudget draft envelope.",
-        cron="25th 06:00 Africa/Kampala",
+        cron="25th 06:00 Africa/Nairobi",
         cron_kwargs={"day": 25, "hour": 6},
         expected_runtime_seconds=15,
         max_interval_minutes=60 * 24 * 32,  # monthly + a few days grace
@@ -62,7 +62,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="notification_escalation",
         description="Escalates stale action-required notifications past a 48h SLA.",
-        cron="hourly :00 Africa/Kampala",
+        cron="hourly :00 Africa/Nairobi",
         cron_kwargs={"minute": 0},
         expected_runtime_seconds=10,
         max_interval_minutes=180,  # 3 missed hourly runs
@@ -74,7 +74,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="daily_digest",
         description="One digest notification per user with unread notifications.",
-        cron="daily 07:30 Africa/Kampala",
+        cron="daily 07:30 Africa/Nairobi",
         cron_kwargs={"hour": 7, "minute": 30},
         expected_runtime_seconds=30,
         max_interval_minutes=60 * 30,  # 30h grace
@@ -86,7 +86,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="activity_reminders",
         description="'Starts tomorrow' reminder to each responsible person for every planned activity (incl. non-school programme events).",
-        cron="daily 07:00 Africa/Kampala",
+        cron="daily 07:00 Africa/Nairobi",
         cron_kwargs={"hour": 7, "minute": 0},
         expected_runtime_seconds=30,
         max_interval_minutes=60 * 30,
@@ -102,7 +102,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "Targets/Team Targets/CD Analytics never show a stale ledger "
             "between page visits (the audit's 'ledger staleness' finding)."
         ),
-        cron="every 30 min Africa/Kampala",
+        cron="every 30 min Africa/Nairobi",
         cron_kwargs={"minute": "*/30"},
         expected_runtime_seconds=120,
         max_interval_minutes=90,
@@ -114,7 +114,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="pd_reminders",
         description="Sends due Professional Development pre-course/in-progress/overdue reminders.",
-        cron="daily 06:30 Africa/Kampala",
+        cron="daily 06:30 Africa/Nairobi",
         cron_kwargs={"hour": 6, "minute": 30},
         expected_runtime_seconds=30,
         max_interval_minutes=60 * 30,
@@ -129,7 +129,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "Closes delegated school actions whose underlying condition has "
             "cleared, and marks past-due ones overdue."
         ),
-        cron="hourly :20 Africa/Kampala",
+        cron="hourly :20 Africa/Nairobi",
         cron_kwargs={"minute": 20},
         expected_runtime_seconds=45,
         max_interval_minutes=180,
@@ -145,7 +145,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="escalation_sla_sweep",
         description="Re-notifies the RVP about CD escalations past their severity SLA.",
-        cron="daily 07:00 Africa/Kampala",
+        cron="daily 07:00 Africa/Nairobi",
         cron_kwargs={"hour": 7, "minute": 0},
         expected_runtime_seconds=15,
         max_interval_minutes=60 * 30,
@@ -157,7 +157,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="field_debrief_recurring_issues",
         description="Scans recent Field Debriefs for recurring cross-team/cross-country issues.",
-        cron="daily 05:30 Africa/Kampala",
+        cron="daily 05:30 Africa/Nairobi",
         cron_kwargs={"hour": 5, "minute": 30},
         expected_runtime_seconds=60,
         max_interval_minutes=60 * 30,
@@ -169,7 +169,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="daily_debrief_reminders",
         description="End-of-day (and next-morning catch-up) reminders for field staff with scheduled activities but no Daily Debrief.",
-        cron="daily 18:00 + 08:00 Africa/Kampala",
+        cron="daily 18:00 + 08:00 Africa/Nairobi",
         cron_kwargs={"hour": "8,18", "minute": 0},
         expected_runtime_seconds=60,
         max_interval_minutes=60 * 14,
@@ -181,7 +181,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="weekly_debrief_reports",
         description="Generates Monday-morning PL Weekly Team Debrief Report drafts for the closed Mon-Sun week.",
-        cron="weekly Mon 06:00 Africa/Kampala",
+        cron="weekly Mon 06:00 Africa/Nairobi",
         cron_kwargs={"day_of_week": "mon", "hour": 6, "minute": 0},
         expected_runtime_seconds=120,
         max_interval_minutes=60 * 24 * 8,
@@ -193,7 +193,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="analytics_report_delivery",
         description="Delivers due user-configured analytics CSV digests by email.",
-        cron="every 15 min Africa/Kampala",
+        cron="every 15 min Africa/Nairobi",
         cron_kwargs={"minute": "*/15"},
         expected_runtime_seconds=120,
         max_interval_minutes=45,
@@ -208,7 +208,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "Ensures the Oct-Sep fiscal year has fresh priority cycles and "
             "draft agreements while preserving prior-year history."
         ),
-        cron="daily 00:10 Africa/Kampala",
+        cron="daily 00:10 Africa/Nairobi",
         cron_kwargs={"hour": 0, "minute": 10},
         expected_runtime_seconds=120,
         max_interval_minutes=1560,
@@ -222,7 +222,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="performance_readiness",
         description="Daily performance-cycle readiness; notifies HR 7 days before quarter end.",
-        cron="daily 06:45 Africa/Kampala",
+        cron="daily 06:45 Africa/Nairobi",
         cron_kwargs={"hour": 6, "minute": 45},
         expected_runtime_seconds=30,
         max_interval_minutes=1560,
@@ -234,7 +234,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="mfa_challenge_purge",
         description="Deletes spent second-factor challenges past their retention window.",
-        cron="daily 03:20 Africa/Kampala",
+        cron="daily 03:20 Africa/Nairobi",
         cron_kwargs={"hour": 3, "minute": 20},
         expected_runtime_seconds=10,
         max_interval_minutes=1560,
@@ -249,7 +249,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "Drafts next week's proposed schedule for every active CCEO — "
             "the platform prepares; staff accept or adjust (roadmap Phase 4)."
         ),
-        cron="Fri 05:00 Africa/Kampala",
+        cron="Fri 05:00 Africa/Nairobi",
         cron_kwargs={"day_of_week": "fri", "hour": 5},
         expected_runtime_seconds=300,
         max_interval_minutes=60 * 24 * 8,
@@ -268,7 +268,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "Drains due durable-outbox events to their handlers with "
             "per-event retry, backoff and dead-lettering."
         ),
-        cron="every minute Africa/Kampala",
+        cron="every minute Africa/Nairobi",
         cron_kwargs={"minute": "*"},
         expected_runtime_seconds=50,
         max_interval_minutes=10,
@@ -288,7 +288,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "operating school's data-quality issues (coordinates, ownership, "
             "clustering, SSA) as durable, self-closing queues."
         ),
-        cron="daily 03:00 Africa/Kampala",
+        cron="daily 03:00 Africa/Nairobi",
         cron_kwargs={"hour": 3, "minute": 0},
         expected_runtime_seconds=300,
         max_interval_minutes=1560,
@@ -308,7 +308,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "aggregates for the Staff Time Standard and prunes raw events "
             "past retention."
         ),
-        cron="daily 02:40 Africa/Kampala",
+        cron="daily 02:40 Africa/Nairobi",
         cron_kwargs={"hour": 2, "minute": 40},
         expected_runtime_seconds=60,
         max_interval_minutes=1560,
@@ -327,7 +327,7 @@ JOB_REGISTRY: list[JobSpec] = [
             "previews, sends acknowledgement reminders and closes idle viewer "
             "sessions."
         ),
-        cron="daily 06:15 Africa/Kampala",
+        cron="daily 06:15 Africa/Nairobi",
         cron_kwargs={"hour": 6, "minute": 15},
         expected_runtime_seconds=45,
         max_interval_minutes=1560,
@@ -343,7 +343,7 @@ JOB_REGISTRY: list[JobSpec] = [
     JobSpec(
         name="admin_maintenance_generation",
         description="Materialises due MaintenanceTemplates into scheduled Admin work items.",
-        cron="daily 05:30 Africa/Kampala",
+        cron="daily 05:30 Africa/Nairobi",
         cron_kwargs={"hour": 5, "minute": 30},
         expected_runtime_seconds=10,
         max_interval_minutes=1560,

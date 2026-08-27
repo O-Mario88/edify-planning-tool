@@ -517,7 +517,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 29214,
+      "bytes": 29226,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -900,7 +900,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13967,
+      "bytes": 13971,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director/drilldown"
@@ -1163,7 +1163,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3133,
+      "bytes": 3137,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1187,7 +1187,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2216,
+      "bytes": 2224,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1303,7 +1303,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2814,
+      "bytes": 2818,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -2023,7 +2023,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7337,
+      "bytes": 7341,
       "deprecated_alternatives": [],
       "example_pages": [
         "/loans/<str:loan_id>/drawer"
@@ -2052,7 +2052,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4848,
+      "bytes": 4856,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/portfolio"
@@ -2229,7 +2229,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7075,
+      "bytes": 7095,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2256,7 +2256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22354,
+      "bytes": 22358,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2911,7 +2911,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7855,
+      "bytes": 7871,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3086,7 +3086,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1751,
+      "bytes": 1755,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/cost-preview",
@@ -3420,7 +3420,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2316,
+      "bytes": 2344,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3866,7 +3866,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6891,
+      "bytes": 6895,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3887,7 +3887,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6510,
+      "bytes": 6514,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3906,7 +3906,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4328,
+      "bytes": 4336,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -3927,7 +3927,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3776,
+      "bytes": 3780,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/drilldown"
@@ -4186,7 +4186,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16955,
+      "bytes": 16959,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4485,7 +4485,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15489,
+      "bytes": 15493,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4543,7 +4543,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 11368,
+      "bytes": 11372,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -5083,7 +5083,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 10904,
+      "bytes": 10916,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5160,7 +5160,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18626,
+      "bytes": 18678,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5231,7 +5231,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3793,
+      "bytes": 3797,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages/new",
@@ -5257,7 +5257,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6845,
+      "bytes": 6849,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5352,7 +5352,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5104,
+      "bytes": 5136,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/accountability"
@@ -5376,7 +5376,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12987,
+      "bytes": 13007,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -5402,7 +5402,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4048,
+      "bytes": 4711,
       "deprecated_alternatives": [],
       "example_pages": [
         "/evidence/returned",
@@ -5410,7 +5410,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 9,
+      "htmx_controls": 10,
       "kind": "application-partial",
       "name": "Activity Row",
       "purpose": "Reusable activity row interface primitive",
@@ -5427,7 +5427,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 7540,
+      "bytes": 7548,
       "deprecated_alternatives": [],
       "example_pages": [
         "/evidence/returned"
@@ -5451,7 +5451,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8086,
+      "bytes": 8118,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -5473,7 +5473,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9456,
+      "bytes": 9460,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5493,8 +5493,33 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 2515,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-plan/<str:activity_id>/cancel-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Cancel Drawer",
+      "purpose": "Reusable cancel drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/my_plan/cancel_drawer.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
-      "bytes": 2791,
+      "bytes": 2795,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5516,7 +5541,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3146,
+      "bytes": 3150,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5541,7 +5566,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19785,
+      "bytes": 19817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/complete-drawer"
@@ -5591,7 +5616,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4777,
+      "bytes": 4817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -5690,7 +5715,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3829,
+      "bytes": 3833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5761,7 +5786,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2785,
+      "bytes": 2789,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5828,7 +5853,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2875,
+      "bytes": 2879,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5852,7 +5877,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2288,
+      "bytes": 2320,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/ssa-upload"
@@ -6335,7 +6360,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5063,
+      "bytes": 5097,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/invoices/new"
@@ -6616,7 +6641,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 14698,
+      "bytes": 14710,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -6732,7 +6757,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 21001,
+      "bytes": 21005,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development",
@@ -7314,7 +7339,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13560,
+      "bytes": 13568,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
@@ -7516,7 +7541,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15196,
+      "bytes": 15200,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/edit-drawer"
@@ -9184,6 +9209,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -12286,6 +12312,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -12388,6 +12415,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -12483,6 +12511,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -12824,6 +12853,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -12912,6 +12942,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13008,6 +13039,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13102,6 +13134,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13198,6 +13231,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13297,6 +13331,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13391,6 +13426,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13561,6 +13597,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13654,6 +13691,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13747,6 +13785,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13840,6 +13879,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -13933,6 +13973,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -14026,6 +14067,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -14119,6 +14161,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -14212,6 +14255,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -14301,6 +14345,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -28649,6 +28694,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -28740,6 +28786,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -40845,6 +40892,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -40947,6 +40995,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41048,6 +41097,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41082,6 +41132,194 @@
         "text-[12px]",
         "text-[14px]",
         "text-[18px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.cancel_activity_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-ACF62FD525",
+      "page_title": "Cancel Activity",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Cancel Activity",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate cancel activity within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/cancel",
+      "route_name": "cancel_activity",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.my_plan_views",
+      "backend_view": "apps.frontend.views.my_plan_views.cancel_activity_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/my_plan/cancel_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:my_plan"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /my-plan/{{ act.id }}/cancel"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-3DDC006A6E",
+      "page_title": "Cancel Activity Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "my_plan",
+      "primary_action": "Cancel Activity Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "CANCEL-01. The screen that calls work off.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/my-plan/<str:activity_id>/cancel-drawer",
+      "route_name": "cancel_activity_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/my-plan/{{ act.id }}/cancel"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.audit.models",
+        "apps.audit.services",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.evidence.services",
+        "apps.fund_requests.models",
+        "apps.my_plan.services",
+        "apps.partners.models",
+        "apps.pl_review.services",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/my_plan/cancel_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[14px]"
       ]
     },
     {
@@ -41142,6 +41380,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41236,6 +41475,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41335,6 +41575,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41428,6 +41669,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41516,6 +41758,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41609,6 +41852,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -41703,6 +41947,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -48101,6 +48346,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -48194,6 +48440,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -48282,6 +48529,7 @@
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
+        "apps.fund_requests.models",
         "apps.my_plan.services",
         "apps.partners.models",
         "apps.pl_review.services",
@@ -60014,7 +60262,7 @@
     ],
     "scheduled_jobs": [
       {
-        "cron": "Fri 06:00 Africa/Kampala",
+        "cron": "Fri 06:00 Africa/Nairobi",
         "cron_kwargs": {
           "day_of_week": "fri",
           "hour": 6
@@ -60029,7 +60277,7 @@
         "retryable": true
       },
       {
-        "cron": "25th 06:00 Africa/Kampala",
+        "cron": "25th 06:00 Africa/Nairobi",
         "cron_kwargs": {
           "day": 25,
           "hour": 6
@@ -60044,7 +60292,7 @@
         "retryable": true
       },
       {
-        "cron": "hourly :00 Africa/Kampala",
+        "cron": "hourly :00 Africa/Nairobi",
         "cron_kwargs": {
           "minute": 0
         },
@@ -60058,7 +60306,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 07:30 Africa/Kampala",
+        "cron": "daily 07:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 7,
           "minute": 30
@@ -60073,7 +60321,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 07:00 Africa/Kampala",
+        "cron": "daily 07:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 7,
           "minute": 0
@@ -60088,7 +60336,7 @@
         "retryable": true
       },
       {
-        "cron": "every 30 min Africa/Kampala",
+        "cron": "every 30 min Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*/30"
         },
@@ -60102,7 +60350,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 06:30 Africa/Kampala",
+        "cron": "daily 06:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
           "minute": 30
@@ -60117,7 +60365,7 @@
         "retryable": true
       },
       {
-        "cron": "hourly :20 Africa/Kampala",
+        "cron": "hourly :20 Africa/Nairobi",
         "cron_kwargs": {
           "minute": 20
         },
@@ -60131,7 +60379,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 07:00 Africa/Kampala",
+        "cron": "daily 07:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 7,
           "minute": 0
@@ -60146,7 +60394,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 05:30 Africa/Kampala",
+        "cron": "daily 05:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 5,
           "minute": 30
@@ -60161,7 +60409,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 18:00 + 08:00 Africa/Kampala",
+        "cron": "daily 18:00 + 08:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": "8,18",
           "minute": 0
@@ -60176,7 +60424,7 @@
         "retryable": true
       },
       {
-        "cron": "weekly Mon 06:00 Africa/Kampala",
+        "cron": "weekly Mon 06:00 Africa/Nairobi",
         "cron_kwargs": {
           "day_of_week": "mon",
           "hour": 6,
@@ -60192,7 +60440,7 @@
         "retryable": true
       },
       {
-        "cron": "every 15 min Africa/Kampala",
+        "cron": "every 15 min Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*/15"
         },
@@ -60206,7 +60454,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 00:10 Africa/Kampala",
+        "cron": "daily 00:10 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 0,
           "minute": 10
@@ -60221,7 +60469,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 06:45 Africa/Kampala",
+        "cron": "daily 06:45 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
           "minute": 45
@@ -60236,7 +60484,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 03:20 Africa/Kampala",
+        "cron": "daily 03:20 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 3,
           "minute": 20
@@ -60251,7 +60499,7 @@
         "retryable": true
       },
       {
-        "cron": "Fri 05:00 Africa/Kampala",
+        "cron": "Fri 05:00 Africa/Nairobi",
         "cron_kwargs": {
           "day_of_week": "fri",
           "hour": 5
@@ -60266,7 +60514,7 @@
         "retryable": true
       },
       {
-        "cron": "every minute Africa/Kampala",
+        "cron": "every minute Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*"
         },
@@ -60280,7 +60528,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 03:00 Africa/Kampala",
+        "cron": "daily 03:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 3,
           "minute": 0
@@ -60295,7 +60543,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 02:40 Africa/Kampala",
+        "cron": "daily 02:40 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 2,
           "minute": 40
@@ -60310,7 +60558,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 06:15 Africa/Kampala",
+        "cron": "daily 06:15 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
           "minute": 15
@@ -60325,7 +60573,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 05:30 Africa/Kampala",
+        "cron": "daily 05:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 5,
           "minute": 30
@@ -73093,6 +73341,33 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.my_plan_views.cancel_activity_action",
+      "kind": "action",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/cancel",
+      "route_name": "cancel_activity",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.my_plan_views.cancel_activity_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "my_plan",
+      "required_permissions": [],
+      "route": "/my-plan/<str:activity_id>/cancel-drawer",
+      "route_name": "cancel_activity_drawer",
+      "templates": [
+        "partials/my_plan/cancel_drawer.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.my_plan_views.complete_activity_action",
       "kind": "action",
       "methods": [
@@ -75982,30 +76257,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 375,
+    "accessibility_contract_pass": 376,
     "activity_states": 23,
-    "all_routes": 1028,
+    "all_routes": 1030,
     "api_routes": 349,
-    "component_templates": 340,
+    "component_templates": 341,
     "full_pages": 203,
-    "mobile_contract_pass": 375,
-    "nonvisual_actions": 177,
+    "mobile_contract_pass": 376,
+    "nonvisual_actions": 178,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 346,
+      "interaction-fragment": 348,
       "operational-queue": 121,
       "planning-or-creation": 6,
       "record-detail": 25,
       "report": 25
     },
-    "partials_and_drawers": 169,
-    "permission_gated": 560,
+    "partials_and_drawers": 170,
+    "permission_gated": 562,
     "permission_keys": 100,
     "roles": 14,
-    "routed_surfaces": 570,
+    "routed_surfaces": 572,
     "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
@@ -76013,8 +76288,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 375,
-    "test_referenced": 525,
-    "theme_contract_pass": 375
+    "tablet_contract_pass": 376,
+    "test_referenced": 527,
+    "theme_contract_pass": 376
   }
 }

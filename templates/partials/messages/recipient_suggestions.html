@@ -38,7 +38,7 @@
 <div class="space-y-1.5">
   {% for s in suggested %}
   <div class="flex items-center gap-2.5 p-2 rounded-surface border border-slate-100 edify-surface">
-    <span class="h-8 w-8 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ s.name|avatar_initials }}</span>
+    <span class="h-8 w-8 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ s.name|avatar_initials }}</span>
     <div class="min-w-0 flex-1">
       <p class="text-[12px] font-bold text-slate-700 truncate">{{ s.name }}</p>
       <p class="edify-text-caption font-semibold text-slate-400 truncate">{{ s.role }}{% if s.meta %} — {{ s.meta }}{% endif %}</p>

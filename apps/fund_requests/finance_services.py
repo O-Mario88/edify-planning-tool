@@ -635,7 +635,15 @@ class PartnerPaymentService:
             # in place, and produces the CompletedActivitySnapshot the direct
             # write used to skip.
             if ClosureEligibilityService.is_eligible(activity):
-                ActivityClosureService.close(activity, closed_by=user_id)
+                # `system=True` (CLOSE-01): closure here is the automatic
+                # CONSEQUENCE of a finance act whose own authority check has
+                # already cleared this actor — an Accountant, who deliberately
+                # cannot reach the closure surface itself (it is gated on the
+                # `planning` page). `close()` asserts authority at the act now,
+                # so this path has to declare itself rather than silently
+                # satisfying a gate it was never meant to pass. The
+                # authorization for the closure is the payment act above it.
+                ActivityClosureService.close(activity, closed_by=user_id, system=True)
 
             # The partner hears about EVERY payment, whichever screen paid it
             # — the invoice wrapper notified but the direct finance screens
@@ -878,7 +886,15 @@ class NetSuiteExpenseService:
             # check) and produces the CompletedActivitySnapshot the direct
             # status="closed" write used to skip.
             if ClosureEligibilityService.is_eligible(activity):
-                ActivityClosureService.close(activity, closed_by=user_id)
+                # `system=True` (CLOSE-01): closure here is the automatic
+                # CONSEQUENCE of a finance act whose own authority check has
+                # already cleared this actor — an Accountant, who deliberately
+                # cannot reach the closure surface itself (it is gated on the
+                # `planning` page). `close()` asserts authority at the act now,
+                # so this path has to declare itself rather than silently
+                # satisfying a gate it was never meant to pass. The
+                # authorization for the closure is the payment act above it.
+                ActivityClosureService.close(activity, closed_by=user_id, system=True)
 
             FinanceAuditService.log_finance_event(
                 activity=activity,

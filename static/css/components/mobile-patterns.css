@@ -27,7 +27,7 @@
 
 .mobile-role-home__copy > p {
   margin: 0 0 0.25rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: 0.08em;
@@ -132,7 +132,7 @@
 }
 
 .mobile-home-section__header :is(a, span) {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   text-decoration: none;
@@ -384,7 +384,7 @@
 
 .mobile-section-picker a[aria-current="page"] {
   background: var(--edify-accent-light);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .mobile-section-picker a small {
@@ -429,7 +429,7 @@
 .mobile-agenda-card__time strong { font-size: var(--edify-text-label-size); }
 .mobile-agenda-card__time small { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
 .mobile-agenda-card__body { min-inline-size: 0; }
-.mobile-agenda-card__body p { margin: 0 0 0.15rem; color: var(--edify-accent); font-size: var(--edify-text-micro-size); font-weight: 700; }
+.mobile-agenda-card__body p { margin: 0 0 0.15rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
 .mobile-agenda-card__body h3 { margin: 0; overflow: hidden; color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 720; text-overflow: ellipsis; white-space: nowrap; }
 .mobile-agenda-card__body small { display: block; margin-block-start: 0.15rem; overflow: hidden; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); text-overflow: ellipsis; white-space: nowrap; }
 
@@ -453,7 +453,7 @@
   place-items: center;
   border-radius: var(--edify-radius-pill);
   background: var(--edify-accent-light);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .mobile-agenda-card__action svg,
@@ -479,7 +479,7 @@
 }
 
 .mobile-record-card > header > div { min-inline-size: 0; }
-.mobile-record-card > header p { margin: 0 0 0.15rem; color: var(--edify-accent); font-size: var(--edify-text-micro-size); font-weight: 700; }
+.mobile-record-card > header p { margin: 0 0 0.15rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 700; }
 .mobile-record-card > header h3 { margin: 0; color: var(--edify-text); font-size: 0.9375rem; font-weight: 740; line-height: 1.25; }
 .mobile-record-card > header small { display: block; margin-block-start: 0.2rem; color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
 
@@ -498,7 +498,7 @@
   padding-inline: 0.75rem;
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-muted);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-label-size);
   font-weight: 700;
   text-decoration: none;
@@ -668,7 +668,7 @@
   .mobile-family-filter > summary > span:last-child {
     grid-column: 2;
     grid-row: 1 / 3;
-    color: var(--edify-accent);
+    color: var(--edify-accent-text);
     transition: rotate var(--edify-transition-fast);
   }
 

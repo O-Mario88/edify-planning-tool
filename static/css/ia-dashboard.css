@@ -210,7 +210,7 @@
   width: 100%;
   border-color: var(--edify-border);
   background: var(--edify-surface-muted);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .ia-button--quiet:hover {
@@ -441,7 +441,7 @@
   flex: 0 0 auto;
   align-items: center;
   gap: 0.3rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 700;
   white-space: nowrap;
@@ -526,7 +526,7 @@
 }
 
 .ia-queue-row__record > a {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-family: var(--edify-font-sans);
   font-size: var(--edify-text-micro-size);
   font-weight: 800;
@@ -1510,7 +1510,7 @@
   place-items: center;
   border-radius: var(--edify-radius-md);
   background: var(--edify-surface-muted);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .ia-field-signals strong,

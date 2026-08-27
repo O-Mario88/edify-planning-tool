@@ -96,7 +96,7 @@
 
 .analytics-more-filters[open] > summary {
   border-color: var(--edify-accent-border);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .analytics-more-filters__panel {
@@ -125,7 +125,7 @@
   min-block-size: 38px;
   margin-inline-start: auto;
   padding-inline: .55rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
@@ -329,7 +329,7 @@
 
 .analytics-text-link {
   flex: 0 0 auto;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }
@@ -378,7 +378,7 @@
 }
 
 .analytics-priority-filters button.is-active {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   background: var(--edify-surface);
   box-shadow: var(--edify-shadow-sm);
 }
@@ -585,7 +585,7 @@
 .analytics-priority-group__more {
   inline-size: 100%;
   min-block-size: 34px;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 750;
 }

@@ -4337,7 +4337,7 @@ html, body {
   color: var(--edify-text);
 }
 .partner-workspace__eyebrow {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 .partner-workspace__header h1 {
   color: var(--edify-text);
@@ -4396,7 +4396,7 @@ html, body {
   color: var(--edify-text-muted);
 }
 .partner-identity p svg, .partner-aside-card__heading svg, .partner-empty-state svg {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 .partner-activity-card__summary > div, .partner-activity-table th, .partner-activity-table td, .partner-aside-card__link {
   border-color: var(--edify-divider);

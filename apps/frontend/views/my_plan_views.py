@@ -1041,6 +1041,10 @@ def complete_activity_action(request, activity_id):
             a.save(update_fields=["ssa_not_collected_reason", "updated_at"])
 
         payload = {
+            # The form already refused above unless this question was
+            # answered; pass the answer on so `complete()` can hold the same
+            # rule for every other door (SSA-01).
+            "ssaCollected": request.POST.get("ssa_collected") == "yes",
             "salesforceId": salesforce_id,
             "trainingSalesforceId": salesforce_id,
             "visitSalesforceId": visit_salesforce_id,
@@ -1309,6 +1313,97 @@ def start_activity_action(request, activity_id):
             success=True,
             reason="Activity execution started",
             payload={"notes": notes},
+        )
+
+        if request.headers.get("HX-Request") == "true":
+            response = HttpResponse("<script>window.location.reload();</script>")
+            response["HX-Trigger"] = "close-drawer"
+            return response
+
+    return local_redirect(f"/my-plan/{activity_id}")
+
+
+@require_page_permission("my_plan")
+def cancel_activity_drawer_view(request, activity_id):
+    """CANCEL-01. The screen that calls work off.
+
+    `apps.activities.services.cancel` has always existed and always worked —
+    it withdraws the cost from every draft funding surface, reverses any
+    milestone credit, deletes advances whose money has not moved, preserves
+    those that have, and notifies the assigned partner. What it did not have
+    was a way in. The only door was `POST /api/activities/<id>/cancel`,
+    generated from the service by the `_action_view` factory, which no page,
+    drawer or button in the platform posts to. So plans that changed could
+    not be recorded as changed, and the three things staff do instead are all
+    worse than cancelling: leave dead work in the plan for ever, complete a
+    visit that never happened, or ask someone to edit the database.
+    """
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not RolePermissionService.can_view_record(request.user, a):
+        return HttpResponseForbidden("Access Denied.")
+
+    from apps.fund_requests.models import MONEY_MOVED_ADVANCE_STATUSES, AdvanceRequest
+
+    # Cancelling funded work is allowed — `_assert_may_execute` already decides
+    # who may cancel, and Journey 8 proves the disbursed advance survives it.
+    # What the person needs to know before they confirm is that the money does
+    # not go away with the activity: it still has to be accounted for and the
+    # remainder returned. Told up front rather than discovered afterwards.
+    money_moved = AdvanceRequest.objects.filter(
+        activity=a, status__in=MONEY_MOVED_ADVANCE_STATUSES
+    ).exists()
+
+    return render(
+        request,
+        "partials/my_plan/cancel_drawer.html",
+        {"act": a, "money_moved": money_moved, "drawer_size": "sm"},
+    )
+
+
+@require_page_permission("my_plan")
+def cancel_activity_action(request, activity_id):
+    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    if not RolePermissionService.can_view_record(request.user, a):
+        audit_log(
+            action="unauthorized_mutation_attempt",
+            subject_kind="Activity",
+            subject_id=str(a.id),
+            actor_id=str(request.user.id),
+            actor_role=request.user.active_role,
+            success=False,
+            reason="User attempted to cancel an activity outside their scoped schools/ownership.",
+        )
+        return HttpResponseForbidden(
+            "Access Denied: You do not have permission to cancel this activity."
+        )
+
+    if request.method == "POST":
+        reason = request.POST.get("reason", "").strip()
+        from apps.activities.services import cancel as cancel_activity
+
+        try:
+            cancel_activity(activity_id, {"reason": reason}, request.user)
+        except Exception as exc:
+            audit_log(
+                action="cancel_activity",
+                subject_kind="Activity",
+                subject_id=str(a.id),
+                actor_id=str(request.user.id),
+                actor_role=request.user.active_role,
+                success=False,
+                reason=str(exc),
+            )
+            return error_fragment(exc, action="Cancellation Error", status=400)
+
+        audit_log(
+            action="cancel_activity",
+            subject_kind="Activity",
+            subject_id=str(a.id),
+            actor_id=str(request.user.id),
+            actor_role=request.user.active_role,
+            success=True,
+            reason="Activity cancelled",
+            payload={"reason": reason},
         )
 
         if request.headers.get("HX-Request") == "true":

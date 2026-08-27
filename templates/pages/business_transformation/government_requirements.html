@@ -21,7 +21,7 @@
       <ul class="space-y-3" role="list">
         {% for requirement in requirements %}<li class="rounded-control border border-[var(--edify-border)] p-3"><p class="text-sm font-black">{{ requirement.label }}</p><p class="mt-1 text-xs text-[var(--edify-text-muted)]">{{ requirement.responsible_authority|default:"Uganda authority" }}</p></li>{% empty %}<li class="text-sm text-[var(--edify-text-muted)]">No active Uganda requirements are configured.</li>{% endfor %}
       </ul>
-      <p class="rounded-control bg-[var(--edify-primary-soft)] p-3 text-xs font-semibold text-[var(--edify-primary)]">BT reads this portfolio and only writes the Salesforce Loan ID confirmation on the Loans page. The responsible CCEO or PL plans every training and visit; IA verifies evidence.</p>
+      <p class="rounded-control bg-[var(--edify-primary-soft)] p-3 text-xs font-semibold text-[var(--edify-accent-text)]">BT reads this portfolio and only writes the Salesforce Loan ID confirmation on the Loans page. The responsible CCEO or PL plans every training and visit; IA verifies evidence.</p>
     </aside>
   </div>
 </div>

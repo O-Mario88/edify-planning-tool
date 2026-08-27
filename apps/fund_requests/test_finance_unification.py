@@ -503,7 +503,13 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
         self.assertFalse(Disbursement.objects.filter(activity=activity).exists())
 
         self.assertTrue(ClosureEligibilityService.is_eligible(activity))
-        ActivityClosureService.close(activity, closed_by=self.accountant.id)
+        # CLOSE-01: closed by the CCEO, not the Accountant. These tests are
+        # about the SNAPSHOT the closure freezes, and the Accountant cannot
+        # reach the closure surface — the endpoint is gated on the `planning`
+        # page, which is {CCEO, PL, ProjectCoordinator, CD, Admin}. `close()`
+        # asserts that itself now, so an actor who could never do this through
+        # a door no longer passes here either.
+        ActivityClosureService.close(activity, closed_by=str(self.cceo.id))
 
         snapshot = CompletedActivitySnapshot.objects.get(activity=activity)
         self.assertEqual(snapshot.disbursed_amount, 100_000)
@@ -533,7 +539,13 @@ class CompletedActivitySnapshotFromAdvanceRequestTest(FinanceUnificationBaseTest
         confirm_reimbursement_receipt(adv.id, {"amount": 50_000}, self.cceo)
 
         self.assertTrue(ClosureEligibilityService.is_eligible(activity))
-        ActivityClosureService.close(activity, closed_by=self.accountant.id)
+        # CLOSE-01: closed by the CCEO, not the Accountant. These tests are
+        # about the SNAPSHOT the closure freezes, and the Accountant cannot
+        # reach the closure surface — the endpoint is gated on the `planning`
+        # page, which is {CCEO, PL, ProjectCoordinator, CD, Admin}. `close()`
+        # asserts that itself now, so an actor who could never do this through
+        # a door no longer passes here either.
+        ActivityClosureService.close(activity, closed_by=str(self.cceo.id))
 
         snapshot = CompletedActivitySnapshot.objects.get(activity=activity)
         # 100,000 original advance + 50,000 reimbursement = 150,000 total disbursed.

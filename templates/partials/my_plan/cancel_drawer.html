@@ -1,0 +1,70 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% block drawer_title %}Cancel Activity{% endblock %}
+{% block drawer_subtitle %}Call off {{ act.activity_type|title|replace_underscore }}{% if act.school %} at {{ act.school.name }}{% endif %}{% endblock %}
+
+{% block drawer_body %}
+<form
+hx-post="/my-plan/{{ act.id }}/cancel"
+hx-target="#cancel-errors"
+class="space-y-5 text-[12px] font-bold text-slate-600"
+>
+{% csrf_token %}
+<div id="cancel-errors"></div>
+
+{% if money_moved %}
+<div class="p-3 rounded-surface bg-amber-50 text-amber-800 text-[12px] font-bold" role="status">
+An advance for this activity has already been disbursed. Cancelling does not
+remove that money — you still have to account for what was spent and return
+the rest.
+</div>
+{% endif %}
+
+<div class="space-y-3">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">1</span>
+What cancelling does
+</h4>
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">
+The activity stays on the record as <strong>Cancelled</strong> — nothing is
+deleted. It leaves your plan and stops counting toward your targets. Its cost
+is withdrawn from any draft fund request, and any advance whose money has not
+yet moved is removed.{% if act.assigned_partner_id %} The assigned partner is
+notified so they do not travel.{% endif %}
+</p>
+
+<div class="pt-2">
+<label for="reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason <span class="text-rose-600">*</span></label>
+<textarea
+name="reason"
+id="reason"
+rows="3"
+required
+placeholder="e.g., School closed for the term; the head teacher has been transferred..."
+class="w-full p-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-slate-50 focus:outline-none focus:ring-2 edify-primary-focus font-semibold text-slate-700"
+></textarea>
+<p class="edify-text-caption text-slate-400 font-semibold mt-1">
+Whoever reviews this later — a Programme Lead, or an Accountant chasing an
+advance — sees only this line.
+</p>
+</div>
+</div>
+
+<div class="drawer-footer">
+<button
+type="button"
+@click="$dispatch('close-drawer')"
+class="edify-action-button secondary h-9 transition-colors"
+>
+Keep activity
+</button>
+<button
+type="submit"
+class="edify-action-button danger h-9 transition-colors shadow-sm"
+>
+Cancel activity
+</button>
+</div>
+</form>
+{% endblock %}

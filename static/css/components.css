@@ -116,7 +116,7 @@
 }
 .theme-toggle button.active {
   background: var(--edify-surface-raised);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   box-shadow: var(--edify-shadow-sm), inset 0 0 0 1px var(--edify-border);
 }
 
@@ -494,7 +494,7 @@ main h3 {
 /* ═══ GOLD STANDARD LINKS ═════════════════════════════════════════════════
    "View all →" style links use accent color. */
 main a[class*="text-blue-600"], main a[class*="text-[var(--edify-accent)]"] {
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   text-decoration: none;
 }
 main a[class*="text-blue-600"]:hover, main a[class*="text-[var(--edify-accent)]"]:hover {
@@ -533,7 +533,7 @@ main nav[class*="pagination"] button, main nav[class*="pagination"] a {
 }
 main .pagination button:hover, main .pagination a:hover {
   background: var(--edify-surface-muted) !important;
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
 }
 
 .edify-sidebar {
@@ -949,7 +949,7 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
 
 .edify-row-overflow__menu a:is(:hover, :focus-visible) {
   background: var(--edify-surface-hover);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .edify-filter-drawer {
@@ -1159,13 +1159,32 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   box-shadow: var(--edify-shadow-md);
 }
 
-.btn-danger {
-  background-color: var(--edify-danger) !important; /* Warning Red */
-  color: #ffffff !important;
+/* `.danger` joins `.primary`/`.secondary` as an action-button variant so a
+   destructive act can look destructive. Cancelling an activity was the first
+   caller; before this, `.edify-action-button.danger` matched no rule at all
+   and rendered as an unstyled button. */
+/* `.danger` joins `.primary`/`.secondary` as an action-button variant so a
+   destructive act can look destructive. Cancelling an activity was the first
+   caller; before this, `.edify-action-button.danger` matched no rule at all
+   and rendered as an unstyled button.
+
+   Both use --edify-danger-SOLID, not --edify-danger. design-system.css says
+   why in as many words: "--edify-danger itself is the semantic red for
+   borders, chart series and tints, and it is deliberately not used as a
+   button fill: white on #ef4444 measures 3.76:1, under AA for text this
+   size." This rule was filling with it anyway, over a hard-coded #ffffff —
+   the token pair existed with the measurement written beside it and the one
+   component it was created for ignored it. --edify-danger-on-solid also
+   flips to dark ink in the dark themes, where the semantic red is a light
+   salmon that white sat on at 2.44:1. */
+.btn-danger, .edify-action-button.danger {
+  background-color: var(--edify-danger-solid) !important;
+  color: var(--edify-danger-on-solid) !important;
 }
-.btn-danger:hover {
-  background-color: var(--edify-danger) !important;
+.btn-danger:hover, .edify-action-button.danger:hover {
+  background-color: var(--edify-danger-solid) !important;
   transform: translateY(-1px);
+  box-shadow: var(--edify-shadow-md);
 }
 
 .btn-success {
@@ -2491,7 +2510,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .edify-section-nav__cluster.is-active {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   background: color-mix(in srgb, var(--edify-accent) 10%, transparent);
 }
 
@@ -2585,7 +2604,7 @@ select:not([multiple]):not(.select-native) {
 }
 
 .edify-section-nav__link.is-active {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   border-block-end-color: var(--edify-accent);
 }
 

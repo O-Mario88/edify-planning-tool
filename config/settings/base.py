@@ -457,7 +457,9 @@ AUTHENTICATION_BACKENDS = [
 
 # ── Internationalisation ─────────────────────────────────────────────────────
 LANGUAGE_CODE = "en-us"
-TIME_ZONE = "Africa/Kampala"  # the program operates in Uganda
+# East Africa Time. Africa/Nairobi is the canonical IANA zone for EAT;
+# Africa/Kampala is a link to it, so the offset (UTC+3, no DST) is identical.
+TIME_ZONE = "Africa/Nairobi"
 USE_I18N = True
 USE_TZ = True
 

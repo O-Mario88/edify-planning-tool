@@ -3856,6 +3856,9 @@
   .text-\[var\(--edify-accent\)\] {
     color: var(--edify-accent);
   }
+  .text-\[var\(--edify-accent-text\)\] {
+    color: var(--edify-accent-text);
+  }
   .text-\[var\(--edify-chart-amber\)\] {
     color: var(--edify-chart-amber);
   }
@@ -3876,9 +3879,6 @@
   }
   .text-\[var\(--edify-on-accent\)\] {
     color: var(--edify-on-accent);
-  }
-  .text-\[var\(--edify-primary\)\] {
-    color: var(--edify-primary);
   }
   .text-\[var\(--edify-purple-text\)\] {
     color: var(--edify-purple-text);
@@ -4440,8 +4440,8 @@
     .group-hover\:text-\[var\(--edify-accent\)\]:is(:where(.group):hover *) {
       color: var(--edify-accent);
     }
-    .group-hover\:text-\[var\(--edify-primary\)\]:is(:where(.group):hover *) {
-      color: var(--edify-primary);
+    .group-hover\:text-\[var\(--edify-accent-text\)\]:is(:where(.group):hover *) {
+      color: var(--edify-accent-text);
     }
     .group-hover\:text-slate-500:is(:where(.group):hover *) {
       color: var(--color-slate-500);
@@ -4877,19 +4877,19 @@
     .hover\:p-1:hover {
       padding: var(--spacing);
     }
-    .hover\:text-\[var\(--edify-chart-blue\)\]:hover {
-      color: var(--edify-chart-blue);
+    .hover\:text-\[var\(--edify-accent-text\)\]:hover {
+      color: var(--edify-accent-text);
     }
-    .hover\:text-\[var\(--edify-primary\)\]:hover {
-      color: var(--edify-primary);
-    }
-    .hover\:text-\[var\(--edify-primary\)\]\/80:hover {
-      color: var(--edify-primary);
+    .hover\:text-\[var\(--edify-accent-text\)\]\/80:hover {
+      color: var(--edify-accent-text);
     }
     @supports (color: color-mix(in lab, red, red)) {
-      .hover\:text-\[var\(--edify-primary\)\]\/80:hover {
-        color: color-mix(in oklab, var(--edify-primary) 80%, transparent);
+      .hover\:text-\[var\(--edify-accent-text\)\]\/80:hover {
+        color: color-mix(in oklab, var(--edify-accent-text) 80%, transparent);
       }
+    }
+    .hover\:text-\[var\(--edify-chart-blue\)\]:hover {
+      color: var(--edify-chart-blue);
     }
     .hover\:text-amber-400:hover {
       color: var(--color-amber-400);
@@ -10098,7 +10098,7 @@ html, body {
   color: var(--edify-text);
 }
 .partner-workspace__eyebrow {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 .partner-workspace__header h1 {
   color: var(--edify-text);
@@ -10157,7 +10157,7 @@ html, body {
   color: var(--edify-text-muted);
 }
 .partner-identity p svg, .partner-aside-card__heading svg, .partner-empty-state svg {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 .partner-activity-card__summary > div, .partner-activity-table th, .partner-activity-table td, .partner-aside-card__link {
   border-color: var(--edify-divider);

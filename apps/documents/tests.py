@@ -1507,7 +1507,7 @@ class ReminderDedupeAcrossTimezonesTest(DocumentTestBase):
     """One reminder per condition per day, in the platform's timezone.
 
     The dedupe compared `last_reminded_at.date()` — the UTC day — against
-    `timezone.localdate()`, the Africa/Kampala day. For the three hours a day
+    `timezone.localdate()`, the Africa/Nairobi day. For the three hours a day
     the offset spans, those disagree, the dedupe silently fails, and a person
     receives a second reminder for the same condition on the same day. §23
     forbids exactly that.
@@ -1534,7 +1534,7 @@ class ReminderDedupeAcrossTimezonesTest(DocumentTestBase):
 
         Django stores aware datetimes in UTC and hands them back in UTC, so
         `.date()` on a value read from the database is the UTC day. At 00:30 in
-        Africa/Kampala that is still the previous calendar day — which is the
+        Africa/Nairobi that is still the previous calendar day — which is the
         three-hour window where the old comparison silently let a second
         reminder through.
         """

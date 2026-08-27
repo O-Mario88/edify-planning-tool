@@ -211,7 +211,9 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         self.assertFalse(ClosureEligibilityService.is_eligible(self.activity))
         self.assertIn("NetSuite ID missing", [b.blocking_reason for b in blockers])
         with self.assertRaises(BadRequest):
-            ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
+            ActivityClosureService.close(
+                self.activity, closed_by=self.accountant.id, system=True
+            )
 
         # Accountability submitted with the code satisfies the NetSuite gate,
         # but the activity must NOT yet be closeable — the accountant has not
@@ -230,7 +232,9 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         )
         self.assertFalse(ClosureEligibilityService.is_eligible(self.activity))
         with self.assertRaises(BadRequest):
-            ActivityClosureService.close(self.activity, closed_by=self.accountant.id)
+            ActivityClosureService.close(
+                self.activity, closed_by=self.accountant.id, system=True
+            )
 
         # The accountant final-clears (→ ACCOUNTED) → the gate opens.
         from apps.fund_requests.advance_service import approve_accountability
@@ -239,8 +243,13 @@ class NetSuiteAccountabilityLawsTest(TestCase):
         checklist, _ = ClosureEligibilityService.evaluate(self.activity)
         self.assertTrue(checklist.accounts_cleared)
         self.assertTrue(ClosureEligibilityService.is_eligible(self.activity))
+        # `system=True` mirrors the real path: the Accountant never closes
+        # through the closure surface (it is gated on the `planning` page).
+        # Closure follows their NetSuite entry automatically, from
+        # `finance_services.enter_netsuite_id`, which declares the same flag.
+        # These tests are about the accountability LAW, not about who may act.
         closure = ActivityClosureService.close(
-            self.activity, closed_by=self.accountant.id
+            self.activity, closed_by=self.accountant.id, system=True
         )
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, "closed")

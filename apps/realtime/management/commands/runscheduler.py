@@ -79,7 +79,11 @@ class Command(BaseCommand):
             "scheduler_watchdog": jobs.scheduler_watchdog_job,
         }
 
-        scheduler = BackgroundScheduler(timezone="Africa/Kampala")
+        # One source of truth for the programme timezone. This was hard-coded,
+        # so a change to settings.TIME_ZONE would silently leave every cron
+        # trigger on the old zone — the schedule and the application disagreeing
+        # with nothing to catch it.
+        scheduler = BackgroundScheduler(timezone=settings.TIME_ZONE)
         scheduler.add_jobstore(DjangoJobStore(), "default")
         for spec in JOB_REGISTRY:
             func = job_funcs.get(spec.name)

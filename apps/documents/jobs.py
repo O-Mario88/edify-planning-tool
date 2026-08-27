@@ -99,7 +99,7 @@ def send_acknowledgement_reminders() -> int:
         # Compare in the same timezone the rest of this function works in.
         # `last_reminded_at` is stored UTC-aware, so `.date()` gives the UTC
         # day while `today` is the local one -- for the hours the offset spans
-        # (three, for Africa/Kampala) they disagree, the dedupe silently fails,
+        # (three, for Africa/Nairobi) they disagree, the dedupe silently fails,
         # and a person receives a second reminder for the same condition on the
         # same day. Found by the suite crossing midnight mid-run.
         if ack.last_reminded_at and timezone.localdate(ack.last_reminded_at) == today:

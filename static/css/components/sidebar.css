@@ -534,8 +534,13 @@
 }
 
 .theme-dark .app-sidebar__item--active {
+  /* --edify-sidebar-active was defined in design-system.css and read by
+     nothing — a token with no reader, the mirror of the defect class this
+     audit keeps finding. It is the reader now, and in this theme it resolves
+     to a darker brand step: the sidebar's own off-white label on the plain
+     accent measures 4.18:1, just under AA, and 6.6:1 on the active step. */
   color: var(--edify-text) !important;
-  background: var(--brand-primary) !important;
+  background: var(--edify-sidebar-active, var(--brand-primary-active)) !important;
   border-color: var(--brand-primary-border);
   box-shadow: none;
 }

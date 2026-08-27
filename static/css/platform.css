@@ -145,12 +145,24 @@ main :where(.text-slate-300, .text-gray-300, .text-zinc-300, .text-neutral-300) 
   color: var(--edify-text-subtle) !important;
 }
 
+/* Dark-ink utilities follow the theme — EXCEPT on an element that also carries
+   a warm semantic fill. Those fills do not theme-flip: `bg-amber-400` is still
+   amber-400 in the dark themes (measured in the browser, not assumed), so an
+   author who wrote `bg-amber-400 text-slate-900` chose that pairing for both
+   themes and this rule was overruling half of it. Found on the analytics
+   "View Action Plan" CTA, where the near-white theme ink landed on amber at
+   1.53:1 — legible in light mode, effectively invisible in dark.
+
+   Cool and neutral fills (bg-white, bg-slate-50 …) are deliberately NOT
+   excluded: those do flip with the theme, so their ink has to flip with them. */
 main :where(.text-slate-600, .text-slate-700, .text-slate-800, .text-slate-900,
   .text-gray-600, .text-gray-700, .text-gray-800, .text-gray-900,
   .text-zinc-600, .text-zinc-700, .text-zinc-800, .text-zinc-900,
-  .text-neutral-600, .text-neutral-700, .text-neutral-800, .text-neutral-900) {
+  .text-neutral-600, .text-neutral-700, .text-neutral-800, .text-neutral-900
+  ):not([class*="bg-amber-"]):not([class*="bg-yellow-"]):not([class*="bg-lime-"]):not([class*="bg-orange-"]) {
   color: var(--edify-text) !important;
 }
+
 
 main :where(.tabular-nums, [class*="text-[19px]"], [class*="text-[20px]"],
   [class*="text-[21px]"], [class*="text-[22px]"], [class*="text-[24px]"]) {
@@ -340,7 +352,7 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   .premium-button-secondary, .premium-button-outline, .pto-button--secondary,
   .sp-button--secondary, .spa-button--secondary, .spp-button--secondary,
   .hcos-button--secondary, .admin-button--secondary) {
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   background-color: var(--edify-surface-raised) !important;
   background-image: var(--edify-button-secondary-treatment) !important;
   border-color: var(--edify-border) !important;
@@ -994,7 +1006,7 @@ main :where(
   .edify-section-nav__link.is-active
 ) {
   background: var(--edify-surface-raised) !important;
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   border-color: color-mix(in oklab, var(--edify-border) 78%, transparent) !important;
   box-shadow: var(--edify-shadow-sm) !important;
 }
@@ -1459,7 +1471,7 @@ main .platform-responsive-table [data-priority="low"] {
   .premium-button-secondary, .premium-button-outline,
   .pto-button--secondary, .sp-button--secondary, .spa-button--secondary,
   .spp-button--secondary, .hcos-button--secondary, .admin-button--secondary):hover:not(:disabled) {
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   background-color: var(--edify-surface-hover) !important;
   border-color: var(--edify-accent-border) !important;
 }
@@ -2038,7 +2050,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-directory-listbar__bulk button:hover {
   border-color: var(--edify-accent-border);
   background: var(--edify-accent-light);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .school-directory-listbar__bulk button.is-clear {
@@ -2110,7 +2122,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   border: 1px solid color-mix(in oklab, var(--edify-accent-border) 66%, transparent);
   border-radius: var(--edify-radius-md);
   background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .school-directory-row__icon svg {
@@ -2141,7 +2153,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .school-directory-row__name:hover {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .school-directory-row__id {
@@ -2167,7 +2179,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   inline-size: 0.875rem;
   block-size: 0.875rem;
   flex: 0 0 auto;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .school-directory-row__location span {
@@ -2241,7 +2253,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   border: 1px solid var(--edify-accent-border);
   border-radius: var(--edify-radius-sm);
   background: var(--edify-surface-raised);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 600;
   line-height: 1;
@@ -2263,7 +2275,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-directory-row__quick-action:hover {
   border-color: var(--edify-accent);
   background: var(--edify-accent-light);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   transform: translateY(-1px);
 }
 
@@ -2556,7 +2568,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   border: 1px solid color-mix(in oklab, var(--edify-accent-border) 66%, transparent);
   border-radius: var(--edify-radius-md);
   background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .planning-school-row__icon svg {
@@ -2587,7 +2599,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 }
 
 .planning-school-row__name:hover {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .planning-school-row__id {
@@ -2612,7 +2624,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   inline-size: 0.875rem;
   block-size: 0.875rem;
   flex: 0 0 auto;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .planning-school-row__address span {
@@ -2768,7 +2780,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .planning-school-row__toggle:hover {
   border-color: var(--edify-accent-border);
   background: var(--edify-accent-light);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .planning-school-row__toggle svg {
@@ -3168,7 +3180,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   border: 1px solid color-mix(in oklab, var(--edify-accent-border) 68%, transparent);
   border-radius: .75rem;
   background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72);
 }
 
@@ -3219,7 +3231,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
   text-decoration: none;
   pointer-events: auto;
 }
-.school-record-row__title a:hover { color: var(--edify-accent); text-decoration: underline; }
+.school-record-row__title a:hover { color: var(--edify-accent-text); text-decoration: underline; }
 .school-record-row__title a:focus-visible {
   outline: 3px solid color-mix(in oklab, var(--edify-accent) 72%, white);
   outline-offset: 3px;
@@ -3256,7 +3268,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row__metadata dd {
   min-inline-size: 0;
   overflow-wrap: anywhere;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-weight: var(--edify-text-title-weight);
 }
 
@@ -3633,7 +3645,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .school-record-ssa__eyebrow {
   margin: 0;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: var(--edify-text-micro-weight);
   letter-spacing: var(--edify-text-micro-tracking);
@@ -3677,7 +3689,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .school-ssa-group h4 {
   margin: 0 0 .5rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-label-size);
   font-weight: var(--edify-text-title-weight);
   line-height: var(--edify-text-label-leading);
@@ -3754,7 +3766,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row__detail-footer :where(a, button) {
   border: 0;
   background: transparent;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-label-size);
   font-weight: 700;
   text-decoration: none;
@@ -3773,7 +3785,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .core-school-package__heading p {
   margin: 0;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: var(--edify-text-micro-weight);
   letter-spacing: var(--edify-text-micro-tracking);
@@ -3796,7 +3808,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 .core-school-package__tracks h4 {
   margin: 0 0 .45rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-label-size);
   font-weight: var(--edify-text-title-weight);
   text-decoration: underline;
@@ -4472,7 +4484,6 @@ main .core-scope-switch [data-edify-tab] {
   padding-block: 0 !important;
   min-block-size: 2rem !important;
 }
-
 
 /* Team Core Oversight — a read-only table, so nothing here is a control that
    changes a record. `Send to <name>` is the only submit, and it writes an ask. */

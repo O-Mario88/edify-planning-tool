@@ -11,7 +11,7 @@
          hx-target="#evidence-workspace"
          hx-swap="outerHTML"
          hx-push-url="true"
-         class="min-h-11 px-3.5 inline-flex items-center gap-2 border-b-2 text-[12px] font-semibold whitespace-nowrap transition-colors {% if active_tab == tab.key %}border-[var(--edify-primary)] text-[var(--edify-primary)]{% else %}border-transparent text-slate-500 hover:text-slate-700{% endif %}">
+         class="min-h-11 px-3.5 inline-flex items-center gap-2 border-b-2 text-[12px] font-semibold whitespace-nowrap transition-colors {% if active_tab == tab.key %}border-[var(--edify-primary)] text-[var(--edify-accent-text)]{% else %}border-transparent text-slate-500 hover:text-slate-700{% endif %}">
         <span>{{ tab.label }}</span>
         <span class="rounded-pill px-2 py-0.5 bg-slate-100 text-slate-600 tabular-nums">{{ tab.count }}</span>
       </a>

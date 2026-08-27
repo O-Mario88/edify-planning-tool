@@ -4,7 +4,7 @@
   <div class="edify-popup-dialog__surface" tabindex="-1" x-init="$nextTick(() => $el.focus())">
     <header class="drawer-header">
       <div>
-        <p class="edify-text-caption font-bold uppercase tracking-wide text-[var(--edify-primary)]">Loan workflow</p>
+        <p class="edify-text-caption font-bold uppercase tracking-wide text-[var(--edify-accent-text)]">Loan workflow</p>
         <h2 id="loan-action-title" class="mt-1 text-lg font-black text-[var(--edify-text)]">
           {% if can_confirm_salesforce and loan.salesforce_status == "pending" %}Confirm Salesforce Entry{% elif can_validate_ia and loan.salesforce_status == "confirmed" and loan.ia_validation_status == "pending" %}Validate Loan Record{% else %}Loan Details{% endif %}
         </h2>

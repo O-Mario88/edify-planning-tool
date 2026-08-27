@@ -242,13 +242,68 @@ class ClosureEligibilityService:
         return ClosureEligibilityService._core_requirements_met(checklist)
 
 
+def _assert_may_close(actor) -> None:
+    """Authority at the act, not only at the door (CLOSE-01).
+
+    Closure is terminal: it locks the record, freezes the financial snapshot,
+    writes a hash-chained audit entry and moves the activity into Completed
+    Activities. `ActivityClosureService.close` took `closed_by` on trust and
+    stamped it onto the closure record, with the only guard living in one view
+    (`frontend.views.closure_views.close_activity_action`, behind
+    `@require_page_permission("planning")`).
+
+    That is the FIN-03 and SEC-03 shape, and their fixes say why it matters:
+    asserting at the act is what stops the next screen re-opening the hole. It
+    was not a live hole — all three callers were gated: the endpoint by the
+    page permission, and the two in `fund_requests.finance_services`
+    (`clear_partner_payment`, `enter_netsuite_id`) as the automatic consequence
+    of a payment act their own authority check had already cleared. Those two
+    now pass `system=True` and say so at the call site. The point of asserting
+    here is that a FOURTH caller would have opened a hole with nothing to catch
+    it — the opposite of the partner-payment path, which asserts at three
+    independent layers.
+
+    The rule is deliberately the SAME rule the door already applies, read from
+    the permission matrix rather than a role tuple, so there is no second
+    standard to drift: whoever may reach the planning surface may close. That
+    is CCEO, Programme Lead, Project Coordinator, Country Director and Admin —
+    measured, not assumed. Impact Assessment and the Accountant are not among
+    them, which is right: they verify and clear the money, and closure comes
+    after both.
+
+    CLOSE-01 was originally filed as "the closure test asserts an actor who
+    cannot close". That half was wrong — a CCEO can close, and the check above
+    is how that was established. What survived is this: nobody was checking.
+    """
+    from apps.core.exceptions import Forbidden
+    from apps.core.permissions import RolePermissionService
+
+    if isinstance(actor, str):
+        from apps.accounts.models import User
+
+        actor = User.objects.filter(id=actor).first()
+    if actor is None or not RolePermissionService.can_view_page(actor, "planning"):
+        raise Forbidden("Your role cannot close an activity.")
+
+
 class ActivityClosureService:
     """Orchestrates locking and closing eligible activities."""
 
     @staticmethod
     def close(
-        activity: Activity, closed_by: str = "system", bypass_checks: bool = False
+        activity: Activity,
+        closed_by: str = "system",
+        bypass_checks: bool = False,
+        *,
+        system: bool = False,
     ) -> ActivityClosure:
+        # Authority first, before eligibility and before any write. `system=True`
+        # is the explicit opt-out for an automated closure with no human actor;
+        # it is keyword-only and no caller passes it today, so a scheduled job
+        # added later has to say so rather than inheriting a bypass from the
+        # `closed_by="system"` default.
+        if not system:
+            _assert_may_close(closed_by)
         # Check eligibility first
         if not bypass_checks and not ClosureEligibilityService.is_eligible(activity):
             raise BadRequest(

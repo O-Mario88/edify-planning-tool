@@ -32,7 +32,7 @@
 <!-- Box 3: Students Impacted -->
 <div class="bg-slate-50  rounded-surface p-3.5 text-center">
 <span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Students Impacted</span>
-<p class="text-[20px] font-semibold text-[var(--edify-primary)] mt-1">
+<p class="text-[20px] font-semibold text-[var(--edify-accent-text)] mt-1">
 {% if impact_summary.students_impacted >= 1000000 %}
 {{ impact_summary.students_impacted|divide:1000000|floatformat:2 }}M
 {% elif impact_summary.students_impacted >= 1000 %}

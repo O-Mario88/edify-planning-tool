@@ -259,7 +259,7 @@ class ScheduleCostLandsInTheRightWeekTest(TestCase):
         )
 
     def test_local_midnight_on_a_monday_belongs_to_that_monday(self):
-        """21:00 UTC Sunday is 00:00 Monday in Africa/Kampala. Taking the UTC
+        """21:00 UTC Sunday is 00:00 Monday in Africa/Nairobi. Taking the UTC
         date puts the money in the previous week."""
         monday = _next_monday()
         local_midnight = timezone.make_aware(

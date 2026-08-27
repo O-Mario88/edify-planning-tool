@@ -407,6 +407,108 @@ def _assert_verifiable(activity) -> None:
             raise BadRequest("IA Verification failed: focus intervention not recorded.")
 
 
+def assert_ssa_visit_is_verifiable(activity) -> None:
+    """SSA-01. A visit scheduled to collect an SSA is only valid work if the
+    scores were actually entered — that is what IA verification certifies.
+
+    The product rule, in the user's words: "the ssa support visits is only
+    considered valid if the ssa scores are entered." A CCEO who arrives to a
+    closed school can still COMPLETE the visit by giving a reason — the record
+    stays honest and the work is not stuck in their queue — but the visit does
+    not become certified work, does not count toward SSA targets, and does not
+    feed the improvement analytics. It shows as done-but-unverified.
+
+    Completion asks the question (apps.activities.services.complete). This is
+    the other half: the answer "no scores, here is why" must not pass through
+    verification as though scores existed.
+
+    `SSAValidationService.validate_ssa` already computed almost this rule, but
+    only as a RECOMMENDATION: `get_verification_checks` puts its result in a
+    dict that prepopulates the IA's checklist, and the form submits fine with
+    the box ticked over it. Advisory, not a gate. Measured before this
+    function existed: an activity with `ssa_collection_expected=True` and
+    `ssa_not_collected_reason=None` completed via the API, verified to
+    `ia_verified`, and was counted.
+
+    Two deliberate differences from the advisory check:
+
+    1. It requires the record to be dated no earlier than the visit.
+       `latest_applicable_record` has no date scoping at all, so the school's
+       assessment from a previous cycle would satisfy a visit that collected
+       nothing — the exact case the rule exists to catch.
+
+       The comparison anchors on the EARLIEST date the visit is known by, not
+       on one chosen field, and that choice was forced by measurement. A first
+       version compared against `actual_delivery_date or planned_date`; since
+       `actual_delivery_date` is only set when a caller sends
+       `actualDeliveryDate`, and the web completion form does not, it fell back
+       to `planned_date` and refused a visit delivered AHEAD of plan. A false
+       refusal here blocks verification, and verification is what releases
+       credit and money, so the rule has to be wrong in the safe direction.
+
+    2. School-level, not activity-level, because that is all the data model
+       can express: `SsaRecord` has no FK to Activity (apps/ssa/models.py).
+       So this is a proxy — a confirmed assessment for this school, dated no
+       earlier than the visit. Two SSA visits to one school on the same day
+       would be satisfied by a single record. Closing that needs a
+       record→activity link rather than a stricter query here.
+    """
+    if not activity.ssa_collection_expected:
+        return
+
+    if not activity.school:
+        raise BadRequest(
+            "IA Verification failed: this visit was scheduled to collect an "
+            "SSA but has no school attached."
+        )
+
+    from apps.ssa.models import SsaRecord
+
+    # The earliest date this visit is known by. An assessment collected ON the
+    # visit cannot predate every date the visit has. Taking the MINIMUM rather
+    # than one chosen field is what keeps a legitimate early delivery from
+    # being refused: `planned_date` alone refuses a visit delivered ahead of
+    # plan, and `actual_delivery_date` is only set when a caller sends
+    # `actualDeliveryDate`, which the web completion form does not.
+    known_dates = [
+        d
+        for d in (
+            activity.planned_date,
+            activity.actual_delivery_date,
+            timezone.localdate(activity.execution_started_at)
+            if activity.execution_started_at
+            else None,
+        )
+        if d
+    ]
+    anchor = min(known_dates) if known_dates else None
+
+    records = SsaRecord.objects.filter(
+        school=activity.school,
+        deleted_at__isnull=True,
+        verification_status="confirmed",
+    )
+    if anchor is not None:
+        # `__date__gte` compares the stored instant AFTER conversion to the
+        # programme timezone, which is the comparison the rule means. Uganda is
+        # UTC+3 and the SSA service stores a date-only input as local midnight,
+        # so that instant sits at 21:00 the PREVIOUS day in UTC; a naive
+        # comparison reads every assessment as a day early. Measured: it
+        # refused the partner SSA monitor-completion flow, which records the
+        # scores and confirms in one transaction, dated exactly on the visit.
+        records = records.filter(date_of_ssa__date__gte=anchor)
+    if not records.exists():
+        reason = (activity.ssa_not_collected_reason or "").strip()
+        detail = f' The recorded reason was: "{reason}".' if reason else ""
+        raise BadRequest(
+            "IA Verification failed: this visit was scheduled to collect an "
+            "SSA and no confirmed assessment was recorded for the school on "
+            "or after the visit date. An SSA visit is only valid work once "
+            "the scores are entered — it can stay completed, but it cannot "
+            "be verified or counted." + detail
+        )
+
+
 class ActivityCertificationService:
     """Certifies activity as official, updating status and triggering downstream integrations."""
 
@@ -435,6 +537,7 @@ class ActivityCertificationService:
         if activity.status != ActivityStatus.AWAITING_IA_VERIFICATION:
             raise BadRequest("Activity is not awaiting IA verification")
         _assert_verifiable(activity)
+        assert_ssa_visit_is_verifiable(activity)
         with transaction.atomic():
             activity = (
                 Activity.objects.select_for_update().filter(id=activity.id).first()
@@ -445,6 +548,7 @@ class ActivityCertificationService:
             ):
                 raise BadRequest("Activity is not awaiting IA verification")
             _assert_verifiable(activity)
+            assert_ssa_visit_is_verifiable(activity)
             activity.status = ActivityStatus.IA_VERIFIED
             activity.ia_verification_status = VerificationStatus.CONFIRMED
             activity.ia_confirmed_at = timezone.now()

@@ -41,14 +41,18 @@ from apps.accounts.models import (
 )
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
+from apps.ssa.models import SsaRecord
 
 
 def _confirmed_ssa(school, *, fy=None, score=6.0):
     """A confirmed assessment, so intervention work can be planned at all."""
+    import datetime
+
     from django.utils import timezone
 
     from apps.core.enums import SsaIntervention
@@ -58,7 +62,12 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
     record = SsaRecord.objects.create(
         school=school,
         fy=fy or get_operational_fy(),
-        date_of_ssa=timezone.now(),
+        # Dated back deliberately. You plan THIS cycle's intervention work
+        # against the assessment you already hold, so a planning SSA is months
+        # old. Stamping it `now()` made it indistinguishable from an assessment
+        # collected on the visit being walked, which quietly satisfied the
+        # SSA-01 verification gate and made the door walk below prove nothing.
+        date_of_ssa=timezone.now() - datetime.timedelta(days=120),
         average_score=score,
         verification_status="confirmed",
     )
@@ -301,16 +310,19 @@ class SchoolVisitSpineJourneyTest(TestCase):
                 f"accounts_cleared={checklist.accounts_cleared} "
                 f"netsuite={checklist.netsuite_id_entered}"
             )
-        # NOTE — the actor here is not one who could do this through a door.
+        # CLOSE-01, now closed. This step used to pass the ACCOUNTANT, with a
+        # note explaining that it proved the closure machinery runs rather than
+        # that this person can close — because `close()` asserted no authority
+        # of its own and the Accountant cannot reach the closure surface (the
+        # endpoint is gated on the `planning` page: {CCEO, PL,
+        # ProjectCoordinator, CD, Admin}).
         #
-        # `close()` asserts no authority of its own, so this passes with the
-        # Accountant. The Accountant cannot close through any screen: the
-        # endpoint is gated on the `planning` page, which is {CCEO, PL,
-        # ProjectCoordinator, CD, Admin}. Read this assertion narrowly — it
-        # proves the closure MACHINERY runs on an eligible activity, not that
-        # this person can close one. The door walk in this module closes as the
-        # PL, which is the claim about people.
-        ActivityClosureService.close(activity, closed_by=str(self.accountant.id))
+        # `close()` asserts that itself now, at the act, so the gap between
+        # "the function runs when called directly" and "the spine closes" is
+        # gone: an actor who could not do this through a door cannot do it
+        # here either. The service walk and the door walk finally make the
+        # same claim about the same person.
+        ActivityClosureService.close(activity, closed_by=str(self.pl.id))
         activity.refresh_from_db()
         self.assertEqual(activity.status, "closed")
 
@@ -415,19 +427,40 @@ class SchoolVisitSpineJourneyTest(TestCase):
             file_size=2048,
             uploaded_by=self.cceo.id,
         )
-        # The endpoint asks for something the service does not: either the
-        # SSA was collected on the visit, or a reason it was not. Posting
-        # without it returns a 400 fragment and leaves the activity parked at
-        # `completion_started` — found by this walk, and invisible to the
-        # service test above, which calls `complete_activity` directly and is
-        # never asked. See the note on `complete_activity` below.
+        # This visit was scheduled with `purpose_of_visit="ssa_support"`, so
+        # collecting the assessment IS the work, and the completion drawer is
+        # where a CCEO enters the eight scores. Walking it here means the
+        # journey now exercises SSA collection as well as the visit spine.
+        #
+        # This walk previously completed with `ssa_not_collected_reason="School
+        # closed for holidays"` and then ticked `ssa_uploaded` on the IA
+        # checklist to push it through to `ia_verified`. That was the SSA-01
+        # defect written down as an expectation: a visit that collected nothing
+        # being certified as though it had. Under the rule the programme owner
+        # set — an SSA support visit is only valid work once the scores are
+        # entered — that path can no longer reach `ia_verified`, and
+        # apps/activities/test_ssa_visit_validity.py pins it there.
+        #
+        # The endpoint asks for something the service did not, before SSA-01
+        # moved the rule into `complete()`: either the SSA was collected on the
+        # visit, or a reason it was not. Posting without it returns a 400
+        # fragment and leaves the activity parked at `completion_started`.
         post(
             f"/my-plan/{activity.id}/complete",
             {
                 "salesforce_id": "SVE-300001",
-                "ssa_not_collected_reason": "School closed for holidays",
+                "ssa_collected": "yes",
+                **{f"score_{code}": "6.0" for code, _label in SsaIntervention.choices},
             },
             who=self.cceo,
+        )
+        self.assertTrue(
+            SsaRecord.objects.filter(
+                school=self.school,
+                verification_status="confirmed",
+                date_of_ssa__date__gte=timezone.localdate(),
+            ).exists(),
+            "completing an SSA collection visit recorded no assessment",
         )
         activity.refresh_from_db()
         self.assertIn(
@@ -526,14 +559,20 @@ class SchoolVisitSpineJourneyTest(TestCase):
         # not "the spine closes" — and only a walk through the door can tell
         # the two apart.
         #
-        # Every real path to close() IS gated, so this is not an open hole:
-        # the endpoint by the page gate, and the two finance callers
-        # (finance_services.py:638, :881) as an automatic consequence of a
-        # payment act their own authority check already cleared. What is worth
-        # keeping in view is that the gating lives entirely in the callers, so
-        # a fourth caller would introduce a hole with nothing to catch it —
-        # the opposite of the partner-payment path, which asserts at three
-        # independent layers.
+        # CLOSE-01 closed the gap this comment used to describe. The gating no
+        # longer "lives entirely in the callers", where a later caller would
+        # have introduced a hole with nothing to catch it: `close()` asserts
+        # the same rule the door applies, read from the permission matrix so
+        # the two cannot drift.
+        #
+        # The two finance callers (finance_services.py, in `clear_partner_payment`
+        # and `enter_netsuite_id`) now pass `system=True` and say why: closure
+        # there is the automatic CONSEQUENCE of an Accountant's payment act,
+        # whose own authority check has already cleared them, and the Accountant
+        # deliberately cannot reach the closure surface. That is still authority
+        # living in a caller — but it is now declared at the call site instead
+        # of inherited from a default, so a fourth caller has to make the same
+        # decision explicitly rather than getting it by silence.
         response = post(f"/activities/{activity.id}/closure/close", who=self.pl)
         activity.refresh_from_db()
         # The view turns a refused close into a flash message and a redirect,

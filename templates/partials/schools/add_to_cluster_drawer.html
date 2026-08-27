@@ -55,7 +55,7 @@
     {% if existing_covering_cluster %}
     <section class="edify-surface rounded-surface border border-slate-200 p-4" aria-labelledby="automatic-cluster-heading">
       <div class="flex items-start gap-3">
-        <svg class="mt-0.5 h-5 w-5 shrink-0 text-[var(--edify-primary)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <svg class="mt-0.5 h-5 w-5 shrink-0 text-[var(--edify-accent-text)]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/>
         </svg>
         <div>
@@ -190,7 +190,7 @@
       <h3 id="responsible-staff-heading" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Field Staff</h3>
       {% if responsible_staff %}
       <div class="mt-2 flex items-center gap-3">
-        <span class="edify-surface flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-[12px] font-extrabold text-[var(--edify-primary)]">
+        <span class="edify-surface flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-slate-200 text-[12px] font-extrabold text-[var(--edify-accent-text)]">
           {{ responsible_staff.user.name|slice:":1"|upper }}
         </span>
         <div>
