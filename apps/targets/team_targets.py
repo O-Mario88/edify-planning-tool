@@ -1135,9 +1135,7 @@ class PLTeamTargetsService:
                         if cell["start"] and cell["end"]
                         else 0
                     )
-                    status, tone = team_status_for(
-                        pct, expected, started, bool(target)
-                    )
+                    status, tone = team_status_for(pct, expected, started, bool(target))
                     status, tone = team_status_display(status, tone)
                     period_rows.append(
                         {

@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load static table_pagination %}
 
 {% block title %}User Management — Edify{% endblock %}
 
@@ -68,6 +68,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 
 {% if can_manage_partners %}
 <!-- Partner Directory: intentionally managed here beside user identities. -->
+{% paginate partners "partners_page" as partners_pager %}
 <section class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in" aria-labelledby="partner-directory-title">
   <header class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-slate-100">
     <div>
@@ -92,7 +93,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 font-medium">
-        {% for partner in partners %}
+        {% for partner in partners_pager.rows %}
         <tr class="hover:bg-slate-50/50 transition-colors">
           <td class="px-5 py-3.5" data-record-title>
             <span class="font-semibold text-slate-800 block">{{ partner.name }}</span>
@@ -137,6 +138,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
       </tbody>
     </table>
   </div>
+  {% include "components/table_pager.html" with pager=partners_pager param="partners_page" %}
 </section>
 {% endif %}
 

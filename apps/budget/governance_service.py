@@ -23,6 +23,7 @@ from .models import (
     RateCardStatus,
     ReserveActivationStatus,
     StrategicReserveActivation,
+    StrategicReserveStatus,
 )
 from .reference import CANONICAL_RATE_KEYS
 
@@ -80,8 +81,10 @@ def list_rate_cards(principal, *, fy: str | None = None) -> dict:
         Permission.RATE_CARD_OPERATIONAL_VIEW,
         "You do not have access to country rate cards.",
     )
-    qs = CostCatalogue.objects.all().prefetch_related("rates").order_by(
-        "kind", "-fy", "-version"
+    qs = (
+        CostCatalogue.objects.all()
+        .prefetch_related("rates")
+        .order_by("kind", "-fy", "-version")
     )
     if fy:
         qs = qs.filter(fy=str(fy))
@@ -261,8 +264,7 @@ def publish_rate_card(principal, card_id: str) -> dict:
         ).exclude(id=card.id)
         if card.effective_from:
             overlap = overlap.filter(
-                Q(effective_to__isnull=True)
-                | Q(effective_to__gte=card.effective_from)
+                Q(effective_to__isnull=True) | Q(effective_to__gte=card.effective_from)
             )
         if card.effective_to:
             overlap = overlap.filter(
@@ -335,10 +337,14 @@ def request_cost_review(principal, activity_id: str, data: dict) -> dict:
     if snapshot is None:
         raise BadRequest("The activity does not yet have an operational cost.")
     if ActivityCostReview.objects.filter(
-        activity=activity, status__in=("submitted", "under_review", "amendment_required")
+        activity=activity,
+        status__in=("submitted", "under_review", "amendment_required"),
     ).exists():
         raise BadRequest("A cost review for this activity is already unresolved.")
-    proposed_inputs = {**snapshot.calculation_inputs, **(data.get("changedInputs") or {})}
+    proposed_inputs = {
+        **snapshot.calculation_inputs,
+        **(data.get("changedInputs") or {}),
+    }
     proposed = calculate_dual(proposed_inputs)["operational"]
     with transaction.atomic():
         review = ActivityCostReview.objects.create(
@@ -453,9 +459,11 @@ def decide_cost_review(principal, review_id: str, data: dict) -> dict:
             )
             if not any(marker in str(exc).lower() for marker in finance_lock_markers):
                 raise
-            current = ActivityCostSnapshot.objects.select_for_update().filter(
-                activity=review.activity, is_current=True
-            ).first()
+            current = (
+                ActivityCostSnapshot.objects.select_for_update()
+                .filter(activity=review.activity, is_current=True)
+                .first()
+            )
             if current:
                 current.cost_status = "amendment_required"
                 current.save(update_fields=["cost_status", "updated_at"])
@@ -577,6 +585,136 @@ def reserve_summary(principal, *, fy: str | None = None) -> dict:
     }
 
 
+def _reserve_amount(data: dict, key: str) -> int:
+    try:
+        amount = int(data.get(key, 0) or 0)
+    except (TypeError, ValueError):
+        raise BadRequest(f"{key} must be a whole UGX value.")
+    if amount < 0:
+        raise BadRequest(f"{key} cannot be negative.")
+    return amount
+
+
+def create_or_update_reserve(principal, data: dict) -> dict:
+    """Create the CD-authored reserve envelope, or revise it while draft."""
+    _require(
+        principal,
+        Permission.STRATEGIC_RESERVE_MANAGE,
+        "Only the Country Director may configure a strategic reserve.",
+    )
+    country = str(data.get("country") or "Uganda").strip()
+    fy = str(data.get("fy") or "").strip()
+    period_key = str(data.get("periodKey") or "").strip()
+    if not fy:
+        raise BadRequest("fy is required.")
+    if not country:
+        raise BadRequest("country is required.")
+    if len(period_key) > 16:
+        raise BadRequest("periodKey cannot exceed 16 characters.")
+    opening_reserve = _reserve_amount(data, "openingReserve")
+    approved_additions = _reserve_amount(data, "approvedAdditions")
+
+    with transaction.atomic():
+        reserve = (
+            CountryStrategicActivityReserve.objects.select_for_update()
+            .filter(country=country, fy=fy, period_key=period_key)
+            .first()
+        )
+        created = reserve is None
+        previous = None
+        if created:
+            reserve = CountryStrategicActivityReserve.objects.create(
+                country=country,
+                fy=fy,
+                period_key=period_key,
+                opening_reserve=opening_reserve,
+                approved_additions=approved_additions,
+                notes=data.get("notes") or None,
+                status=StrategicReserveStatus.DRAFT,
+            )
+        else:
+            if reserve.status != StrategicReserveStatus.DRAFT:
+                raise BadRequest("An approved or closed reserve is immutable.")
+            previous = {
+                "openingReserve": reserve.opening_reserve,
+                "approvedAdditions": reserve.approved_additions,
+            }
+            reserve.opening_reserve = opening_reserve
+            reserve.approved_additions = approved_additions
+            reserve.notes = data.get("notes") or None
+            reserve.save(
+                update_fields=[
+                    "opening_reserve",
+                    "approved_additions",
+                    "notes",
+                    "updated_at",
+                ]
+            )
+        audit_log(
+            action=(
+                "strategic_reserve.created" if created else "strategic_reserve.updated"
+            ),
+            subject_kind="CountryStrategicActivityReserve",
+            subject_id=reserve.id,
+            actor_id=_user_id(principal),
+            actor_role=getattr(principal, "active_role", None),
+            payload={
+                "country": country,
+                "fy": fy,
+                "periodKey": period_key,
+                "previous": previous,
+                "openingReserve": opening_reserve,
+                "approvedAdditions": approved_additions,
+            },
+            required=True,
+        )
+    return {
+        "id": reserve.id,
+        "status": reserve.status,
+        "availableBalance": reserve.available_balance,
+    }
+
+
+def approve_reserve(principal, reserve_id: str) -> dict:
+    """Apply the independent RVP approval gate to a draft reserve."""
+    _require(
+        principal,
+        Permission.STRATEGIC_RESERVE_APPROVE,
+        "Only the RVP may approve a strategic reserve.",
+    )
+    with transaction.atomic():
+        reserve = (
+            CountryStrategicActivityReserve.objects.select_for_update()
+            .filter(id=reserve_id)
+            .first()
+        )
+        if reserve is None:
+            raise NotFoundError("Strategic reserve not found.")
+        if reserve.status != StrategicReserveStatus.DRAFT:
+            raise BadRequest("Only a draft strategic reserve may be approved.")
+        reserve.status = StrategicReserveStatus.APPROVED
+        reserve.approved_by = _user_id(principal)
+        reserve.approved_at = timezone.now()
+        reserve.save(
+            update_fields=["status", "approved_by", "approved_at", "updated_at"]
+        )
+        audit_log(
+            action="strategic_reserve.approved",
+            subject_kind="CountryStrategicActivityReserve",
+            subject_id=reserve.id,
+            actor_id=_user_id(principal),
+            actor_role=getattr(principal, "active_role", None),
+            payload={
+                "country": reserve.country,
+                "fy": reserve.fy,
+                "periodKey": reserve.period_key,
+                "availableBalance": reserve.available_balance,
+            },
+            required=True,
+        )
+    return {"id": reserve.id, "status": reserve.status}
+
+
 def request_reserve_activation(principal, reserve_id: str, data: dict) -> dict:
     _require(
         principal,
@@ -624,16 +762,18 @@ def request_reserve_activation(principal, reserve_id: str, data: dict) -> dict:
                 ReserveActivationStatus.DISBURSED,
             ),
         ).exists():
-            raise BadRequest("This activity already has an unresolved reserve activation.")
+            raise BadRequest(
+                "This activity already has an unresolved reserve activation."
+            )
         if requested_amount > reserve.available_balance:
-            raise BadRequest("The requested amount exceeds the available reserve balance.")
+            raise BadRequest(
+                "The requested amount exceeds the available reserve balance."
+            )
         before = reserve.available_balance
         activation = StrategicReserveActivation.objects.create(
             reserve=reserve,
             activity=activity,
-            reason_normal_funding_insufficient=data[
-                "reasonNormalFundingInsufficient"
-            ],
+            reason_normal_funding_insufficient=data["reasonNormalFundingInsufficient"],
             operational_cost=activity.est_cost_cents,
             requested_amount=requested_amount,
             expected_outcome=data["expectedOutcome"],
@@ -683,12 +823,16 @@ def approve_reserve_activation(principal, activation_id: str) -> dict:
             id=activation.reserve_id
         )
         if activation.requested_amount > reserve.available_balance:
-            raise BadRequest("The reserve balance changed and can no longer cover this request.")
+            raise BadRequest(
+                "The reserve balance changed and can no longer cover this request."
+            )
         reserve.amount_committed += activation.requested_amount
         reserve.save(update_fields=["amount_committed", "updated_at"])
         activation.status = ReserveActivationStatus.APPROVED
         activation.rvp_approved_by = _user_id(principal)
-        activation.balance_before = reserve.available_balance + activation.requested_amount
+        activation.balance_before = (
+            reserve.available_balance + activation.requested_amount
+        )
         activation.balance_after = reserve.available_balance
         activation.save(
             update_fields=[
@@ -744,6 +888,8 @@ __all__ = [
     "request_cost_review",
     "decide_cost_review",
     "reserve_summary",
+    "create_or_update_reserve",
+    "approve_reserve",
     "request_reserve_activation",
     "approve_reserve_activation",
 ]

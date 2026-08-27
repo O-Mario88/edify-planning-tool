@@ -763,9 +763,6 @@
   .mb-14 {
     margin-bottom: calc(var(--spacing) * 14);
   }
-  .ml-0 {
-    margin-left: 0px;
-  }
   .ml-0\.5 {
     margin-left: calc(var(--spacing) * 0.5);
   }
@@ -3549,9 +3546,6 @@
   .pl-6 {
     padding-left: calc(var(--spacing) * 6);
   }
-  .pl-7 {
-    padding-left: calc(var(--spacing) * 7);
-  }
   .pl-8 {
     padding-left: calc(var(--spacing) * 8);
   }
@@ -4409,9 +4403,6 @@
   .group-open\:rotate-90:is(:where(.group):is([open], :popover-open, :open) *) {
     rotate: 90deg;
   }
-  .group-open\:rotate-180:is(:where(.group):is([open], :popover-open, :open) *) {
-    rotate: 180deg;
-  }
   @media (hover: hover) {
     .group-hover\:scale-105:is(:where(.group):hover *) {
       --tw-scale-x: 105%;
@@ -5191,9 +5182,6 @@
     }
     .sm\:mt-0 {
       margin-top: 0px;
-    }
-    .sm\:ml-7 {
-      margin-left: calc(var(--spacing) * 7);
     }
     .sm\:block {
       display: block;

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **341**
+Components and application partials: **342**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -60,7 +60,7 @@ Components and application partials: **341**
 | `partials/analytics/drilldown_drawer.html` | application-partial | Reusable drilldown drawer interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /analytics/drilldown | 0 |
 | `partials/analytics/filters.html` | application-partial | Reusable filters interface primitive | canonical; default | inherits containing page contract | accessible name and label | /analytics<br>/analytics/ | 0 |
 | `partials/analytics/impact_summary.html` | application-partial | Reusable impact summary interface primitive | canonical; default | inherits containing page contract | accessible name and label | /analytics<br>/analytics/ | 0 |
-| `partials/analytics/impact_workspace.html` | application-partial | Reusable impact workspace interface primitive | executive; default, empty | explicit responsive contract | accessible name and label, announced dynamic state | dynamic / parent-owned | 0 |
+| `partials/analytics/impact_workspace.html` | application-partial | Reusable impact workspace interface primitive | executive; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/analytics/kpi_cards.html` | application-partial | Reusable kpi cards interface primitive | executive, supporting; default | inherits containing page contract | accessible name and label | /analytics<br>/analytics/ | 0 |
 | `partials/analytics/performance_overview.html` | application-partial | Reusable performance overview interface primitive | canonical; default | inherits containing page contract | accessible name and label | /analytics<br>/analytics/ | 0 |
 | `partials/analytics/pl/_icon.html` | application-partial | Reusable  icon interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /accounts<br>/accounts/<br>/admin-ops/incidents/<str:incident_id><br>/admin-ops/planning<br>/admin-ops/support<br>/admin-ops/team-plans<br>/admin-panel/data-quality-center<br>/analytics | 0 |
@@ -203,6 +203,7 @@ Components and application partials: **341**
 | `partials/hr/pd_dashboard/body.html` | application-partial | Reusable body interface primitive | executive; default, empty | explicit responsive contract | inherits semantic parent contract | /cpd-learning | 0 |
 | `partials/hr/pd_dashboard/tracker_table.html` | application-partial | Reusable tracker table interface primitive | canonical; default, empty, disabled | inherits containing page contract | inherits semantic parent contract | /cpd-learning | 0 |
 | `partials/hr/priority_import.html` | application-partial | Reusable priority import interface primitive | {% if row.status == ; default, error | inherits containing page contract | accessible name and label, keyboard focus visibility | /target-distribution | 0 |
+| `partials/hr/priority_milestone_detail.html` | application-partial | Reusable priority milestone detail interface primitive | info, success, warning; default, open | explicit responsive contract | accessible name and label | /strategic-priorities | 0 |
 | `partials/hr/ssa_mapping_drawer.html` | application-partial | Reusable ssa mapping drawer interface primitive | canonical; default, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /priorities/ssa-mapping/<str:item_id>/drawer | 0 |
 | `partials/hr/target_distribution_form.html` | application-partial | Reusable target distribution form interface primitive | success; default, empty | inherits containing page contract | accessible name and label, announced dynamic state | /target-distribution/form | 0 |
 | `partials/hr/team_target_distribution_form.html` | application-partial | Reusable team target distribution form interface primitive | success; default, empty, error | inherits containing page contract | accessible name and label, announced dynamic state | /target-distribution/team | 0 |
@@ -326,7 +327,7 @@ Components and application partials: **341**
 | `partials/ssa/performance_workspace.html` | application-partial | Reusable performance workspace interface primitive | danger, executive, lime, success, warning, {{ cell.band.tone }}, {{ district.band.tone }}, {{ insight.tone }}, {{ intervention.band.tone }}, {{ row.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | dynamic / parent-owned | 0 |
 | `partials/ssa/score_group_columns.html` | application-partial | Reusable score group columns interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /clusters<br>/core-schools<br>/partials/clusters/<str:cluster_id>/schools<br>/planning<br>/schools | 0 |
 | `partials/targets/area_drawer.html` | application-partial | Reusable area drawer interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-targets/area-drawer | 0 |
-| `partials/targets/my_body.html` | application-partial | Reusable my body interface primitive | executive, {{ row.classification.tone }}; default | explicit responsive contract | accessible name and label | /my-targets | 0 |
+| `partials/targets/my_body.html` | application-partial | Reusable my body interface primitive | executive, {{ row.classification.tone }}; default | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-targets | 0 |
 | `partials/targets/priority_portfolio.html` | application-partial | Reusable priority portfolio interface primitive | neutral, {{ row.tone }}; default | explicit responsive contract | accessible name and label | /my-targets | 0 |
 | `partials/targets/project_priorities.html` | application-partial | Reusable project priorities interface primitive | canonical; default, empty | explicit responsive contract | accessible name and label | /my-performance<br>/my-performance/development<br>/my-performance/documents<br>/my-performance/values<br>/my-targets | 0 |
 | `partials/targets/strategic_priority_overview.html` | application-partial | Reusable strategic priority overview interface primitive | canonical; default | explicit responsive contract | accessible name and label | /my-targets<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |

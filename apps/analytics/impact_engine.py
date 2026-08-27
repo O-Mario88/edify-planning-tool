@@ -349,9 +349,7 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
         if act["school_id"]:
             attributed = [act["school_id"]]
         elif act["attended_school_ids"]:
-            attributed = [
-                s for s in (act["attended_school_ids"] or []) if s in scoped
-            ]
+            attributed = [s for s in (act["attended_school_ids"] or []) if s in scoped]
         elif act["project_id"]:
             attributed = [
                 row["school_id"]
@@ -583,8 +581,7 @@ def _driver_activity_rows(acts: pd.DataFrame, key: str) -> pd.DataFrame:
         # interventions improve those scores. Unlinked legacy training rows do
         # not enter this dosage; they remain visible as a data-quality gap.
         return acts[
-            (acts["kind"] == "training")
-            & acts["focus"].map(lambda focus: bool(focus))
+            (acts["kind"] == "training") & acts["focus"].map(lambda focus: bool(focus))
         ]
     if key == "staff":
         return acts[acts["delivery_type"] == "staff"]
@@ -617,8 +614,10 @@ def _driver_association(
     label: str,
     description: str,
 ) -> dict:
-    outcomes = _school_outcomes(imp) if not imp.empty else pd.DataFrame(
-        columns=["school_id", "mean_delta"]
+    outcomes = (
+        _school_outcomes(imp)
+        if not imp.empty
+        else pd.DataFrame(columns=["school_id", "mean_delta"])
     )
     selected = _driver_activity_rows(acts, key)
     counts = (
@@ -1063,13 +1062,10 @@ def _school_group_metadata(school_rows: list[dict]) -> dict[str, dict[str, str]]
         if owner.get("user__active_role") == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
             pl_name = owner.get("user__name") or "Unassigned Program Lead"
         else:
-            pl_name = supervisor_names.get(
-                owner_id, "Unassigned Program Lead"
-            )
+            pl_name = supervisor_names.get(owner_id, "Unassigned Program Lead")
         metadata[row["id"]] = {
             "pl": pl_name,
-            "sub_region": row["district__sub_region__name"]
-            or "Unassigned sub-region",
+            "sub_region": row["district__sub_region__name"] or "Unassigned sub-region",
             "district": row["district__name"] or "Unassigned district",
             "cluster": cluster_names.get(row["cluster_id"], "Unassigned cluster"),
             "sub_county": row["sub_county__name"] or "Unassigned sub-county",
@@ -1078,9 +1074,7 @@ def _school_group_metadata(school_rows: list[dict]) -> dict[str, dict[str, str]]
     return metadata
 
 
-def _group_options(
-    metadata: dict[str, dict[str, str]], selected: str
-) -> list[dict]:
+def _group_options(metadata: dict[str, dict[str, str]], selected: str) -> list[dict]:
     keys = ["pl", "sub_region", "district", "cluster", "sub_county"]
     parish_populated = any(
         values["parish"] != "Unassigned parish" for values in metadata.values()
@@ -1123,13 +1117,17 @@ def grouped_driver_associations(
         }
     labels = {school_id: values[group_by] for school_id, values in metadata.items()}
     frame = imp.copy()
-    frame["group_label"] = frame["school_id"].map(labels).fillna(
-        f"Unassigned {GROUP_LABELS[group_by].lower()}"
+    frame["group_label"] = (
+        frame["school_id"]
+        .map(labels)
+        .fillna(f"Unassigned {GROUP_LABELS[group_by].lower()}")
     )
     activity_rows = acts.copy()
     if not activity_rows.empty:
-        activity_rows["group_label"] = activity_rows["school_id"].map(labels).fillna(
-            f"Unassigned {GROUP_LABELS[group_by].lower()}"
+        activity_rows["group_label"] = (
+            activity_rows["school_id"]
+            .map(labels)
+            .fillna(f"Unassigned {GROUP_LABELS[group_by].lower()}")
         )
 
     prepared = []
@@ -1262,9 +1260,7 @@ def build_dashboard(principal, query: dict) -> dict:
         page_size=20,
     )
     all_training_rows = _driver_activity_rows(acts, "training")
-    all_trainings = (
-        acts[acts["kind"] == "training"] if not acts.empty else acts
-    )
+    all_trainings = acts[acts["kind"] == "training"] if not acts.empty else acts
 
     return {
         "filters": {
@@ -1289,9 +1285,7 @@ def build_dashboard(principal, query: dict) -> dict:
             "trainings_in_window": int(all_trainings["activity_id"].nunique())
             if not all_trainings.empty
             else 0,
-            "ssa_linked_trainings": int(
-                all_training_rows["activity_id"].nunique()
-            )
+            "ssa_linked_trainings": int(all_training_rows["activity_id"].nunique())
             if not all_training_rows.empty
             else 0,
         },

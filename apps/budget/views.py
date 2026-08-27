@@ -84,12 +84,16 @@ class RateCardsView(APIView):
     def get(self, request: Request) -> Response:
         from .governance_service import list_rate_cards
 
-        return Response(list_rate_cards(request.user, fy=request.query_params.get("fy")))
+        return Response(
+            list_rate_cards(request.user, fy=request.query_params.get("fy"))
+        )
 
     def post(self, request: Request) -> Response:
         from .governance_service import create_rate_card_version
 
-        return Response(create_rate_card_version(request.user, request.data), status=201)
+        return Response(
+            create_rate_card_version(request.user, request.data), status=201
+        )
 
 
 class RateCardLineView(APIView):
@@ -141,13 +145,38 @@ class ActivityCostReviewDecisionView(APIView):
 
 
 class StrategicReserveView(APIView):
-    permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = [Permission.STRATEGIC_RESERVE_VIEW.value]
+    @property
+    def required_permissions(self):
+        if self.request.method == "POST":
+            return [Permission.STRATEGIC_RESERVE_MANAGE.value]
+        return [Permission.STRATEGIC_RESERVE_VIEW.value]
+
+    def get_permissions(self):
+        return [IsAuthenticated(), RequirePermissions()]
 
     def get(self, request: Request) -> Response:
         from .governance_service import reserve_summary
 
-        return Response(reserve_summary(request.user, fy=request.query_params.get("fy")))
+        return Response(
+            reserve_summary(request.user, fy=request.query_params.get("fy"))
+        )
+
+    def post(self, request: Request) -> Response:
+        from .governance_service import create_or_update_reserve
+
+        return Response(
+            create_or_update_reserve(request.user, request.data), status=201
+        )
+
+
+class StrategicReserveApprovalView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.STRATEGIC_RESERVE_APPROVE.value]
+
+    def post(self, request: Request, reserve_id: str) -> Response:
+        from .governance_service import approve_reserve
+
+        return Response(approve_reserve(request.user, reserve_id))
 
 
 class StrategicReserveActivationView(APIView):
@@ -158,7 +187,8 @@ class StrategicReserveActivationView(APIView):
         from .governance_service import request_reserve_activation
 
         return Response(
-            request_reserve_activation(request.user, reserve_id, request.data), status=201
+            request_reserve_activation(request.user, reserve_id, request.data),
+            status=201,
         )
 
 

@@ -860,7 +860,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("Funding &amp; Execution", intelligence_row)
         self.assertIn('aside class="pl-funding-card ', dashboard)
         self.assertLess(
-            dashboard.index("SSA Intelligence"), dashboard.index("Funding &amp; Execution")
+            dashboard.index("SSA Intelligence"),
+            dashboard.index("Funding &amp; Execution"),
         )
         self.assertLess(
             dashboard.index("Funding &amp; Execution"), dashboard.index("Team Backlog")
@@ -886,6 +887,35 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertIn(".pl-ssa-matrix-scroll, .pl-urgent-table-scroll", pages)
         self.assertIn("overflow-x: clip", pages)
+
+    def test_priority_milestones_use_the_compact_reference_record_grid(self):
+        dashboard = _read("templates/pages/hr/priority_configuration.html")
+        detail = _read("templates/partials/hr/priority_milestone_detail.html")
+        pages = _read("static/css/pages.css")
+
+        for label in (
+            "Milestone Name",
+            "Priority Group",
+            "Metric / Indicator",
+            "Created Date",
+            "Def.",
+            "App.",
+            "All.",
+        ):
+            self.assertIn(label, dashboard)
+        self.assertIn('class="priority-record-shell edify-surface"', dashboard)
+        self.assertIn(
+            'class="priority-record-summary priority-record-columns"', dashboard
+        )
+        self.assertIn("priority-record-check", dashboard)
+        self.assertIn("priority-record-empty", dashboard)
+        self.assertIn("priority-record-action-button", dashboard)
+        self.assertIn("priority_milestone_detail.html", dashboard)
+        self.assertIn("Define metric", detail)
+        self.assertIn("Allocate approved target", detail)
+        self.assertIn("overflow-x: auto", pages)
+        self.assertIn("min-inline-size: 74rem", pages)
+        self.assertIn("var(--edify-text-micro-size)", pages)
 
     def test_program_lead_urgent_schools_card_uses_compact_server_pagination(self):
         dashboard = _read("templates/partials/dashboards/pl/body.html")

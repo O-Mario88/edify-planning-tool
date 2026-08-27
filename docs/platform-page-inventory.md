@@ -4,17 +4,17 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **572**
-- All registered routes: **1030**
-- API routes: **349**
+- Routed product surfaces: **573**
+- All registered routes: **1041**
+- API routes: **359**
 - Roles: **14**
-- Permission keys: **100**
+- Permission keys: **112**
 - Scheduled jobs: **23**
 - Activity states: **23**
-- Shared component templates: **341**
+- Shared component templates: **342**
 - Full pages: **203**
 - Partials and drawers: **170**
-- Permission-gated surfaces: **562**
+- Permission-gated surfaces: **563**
 - Referenced by automated tests: **527**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
@@ -196,6 +196,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-0B247C98CF | /core-schools/schedule-visit | Core Schedule Visit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1B92F939B0 | /core-schools/schedule-visit/action | Core Schedule Visit Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E1FE532B4B | /core-schools/strategy-playbook | Core Strategy Playbook Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B2C7B8534B | /cost-intelligence | Cost Intelligence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-AD648BAC50 | /cost-settings | Cost Catalogue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6B5ACDE957 | /cost-settings/initialize-default | Initialize Default Catalogue | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B40AF5ED77 | /cost-settings/row/<str:key> | Cost Setting Row | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

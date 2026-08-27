@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 614,
+  "titled_cards": 618,
   "templates": 220,
-  "distinct_titles": 586,
+  "distinct_titles": 588,
   "with_card_key": 13,
-  "untitled_surfaces": 1017,
+  "untitled_surfaces": 1022,
   "untitled_chrome": 237,
-  "untitled_nested": 388,
+  "untitled_nested": 393,
   "untitled_headless": 392,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 22,
+  "titles_in_several_templates": 23,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -31,6 +31,11 @@
    "templates/pages/projects/index.html",
    "templates/partials/core_schools/right_panel.html",
    "templates/partials/projects/my_plan_workspace.html"
+  ],
+  "cumulative progress by time period": [
+   "templates/pages/reports/index.html",
+   "templates/partials/targets/my_body.html",
+   "templates/partials/targets/team/body.html"
   ],
   "danger zone": [
    "templates/pages/admin/user_detail.html",
@@ -563,7 +568,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 71,
+   "line": 72,
    "title": "Partner Organisations",
    "heading_level": 2,
    "has_card_key": false,
@@ -577,7 +582,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 261,
+   "line": 263,
    "title": "Add Partner Organisation",
    "heading_level": 3,
    "has_card_key": false,
@@ -591,7 +596,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 343,
+   "line": 345,
    "title": "Remove ?",
    "heading_level": 3,
    "has_card_key": false,
@@ -605,7 +610,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 378,
+   "line": 380,
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,
@@ -1178,7 +1183,35 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 59,
+   "line": 64,
+   "title": "Cost comparison intelligence",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm",
+   "branch_path": [
+    [
+     5,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/cost_settings/index.html",
+   "line": 76,
+   "title": "Cost review requests",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
+   "branch_path": [
+    [
+     6,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/cost_settings/index.html",
+   "line": 142,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2126,7 +2159,7 @@
   },
   {
    "template": "templates/pages/hr/priority_configuration.html",
-   "line": 212,
+   "line": 157,
    "title": "No governed priority cycle for FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -4133,126 +4166,28 @@
   },
   {
    "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 35,
+   "line": 43,
    "title": "No paired assessment cycles yet",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-8 text-center space-y-2",
    "branch_path": [
     [
-     1,
+     2,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 47,
-   "title": "Dose\u2013response: support intensity vs improvement",
-   "heading_level": 3,
+   "line": 113,
+   "title": "Portfolio comparison by",
+   "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "classes": "impact-deferred-section edify-surface rounded-surface border border-slate-100 shadow-sm p-4 sm:p-5 space-y-3",
    "branch_path": [
     [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 59,
-   "title": "Funding vs improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 73,
-   "title": "Focused visits: treated vs untreated schools with weak initial SSA scores",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 96,
-   "title": "Focused trainings: treated vs untreated schools with weak initial SSA scores",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 121,
-   "title": "Funding efficiency quadrants",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 139,
-   "title": "Target achievement \u2194 school improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-amber-100 bg-amber-50/40 p-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 163,
-   "title": "Geography: median delta by district \u00d7 intervention",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 187,
-   "title": "Does geography matter?",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": [
-    [
-     1,
+     2,
      1
     ]
    ]
@@ -4260,13 +4195,125 @@
   {
    "template": "templates/partials/analytics/impact_workspace.html",
    "line": 198,
+   "title": "Dose\u2013response: support intensity vs improvement",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 210,
+   "title": "Funding vs improvement",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 224,
+   "title": "Focused visits: treated vs untreated schools with weak initial SSA scores",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 247,
+   "title": "Focused trainings: treated vs untreated schools with weak initial SSA scores",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 272,
+   "title": "Funding efficiency quadrants",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 290,
+   "title": "Target achievement \u2194 school improvement",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-amber-100 bg-amber-50/40 p-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 314,
+   "title": "Geography: median delta by district \u00d7 intervention",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 362,
+   "title": "Does geography matter?",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 373,
    "title": "Field reality: why interventions are (not) moving",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": [
     [
-     1,
+     2,
      1
     ]
    ]
@@ -4955,7 +5002,7 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 132,
+   "line": 128,
    "title": "SSA Intelligence",
    "heading_level": 2,
    "has_card_key": false,
@@ -4964,7 +5011,16 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 140,
+   "line": 134,
+   "title": "Funding &amp; Execution",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "pl-funding-card rounded-surface p-4 edify-surface border edify-border edify-shadow-sm",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/pl/body.html",
+   "line": 144,
    "title": "Team Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4973,20 +5029,11 @@
   },
   {
    "template": "templates/partials/dashboards/pl/body.html",
-   "line": 144,
+   "line": 148,
    "title": "Smart Route &amp; Capacity",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "lg:col-span-6 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/dashboards/pl/body.html",
-   "line": 151,
-   "title": "Funding &amp; Execution",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "pl-funding-card pl-funding-card--wide rounded-surface p-4 edify-surface border edify-border edify-shadow-sm",
    "branch_path": []
   },
   {
@@ -5287,7 +5334,16 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 224,
+   "line": 139,
+   "title": "Monthly Executable Budget",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/finance/country_budget/root.html",
+   "line": 253,
    "title": "Approval Status",
    "heading_level": 3,
    "has_card_key": false,
@@ -5296,7 +5352,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 231,
+   "line": 260,
    "title": "Monthly Approval Progress",
    "heading_level": 3,
    "has_card_key": false,
@@ -5305,7 +5361,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 247,
+   "line": 276,
    "title": "Budget Integrity Checks",
    "heading_level": 3,
    "has_card_key": false,
@@ -5314,7 +5370,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 260,
+   "line": 289,
    "title": "Month Summary",
    "heading_level": 3,
    "has_card_key": false,
@@ -5323,7 +5379,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 270,
+   "line": 299,
    "title": "Plan Source Summary",
    "heading_level": 3,
    "has_card_key": false,
@@ -6520,7 +6576,7 @@
   {
    "template": "templates/partials/targets/my_body.html",
    "line": 101,
-   "title": "Performance Priorities by Time Period",
+   "title": "Cumulative progress by time period",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
@@ -6533,7 +6589,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 186,
+   "line": 205,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -6542,7 +6598,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 203,
+   "line": 222,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -6551,7 +6607,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 232,
+   "line": 251,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,
@@ -6593,7 +6649,7 @@
   {
    "template": "templates/partials/targets/team/body.html",
    "line": 6,
-   "title": "Team targets performance",
+   "title": "Cumulative progress by time period",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "tt-panel tt-matrix-panel",

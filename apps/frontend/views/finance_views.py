@@ -598,9 +598,7 @@ def cost_settings_view(request):
     )
     reference_catalogue = None
     if can_view_reference:
-        reference_catalogue = get_active_cost_catalogue(
-            fy, kind=RateCardKind.REFERENCE
-        )
+        reference_catalogue = get_active_cost_catalogue(fy, kind=RateCardKind.REFERENCE)
 
     cost_items = []
     if active_catalogue:
@@ -645,9 +643,7 @@ def cost_settings_view(request):
                 "reference_configuration_required": reference_catalogue is None,
                 "reference_total": reference_total,
                 "operational_total": operational_total,
-                "potential_cost_avoidance": max(
-                    0, reference_total - operational_total
-                ),
+                "potential_cost_avoidance": max(0, reference_total - operational_total),
                 "operational_premium": max(0, operational_total - reference_total),
                 "actual_accounted_total": int(comparison["actual_total"] or 0),
                 "cost_review_queue": ActivityCostReview.objects.filter(
@@ -662,9 +658,7 @@ def cost_settings_view(request):
     )
     if context["can_view_reserve"]:
         context["strategic_reserves"] = list(
-            CountryStrategicActivityReserve.objects.filter(fy=fy).order_by(
-                "period_key"
-            )
+            CountryStrategicActivityReserve.objects.filter(fy=fy).order_by("period_key")
         )
     return render(request, "pages/cost_settings/index.html", context)
 

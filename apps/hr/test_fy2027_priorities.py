@@ -324,9 +324,7 @@ class MilestoneAllocationProjectionTests(TestCase):
         pl_staff = StaffProfile.objects.create(
             user=pl_user, title="Program Lead", country="Uganda"
         )
-        StaffSupervisorAssignment.objects.create(
-            supervisor=pl_staff, supervisee=staff
-        )
+        StaffSupervisorAssignment.objects.create(supervisor=pl_staff, supervisee=staff)
         self.client.force_login(user)
         personal_html = self.client.get("/my-targets?fy=2027").content.decode()
         self.assertIn("Cumulative progress by time period", personal_html)

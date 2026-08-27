@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from django.conf import settings
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token
@@ -13,8 +12,10 @@ from apps.budget.governance_service import list_rate_cards
 from apps.budget.models import (
     CostCatalogue,
     CostSetting,
+    CountryStrategicActivityReserve,
     RateCardKind,
     RateCardStatus,
+    StrategicReserveStatus,
 )
 from apps.core.fy import get_operational_fy
 from apps.core.rbac import EdifyRole, permissions_for_role
@@ -34,6 +35,13 @@ class DualRateCardSecurityTest(APITestCase):
             name="Dual Card CCEO",
             roles=[EdifyRole.CCEO.value],
             active_role=EdifyRole.CCEO.value,
+            password="x",
+        )
+        self.rvp = User.objects.create_user(
+            email="dual-rvp@example.test",
+            name="Dual Card RVP",
+            roles=[EdifyRole.REGIONAL_VICE_PRESIDENT.value],
+            active_role=EdifyRole.REGIONAL_VICE_PRESIDENT.value,
             password="x",
         )
         self.fy = get_operational_fy()
@@ -172,3 +180,43 @@ class DualRateCardSecurityTest(APITestCase):
         self.assertNotEqual(new_card.id, old_card.id)
         self.assertGreater(new_card.version, old_card.version)
         self.assertEqual(result["unitCost"], old_amount + 500)
+
+    def test_country_director_can_create_and_rvp_can_approve_reserve(self):
+        self._as(self.cd)
+        create_response = self.client.post(
+            "/api/budget/strategic-reserve",
+            {
+                "country": "Uganda",
+                "fy": self.fy,
+                "periodKey": "annual",
+                "openingReserve": 12_000_000,
+                "approvedAdditions": 3_000_000,
+                "notes": "Approved annual contingency envelope",
+            },
+            format="json",
+        )
+        self.assertEqual(create_response.status_code, 201, create_response.content)
+        reserve = CountryStrategicActivityReserve.objects.get(
+            id=create_response.json()["id"]
+        )
+        self.assertEqual(reserve.status, StrategicReserveStatus.DRAFT)
+        self.assertEqual(reserve.available_balance, 15_000_000)
+
+        self._as(self.rvp)
+        approval_response = self.client.post(
+            f"/api/budget/strategic-reserve/{reserve.id}/approve",
+            format="json",
+        )
+        self.assertEqual(approval_response.status_code, 200, approval_response.content)
+        reserve.refresh_from_db()
+        self.assertEqual(reserve.status, StrategicReserveStatus.APPROVED)
+        self.assertEqual(reserve.approved_by, str(self.rvp.id))
+
+    def test_rvp_cannot_create_strategic_reserve(self):
+        self._as(self.rvp)
+        response = self.client.post(
+            "/api/budget/strategic-reserve",
+            {"fy": self.fy, "openingReserve": 1_000_000},
+            format="json",
+        )
+        self.assertEqual(response.status_code, 403)

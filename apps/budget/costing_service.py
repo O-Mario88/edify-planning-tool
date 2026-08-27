@@ -49,12 +49,12 @@ def active_catalogue(
     resolved_fy = str(fy or get_operational_fy())
     country = getattr(settings, "COUNTRY", "Uganda")
     qs = CostCatalogue.objects.filter(
-            country=country,
-            fy=resolved_fy,
-            kind=kind,
-            status=RateCardStatus.PUBLISHED,
-            is_active=True,
-        )
+        country=country,
+        fy=resolved_fy,
+        kind=kind,
+        status=RateCardStatus.PUBLISHED,
+        is_active=True,
+    )
     if on_date is not None:
         from django.db.models import Q
 
@@ -199,7 +199,9 @@ def calculate_dual(input: dict) -> dict:
     reference_rates, _reference_settings = _rate_card(reference_card)
     operational = cost_for_activity(input, operational_rates)
     reference = (
-        cost_for_activity(input, reference_rates) if reference_card is not None else None
+        cost_for_activity(input, reference_rates)
+        if reference_card is not None
+        else None
     )
 
     missing = list(operational.missing_items)
@@ -273,7 +275,9 @@ def management_preview(input: dict) -> dict:
         "operationalCost": int(operational.amount),
         "operationalBreakdown": [_serialize_line(line) for line in operational.lines],
         "operationalRateCardId": operational_card.id if operational_card else None,
-        "operationalRateCardVersion": operational_card.version if operational_card else None,
+        "operationalRateCardVersion": operational_card.version
+        if operational_card
+        else None,
         "referenceCost": int(reference.amount) if reference is not None else None,
         "referenceBreakdown": (
             [_serialize_line(line) for line in reference.lines] if reference else []
@@ -576,11 +580,7 @@ def apply_to_activity(
     dual = calculate_dual({**input, "fy": fy})
     catalogue = dual["operationalCard"]
     rates, settings_by_key = _rate_card(catalogue)
-    cost = (
-        precomputed_cost
-        if precomputed_cost is not None
-        else dual["operational"]
-    )
+    cost = precomputed_cost if precomputed_cost is not None else dual["operational"]
     reference_card = dual["referenceCard"]
     reference_cost = dual["reference"]
 
