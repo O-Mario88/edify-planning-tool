@@ -314,20 +314,28 @@ class CancelAfterDisbursementJourneyTest(TestCase):
 
         Mapping them found two things worth more than the walk itself.
 
-        CANCEL-01. The mandate's first step for this journey is Cancellation,
-        and the ONLY door to it is `POST /api/activities/<id>/cancel` — the DRF
-        endpoint built by `_action_view(services.cancel, ASSIGN)`. No screen
-        reaches it. Checked three ways: `apps/frontend/urls.py` has no cancel
-        route for activities (the one `/cancel` form in templates belongs to
-        extra work), nothing in templates or JS posts to the API path, and
-        every `"cancelled"` reference in `apps/frontend/views/` is a READ —
-        five modules exclude or filter it, none writes it. So the UI has a
-        full vocabulary for cancelled work and no way to produce it.
+        CANCEL-01, now closed. When this walk was first written the ONLY door
+        to cancellation was `POST /api/activities/<id>/cancel` — the DRF
+        endpoint built by `_action_view(services.cancel, ASSIGN)` — and no
+        screen reached it. Checked three ways at the time: `apps/frontend/
+        urls.py` had no cancel route for activities (the one `/cancel` form in
+        templates belongs to extra work), nothing in templates or JS posted to
+        the API path, and every `"cancelled"` reference in
+        `apps/frontend/views/` was a READ. The UI had a full vocabulary for
+        cancelled work and no way to produce it.
 
-        Whether that is deliberate is a product question and is recorded
-        rather than assumed. What this test can do meanwhile is pin the door
-        that DOES exist, so the behaviour is held either way — and so that a
-        screen added later has something to conform to.
+        There is a screen now (`/my-plan/<id>/cancel`, with its drawer), and
+        `apps/frontend/test_cancel_activity_door.py` walks it. This test keeps
+        walking the API door, because both must hold the same rule — a rule
+        written on one door only is the defect this audit keeps finding.
+
+        Who may cancel was left exactly where the platform already put it.
+        Adding a money-based escalation to the Programme Lead was tried and
+        reverted: `_assert_may_execute` cites §1B — supervision does not
+        license cancelling someone else's work — so a Programme Lead cannot
+        reach this act at all, and the two rules together would have made
+        funded work permanently uncancellable. What CANCEL-01 does add is a
+        mandatory reason, on both doors.
 
         SSA-01 is recorded separately: the API completion twin does not carry
         the SSA-or-reason rule the web form enforces. Not exercised here;
@@ -340,7 +348,7 @@ class CancelAfterDisbursementJourneyTest(TestCase):
         disbursed = {a.id: a.disbursed_amount for a in advances}
         self.assertTrue(disbursed, "nothing was disbursed, so there is no journey")
 
-        # ── 1. Cancellation, through the only door there is ───────────────
+        # ── 1. Cancellation, through the API door ─────────────────────────
         self.client.force_login(self.cceo)
         with self.captureOnCommitCallbacks(execute=True):
             response = self.client.post(

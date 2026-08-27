@@ -699,6 +699,16 @@ urlpatterns = [
         name="complete_activity",
     ),
     path(
+        "my-plan/<str:activity_id>/cancel-drawer",
+        my_plan_views.cancel_activity_drawer_view,
+        name="cancel_activity_drawer",
+    ),
+    path(
+        "my-plan/<str:activity_id>/cancel",
+        my_plan_views.cancel_activity_action,
+        name="cancel_activity",
+    ),
+    path(
         "my-plan/<str:activity_id>/accountability",
         my_plan_views.accountability_action,
         name="accountability_action",

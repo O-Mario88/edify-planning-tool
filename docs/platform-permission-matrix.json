@@ -10605,6 +10605,38 @@
     "PartnerFieldOfficer",
     "Admin"
    ],
+   "route": "/my-plan/<str:activity_id>/cancel",
+   "route_name": "cancel_activity",
+   "view": "apps.frontend.views.my_plan_views.cancel_activity_action"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
+   "route": "/my-plan/<str:activity_id>/cancel-drawer",
+   "route_name": "cancel_activity_drawer",
+   "view": "apps.frontend.views.my_plan_views.cancel_activity_drawer_view"
+  },
+  {
+   "page_permission": "my_plan",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "Admin"
+   ],
    "route": "/my-plan/<str:activity_id>/complete",
    "route_name": "complete_activity",
    "view": "apps.frontend.views.my_plan_views.complete_activity_action"
@@ -13814,25 +13846,25 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 281,
-  "Admin": 760,
+  "Admin": 762,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 463,
+  "CCEO": 465,
   "CountryDirector": 532,
   "HumanResources": 264,
   "ImpactAssessment": 400,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
-  "PartnerAdmin": 199,
-  "PartnerFieldOfficer": 199,
-  "Program Lead": 538,
-  "ProjectCoordinator": 394,
+  "PartnerAdmin": 201,
+  "PartnerFieldOfficer": 201,
+  "Program Lead": 540,
+  "ProjectCoordinator": 396,
   "RegionalVicePresident": 293
  },
  "summary": {
   "page_keys_declared": 147,
   "page_keys_in_navigation": 164,
-  "routes_guarded": 845,
-  "routes_total": 1028,
+  "routes_guarded": 847,
+  "routes_total": 1030,
   "routes_unguarded": 183,
   "surfaces_no_role_can_reach": 0
  },

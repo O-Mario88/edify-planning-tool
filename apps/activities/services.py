@@ -4183,6 +4183,27 @@ def _cancel_or_defer(
         if already_authorised
         else _get_for_execution(activity_id, principal)
     )
+    if new_status == "cancelled" and not already_authorised:
+        # WHO may cancel is already settled, and deliberately: `_get_for_execution`
+        # above applies `_assert_may_execute`, whose docstring cites §1B —
+        # supervision does not license cancelling someone else's work. An
+        # earlier version of this fix escalated cancellation of FUNDED work to
+        # the Programme Lead, reasoning by analogy with
+        # `partners.withdrawal_service.assert_may_withdraw`. The tests refused
+        # it, and they were right: a Programme Lead cannot pass
+        # `_assert_may_execute` at all, so the two rules together made funded
+        # work permanently uncancellable. The financial control it was reaching
+        # for already exists downstream — the disbursed advance survives
+        # cancellation and still has to be accounted for (FIN-01, FIN-04).
+        #
+        # A cancelled activity is a record someone has to read later — the
+        # Programme Lead reviewing a dropped visit, the Accountant chasing an
+        # advance against work that never happened. `_cancel_or_defer` already
+        # stores `reason` in `last_reason` and puts it in the partner's
+        # notification; nothing required it to be there, so it could be empty
+        # in exactly the cases that need explaining.
+        if not str(data.get("reason") or "").strip():
+            raise BadRequest("Give a reason this activity is being cancelled.")
     with transaction.atomic():
         a = Activity.objects.select_for_update().get(pk=a.pk)
         prior_buckets = list(

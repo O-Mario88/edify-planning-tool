@@ -42,7 +42,7 @@
 .help-topic-card__eyebrow,
 .help-section-kicker {
   margin: 0;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-size: var(--edify-text-micro-size);
   font-weight: 800;
   letter-spacing: .14em;
@@ -355,7 +355,7 @@
 
 .help-primary-link:hover { background: var(--edify-accent-hover); transform: translateY(-1px); }
 .help-quick-links { display: grid; gap: .75rem; margin: 1rem 0 0; padding: 0; list-style: none; }
-.help-quick-links a { color: var(--edify-accent); font-size: .88rem; font-weight: 800; }
+.help-quick-links a { color: var(--edify-accent-text); font-size: .88rem; font-weight: 800; }
 .help-quick-links a:hover { text-decoration: underline; }
 
 @supports (font-size: 1cqi) {

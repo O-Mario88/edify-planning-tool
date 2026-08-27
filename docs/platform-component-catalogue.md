@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **340**
+Components and application partials: **341**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -229,6 +229,7 @@ Components and application partials: **340**
 | `partials/my_plan/activity_table.html` | application-partial | Reusable activity table interface primitive | canonical; default | inherits containing page contract | keyboard focus visibility | /evidence/returned | 0 |
 | `partials/my_plan/attendance_drawer.html` | application-partial | Reusable attendance drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /activities/<str:activity_id>/attendance | 0 |
 | `partials/my_plan/attention.html` | application-partial | Reusable attention interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
+| `partials/my_plan/cancel_drawer.html` | application-partial | Reusable cancel drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /my-plan/<str:activity_id>/cancel-drawer | 0 |
 | `partials/my_plan/cluster_meetings.html` | application-partial | Reusable cluster meetings interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/cluster_trainings.html` | application-partial | Reusable cluster trainings interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /my-plan | 0 |
 | `partials/my_plan/complete_drawer.html` | application-partial | Reusable complete drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /my-plan/<str:activity_id>/complete-drawer | 0 |

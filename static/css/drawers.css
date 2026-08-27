@@ -679,7 +679,7 @@
 .drawer-body .text-emerald-600, .drawer-body .text-emerald-700 { color: var(--edify-success) !important; }
 .drawer-body .text-rose-600, .drawer-body .text-rose-700 { color: var(--edify-danger) !important; }
 .drawer-body .text-amber-600, .drawer-body .text-amber-700 { color: var(--edify-warning) !important; }
-.drawer-body .text-blue-600, .drawer-body .text-blue-700 { color: var(--edify-accent) !important; }
+.drawer-body .text-blue-600, .drawer-body .text-blue-700 { color: var(--edify-accent-text) !important; }
 .drawer-body .bg-emerald-50 { background: var(--edify-success-light) !important; }
 .drawer-body .bg-rose-50 { background: var(--edify-danger-light) !important; }
 .drawer-body .bg-amber-50 { background: var(--edify-warning-light) !important; }
@@ -993,7 +993,7 @@
 .drawer-surface:has(.cluster-create-drawer) .drawer-close-btn:hover {
   border-color: var(--edify-accent);
   background: var(--edify-accent-light);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .drawer-surface:has(.cluster-create-drawer) .drawer-body {
@@ -1197,7 +1197,7 @@
 .cluster-create-empty svg {
   inline-size: 1.5rem;
   block-size: 1.5rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .cluster-create-leader {
@@ -1218,7 +1218,7 @@
 .cluster-create-leader__title svg {
   inline-size: 1.25rem;
   block-size: 1.25rem;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 .cluster-create-leader__grid {
@@ -1267,7 +1267,7 @@
 }
 
 .cluster-create-footer .cluster-create-cancel:hover:not(:disabled) {
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   border-color: transparent !important;
   background-color: var(--edify-accent-light) !important;
 }
@@ -1430,7 +1430,7 @@
   flex: 0 0 2.75rem;
   place-items: center;
   overflow: hidden;
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   border: 1px solid color-mix(in srgb, var(--edify-accent) 22%, var(--edify-border));
   border-radius: 0.875rem;
   background: color-mix(in srgb, var(--edify-accent-light) 78%, var(--edify-surface-raised));
@@ -1454,7 +1454,7 @@
 
 .drawer-header__eyebrow {
   margin: 0 0 0.22rem !important;
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   font-size: var(--edify-text-micro-size) !important;
   font-weight: 500 !important;
   letter-spacing: 0.105em;
@@ -1501,7 +1501,7 @@
 }
 
 .drawer-close-btn:hover {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   border-color: color-mix(in srgb, var(--edify-accent) 38%, var(--edify-border));
   background: var(--edify-accent-light);
 }

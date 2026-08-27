@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 613,
-  "templates": 219,
-  "distinct_titles": 585,
+  "titled_cards": 614,
+  "templates": 220,
+  "distinct_titles": 586,
   "with_card_key": 13,
   "untitled_surfaces": 1017,
   "untitled_chrome": 237,
@@ -5793,6 +5793,15 @@
      0
     ]
    ]
+  },
+  {
+   "template": "templates/partials/my_plan/cancel_drawer.html",
+   "line": 17,
+   "title": "1 What cancelling does",
+   "heading_level": 4,
+   "has_card_key": false,
+   "classes": "p-3 rounded-surface bg-amber-50 text-amber-800 text-[12px] font-bold",
+   "branch_path": []
   },
   {
    "template": "templates/partials/my_plan/cluster_meetings.html",

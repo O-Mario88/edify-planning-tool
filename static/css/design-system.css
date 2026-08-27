@@ -85,6 +85,18 @@
      measures 3.87:1 where AA wants 4.5:1. Deliberately separate from
      --edify-accent so button FILLS keep the brand colour — lightening those
      would break white-on-fill contrast the other way (2026-08 UI/UX audit). */
+  /* The INK twin of --edify-accent, and the two are only the same colour in
+     the light themes. Every `color:` that wants "the accent" must use this
+     one: in the dark themes --edify-accent stays the brand blue so button
+     FILLS keep it (white on #2f78b7 measures 4.68:1, AA), and that same blue
+     used as INK on a dark card measures 3.56:1, which is not.
+
+     146 rules across the stylesheet painted text with --edify-accent. They
+     were invisible in the light themes, where the two tokens resolve
+     identically, and only wrong in the dark ones — which is why the audit
+     found them by rendering rather than by reading. components.css had
+     already started the fix at one site (`var(--edify-accent-text,
+     var(--edify-accent))`) and it was never carried across. */
   --edify-accent-text: var(--edify-brand-primary);
   /* The ink a primary button carries, per theme rather than always white.
      Dark mode's primary fill is #e9eef8 and its hover is #ffffff, because on
@@ -120,6 +132,13 @@
      rose-600 clears it at 4.70:1. In the dark themes the semantic red is
      a light salmon, so there the ink flips dark instead — white on it was
      rendering at 2.44:1. */
+  /* Ink for the warm semantic fills (amber/yellow/lime/orange). Those fills do
+     not theme-flip — bg-amber-400 is amber-400 in every theme — so their ink
+     must not flip either, which is why this is a constant and not a per-theme
+     token. Same principle as --edify-danger-on-solid: a filled control is a
+     fill PLUS its ink, and both have to be tokens. */
+  --edify-on-warm-fill: #17232b;
+
   --edify-danger-solid: #e11d48;
   --edify-danger-on-solid: #ffffff;
   --edify-danger-light: #fef2f2;
@@ -728,6 +747,15 @@ html.theme-blue body {
   /* AA-safe accent for TEXT on this theme's dark surfaces. */
   --edify-accent-text: #8fbfe3;
 
+  /* The active sidebar pill is a FILL, so it takes a darker brand step rather
+     than the accent ink above. Measured: the sidebar's off-white label
+     (#edf3f7) on the plain accent #2f78b7 is 4.18:1, just under AA; on
+     --brand-primary-active it is 6.6:1. Pure white on the accent would have
+     scraped 4.68:1, but the sidebar's ink is not pure white, and a rule that
+     only passes because of the exact shade of its text is a rule waiting to
+     fail. */
+  --edify-sidebar-active: var(--brand-primary-active);
+
   --brand-primary: #2f78b7;
   --brand-primary-hover: #28699f;
   --brand-primary-active: #225986;
@@ -1059,7 +1087,7 @@ body {
   border: 1px solid var(--edify-border-strong);
   border-radius: var(--edify-radius-md);
   background-color: var(--edify-surface);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 
 :is(button, a):is(.border-slate-200, .border-slate-300):hover {

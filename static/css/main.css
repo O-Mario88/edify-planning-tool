@@ -3854,7 +3854,7 @@
     color: var(--color-edify-primary);
   }
   .text-\[var\(--edify-accent\)\] {
-    color: var(--edify-accent);
+    color: var(--edify-accent-text);
   }
   .text-\[var\(--edify-chart-amber\)\] {
     color: var(--edify-chart-amber);
@@ -4438,7 +4438,7 @@
       background-color: var(--color-rose-100);
     }
     .group-hover\:text-\[var\(--edify-accent\)\]:is(:where(.group):hover *) {
-      color: var(--edify-accent);
+      color: var(--edify-accent-text);
     }
     .group-hover\:text-\[var\(--edify-primary\)\]:is(:where(.group):hover *) {
       color: var(--edify-primary);
@@ -4517,7 +4517,7 @@
     font-weight: var(--font-weight-semibold);
   }
   .file\:text-\[var\(--edify-accent\)\]::file-selector-button {
-    color: var(--edify-accent);
+    color: var(--edify-accent-text);
   }
   .file\:text-slate-700::file-selector-button {
     color: var(--color-slate-700);
@@ -10098,7 +10098,7 @@ html, body {
   color: var(--edify-text);
 }
 .partner-workspace__eyebrow {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 .partner-workspace__header h1 {
   color: var(--edify-text);
@@ -10157,7 +10157,7 @@ html, body {
   color: var(--edify-text-muted);
 }
 .partner-identity p svg, .partner-aside-card__heading svg, .partner-empty-state svg {
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
 }
 .partner-activity-card__summary > div, .partner-activity-table th, .partner-activity-table td, .partner-aside-card__link {
   border-color: var(--edify-divider);

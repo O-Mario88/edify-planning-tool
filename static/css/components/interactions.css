@@ -766,7 +766,7 @@ main .edify-section-nav__view-link:hover {
 
 main .edify-section-nav__view-link.is-active {
   background: color-mix(in srgb, var(--edify-accent) 10%, transparent);
-  color: var(--edify-accent);
+  color: var(--edify-accent-text);
   font-weight: 400;
 }
 

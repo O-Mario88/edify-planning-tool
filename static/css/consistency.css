@@ -1826,7 +1826,7 @@ main .help-search-label {
 
 main :is(.platform-hero__eyebrow, .ia-hero__eyebrow),
 main .help-center-hero .help-center-kicker {
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
 }
 
 main .help-stat-list dt {
@@ -1854,7 +1854,7 @@ main .ia-hero .ia-button--secondary {
 }
 
 main .ia-hero .ia-button--secondary:hover {
-  color: var(--edify-accent) !important;
+  color: var(--edify-accent-text) !important;
   background: var(--edify-surface-hover) !important;
   border-color: var(--edify-border-strong) !important;
 }
@@ -2789,4 +2789,32 @@ main :is(.apexcharts-datalabel-value) {
   max-inline-size: none !important;
   overflow: visible !important;
   text-overflow: clip !important;
+}
+
+/* ── Ink on the warm semantic fills ──────────────────────────────────────────
+   The warm Tailwind fills do not theme-flip: `bg-amber-400` is amber-400 in
+   every theme (measured in the browser, not assumed). Their ink must therefore
+   be a constant too, and dark — near-white on amber-400 measures 1.53:1.
+
+   Found on the analytics "Recommended Strategy" CTA, which asks for
+   `bg-amber-400 text-slate-900` and rendered near-white anyway: its own
+   utility was losing, and the platform-wide dark-ink remap that had been
+   covering for it is written with `:where()`, so it carries the specificity of
+   a bare element selector and loses to any `!important` class rule. This rule
+   uses real attribute selectors and lives in the final bridge sheet for the
+   same reason the file's header gives — shared tokens and accessibility states
+   have to win across the platform.
+
+   The selector repeats its attribute test to buy specificity, which is ugly
+   and deliberate: this sheet already carries a thicket of `!important` colour
+   rules for button families, and a legible control has to win against whichever
+   of them happens to match. Repeating the test changes the weight and nothing
+   else — it still matches exactly the elements the single test matches.
+
+   --edify-on-warm-fill measures 9.32:1 on amber-400. */
+main [class*="bg-amber-"][class*="bg-amber-"][class*="bg-amber-"],
+main [class*="bg-yellow-"][class*="bg-yellow-"][class*="bg-yellow-"],
+main [class*="bg-lime-"][class*="bg-lime-"][class*="bg-lime-"],
+main [class*="bg-orange-"][class*="bg-orange-"][class*="bg-orange-"] {
+  color: var(--edify-on-warm-fill) !important;
 }

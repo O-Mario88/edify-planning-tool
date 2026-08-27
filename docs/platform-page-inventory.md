@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **570**
-- All registered routes: **1028**
+- Routed product surfaces: **572**
+- All registered routes: **1030**
 - API routes: **349**
 - Roles: **14**
 - Permission keys: **100**
 - Scheduled jobs: **23**
 - Activity states: **23**
-- Shared component templates: **340**
+- Shared component templates: **341**
 - Full pages: **203**
-- Partials and drawers: **169**
-- Permission-gated surfaces: **560**
-- Referenced by automated tests: **525**
+- Partials and drawers: **170**
+- Permission-gated surfaces: **562**
+- Referenced by automated tests: **527**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -391,6 +391,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-81D22F3012 | /my-plan | My Plan | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1028B8B6D6 | /my-plan/<str:activity_id> | Activity Details | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3093D469A8 | /my-plan/<str:activity_id>/accountability | Accountability Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-ACF62FD525 | /my-plan/<str:activity_id>/cancel | Cancel Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-3DDC006A6E | /my-plan/<str:activity_id>/cancel-drawer | Cancel Activity Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D80C668599 | /my-plan/<str:activity_id>/complete | Complete Activity | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2C668C3B27 | /my-plan/<str:activity_id>/complete-drawer | Complete Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EC0BDB34F5 | /my-plan/<str:activity_id>/confirm-reimbursement-receipt | Confirm Reimbursement Receipt Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

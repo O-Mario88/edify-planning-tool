@@ -138,6 +138,24 @@ class="row-menu__item" role="menuitem"
 >
 View Budget Lines
 </button>
+
+<!-- Cancel (CANCEL-01). Work already finished or already called off has
+     nothing to cancel; everything still live does. The service decides who
+     may actually do it — this menu item is not the guard. -->
+{% if row.status != 'completed' and row.status != 'cancelled' and row.status != 'ia_verified' and row.status != 'accountant_confirmed' and row.status != 'closed' %}
+<button
+type="button"
+data-cancel-trigger
+hx-get="/my-plan/{{ row.id }}/cancel-drawer"
+hx-trigger="click consume"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+@click="close()"
+class="row-menu__item row-menu__item--danger" role="menuitem"
+>
+Cancel Activity
+</button>
+{% endif %}
     </div>
   </div>
 </td>
