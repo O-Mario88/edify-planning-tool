@@ -385,8 +385,11 @@
 }
 
 .pl-dashboard-stack :is(.pl-ssa-matrix-scroll, .pl-urgent-table-scroll) {
+  min-inline-size: 0;
   max-inline-size: 100%;
-  overflow-x: clip;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  touch-action: pan-x pan-y;
 }
 
 .pl-dashboard-stack :is(.pl-ssa-matrix, .pl-urgent-table) {
@@ -395,25 +398,27 @@
 }
 
 /* Below tablet width the fixed column budget crushes school names into
-   one-word-per-line stacks. Let the table keep a readable minimum width and
-   hand the excess to its scroll wrapper (auto beats the desktop clip). */
+   one-word-per-line stacks. Keep a readable minimum table width and let the
+   shared scroll wrapper expose the remaining columns. */
 @media (max-width: 48rem) {
-  .pl-urgent-table-scroll { overflow-x: auto !important; }
   .pl-urgent-table { min-inline-size: 760px; table-layout: auto; }
 }
 
 .pl-dashboard-stack .pl-ssa-matrix {
-  white-space: normal !important;
+  min-inline-size: 58rem !important;
+  table-layout: auto;
+  white-space: nowrap !important;
 }
 
 .pl-dashboard-stack .pl-ssa-matrix th:first-child,
 .pl-dashboard-stack .pl-ssa-matrix td:first-child {
   inline-size: 27%;
-  overflow-wrap: anywhere;
+  min-inline-size: 10rem;
+  overflow-wrap: normal;
 }
 
 .pl-dashboard-stack .pl-ssa-matrix :is(th, td) {
-  min-inline-size: 0;
+  min-inline-size: 5rem;
   padding-inline: clamp(0.1rem, 0.55cqi, 0.35rem) !important;
 }
 

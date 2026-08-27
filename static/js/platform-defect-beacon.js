@@ -141,11 +141,23 @@
         return;
       }
 
-      var before = document.body.innerHTML.length;
       var url = window.location.href;
+      var changed = false;
+      var changeObserver = new MutationObserver(function () {
+        changed = true;
+        changeObserver.disconnect();
+      });
+      changeObserver.observe(document.body, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ["class", "style", "hidden", "open", "aria-expanded"],
+      });
       window.setTimeout(function () {
+        changeObserver.disconnect();
         if (window.location.href !== url) return; // navigated
-        if (document.body.innerHTML.length !== before) return; // rendered
+        if (changed) return; // rendered or changed state
         send("dead_button", identify(el), { message: "click produced no change" });
       }, DEAD_BUTTON_GRACE_MS);
     },

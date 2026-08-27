@@ -8,6 +8,7 @@
 <form
 hx-post="/activities/{{ act.id }}/ssa-upload/action"
 hx-encoding="multipart/form-data"
+hx-request='{"timeout":120000}'
 hx-target="#ssa-errors"
 class="space-y-5 text-[12px] font-bold text-slate-700"
 >

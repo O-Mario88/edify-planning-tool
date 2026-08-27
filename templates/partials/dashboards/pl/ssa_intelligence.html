@@ -9,9 +9,9 @@ The ramp is per-point (0-10) rather than per-band. Four bands paint 5.0 and
 6.9 identically, and on a matrix whose entire purpose is comparison that hides
 the differences a reader is scanning for.
 {% endcomment %}
-<div class="pl-ssa-matrix-scroll overflow-x-auto flex-1">
+<div class="pl-ssa-matrix-scroll overflow-x-auto flex-1" data-table-scroll-region>
   {% if ssa_matrix.rows %}
-  <table class="pl-ssa-matrix edify-table w-full whitespace-nowrap" data-mobile-table="fit">
+  <table class="pl-ssa-matrix edify-table w-full whitespace-nowrap" data-mobile-table="scroll">
     <caption class="sr-only">
       Average SSA score out of 10 for each intervention, by cluster. Cells are
       shaded from red at 0 to green at 10; the score is stated in every cell,

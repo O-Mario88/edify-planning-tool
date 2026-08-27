@@ -8,6 +8,7 @@
 <form
 hx-post="/activities/{{ act.id }}/attendance/action"
 hx-encoding="multipart/form-data"
+hx-request='{"timeout":120000}'
 hx-target="#attendance-errors"
 class="space-y-5 text-[12px] font-bold text-slate-600"
 >

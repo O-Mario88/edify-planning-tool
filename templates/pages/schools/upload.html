@@ -32,6 +32,7 @@ Download School Template
 <form
 hx-post="/schools/upload"
 hx-encoding="multipart/form-data"
+hx-request='{"timeout":120000}'
 hx-target="#upload-results"
 hx-indicator="#schools-indicator"
 class="space-y-4"

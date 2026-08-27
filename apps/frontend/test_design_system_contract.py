@@ -75,8 +75,9 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn(".edify-section-nav__link[href]:not([aria-current])", base)
         self.assertIn(".app-sidebar__item[href]:not([aria-current])", base)
         self.assertIn(".edify-bottom-nav__item[href]:not([aria-current])", base)
-        self.assertIn('"eagerness": "eager"', base)
         self.assertIn('"eagerness": "moderate"', base)
+        self.assertIn('"eagerness": "conservative"', base)
+        self.assertNotIn('"eagerness": "eager"', base)
         self.assertNotIn('"prerender"', base)
 
     def test_consistency_layer_owns_legacy_primary_utilities_and_dark_headers(self):

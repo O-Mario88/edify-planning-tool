@@ -147,6 +147,7 @@
       <form hx-post="/messages/thread/{{ selected.thread.id }}/reply"
             hx-target="#conversation-pane" hx-swap="innerHTML"
             hx-encoding="multipart/form-data"
+            hx-request='{"timeout":120000}'
             class="p-3" id="reply-form">
         {% csrf_token %}
         <textarea name="body" rows="3" required

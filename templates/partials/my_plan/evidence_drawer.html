@@ -18,6 +18,7 @@ partner work at Confirm Salesforce Entry.
 
   {% for item in evidence_checklist %}
   <form hx-post="/activities/{{ act.id }}/evidence/action" hx-encoding="multipart/form-data"
+        hx-request='{"timeout":120000}'
         hx-target="#evidence-errors" hx-disabled-elt="find button[type=submit]"
         class="edify-surface rounded-overlay border {% if item.uploaded %}border-emerald-200{% else %}border-[var(--border-card)]{% endif %} p-4 shadow-sm space-y-2.5">
     {% csrf_token %}

@@ -84,7 +84,7 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbaralign2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260823aura1">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260823aura2">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260827ssascroll2">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -106,7 +106,7 @@ other page was relying on them.
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 <link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260827nowrap1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260827nowrap1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260827responsiveness1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -125,6 +125,10 @@ other page was relying on them.
      Same-origin removes both concerns — the file is in the image we built. -->
 <script src="{% static 'js/vendor/htmx-1.9.12.min.js' %}"></script>
 <script>
+  // A request must always reach a terminal state. Individual file-upload
+  // forms opt into a longer budget because their payloads can be large.
+  htmx.config.timeout = 45000;
+
   // Server-side validation responses (400/403) carry user-facing notices —
   // e.g. the Daily Visit "reason required" panel and route/scheduling errors.
   // htmx only swaps 2xx by default, which silently drops those notices; allow
@@ -161,20 +165,19 @@ other page was relying on them.
      exchanges are invisible to the server, so the page reports them. Each
      unique defect becomes one System Incident for the Admin. -->
 <script defer src="{% static 'js/csrf-sync.js' %}?v=20260810csrf1"></script>
-<script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260728beacon1"></script>
+<script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
 {% endcomment %}
 <script defer src="{% static 'js/interaction-pending.js' %}?v=20260803pending1"></script>
 {% comment %}
 Workspace switches are real document navigations, not in-page tabs. Ask the
-browser to fetch the small set of sibling views before a likely click so the
-next document is ready without turning the application into a fragile global
-HTMX shell. The active analytics group's menu is intentionally eager (normally
-two or three destinations); wider workspace rails, sidebar destinations and
-the mobile navigation wait for pointer/keyboard intent, which avoids firing
-every expensive report in the background. Unsupported browsers ignore this
-progressive enhancement.
+browser to fetch likely sibling views after user intent so the next document
+is ready without turning the application into a fragile global HTMX shell.
+The active analytics group waits for pointer/keyboard intent; wider workspace
+rails and mobile navigation wait until intent is stronger. This keeps expensive
+reports from competing with the current interaction. Unsupported browsers
+ignore this progressive enhancement.
 {% endcomment %}
 <script type="speculationrules">
 {
@@ -184,14 +187,14 @@ progressive enhancement.
       "where": {
         "selector_matches": ".edify-section-nav__view-link[href]:not([aria-current])"
       },
-      "eagerness": "eager"
+      "eagerness": "moderate"
     },
     {
       "source": "document",
       "where": {
         "selector_matches": ".edify-section-nav__link[href]:not([aria-current]), .edify-section-nav__cluster[href]:not([aria-current]), .app-sidebar__item[href]:not([aria-current]), .edify-bottom-nav__item[href]:not([aria-current])"
       },
-      "eagerness": "moderate"
+      "eagerness": "conservative"
     }
   ]
 }
@@ -210,7 +213,7 @@ controller exists by the time a drawer's x-init runs.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260827nowrap1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260827responsiveness1"></script>
 <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).

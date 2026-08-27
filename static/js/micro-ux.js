@@ -13,7 +13,11 @@
   var dialogStates = new WeakMap();
   var activeDialogs = new Set();
   var generatedId = 0;
-  var scanQueued = false;
+  var mutationScanQueued = false;
+  var auditQueued = false;
+  var pendingEnhanceRoots = new Set();
+  var pendingDialogRoots = new Set();
+  var pendingAuditRoots = new Set();
 
   /* Some mobile browsers keep native checkboxes in :focus-visible after a
    * tap. Track the actual input modality so CSS can suppress that pointer-only
@@ -448,11 +452,6 @@
         button.getAttribute('role') === 'tab';
       if (isAction) button.type = 'button';
     });
-    var implicitActionButtons = Array.from(document.querySelectorAll('button:not([type])')).filter(function (button) {
-      return button.hasAttribute('hx-get') || button.hasAttribute('hx-post') ||
-        button.hasAttribute('@click') || button.hasAttribute('x-on:click');
-    });
-    document.documentElement.dataset.edifyImplicitActionButtons = String(implicitActionButtons.length);
   }
 
   function auditInteractiveNames(root) {
@@ -463,15 +462,25 @@
     });
     controls.forEach(function (control) {
       if (!controlHasName(control) && control.title) control.setAttribute('aria-label', control.title);
-      if (!visible(control) || controlHasName(control)) delete control.dataset.edifyA11yWarning;
+      /* Accessible naming is a markup property. Measuring visibility here
+       * forced layout once per control without improving the audit. */
+      if (controlHasName(control)) delete control.dataset.edifyA11yWarning;
       else control.dataset.edifyA11yWarning = 'missing-name';
       control.querySelectorAll('svg:not([aria-hidden="true"]):not([role="img"])').forEach(function (svg) {
         svg.setAttribute('aria-hidden', 'true');
       });
     });
+  }
+
+  function updateAuditCounts() {
     document.documentElement.dataset.edifyA11yWarnings = String(
       document.querySelectorAll('[data-edify-a11y-warning]').length
     );
+    var implicitActionButtons = Array.from(document.querySelectorAll('button:not([type])')).filter(function (button) {
+      return button.hasAttribute('hx-get') || button.hasAttribute('hx-post') ||
+        button.hasAttribute('@click') || button.hasAttribute('x-on:click');
+    });
+    document.documentElement.dataset.edifyImplicitActionButtons = String(implicitActionButtons.length);
   }
 
   function announce(message, priority) {
@@ -481,30 +490,75 @@
     window.setTimeout(function () { target.textContent = message; }, 40);
   }
 
-  function enhance(root) {
+  function enhanceCritical(root) {
     enhanceTables(root);
     enhanceTabs(root);
     enhanceCustomDialogs(root);
     enhanceFormLabels(root);
     normalizeActionButtonTypes(root);
-    auditInteractiveNames(root);
   }
 
-  function scheduleFullScan() {
-    if (scanQueued) return;
-    scanQueued = true;
+  function runWhenIdle(callback) {
+    if ('requestIdleCallback' in window) {
+      window.requestIdleCallback(callback, { timeout: 500 });
+      return;
+    }
+    window.setTimeout(callback, 50);
+  }
+
+  function scheduleAudit(root) {
+    pendingAuditRoots.add(root);
+    if (auditQueued) return;
+    auditQueued = true;
+    runWhenIdle(function () {
+      auditQueued = false;
+      var roots = Array.from(pendingAuditRoots);
+      pendingAuditRoots.clear();
+      roots.forEach(function (auditRoot) {
+        if (auditRoot === document || auditRoot.isConnected) auditInteractiveNames(auditRoot);
+      });
+      updateAuditCounts();
+    });
+  }
+
+  function enhance(root) {
+    enhanceCritical(root);
+    scheduleAudit(root);
+  }
+
+  function scheduleMutationScan(mutations) {
+    mutations.forEach(function (mutation) {
+      if (mutation.type === 'childList') {
+        mutation.addedNodes.forEach(function (node) {
+          if (node.nodeType === Node.ELEMENT_NODE) pendingEnhanceRoots.add(node);
+        });
+      }
+      if (mutation.target && mutation.target.nodeType === Node.ELEMENT_NODE) {
+        pendingDialogRoots.add(mutation.target);
+      }
+    });
+    if (mutationScanQueued) return;
+    mutationScanQueued = true;
     requestAnimationFrame(function () {
-      scanQueued = false;
-      enhanceCustomDialogs(document);
-      enhanceFormLabels(document);
-      normalizeActionButtonTypes(document);
-      auditInteractiveNames(document);
+      mutationScanQueued = false;
+      var enhanceRoots = Array.from(pendingEnhanceRoots);
+      var dialogRoots = Array.from(pendingDialogRoots);
+      pendingEnhanceRoots.clear();
+      pendingDialogRoots.clear();
+      enhanceRoots.forEach(function (root) {
+        if (root.isConnected) enhance(root);
+      });
+      dialogRoots.forEach(function (root) {
+        if (root.isConnected) enhanceCustomDialogs(root);
+      });
+      /* A removed dialog will not appear in a surviving mutation root. */
+      Array.from(activeDialogs).forEach(deactivateDialog);
     });
   }
 
   document.addEventListener('DOMContentLoaded', function () {
     enhance(document);
-    var observer = new MutationObserver(scheduleFullScan);
+    var observer = new MutationObserver(scheduleMutationScan);
     observer.observe(document.body, {
       subtree: true,
       childList: true,
