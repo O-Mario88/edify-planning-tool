@@ -84,7 +84,7 @@
       <tbody>
       {% for review in cost_review_queue %}
         <tr>
-          <td>{{ review.activity.activity_name_snapshot|default:review.activity.activity_type }}</td>
+          <td>{% firstof review.activity.activity_name_snapshot review.activity.activity_type %}</td>
           <td>{{ review.get_reason_code_display }}</td>
           <td class="text-right">UGX {{ review.current_operational_cost|currency }}</td>
           <td class="text-right">UGX {{ review.proposed_operational_cost|currency }}</td>

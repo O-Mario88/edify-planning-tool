@@ -848,18 +848,21 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             f"viewport workspaces and drawers: {offenders}",
         )
 
-    def test_program_lead_funding_card_is_separate_from_the_urgent_schools_row(self):
+    def test_program_lead_funding_card_sits_to_the_right_of_ssa_intelligence(self):
         dashboard = _read("templates/partials/dashboards/pl/body.html")
         funding = _read("templates/partials/dashboards/pl/funding_execution.html")
         pages = _read("static/css/pages.css")
 
-        self.assertIn('class="pl-intelligence-grid"', dashboard)
+        self.assertIn('class="pl-ssa-funding-grid"', dashboard)
         intelligence_row = dashboard[
             dashboard.index("SSA Intelligence") : dashboard.index("Team Backlog")
         ]
-        self.assertNotIn("Funding &amp; Execution", intelligence_row)
-        self.assertIn("pl-funding-card pl-funding-card--wide", dashboard)
-        self.assertGreater(
+        self.assertIn("Funding &amp; Execution", intelligence_row)
+        self.assertIn('aside class="pl-funding-card ', dashboard)
+        self.assertLess(
+            dashboard.index("SSA Intelligence"), dashboard.index("Funding &amp; Execution")
+        )
+        self.assertLess(
             dashboard.index("Funding &amp; Execution"), dashboard.index("Team Backlog")
         )
         self.assertIn("pl-funding-card__body", dashboard)
@@ -868,19 +871,20 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             funding.index("pl-funding-donut"), funding.index("pl-funding-statuses")
         )
         self.assertIn("container: pl-dashboard / inline-size", pages)
-        # The intelligence row is one column now. It used to split into a
-        # narrow SSA matrix beside a wider urgent-schools card, and that narrow
-        # column is what forced the matrix down to six of its eight
-        # interventions. The risk list owns the row; the matrix sits below it
-        # at full width, where all eight columns fit.
+        # Narrow workspaces stack in DOM order; wide dashboard containers give
+        # SSA the flexible left track and place finance in the compact right.
         self.assertIn(
-            """.pl-intelligence-grid {
+            """.pl-ssa-funding-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);""",
             pages,
         )
-        self.assertNotIn("minmax(0, 0.76fr)", pages)
-        self.assertIn("pl-funding-card--wide .pl-funding-card__body", pages)
+        self.assertIn("@container pl-dashboard (min-width: 64rem)", pages)
+        self.assertIn(
+            "grid-template-columns: minmax(0, 2.35fr) minmax(17rem, 0.8fr)",
+            pages,
+        )
+        self.assertIn(".pl-ssa-matrix-scroll, .pl-urgent-table-scroll", pages)
         self.assertIn("overflow-x: clip", pages)
 
     def test_program_lead_urgent_schools_card_uses_compact_server_pagination(self):
