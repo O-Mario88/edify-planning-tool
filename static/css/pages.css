@@ -301,22 +301,33 @@
 
 .pl-dashboard-stack > *,
 .pl-intelligence-grid > *,
+.pl-ssa-funding-grid > *,
 .pl-funding-card > * {
   min-inline-size: 0;
   max-inline-size: 100%;
 }
 
-/*
- * One column, deliberately. This was a two-column split with SSA Intelligence
- * in the narrow side, which is what forced that matrix down to six of its
- * eight interventions. The risk list now has the row to itself and the matrix
- * sits below it at full width.
- */
 .pl-intelligence-grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
   align-items: start;
+}
+
+/* SSA owns the flexible track; the compact finance summary sits to its right.
+   The safe default is stacked, and the dashboard's own available width—not
+   the viewport—decides when both cards can share a row. */
+.pl-ssa-funding-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+  align-items: start;
+}
+
+@container pl-dashboard (min-width: 64rem) {
+  .pl-ssa-funding-grid {
+    grid-template-columns: minmax(0, 2.35fr) minmax(17rem, 0.8fr);
+  }
 }
 
 .pl-intelligence-card,
@@ -648,24 +659,24 @@
 }
 
 @container pl-funding (min-width: 40rem) {
-  .pl-funding-card--wide .pl-funding-card__body {
+  .pl-funding-card__body {
     grid-template-columns: minmax(12rem, 0.78fr) minmax(18rem, 1.5fr) minmax(10rem, 0.62fr);
     align-items: center;
   }
 
-  .pl-funding-card--wide .pl-funding-summary {
+  .pl-funding-summary {
     grid-template-columns: auto minmax(0, 1fr);
     align-items: center;
     padding-block: 0;
     text-align: start;
   }
 
-  .pl-funding-card--wide .pl-funding-statuses {
+  .pl-funding-statuses {
     gap: 0.5rem;
     border-block: 0;
   }
 
-  .pl-funding-card--wide .pl-funding-status {
+  .pl-funding-status {
     min-block-size: 100%;
     padding: 0.55rem 0.65rem;
     border: 1px solid var(--edify-card-border, var(--edify-border));
@@ -673,7 +684,7 @@
     background: var(--edify-surface-muted);
   }
 
-  .pl-funding-card--wide .pl-funding-footer {
+  .pl-funding-footer {
     align-self: stretch;
     align-content: center;
     padding-inline-start: 0.85rem;

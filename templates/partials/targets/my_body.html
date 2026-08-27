@@ -96,26 +96,30 @@
   </section>
   {% endif %}
 
-  {# ── Priorities by Time Period matrix ───────────────────────────────────── #}
-  {% if matrix_rows %}
-  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
-    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Performance Priorities by Time Period</h2>
-    <div class="overflow-x-auto">
+  {# ── Operational agreements + approved strategic allocations by period ─── #}
+  {% if matrix_rows or strategic_milestones %}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="my-cumulative-progress-title">
+    <div>
+      <h2 id="my-cumulative-progress-title" class="text-[13px] font-bold text-slate-800 tracking-tight">Cumulative progress by time period</h2>
+      <p class="mt-1 edify-text-caption text-slate-400 font-medium">Your agreed performance priorities and approved strategic milestone allocations, from the selected month through Q1–Q4 and the full financial year.</p>
+    </div>
+    <div class="overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="Scrollable personal cumulative target progress table. Scroll horizontally to compare every quarter and the full financial year.">
       <table class="w-full edify-text-caption border-collapse min-w-[860px]">
+        <caption class="sr-only">Personal cumulative target and verified achievement by reporting period</caption>
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
-            <th class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">Performance Priority</th>
+            <th scope="col" class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">Priority / target</th>
             {% for h in matrix_heads|slice:":30" %}
-            <th class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}edify-primary-soft-alpha-40{% endif %}" colspan="3">
+            <th scope="colgroup" class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}edify-primary-soft-alpha-40{% endif %}" colspan="3">
               <span class="block text-slate-600 font-bold">{{ h.label }}</span>
               <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}</span>
             </th>
             {% endfor %}
           </tr>
           <tr class="border-b border-slate-100 text-slate-400 font-bold edify-text-caption uppercase">
-            <th class="py-1 px-3 sticky left-0 edify-surface z-10"></th>
+            <th class="py-1 px-3 sticky left-0 edify-surface z-10"><span class="sr-only">Measure</span></th>
             {% for h in matrix_heads|slice:":30" %}
-            <th class="py-1 text-center border-l border-slate-100">Tgt</th><th class="py-1 text-center">Ach</th><th class="py-1 text-center">%</th>
+            <th scope="col" class="py-1 text-center border-l border-slate-100">Tgt</th><th scope="col" class="py-1 text-center">Ach</th><th scope="col" class="py-1 text-center">%</th>
             {% endfor %}
           </tr>
         </thead>
@@ -124,7 +128,7 @@
           <tr class="hover:bg-slate-50/50 cursor-pointer"
               hx-get="/my-targets/area-drawer?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}"
               hx-target="#drawer-container" hx-swap="innerHTML">
-            <td class="py-2.5 px-3 font-semibold text-slate-800 whitespace-nowrap sticky left-0 edify-surface z-10">{{ row.label }}</td>
+            <th scope="row" class="py-2.5 px-3 font-semibold text-left text-slate-800 whitespace-nowrap sticky left-0 edify-surface z-10">{{ row.label }}</th>
             {% for cell in row.cells %}
             <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400 tabular-nums">{{ cell.t }}</td>
             <td class="py-2.5 text-center font-semibold text-slate-800 tabular-nums">{{ cell.a }}</td>
@@ -132,19 +136,34 @@
             {% endfor %}
           </tr>
           {% endfor %}
+          {% for row in strategic_milestones %}
+          <tr class="hover:bg-slate-50/50">
+            <th scope="row" class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">
+              <span class="block font-semibold text-slate-800 whitespace-nowrap">{{ row.milestone }}</span>
+              <span class="block max-w-[260px] truncate font-medium text-slate-400 normal-case">{{ row.priority }}</span>
+            </th>
+            {% for cell in row.periodCells %}
+            <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400 tabular-nums">{{ cell.t|floatformat:"-2" }}</td>
+            <td class="py-2.5 text-center font-semibold text-slate-800 tabular-nums">{{ cell.a|floatformat:"-2" }}</td>
+            <td class="py-2.5 text-center font-semibold tabular-nums {% if cell.pct == None %}text-slate-300{% elif cell.pct >= 100 %}text-emerald-600{% elif cell.pct >= 60 %}text-amber-600{% else %}text-rose-500{% endif %}">{% if cell.pct != None %}{{ cell.pct }}%{% else %}—{% endif %}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+          {% if matrix_rows %}
           <tr class="border-t border-slate-100 bg-slate-50/60">
-            <td class="py-2.5 px-3 font-bold text-slate-800 sticky left-0 bg-slate-50 z-10">Overall Progress</td>
+            <th scope="row" class="py-2.5 px-3 text-left font-bold text-slate-800 sticky left-0 bg-slate-50 z-10">Operational Overall Progress</th>
             {% for cell in overall_cells %}
             <td class="py-2.5 text-center border-l border-slate-100" colspan="3">
               <span class="font-bold tabular-nums {% if cell.pct >= 70 %}text-emerald-600{% elif cell.pct >= 50 %}text-amber-600{% else %}text-rose-500{% endif %}">{{ cell.pct }}%</span>
             </td>
             {% endfor %}
           </tr>
+          {% endif %}
         </tbody>
       </table>
     </div>
-    <p class="edify-text-caption text-slate-400 font-medium">Weighted overall progress ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %} · {% endif %}{% endfor %}). Areas without a target are excluded.</p>
-  </div>
+    <p class="edify-text-caption text-slate-400 font-medium">Operational overall progress is priority-weighted{% if area_cards %} ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %} · {% endif %}{% endfor %}){% endif %}. Strategic allocations retain their governed milestone weights and are not silently blended into that score.</p>
+  </section>
   {% endif %}
 
   {# ── Charts + focus row ─────────────────────────────────────────────────── #}

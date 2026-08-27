@@ -135,7 +135,11 @@ def ensure_active_catalogue():
     """
     from django.conf import settings
 
-    from apps.budget.models import CostCatalogue
+    from apps.budget.models import (
+        CostCatalogue,
+        RateCardKind,
+        RateCardStatus,
+    )
 
     fy = getattr(settings, "OPERATIONAL_FY", None)
     if not fy:
@@ -147,6 +151,8 @@ def ensure_active_catalogue():
         CostCatalogue.objects.filter(
             country=country,
             fy=str(fy),
+            kind=RateCardKind.OPERATIONAL,
+            status=RateCardStatus.PUBLISHED,
             is_active=True,
         )
         .order_by("-version")
@@ -166,25 +172,37 @@ def ensure_active_catalogue():
 
 def ensure_cost_reference(catalogue=None) -> int:
     """Create any missing canonical rate. Returns how many were created."""
-    from apps.budget.models import CostSetting
+    from apps.budget.models import CostCatalogue, CostSetting, RateCardKind, RateCardStatus
 
     catalogue = catalogue or ensure_active_catalogue()
+    CostCatalogue.objects.get_or_create(
+        country=catalogue.country,
+        fy=catalogue.fy,
+        kind=RateCardKind.REFERENCE,
+        version=0,
+        defaults={
+            "status": RateCardStatus.DRAFT,
+            "is_active": False,
+            "currency": "UGX",
+            "label": "Internal Reference Rate Card — Configuration Required",
+            "notes": (
+                "Reference rates have not been approved. Operational values were "
+                "not copied into this card."
+            ),
+        },
+    )
     created = 0
     for key, label, default_cost in CANONICAL_RATES:
         rate, was_created = CostSetting.objects.get_or_create(
+            catalogue=catalogue,
             key=key,
             defaults={
                 "label": label,
                 "unit_cost": default_cost,
                 "fy": catalogue.fy,
                 "version": 1,
-                "catalogue": catalogue,
             },
         )
-        if not was_created and rate.catalogue_id != catalogue.id:
-            rate.catalogue = catalogue
-            rate.fy = catalogue.fy
-            rate.save(update_fields=["catalogue", "fy", "updated_at"])
         created += int(was_created)
     return created
 
@@ -192,7 +210,7 @@ def ensure_cost_reference(catalogue=None) -> int:
 def cost_reference_is_complete() -> bool:
     """Read-only counterpart to ``ensure_cost_reference``."""
     from apps.budget.costing_service import active_catalogue
-    from apps.budget.models import CostSetting
+    from apps.budget.models import CostCatalogue, CostSetting, RateCardKind
 
     catalogue = active_catalogue()
     if catalogue is None:
@@ -203,4 +221,9 @@ def cost_reference_is_complete() -> bool:
             key__in=CANONICAL_RATE_KEYS,
         ).values_list("key", flat=True)
     )
-    return present == CANONICAL_RATE_KEYS
+    reference_structure_exists = CostCatalogue.objects.filter(
+        country=catalogue.country,
+        fy=catalogue.fy,
+        kind=RateCardKind.REFERENCE,
+    ).exists()
+    return present == CANONICAL_RATE_KEYS and reference_structure_exists

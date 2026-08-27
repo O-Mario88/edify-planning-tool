@@ -402,7 +402,10 @@ class TeamTargetsPageTest(TestCase):
         html = client.get("/team-targets").content.decode()
 
         self.assertIn('class="tt-matrix"', html)
-        self.assertIn("Team performance by reporting period", html)
+        self.assertIn(
+            "Team cumulative target and verified achievement by reporting period",
+            html,
+        )
         self.assertNotIn('class="tt-mobile-performance"', html)
         self.assertIn(
             'aria-label="Open Grace One validated achievement, pace, and blockers"',

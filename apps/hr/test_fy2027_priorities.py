@@ -2,7 +2,7 @@ from datetime import date
 
 from django.test import TestCase
 
-from apps.accounts.models import StaffProfile, User
+from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
 from apps.activities.models import Activity
 from apps.activity_catalogue.models import ActivityCatalogueItem
 from apps.activity_catalogue.services import apply_catalogue_snapshot
@@ -212,6 +212,18 @@ class MilestoneAllocationProjectionTests(TestCase):
                 "updated_at",
             ]
         )
+        core_milestone = PriorityMilestone.objects.get(code="NEW_CORE_SCHOOLS")
+        core_milestone.requires_definition = False
+        core_milestone.definition_status = "approved"
+        core_milestone.active = True
+        core_milestone.save(
+            update_fields=[
+                "requires_definition",
+                "definition_status",
+                "active",
+                "updated_at",
+            ]
+        )
         # 2026-08-20 audit G1: approval now enforces authority + exact-zero.
         # A parentless single-holder allocation must equal the milestone
         # target, and only a distribution approver (IA/Admin) may lock it —
@@ -238,6 +250,19 @@ class MilestoneAllocationProjectionTests(TestCase):
             principal=user,
         )
         approve_allocation(allocation, principal=ia_user)
+        core_allocation = create_allocation(
+            milestone=core_milestone,
+            data={
+                "allocatedToType": "employee",
+                "employeeId": staff.id,
+                "allocatedTarget": str(core_milestone.target_value),
+                "weight": "20",
+                "effectiveDate": "2026-10-01",
+                "allocationReason": "Approved FY2027 Core School cascade.",
+            },
+            principal=user,
+        )
+        approve_allocation(core_allocation, principal=ia_user)
         allocation.refresh_from_db()
         months = list(
             allocation.period_targets.filter(period_type="month").order_by(
@@ -262,11 +287,19 @@ class MilestoneAllocationProjectionTests(TestCase):
         self.assertIsNotNone(allocation.locked_at)
 
         personal = personal_milestone_targets(staff=staff, fy="2027", month_of_fy=1)
-        self.assertEqual(len(personal), 1)
+        self.assertEqual(len(personal), 2)
         self.assertEqual(personal[0]["fyPlan"], allocation.allocated_target)
         self.assertEqual(personal[0]["allocatedTarget"], allocation.allocated_target)
         self.assertEqual(personal[0]["targetSource"], "Approved Milestone Allocation")
         self.assertEqual(personal[0]["linkedActivities"], 0)
+        self.assertEqual(
+            [cell["key"] for cell in personal[0]["periodCells"]],
+            ["month", "Q1", "Q2", "Q3", "Q4", "fy"],
+        )
+        self.assertEqual(
+            {row["milestone"] for row in personal},
+            {milestone.title, core_milestone.title},
+        )
         overview = strategic_priority_overview(
             fy="2027",
             staff_ids=[staff.id],
@@ -274,11 +307,36 @@ class MilestoneAllocationProjectionTests(TestCase):
         growth = next(
             row for row in overview if row["code"] == "PROGRAM_GROWTH_AND_EXPANSION"
         )
-        self.assertEqual(growth["allocatedCount"], 1)
+        self.assertEqual(growth["allocatedCount"], 2)
         self.assertEqual(growth["status"], "Allocated")
         team = team_milestone_targets(users=[user], fy="2027", month_of_fy=1)
         self.assertEqual(team[0]["teamMember"], user.name)
         self.assertEqual(team[0]["risk"], "Needs attention")
+
+        pl_user = User.objects.create_user(
+            email="milestone-pl@example.test",
+            name="Milestone PL",
+            roles=["Program Lead"],
+            active_role="Program Lead",
+            password="test-password",
+            is_active=True,
+        )
+        pl_staff = StaffProfile.objects.create(
+            user=pl_user, title="Program Lead", country="Uganda"
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=pl_staff, supervisee=staff
+        )
+        self.client.force_login(user)
+        personal_html = self.client.get("/my-targets?fy=2027").content.decode()
+        self.assertIn("Cumulative progress by time period", personal_html)
+        self.assertIn(milestone.title, personal_html)
+        self.assertIn(core_milestone.title, personal_html)
+        self.client.force_login(pl_user)
+        team_html = self.client.get("/team-targets?fy=2027").content.decode()
+        self.assertIn("Cumulative progress by time period", team_html)
+        self.assertIn(milestone.title, team_html)
+        self.assertIn(core_milestone.title, team_html)
         review = PerformanceReview.objects.create(
             staff=staff,
             period="FY2027",

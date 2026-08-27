@@ -570,18 +570,37 @@ def budget_overview_view(request):
 
 @require_page_permission("cost_settings")
 def cost_settings_view(request):
-    """CD Cost Catalogue management."""
+    """Governed operational/reference cost control for finance leadership."""
+    from django.db.models import Sum
     from apps.budget.reference import CANONICAL_RATE_KEYS
     from apps.budget.costing_service import (
         active_catalogue as get_active_cost_catalogue,
         activity_cost_coverage,
     )
     from apps.activity_catalogue.services import effective_items
+    from apps.budget.models import (
+        ActivityCostReview,
+        ActivityCostSnapshot,
+        CountryStrategicActivityReserve,
+        RateCardKind,
+    )
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
 
     fy = get_operational_fy()
 
-    catalogues = CostCatalogue.objects.filter(fy=fy).order_by("-version")
+    catalogues = CostCatalogue.objects.filter(
+        fy=fy, kind=RateCardKind.OPERATIONAL
+    ).order_by("-version")
     active_catalogue = get_active_cost_catalogue(fy)
+    can_view_reference = has_permission(
+        request.user, Permission.RATE_CARD_REFERENCE_VIEW.value
+    )
+    reference_catalogue = None
+    if can_view_reference:
+        reference_catalogue = get_active_cost_catalogue(
+            fy, kind=RateCardKind.REFERENCE
+        )
 
     cost_items = []
     if active_catalogue:
@@ -607,9 +626,53 @@ def cost_settings_view(request):
         ),
         "governed_activity_count": len(governed_activities),
         "fy": fy,
-        "can_initialize": request.user.active_role in ("CountryDirector", "Admin"),
+        "can_initialize": request.user.active_role == "CountryDirector",
+        "can_manage_rates": request.user.active_role == "CountryDirector",
+        "can_view_reference": can_view_reference,
+        "reference_catalogue": reference_catalogue,
     }
+    if can_view_reference:
+        current_snapshots = ActivityCostSnapshot.objects.filter(is_current=True)
+        comparison = current_snapshots.aggregate(
+            reference_total=Sum("reference_cost"),
+            operational_total=Sum("operational_cost"),
+            actual_total=Sum("actual_accounted_spend"),
+        )
+        reference_total = int(comparison["reference_total"] or 0)
+        operational_total = int(comparison["operational_total"] or 0)
+        context.update(
+            {
+                "reference_configuration_required": reference_catalogue is None,
+                "reference_total": reference_total,
+                "operational_total": operational_total,
+                "potential_cost_avoidance": max(
+                    0, reference_total - operational_total
+                ),
+                "operational_premium": max(0, operational_total - reference_total),
+                "actual_accounted_total": int(comparison["actual_total"] or 0),
+                "cost_review_queue": ActivityCostReview.objects.filter(
+                    status="submitted"
+                )
+                .select_related("activity")
+                .order_by("-created_at")[:20],
+            }
+        )
+    context["can_view_reserve"] = has_permission(
+        request.user, Permission.STRATEGIC_RESERVE_VIEW.value
+    )
+    if context["can_view_reserve"]:
+        context["strategic_reserves"] = list(
+            CountryStrategicActivityReserve.objects.filter(fy=fy).order_by(
+                "period_key"
+            )
+        )
     return render(request, "pages/cost_settings/index.html", context)
+
+
+@require_page_permission("cost_intelligence")
+def cost_intelligence_view(request):
+    """Read-only RVP/Accountant view of the same governed cost intelligence."""
+    return cost_settings_view.__wrapped__(request)
 
 
 @require_page_permission("consolidated_fund_allocation")
@@ -940,7 +1003,7 @@ def cost_setting_row_view(request, key):
     from apps.budget.costing_service import active_catalogue
     from apps.budget.reference import CANONICAL_RATE_KEYS
 
-    if request.user.active_role not in ("CountryDirector", "Admin"):
+    if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
 
     catalogue = active_catalogue()
@@ -975,6 +1038,7 @@ def cost_setting_row_view(request, key):
                 },
                 request.user,
             )
+            catalogue = active_catalogue()
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
         except ValueError:
@@ -1002,6 +1066,7 @@ def cost_setting_row_view(request, key):
         "c": setting,
         "mode": mode,
         "history": history,
+        "can_manage_rates": request.user.active_role == "CountryDirector",
     }
     return render(request, "partials/cost_settings/cost_setting_row.html", context)
 
@@ -1014,7 +1079,7 @@ def initialize_default_catalogue_view(request):
     from apps.budget.reference import ensure_cost_reference
     from apps.core.fy import get_operational_fy
 
-    if request.user.active_role not in ("CountryDirector", "Admin"):
+    if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
 
     fy = get_operational_fy()

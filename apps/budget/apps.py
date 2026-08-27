@@ -26,3 +26,5 @@ class BudgetConfig(AppConfig):
         reference_data.register(
             "budget", ensure_cost_reference, cost_reference_is_complete
         )
+        # Register the advance-ledger → cost-snapshot projection.
+        from apps.budget import signals  # noqa: F401

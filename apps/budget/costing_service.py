@@ -24,28 +24,45 @@ from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest
 
 from .costing import ActivityCost, CostLine, cost_for_activity
-from .models import CostCatalogue, CostSetting
+from .models import (
+    ActivityCostSnapshot,
+    CostCatalogue,
+    CostSetting,
+    RateCardKind,
+    RateCardStatus,
+)
 from .reference import CANONICAL_RATE_KEYS
 
 
 # ── Catalogue + rate resolution ──────────────────────────────────────────────
-def active_catalogue(fy: str | None = None) -> CostCatalogue | None:
-    """The active CD Cost Catalogue used by the management page and pricing."""
+def active_catalogue(
+    fy: str | None = None,
+    *,
+    kind: str = RateCardKind.OPERATIONAL,
+    on_date=None,
+) -> CostCatalogue | None:
+    """Resolve the one published rate card applicable to the activity date."""
     from django.conf import settings
 
     from apps.core.fy import get_operational_fy
 
     resolved_fy = str(fy or get_operational_fy())
     country = getattr(settings, "COUNTRY", "Uganda")
-    return (
-        CostCatalogue.objects.filter(
+    qs = CostCatalogue.objects.filter(
             country=country,
             fy=resolved_fy,
+            kind=kind,
+            status=RateCardStatus.PUBLISHED,
             is_active=True,
         )
-        .order_by("-version")
-        .first()
-    )
+    if on_date is not None:
+        from django.db.models import Q
+
+        qs = qs.filter(
+            Q(effective_from__isnull=True) | Q(effective_from__lte=on_date),
+            Q(effective_to__isnull=True) | Q(effective_to__gte=on_date),
+        )
+    return qs.order_by("-version").first()
 
 
 def _rate_card(
@@ -145,6 +162,132 @@ def _missing_label(key: str) -> str:
 
 
 # ── Preview ──────────────────────────────────────────────────────────────────
+def _calculation_inputs(input: dict) -> dict:
+    """JSON-safe immutable copy of every governed calculation input."""
+    from datetime import date, datetime
+
+    def clean(value):
+        if isinstance(value, (date, datetime)):
+            return value.isoformat()
+        if isinstance(value, dict):
+            return {str(k): clean(v) for k, v in value.items()}
+        if isinstance(value, (list, tuple, set)):
+            return [clean(v) for v in value]
+        if value is None or isinstance(value, (str, int, float, bool)):
+            return value
+        return str(value)
+
+    return clean(input)
+
+
+def calculate_dual(input: dict) -> dict:
+    """Run the single pure costing recipe against both governed rate cards.
+
+    This is an internal management result. Staff-facing serializers must use
+    :func:`preview`, which deliberately omits every reference-card field.
+    """
+    input = _profiled_input(input)
+    fy = input.get("fy")
+    activity_date = input.get("plannedDate") or input.get("date")
+    operational_card = active_catalogue(
+        fy, kind=RateCardKind.OPERATIONAL, on_date=activity_date
+    )
+    reference_card = active_catalogue(
+        fy, kind=RateCardKind.REFERENCE, on_date=activity_date
+    )
+    operational_rates, operational_settings = _rate_card(operational_card)
+    reference_rates, _reference_settings = _rate_card(reference_card)
+    operational = cost_for_activity(input, operational_rates)
+    reference = (
+        cost_for_activity(input, reference_rates) if reference_card is not None else None
+    )
+
+    missing = list(operational.missing_items)
+    warnings: list[str] = []
+    below_minimum = []
+    for line in operational.lines:
+        setting = operational_settings.get(line.key)
+        if (
+            setting is not None
+            and setting.approved_minimum is not None
+            and int(setting.unit_cost) < int(setting.approved_minimum)
+        ):
+            below_minimum.append(line.key)
+    if below_minimum:
+        warnings.append("One or more operational rates are below an approved minimum.")
+    if reference_card is None:
+        warnings.append("Internal Reference Rate Card has not been configured.")
+    elif reference and reference.cost_missing:
+        warnings.append("Internal Reference Rate Card configuration is incomplete.")
+    elif (
+        reference
+        and reference.amount
+        and operational_card
+        and operational_card.material_difference_threshold_bps is not None
+    ):
+        difference_bps = round(
+            (int(reference.amount) - int(operational.amount))
+            * 10_000
+            / int(reference.amount)
+        )
+        if difference_bps >= operational_card.material_difference_threshold_bps:
+            warnings.append(
+                "The operational cost is materially below the internal reference "
+                "estimate. Confirm that the approved activity scope remains executable."
+            )
+
+    if operational_card is None or operational.cost_missing:
+        viability = "configuration_missing"
+    elif below_minimum:
+        viability = "below_approved_minimum"
+    elif warnings and reference_card is not None:
+        viability = "review_recommended"
+    else:
+        viability = "viable"
+
+    return {
+        "operationalCard": operational_card,
+        "referenceCard": reference_card,
+        "operational": operational,
+        "reference": reference,
+        "inputs": _calculation_inputs(input),
+        "warnings": warnings,
+        "missingConfiguration": {
+            "operational": missing,
+            "reference": list(reference.missing_items) if reference else ["rate_card"],
+        },
+        "viability": viability,
+        "canSchedule": operational_card is not None and not operational.cost_missing,
+    }
+
+
+def management_preview(input: dict) -> dict:
+    """Restricted dual-card representation for CD/RVP/Accountant services."""
+    result = calculate_dual(input)
+    operational = result["operational"]
+    reference = result["reference"]
+    operational_card = result["operationalCard"]
+    reference_card = result["referenceCard"]
+    return {
+        "currency": "UGX",
+        "operationalCost": int(operational.amount),
+        "operationalBreakdown": [_serialize_line(line) for line in operational.lines],
+        "operationalRateCardId": operational_card.id if operational_card else None,
+        "operationalRateCardVersion": operational_card.version if operational_card else None,
+        "referenceCost": int(reference.amount) if reference is not None else None,
+        "referenceBreakdown": (
+            [_serialize_line(line) for line in reference.lines] if reference else []
+        ),
+        "referenceRateCardId": reference_card.id if reference_card else None,
+        "referenceRateCardVersion": reference_card.version if reference_card else None,
+        "inputs": result["inputs"],
+        "warnings": result["warnings"],
+        "missingConfiguration": result["missingConfiguration"],
+        "operationalViability": result["viability"],
+        "canSchedule": result["canSchedule"],
+    }
+
+
 def preview(input: dict) -> dict:
     """Compute an itemized cost preview from the active catalogue. No writes.
 
@@ -152,11 +295,9 @@ def preview(input: dict) -> dict:
               costMissing, missingItems[], blockers[], canSchedule}.
     A blocker is raised-candidate text naming the exact missing cost item so the
     UI can show e.g. "Group training participant meal cost is not set."."""
-    input = _profiled_input(input)
-    fy = input.get("fy")
-    catalogue = active_catalogue(fy)
-    rates, _by_key = _rate_card(catalogue)
-    cost = cost_for_activity(input, rates)
+    result = calculate_dual(input)
+    catalogue = result["operationalCard"]
+    cost = result["operational"]
     missing = cost.missing_items
     blockers = [
         f"{_missing_label(k)} is not set in the active CD Cost Catalogue."
@@ -175,7 +316,7 @@ def preview(input: dict) -> dict:
         "costMissing": cost.cost_missing or catalogue is None,
         "missingItems": missing,
         "blockers": blockers,
-        "canSchedule": (not cost.cost_missing) and catalogue is not None,
+        "canSchedule": result["canSchedule"],
     }
 
 
@@ -432,13 +573,16 @@ def apply_to_activity(
     the same response as the schedule."""
     input = _profiled_input(input)
     fy = input.get("fy") or activity.fy
-    catalogue = active_catalogue(fy)
+    dual = calculate_dual({**input, "fy": fy})
+    catalogue = dual["operationalCard"]
     rates, settings_by_key = _rate_card(catalogue)
     cost = (
         precomputed_cost
         if precomputed_cost is not None
-        else cost_for_activity(input, rates)
+        else dual["operational"]
     )
+    reference_card = dual["referenceCard"]
+    reference_cost = dual["reference"]
 
     catalogue_id = catalogue.id if catalogue else None
     catalogue_version = catalogue.version if catalogue else None
@@ -709,6 +853,67 @@ def apply_to_activity(
             ]
         )
 
+        # Preserve every recalculation as a revision. The reference result is
+        # metadata only; the payable line rows above continue to equal the
+        # operational amount exactly.
+        previous = (
+            ActivityCostSnapshot.objects.select_for_update()
+            .filter(activity=activity, is_current=True)
+            .first()
+        )
+        sequence = (previous.sequence + 1) if previous else 1
+        if previous:
+            previous.is_current = False
+            previous.save(update_fields=["is_current", "updated_at"])
+        snapshot = ActivityCostSnapshot.objects.create(
+            activity=activity,
+            sequence=sequence,
+            is_current=True,
+            activity_catalogue_item_id=activity.catalogue_item_id,
+            activity_catalogue_version=activity.catalogue_version,
+            costing_profile_version=activity.costing_profile_snapshot,
+            reference_rate_card=reference_card,
+            operational_rate_card=catalogue,
+            reference_cost=(
+                int(reference_cost.amount)
+                if reference_cost is not None and not reference_cost.cost_missing
+                else None
+            ),
+            operational_cost=int(cost.amount),
+            calculation_inputs=dual["inputs"],
+            reference_breakdown=(
+                [_serialize_line(line) for line in reference_cost.lines]
+                if reference_cost is not None
+                else []
+            ),
+            operational_breakdown=[_serialize_line(line) for line in cost.lines],
+            warnings=dual["warnings"],
+            missing_configuration=dual["missingConfiguration"],
+            calculated_at=timezone.now(),
+            calculated_by=responsible_user_id or activity.responsible_staff_id,
+            recalculation_reason=input.get("recalculationReason"),
+            supersedes=previous,
+        )
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="activity.cost.calculated",
+            subject_kind="ActivityCostSnapshot",
+            subject_id=snapshot.id,
+            actor_id=responsible_user_id or activity.responsible_staff_id,
+            payload={
+                "activityId": activity.id,
+                "sequence": sequence,
+                "operationalCost": int(cost.amount),
+                "operationalRateCardVersion": catalogue_version,
+                "referenceConfigured": snapshot.reference_cost is not None,
+                "referenceRateCardVersion": (
+                    reference_card.version if reference_card else None
+                ),
+            },
+            required=True,
+        )
+
     # Auto-create weekly advance requests from the freshly-written budget lines
     # (the responsible user confirms before the Accountant may disburse). Only
     # when not cost-missing — a blocked activity carries no fundable advance.
@@ -719,8 +924,69 @@ def apply_to_activity(
     return cost
 
 
+def sync_snapshot_actuals(activity_id: str) -> None:
+    """Project the advance ledger into the current cost snapshot.
+
+    The advance rows remain the accounting source of truth. This denormalized
+    projection gives planning/management one coherent operational-limit view
+    without relabelling planned cost as actual spend.
+    """
+    from django.db.models import Sum
+
+    from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+
+    with transaction.atomic():
+        snapshot = (
+            ActivityCostSnapshot.objects.select_for_update()
+            .filter(activity_id=activity_id, is_current=True)
+            .first()
+        )
+        if snapshot is None:
+            return
+        advances = AdvanceRequest.objects.filter(activity_id=activity_id)
+        totals = advances.aggregate(
+            disbursed=Sum("disbursed_amount"),
+            actual=Sum("accounted_amount"),
+            returned=Sum("returned_amount"),
+            reimbursed=Sum("reimbursed_amount"),
+        )
+        disbursed = int(totals["disbursed"] or 0)
+        actual = int(totals["actual"] or 0)
+        reimbursed = int(totals["reimbursed"] or 0)
+        snapshot.amount_disbursed = disbursed
+        snapshot.actual_accounted_spend = actual
+        snapshot.unused_balance = max(0, disbursed - actual)
+        snapshot.reimbursement_amount = reimbursed
+        if actual:
+            snapshot.cost_status = "accounted"
+        elif disbursed:
+            snapshot.cost_status = "disbursed"
+        elif advances.filter(
+            status__in=(
+                AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
+                AdvanceRequestStatus.SUBMITTED_TO_ACCOUNTANT,
+            )
+        ).exists():
+            snapshot.approved_operating_limit = snapshot.operational_cost
+            snapshot.cost_status = "approved"
+        snapshot.save(
+            update_fields=[
+                "amount_disbursed",
+                "actual_accounted_spend",
+                "unused_balance",
+                "reimbursement_amount",
+                "approved_operating_limit",
+                "cost_status",
+                "updated_at",
+            ]
+        )
+
+
 __all__ = [
     "active_catalogue",
+    "calculate_dual",
+    "management_preview",
     "preview",
     "apply_to_activity",
+    "sync_snapshot_actuals",
 ]

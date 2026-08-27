@@ -1112,6 +1112,53 @@ class PLTeamTargetsService:
             fy=fy,
             month_of_fy=month_of_fy,
         )
+        # Approved strategic allocations share the same selected-month → Q1–Q4
+        # → FY matrix as the employee's agreed operating priorities. They remain
+        # separate from the operating weighted score: each governed milestone
+        # keeps its own allocation weight and source instead of being silently
+        # folded into the five legacy TargetArea weights.
+        if category == "overall":
+            members_by_user_id = {str(member["user_id"]): member for member in members}
+            for allocation in strategic_milestones:
+                member = members_by_user_id.get(str(allocation["teamMemberId"]))
+                if member is None:
+                    continue
+                period_rows = []
+                for cell in allocation["periodCells"]:
+                    target = cell["t"]
+                    pct = cell["pct"]
+                    started = not cell["start"] or today >= cell["start"]
+                    expected = (
+                        Cal.expected_pace_pct(
+                            cell["start"], cell["end"], today, member["user"]
+                        )
+                        if cell["start"] and cell["end"]
+                        else 0
+                    )
+                    status, tone = team_status_for(
+                        pct, expected, started, bool(target)
+                    )
+                    status, tone = team_status_display(status, tone)
+                    period_rows.append(
+                        {
+                            "key": cell["key"],
+                            "label": cell["label"],
+                            "pct": pct,
+                            "display_pct": None if status == "Upcoming" else pct,
+                            "achieved": cell["a"],
+                            "target": target,
+                            "status": status,
+                            "tone": tone,
+                        }
+                    )
+                member["area_matrix"].append(
+                    {
+                        "key": f"strategic-{allocation['allocationId']}",
+                        "label": allocation["milestone"],
+                        "source": allocation["priority"],
+                        "periods": period_rows,
+                    }
+                )
         strategic_priorities = strategic_priority_overview(
             fy=fy,
             staff_ids=[
@@ -1548,6 +1595,20 @@ class PLTeamTargetsService:
                         }
                     )
                 rows.append({"staff": u.name, "area": a.label, "cells": cells})
+        if not selected_area_key:
+            from apps.hr.milestone_allocations import team_milestone_targets
+
+            for target in team_milestone_targets(
+                users=team, fy=fy, month_of_fy=month_of_fy
+            ):
+                rows.append(
+                    {
+                        "staff": target["teamMember"],
+                        "area": target["milestone"],
+                        "area_source": target["priority"],
+                        "cells": target["periodCells"],
+                    }
+                )
         return {
             "heads": heads,
             "rows": rows,

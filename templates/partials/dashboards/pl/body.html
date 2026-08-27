@@ -123,16 +123,20 @@
     </div>
   </div>
 
-  {% comment %}
-  SSA Intelligence sits directly under the risk list it explains, at full
-  width because it is a matrix: eight interventions plus an overall column
-  per cluster. It used to sit beside the urgent-schools card in a narrow
-  column, which is why only six of the eight were ever shown.
-  {% endcomment %}
-  <div class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
-    <h2 class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
-    <p class="text-[12px] mb-2 edify-text-subtle">By cluster (score out of 10)</p>
-    {% include "partials/dashboards/pl/ssa_intelligence.html" %}
+  {# ── SSA Intelligence + Funding & Execution ─────────────────────────── #}
+  <div class="pl-ssa-funding-grid">
+    <section class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-ssa-intelligence-title">
+      <h2 id="pl-ssa-intelligence-title" class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
+      <p class="text-[12px] mb-2 edify-text-subtle">By cluster (score out of 10)</p>
+      {% include "partials/dashboards/pl/ssa_intelligence.html" %}
+    </section>
+
+    <aside class="pl-funding-card rounded-surface p-4 edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-funding-execution-title">
+      <h2 id="pl-funding-execution-title" class="text-[13px] font-semibold mb-3 edify-text">Funding &amp; Execution</h2>
+      <div class="pl-funding-card__body">
+        {% include "partials/dashboards/pl/funding_execution.html" %}
+      </div>
+    </aside>
   </div>
 
   {# ── Backlog + Route Capacity ────────────────────────────────────────── #}
@@ -144,14 +148,6 @@
     <div class="lg:col-span-6 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
       <h2 class="text-[13px] font-semibold mb-3 edify-text">Smart Route &amp; Capacity</h2>
       {% include "partials/dashboards/pl/route_capacity.html" %}
-    </div>
-  </div>
-
-  {# ── Funding & Execution: supporting financial context, kept below risk ── #}
-  <div class="pl-funding-card pl-funding-card--wide rounded-surface p-4 edify-surface border edify-border edify-shadow-sm">
-    <h2 class="text-[13px] font-semibold mb-3 edify-text">Funding &amp; Execution</h2>
-    <div class="pl-funding-card__body">
-      {% include "partials/dashboards/pl/funding_execution.html" %}
     </div>
   </div>
 
