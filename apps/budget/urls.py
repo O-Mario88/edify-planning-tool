@@ -53,6 +53,11 @@ urlpatterns = [
         name="strategic-reserve-activation",
     ),
     path(
+        "strategic-reserve/<str:reserve_id>/approve",
+        views.StrategicReserveApprovalView.as_view(),
+        name="strategic-reserve-approve",
+    ),
+    path(
         "strategic-reserve/activations/<str:activation_id>/approve",
         views.StrategicReserveActivationApprovalView.as_view(),
         name="strategic-reserve-activation-approve",

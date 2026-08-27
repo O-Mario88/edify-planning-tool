@@ -145,8 +145,14 @@ class ActivityCostReviewDecisionView(APIView):
 
 
 class StrategicReserveView(APIView):
-    permission_classes = [IsAuthenticated, RequirePermissions]
-    required_permissions = [Permission.STRATEGIC_RESERVE_VIEW.value]
+    @property
+    def required_permissions(self):
+        if self.request.method == "POST":
+            return [Permission.STRATEGIC_RESERVE_MANAGE.value]
+        return [Permission.STRATEGIC_RESERVE_VIEW.value]
+
+    def get_permissions(self):
+        return [IsAuthenticated(), RequirePermissions()]
 
     def get(self, request: Request) -> Response:
         from .governance_service import reserve_summary
@@ -154,6 +160,23 @@ class StrategicReserveView(APIView):
         return Response(
             reserve_summary(request.user, fy=request.query_params.get("fy"))
         )
+
+    def post(self, request: Request) -> Response:
+        from .governance_service import create_or_update_reserve
+
+        return Response(
+            create_or_update_reserve(request.user, request.data), status=201
+        )
+
+
+class StrategicReserveApprovalView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.STRATEGIC_RESERVE_APPROVE.value]
+
+    def post(self, request: Request, reserve_id: str) -> Response:
+        from .governance_service import approve_reserve
+
+        return Response(approve_reserve(request.user, reserve_id))
 
 
 class StrategicReserveActivationView(APIView):

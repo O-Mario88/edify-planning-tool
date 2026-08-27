@@ -1812,7 +1812,7 @@
    "audit_id": "KPI-SOURCE-093",
    "kind": "breakdown-row",
    "module": "apps/budget/governance_service.py",
-   "line": 63,
+   "line": 64,
    "label": null,
    "keys": [
     "amount",
@@ -2044,7 +2044,7 @@
    "audit_id": "KPI-SOURCE-104",
    "kind": "breakdown-row",
    "module": "apps/budget/views.py",
-   "line": 264,
+   "line": 287,
    "label": null,
    "keys": [
     "activityId",
@@ -6070,7 +6070,7 @@
     "RVP"
    ],
    "page_purpose": "Turn the FY2027 regional direction into measurable, approved and allocated priorities. Source wording stays intact until an authorized owner completes the definition.",
-   "primary_action": "Save definition for approval",
+   "primary_action": "Approve FY cycle",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 6,
    "mobile_result": "At most six distinct headline metrics; the tray reflows without horizontal scrolling",

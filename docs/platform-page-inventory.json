@@ -4840,6 +4840,34 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12169,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/strategic-priorities"
+      ],
+      "findings": [],
+      "forms": 3,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Priority Milestone Detail",
+      "purpose": "Reusable priority milestone detail interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/hr/priority_milestone_detail.html",
+      "variants": [
+        "info",
+        "success",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
@@ -56406,7 +56434,7 @@
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "strategic_priorities",
-      "primary_action": "Save definition for approval",
+      "primary_action": "Approve FY cycle",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Turn the FY2027 regional direction into measurable, approved and allocated priorities. Source wording stays intact until an authorized owner completes the definition.",
       "remediation": "No automated remediation outstanding",
@@ -56422,9 +56450,6 @@
       "search": "shared topbar search or none",
       "secondary_actions": [
         "/strategic-priorities",
-        "/strategic-priorities/milestones/{{ milestone.id }}/define",
-        "/strategic-priorities/milestones/{{ milestone.id }}/approve",
-        "/strategic-priorities/milestones/{{ milestone.id }}/allocate",
         "/strategic-priorities/cycles/{{ cycle.id }}/approve"
       ],
       "services_and_models": [
@@ -64846,9 +64871,7 @@
         "TRACE"
       ],
       "page_permission": "",
-      "required_permissions": [
-        "strategicReserve.view"
-      ],
+      "required_permissions": [],
       "route": "/api/budget(?:/|)strategic-reserve",
       "route_name": "strategic-reserve",
       "templates": []
@@ -64870,6 +64893,25 @@
       ],
       "route": "/api/budget(?:/|)strategic-reserve/<str:reserve_id>/activations",
       "route_name": "strategic-reserve-activation",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "strategicReserve.approve"
+      ],
+      "route": "/api/budget(?:/|)strategic-reserve/<str:reserve_id>/approve",
+      "route_name": "strategic-reserve-approve",
       "templates": []
     },
     {
@@ -76546,9 +76588,9 @@
   "summary": {
     "accessibility_contract_pass": 376,
     "activity_states": 23,
-    "all_routes": 1040,
-    "api_routes": 358,
-    "component_templates": 341,
+    "all_routes": 1041,
+    "api_routes": 359,
+    "component_templates": 342,
     "full_pages": 203,
     "mobile_contract_pass": 376,
     "nonvisual_actions": 179,

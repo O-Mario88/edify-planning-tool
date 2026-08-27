@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **341**
+Components and application partials: **342**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -203,6 +203,7 @@ Components and application partials: **341**
 | `partials/hr/pd_dashboard/body.html` | application-partial | Reusable body interface primitive | executive; default, empty | explicit responsive contract | inherits semantic parent contract | /cpd-learning | 0 |
 | `partials/hr/pd_dashboard/tracker_table.html` | application-partial | Reusable tracker table interface primitive | canonical; default, empty, disabled | inherits containing page contract | inherits semantic parent contract | /cpd-learning | 0 |
 | `partials/hr/priority_import.html` | application-partial | Reusable priority import interface primitive | {% if row.status == ; default, error | inherits containing page contract | accessible name and label, keyboard focus visibility | /target-distribution | 0 |
+| `partials/hr/priority_milestone_detail.html` | application-partial | Reusable priority milestone detail interface primitive | info, success, warning; default, open | explicit responsive contract | accessible name and label | /strategic-priorities | 0 |
 | `partials/hr/ssa_mapping_drawer.html` | application-partial | Reusable ssa mapping drawer interface primitive | canonical; default, disabled, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /priorities/ssa-mapping/<str:item_id>/drawer | 0 |
 | `partials/hr/target_distribution_form.html` | application-partial | Reusable target distribution form interface primitive | success; default, empty | inherits containing page contract | accessible name and label, announced dynamic state | /target-distribution/form | 0 |
 | `partials/hr/team_target_distribution_form.html` | application-partial | Reusable team target distribution form interface primitive | success; default, empty, error | inherits containing page contract | accessible name and label, announced dynamic state | /target-distribution/team | 0 |

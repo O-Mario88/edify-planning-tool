@@ -2710,21 +2710,6 @@
   {
    "page_permission": "",
    "required_permissions": [
-    "strategicReserve.view"
-   ],
-   "role_exclusive": false,
-   "roles": [
-    "CountryDirector",
-    "RegionalVicePresident",
-    "Accountant"
-   ],
-   "route": "/api/budget(?:/|)strategic-reserve",
-   "route_name": "strategic-reserve",
-   "view": "apps.budget.views.view"
-  },
-  {
-   "page_permission": "",
-   "required_permissions": [
     "strategicReserve.manage"
    ],
    "role_exclusive": false,
@@ -2733,6 +2718,19 @@
    ],
    "route": "/api/budget(?:/|)strategic-reserve/<str:reserve_id>/activations",
    "route_name": "strategic-reserve-activation",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "strategicReserve.approve"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident"
+   ],
+   "route": "/api/budget(?:/|)strategic-reserve/<str:reserve_id>/approve",
+   "route_name": "strategic-reserve-approve",
    "view": "apps.budget.views.view"
   },
   {
@@ -13995,11 +13993,11 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 286,
+  "Accountant": 285,
   "Admin": 765,
   "BusinessTransformationOfficer": 212,
   "CCEO": 468,
-  "CountryDirector": 540,
+  "CountryDirector": 539,
   "HumanResources": 264,
   "ImpactAssessment": 400,
   "MfiLoanOfficer": 111,
@@ -14014,8 +14012,8 @@
   "page_keys_declared": 148,
   "page_keys_in_navigation": 165,
   "routes_guarded": 857,
-  "routes_total": 1040,
-  "routes_unguarded": 183,
+  "routes_total": 1041,
+  "routes_unguarded": 184,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -14731,6 +14729,13 @@
    "required_permissions": [],
    "route": "/api/budget(?:/|)cost-settings",
    "route_name": "cost-settings",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/api/budget(?:/|)strategic-reserve",
+   "route_name": "strategic-reserve",
    "view": "apps.budget.views.view"
   },
   {
