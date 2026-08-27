@@ -198,10 +198,26 @@ audit environment, stated rather than papered over, and it is the reason this en
 "unexplained" instead of naming a cause.
 
 **The suite grew with the work and stayed clean.** It ran at 5,951 tests when this section
-was first written, 6,037 at the last full run before the DEP-01 guard was added, and
-**6,081 at HEAD `8739af6`** — `OK (expected failures=3)` in 3,600s, with no failures, no
-errors and no skips. Expected failures appear only where a defect is deliberately
-quarantined — CONFLICT-001 and the two halves of DEP-01. Each is self-removing.
+was first written, 6,037 at the last full run before the DEP-01 guard was added, 6,081 at
+HEAD `8739af6`, and **6,117 at HEAD `ecb2d8e`** — `OK (expected failures=2)` in 898s, with
+no failures, no errors and no skips. Expected failures appear only where a defect is
+deliberately quarantined, and each is self-removing.
+
+That last figure is worth stating precisely, because it is the first clean run of this
+repository since **17 August**. `main` had failed CI on every push for ten days and
+seventeen consecutive runs (§4d), so "the suite passes" had stopped being a fact anyone
+could point at. The path to it, on the merged head, was measured at each step rather than
+asserted:
+
+| Head | Failures | |
+| --- | --- | --- |
+| `b4ac443` | 7 | 3 this branch's stale manifests, 4 `main`'s |
+| `b1ebf56` | 1 | the costing rule |
+| `ecb2d8e` | **0** | |
+
+Each of those three runs was corroborated by CI on the same commit — 6,117/7, 6,117/1 and
+the run on `ecb2d8e` — with identical counts and identical test names every time. Two
+independent executions agreeing is what the numbers above rest on.
 
 That HEAD run was corroborated rather than trusted: CI's Django Lint & Test Suite passed on
 the same commit, on a different machine, in 21 minutes. Two independent executions of the
@@ -1254,6 +1270,51 @@ adding it would turn CI red on a missing dependency — the very thing this sect
 It is kept at `scratchpad/dark_contrast_probe.py`. Putting contrast measurement into CI is a
 worthwhile piece of work and an honest prerequisite for ever calling dark mode "verified";
 it is not free, and it is not done.
+
+## 4g. FUND-01 · The guard against funding a school visit twice had no test
+
+**P1 · money · found and closed 2026-08-27**
+
+An in-school Training creates two governed records — a TS- Training and an SVE- School
+Visit — describing one delivery. The visit is the Training's evidence and Salesforce twin,
+and the Training already carries the visit-equivalent cost, so funding the twin claims the
+same money a second time. `fund_requests.services.submit` prevents that with one line:
+
+```python
+qs = qs.exclude(paired_in_school_training__isnull=False)
+```
+
+Nothing held it there. `paired_in_school_training` appeared in **four production
+exclusions** — this one, two system-health surfaces and the costing repair command — and in
+**no test**; the 255-line suite that shipped with the pairing feature never named it.
+Measured rather than assumed: deleting the line and running `apps.fund_requests` plus
+`apps.planning.test_in_school_training_pair` gave **285 tests, OK**. The guard against
+double-funding was deletable in silence.
+
+It is now mutation-verified in shillings. With the line gone the request totals **420,000
+instead of 300,000** — the twin's 120,000 asked for a second time.
+
+**This is the audit's recurring defect class arriving from the other side.** Every earlier
+instance was a reader with no writer: a screen that could never show anything. This is a
+money rule with no test — the behaviour is right and nothing holds it there. Both have the
+same root, which is that the thing was built and the thing that proves it works was not.
+
+**Two things about writing the test are worth keeping**, because both are the failure mode
+this audit exists to catch.
+
+*Its first version passed against an empty request.* `resolve_user_scope` reads staff ids
+and the fixture set `responsible_staff_id` to a user id, so the scope filter dropped both
+activities: total 0, no items, every exclusion assertion vacuously true. Two guesses at the
+cause were wrong; probing each filter stage found it.
+`test_an_unpaired_visit_is_still_funded` now exists to make that impossible — it fails when
+the request is empty, and it also fails if someone "fixes" this by excluding school visits
+as a class rather than excluding the pairing.
+
+*The path had no amount-asserting test at all.* The existing fixture builds `FundRequest`
+rows directly, and its one `submit` test checks the period key rather than a total, so
+nothing exercised funding-from-activities end to end. That is how a money rule reached
+`main` unguarded in the first place — not carelessness, but a test suite whose shape left
+that particular question unasked.
 
 ## 4c. The product-owner decisions, made
 
