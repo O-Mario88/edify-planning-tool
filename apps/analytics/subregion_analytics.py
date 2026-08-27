@@ -239,6 +239,7 @@ def combine_district_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
                 "client": 0,
                 "champion": 0,
                 "core_trained": 0,
+                "core_graduate": 0,
             },
         )
         return combined
@@ -248,7 +249,16 @@ def combine_district_rows(rows: list[dict[str, Any]]) -> dict[str, Any]:
             combined[field] += row.get(field) or 0
 
     # School cohorts add like the other counts, but live one level down.
-    distribution = {key: 0 for key in ("core", "client", "champion", "core_trained")}
+    distribution = {
+        key: 0
+        for key in (
+            "core",
+            "client",
+            "champion",
+            "core_trained",
+            "core_graduate",
+        )
+    }
     for row in rows:
         source = row.get("school_distribution") or {}
         for key in distribution:

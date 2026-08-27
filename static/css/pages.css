@@ -316,7 +316,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
-  align-items: stretch;
+  align-items: start;
 }
 
 .pl-intelligence-card,
@@ -325,32 +325,27 @@
 }
 
 .pl-intelligence-card {
-  block-size: 100%;
+  block-size: auto;
 }
 
 /*
- * Dashboard rows share one baseline. Partial wrappers inherit the grid row
- * height so their card surface fills it without introducing fixed heights.
+ * Dashboard cards keep their intrinsic height. The former stretch contract
+ * made every short card as tall as the largest neighbour and filled the
+ * difference with blank surface. A shared baseline does not require shared
+ * block size; the grid row still begins on one baseline with align-items:start.
  */
 .edify-card-row {
-  align-items: stretch;
+  align-items: start;
 }
 
 .edify-card-row > * {
   min-inline-size: 0;
-}
-
-.edify-card-row > :is(.edify-surface, .card, article, section, a) {
-  block-size: 100%;
-}
-
-.edify-card-row > :not(.edify-surface, .card, article, section, a) {
-  block-size: 100%;
+  block-size: auto;
 }
 
 .edify-card-row > :not(.edify-surface, .card, article, section, a) > :is(.edify-surface, .card, article, section, a):only-child {
   inline-size: 100%;
-  block-size: 100%;
+  block-size: auto;
 }
 
 @media (min-width: 64rem) {
@@ -686,7 +681,7 @@
   }
 }
 
-/* Responsive grid templates utilizing auto-fill to prevent stretching to full rows */
+/* Responsive grid templates use auto-fit so absent items never reserve ghost tracks. */
 .kpi-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
@@ -725,6 +720,7 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   gap: clamp(0.875rem, 0.7rem + 0.55vw, 1.125rem);
   margin-bottom: 1rem;
+  align-items: start;
 }
 
 .three-col {
@@ -732,6 +728,7 @@
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
   gap: clamp(0.875rem, 0.7rem + 0.55vw, 1.125rem);
   margin-bottom: 1rem;
+  align-items: start;
 }
 
 .mini-metrics {
@@ -1700,7 +1697,7 @@
   display: grid;
   grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.75fr);
   gap: var(--pto-panel-gap);
-  align-items: stretch;
+  align-items: start;
 }
 
 .pto-panel {
@@ -2206,7 +2203,7 @@
 }
 
 .pto-request-list {
-  min-height: 10rem;
+  min-height: 0;
   padding-block-start: 0.25rem;
 }
 
@@ -2562,7 +2559,7 @@
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: var(--pto-panel-gap);
-  align-items: stretch;
+  align-items: start;
 }
 
 .pto-constraint-list,
@@ -3591,11 +3588,11 @@
 .tt-rail {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  align-items: stretch;
+  align-items: start;
   gap: 1rem;
   min-width: 0;
 }
-.tt-rail-panel { height: 100%; overflow: hidden; padding-bottom: 0.9rem; }
+.tt-rail-panel { height: auto; overflow: hidden; padding-bottom: 0.9rem; }
 .tt-support-list,
 .tt-plan-list { display: grid; padding: 0 0.85rem; }
 
@@ -3665,7 +3662,7 @@
 .tt-signal small { margin-top: 0.15rem; overflow: hidden; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); text-overflow: ellipsis; white-space: nowrap; }
 .tt-signal :is(a, button) { width: fit-content; margin-top: 0.55rem; padding: 0; border: 0; background: transparent; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 600; text-decoration: none; cursor: pointer; }
 
-.tt-insights-grid { display: grid; grid-template-columns: minmax(19rem, 0.82fr) minmax(0, 1.18fr); gap: 1rem; align-items: stretch; }
+.tt-insights-grid { display: grid; grid-template-columns: minmax(19rem, 0.82fr) minmax(0, 1.18fr); gap: 1rem; align-items: start; }
 .tt-insight-panel { overflow: hidden; }
 .tt-progress-list { display: grid; padding: 0.5rem var(--tt-panel-pad) 0.9rem; }
 .tt-progress-row { display: grid; gap: 0.4rem; padding: 0.65rem 0; border: 0; border-bottom: 1px solid var(--edify-border); background: transparent; text-align: left; cursor: pointer; }
@@ -3739,10 +3736,10 @@
 .tt-lower-stack {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(16rem, 0.65fr);
-  align-items: stretch;
+  align-items: start;
   gap: 1rem;
 }
-.tt-lower-stack > * { min-width: 0; height: 100%; }
+.tt-lower-stack > * { min-width: 0; height: auto; }
 .tt-district-list { display: grid; padding: 0.35rem var(--tt-panel-pad) 0.8rem; }
 .tt-district-list > div { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding: 0.7rem 0; border-bottom: 1px solid var(--edify-border); }
 .tt-district-list > div:last-child { border-bottom: 0; }
@@ -3806,7 +3803,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .tt-filter-actions { grid-column: 1 / -1; }
   .tt-command-grid { grid-template-columns: 1fr; }
   .tt-rail { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  .tt-rail-panel { height: 100%; }
+  .tt-rail-panel { height: auto; }
   .tt-signal-strip { grid-template-columns: 1fr; }
   .tt-signal-grid { border-top: 1px solid var(--edify-border); padding-top: 0.9rem; }
   .tt-signal:first-child { border-left: 0; }

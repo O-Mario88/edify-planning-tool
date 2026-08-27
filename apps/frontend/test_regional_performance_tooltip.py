@@ -98,12 +98,13 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertNotIn("saturate(", hover_css)
         self.assertNotIn("sr-context-active", template)
 
-    def test_map_names_have_no_outline(self):
+    def test_map_names_use_a_readable_halo(self):
         template = _regional_source()
 
         self.assertIn("#sr-cam text{text-anchor:middle", template)
-        self.assertIn("stroke:none;transition:opacity .3s", template)
-        self.assertNotIn("paint-order:stroke fill;stroke:#fff", template)
+        self.assertIn("fill:var(--edify-map-label)", template)
+        self.assertIn("stroke:var(--edify-map-label-halo);stroke-width:.2em;", template)
+        self.assertIn("stroke-linejoin:round;paint-order:stroke fill", template)
 
     def test_map_renders_toggleable_school_distribution_pins(self):
         template = _regional_source()
@@ -189,7 +190,14 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             "colour:token('--edify-warning-text')",
             template,
         )
+        self.assertIn(
+            "{key:'core_graduate', label:'Core graduate', "
+            "colour:token('--edify-chart-purple')",
+            template,
+        )
         self.assertIn("class', 'sr-pin-check'", template)
+        self.assertIn("class', 'sr-pin-graduate'", template)
+        self.assertIn('data-school-type="core_graduate"', template)
 
     def test_subcounty_markers_do_not_obscure_place_names(self):
         template = _regional_source()
@@ -204,7 +212,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             template,
         )
         self.assertIn("font-weight:var(--edify-text-label-weight)", template)
-        self.assertIn("stroke:none;transition:opacity .3s", template)
+        self.assertIn("paint-order:stroke fill", template)
         self.assertNotIn("stroke-width:1.4px", template)
         self.assertLess(
             template.index("this.cam.insertBefore(pinLayer, this.labels);"),
@@ -241,9 +249,7 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("label.dataset.labelPlacement = 'hidden';", template)
         self.assertIn("label.style.opacity = 0;", template)
         self.assertIn("placement = 'boundary-fit';", template)
-        self.assertIn(
-            "placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template
-        )
+        self.assertIn(": 'centroid-fallback';", template)
         self.assertNotIn("placement = 'open-space';", template)
         self.assertIn("const blocked =", template)
         self.assertIn("placed.some(existing => overlaps(rect, existing))", template)
@@ -264,14 +270,32 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertNotIn("declash(){", template)
 
+    def test_mobile_keeps_district_labels_visible(self):
+        template = _regional_source()
+
+        self.assertIn("#sr-cam .sr-dl{display:block}", template)
+        self.assertNotIn("#sr-cam .sr-dl{display:none}", template)
+        self.assertIn("allowOverlapFallback:true,", template)
+
+    def test_hover_card_includes_core_graduate(self):
+        template = _regional_source()
+
+        self.assertIn("this.tip.mix = this.schoolTypes.map", template)
+        self.assertIn("`${mix.core_graduate || 0} Core graduate schools`", template)
+        self.assertIn(
+            "`${metric.school_distribution.core_graduate || 0} Core graduate; `",
+            template,
+        )
+
     def test_subcounty_labels_are_complete_and_use_compact_title_case(self):
         template = _regional_source()
 
         self.assertIn("label.textContent = properties.n;", template)
         self.assertNotIn("label.textContent = properties.n.toUpperCase();", template)
         self.assertIn(
-            "placement = anchor.fullFit ? 'boundary-fit' : 'boundary-anchor';", template
+            "? (anchor.fullFit ? 'boundary-fit' : 'boundary-anchor')", template
         )
+        self.assertIn(": 'centroid-fallback';", template)
 
     def test_national_overview_keeps_every_district_label_visible(self):
         template = _regional_source()

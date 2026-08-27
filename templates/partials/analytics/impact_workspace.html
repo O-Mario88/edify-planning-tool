@@ -1,6 +1,6 @@
 <div id="impact-workspace" class="sp-workspace" aria-live="polite">
   {{ impact_chart_payload|json_script:"impact-chart-payload" }}
-  <form class="sp-filter-panel"
+  <form id="impact-filters-form" class="sp-filter-panel impact-filter-panel"
         method="get"
         action="/impact"
         hx-get="/impact"
@@ -17,6 +17,14 @@
           {% endfor %}
         </select>
       </label>
+      <label class="sp-field" for="ia-group-by">
+        <span>Group portfolio results by</span>
+        <select id="ia-group-by" name="group_by">
+          {% for option in dashboard.filters.group_options %}
+          <option value="{{ option.value }}"{% if option.selected %} selected{% endif %}>{{ option.label }}</option>
+          {% endfor %}
+        </select>
+      </label>
       <div class="sp-filter-actions">
         <a href="/impact" class="sp-reset" aria-label="Reset Impact Analytics filters">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" aria-hidden="true"><path d="M3 12a9 9 0 1 0 3-6.7M3 4v6h6"/></svg>
@@ -26,7 +34,7 @@
     </div>
     <p class="sp-scope-note">
       <span aria-hidden="true"></span>
-      Comparing confirmed SSA scores in {{ dashboard.filters.fy_label }} against FY {{ dashboard.filters.prev_fy }} for {{ dashboard.coverage.schools_paired }} of {{ dashboard.coverage.schools_in_scope }} schools in your scope · {{ dashboard.coverage.activities_in_window }} executed activities inside the exposure windows.
+      Comparing confirmed SSA scores in {{ dashboard.filters.fy_label }} against FY {{ dashboard.filters.prev_fy }} for {{ dashboard.coverage.schools_paired }} of {{ dashboard.coverage.schools_in_scope }} schools in your authorized portfolio · {{ dashboard.coverage.activities_in_window }} verified activities inside the exposure windows · {{ dashboard.coverage.ssa_linked_trainings }} of {{ dashboard.coverage.trainings_in_window }} trainings linked to SSA interventions.
     </p>
     <noscript><button type="submit" class="sp-export">Apply filters</button></noscript>
   </form>
@@ -42,6 +50,149 @@
   {% else %}
 
   {% include "components/kpi_strip.html" with items=impact_kpi_items variant="executive" title="Impact key indicators" %}
+
+  <section class="space-y-3" aria-labelledby="programme-driver-title">
+    <div class="flex flex-wrap items-end justify-between gap-2">
+      <div>
+        <h2 id="programme-driver-title" class="text-[15px] font-bold text-slate-800 tracking-tight">Programme activity associations with SSA improvement</h2>
+        <p class="edify-text-caption text-slate-500 mt-0.5">Spearman rank correlation across paired schools. P-values are adjusted together for the five tests; overlapping activity families are not additive.</p>
+      </div>
+      <span class="edify-text-caption font-semibold text-slate-400">Approximate 95% CI · minimum n {{ dashboard.methodology.minimum_correlation_n }}</span>
+    </div>
+    <p class="impact-scroll-hint">Swipe or scroll sideways to view every contribution measure.</p>
+    <div class="impact-table-scroll"
+         data-table-scroll-region
+         role="region"
+         aria-labelledby="programme-driver-title"
+         tabindex="0">
+      <table class="impact-analysis-table impact-analysis-table--drivers" data-mobile-table="scroll" data-impact-driver-table>
+        <caption class="sr-only">SSA improvement associations for all five programme activity families</caption>
+        <thead>
+          <tr>
+            <th scope="col">Activity family</th>
+            <th scope="col">Association signal</th>
+            <th scope="col">Spearman ρ</th>
+            <th scope="col">95% CI</th>
+            <th scope="col">Strength</th>
+            <th scope="col">Raw p</th>
+            <th scope="col">Adjusted p</th>
+            <th scope="col">n</th>
+            <th scope="col">Activities</th>
+            <th scope="col">Exposed schools</th>
+            <th scope="col">Unexposed schools</th>
+            <th scope="col">Exposed Δ</th>
+            <th scope="col">No-exposure Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for driver in dashboard.drivers %}
+          <tr>
+            <th scope="row">
+              <strong>{{ driver.label }}</strong>
+              <small>{{ driver.description }}</small>
+            </th>
+            <td><span class="impact-signal {% if driver.signal == 'Positive association' %}impact-signal--positive{% elif driver.signal == 'Negative association' %}impact-signal--negative{% elif driver.signal == 'Insufficient paired data' %}impact-signal--insufficient{% endif %}">{{ driver.signal }}</span></td>
+            <td class="impact-table-number">{{ driver.correlation.rho|default_if_none:"Not estimable" }}</td>
+            <td>{% if driver.correlation.rho is not None %}{{ driver.correlation.ci_low }} to {{ driver.correlation.ci_high }}{% else %}—{% endif %}</td>
+            <td>{{ driver.strength|capfirst }}</td>
+            <td class="impact-table-number">{{ driver.correlation.p|default_if_none:"—" }}</td>
+            <td class="impact-table-number">{{ driver.correlation.p_adjusted|default_if_none:"—" }}</td>
+            <td class="impact-table-number">{{ driver.correlation.n }}</td>
+            <td class="impact-table-number">{{ driver.activities }}</td>
+            <td class="impact-table-number">{{ driver.schools_exposed }}</td>
+            <td class="impact-table-number">{{ driver.schools_unexposed }}</td>
+            <td>Mean {{ driver.exposed_mean_delta|default_if_none:"—" }} · median {{ driver.exposed_median_delta|default_if_none:"—" }}</td>
+            <td>Mean {{ driver.unexposed_mean_delta|default_if_none:"—" }} · median {{ driver.unexposed_median_delta|default_if_none:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="impact-deferred-section edify-surface rounded-surface border border-slate-100 shadow-sm p-4 sm:p-5 space-y-3" aria-labelledby="grouped-driver-title">
+    <div>
+      <h2 id="grouped-driver-title" class="text-[14px] font-bold text-slate-800">Portfolio comparison by {{ dashboard.filters.group_by_label }}</h2>
+      <p class="edify-text-caption text-slate-500 mt-0.5">Attention-first ordering. Each portfolio recomputes the same five corrected association tests within its own paired-school cohort · {{ dashboard.grouped_driver_pagination.total }} {{ dashboard.filters.group_by_label|lower }} group{{ dashboard.grouped_driver_pagination.total|pluralize }}.</p>
+    </div>
+    <p class="impact-scroll-hint">Each portfolio is shown once per activity family so no association or exposure detail is hidden.</p>
+    <div class="impact-table-scroll"
+         data-table-scroll-region
+         role="region"
+         aria-labelledby="grouped-driver-title"
+         tabindex="0">
+      <table class="impact-analysis-table impact-analysis-table--groups" data-mobile-table="scroll" data-impact-group-table>
+        <caption class="sr-only">Portfolio outcomes and SSA contribution associations grouped by {{ dashboard.filters.group_by_label }}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{{ dashboard.filters.group_by_label }}</th>
+            <th scope="col">Paired schools</th>
+            <th scope="col">Mean Δ</th>
+            <th scope="col">Median Δ</th>
+            <th scope="col">Improved</th>
+            <th scope="col">Activity family</th>
+            <th scope="col">Association signal</th>
+            <th scope="col">Spearman ρ</th>
+            <th scope="col">95% CI</th>
+            <th scope="col">Strength</th>
+            <th scope="col">Raw p</th>
+            <th scope="col">Adjusted p</th>
+            <th scope="col">n</th>
+            <th scope="col">Activities</th>
+            <th scope="col">Exposed</th>
+            <th scope="col">Unexposed</th>
+            <th scope="col">Exposed Δ</th>
+            <th scope="col">No-exposure Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for group in dashboard.grouped_drivers %}
+            {% for driver in group.drivers %}
+            <tr>
+              <th scope="row">{{ group.name }}</th>
+              <td class="impact-table-number">{{ group.paired_schools }}</td>
+              <td class="impact-table-number">{{ group.mean_delta }}</td>
+              <td class="impact-table-number">{{ group.median_delta }}</td>
+              <td class="impact-table-number">{{ group.improved_pct }}%</td>
+              <td><strong>{{ driver.label }}</strong></td>
+              <td><span class="impact-signal {% if driver.signal == 'Positive association' %}impact-signal--positive{% elif driver.signal == 'Negative association' %}impact-signal--negative{% elif driver.signal == 'Insufficient paired data' %}impact-signal--insufficient{% endif %}">{{ driver.signal }}</span></td>
+              <td class="impact-table-number">{{ driver.correlation.rho|default_if_none:"Not estimable" }}</td>
+              <td>{% if driver.correlation.rho is not None %}{{ driver.correlation.ci_low }} to {{ driver.correlation.ci_high }}{% else %}—{% endif %}</td>
+              <td>{{ driver.strength|capfirst }}</td>
+              <td class="impact-table-number">{{ driver.correlation.p|default_if_none:"—" }}</td>
+              <td class="impact-table-number">{{ driver.correlation.p_adjusted|default_if_none:"—" }}</td>
+              <td class="impact-table-number">{{ driver.correlation.n }}</td>
+              <td class="impact-table-number">{{ driver.activities }}</td>
+              <td class="impact-table-number">{{ driver.schools_exposed }}</td>
+              <td class="impact-table-number">{{ driver.schools_unexposed }}</td>
+              <td>Mean {{ driver.exposed_mean_delta|default_if_none:"—" }} · median {{ driver.exposed_median_delta|default_if_none:"—" }}</td>
+              <td>Mean {{ driver.unexposed_mean_delta|default_if_none:"—" }} · median {{ driver.unexposed_median_delta|default_if_none:"—" }}</td>
+            </tr>
+            {% endfor %}
+          {% empty %}
+          <tr><td colspan="18" class="impact-table-empty">No paired schools are available for this grouping.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if dashboard.grouped_driver_pagination.total_pages > 1 %}
+    <nav class="impact-group-pagination flex items-center justify-between gap-3 border-t border-slate-100 pt-3" aria-label="Portfolio comparison pages">
+      {% if dashboard.grouped_driver_pagination.has_previous %}
+      <a class="min-h-11 inline-flex items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600"
+         href="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}"
+         hx-get="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}"
+         hx-target="#impact-workspace" hx-swap="outerHTML" hx-push-url="true">Previous</a>
+      {% else %}<span></span>{% endif %}
+      <span class="edify-text-caption font-semibold text-slate-500">Page {{ dashboard.grouped_driver_pagination.page }} of {{ dashboard.grouped_driver_pagination.total_pages }}</span>
+      {% if dashboard.grouped_driver_pagination.has_next %}
+      <a class="min-h-11 inline-flex items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600"
+         href="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.next_page }}"
+         hx-get="/impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.next_page }}"
+         hx-target="#impact-workspace" hx-swap="outerHTML" hx-push-url="true">Next</a>
+      {% else %}<span></span>{% endif %}
+    </nav>
+    {% endif %}
+  </section>
 
   <section class="grid grid-cols-1 lg:grid-cols-2 gap-4" aria-label="Dosage and funding charts">
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
@@ -175,11 +326,35 @@
       <p class="text-[12px] text-slate-400 py-6 text-center">No district has enough paired schools yet for a geographic comparison.</p>
       {% endif %}
       {% if dashboard.geography.lagging %}
-      <div class="pt-1">
-        <p class="edify-text-caption font-bold text-slate-500 mb-1">Lagging district–intervention combinations</p>
-        {% for row in dashboard.geography.lagging %}
-        <p class="text-[12px] text-slate-600">{{ row.district }} · {{ row.intervention }} — median Δ {{ row.median_delta }} across {{ row.n }} schools</p>
-        {% endfor %}
+      <div class="pt-1 space-y-2">
+        <h4 id="lagging-district-interventions-title" class="edify-text-caption font-bold text-slate-500">Lagging district–intervention combinations</h4>
+        <div class="impact-table-scroll"
+             data-table-scroll-region
+             role="region"
+             aria-labelledby="lagging-district-interventions-title"
+             tabindex="0">
+          <table class="impact-analysis-table impact-analysis-table--lagging" data-mobile-table="scroll" data-impact-lagging-table>
+            <caption class="sr-only">District and SSA intervention combinations with declining median scores</caption>
+            <thead>
+              <tr>
+                <th scope="col">District</th>
+                <th scope="col">SSA intervention</th>
+                <th scope="col">Median SSA Δ</th>
+                <th scope="col">Paired schools</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in dashboard.geography.lagging %}
+              <tr>
+                <th scope="row">{{ row.district }}</th>
+                <td>{{ row.intervention }}</td>
+                <td class="impact-table-number text-rose-600">{{ row.median_delta }}</td>
+                <td class="impact-table-number">{{ row.n }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
       </div>
       {% endif %}
     </div>

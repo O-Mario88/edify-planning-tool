@@ -94,7 +94,7 @@
 .admin-stack,
 .admin-rail { min-width: 0; display: grid; gap: 0.9rem; }
 
-.admin-grid { min-width: 0; display: grid; gap: 0.9rem; align-items: stretch; }
+.admin-grid { min-width: 0; display: grid; gap: 0.9rem; align-items: start; }
 .admin-grid--top { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.08fr); }
 /* Two panels since Team Target Progress moved to the action rail: the middle
    0.58fr track existed only to hold that narrow card, and with it gone a
@@ -289,10 +289,10 @@
 .admin-progress > span[data-tone="success"] { background: var(--edify-success); }
 .admin-progress > span[data-tone="warning"] { background: var(--edify-warning); }
 
-/* Was paired with .admin-team-targets so the two middle-grid panels matched
-   heights; that card now lives in the rail, where stretching to an auto row
-   means nothing. */
-.admin-priority-schools { min-height: 100%; }
+/* This card is no longer paired with a same-height middle-grid neighbour.
+   Let its rows determine the surface instead of carrying the old full-height
+   contract into the condensed rail. */
+.admin-priority-schools { min-height: auto; }
 .admin-target-list { display: grid; }
 .admin-target-row { min-width: 0; display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 0.5rem; padding: 0.82rem 0.9rem; border-bottom: 1px solid var(--edify-border); color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); }
 .admin-target-row:last-child { border-bottom: 0; }
@@ -494,6 +494,4 @@
 }
 
 /* The ops tiles are links; the strip's own styling assumes <article>. */
-
-
 

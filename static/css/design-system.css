@@ -172,6 +172,11 @@
   --edify-chart-orange: #ea580c;
   --edify-chart-pink: #ec4899;
   --edify-chart-lime: #84cc16;
+  /* Geography uses one invariant pastel boundary palette in every workspace
+     theme. Its labels therefore keep an invariant dark ink and light halo,
+     rather than inheriting page text colours that turn white in dark mode. */
+  --edify-map-label: #24343d;
+  --edify-map-label-halo: rgba(255, 255, 255, 0.94);
   /* ── Categorical series, in fixed order ──────────────────────────────
      Blue first, always: a single-series chart is blue, and a comparison
      starts from blue and takes the next hue in this order. Assigned in order

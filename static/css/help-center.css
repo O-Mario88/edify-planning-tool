@@ -182,6 +182,7 @@
 .help-topic-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  align-items: start;
   gap: 1.2rem;
   margin-block-start: 1.6rem;
 }
@@ -191,7 +192,7 @@
   --topic-soft: var(--brand-primary-soft);
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
-  min-block-size: 22rem;
+  min-block-size: 0;
   overflow: clip;
   border: 1px solid var(--edify-border);
   border-block-start: 4px solid var(--topic);

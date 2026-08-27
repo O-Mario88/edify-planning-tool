@@ -17,6 +17,8 @@ from django.utils import timezone
 from apps.accounts.models import (
     StaffGeographyAssignment,
     StaffProfile,
+    StaffSchoolAssignment,
+    StaffSupervisorAssignment,
     User,
 )
 from apps.activities.models import Activity, ActivityScheduleCostLine
@@ -78,6 +80,29 @@ def _visit(school: School, fy: str, *, days_ago: int = 60, status: str = "ia_ver
         fy=fy,
         focus_intervention=FOCUS,
         delivery_type="staff",
+    )
+
+
+def _activity(
+    school: School,
+    fy: str,
+    activity_type: str,
+    *,
+    delivery_type: str = "staff",
+    focus: str | None = FOCUS,
+    project: bool = False,
+):
+    return Activity.objects.create(
+        school=school,
+        activity_type=activity_type,
+        status="ia_verified",
+        planned_date=timezone.now().date() - timedelta(days=55),
+        fy=fy,
+        focus_intervention=focus,
+        delivery_type=delivery_type,
+        project_id="project-impact-test" if project else None,
+        primary_driver_type="special_project" if project else "",
+        activity_context_type="project" if project else "school",
     )
 
 
@@ -228,6 +253,42 @@ class ImpactEngineStatsTest(TestCase):
         self.assertIsNotNone(visits["correlation"]["rho"])
         self.assertGreater(visits["correlation"]["rho"], 0)
 
+    def test_five_programme_driver_correlations_use_verified_linked_work(self):
+        for school in self.treated:
+            _activity(school, self.fy, "partner_activity", delivery_type="partner")
+            _activity(school, self.fy, "training")
+            _activity(school, self.fy, "cluster_meeting")
+            _activity(school, self.fy, "project_activity", project=True)
+        # A legacy training without an SSA focus is not evidence for the
+        # intervention-linked training question.
+        _activity(self.untreated[0], self.fy, "training", focus=None)
+
+        school_ids = [s.id for s in self.treated + self.untreated]
+        imp = impact_engine.improvement_frame(school_ids, self.fy)
+        acts = impact_engine.activity_frame(imp, school_ids)
+        rows = {
+            row["key"]: row
+            for row in impact_engine.programme_driver_associations(imp, acts)
+        }
+
+        self.assertEqual(
+            set(rows),
+            {"partner", "training", "staff", "cluster_meeting", "special_project"},
+        )
+        self.assertEqual(rows["training"]["activities"], 10)
+        for row in rows.values():
+            self.assertGreater(row["correlation"]["rho"], 0)
+            self.assertIsNotNone(row["correlation"]["ci_low"])
+            self.assertIsNotNone(row["correlation"]["ci_high"])
+            self.assertEqual(row["correlation"]["tests_run"], 5)
+            self.assertLessEqual(
+                row["correlation"]["p"], row["correlation"]["p_adjusted"]
+            )
+            self.assertGreaterEqual(row["schools_exposed"], 10)
+            self.assertGreater(
+                row["exposed_median_delta"], row["unexposed_median_delta"]
+            )
+
     def test_funding_accepts_only_accountant_accepted_money(self):
         school_ids = [s.id for s in self.treated + self.untreated]
         imp = impact_engine.improvement_frame(school_ids, self.fy)
@@ -328,6 +389,63 @@ class ImpactEngineStatsTest(TestCase):
             _json.loads(payload)
         self.assertTrue(dashboard["method_notes"])
 
+    def test_parish_grouping_is_offered_only_when_profile_data_exists(self):
+        without_parish = {
+            "school-1": {
+                "pl": "PL A",
+                "sub_region": "North",
+                "district": "District A",
+                "cluster": "Cluster A",
+                "sub_county": "Sub-county A",
+                "parish": "Unassigned parish",
+            }
+        }
+        values = {
+            option["value"]
+            for option in impact_engine._group_options(without_parish, "district")
+        }
+        self.assertNotIn("parish", values)
+
+        with_parish = {key: dict(value) for key, value in without_parish.items()}
+        with_parish["school-1"]["parish"] = "Parish A"
+        values = {
+            option["value"]
+            for option in impact_engine._group_options(with_parish, "parish")
+        }
+        self.assertIn("parish", values)
+
+    def test_large_country_grouping_is_server_paginated(self):
+        imp = impact_engine.pd.DataFrame(
+            [
+                {"school_id": f"school-{index}", "delta": index / 100}
+                for index in range(25)
+            ]
+        )
+        acts = impact_engine.pd.DataFrame(
+            columns=[
+                "activity_id",
+                "school_id",
+                "kind",
+                "activity_type",
+                "focus",
+                "delivery_type",
+                "is_special_project",
+            ]
+        )
+        metadata = {
+            f"school-{index}": {"district": f"District {index:02d}"}
+            for index in range(25)
+        }
+        result = impact_engine.grouped_driver_associations(
+            imp, acts, metadata, "district", page=2, page_size=20
+        )
+        self.assertEqual(result["total"], 25)
+        self.assertEqual(result["total_pages"], 2)
+        self.assertEqual(result["page"], 2)
+        self.assertEqual(len(result["rows"]), 5)
+        self.assertTrue(result["has_previous"])
+        self.assertFalse(result["has_next"])
+
 
 class ImpactPageTest(TestCase):
     """Page permissions, scoping flags, and honest empty state."""
@@ -356,11 +474,12 @@ class ImpactPageTest(TestCase):
         self.assertEqual(res.status_code, 200)
         self.assertTemplateUsed(res, "partials/analytics/impact_workspace.html")
 
-    def test_cceo_is_denied(self):
+    def test_cceo_can_open_portfolio_scoped_analysis(self):
         client = Client()
         client.force_login(self.cceo)
         res = client.get("/impact")
-        self.assertEqual(res.status_code, 302)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(res.context["dashboard"]["coverage"]["schools_in_scope"], 0)
 
     def test_analytics_section_visibility_follows_permissions(self):
         """Impact Analytics is a section of the Analytics workspace now.
@@ -374,13 +493,11 @@ class ImpactPageTest(TestCase):
         self.assertEqual(
             [s["label"] for s in cd_sections if s["active"]], ["Impact Analytics"]
         )
-        for excluded in (self.cceo, self.accountant):
+        for included in (self.cceo, self.accountant):
             labels = [
-                s["label"] for s in build_analytics_sections(excluded, "/dashboard")
+                s["label"] for s in build_analytics_sections(included, "/dashboard")
             ]
-            self.assertNotIn("Impact Analytics", labels)
-            # They keep the workspace itself — just not this section.
-            self.assertTrue(labels)
+            self.assertIn("Impact Analytics", labels)
 
     def test_empty_state_is_honest_without_paired_cycles(self):
         client = Client()
@@ -408,3 +525,73 @@ class ImpactPageTest(TestCase):
         dashboard = impact_engine.build_dashboard(rvp, {})
         self.assertEqual(dashboard["coverage"]["schools_paired"], 1)
         self.assertFalse(dashboard["scope"]["can_view_school_details"])
+
+        other_region = Region.objects.create(name="RVP Other Region")
+        other_district = District.objects.create(
+            name="RVP Other District", region=other_region
+        )
+        other_school = School.objects.create(
+            school_id="IMP-RVP-COUNTRY",
+            name="RVP Country School",
+            region=other_region,
+            district=other_district,
+        )
+        _paired_ssa(other_school, self.fy, {FOCUS: 4.0}, {FOCUS: 5.0})
+        country_dashboard = impact_engine.build_dashboard(rvp, {})
+        self.assertEqual(country_dashboard["coverage"]["schools_paired"], 2)
+        self.assertEqual(country_dashboard["filters"]["group_by"], "pl")
+
+
+class ImpactPortfolioScopeTest(TestCase):
+    def setUp(self):
+        self.fy = get_operational_fy()
+        region = Region.objects.create(name="Portfolio Impact Region")
+        district = District.objects.create(name="Portfolio Impact District", region=region)
+        self.pl = _user("impact-pl@edify.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
+        self.cceo = _user("impact-team@edify.test", EdifyRole.CCEO.value)
+        self.other = _user("impact-other@edify.test", EdifyRole.CCEO.value)
+        self.accountant = _user(
+            "impact-country-acc@edify.test", EdifyRole.PROGRAM_ACCOUNTANT.value
+        )
+        self.pl_sp = StaffProfile.objects.create(user=self.pl, title="PL")
+        self.cceo_sp = StaffProfile.objects.create(user=self.cceo, title="CCEO")
+        self.other_sp = StaffProfile.objects.create(user=self.other, title="CCEO")
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=self.cceo_sp
+        )
+
+        self.own = School.objects.create(
+            school_id="IMPACT-PL-OWN", name="PL Own", region=region, district=district
+        )
+        self.team = School.objects.create(
+            school_id="IMPACT-PL-TEAM", name="PL Team", region=region, district=district
+        )
+        self.outside = School.objects.create(
+            school_id="IMPACT-OUTSIDE", name="Outside", region=region, district=district
+        )
+        StaffSchoolAssignment.objects.create(staff=self.pl_sp, school_id=self.own.id)
+        StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=self.team.id)
+        StaffSchoolAssignment.objects.create(
+            staff=self.other_sp, school_id=self.outside.id
+        )
+        for school in (self.own, self.team, self.outside):
+            _paired_ssa(school, self.fy, {FOCUS: 4.0}, {FOCUS: 5.0})
+
+    def test_pl_sees_own_and_supervised_portfolios_only(self):
+        dashboard = impact_engine.build_dashboard(self.pl, {})
+        self.assertEqual(dashboard["coverage"]["schools_in_scope"], 2)
+        self.assertEqual(dashboard["coverage"]["schools_paired"], 2)
+
+    def test_field_staff_sees_only_own_portfolio(self):
+        dashboard = impact_engine.build_dashboard(self.cceo, {})
+        self.assertEqual(dashboard["coverage"]["schools_in_scope"], 1)
+        self.assertEqual(dashboard["coverage"]["schools_paired"], 1)
+
+    def test_accountant_sees_country_and_can_group_by_program_lead(self):
+        dashboard = impact_engine.build_dashboard(
+            self.accountant, {"group_by": "pl"}
+        )
+        self.assertEqual(dashboard["coverage"]["schools_in_scope"], 3)
+        self.assertEqual(dashboard["filters"]["group_by"], "pl")
+        names = {row["name"] for row in dashboard["grouped_drivers"]}
+        self.assertIn(self.pl.name, names)

@@ -93,6 +93,12 @@ def subcounty_insight(
             type_core=Count("id", filter=Q(school_type="core"), distinct=True),
             type_client=Count("id", filter=Q(school_type="client"), distinct=True),
             type_champion=Count("id", filter=Q(school_type="champion"), distinct=True),
+            type_core_trained=Count(
+                "id", filter=Q(school_type="core_trained"), distinct=True
+            ),
+            type_core_graduate=Count(
+                "id", filter=Q(school_type="core_graduate"), distinct=True
+            ),
             core_schools=Count("id", filter=Q(school_id__in=core_ids), distinct=True),
             clusters=Count(
                 "cluster_id",
@@ -121,7 +127,8 @@ def subcounty_insight(
                 "core": int(row["type_core"]),
                 "client": int(row["type_client"]),
                 "champion": int(row["type_champion"]),
-                "core_trained": 0,
+                "core_trained": int(row["type_core_trained"]),
+                "core_graduate": int(row["type_core_graduate"]),
             },
             "clusters": int(row["clusters"]),
             "core_schools": int(row["core_schools"]),
@@ -190,7 +197,6 @@ def subcounty_insight(
     )
     if fy:
         delivered_activity_qs = delivered_activity_qs.filter(fy=fy)
-    unassigned_core_trained: dict[str, int] = {}
     for row in delivered_activity_qs.values(
         "school__sub_county_id",
         "school__district__name",
@@ -205,27 +211,15 @@ def subcounty_insight(
             filter=Q(activity_type__in=VISIT_TYPES),
             distinct=True,
         ),
-        core_trained=Count(
-            "school_id",
-            filter=Q(
-                activity_type__in=TRAINING_TYPES,
-                school__school_id__in=core_ids,
-            ),
-            distinct=True,
-        ),
         teachers=Sum("teachers_attended"),
         leaders=Sum("leaders_attended"),
     ):
         if row["school__sub_county_id"] is None:
-            unassigned_core_trained[row["school__district__name"]] = int(
-                row["core_trained"] or 0
-            )
             continue
         entry = entries.get(id_to_key.get(str(row["school__sub_county_id"]), ""))
         if entry:
             entry["trained"] = int(row["trained"] or 0)
             entry["visited"] = int(row["visited"] or 0)
-            entry["school_distribution"]["core_trained"] = int(row["core_trained"] or 0)
             entry["teachers_trained"] = int(row["teachers"] or 0)
             entry["leaders_trained"] = int(row["leaders"] or 0)
 
@@ -267,7 +261,8 @@ def subcounty_insight(
                 "core": int(row["type_core"]),
                 "client": int(row["type_client"]),
                 "champion": int(row["type_champion"]),
-                "core_trained": 0,
+                "core_trained": int(row["type_core_trained"]),
+                "core_graduate": int(row["type_core_graduate"]),
             },
         }
         for row in school_qs.filter(sub_county__isnull=True)
@@ -277,12 +272,14 @@ def subcounty_insight(
             type_core=Count("id", filter=Q(school_type="core"), distinct=True),
             type_client=Count("id", filter=Q(school_type="client"), distinct=True),
             type_champion=Count("id", filter=Q(school_type="champion"), distinct=True),
+            type_core_trained=Count(
+                "id", filter=Q(school_type="core_trained"), distinct=True
+            ),
+            type_core_graduate=Count(
+                "id", filter=Q(school_type="core_graduate"), distinct=True
+            ),
         )
     }
-    for district_name, trained_count in unassigned_core_trained.items():
-        district = unassigned_by_district.get(district_name)
-        if district:
-            district["school_distribution"]["core_trained"] = trained_count
     values = sorted(
         entries.values(),
         key=lambda entry: (entry["district"].upper(), entry["subcounty"].upper()),

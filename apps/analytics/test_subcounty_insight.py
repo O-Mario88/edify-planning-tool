@@ -101,6 +101,7 @@ class SubCountyInsightTest(TestCase):
                     "client": 1,
                     "champion": 0,
                     "core_trained": 0,
+                    "core_graduate": 0,
                 },
             },
         )
@@ -130,22 +131,13 @@ class SubCountyInsightTest(TestCase):
         self.assertEqual(entry["ssa_done"], 1)
         self.assertEqual(entry["ssa_total"], 1)
 
-    def test_core_trained_is_a_distinct_completed_core_school_count(self):
+    def test_core_trained_is_a_school_classification(self):
         from apps.activities.models import Activity
 
-        self.school.school_type = "core"
+        self.school.school_type = "core_trained"
         self.school.save(update_fields=["school_type"])
-        plan = CorePlan.objects.create(
-            id="map-core-plan",
-            school_id=self.school.school_id,
-            fy="FY2026",
-        )
-        CoreSchoolProfile.objects.create(
-            id="map-core-profile",
-            school_id=self.school.school_id,
-            core_plan=plan,
-            core_start_fy="FY2026",
-        )
+        # Delivered training remains a separate hover-card coverage metric;
+        # it must not be the source of the classification marker.
         for _ in range(2):
             Activity.objects.create(
                 school=self.school,
@@ -165,8 +157,19 @@ class SubCountyInsightTest(TestCase):
             self.nama,
         )["school_distribution"]
 
-        self.assertEqual(distribution["core"], 1)
+        self.assertEqual(distribution["core"], 0)
         self.assertEqual(distribution["core_trained"], 1)
+
+    def test_core_graduate_is_visible_in_the_subcounty_distribution(self):
+        self.school.school_type = "core_graduate"
+        self.school.save(update_fields=["school_type"])
+
+        distribution = self._entry(
+            subcounty_insight("FY2026"),
+            self.nama,
+        )["school_distribution"]
+
+        self.assertEqual(distribution["core_graduate"], 1)
 
     def test_query_count_is_constant_with_subcounty_cardinality(self):
         for index in range(25):
