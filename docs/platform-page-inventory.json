@@ -3420,7 +3420,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2316,
+      "bytes": 2344,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -5160,7 +5160,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18634,
+      "bytes": 18678,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5352,7 +5352,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5104,
+      "bytes": 5136,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/accountability"
@@ -5451,7 +5451,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8086,
+      "bytes": 8118,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -5566,7 +5566,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19785,
+      "bytes": 19817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/complete-drawer"
@@ -5616,7 +5616,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4777,
+      "bytes": 4817,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -5877,7 +5877,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2288,
+      "bytes": 2320,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/ssa-upload"
@@ -6360,7 +6360,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5063,
+      "bytes": 5097,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/invoices/new"
