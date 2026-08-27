@@ -218,7 +218,8 @@ it because automation exists.
 | Scale invariance (§46) | **PASSED** | `apps/system_health/test_load_scale.py` at 15,000 schools + 3,000 growth, in the green suite |
 | Wall-clock p95 at 15,000 schools | **STILL UNVERIFIED** | The latency run above is against the 702-school dev estate. The scale harness proves query counts do not grow; it does not measure production wall time, and says so |
 | Rollback rehearsal (§53) | **STILL UNVERIFIED against the platform's source** | `scripts/rollback_rehearsal.sh` carried the same defects as the backup gate and has been repaired alongside it: the dead scratch-name guard, the `check()` that passed on two empty strings (removed — it had no call sites left), `pg_dump \| pg_restore >/dev/null 2>&1` with every error discarded, a step 3 with no failing path, a relative `PYTHON_BIN` that made the script exit 127 in silence from any directory but the repository root, no ERR trap and so no verdict on an abort, and `git worktree remove --force` running unconditionally ahead of its own ownership check — which destroyed a pre-existing worktree holding uncommitted work. Run end to end against the platform's own developer source `edify` at commit `cad73c69`: **exit 0, 16 PASS, 0 FAIL** — `7c27f2f6` serves the schema `cad73c69` leaves behind, 320 migrations known to the previous release with 0 missing, 8 pages served to signed-in accounts from the migrated copy. Not run against the production source |
-| Visual regression / accessibility tooling (§4) | **STILL UNVERIFIED** | Not configured in this repository |
+| Accessibility tooling (§4) | **CONFIGURED, RUN, AND ONE DEFECT FIXED** | `scripts/accessibility_audit.py` drives Chromium through axe-core over the eight core pages, signed in as a real account, with the real stylesheet. First run found **6 serious WCAG AA colour-contrast failures**; all six are fixed and the measured state is now **0 critical, 0 serious** across 8 pages at 63–65 rules each. Ratcheted at zero in `docs/accessibility-baseline.json`. See A11Y-01 |
+| Visual regression tooling (§4) | **STILL UNVERIFIED** | No screenshot baseline exists. The accessibility half of this row is now covered; the pixel-diff half is not, and needs a decision about where baselines live before it is worth building |
 | 95% planning-time reduction (§2) | **STILL UNVERIFIED** | Mechanical half measured (see §7); human half needs staff observations |
 
 Two gates that were UNVERIFIED are now executed with evidence, and the latency
@@ -526,6 +527,83 @@ merely arrived. Until an operator runs it:
 * §53 cannot be claimed, because the restore half is only half;
 * and the first real test of any of this would be an incident, which is the
   one time nobody gets to re-run it.
+
+### A11Y-01 · Six WCAG AA contrast failures, found by the first tool ever pointed at the product · **FIXED, MEASURED**
+
+§4 asks for accessibility tooling. This ledger recorded it as "Not configured
+in this repository", which was accurate: no browser harness, no axe, no
+measurement of any kind. Every accessibility statement in the documentation was
+a statement of intent.
+
+`scripts/accessibility_audit.py` now drives Chromium through axe-core over the
+eight pages people spend the day on, signed in, with the real stylesheet
+served. The first run found six serious violations, all one defect:
+
+`.kpi-strip__helper` — the small line under each KPI tile's number — was
+tinted 70% toward the tile's accent colour. At 12px and weight 500 on
+`#eaeef1`, that fails WCAG AA:
+
+| Page | Text | Measured | Required |
+| --- | --- | --- | --- |
+| `/dashboard` | "0 open and unacknowledged" | 3.03 | 4.5 |
+| `/dashboard` | "Open security incidents" | 3.03 | 4.5 |
+| `/schools` | "80% of total" (success tile) | 3.03 | 4.5 |
+| `/schools` | "15% of total" (purple tile) | 4.49 | 4.5 |
+| `/schools` | "100% of total" (warning tile) | 2.69 | 4.5 |
+| `/schools` | "56% of total" (danger tile) | 4.37 | 4.5 |
+
+**Fixed, not baselined.** The tint is now 30%. That number is computed, not
+chosen: against this background and this muted colour, the largest accent share
+clearing 4.5:1 on *every* tile variant is 33% — warning (`#f59e0b`) binds,
+being the lightest — so 30% is the round number below it, leaving primary 6.30,
+warning 4.70, success 4.93, purple 5.92, danger 6.13. The tile keeps its
+accent; the helper line becomes readable. Measured state after the fix: **0
+critical and 0 serious across all eight pages.**
+
+**What the harness does that the obvious version does not.** Both lessons come
+from defects this audit already found in this repository:
+
+* **It signs in, and proves it.** An anonymous browser is redirected to
+  `/login`, which is small, clean and largely accessible — so the obvious
+  version scores the login form eight times and reports the product as
+  accessible. `scripts/restore_smoke.py` shipped with exactly that defect.
+  Every page here asserts it *landed* on the path it requested. This was not
+  theoretical: the first working draft signed in with
+  `django.contrib.auth.backends.ModelBackend` while the project authenticates
+  through `LockoutEnforcingModelBackend`, so every session was silently
+  rejected and all eight pages redirected to `/login`. The assertion caught it;
+  without it the run would have reported a clean sheet.
+* **It proves axe actually ran.** A scan that fails to inject axe reports zero
+  violations, which is indistinguishable from a perfect page. Each page asserts
+  a floor on rules evaluated and DOM size. This also caught a real bug in the
+  harness: passing `resultTypes: ['violations']` makes axe truncate its other
+  result arrays, so the rule count read 28–38 where the true figure is 63–65,
+  and every page was wrongly reported as a thin scan.
+
+**Gated.** `apps/system_health/test_accessibility_baseline.py` runs on every
+commit and holds the ratchet. Proven able to fail:
+
+| Mutation | Caught by |
+| --- | --- |
+| baseline file deleted | `test_the_baseline_exists` |
+| a page dropped from the baseline | `test_it_covers_every_page_the_audit_scans` |
+| a count raised to absorb 4 new violations | `test_the_counts_are_the_measured_zero` |
+| the ratchet warning stripped from the file | `test_the_file_says_it_is_a_ratchet` |
+| the audit stops scanning a page | `test_it_covers_every_page_the_audit_scans` |
+
+The audit script itself needs Chromium and a seeded estate, so like
+`scripts/latency_budget.py` it is run deliberately rather than on every commit.
+That is a real limitation and it is stated rather than papered over: what CI
+guards is the baseline, not a fresh scan. The scan was also verified able to
+fail — reintroducing the 70% tint brought all six violations back and the run
+reported `2 blocking, baseline allows 0` and `4 blocking, baseline allows 0`.
+
+**Not covered.** Only the default (light) theme, only the eight core pages,
+only WCAG 2.0/2.1 A and AA, and only what axe can detect automatically —
+which is roughly a third of the WCAG criteria. Keyboard traps, focus order,
+screen-reader semantics and the dark theme are unmeasured. Saying so is the
+point: this row moved from "no tooling" to "some tooling, and here is exactly
+what it does and does not see".
 
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
