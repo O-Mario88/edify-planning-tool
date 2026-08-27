@@ -1,12 +1,9 @@
-"""The Core Schools list card fills its column, and stays bounded doing it.
+"""The Core Schools list card stays intrinsic and bounded.
 
-The card used to stop well above the bottom of the right-hand card stack,
-leaving a band of dead space beside it, and showed ten schools per page. The
-fix is structural rather than a measured height: one stretched two-column
-grid, a flex column inside it, and a footer that is the card's last child. A
-pixel height copied off a screenshot would have looked identical on the day
-and broken the first time the right-hand stack changed, so what is asserted
-here is the mechanism, not a number.
+The list and summary stack share a starting baseline without stretching the
+shorter card to the taller column. The fix is structural rather than a measured
+height: one top-aligned two-column grid, a flex column inside it, and a footer
+that is the card's last child.
 
 The other half is that "more rows" must not become "all rows". Page size is
 validated server-side against a fixed set, so an edited query string cannot
@@ -35,10 +32,11 @@ CSS = ROOT / "static/css/platform.css"
 class CoreSchoolsLayoutContractTest(TestCase):
     """The structure that produces the alignment, asserted where it lives."""
 
-    def test_the_page_is_one_stretched_two_column_grid(self):
+    def test_the_page_is_one_intrinsic_two_column_grid(self):
         page = PAGE.read_text()
         self.assertIn("lg:grid-cols-4", page)
-        self.assertIn("items-stretch", page)
+        self.assertIn("items-start", page)
+        self.assertNotIn("items-stretch", page)
         self.assertIn('class="lg:col-span-3 flex flex-col', page)
         self.assertIn('class="lg:col-span-1 flex flex-col', page)
 

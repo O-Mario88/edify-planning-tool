@@ -526,7 +526,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         consistency = _read("static/css/consistency.css")
         self.assertIn("main > .edify-page-canvas", consistency)
         self.assertIn(
-            "padding: 1.25rem var(--edify-page-gutter) !important;",
+            "padding: 1rem var(--edify-page-gutter) !important;",
             consistency,
         )
 

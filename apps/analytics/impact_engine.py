@@ -15,6 +15,10 @@ Analysis families (all computed per role-scoped school set, per FY cycle):
      test of whether districts genuinely differ.
   6. Field-debrief reality overlay: for stuck interventions, what the
      debriefs report (critical counts, top challenge types).
+  7. Five programme-driver associations: partner activities,
+     intervention-linked trainings, staff activities, cluster meetings, and
+     special-project work. Results can be grouped by PL, sub-region, district,
+     cluster, sub-county, and populated parishes.
 
 Method constraints (each shows up in `method_notes` on the page):
 - "Improvement" is the per (school, intervention) delta between the
@@ -46,6 +50,7 @@ from collections import defaultdict
 import numpy as np
 import pandas as pd
 from django.db.models import Q
+from django.db.models.functions import Coalesce
 from scipy import stats
 
 from apps.accounts.models import StaffSchoolAssignment
@@ -54,8 +59,9 @@ from apps.analytics.decision_engine import (
     DECLINE_THRESHOLD,
     IMPROVEMENT_THRESHOLD,
 )
-from apps.analytics.pl_analytics_service import (
-    COMPLETED_STATUSES,
+from apps.core.activity_types import (
+    CLUSTER_MEETING_TYPES,
+    COMPLETED_WORK_STATUSES,
     TRAINING_TYPES,
     VISIT_TYPES,
 )
@@ -98,17 +104,69 @@ ALL_INTERVENTIONS = [i.value for i in SsaIntervention]
 
 DOSAGE_BUCKETS = ((0, 0, "0"), (1, 2, "1–2"), (3, None, "3+"))
 
+DRIVER_DEFINITIONS = (
+    (
+        "partner",
+        "Partner activities",
+        "Partner-delivered verified activities",
+    ),
+    (
+        "training",
+        "SSA-linked trainings",
+        "Verified trainings linked to at least one SSA intervention",
+    ),
+    (
+        "staff",
+        "Staff activities",
+        "Staff-delivered verified activities",
+    ),
+    (
+        "cluster_meeting",
+        "Cluster meetings",
+        "Verified cluster meetings attributed to attending schools",
+    ),
+    (
+        "special_project",
+        "Special projects",
+        "Verified work explicitly linked to a special project",
+    ),
+)
+
+GROUP_LABELS = {
+    "pl": "Program Lead",
+    "sub_region": "Sub-region",
+    "district": "District",
+    "cluster": "Cluster",
+    "sub_county": "Sub-county",
+    "parish": "Parish",
+}
+
+COUNTRY_DRIVER_ROLES = {
+    "Admin",
+    "CountryDirector",
+    "ImpactAssessment",
+    "RegionalVicePresident",
+    "Accountant",
+}
+
 
 # ── Scope (same shape as ssa_performance_service — correct RVP handling) ─────
 
 
 def _scoped_schools(principal):
-    """RVP may aggregate over assigned regions but never see school identity;
-    other roles follow the shared scope service exactly."""
+    """Return the portfolio population authorized for contribution analytics.
+
+    Field staff and PLs use the shared own/team portfolio scope. The explicitly
+    country-facing analysis roles requested by programme leadership (IA, CD,
+    RVP and Accountant) aggregate the whole country; RVP identity suppression
+    remains enforced separately through ``can_view_school_level_detail``.
+    """
     from apps.core.scoping import scoped_school_queryset
 
     scope = resolve_user_scope(principal)
     schools = School.objects.filter(deleted_at__isnull=True)
+    if getattr(principal, "active_role", "") in COUNTRY_DRIVER_ROLES:
+        return schools, scope
     return scoped_school_queryset(scope, schools), scope
 
 
@@ -200,19 +258,28 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
     """Executed activities attributed per school, restricted to each school's
     exposure window. Cluster activities (school NULL) attribute through
     attended_school_ids; their spend is split equally across those schools.
-    Columns: activity_id, school_id, kind, planned_date, focus (set),
-    n_attributed, accepted_spend (UGX share)."""
+    Columns: activity_id, school_id, kind, analysis_date, focus (set),
+    delivery_type, is_special_project, accepted_spend (UGX share).
+
+    ``analysis_date`` prefers the recorded delivery date and falls back to the
+    planned date for legacy rows. A project-wide activity without a direct
+    school/attendance list is attributed only to schools explicitly enrolled
+    in that project at the time; this is the narrowest defensible fallback for
+    historical project work that predates per-school attendance capture.
+    """
+    columns = [
+        "activity_id",
+        "school_id",
+        "kind",
+        "activity_type",
+        "analysis_date",
+        "focus",
+        "delivery_type",
+        "is_special_project",
+        "accepted_spend",
+    ]
     if imp.empty:
-        return pd.DataFrame(
-            columns=[
-                "activity_id",
-                "school_id",
-                "kind",
-                "planned_date",
-                "focus",
-                "accepted_spend",
-            ]
-        )
+        return pd.DataFrame(columns=columns)
     windows = (
         imp.groupby("school_id")[["window_start", "window_end"]]
         .first()
@@ -221,36 +288,53 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
     lo = min(w["window_start"] for w in windows.values())
     hi = max(w["window_end"] for w in windows.values())
 
+    from apps.projects.models import ProjectSchoolAssignment
+
+    project_assignments = list(
+        ProjectSchoolAssignment.objects.filter(school_id__in=school_ids).values(
+            "project_id", "school_id", "start_date"
+        )
+    )
+    project_ids = sorted({row["project_id"] for row in project_assignments})
+    project_schools: dict[str, list[dict]] = defaultdict(list)
+    for row in project_assignments:
+        project_schools[row["project_id"]].append(row)
+
+    activity_scope = Q(school_id__in=school_ids) | Q(
+        attended_school_ids__overlap=school_ids
+    )
+    if project_ids:
+        activity_scope |= Q(project_id__in=project_ids)
+
     activities = list(
         Activity.objects.filter(
-            Q(school_id__in=school_ids) | Q(attended_school_ids__overlap=school_ids),
+            activity_scope,
             deleted_at__isnull=True,
-            status__in=COMPLETED_STATUSES,
-            planned_date__isnull=False,
-            planned_date__gt=lo,
-            planned_date__lte=hi,
-        ).values(
+            status__in=COMPLETED_WORK_STATUSES,
+        )
+        .annotate(analysis_date=Coalesce("actual_delivery_date", "planned_date"))
+        .filter(
+            analysis_date__isnull=False,
+            analysis_date__gt=lo,
+            analysis_date__lte=hi,
+        )
+        .values(
             "id",
             "school_id",
             "activity_type",
+            "delivery_type",
             "focus_intervention",
             "purpose_intervention",
             "secondary_focus_interventions",
-            "planned_date",
+            "analysis_date",
             "attended_school_ids",
+            "project_id",
+            "primary_driver_type",
+            "activity_context_type",
         )
     )
     if not activities:
-        return pd.DataFrame(
-            columns=[
-                "activity_id",
-                "school_id",
-                "kind",
-                "planned_date",
-                "focus",
-                "accepted_spend",
-            ]
-        )
+        return pd.DataFrame(columns=columns)
 
     spend = _accepted_spend_by_activity([a["id"] for a in activities])
     scoped = set(school_ids)
@@ -262,45 +346,54 @@ def activity_frame(imp: pd.DataFrame, school_ids: list[str]) -> pd.DataFrame:
             kind = "training"
         else:
             kind = "other"
-        attributed = (
-            [act["school_id"]]
-            if act["school_id"]
-            else [s for s in (act["attended_school_ids"] or []) if s in scoped]
-        )
+        if act["school_id"]:
+            attributed = [act["school_id"]]
+        elif act["attended_school_ids"]:
+            attributed = [
+                s for s in (act["attended_school_ids"] or []) if s in scoped
+            ]
+        elif act["project_id"]:
+            attributed = [
+                row["school_id"]
+                for row in project_schools.get(act["project_id"], [])
+                if row["start_date"] is None
+                or row["start_date"] <= act["analysis_date"]
+            ]
+        else:
+            attributed = []
         attributed = [
             s
             for s in attributed
             if s in windows
             and windows[s]["window_start"]
-            < act["planned_date"]
+            < act["analysis_date"]
             <= windows[s]["window_end"]
         ]
         if not attributed:
             continue
         share = spend.get(act["id"], 0) / len(attributed)
         focus = _activity_focus_set(act)
+        is_special_project = bool(
+            act["project_id"]
+            or act["activity_type"] == "project_activity"
+            or act["primary_driver_type"] == "special_project"
+            or act["activity_context_type"] == "project"
+        )
         for sid in attributed:
             rows.append(
                 {
                     "activity_id": act["id"],
                     "school_id": sid,
                     "kind": kind,
-                    "planned_date": act["planned_date"],
+                    "activity_type": act["activity_type"],
+                    "analysis_date": act["analysis_date"],
                     "focus": focus,
+                    "delivery_type": act["delivery_type"],
+                    "is_special_project": is_special_project,
                     "accepted_spend": share,
                 }
             )
-    return pd.DataFrame(
-        rows,
-        columns=[
-            "activity_id",
-            "school_id",
-            "kind",
-            "planned_date",
-            "focus",
-            "accepted_spend",
-        ],
-    )
+    return pd.DataFrame(rows, columns=columns)
 
 
 def _accepted_spend_by_activity(activity_ids: list[str]) -> dict[str, float]:
@@ -334,14 +427,38 @@ def _verdict(p: float | None) -> str:
 def _spearman(x: pd.Series, y: pd.Series) -> dict:
     n = int(len(x))
     if n < MIN_CORR_N or x.nunique() < 2 or y.nunique() < 2:
-        return {"rho": None, "p": None, "n": n, "verdict": "insufficient data"}
+        return {
+            "rho": None,
+            "p": None,
+            "n": n,
+            "ci_low": None,
+            "ci_high": None,
+            "verdict": "insufficient data",
+        }
     rho, p = stats.spearmanr(x, y)
     if np.isnan(rho):
-        return {"rho": None, "p": None, "n": n, "verdict": "insufficient data"}
+        return {
+            "rho": None,
+            "p": None,
+            "n": n,
+            "ci_low": None,
+            "ci_high": None,
+            "verdict": "insufficient data",
+        }
+    # Approximate 95% interval using Fisher's z transform. This is intentionally
+    # labelled approximate in the UI: rank correlations and tied dosage counts
+    # do not support false decimal precision, but a plausible range is still
+    # more decision-useful than a point estimate alone.
+    bounded_rho = min(0.999999, max(-0.999999, float(rho)))
+    margin = 1.96 / np.sqrt(n - 3)
+    z = np.arctanh(bounded_rho)
+    ci_low, ci_high = np.tanh((z - margin, z + margin))
     return {
         "rho": round(float(rho), 3),
         "p": round(float(p), 4),
         "n": n,
+        "ci_low": round(float(ci_low), 3),
+        "ci_high": round(float(ci_high), 3),
         "verdict": _verdict(float(p)),
     }
 
@@ -454,6 +571,122 @@ def dosage_impact(imp: pd.DataFrame, acts: pd.DataFrame, kind: str) -> dict:
         "per_intervention": per_intervention,
         "schools_with_any": int((merged["dosage"] > 0).sum()),
     }
+
+
+def _driver_activity_rows(acts: pd.DataFrame, key: str) -> pd.DataFrame:
+    if acts.empty:
+        return acts
+    if key == "partner":
+        return acts[acts["delivery_type"] == "partner"]
+    if key == "training":
+        # The user asked specifically whether trainings linked to SSA
+        # interventions improve those scores. Unlinked legacy training rows do
+        # not enter this dosage; they remain visible as a data-quality gap.
+        return acts[
+            (acts["kind"] == "training")
+            & acts["focus"].map(lambda focus: bool(focus))
+        ]
+    if key == "staff":
+        return acts[acts["delivery_type"] == "staff"]
+    if key == "cluster_meeting":
+        return acts[acts["activity_type"].isin(CLUSTER_MEETING_TYPES)]
+    if key == "special_project":
+        return acts[acts["is_special_project"]]
+    return acts.iloc[0:0]
+
+
+def _correlation_strength(rho: float | None) -> str:
+    if rho is None:
+        return "not estimable"
+    magnitude = abs(rho)
+    if magnitude < 0.10:
+        return "negligible"
+    if magnitude < 0.30:
+        return "weak"
+    if magnitude < 0.50:
+        return "moderate"
+    if magnitude < 0.70:
+        return "strong"
+    return "very strong"
+
+
+def _driver_association(
+    imp: pd.DataFrame,
+    acts: pd.DataFrame,
+    key: str,
+    label: str,
+    description: str,
+) -> dict:
+    outcomes = _school_outcomes(imp) if not imp.empty else pd.DataFrame(
+        columns=["school_id", "mean_delta"]
+    )
+    selected = _driver_activity_rows(acts, key)
+    counts = (
+        selected.groupby("school_id").size().rename("dosage").reset_index()
+        if not selected.empty
+        else pd.DataFrame(columns=["school_id", "dosage"])
+    )
+    merged = outcomes.merge(counts, on="school_id", how="left")
+    merged["dosage"] = merged["dosage"].fillna(0).astype(int)
+    correlation = _spearman(merged["dosage"], merged["mean_delta"])
+    exposed = merged[merged["dosage"] > 0]["mean_delta"]
+    unexposed = merged[merged["dosage"] == 0]["mean_delta"]
+
+    def _summary(series: pd.Series) -> tuple[float | None, float | None]:
+        if series.empty:
+            return None, None
+        return round(float(series.mean()), 2), round(float(series.median()), 2)
+
+    exposed_mean, exposed_median = _summary(exposed)
+    unexposed_mean, unexposed_median = _summary(unexposed)
+    return {
+        "key": key,
+        "label": label,
+        "description": description,
+        "correlation": correlation,
+        "strength": _correlation_strength(correlation["rho"]),
+        "activities": int(selected["activity_id"].nunique())
+        if not selected.empty
+        else 0,
+        "schools_exposed": int(len(exposed)),
+        "schools_unexposed": int(len(unexposed)),
+        "exposed_mean_delta": exposed_mean,
+        "exposed_median_delta": exposed_median,
+        "unexposed_mean_delta": unexposed_mean,
+        "unexposed_median_delta": unexposed_median,
+    }
+
+
+def programme_driver_associations(imp: pd.DataFrame, acts: pd.DataFrame) -> list[dict]:
+    """Five pre-declared Spearman tests with a family-wise correction.
+
+    The families overlap by design (a partner-delivered training is both a
+    partner exposure and a training exposure), so they are explanatory lenses,
+    never additive shares of improvement.
+    """
+    rows = [
+        _driver_association(imp, acts, key, label, description)
+        for key, label, description in DRIVER_DEFINITIONS
+    ]
+    tests_run = len(DRIVER_DEFINITIONS)
+    for row in rows:
+        corr = row["correlation"]
+        raw_p = corr["p"]
+        adjusted = min(1.0, raw_p * tests_run) if raw_p is not None else None
+        corr["p_adjusted"] = round(adjusted, 4) if adjusted is not None else None
+        corr["tests_run"] = tests_run
+        corr["raw_verdict"] = corr["verdict"]
+        corr["verdict"] = _verdict(adjusted)
+        rho = corr["rho"]
+        if rho is None:
+            row["signal"] = "Insufficient paired data"
+        elif corr["verdict"] in ("significant", "suggestive") and rho > 0:
+            row["signal"] = "Positive association"
+        elif corr["verdict"] in ("significant", "suggestive") and rho < 0:
+            row["signal"] = "Negative association"
+        else:
+            row["signal"] = "No reliable association detected"
+    return rows
 
 
 def funding_impact(
@@ -777,11 +1010,200 @@ def _ugx(value: int | None) -> str | None:
     return f"UGX {value:,}" if value is not None else None
 
 
+def _school_group_metadata(school_rows: list[dict]) -> dict[str, dict[str, str]]:
+    """Resolve every grouping label in a bounded set of bulk queries."""
+    from apps.accounts.models import (
+        StaffProfile,
+        StaffSchoolAssignment,
+        StaffSupervisorAssignment,
+    )
+    from apps.core.rbac import EdifyRole
+    from apps.clusters.models import Cluster
+
+    cluster_ids = {row["cluster_id"] for row in school_rows if row["cluster_id"]}
+    cluster_names = dict(
+        Cluster.objects.filter(id__in=cluster_ids).values_list("id", "name")
+    )
+
+    school_ids = [row["id"] for row in school_rows]
+    assignment_owners: dict[str, str] = {}
+    for link in StaffSchoolAssignment.objects.filter(
+        school_id__in=school_ids,
+        staff__deleted_at__isnull=True,
+    ).values("school_id", "staff_id", "staff__user__active_role"):
+        current = assignment_owners.get(link["school_id"])
+        # Prefer the operational CCEO assignment when legacy data contains
+        # multiple links; otherwise retain the first deterministic owner.
+        if current is None or link["staff__user__active_role"] == EdifyRole.CCEO.value:
+            assignment_owners[link["school_id"]] = link["staff_id"]
+    effective_owner = {
+        row["id"]: row["account_owner_id"] or assignment_owners.get(row["id"])
+        for row in school_rows
+    }
+    owner_ids = {owner_id for owner_id in effective_owner.values() if owner_id}
+    owners = {
+        row["id"]: row
+        for row in StaffProfile.objects.filter(id__in=owner_ids)
+        .select_related("user")
+        .values("id", "user__name", "user__active_role")
+    }
+    supervisor_names = {
+        row["supervisee_id"]: row["supervisor__user__name"]
+        for row in StaffSupervisorAssignment.objects.filter(
+            supervisee_id__in=owner_ids,
+            supervisor__deleted_at__isnull=True,
+            supervisor__user__active_role=EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+        ).values("supervisee_id", "supervisor__user__name")
+    }
+
+    metadata: dict[str, dict[str, str]] = {}
+    for row in school_rows:
+        owner_id = effective_owner.get(row["id"])
+        owner = owners.get(owner_id, {})
+        if owner.get("user__active_role") == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+            pl_name = owner.get("user__name") or "Unassigned Program Lead"
+        else:
+            pl_name = supervisor_names.get(
+                owner_id, "Unassigned Program Lead"
+            )
+        metadata[row["id"]] = {
+            "pl": pl_name,
+            "sub_region": row["district__sub_region__name"]
+            or "Unassigned sub-region",
+            "district": row["district__name"] or "Unassigned district",
+            "cluster": cluster_names.get(row["cluster_id"], "Unassigned cluster"),
+            "sub_county": row["sub_county__name"] or "Unassigned sub-county",
+            "parish": row["parish__name"] or "Unassigned parish",
+        }
+    return metadata
+
+
+def _group_options(
+    metadata: dict[str, dict[str, str]], selected: str
+) -> list[dict]:
+    keys = ["pl", "sub_region", "district", "cluster", "sub_county"]
+    parish_populated = any(
+        values["parish"] != "Unassigned parish" for values in metadata.values()
+    )
+    if parish_populated:
+        keys.append("parish")
+    return [
+        {
+            "value": key,
+            "label": GROUP_LABELS[key],
+            "selected": key == selected,
+        }
+        for key in keys
+    ]
+
+
+def grouped_driver_associations(
+    imp: pd.DataFrame,
+    acts: pd.DataFrame,
+    metadata: dict[str, dict[str, str]],
+    group_by: str,
+    *,
+    page: int | None = None,
+    page_size: int = 20,
+) -> list[dict] | dict:
+    if imp.empty:
+        empty = []
+        if page is None:
+            return empty
+        return {
+            "rows": empty,
+            "page": 1,
+            "page_size": page_size,
+            "total": 0,
+            "total_pages": 1,
+            "has_previous": False,
+            "has_next": False,
+            "previous_page": None,
+            "next_page": None,
+        }
+    labels = {school_id: values[group_by] for school_id, values in metadata.items()}
+    frame = imp.copy()
+    frame["group_label"] = frame["school_id"].map(labels).fillna(
+        f"Unassigned {GROUP_LABELS[group_by].lower()}"
+    )
+    activity_rows = acts.copy()
+    if not activity_rows.empty:
+        activity_rows["group_label"] = activity_rows["school_id"].map(labels).fillna(
+            f"Unassigned {GROUP_LABELS[group_by].lower()}"
+        )
+
+    prepared = []
+    for group_label, group_imp in frame.groupby("group_label", sort=True):
+        group_acts = (
+            activity_rows[activity_rows["group_label"] == group_label]
+            if not activity_rows.empty
+            else activity_rows
+        )
+        outcomes = _school_outcomes(group_imp)
+        prepared.append(
+            {
+                "name": str(group_label),
+                "paired_schools": int(outcomes["school_id"].nunique()),
+                "median_delta": round(float(outcomes["mean_delta"].median()), 2),
+                "mean_delta": round(float(outcomes["mean_delta"].mean()), 2),
+                "improved_pct": round(
+                    float(
+                        (outcomes["mean_delta"] > IMPROVEMENT_THRESHOLD).mean() * 100
+                    ),
+                    1,
+                ),
+                "_imp": group_imp,
+                "_acts": group_acts,
+            }
+        )
+    # Leadership sees attention-first ordering; alphabetical is the stable
+    # tie-break for equal medians.
+    prepared.sort(key=lambda row: (row["median_delta"], row["name"]))
+    total = len(prepared)
+    total_pages = max(1, int(np.ceil(total / page_size)))
+    current_page = min(max(1, int(page or 1)), total_pages)
+    visible = prepared
+    if page is not None:
+        start = (current_page - 1) * page_size
+        visible = prepared[start : start + page_size]
+
+    rows = []
+    for row in visible:
+        group_imp = row.pop("_imp")
+        group_acts = row.pop("_acts")
+        row["drivers"] = programme_driver_associations(group_imp, group_acts)
+        rows.append(row)
+    if page is None:
+        return rows
+    return {
+        "rows": rows,
+        "page": current_page,
+        "page_size": page_size,
+        "total": total,
+        "total_pages": total_pages,
+        "has_previous": current_page > 1,
+        "has_next": current_page < total_pages,
+        "previous_page": current_page - 1 if current_page > 1 else None,
+        "next_page": current_page + 1 if current_page < total_pages else None,
+    }
+
+
 def build_dashboard(principal, query: dict) -> dict:
     fy = _fy_from_query(query)
     prev_fy = str(int(fy) - 1)
     schools_qs, scope = _scoped_schools(principal)
-    school_rows = list(schools_qs.values("id", "name", "district__name"))
+    school_rows = list(
+        schools_qs.values(
+            "id",
+            "name",
+            "district__name",
+            "district__sub_region__name",
+            "sub_county__name",
+            "parish__name",
+            "cluster_id",
+            "account_owner_id",
+        )
+    )
     school_ids = [row["id"] for row in school_rows]
     school_names = {row["id"]: row["name"] for row in school_rows}
     districts = {row["id"]: row["district__name"] for row in school_rows}
@@ -807,10 +1229,42 @@ def build_dashboard(principal, query: dict) -> dict:
 
     visits = dosage_impact(imp, acts, "visit")
     trainings = dosage_impact(imp, acts, "training")
+    drivers = programme_driver_associations(imp, acts)
     funding = funding_impact(imp, acts, school_names, show_names)
     targets = target_achievement_link(imp, fy)
     geography = geographic_performance(imp, districts)
     field_reality = field_reality_overlay(principal, imp, fy)
+    group_metadata = _school_group_metadata(school_rows)
+    available_group_keys = {
+        option["value"] for option in _group_options(group_metadata, "")
+    }
+    default_group = (
+        "pl"
+        if getattr(principal, "active_role", "") in COUNTRY_DRIVER_ROLES
+        else "district"
+    )
+    requested_group = str(query.get("group_by") or default_group)
+    group_by = (
+        requested_group if requested_group in available_group_keys else default_group
+    )
+    if group_by not in available_group_keys:
+        group_by = "district"
+    try:
+        group_page = max(1, int(query.get("group_page") or 1))
+    except (TypeError, ValueError):
+        group_page = 1
+    grouped_result = grouped_driver_associations(
+        imp,
+        acts,
+        group_metadata,
+        group_by,
+        page=group_page,
+        page_size=20,
+    )
+    all_training_rows = _driver_activity_rows(acts, "training")
+    all_trainings = (
+        acts[acts["kind"] == "training"] if not acts.empty else acts
+    )
 
     return {
         "filters": {
@@ -818,6 +1272,9 @@ def build_dashboard(principal, query: dict) -> dict:
             "fy_label": f"FY {fy}",
             "prev_fy": prev_fy,
             "fy_options": _fy_option_list(fy),
+            "group_by": group_by,
+            "group_by_label": GROUP_LABELS[group_by],
+            "group_options": _group_options(group_metadata, group_by),
         },
         "scope": {
             "role": getattr(scope, "active_role", ""),
@@ -828,6 +1285,14 @@ def build_dashboard(principal, query: dict) -> dict:
             "schools_paired": paired,
             "activities_in_window": int(acts["activity_id"].nunique())
             if not acts.empty
+            else 0,
+            "trainings_in_window": int(all_trainings["activity_id"].nunique())
+            if not all_trainings.empty
+            else 0,
+            "ssa_linked_trainings": int(
+                all_training_rows["activity_id"].nunique()
+            )
+            if not all_training_rows.empty
             else 0,
         },
         "kpis": {
@@ -843,8 +1308,17 @@ def build_dashboard(principal, query: dict) -> dict:
                 "impact", record_count=paired, confirmed_only=True
             ),
         },
+        "methodology": {
+            "minimum_group_n": MIN_GROUP_N,
+            "minimum_correlation_n": MIN_CORR_N,
+            "driver_tests": len(DRIVER_DEFINITIONS),
+            "p_adjustment": "Bonferroni",
+        },
         "visits": visits,
         "trainings": trainings,
+        "drivers": drivers,
+        "grouped_drivers": grouped_result["rows"],
+        "grouped_driver_pagination": grouped_result,
         "funding": funding,
         "targets": targets,
         "geography": geography,
@@ -870,9 +1344,12 @@ def build_dashboard(principal, query: dict) -> dict:
         },
         "method_notes": [
             f"Improvement = confirmed SSA score in FY {fy} minus confirmed SSA score in FY {prev_fy}, per school per intervention. Only schools assessed in both cycles are analysed ({paired} of {len(school_ids)} in scope).",
-            "Dosage counts only executed activities dated inside each school's own exposure window (between its two assessments).",
+            "Dosage counts only verified/completed activities dated inside each school's own exposure window (between its two assessments); recorded delivery date is preferred over the planned date.",
+            "Training dosage includes only training records linked to at least one SSA intervention. The focused-training table then compares intervention-specific score movement among schools that started weak.",
+            "Partner, training, staff, cluster-meeting and special-project families can overlap (for example, a partner-delivered training appears in two lenses), so the five correlations are not additive shares of improvement.",
+            "The five driver p-values use a Bonferroni family-wise correction. Cards show Spearman rho with an approximate 95% confidence interval, adjusted p-value, and the paired-school sample size.",
             f"Treated-vs-untreated comparisons are restricted to schools with a weak initial SSA score (below {WEAK_BASELINE}) on that intervention, because activity planning already targets weak interventions — comparing against strong schools would only measure regression to the mean.",
             "Spend counts accountant-accepted money only (accounted advances and partner payments, plain UGX). Cluster activities split spend equally across attended schools.",
-            f"Rank-based tests (Spearman, Mann-Whitney, Kruskal-Wallis); groups under {MIN_GROUP_N} schools report 'insufficient data' rather than an unreliable number. Correlation is not causation — these results direct attention, they do not close questions.",
+            f"Rank-based tests (Spearman, Mann-Whitney, Kruskal-Wallis); groups under {MIN_GROUP_N} schools and correlations under {MIN_CORR_N} schools report 'insufficient data' rather than an unreliable number. Correlation is not causation — confounding, reverse causation and targeted support remain possible, so these results direct attention rather than prove attribution.",
         ],
     }

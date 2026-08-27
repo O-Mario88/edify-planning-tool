@@ -289,14 +289,14 @@ main .platform-kpi-grid {
 main .platform-major-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  align-items: stretch;
+  align-items: start;
   gap: var(--edify-panel-gap);
 }
 
 main .platform-support-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
-  align-items: stretch;
+  align-items: start;
   gap: var(--edify-panel-gap);
 }
 

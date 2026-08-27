@@ -5,19 +5,21 @@ from django.test import SimpleTestCase
 
 
 class DashboardCardRowContractTest(SimpleTestCase):
-    """Keep role dashboards aligned without brittle fixed card heights."""
+    """Keep role dashboards aligned without equal-height blank interiors."""
 
     def _source(self, relative_path):
         return (Path(settings.BASE_DIR) / relative_path).read_text()
 
-    def test_shared_equal_height_row_utility_is_available(self):
+    def test_shared_card_rows_use_intrinsic_heights(self):
         css = self._source("static/css/pages.css")
         self.assertIn(".edify-card-row {", css)
-        self.assertIn("align-items: stretch;", css)
+        self.assertIn("align-items: start;", css)
         self.assertIn(".pl-intelligence-card {", css)
-        self.assertIn("block-size: 100%;", css)
+        self.assertIn("block-size: auto;", css)
+        card_row = css.split(".edify-card-row {", 1)[1].split("}", 1)[0]
+        self.assertNotIn("stretch", card_row)
 
-    def test_role_dashboards_use_equal_height_rows(self):
+    def test_role_dashboards_use_shared_intrinsic_height_rows(self):
         dashboard_templates = (
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/pl/body.html",
@@ -29,11 +31,6 @@ class DashboardCardRowContractTest(SimpleTestCase):
         for path in dashboard_templates:
             source = self._source(path)
             self.assertIn("edify-card-row", source, path)
-            self.assertNotIn(
-                "gap-5 items-start",
-                source,
-                f"{path} reintroduced an uneven card row",
-            )
 
         rvp = self._source("templates/pages/dashboards/rvp.html")
         self.assertEqual(

@@ -11,8 +11,7 @@ from apps.core.metrics import DataState, MetricValue, render_kpi_item
 
 @require_page_permission("impact_analytics")
 def impact_analytics_view(request):
-    """Statistical impact intelligence: did visits, trainings, and money move
-    the SSA scores — and what does the field say where they didn't?"""
+    """Role-scoped SSA contribution analysis across verified activity families."""
     from apps.analytics.decision_engine import impact_analytics_dashboard
 
     # Cached like the Analytics dashboard next door, and for a stronger
@@ -29,7 +28,7 @@ def impact_analytics_view(request):
     from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
 
     dashboard = stampede_safe_get_or_compute(
-        f"impact-dashboard:v1:{request.user.id}:"
+        f"impact-dashboard:v2:{request.user.id}:"
         f"{request.user.active_role}:"
         f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:{fingerprint}",
         lambda: impact_analytics_dashboard(request.user, query),

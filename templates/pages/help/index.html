@@ -25,10 +25,10 @@
 <section class="mt-7" aria-labelledby="areas-heading">
   <h2 id="areas-heading" class="text-[15px] font-extrabold">Documentation areas</h2>
   <p class="mt-1 text-[13px] edify-text-muted">Every area you are authorised to read, with the number of guides in each.</p>
-  <ul class="mt-4 grid gap-3 sm:grid-cols-2" role="list">
+  <ul class="mt-4 grid items-start gap-3 sm:grid-cols-2" role="list">
     {% for group in knowledge_tree %}
     <li>
-      <a href="{{ group.url }}" class="block h-full rounded-surface border p-4 edify-border hover:bg-[var(--edify-surface-muted)]">
+      <a href="{{ group.url }}" class="block rounded-surface border p-4 edify-border hover:bg-[var(--edify-surface-muted)]">
         <div class="flex items-start justify-between gap-3">
           <h3 class="text-[14px] font-extrabold">{{ group.category.name }}</h3>
           <span class="help-toc__count">{{ group.count }}<span class="sr-only"> articles</span></span>

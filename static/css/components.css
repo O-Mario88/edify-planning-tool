@@ -1985,11 +1985,40 @@ select:not([multiple]):not(.select-native) {
   .kpi-strip.kpi-strip--executive .kpi-strip__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
 }
 
 @container kpi-strip (min-width: 48rem) and (max-width: 55.99rem) {
   .kpi-strip.kpi-strip--executive .kpi-strip__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Exact metric counts fill every row at tablet/workspace widths without
+     compressing all of them into one line. Source order remains untouched. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(10)):not(:has(> .kpi-strip__item:nth-child(11))),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(12))) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))) > .kpi-strip__item,
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(10)):not(:has(> .kpi-strip__item:nth-child(11))) > .kpi-strip__item:nth-child(-n + 4),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(12))) > .kpi-strip__item:nth-child(-n + 8) {
+    grid-column: span 3;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))) > .kpi-strip__item:nth-child(n + 5),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(10)):not(:has(> .kpi-strip__item:nth-child(11))) > .kpi-strip__item:nth-child(n + 5),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(12))) > .kpi-strip__item:nth-child(n + 9) {
+    grid-column: span 4;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(8)):not(:has(> .kpi-strip__item:nth-child(9))),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(12)):not(:has(> .kpi-strip__item:nth-child(13))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
@@ -2020,11 +2049,51 @@ select:not([multiple]):not(.select-native) {
 
   /* Seven or more (FE-02, decided: the tray no longer caps at six, because the
      count follows the work rather than the layout). Six fixed columns would
-     wrap correctly but strand a lone card on a second row, so past six the
-     grid distributes instead. Nothing is dropped either way -- the container
-     grows with its rows, and `overflow: clip` above only trims decoration. */
-  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)) {
+     wrap correctly but strand a lone card on a second row. Exact counts use
+     balanced rows below; larger, genuinely variable sets keep auto-fit. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(13)) {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 11rem), 1fr));
+  }
+
+  /* 7 = 4 + 3, with both rows consuming the full tray. Twelve tracks let the
+     first row use 3 each and the final row use 4 each without visual-order or
+     keyboard-order tricks. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))) > .kpi-strip__item {
+    grid-column: span 3;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))) > .kpi-strip__item:nth-child(n + 5) {
+    grid-column: span 4;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(8)):not(:has(> .kpi-strip__item:nth-child(9))),
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(12)):not(:has(> .kpi-strip__item:nth-child(13))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(9)):not(:has(> .kpi-strip__item:nth-child(10))) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(10)):not(:has(> .kpi-strip__item:nth-child(11))) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  /* 11 = 4 + 4 + 3, balanced with the same 12-track technique as seven. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(12))) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(12))) > .kpi-strip__item {
+    grid-column: span 3;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(11)):not(:has(> .kpi-strip__item:nth-child(12))) > .kpi-strip__item:nth-child(n + 9) {
+    grid-column: span 4;
   }
 }
 
@@ -3712,8 +3781,9 @@ search:has(.edify-search-submit) input[type="search"] {
      labels are fitted by the placement transform; detailed sub-county labels
      retain the full step because the focused map has substantially more room. */
   #sr-cam .sr-dl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
-                 font-weight:var(--edify-text-label-weight);fill:var(--edify-text-muted);
-                 letter-spacing:0}
+                 font-weight:var(--edify-text-label-weight);fill:var(--edify-map-label);
+                 letter-spacing:0;stroke:var(--edify-map-label-halo);stroke-width:.2em;
+                 stroke-linejoin:round;paint-order:stroke fill}
   /* A white halo on each glyph so a sub-region name stays legible wherever it
      falls — across two district fills, over a boundary, or on a dark choropleth
      band. paint-order draws the stroke behind the fill; without it the outline
@@ -3725,14 +3795,15 @@ search:has(.edify-search-submit) input[type="search"] {
                  paint-order:stroke fill}
   #sr-cam .sr-scl{
     font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
-    font-weight:var(--edify-text-label-weight);fill:var(--edify-text);
-    letter-spacing:0;
+    font-weight:var(--edify-text-label-weight);fill:var(--edify-map-label);
+    letter-spacing:0;stroke:var(--edify-map-label-halo);stroke-width:.2em;
+    stroke-linejoin:round;paint-order:stroke fill;
   }
-  /* Phone maps keep the decision hierarchy readable: sub-region labels stay,
-     while the much denser district-name layer yields until detailed geography
-     becomes the active level. */
+  /* Place names are operational map content, including on phones. Collision
+     fitting and text halos keep the dense national layer readable without
+     removing district identity from smaller viewports. */
   @media (max-width:48rem){
-    #sr-cam .sr-dl{display:none}
+    #sr-cam .sr-dl{display:block}
     #sr-cam .sr-sl{display:block}
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
@@ -3775,6 +3846,21 @@ search:has(.edify-search-submit) input[type="search"] {
   #sr-cam .sr-pin-check{
     fill:none;stroke:var(--edify-on-accent);stroke-width:1.2;stroke-linecap:round;
     stroke-linejoin:round;filter:none;
+  }
+  #sr-cam .sr-pin-graduate{
+    fill:var(--edify-on-accent);stroke:none;filter:none;
+  }
+  .sr-legend-marker{
+    position:relative;display:inline-grid;place-items:center;
+    color:var(--edify-on-accent);
+  }
+  .sr-legend-marker[data-school-type="core_trained"]::after{
+    content:'✓';font-size:var(--edify-text-micro-size);font-weight:900;
+    line-height:1;transform:scale(.82);
+  }
+  .sr-legend-marker[data-school-type="core_graduate"]::after{
+    content:'◆';font-size:var(--edify-text-micro-size);line-height:1;
+    transform:scale(.64);
   }
   #sr-cam > g:first-child path:focus-visible{outline:none;stroke:var(--edify-accent);
       stroke-width:2}

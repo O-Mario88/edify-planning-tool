@@ -17,8 +17,14 @@ from apps.analytics.subcounty_insight import subcounty_insight
 from apps.analytics.subregion_analytics import subregion_performance
 
 
-#: The four school cohorts the map legend counts.
-SCHOOL_TYPE_KEYS = ("core", "client", "champion", "core_trained")
+#: The five canonical school classifications the map legend counts.
+SCHOOL_TYPE_KEYS = (
+    "core",
+    "client",
+    "champion",
+    "core_trained",
+    "core_graduate",
+)
 
 
 def school_type_totals(districts: dict[str, Any]) -> dict[str, int]:
@@ -56,7 +62,7 @@ def country_map_context(fy: str | None = None) -> dict[str, Any]:
     from apps.core.cache_utils import stampede_safe_get_or_compute
 
     return stampede_safe_get_or_compute(
-        f"country-map:v1:{fy or 'current'}",
+        f"country-map:v2:{fy or 'current'}",
         lambda: _country_map_context_uncached(fy),
         timeout=settings.COUNTRY_MAP_CACHE_SECONDS,
     )

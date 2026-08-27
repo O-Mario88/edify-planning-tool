@@ -142,12 +142,16 @@ def district_insight(
             type_core=Count("id", filter=Q(school_type="core")),
             type_client=Count("id", filter=Q(school_type="client")),
             type_champion=Count("id", filter=Q(school_type="champion")),
+            type_core_trained=Count("id", filter=Q(school_type="core_trained")),
+            type_core_graduate=Count("id", filter=Q(school_type="core_graduate")),
         ),
         "district_id",
         n="schools",
         type_core="type_core_schools",
         type_client="type_client_schools",
         type_champion="type_champion_schools",
+        type_core_trained="type_core_trained_schools",
+        type_core_graduate="type_core_graduate_schools",
     )
     clusters = _frame(
         cluster_qs.values("district_id").annotate(n=Count("id")),
@@ -216,16 +220,6 @@ def district_insight(
         "school__district_id",
         n="schools_trained",
     )
-    core_trained = _frame(
-        acts.filter(
-            activity_type__in=TRAINING_TYPES,
-            school__school_id__in=core_ids,
-        )
-        .values("school__district_id")
-        .annotate(n=Count("school", distinct=True)),
-        "school__district_id",
-        n="core_schools_trained",
-    )
     visited = _frame(
         acts.filter(activity_type__in=VISIT_TYPES)
         .values("school__district_id")
@@ -250,7 +244,6 @@ def district_insight(
         ssa_cluster,
         ssa_core,
         trained,
-        core_trained,
         visited,
         people,
     ):
@@ -262,12 +255,13 @@ def district_insight(
         "type_core_schools",
         "type_client_schools",
         "type_champion_schools",
+        "type_core_trained_schools",
+        "type_core_graduate_schools",
         "clusters",
         "core_schools",
         "ssa_n",
         "ssa_schools",
         "schools_trained",
-        "core_schools_trained",
         "schools_visited",
         "teachers_trained",
         "leaders_trained",
@@ -331,7 +325,8 @@ def district_insight(
                 "core": int(r["type_core_schools"]),
                 "client": int(r["type_client_schools"]),
                 "champion": int(r["type_champion_schools"]),
-                "core_trained": int(r["core_schools_trained"]),
+                "core_trained": int(r["type_core_trained_schools"]),
+                "core_graduate": int(r["type_core_graduate_schools"]),
             },
             "clusters": int(r["clusters"]),
             "core_schools": int(r["core_schools"]),

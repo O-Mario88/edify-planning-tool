@@ -395,9 +395,19 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # SSA Performance is an intelligence surface for every role. Its service
     # applies school/region/partner/project scope before computing any metric.
     "ssa_performance": ALL_ROLES,
-    # Impact Analytics runs statistical comparisons that need enough schools
-    # in scope to be meaningful — leadership roles only.
-    "impact_analytics": {CD, IA, PL, RVP, ADMIN},
+    # SSA contribution analysis is portfolio-scoped for field staff/PLs and
+    # country-wide for assurance/leadership roles. Small portfolios render an
+    # honest insufficient-data state instead of being denied the evidence.
+    "impact_analytics": {
+        CCEO,
+        PL,
+        IA,
+        CD,
+        RVP,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        ADMIN,
+    },
     # School Visit Effectiveness: the shared visit↔SSA-change module — field
     # roles see their own delivery, leadership sees team/country strategy.
     "visit_effectiveness": {CCEO, PL, IA, CD, RVP, PROJECT_COORDINATOR, ADMIN},
@@ -697,7 +707,7 @@ ANALYTICS_SECTIONS = [
         "url": "/impact",
         "page_key": "impact_analytics",
         "cluster": "impact_decisions",
-        "description": "Did visits, trainings and money move the scores?",
+        "description": "How programme activity is associated with SSA improvement.",
     },
     {
         "key": "declining_schools",

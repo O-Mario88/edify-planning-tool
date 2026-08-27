@@ -75,7 +75,10 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("table-layout: fixed", layout)
         self.assertIn("padding: 1rem 0.5rem 0", layout)
         self.assertIn("@media (max-width:48rem)", map_template)
-        self.assertIn("#sr-cam .sr-dl{display:none}", map_template)
+        # District and sub-region identity must remain readable on phones;
+        # collision fitting + text halos handle density without deleting the
+        # place names from the map.
+        self.assertIn("#sr-cam .sr-dl{display:block}", map_template)
         self.assertIn("#sr-cam .sr-sl{display:block}", map_template)
         cluster_template = _read(
             "templates/partials/analytics/cluster_performance.html"
@@ -148,6 +151,35 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("localStorage", script)
         self.assertIn("edify:analytics-interaction", script)
         self.assertIn('aria-label="Decision and data context"', decision_frame)
+
+    def test_impact_contribution_results_are_complete_scrollable_tables(self):
+        template = _read("templates/partials/analytics/impact_workspace.html")
+        css = _read("static/css/pages/analytics-dashboard.css")
+
+        self.assertIn("data-impact-driver-table", template)
+        self.assertIn("data-impact-group-table", template)
+        self.assertIn("data-impact-lagging-table", template)
+        self.assertEqual(template.count('data-mobile-table="scroll"'), 3)
+        self.assertEqual(template.count('class="impact-table-scroll"'), 3)
+        self.assertEqual(template.count("data-table-scroll-region"), 3)
+        self.assertIn('<caption class="sr-only">', template)
+        self.assertIn('<th scope="col">Adjusted p</th>', template)
+        self.assertIn('<th scope="col">Median SSA Δ</th>', template)
+        self.assertIn('<th scope="col">Paired schools</th>', template)
+        self.assertIn("driver.schools_unexposed", template)
+        self.assertNotIn(
+            "{{ row.district }} · {{ row.intervention }} — median Δ",
+            template,
+        )
+        self.assertNotIn(
+            'class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3"',
+            template,
+        )
+        self.assertIn(".impact-table-scroll", css)
+        self.assertIn("overflow-x: auto", css)
+        self.assertIn("min-inline-size: 126rem", css)
+        self.assertIn("min-inline-size: 42rem", css)
+        self.assertIn(':focus-visible', css)
 
     def test_role_dashboards_prioritize_actions_and_disclose_evidence(self):
         pl = _read("templates/partials/analytics/pl/body.html")

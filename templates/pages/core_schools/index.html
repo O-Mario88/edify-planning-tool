@@ -64,13 +64,11 @@ always the responsible CCEO's.
 {% else %}
 
 {% comment %}
-One two-column parent grid, stretched. The left column holds the Core School
-List card and the right holds the summary stack; `items-stretch` (the grid
-default, named here so it cannot be lost) plus `h-full`/`flex-1` on the left
-card is what makes the two columns end on the same line — no fixed height,
-so the alignment survives any change to the right-hand content.
+One two-column parent grid sized by content. The list and summary stack start
+on the same baseline, but neither is stretched to the other's height; short
+content therefore cannot create a blank lower half inside its card.
 {% endcomment %}
-<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-stretch" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
+<div class="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start" x-data="urlTabs('matrix', ['matrix', 'queue', 'impact', 'performance'])">
 
 <!-- Left 3 columns: Tab panels -->
 <div class="lg:col-span-3 flex flex-col gap-4 min-w-0">

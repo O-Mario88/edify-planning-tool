@@ -1226,3 +1226,174 @@
     transition-duration: .01ms !important;
   }
 }
+/* The grouped association matrix sits below the initial viewport and can grow
+   with country portfolios. Let the browser defer its layout/paint work while
+   preserving a stable scroll footprint; unsupported browsers simply ignore
+   these progressive-enhancement properties. */
+.impact-deferred-section {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 34rem;
+}
+
+/* Contribution evidence stays tabular at every viewport size. The focusable
+   wrapper owns overflow so wide rows scroll locally without widening the page. */
+.impact-scroll-hint {
+  margin: 0;
+  color: var(--edify-text-subtle, #64748b);
+  font-size: .6875rem;
+  font-weight: 600;
+}
+
+.impact-table-scroll {
+  position: relative;
+  inline-size: 100%;
+  max-inline-size: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  border: 1px solid var(--edify-border, #e2e8f0);
+  border-radius: var(--edify-radius-md, .75rem);
+  background: var(--edify-surface, #fff);
+}
+
+.impact-table-scroll:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--edify-accent, #2563eb) 48%, transparent);
+  outline-offset: 2px;
+}
+
+.impact-analysis-table {
+  inline-size: 100%;
+  min-inline-size: 92rem;
+  border-collapse: separate;
+  border-spacing: 0;
+  color: var(--edify-text-muted, #475569);
+  font-size: .6875rem;
+  line-height: 1.35;
+}
+
+.impact-analysis-table--groups {
+  min-inline-size: 126rem;
+}
+
+.impact-analysis-table--lagging {
+  min-inline-size: 42rem;
+}
+
+.impact-analysis-table :where(th, td) {
+  box-sizing: border-box;
+  padding: .65rem .75rem;
+  border-block-end: 1px solid var(--edify-border, #e2e8f0);
+  text-align: start;
+  vertical-align: top;
+  white-space: nowrap;
+}
+
+.impact-analysis-table thead th {
+  background: var(--edify-surface-soft, #f8fafc);
+  color: var(--edify-text-subtle, #64748b);
+  font-size: .625rem;
+  font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
+}
+
+.impact-analysis-table tbody tr:last-child :where(th, td) {
+  border-block-end: 0;
+}
+
+.impact-analysis-table tbody tr:nth-child(even) :where(th, td) {
+  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, #fff));
+}
+
+.impact-analysis-table tbody th[scope="row"] {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  max-inline-size: 17rem;
+  background: var(--edify-surface, #fff);
+  color: var(--edify-text, #1e293b);
+  box-shadow: 1px 0 0 var(--edify-border, #e2e8f0);
+  white-space: normal;
+}
+
+.impact-analysis-table tbody tr:nth-child(even) th[scope="row"] {
+  background: color-mix(in srgb, var(--edify-surface-soft, #f8fafc) 55%, var(--edify-surface, #fff));
+}
+
+.impact-analysis-table tbody th strong,
+.impact-analysis-table tbody th small {
+  display: block;
+}
+
+.impact-analysis-table tbody th small {
+  margin-block-start: .2rem;
+  color: var(--edify-text-subtle, #64748b);
+  font-size: .625rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.impact-table-number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.impact-signal {
+  font-weight: 750;
+}
+
+.impact-signal--positive {
+  color: var(--edify-success, #047857);
+}
+
+.impact-signal--negative {
+  color: var(--edify-danger, #be123c);
+}
+
+.impact-signal--insufficient {
+  color: var(--edify-warning, #a16207);
+}
+
+.impact-table-empty {
+  padding-block: 2rem !important;
+  color: var(--edify-text-subtle, #64748b);
+  text-align: center !important;
+}
+
+/* Impact filters have a scope sentence below their controls, so they are not
+   the single-row scrolling toolbar used by directory filters. Keep the nested
+   control grid full-width; otherwise the shared :has(select) rule treats the
+   entire grid as one 7.5rem field and truncates both values on phones. */
+main #impact-filters-form.impact-filter-panel {
+  display: block !important;
+  overflow: visible !important;
+}
+
+main #impact-filters-form.impact-filter-panel > .sp-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(12rem, 18rem)) auto !important;
+  inline-size: 100%;
+  max-inline-size: 100%;
+}
+
+html body main #impact-filters-form.sp-filter-panel.impact-filter-panel select {
+  min-block-size: 3rem !important;
+}
+
+main #impact-workspace .impact-group-pagination a {
+  min-block-size: 2.75rem !important;
+}
+
+@media (max-width: 720px) {
+  main #impact-filters-form.impact-filter-panel > .sp-filter-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  main #impact-filters-form.impact-filter-panel .sp-filter-actions {
+    grid-column: auto;
+    justify-content: stretch;
+  }
+}

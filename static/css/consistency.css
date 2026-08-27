@@ -430,7 +430,7 @@ main > .edify-page-canvas {
   inline-size: min(100%, var(--edify-page-max-size)) !important;
   max-inline-size: var(--edify-page-max-size) !important;
   margin-inline: auto !important;
-  padding: 1.25rem var(--edify-page-gutter) !important;
+  padding: 1rem var(--edify-page-gutter) !important;
   box-sizing: border-box;
 }
 
@@ -2817,4 +2817,203 @@ main [class*="bg-yellow-"][class*="bg-yellow-"][class*="bg-yellow-"],
 main [class*="bg-lime-"][class*="bg-lime-"][class*="bg-lime-"],
 main [class*="bg-orange-"][class*="bg-orange-"][class*="bg-orange-"] {
   color: var(--edify-on-warm-fill) !important;
+}
+
+/* ═══ CONDENSED PLATFORM LAYOUT CONTRACT ══════════════════════════════════
+ * Space has one owner and every region sizes to its content. Data canvases
+ * (charts, maps, uploads, documents and populated tables) deliberately keep
+ * their feature-owned dimensions; the rules below remove only structural
+ * dead space, duplicate margins, ghost grid tracks and oversized no-data
+ * placeholders. */
+main.edify-workspace {
+  --edify-content-section-gap: 0.875rem;
+  --edify-surface-padding-generous: clamp(1rem, 0.94rem + 0.26vw, 1.25rem);
+}
+
+/* Legacy page roots used either py-5/py-6 or p-6, while semantic canvases use
+ * the rule near the top of this file. Normalise their block edge without
+ * touching inline safe-area/page gutters. */
+main.edify-workspace > :is(div, section, article):is(
+  [class~="p-4"],
+  [class~="sm:p-6"],
+  [class~="py-5"],
+  [class~="py-6"],
+  [class~="py-8"],
+  [class~="p-6"],
+  [class~="p-8"]
+) {
+  padding-block: 1rem !important;
+}
+
+/* Parent flow owns separation. Headers, tab rails and grid helpers used to
+ * contribute a second bottom margin on top of Tailwind's space-y margin. */
+main :is([class*="space-y-"], [class*="gap-"]) > :is(
+  .edify-page-hero,
+  .edify-page-header,
+  .platform-page-header,
+  .platform-hero,
+  .ia-hero,
+  .help-center-hero,
+  .help-shell__header,
+  .hcos-hero,
+  .sp-page-header,
+  .pto-header,
+  .tt-page-header,
+  .calendar-workspace__header,
+  .partner-workspace__header,
+  .admin-command__header,
+  .pd-page-header,
+  .sp-plan__header,
+  .spp-header,
+  .spa-header,
+  .kpi-strip,
+  .edify-tab-container,
+  .kpi-grid,
+  .signal-grid,
+  .panel-grid,
+  .two-col,
+  .three-col
+) {
+  margin-block-end: 0 !important;
+}
+
+/* Compact the old large-gap utilities to the platform's 12–16px operational
+ * rhythm. This changes layout separation only; touch targets retain 44px. */
+main.edify-workspace :where(.gap-4) { gap: 0.75rem !important; }
+main.edify-workspace :where(.gap-5, .gap-6, .gap-8) { gap: 1rem !important; }
+main.edify-workspace :where(.space-y-5, .space-y-6, .space-y-8, .space-y-10, .space-y-12)
+  > :not([hidden]) ~ :not([hidden]) {
+  margin-block-start: 1rem !important;
+}
+
+/* Content cards do not inherit the tallest neighbour's block size. Explicit
+ * items-stretch layouts, full-height workspaces, KPI strips and data canvases
+ * are left alone. */
+main .grid:not([class*="items-"]):not(.kpi-grid):not(.signal-grid):has(
+  > :is(.card, .edify-surface, article, section)
+) {
+  align-items: start;
+}
+
+/* A lone card or no-data result should not sit beside reserved empty tracks. */
+main .grid:has(> :is(.card, .edify-surface, article, section):only-child:not([class*="col-span"]))
+  > :is(.card, .edify-surface, article, section):only-child:not([class*="col-span"]) {
+  grid-column: 1 / -1;
+}
+
+/* Empty response/live-region slots often carried mt-* or pt-* and therefore
+ * occupied space before HTMX inserted anything. Once populated they return
+ * to their authored display and spacing automatically. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :is(
+    [aria-live],
+    [id$="-errors"],
+    [id$="-error"],
+    [id$="-result"],
+    [id$="-feedback"],
+    [id$="-status"]
+  ):empty:not(.edify-visually-hidden, .sr-only) {
+  display: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+/* Empty states remain useful guidance, but they no longer impersonate a data
+ * visualisation. The icon, explanation and action determine the height. */
+main :is(
+  .edify-empty-state,
+  [data-empty-state],
+  .school-directory-empty,
+  .admin-panel__empty,
+  .ia-empty,
+  .ia-list-empty,
+  .sp-empty,
+  .sp-empty-state,
+  .sp-protected-state,
+  .spp-empty,
+  .spp-table-empty,
+  .spa-empty,
+  .spa-table-empty,
+  .pto-empty-state,
+  .tt-empty,
+  .hcos-empty,
+  .cal-panel__empty,
+  .calendar-agenda__empty,
+  .pl-cceo-performance-table__empty
+) {
+  min-block-size: 0 !important;
+  min-height: 0 !important;
+  block-size: auto !important;
+  padding-block: clamp(0.875rem, 0.78rem + 0.42vw, 1.25rem) !important;
+}
+
+/* Most one-row colspan bodies are the template's `{% empty %}` branch. Keep
+ * that message scannable rather than rendering a blank half-card below it. */
+main table tbody > tr:only-child > td[colspan] {
+  block-size: auto !important;
+  min-block-size: 0 !important;
+  padding-block: 1rem !important;
+}
+
+/* Legacy non-table empty panels frequently expressed the same state as a
+ * text-centred p-12/p-16 utility. Limit only their vertical inset; populated
+ * cards and actionable form panels are excluded. */
+main :is(div, section, article, p, li)[class*="text-center"]:is(
+  [class~="p-8"],
+  [class~="p-12"],
+  [class~="p-16"],
+  [class~="py-8"],
+  [class~="py-12"],
+  [class~="py-16"]
+):not(:has(:is(form, input, select, textarea, canvas, img, embed))) {
+  padding-block: 1.25rem !important;
+}
+
+/* A table cell already supplies the empty row's vertical inset. Nested empty
+ * components therefore contribute guidance, not a second padded canvas. */
+main table tbody > tr:only-child > td[colspan] > :is(
+  .edify-empty-state,
+  [data-empty-state],
+  .school-directory-empty,
+  .admin-panel__empty,
+  .ia-empty,
+  .ia-list-empty,
+  .sp-empty,
+  .sp-empty-state,
+  .sp-protected-state,
+  .spp-empty,
+  .spp-table-empty,
+  .spa-empty,
+  .spa-table-empty,
+  .pto-empty-state,
+  .tt-empty,
+  .hcos-empty,
+  .cal-panel__empty,
+  .calendar-agenda__empty,
+  .pl-cceo-performance-table__empty,
+  [class*="text-center"]
+) {
+  min-block-size: 0 !important;
+  min-height: 0 !important;
+  padding-block: 0 !important;
+}
+
+@media (max-width: 47.9375rem) {
+  main > .edify-page-canvas,
+  main.edify-workspace > :is(div, section, article):is(
+    [class~="p-4"],
+    [class~="sm:p-6"],
+    [class~="py-5"],
+    [class~="py-6"],
+    [class~="py-8"],
+    [class~="p-6"],
+    [class~="p-8"]
+  ) {
+    padding-block: 0.75rem !important;
+  }
+
+  main .edify-page-header {
+    --page-header-padding-y: 0.75rem;
+    --page-header-padding-x: 0.75rem;
+  }
 }
