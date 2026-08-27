@@ -10,7 +10,12 @@
   <div class="edify-page-header__lead">
   <p class="edify-page-eyebrow">My Work</p>
   <h1 class="edify-page-title edify-page-header__title">IA Verification Queue</h1>
-  <p class="edify-page-header__description">Verify activity completions, confirm Salesforce records integrity, and close the workflow loop.</p>
+  {% comment %}
+  INTG-01. This claimed the queue confirms the integrity of Salesforce records.
+  Nothing checks the integrity of anything there — the platform has no HTTP
+  transport for it at all. The reference is typed by a person and stored.
+  {% endcomment %}
+  <p class="edify-page-header__description">Verify activity completions, record the Salesforce reference for each, and close the workflow loop.</p>
   </div>
 </header>
 

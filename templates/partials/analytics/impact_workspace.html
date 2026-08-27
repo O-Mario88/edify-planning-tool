@@ -328,6 +328,7 @@
       {% if dashboard.geography.lagging %}
       <div class="pt-1 space-y-2">
         <h4 id="lagging-district-interventions-title" class="edify-text-caption font-bold text-slate-500">Lagging district–intervention combinations</h4>
+        <p class="edify-text-caption text-slate-500">{% if dashboard.geography.lagging_total > dashboard.geography.lagging|length %}The {{ dashboard.geography.lagging|length }} steepest declines of {{ dashboard.geography.lagging_total }}{% else %}All {{ dashboard.geography.lagging_total }} declining combination{{ dashboard.geography.lagging_total|pluralize }}{% endif %}, worst first.</p>
         <div class="impact-table-scroll"
              data-table-scroll-region
              role="region"

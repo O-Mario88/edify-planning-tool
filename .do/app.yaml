@@ -109,22 +109,45 @@ domains:
     # zone: edifyplanning.app
 
 databases:
-  # App Platform's development database. Cheaper than a managed cluster and
-  # fine to launch on, with two things to know: no automated failover, and no
-  # private VPC networking, so DATABASE_URL is the public host over TLS.
+  # A MANAGED CLUSTER, not App Platform's development database. This is not a
+  # performance preference. It is the only tier that has backups at all.
   #
-  # To move to a managed cluster later, replace this block with:
-  #   production: true
-  #   cluster_name: edify-db
-  #   size: db-s-1vcpu-1gb
-  #   num_nodes: 1
-  # and switch the web service's DATABASE_URL to ${db.DATABASE_PRIVATE_URL},
-  # which only exists on a production cluster. Take a dump first — swapping the
-  # database resource does not migrate the data.
+  # This block used to read `production: false`, and the comment above it named
+  # two consequences — no automated failover, no private VPC networking. It did
+  # not name the third, which is the one that decides whether the platform can
+  # ship:
+  #
+  #   "App Platform's dev databases do not support backups."
+  #   "because dev databases lack these features, we do not recommend using dev
+  #    databases in production environments."
+  #       — DigitalOcean documentation, "How do I back up my dev database on
+  #         App Platform?"
+  #
+  # So the platform had a rehearsed and verified restore procedure (§53,
+  # scripts/backup_restore_rehearsal.sh) for a backup that nothing was taking.
+  # An incident would have been unrecoverable: no snapshot, no point-in-time
+  # recovery, no failover, and the only copy of the financial ledger, the SSA
+  # history and the child-welfare records sitting on a tier whose own vendor
+  # says not to run production on it. See BACKUP-01 in
+  # docs/production-readiness-ledger.md.
+  #
+  # APPLYING THIS IS A DATA MIGRATION, NOT A REDEPLOY. Swapping the database
+  # resource does not move the data. Dump first, restore into the new cluster,
+  # and verify the restore before cutting over: docs/runbooks.md §12 is the
+  # procedure, and scripts/backup_restore_rehearsal.sh is what proves the copy
+  # arrived intact rather than merely arrived.
+  #
+  # DATABASE_URL stays as it is and works here. On this tier
+  # ${db.DATABASE_PRIVATE_URL} also exists and keeps database traffic inside
+  # the VPC rather than crossing the public internet; prefer it once the
+  # cluster is up and the app is known good against it.
   - name: db
     engine: PG
     version: "16"
-    production: false
+    production: true
+    cluster_name: edify-db
+    size: db-s-1vcpu-1gb
+    num_nodes: 1
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 # Migrations run here, once, before the new web containers take traffic. The web

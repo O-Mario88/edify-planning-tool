@@ -233,5 +233,12 @@ class PartnerSsaCompletionTest(TestCase):
         )
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Confirm Salesforce Entry")
+        # INTG-01 renamed this drawer from "Confirm Salesforce Entry" to
+        # "Record Salesforce Reference", because nothing here contacts
+        # Salesforce. The title is this test's proxy for "the reference drawer
+        # was served, not the SSA one", so it tracks the rename.
+        self.assertContains(response, "Record Salesforce Reference")
+        # And the claim itself, so a future tidy-up of the copy cannot quietly
+        # put back the promise that the system checked Salesforce.
+        self.assertContains(response, "does not contact Salesforce")
         self.assertNotContains(response, 'name="enrollment"')

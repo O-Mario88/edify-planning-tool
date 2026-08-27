@@ -55,7 +55,10 @@ tier.** Restarting does not bring a database back and destroys the warm
 capacity that would have served the recovery.
 
 **Recover** Database owner's problem: failover, restart, or restore. The
-application needs nothing beyond the database answering again.
+application needs nothing beyond the database answering again. If it comes to
+a restore from backup, §11 below is the runbook for that; do not treat a
+green backup-gate result from an earlier commit as evidence that the backup is
+good.
 
 **Data integrity** Check for financial records committed either side of the
 outage: `Disbursement`, `PartnerPayment`, `AccountabilityRecord`. Run the
@@ -302,3 +305,174 @@ and a filter that stopped using an index.
 **After** A page that regressed without a failing test needs a query budget —
 that is what makes the regression visible at the point it is written rather
 than in production.
+
+---
+
+## 11. Restoring from backup
+
+**Detect** You are here because the database is gone, corrupted, or has lost
+data nobody can reconstruct, and §2 has already established the database itself
+is not coming back on its own.
+
+**Confirm** Establish two things before touching anything: which artifact you
+intend to restore, and what it actually contains. Do not assume. Run the
+rehearsal against a copy of the artifact first if there is any time at all to
+do so — the whole point of `scripts/backup_restore_rehearsal.sh` is that it
+answers this question in about ninety seconds:
+
+```
+PGDATABASE=<source> scripts/backup_restore_rehearsal.sh
+```
+
+It dumps the source, creates a scratch database **from the artifact's own
+`CREATE DATABASE` statement** — so the copy carries the backup's encoding,
+locale and `ALTER DATABASE ... SET` settings rather than the cluster's
+defaults — restores into it, and compares the result against a manifest taken
+inside the dump's own snapshot. It always drops the scratch copy afterwards.
+
+**Read its exit code, not its output:**
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | PASSED. The restore matched the dump on all ~8,800 comparisons |
+| 1 | FAILED. Something is wrong with the backup or the restore. The FAIL lines name it |
+| 2 | REFUSED. The rehearsal declined to start; it did not run and proved nothing |
+| 3 | NOT PROVEN. Nothing failed and nothing was shown — an empty or never-used source cannot evidence a round trip. **Not** a passing result |
+
+`KEEP_SCRATCH_ON_FAIL=1` retains the restored copy for post-mortem instead of
+dropping it. The rehearsal will not touch a scratch database it did not create
+in that same run, so a retained copy survives the next run.
+
+**Contain** Take the application out of rotation before restoring. A partial
+restore serving traffic writes rows that the completed restore will then
+overwrite.
+
+**Recover** Restore with `pg_restore --exit-on-error`. Never `--no-privileges`
+or `--no-owner` unless you have decided to re-grant by hand afterwards: a
+database restored without its GRANTs is one the application role cannot read,
+and it looks perfectly healthy from `psql` as the owner.
+
+**Data integrity** Four things a row count will not tell you, all of which the
+rehearsal checks and none of which are obvious by eye:
+
+* **Sequences.** A sequence behind the column it feeds collides on the first
+  insert, not on the restore.
+* **Materialised views.** `pg_dump` carries the DEFINITION, never the CONTENTS.
+  The restore re-executes `REFRESH`, so a matview over anything time-dependent
+  comes back holding different data — or, if its window has passed, nothing.
+* **Privileges and database settings.** Carried only if the dump was taken with
+  `--create` and without `--no-privileges`.
+* **Large objects and non-`public` schemas.** Easy to lose and invisible to
+  anything that only looks at tables.
+
+Then run the audit chain end to end (`verify_chain(full=True)`) — the default
+is incremental and will happily report a restored database intact having hashed
+zero rows.
+
+**Communication** Database owner leads. Say which window of writes is lost:
+everything committed between the backup's timestamp and the incident.
+
+**After** A backup that has not been restored is not a backup, it is a file.
+Whatever the rehearsal did not check that bit you this time belongs in
+`scripts/restore_manifest.py`, with the measurement that shows the old check
+could not see it — see ISSUE-008 in the production-readiness ledger for the
+form that takes.
+
+---
+
+## 12. Moving production onto a database that has backups (BACKUP-01)
+
+**Detect** You are here because `.do/app.yaml` declares the production
+database on App Platform's dev tier — `production: false` — and DigitalOcean
+documents that tier as having **no backups at all**:
+
+> "App Platform's dev databases do not support backups."
+> "because dev databases lack these features, we do not recommend using dev
+> databases in production environments."
+
+Everything in §11 describes what to do *with* a backup. On the dev tier
+nothing is taking one. There is no snapshot to restore, no point-in-time
+recovery, and no failover.
+
+**Confirm** `apps/core/tests/test_production_database_is_backupable.py` fails
+while the spec is on the dev tier. Confirm what is actually running, which is
+not necessarily what the spec says — `.do/app.yaml` carries a DO NOT APPLY
+warning and DEP-01 records that the two disagree:
+
+```
+doctl databases list
+doctl apps spec get <app-id>
+```
+
+If the live app is on the dev tier, the platform currently has no recoverable
+copy of the financial ledger, the SSA history or the child-welfare records.
+Treat that as the standing incident it is, not as a scheduled improvement.
+
+**Contain** Do not swap the database resource on a running app and hope.
+Swapping it **does not migrate the data**: App Platform detaches the old
+resource and attaches an empty one. The dev database is deleted with the
+attachment, so a mistake here is not recoverable — which is the whole problem
+restated.
+
+**Recover** The migration, in the order that keeps a copy at every step:
+
+1. **Take a verified dump of the live database first.** Not `pg_dump` alone —
+   dump *and* describe it, so you can prove afterwards that what arrived is
+   what left:
+
+   ```
+   REHEARSAL_DSN="<live dsn>" .venv/bin/python scripts/restore_manifest.py \
+       capture live.manifest.json live.dump
+   ```
+
+   Keep both files somewhere that is not the app.
+
+2. **Create the managed cluster** (`doctl databases create edify-db --engine
+   pg --version 16`), and restore into it:
+
+   ```
+   pg_restore --exit-on-error -d "<new cluster dsn>" live.dump
+   ```
+
+3. **Verify the restore before cutting over.** This is the step the whole of
+   §53 exists for, and the one an outage tempts you to skip:
+
+   ```
+   REHEARSAL_DSN="<new cluster dsn>" .venv/bin/python \
+       scripts/restore_manifest.py verify live.manifest.json
+   ```
+
+   Exit 0 means every row digest, index, constraint definition, privilege,
+   sequence position and database setting matches the dump. Anything else
+   means do not cut over.
+
+4. **Point the app at the new cluster** and deploy. `DATABASE_URL` works on
+   both tiers. Once the app is known good, prefer
+   `${db.DATABASE_PRIVATE_URL}`, which keeps database traffic inside the VPC
+   instead of crossing the public internet.
+
+5. **Only then** release the old resource, and not on the same day.
+
+**Data integrity** Re-read §11's four traps — sequences, materialised views,
+privileges and database settings, large objects and non-`public` schemas. The
+verify in step 3 covers all of them; running it is what makes that true.
+
+Then confirm the new cluster's backups are real rather than assumed. A managed
+cluster having a backup *feature* is not the same as this cluster having a
+backup:
+
+```
+doctl databases backups <cluster-id>
+```
+
+An empty list means you have moved onto a tier that can take backups and have
+not yet taken one. That is better than the dev tier and it is not done.
+
+**Communication** Database owner leads; this is a planned migration with a
+write freeze, not an incident — unless you arrived here during one, in which
+case §11 comes first and this follows.
+
+**After** The tier is one word in a YAML file and the cheaper value is a
+copy-paste away in `staging.yaml`, where it is correct. That is why it is
+asserted in the suite rather than left as a comment. If the assertion is ever
+in the way, the thing to change is the infrastructure, not the test.

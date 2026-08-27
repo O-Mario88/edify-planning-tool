@@ -104,6 +104,10 @@ ALL_INTERVENTIONS = [i.value for i in SsaIntervention]
 
 DOSAGE_BUCKETS = ((0, 0, "0"), (1, 2, "1–2"), (3, None, "3+"))
 
+#: How many lagging district-intervention rows the impact workspace shows.
+#: The page states this count next to the table rather than capping in silence.
+LAGGING_SHOWN = 10
+
 DRIVER_DEFINITIONS = (
     (
         "partner",
@@ -836,7 +840,7 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
     """District × intervention median deltas + Kruskal-Wallis per intervention
     across districts with enough paired schools."""
     if imp.empty:
-        return {"matrix": [], "tests": [], "lagging": []}
+        return {"matrix": [], "tests": [], "lagging": [], "lagging_total": 0}
     frame = imp.copy()
     frame["district"] = frame["school_id"].map(districts)
     frame = frame[frame["district"].notna()]
@@ -921,7 +925,16 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
                     }
                 )
     lagging.sort(key=lambda r: r["median_delta"])
-    return {"matrix": matrix_rows, "tests": tests, "lagging": lagging[:10]}
+    # The table shows the ten steepest declines. The total is carried alongside
+    # so the page can say so: a silent cap reads as "these are all of them",
+    # which is how somebody comes to believe they have seen every lagging
+    # district when they have seen ten of them.
+    return {
+        "matrix": matrix_rows,
+        "tests": tests,
+        "lagging": lagging[:LAGGING_SHOWN],
+        "lagging_total": len(lagging),
+    }
 
 
 def field_reality_overlay(principal, imp: pd.DataFrame, fy: str) -> list[dict]:

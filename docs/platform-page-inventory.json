@@ -1329,7 +1329,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 29528,
+      "bytes": 29919,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4954,7 +4954,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3919,
+      "bytes": 4430,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"

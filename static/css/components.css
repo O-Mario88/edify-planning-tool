@@ -1962,10 +1962,26 @@ select:not([multiple]):not(.select-native) {
   grid-area: meta;
 }
 
+/* A11Y-01. The tint is 30%, not 70%, because helper text is 12px at weight
+   500 and WCAG AA asks 4.5:1 of it. At 70% the accent dominates the readable
+   muted colour and six of these failed, measured by axe against the real
+   pages: 3.03 on the dashboard's incident helpers, and 2.69 / 3.03 / 4.37 /
+   4.49 across the four school tiles.
+
+   30% is not a guess. Against this background (#eaeef1) and this muted colour
+   (#3f515c), the largest accent share that still clears 4.5:1 on EVERY tile
+   variant is 33% -- warning (#f59e0b) is the binding one, being the lightest.
+   30% takes the round number below it and leaves every variant with margin:
+
+     primary 6.30 · warning 4.70 · success 4.93 · purple 5.92 · danger 6.13
+
+   The tile keeps its accent; the helper line keeps being readable. If a new
+   tile colour is added, re-run scripts/accessibility_audit.py rather than
+   assuming this proportion still covers it. */
 .kpi-strip.kpi-strip--executive .kpi-strip__helper {
   font-size: var(--edify-text-tile-helper-size);
   font-weight: 500;
-  color: color-mix(in srgb, var(--kpi-accent, var(--edify-text-muted)) 70%, var(--edify-text-muted));
+  color: color-mix(in srgb, var(--kpi-accent, var(--edify-text-muted)) 30%, var(--edify-text-muted));
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__trend {
