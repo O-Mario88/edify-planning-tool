@@ -192,7 +192,7 @@ class MobileMicroUXContractTest(SimpleTestCase):
             ("templates/partials/dashboards/pl/backlog_snapshot.html", "fit"),
             ("templates/partials/dashboards/pl/cceo_performance.html", "scroll"),
             ("templates/partials/dashboards/urgent_schools_table.html", "scroll"),
-            ("templates/partials/dashboards/pl/ssa_intelligence.html", "fit"),
+            ("templates/partials/dashboards/pl/ssa_intelligence.html", "scroll"),
             ("templates/partials/oversight/cd_workspace.html", "scroll"),
             ("templates/partials/oversight/pl_workspace.html", "scroll"),
         ):

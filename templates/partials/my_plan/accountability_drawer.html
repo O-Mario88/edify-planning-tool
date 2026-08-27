@@ -8,6 +8,7 @@
 <form
 hx-post="/my-plan/{{ act.id }}/accountability"
 hx-encoding="multipart/form-data"
+hx-request='{"timeout":120000}'
 hx-target="#accountability-errors"
 class="space-y-5 text-[12px] font-bold text-slate-600"
 >

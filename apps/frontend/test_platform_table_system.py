@@ -80,6 +80,24 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
         self.assertIn("data-table-scroll-region", template)
         self.assertIn('data-mobile-table="scroll"', template)
 
+    def test_pl_dashboard_table_wrappers_remain_scrollable(self):
+        styles = _read("static/css/pages.css")
+        ssa_template = _read("templates/partials/dashboards/pl/ssa_intelligence.html")
+        selector = (
+            ".pl-dashboard-stack :is(.pl-ssa-matrix-scroll, "
+            ".pl-urgent-table-scroll)"
+        )
+        rule = styles.split(selector, 1)[1].split("}", 1)[0]
+
+        self.assertIn("min-inline-size: 0", rule)
+        self.assertIn("overflow-x: auto", rule)
+        self.assertIn("overscroll-behavior-inline: contain", rule)
+        self.assertIn("touch-action: pan-x pan-y", rule)
+        self.assertNotIn("overflow-x: clip", rule)
+        self.assertIn('data-mobile-table="scroll"', ssa_template)
+        self.assertIn("data-table-scroll-region", ssa_template)
+        self.assertIn("min-inline-size: 58rem !important", styles)
+
     def test_table_assets_are_cache_busted_together(self):
         base = _read("templates/base.html")
 
