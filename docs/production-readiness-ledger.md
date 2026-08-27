@@ -213,6 +213,7 @@ it because automation exists.
 | Gate | Status | Evidence |
 | --- | --- | --- |
 | Backup restore rehearsal (§53) | **RE-RUN AND PASSED against `edify` — production source still unexercised** | The PASS originally recorded here established one thing: the commands in `scripts/backup_restore_rehearsal.sh` ran without erroring. It established nothing about the restore, because every threshold it used clears on a database with no rows in it — see ISSUE-008. The gate was rebuilt around `scripts/restore_manifest.py`, rebuilt again after two adversarial reviews, and then had two further defects found by running it rather than reading it (ISSUE-008c). It has now been run end to end against the platform's own developer source `edify` at commit `cad73c69`: **exit 0, 25 PASS, 0 FAIL**, 8,789 comparisons against a manifest of the dump, 8 pages served to *signed-in* accounts from the restored copy across 10 roles, audit hash chain walked 161 of 161 rows, scratch copy dropped. Proven able to fail: **12 of 12 testable corruption classes caught** (ISSUE-008c). This is a dev-estate source of 700 schools and 27,828 rows; **the production source has still never been dumped or restored by anyone**, so §53 is satisfied for the mechanism and not for the estate it will run against |
+| Backups exist at all (§53) | **NO — RELEASE BLOCKER** | `.do/app.yaml` declared the production database on App Platform's dev tier, which DigitalOcean documents as having no backups and explicitly does not recommend for production. The restore gate above verifies a round trip that nothing was feeding. The spec now declares a managed cluster and a test fails while it does not, but applying it is a data migration nobody has run and this environment has no DigitalOcean credentials to check what is actually live. See BACKUP-01 |
 | Latency budgets (§46) | **RUN — 1 breach** | `scripts/latency_budget.py`, 15 samples per page per role after 2 discarded, 702 schools. 23 of 24 page/role combinations within budget; `/todos` for the Country Director breached |
 | Scale invariance (§46) | **PASSED** | `apps/system_health/test_load_scale.py` at 15,000 schools + 3,000 growth, in the green suite |
 | Wall-clock p95 at 15,000 schools | **STILL UNVERIFIED** | The latency run above is against the 702-school dev estate. The scale harness proves query counts do not grow; it does not measure production wall time, and says so |
@@ -447,6 +448,84 @@ was "the rebuilt check still could not see most of the database". This one is
 different in kind and worth naming separately: the code was correct on every
 reading and wrong on every execution. Reading a script establishes what its
 author meant. Only running it establishes what it does.
+
+### BACKUP-01 · The production database is on a tier with no backups · **RELEASE BLOCKER**
+
+Everything above this entry is about whether the *restore* can be trusted.
+This entry is about whether there is anything to restore.
+
+`.do/app.yaml` declared the production database `production: false` — App
+Platform's development tier. DigitalOcean's own documentation:
+
+> "App Platform's dev databases do not support backups."
+>
+> "because dev databases lack these features, we do not recommend using dev
+> databases in production environments."
+>
+> — *How do I back up my dev database on App Platform?*, DigitalOcean
+> documentation
+
+The comment above that line named two consequences — no automated failover, no
+private VPC networking — and not the third. So the platform had a rehearsed
+restore procedure, a verified round trip, a manifest verifier proven to fail on
+twelve corruption classes, and a runbook, **for a backup that nothing was
+taking**. No snapshot. No point-in-time recovery. No failover. One copy of the
+financial ledger, the SSA history and the child-welfare records, on a tier
+whose vendor says not to run production on it.
+
+This is the audit's recurring defect at the layer beneath all the others: **a
+reader with no writer**. A restore procedure is a reader. Something has to
+write the backups. Twelve of the findings in this ledger are that shape, and
+this is the one where the missing writer is the data itself.
+
+**Why it stayed invisible.** Every check that touched backups checked the
+restore. `scripts/backup_restore_rehearsal.sh` dumps a source and restores it,
+which works on any tier — the rehearsal passes just as well against a database
+that has never been backed up as against one that is backed up hourly. The
+gate measured the procedure, and nobody asked whether the procedure had an
+input. §53 is written as "backup, restore, verify"; the repository had built
+the second and third and read the first as given.
+
+**Fixed in the record, and the record is not the running app.** `.do/app.yaml`
+now declares a managed cluster (`production: true`, `cluster_name: edify-db`).
+That file carries a DO NOT APPLY warning and DEP-01 records that it and the
+live app disagree, so this change corrects the *intent*, not production.
+Whether the running app is on the dev tier is a `doctl databases list` away and
+has not been checked from here — no DigitalOcean credentials are configured in
+this environment.
+
+**Gated so it cannot revert.** `apps/core/tests/test_production_database_is_backupable.py`
+parses the `databases:` block and fails while any production database is
+dev-tier. Parsed rather than grepped: the spec carries commented-out examples
+of a managed *cache* that also say `production: true`, and a whole-file grep
+would have read one of those as evidence about the database and passed. Proven
+able to fail, each mutation confirmed present in the file before the verdict
+was read:
+
+| Mutation | Caught by |
+| --- | --- |
+| tier reverted to `production: false` | `test_the_production_database_is_a_managed_cluster` |
+| tier line deleted (dev is the default, so silence is dev) | same |
+| the reason stripped from the spec comment | `test_the_spec_records_why_the_tier_matters` |
+
+A fourth test asserts the parser finds the databases at all — a parser that
+quietly stopped matching would pass the other three forever, which is precisely
+how the gate this replaces came to certify a wiped database.
+
+Staging stays dev-tier and that is asserted too: it carries seeded data, says
+"Dev-tier is intentional", and losing it costs a reseed.
+
+**Still open, and it is what stands between here and a Go.** Applying this is a
+data migration, not a redeploy — swapping the database resource detaches the old
+one and attaches an empty one, and the dev database is deleted with the
+attachment. `docs/runbooks.md` §12 is the procedure, and it uses
+`scripts/restore_manifest.py` to prove the copy arrived intact rather than
+merely arrived. Until an operator runs it:
+
+* production has no recoverable copy of its data;
+* §53 cannot be claimed, because the restore half is only half;
+* and the first real test of any of this would be an incident, which is the
+  one time nobody gets to re-run it.
 
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
