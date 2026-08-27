@@ -1041,6 +1041,10 @@ def complete_activity_action(request, activity_id):
             a.save(update_fields=["ssa_not_collected_reason", "updated_at"])
 
         payload = {
+            # The form already refused above unless this question was
+            # answered; pass the answer on so `complete()` can hold the same
+            # rule for every other door (SSA-01).
+            "ssaCollected": request.POST.get("ssa_collected") == "yes",
             "salesforceId": salesforce_id,
             "trainingSalesforceId": salesforce_id,
             "visitSalesforceId": visit_salesforce_id,

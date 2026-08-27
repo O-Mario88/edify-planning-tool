@@ -201,7 +201,7 @@ class MyPlanOwnerNameDisplayTest(TestCase):
         from apps.my_plan.services import get_frontend_context
 
         # localdate, not timezone.now().date(): get_frontend_context's own
-        # "today" is date.today() (server-local, Africa/Kampala/EAT) --
+        # "today" is date.today() (server-local, Africa/Nairobi/EAT) --
         # timezone.now() is UTC, which is a different calendar date from
         # 21:00-24:00 UTC (00:00-03:00 EAT) every night.
         today = timezone.localdate()

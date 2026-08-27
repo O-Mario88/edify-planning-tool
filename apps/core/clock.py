@@ -20,7 +20,7 @@ class ClockService:
 
     @staticmethod
     def today():
-        """Current date in the project's configured timezone (Africa/Kampala),
+        """Current date in the project's configured timezone (Africa/Nairobi),
         not UTC — a date-only value taken from timezone.now().date() would be
         wrong for the hours where UTC and EAT disagree on the calendar day."""
         return timezone.localdate()

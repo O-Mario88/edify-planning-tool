@@ -60014,7 +60014,7 @@
     ],
     "scheduled_jobs": [
       {
-        "cron": "Fri 06:00 Africa/Kampala",
+        "cron": "Fri 06:00 Africa/Nairobi",
         "cron_kwargs": {
           "day_of_week": "fri",
           "hour": 6
@@ -60029,7 +60029,7 @@
         "retryable": true
       },
       {
-        "cron": "25th 06:00 Africa/Kampala",
+        "cron": "25th 06:00 Africa/Nairobi",
         "cron_kwargs": {
           "day": 25,
           "hour": 6
@@ -60044,7 +60044,7 @@
         "retryable": true
       },
       {
-        "cron": "hourly :00 Africa/Kampala",
+        "cron": "hourly :00 Africa/Nairobi",
         "cron_kwargs": {
           "minute": 0
         },
@@ -60058,7 +60058,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 07:30 Africa/Kampala",
+        "cron": "daily 07:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 7,
           "minute": 30
@@ -60073,7 +60073,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 07:00 Africa/Kampala",
+        "cron": "daily 07:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 7,
           "minute": 0
@@ -60088,7 +60088,7 @@
         "retryable": true
       },
       {
-        "cron": "every 30 min Africa/Kampala",
+        "cron": "every 30 min Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*/30"
         },
@@ -60102,7 +60102,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 06:30 Africa/Kampala",
+        "cron": "daily 06:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
           "minute": 30
@@ -60117,7 +60117,7 @@
         "retryable": true
       },
       {
-        "cron": "hourly :20 Africa/Kampala",
+        "cron": "hourly :20 Africa/Nairobi",
         "cron_kwargs": {
           "minute": 20
         },
@@ -60131,7 +60131,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 07:00 Africa/Kampala",
+        "cron": "daily 07:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 7,
           "minute": 0
@@ -60146,7 +60146,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 05:30 Africa/Kampala",
+        "cron": "daily 05:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 5,
           "minute": 30
@@ -60161,7 +60161,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 18:00 + 08:00 Africa/Kampala",
+        "cron": "daily 18:00 + 08:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": "8,18",
           "minute": 0
@@ -60176,7 +60176,7 @@
         "retryable": true
       },
       {
-        "cron": "weekly Mon 06:00 Africa/Kampala",
+        "cron": "weekly Mon 06:00 Africa/Nairobi",
         "cron_kwargs": {
           "day_of_week": "mon",
           "hour": 6,
@@ -60192,7 +60192,7 @@
         "retryable": true
       },
       {
-        "cron": "every 15 min Africa/Kampala",
+        "cron": "every 15 min Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*/15"
         },
@@ -60206,7 +60206,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 00:10 Africa/Kampala",
+        "cron": "daily 00:10 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 0,
           "minute": 10
@@ -60221,7 +60221,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 06:45 Africa/Kampala",
+        "cron": "daily 06:45 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
           "minute": 45
@@ -60236,7 +60236,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 03:20 Africa/Kampala",
+        "cron": "daily 03:20 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 3,
           "minute": 20
@@ -60251,7 +60251,7 @@
         "retryable": true
       },
       {
-        "cron": "Fri 05:00 Africa/Kampala",
+        "cron": "Fri 05:00 Africa/Nairobi",
         "cron_kwargs": {
           "day_of_week": "fri",
           "hour": 5
@@ -60266,7 +60266,7 @@
         "retryable": true
       },
       {
-        "cron": "every minute Africa/Kampala",
+        "cron": "every minute Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*"
         },
@@ -60280,7 +60280,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 03:00 Africa/Kampala",
+        "cron": "daily 03:00 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 3,
           "minute": 0
@@ -60295,7 +60295,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 02:40 Africa/Kampala",
+        "cron": "daily 02:40 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 2,
           "minute": 40
@@ -60310,7 +60310,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 06:15 Africa/Kampala",
+        "cron": "daily 06:15 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 6,
           "minute": 15
@@ -60325,7 +60325,7 @@
         "retryable": true
       },
       {
-        "cron": "daily 05:30 Africa/Kampala",
+        "cron": "daily 05:30 Africa/Nairobi",
         "cron_kwargs": {
           "hour": 5,
           "minute": 30

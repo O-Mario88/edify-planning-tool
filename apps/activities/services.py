@@ -2739,6 +2739,43 @@ def complete(activity_id: str, data: dict, principal) -> dict:
             "Click Complete first to unlock evidence upload and Activity Code entry."
         )
 
+    # SSA-01. A visit scheduled to collect an SSA must answer the SSA
+    # question — with the scores, or with a reason there are none.
+    #
+    # The rule already existed, in the web completion form, which refuses a
+    # 400 without it. It lived ONLY there. The same act has a second door,
+    # `POST /api/activities/<id>/complete`, built from this function by the
+    # `_action_view` factory, and that one never asked. Measured end to end:
+    # an activity with `ssa_collection_expected=True` completed through the
+    # API returned 200, advanced to `submitted_to_pl`, and then verified to
+    # `ia_verified` with the reason field still None — counted, reported and
+    # feeding the analytics, with nobody ever having answered the question.
+    #
+    # IA verification does not catch it, which was the obvious hope:
+    # `SSAValidationService.validate_ssa` computes a checklist RECOMMENDATION
+    # in `get_verification_checks`, and the IA's form can be submitted with
+    # the box ticked over it. Advisory, not a gate.
+    #
+    # Scoped exactly as the form scopes it — `ssa_collection_expected`, set
+    # when the visit's purpose is SSA collection. A visit that was never
+    # meant to collect one is untouched, which is why partner work and the
+    # in-school training pair pass through unchanged.
+    #
+    # The caller must answer because the platform cannot infer it: SsaRecord
+    # is school-level with no link to the activity, so a pre-existing
+    # assessment for the school would otherwise satisfy a visit that
+    # collected nothing.
+    if a.ssa_collection_expected:
+        ssa_collected = bool(data.get("ssaCollected"))
+        reason = str(
+            data.get("ssaNotCollectedReason") or a.ssa_not_collected_reason or ""
+        ).strip()
+        if not ssa_collected and not reason:
+            raise BadRequest(
+                "This visit was scheduled to collect an SSA. Record the "
+                "scores, or give a reason the SSA was not collected."
+            )
+
     # Evidence presence (lazily import to avoid a circular dep with evidence app).
     try:
         from apps.evidence.models import EvidenceRecord  # type: ignore
@@ -3168,6 +3205,13 @@ def _confirm_activity_after_authorization(
     """Shared confirmation transition after a caller-specific authority gate."""
     if a.status != "awaiting_ia_verification":
         raise BadRequest("Activity is not awaiting IA verification")
+    # SSA-01. The same rule the live IA screen holds
+    # (ActivityCertificationService.certify_activity), on this door too.
+    # SSA-01 exists BECAUSE a rule was written on one door only; fixing it on
+    # one door would just move the hole.
+    from apps.activities.ia_services import assert_ssa_visit_is_verifiable
+
+    assert_ssa_visit_is_verifiable(a)
     # §Direct IA handoff (2026-08-20): partner evidence comes straight to
     # IA — no CCEO/PL acceptance gate. IA reviews the evidence itself; the
     # only precondition is that evidence exists.

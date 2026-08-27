@@ -41,14 +41,18 @@ from apps.accounts.models import (
 )
 from apps.activities.models import Activity
 from apps.budget.models import CostCatalogue, CostSetting
+from apps.core.enums import SsaIntervention
 from apps.core.fy import get_operational_fy
 from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequest
 from apps.geography.models import District, Region
 from apps.schools.models import School
+from apps.ssa.models import SsaRecord
 
 
 def _confirmed_ssa(school, *, fy=None, score=6.0):
     """A confirmed assessment, so intervention work can be planned at all."""
+    import datetime
+
     from django.utils import timezone
 
     from apps.core.enums import SsaIntervention
@@ -58,7 +62,12 @@ def _confirmed_ssa(school, *, fy=None, score=6.0):
     record = SsaRecord.objects.create(
         school=school,
         fy=fy or get_operational_fy(),
-        date_of_ssa=timezone.now(),
+        # Dated back deliberately. You plan THIS cycle's intervention work
+        # against the assessment you already hold, so a planning SSA is months
+        # old. Stamping it `now()` made it indistinguishable from an assessment
+        # collected on the visit being walked, which quietly satisfied the
+        # SSA-01 verification gate and made the door walk below prove nothing.
+        date_of_ssa=timezone.now() - datetime.timedelta(days=120),
         average_score=score,
         verification_status="confirmed",
     )
@@ -415,19 +424,40 @@ class SchoolVisitSpineJourneyTest(TestCase):
             file_size=2048,
             uploaded_by=self.cceo.id,
         )
-        # The endpoint asks for something the service does not: either the
-        # SSA was collected on the visit, or a reason it was not. Posting
-        # without it returns a 400 fragment and leaves the activity parked at
-        # `completion_started` — found by this walk, and invisible to the
-        # service test above, which calls `complete_activity` directly and is
-        # never asked. See the note on `complete_activity` below.
+        # This visit was scheduled with `purpose_of_visit="ssa_support"`, so
+        # collecting the assessment IS the work, and the completion drawer is
+        # where a CCEO enters the eight scores. Walking it here means the
+        # journey now exercises SSA collection as well as the visit spine.
+        #
+        # This walk previously completed with `ssa_not_collected_reason="School
+        # closed for holidays"` and then ticked `ssa_uploaded` on the IA
+        # checklist to push it through to `ia_verified`. That was the SSA-01
+        # defect written down as an expectation: a visit that collected nothing
+        # being certified as though it had. Under the rule the programme owner
+        # set — an SSA support visit is only valid work once the scores are
+        # entered — that path can no longer reach `ia_verified`, and
+        # apps/activities/test_ssa_visit_validity.py pins it there.
+        #
+        # The endpoint asks for something the service did not, before SSA-01
+        # moved the rule into `complete()`: either the SSA was collected on the
+        # visit, or a reason it was not. Posting without it returns a 400
+        # fragment and leaves the activity parked at `completion_started`.
         post(
             f"/my-plan/{activity.id}/complete",
             {
                 "salesforce_id": "SVE-300001",
-                "ssa_not_collected_reason": "School closed for holidays",
+                "ssa_collected": "yes",
+                **{f"score_{code}": "6.0" for code, _label in SsaIntervention.choices},
             },
             who=self.cceo,
+        )
+        self.assertTrue(
+            SsaRecord.objects.filter(
+                school=self.school,
+                verification_status="confirmed",
+                date_of_ssa__date__gte=timezone.localdate(),
+            ).exists(),
+            "completing an SSA collection visit recorded no assessment",
         )
         activity.refresh_from_db()
         self.assertIn(
