@@ -179,7 +179,7 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("overflow-x: auto", css)
         self.assertIn("min-inline-size: 126rem", css)
         self.assertIn("min-inline-size: 42rem", css)
-        self.assertIn(':focus-visible', css)
+        self.assertIn(":focus-visible", css)
 
     def test_role_dashboards_prioritize_actions_and_disclose_evidence(self):
         pl = _read("templates/partials/analytics/pl/body.html")

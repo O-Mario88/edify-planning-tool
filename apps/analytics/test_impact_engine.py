@@ -546,7 +546,9 @@ class ImpactPortfolioScopeTest(TestCase):
     def setUp(self):
         self.fy = get_operational_fy()
         region = Region.objects.create(name="Portfolio Impact Region")
-        district = District.objects.create(name="Portfolio Impact District", region=region)
+        district = District.objects.create(
+            name="Portfolio Impact District", region=region
+        )
         self.pl = _user("impact-pl@edify.test", EdifyRole.COUNTRY_PROGRAM_LEAD.value)
         self.cceo = _user("impact-team@edify.test", EdifyRole.CCEO.value)
         self.other = _user("impact-other@edify.test", EdifyRole.CCEO.value)
@@ -588,9 +590,7 @@ class ImpactPortfolioScopeTest(TestCase):
         self.assertEqual(dashboard["coverage"]["schools_paired"], 1)
 
     def test_accountant_sees_country_and_can_group_by_program_lead(self):
-        dashboard = impact_engine.build_dashboard(
-            self.accountant, {"group_by": "pl"}
-        )
+        dashboard = impact_engine.build_dashboard(self.accountant, {"group_by": "pl"})
         self.assertEqual(dashboard["coverage"]["schools_in_scope"], 3)
         self.assertEqual(dashboard["filters"]["group_by"], "pl")
         names = {row["name"] for row in dashboard["grouped_drivers"]}

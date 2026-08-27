@@ -58,7 +58,7 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertIn("table tbody > tr:only-child > td[colspan]", density)
         self.assertIn(".spa-table-empty", density)
         self.assertIn(".pto-empty-state", density)
-        self.assertIn('[data-empty-state]', density)
+        self.assertIn("[data-empty-state]", density)
         self.assertIn('[class~="py-8"]', density)
         self.assertIn("padding-block: 0 !important;", density)
         for data_canvas in ("canvas", "map", "upload", "chart"):
