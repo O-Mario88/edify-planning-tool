@@ -30,6 +30,7 @@ from apps.geography.models import District, Region
 from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
+from apps.targets.priority_fixtures import agree_priorities
 
 User = get_user_model()
 FY = "2026"
@@ -81,6 +82,12 @@ class CDCommandCenterTest(TestCase):
             staff=self.a1_sp, fy=FY, visits_target=2, trainings_target=1
         )
         StaffTargetProfile.objects.create(staff=self.b1_sp, fy=FY, visits_target=4)
+        # The agreement those annual targets imply. CONFLICT-001 was decided in
+        # favour of the honest denominator, so a person with no agreed priority
+        # measures nothing on any leadership surface -- correct, and it would
+        # turn the assertions below into 0 == 0.
+        agree_priorities(self.a1_sp, FY, school_visits=2, cluster_trainings=1)
+        agree_priorities(self.b1_sp, FY, school_visits=4)
 
         self.wfr = WeeklyFundRequest.objects.create(
             fy=FY,
@@ -253,12 +260,14 @@ class CDCommandCenterTest(TestCase):
         self.assertGreaterEqual(int(by["High-Risk Teams"]["value"]), 1)
 
     def test_program_lead_rows_include_all_supervised_cceo_target_areas(self):
-        """All five areas are still reported — MSCS just has its own column.
+        """Every area the team is measured on is reported, and none it is not.
 
-        The badge cell carries the four delivery counts and MSCS is served
-        separately, because five badges wrapped: the fifth fell under the
-        fourth and made every row in the table two lines tall. Splitting the
-        payload is what lets the column exist; nothing was dropped.
+        This asserted the four catalogue delivery areas. Since CONFLICT-001 was
+        decided, a Programme Lead's row reports the areas their CCEOs have
+        AGREED, so asserting the catalogue would pin the defect rather than the
+        behaviour. The original point of the test survives: the badge cell
+        still carries every delivery area in the row and nothing was dropped
+        when MSCS moved to its own column.
         """
         d = self._dash()
         ada = next(r for r in d["pl_performance"]["rows"] if r["name"] == "PL Ada")
@@ -266,19 +275,24 @@ class CDCommandCenterTest(TestCase):
 
         self.assertEqual(
             list(areas),
-            [
-                "school_visits",
-                "cluster_meetings",
-                "cluster_trainings",
-                "ssa_completed",
-            ],
+            ["school_visits", "cluster_trainings"],
         )
-        self.assertEqual(ada["mscs"]["key"], "mscs")
+        # MSCS keeps its own column, and with nobody having agreed an MSCS
+        # priority the cell is empty rather than zero. Both templates that
+        # render it already guard on `{% if r.mscs and r.mscs.pct is not
+        # None %}`, so an empty cell was always part of the contract -- the
+        # agreed-area rule just makes it the ordinary case rather than a rare
+        # one.
+        self.assertIsNone(ada["mscs"])
         # One validated visit against A1's target of two. The completed
         # training has no Activity SF ID, so it remains provisional.
         self.assertEqual(areas["school_visits"]["pct"], 50)
         self.assertEqual(areas["cluster_trainings"]["pct"], 0)
-        self.assertIsNone(areas["ssa_completed"]["pct"])
+        self.assertNotIn(
+            "ssa_completed",
+            areas,
+            "an area nobody agreed appeared in the Programme Lead's row",
+        )
 
     # 8 ─ leadership attention from real data
     def test_cd_leadership_attention_cards_generated_from_real_data(self):
@@ -407,6 +421,7 @@ class CDTargetCreditConvergenceTest(TestCase):
             staff=self.cceo_sp, school_id=self.school.id
         )
         StaffTargetProfile.objects.create(staff=self.cceo_sp, fy=FY, visits_target=4)
+        agree_priorities(self.cceo_sp, FY, school_visits=4)
         # 2 completed visits with an Activity SF ID (validated) + 1 without
         # (provisional — must never silently count, unlike the old raw
         # completed-status count which counted all 3).

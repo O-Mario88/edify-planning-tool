@@ -74,6 +74,34 @@ class NotificationLinkResolver:
         if event_type.startswith("bt."):
             return "/business-transformation", "Open Uganda Portfolio"
 
+        # ── Routes for the six conditions rescued from raw inserts (INTG-03).
+        # Each raw insert carried its own `target_route`; routing them through
+        # the service means the route has to be resolved here instead, and a
+        # notice that lands on /dashboard is a nudge, not a notification.
+        if event_type == "team_target_staff_at_risk":
+            return "/team-targets", "Review Team Targets"
+
+        if event_type == "team_target_own_at_risk":
+            return "/my-targets", "Open My Targets"
+
+        if event_type.startswith("catchup_plan_"):
+            return "/my-targets", "Open Catch-Up Plan"
+
+        if event_type.startswith("leadership_escalation_"):
+            return "/escalations", "Open Escalation"
+
+        if event_type == "annual_budget_submitted":
+            # The FY Work Plan and the Country Annual Budget are one envelope
+            # (apps/planning/work_plan_approval.py); the RVP approves it from
+            # the work-plan surface the submission notice always pointed at.
+            return "/work-plan?view=fy", "Review Work Plan"
+
+        if event_type.startswith("annual_budget_"):
+            return "/country-budget", "Open Annual Budget"
+
+        if event_type == "strategy_note_issued":
+            return "/dashboard", "Open Strategic Guidance"
+
         if event_type == "fiscal_year_priority_setting":
             if role in ("humanresources", "admin"):
                 route = "/hr/performance"

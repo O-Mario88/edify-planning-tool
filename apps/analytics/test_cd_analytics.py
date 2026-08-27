@@ -40,6 +40,7 @@ from apps.geography.models import District, Region
 from apps.partners.models import Partner, PartnerAssignment
 from apps.schools.models import School
 from apps.ssa.models import SsaRecord, SsaScore
+from apps.targets.priority_fixtures import agree_priorities
 
 User = get_user_model()
 FY, PREV = "2026", "2025"
@@ -142,6 +143,14 @@ class CDAnalyticsTest(TestCase):
         StaffTargetProfile.objects.create(staff=self.b1_sp, fy=FY, visits_target=1)
         StaffTargetProfile.objects.create(staff=self.pl_a_sp, fy=FY, visits_target=1)
         StaffTargetProfile.objects.create(staff=self.pl_b_sp, fy=FY, visits_target=1)
+        # The agreement those annual targets imply. CONFLICT-001 was decided in
+        # favour of the honest denominator, so a person with no agreed priority
+        # measures nothing on any leadership surface -- correct, and it would
+        # turn the assertions below into 0 == 0.
+        agree_priorities(self.a1_sp, FY, school_visits=1, cluster_trainings=1)
+        agree_priorities(self.b1_sp, FY, school_visits=1)
+        agree_priorities(self.pl_a_sp, FY, school_visits=1)
+        agree_priorities(self.pl_b_sp, FY, school_visits=1)
 
     # ── fixtures ─────────────────────────────────────────────────────────────
     def _staff(self, email, name, role):
@@ -552,7 +561,16 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         self.assertEqual(rows["PL Bola"]["cceos"], 1)
         self.assertNotEqual(rows["PL Ada"]["backlog"], rows["PL Bola"].get("_x", None))
 
-    def test_pl_drilldown_shows_every_cceo_across_all_target_areas(self):
+    def test_pl_drilldown_shows_every_area_the_cceo_is_measured_on(self):
+        """Completeness of the drill-down, on the areas that now define it.
+
+        This asserted all five catalogue areas. Since CONFLICT-001 was decided
+        the drill-down reports the areas a CCEO has AGREED — the same rule My
+        Targets already followed — so listing the catalogue here would be
+        asserting the defect. The invariant it exists for is unchanged and
+        arguably stronger: every area the person is measured on appears, and
+        none they are not.
+        """
         detail = S.drilldown(
             self.cd,
             "pl",
@@ -567,16 +585,18 @@ class CDRefinedSpecTest(CDAnalyticsTest):
             [area["key"] for area in cceo["areas"]],
             [
                 "school_visits",
-                "cluster_meetings",
                 "cluster_trainings",
-                "ssa_completed",
-                "mscs",
             ],
         )
         by_area = {area["key"]: area for area in cceo["areas"]}
         self.assertEqual(by_area["school_visits"]["pct"], 100)
         self.assertEqual(by_area["cluster_trainings"]["pct"], 0)
-        self.assertIsNone(by_area["mscs"]["pct"])
+        self.assertNotIn(
+            "mscs",
+            by_area,
+            "an area nobody agreed appeared in the drill-down -- the catalogue "
+            "is inventing rows again",
+        )
 
     def test_cceo_snapshot_uses_fairness_context(self):
         d = self._dash()
@@ -715,7 +735,26 @@ class CDRefinedSpecTest(CDAnalyticsTest):
             200,
         )
 
-    def test_weighted_overall_uses_five_area_weights(self):
+    def test_weighted_overall_averages_each_persons_weighted_result(self):
+        """The country number is the average of each person's own result.
+
+        This expected 60, which is what you get by summing everyone's targets
+        and everyone's achievements and weighting once: visits 2/2 at weight
+        30, trainings 0/1 at weight 20 -> 3000/50.
+
+        CONFLICT-001 was decided in favour of the Programme Lead's reading, and
+        the PL's page has always averaged its members' own weighted results
+        instead. On this fixture that is (a1: 60, b1: 100) -> 80. The counts
+        below are unchanged at (2, 3), which is the evidence that only the
+        statistic moved and not the underlying data.
+
+        The trade-off is worth naming rather than burying: averaging members
+        gives a CCEO with one target the same voice as one with fifty, while
+        summing weights by volume. Summing is what let a CCEO with no target at
+        all push their achievement into somebody else's denominator and report
+        200%, so the platform now averages -- and a Country Director sees
+        exactly what each of their Programme Leads sees.
+        """
         from apps.targets.my_targets import TargetAchievementService
 
         # Build the validated ledgers: a1 visit (SF ✓) validates; a1 training
@@ -724,10 +763,10 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         TargetAchievementService.rebuild(self.b1, FY)
         cd = resolve_cd_scope(FY)
         pct, achieved, target = S._weighted_overall(cd)
-        # Visits: 2 validated of 2 targeted → 100% (w30). Trainings: 0 of 1 →
-        # 0% (w20). Weighted = 3000/50 = 60.
+        # a1: visits 1/1 = 100% (w30) and trainings 0/1 = 0% (w20) -> 60.
+        # b1: visits 1/1 = 100% (w30) only -> 100. Average = 80.
         self.assertEqual((achieved, target), (2, 3))
-        self.assertEqual(pct, 60)
+        self.assertEqual(pct, 80)
         from apps.targets.models import TargetAchievementLedger
 
         self.assertFalse(

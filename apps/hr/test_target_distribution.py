@@ -592,7 +592,7 @@ class QuarterlySpreadTests(DistributionFixture):
         milestone = self._milestone(
             "QSP_RATE", target="90", measurement="percentage", cap_at_100=True
         )
-        allocation = self._team_allocation(milestone, self.pl_sp, 90)
+        allocation = self._team_allocation(milestone, self.pl_sp, 90, denominator="10")
         approve_allocation(allocation, principal=self.ia)
         for row in allocation.period_targets.all():
             self.assertEqual(row.planned_value, Decimal("90"))
@@ -815,9 +815,7 @@ class RateAchievementTests(DistributionFixture):
             minimum_completion_state="ia_verified",
             weight=1,
         )
-        allocation = self._team_allocation(milestone, self.pl_sp, 90)
-        allocation.denominator = Decimal("4")
-        allocation.save(update_fields=["denominator"])
+        allocation = self._team_allocation(milestone, self.pl_sp, 90, denominator="4")
         approve_allocation(allocation, principal=self.ia)
         schools = self.schools_by_staff[self.cceo_a_sp.id][:2]
         for school in schools:
@@ -861,9 +859,20 @@ class RateAchievementTests(DistributionFixture):
             minimum_completion_state="ia_verified",
             weight=1,
         )
-        allocation = self._team_allocation(milestone, self.pl_sp, rate)
-        allocation.denominator = Decimal(str(denominator)) if denominator else None
-        allocation.save(update_fields=["denominator"])
+        # A rate allocation is created WITH its denominator now — create_allocation
+        # refuses one without (TGT-01). The no-denominator case this helper still
+        # has to build is a LEGACY row, written before that guard existed, so it
+        # is stamped straight onto the record rather than through the service:
+        # the point of that test is the engine's defence against data already in
+        # the database, which is exactly what cannot be created any more.
+        allocation = self._team_allocation(
+            milestone, self.pl_sp, rate, denominator=str(denominator or 1)
+        )
+        if not denominator:
+            MilestoneAllocation.objects.filter(id=allocation.id).update(
+                denominator=None
+            )
+            allocation.refresh_from_db()
         approve_allocation(allocation, principal=self.ia)
         for school in self.schools_by_staff[self.cceo_a_sp.id][:cover]:
             activity = Activity.objects.create(
@@ -1031,6 +1040,150 @@ class IaWorkspaceCreditTests(DistributionFixture):
         self.assertIn("1 of 10", body)
 
 
+class UniqueSchoolRollupTests(DistributionFixture):
+    """TGT-03 — a "unique schools" figure must not grow when the SAME school
+    is reached again in a later period.
+
+    Each stored month row is a distinct count for its own month, which is
+    right for the monthly view. Adding those rows up is not a distinct count
+    of anything: a school supported in October and again in November is one
+    unique school across the quarter and across the year, not two.
+    """
+
+    def _unique_school_allocation(self, code):
+        """A count milestone measured in UNIQUE SCHOOLS, allocated to Alpha."""
+        milestone = self._milestone(code, target="10")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="CLA_CHARACTER_DEVELOPMENT"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=milestone,
+            catalogue_item=item,
+            counting_basis="UNIQUE_SCHOOLS_TRAINED",
+            minimum_completion_state="ia_verified",
+            weight=1,
+        )
+        team = self._team_allocation(milestone, self.pl_sp, 10)
+        approve_allocation(team, principal=self.ia)
+        child = self._employee_allocation(milestone, self.cceo_a_sp, 10, parent=team)
+        approve_allocation(child, principal=self.pl)
+        return milestone, item, child
+
+    def _verify_visit(self, item, school, when, reference):
+        activity = Activity.objects.create(
+            activity_type=item.workflow_kind,
+            status="ia_verified",
+            salesforce_activity_id=reference,
+            planned_date=when,
+            fy=FY,
+            school=school,
+            responsible_staff_id=self.cceo_a_sp.id,
+            focus_intervention="christlike_behaviour",
+        )
+        apply_catalogue_snapshot(
+            activity, item=item, requested_intervention="christlike_behaviour"
+        )
+        record_activity_progress(activity)
+        return activity
+
+    def _figures(self, allocation):
+        """The three roll-ups a CCEO's achievement is read from."""
+        from .milestone_allocations import personal_milestone_targets
+        from .performance_scores import milestone_scores
+
+        # month_of_fy 2 = November 2026, so the quarter window is Q1
+        # (October–December) — the window both visits fall inside.
+        projection = next(
+            row
+            for row in personal_milestone_targets(
+                staff=self.cceo_a_sp, fy=FY, month_of_fy=2
+            )
+            if row["allocationId"] == allocation.id
+        )
+        scored = next(
+            row
+            for row in milestone_scores(str(self.cceo_a_sp.id), FY)
+            if row.allocation_id == allocation.id
+        )
+        return projection, scored
+
+    def test_one_school_reached_in_two_months_counts_once_for_the_year(self):
+        _milestone, item, allocation = self._unique_school_allocation("UNIQ_REPEAT")
+        school = self.schools_by_staff[self.cceo_a_sp.id][0]
+        self._verify_visit(item, school, date(2026, 10, 14), "VS-UNIQ-OCT")
+        self._verify_visit(item, school, date(2026, 11, 18), "VS-UNIQ-NOV")
+
+        october, november = list(
+            allocation.period_targets.filter(period_type="month").order_by(
+                "period_start"
+            )
+        )[:2]
+        # Each month is honestly 1 — the month view is unaffected.
+        self.assertEqual(october.actual_value, Decimal("1"))
+        self.assertEqual(november.actual_value, Decimal("1"))
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("1"))
+        self.assertEqual(projection["quarterActual"], Decimal("1"))
+        self.assertEqual(scored.achieved, Decimal("1"))
+
+    def test_one_school_reached_in_two_quarters_counts_once_for_the_year(self):
+        _milestone, item, allocation = self._unique_school_allocation("UNIQ_QUARTERS")
+        school = self.schools_by_staff[self.cceo_a_sp.id][0]
+        self._verify_visit(item, school, date(2026, 10, 14), "VS-UNIQQ-OCT")
+        self._verify_visit(item, school, date(2027, 1, 20), "VS-UNIQQ-JAN")
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("1"))
+        # Q1 holds only the October visit, so the quarter reads 1 either way —
+        # the year is where the repeat visit was being added on.
+        self.assertEqual(projection["quarterActual"], Decimal("1"))
+        self.assertEqual(scored.achieved, Decimal("1"))
+
+    def test_two_different_schools_in_two_months_still_total_two(self):
+        """The control. A fix that simply collapses every roll-up to the best
+        single month would pass the tests above and destroy the measure."""
+        _milestone, item, allocation = self._unique_school_allocation("UNIQ_CONTROL")
+        first, second = self.schools_by_staff[self.cceo_a_sp.id][:2]
+        self._verify_visit(item, first, date(2026, 10, 14), "VS-UNIQC-OCT")
+        self._verify_visit(item, second, date(2026, 11, 18), "VS-UNIQC-NOV")
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("2"))
+        self.assertEqual(projection["quarterActual"], Decimal("2"))
+        self.assertEqual(scored.achieved, Decimal("2"))
+
+    def test_an_additive_count_still_sums_across_months(self):
+        """The second control. VERIFIED_ACTIVITIES counts events, not
+        entities: two visits to the same school in two months really are two
+        activities, and that must keep summing."""
+        milestone = self._milestone("UNIQ_ADDITIVE", target="10")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="CLA_CHARACTER_DEVELOPMENT"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=milestone,
+            catalogue_item=item,
+            counting_basis="VERIFIED_ACTIVITIES",
+            minimum_completion_state="ia_verified",
+            weight=1,
+        )
+        team = self._team_allocation(milestone, self.pl_sp, 10)
+        approve_allocation(team, principal=self.ia)
+        allocation = self._employee_allocation(
+            milestone, self.cceo_a_sp, 10, parent=team
+        )
+        approve_allocation(allocation, principal=self.pl)
+        school = self.schools_by_staff[self.cceo_a_sp.id][0]
+        self._verify_visit(item, school, date(2026, 10, 14), "VS-UNIQA-OCT")
+        self._verify_visit(item, school, date(2026, 11, 18), "VS-UNIQA-NOV")
+
+        projection, scored = self._figures(allocation)
+        self.assertEqual(projection["fyActual"], Decimal("2"))
+        self.assertEqual(projection["quarterActual"], Decimal("2"))
+        self.assertEqual(scored.achieved, Decimal("2"))
+
+
 class PlannedOutputTests(DistributionFixture):
     def test_scheduling_raises_planned_output_and_cancelling_returns_it(self):
         milestone = self._milestone("PLN_1", target="10")
@@ -1086,15 +1239,127 @@ class MasterGovernanceTests(DistributionFixture):
             engine.publish_uganda_master(FY, principal=self.cd)
         self.assertIn("Confirm these source figures", str(ctx.exception))
 
-    def test_only_the_cd_confirms_and_publishes(self):
+    def test_ia_confirms_alongside_the_cd_but_only_the_cd_publishes(self):
+        """CONFLICT-002, decided: IA may edit Master Priority rows.
+
+        The product owner's reason was that IA works WITH the Country Director
+        to assign priorities, and IA is the role that monitors everyone's
+        progress against them. IA already imports the master, so being unable
+        to correct what it brought in was the practical complaint.
+
+        Working with somebody is not signing on their behalf, so the two acts
+        are split and both halves are asserted here. Confirming a source figure
+        now reads ``milestones.define`` from the permission matrix, which IA
+        holds. Publication still compares against the Country Director alone,
+        and IA does not hold ``strategicPriorities.approve``.
+
+        This audit argued the other way — IA verifies delivered work, and
+        letting the verifier author what that work is measured against is the
+        conflict SEC-03 closed one layer down — and was overruled. The
+        narrowing above is what remains of the objection, together with the
+        audit row every confirmation writes.
+        """
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        engine.confirm_milestone(milestone, data={}, principal=self.ia)
+        milestone.refresh_from_db()
+        self.assertFalse(
+            milestone.needs_confirmation,
+            "Impact Assessment could not confirm a source figure",
+        )
+
+        self._confirm_all()
+        with self.assertRaises(BadRequest) as ctx:
+            engine.publish_uganda_master(FY, principal=self.ia)
+        self.assertIn("Country Director", str(ctx.exception))
+
+    def test_ia_can_confirm_through_the_real_endpoint(self):
+        """The decision, at the door a real user actually touches.
+
+        JRN-01's lesson, applied while the change was being made rather than
+        found afterwards. The service guard and the permission grant are not
+        the whole of this decision: the view had its own copy of the rule
+        (``if not _is_cd(request)``), so opening the service and granting the
+        permission would have left Impact Assessment refused at the door while
+        the act allowed them. Nothing in the service-level tests above would
+        have noticed.
+
+        The duplicate is gone -- the view now lets ``confirm_milestone`` refuse
+        and surfaces the message, which is how the ``publish_master`` branch
+        beside it always worked -- and this proves it end to end.
+        """
+        from django.test import Client
+
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        self.assertTrue(milestone.needs_confirmation)
+
+        client = Client()
+        client.force_login(self.ia)
+        response = client.post(
+            "/target-distribution/action",
+            {"action": "confirm_milestone", "milestone": str(milestone.id), "fy": FY},
+        )
+        self.assertIn(response.status_code, (200, 302), response.content[:300])
+
+        milestone.refresh_from_db()
+        self.assertFalse(
+            milestone.needs_confirmation,
+            "Impact Assessment was refused at the door even though the "
+            "permission matrix and the service both allow the act",
+        )
+
+    def test_the_door_still_refuses_a_role_without_the_permission(self):
+        """The control: the door was widened, not opened."""
+        from django.test import Client
+
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        client = Client()
+        client.force_login(self.pl)
+        client.post(
+            "/target-distribution/action",
+            {"action": "confirm_milestone", "milestone": str(milestone.id), "fy": FY},
+        )
+        milestone.refresh_from_db()
+        self.assertTrue(
+            milestone.needs_confirmation,
+            "a Programme Lead confirmed a Master Priority figure",
+        )
+
+    def test_a_role_with_neither_permission_still_cannot_touch_the_master(self):
+        """The guard must refuse somebody, or it is not a guard.
+
+        Splitting confirmation off from publication widened who may edit; this
+        is the control that it did not widen it to everybody.
+        """
         milestone = PriorityMilestone.objects.get(
             code="ECD_TEACHERS", priority__level="country"
         )
         with self.assertRaises(BadRequest):
-            engine.confirm_milestone(milestone, data={}, principal=self.ia)
-        self._confirm_all()
-        with self.assertRaises(BadRequest):
-            engine.publish_uganda_master(FY, principal=self.ia)
+            engine.confirm_milestone(milestone, data={}, principal=self.pl)
+
+    def test_every_confirmation_records_who_made_it(self):
+        """Now that two roles can edit, the audit row is what answers 'who'."""
+        from apps.audit.models import AuditLog
+
+        milestone = PriorityMilestone.objects.get(
+            code="ECD_TEACHERS", priority__level="country"
+        )
+        engine.confirm_milestone(milestone, data={}, principal=self.ia)
+        row = (
+            AuditLog.objects.filter(
+                action="hr.uganda_master_milestone_confirmed",
+                subject_id=str(milestone.id),
+            )
+            .order_by("-seq")
+            .first()
+        )
+        self.assertIsNotNone(row, "confirming a master figure wrote no audit row")
+        self.assertEqual(row.actor_role, "ImpactAssessment")
 
     def test_publication_locks_the_master_and_activates_scoreable_milestones(self):
         self._confirm_all()
@@ -1378,3 +1643,39 @@ class SeedCycleGuardTests(TestCase):
         )
         with self.assertRaises(BadRequest):
             seed_uganda_master(fy="2031")
+
+
+class RateAllocationNeedsItsDenominatorTests(DistributionFixture):
+    """A rate with no denominator is a target that can never be met.
+
+    milestone_progress refuses to invent one — it logs the allocation and
+    scores an honest zero rather than dividing raw units by the rate, which is
+    dimensional nonsense wearing a number. But nothing stopped the zero-scoring
+    allocation being created in the first place, and the distribution workspace
+    populated the denominator only for "percentage" while the engine treats
+    "ratio" as a rate too. Every ratio milestone allocated there scored zero
+    for ever (2026-08 audit TGT-01).
+    """
+
+    def test_a_ratio_allocation_without_a_denominator_is_refused(self):
+        milestone = self._milestone("RATIO_NODEN", target="90", measurement="ratio")
+        with self.assertRaises(BadRequest) as caught:
+            self._team_allocation(milestone, self.pl_sp, 90)
+        self.assertIn("denominator", str(caught.exception).lower())
+
+    def test_a_percentage_allocation_without_a_denominator_is_refused(self):
+        milestone = self._milestone("PCT_NODEN", target="90", measurement="percentage")
+        with self.assertRaises(BadRequest):
+            self._team_allocation(milestone, self.pl_sp, 90)
+
+    def test_a_rate_allocation_with_a_denominator_is_accepted(self):
+        """Without this, refusing every rate allocation would pass the two above."""
+        milestone = self._milestone("RATIO_OK", target="90", measurement="ratio")
+        allocation = self._team_allocation(milestone, self.pl_sp, 90, denominator="12")
+        self.assertEqual(allocation.denominator, Decimal("12"))
+
+    def test_a_count_allocation_still_needs_no_denominator(self):
+        """The requirement is about rates. A count target is a count."""
+        milestone = self._milestone("COUNT_NODEN", target="50", measurement="count")
+        allocation = self._team_allocation(milestone, self.pl_sp, 50)
+        self.assertIsNone(allocation.denominator)

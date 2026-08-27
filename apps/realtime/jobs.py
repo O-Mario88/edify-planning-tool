@@ -678,3 +678,87 @@ def document_lifecycle_job():
     if not _enabled():
         return
     run_tracked_job("document_lifecycle", _do_document_lifecycle)
+
+
+# ── Scheduler watchdog ───────────────────────────────────────────────────────
+SCHEDULER_JOB_UNHEALTHY = "scheduler.job_unhealthy"
+
+
+def _do_scheduler_watchdog() -> int:
+    """Push what SchedulerHealthService already knows.
+
+    The health of every job was computed correctly and read by exactly two
+    things: the System Health page, which somebody has to open, and a CLI
+    command no deploy config invokes. So a job could stop and nobody would
+    hear — the failure mode the platform's own runbooks call out ("a scheduler
+    that can stop without anyone noticing until a job is stale needs its own
+    liveness signal").
+
+    This closes the common half: a job that fails or falls behind while the
+    scheduler is alive. It cannot close the other half — a watchdog inside the
+    scheduler dies with it — and that still needs an external monitor calling
+    `manage.py scheduler_health_check`, which already exits non-zero for
+    exactly this and checks `is_scheduler_process_alive` too.
+
+    Notifications are keyed per job, so a job broken for a week re-fires into
+    the one open notice rather than adding forty-eight. Recovery closes it,
+    because a notice that outlives its condition is what taught people to stop
+    reading them.
+    """
+    from apps.accounts.models import User
+    from apps.notifications.services import (
+        WorkflowNotificationService,
+        resolve_condition,
+    )
+
+    from .registry import SchedulerHealthService
+
+    admins = list(
+        User.objects.filter(
+            is_active=True, deleted_at__isnull=True, roles__contains=["Admin"]
+        ).values_list("id", flat=True)
+    )
+
+    raised = 0
+    for health in SchedulerHealthService.all_jobs_health():
+        job_name = health["job_name"]
+        if health["severity"] == "ok":
+            resolve_condition(SCHEDULER_JOB_UNHEALTHY, "scheduled_job", job_name)
+            continue
+
+        if not admins:
+            logger.error(
+                "Scheduled job %s is %s and no active Admin exists to notify.",
+                job_name,
+                health["status"],
+            )
+            continue
+
+        last = health["last_successful"]
+        WorkflowNotificationService.trigger(
+            event_type=SCHEDULER_JOB_UNHEALTHY,
+            category="platform",
+            # `critical` is a job that failed or has never run at all; `high` is
+            # one that is merely late. Neither is urgent — the escalation sweep
+            # promotes what stays unresolved, and starting there would leave it
+            # nowhere to go.
+            priority="high" if health["severity"] == "critical" else "normal",
+            title=f"Background job {job_name} is {health['status']}",
+            body=(
+                f"{health['status'].replace('_', ' ').capitalize()}. "
+                f"Last successful run: {last or 'never'}. "
+                f"{health['failure_count']} recorded failure(s). "
+                f"{health['last_error'] or ''}"
+            ).strip(),
+            context_type="scheduled_job",
+            context_id=job_name,
+            recipients=admins,
+        )
+        raised += 1
+    return raised
+
+
+def scheduler_watchdog_job():
+    if not _enabled():
+        return
+    run_tracked_job("scheduler_watchdog", _do_scheduler_watchdog)

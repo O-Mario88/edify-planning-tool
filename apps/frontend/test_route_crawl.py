@@ -166,16 +166,26 @@ class _KpiVisualAuditParser(HTMLParser):
         self.close()
         while self.stack:
             self._finish_node(self.stack.pop())
-        if self.total_card_count > 6:
-            self.issues.append(
-                f"page rendered {self.total_card_count} KPI cards; maximum is 6"
-            )
+        # FE-02, decided: no headline cap. This used to flag any page rendering
+        # more than six KPI cards, and it was flagging the fix rather than a
+        # fault -- /clusters, /debriefs, /my-plan, /planning, /schools,
+        # /core-schools and /my-professional-development each register seven or
+        # eight metrics, and every one of them was losing the surplus off the
+        # end of a six-slot tray with nothing on screen to say so.
+        #
+        # A cap is not what this crawl should police. What matters is that
+        # every card the page renders is a complete card, which _finish_node
+        # below still checks part by part, and that the mobile tray keeps its
+        # real two-card width, which its own test covers.
 
     def _finish_node(self, node):
-        if node["is_summary"] and node["card_count"] > 6:
-            self.issues.append(
-                f"executive tray rendered {node['card_count']} cards; maximum is 6"
-            )
+        if node["is_summary"] and node["card_count"] == 0:
+            # The replacement for the old "more than six" rule. An empty
+            # headline tray is the failure worth catching now: a page that
+            # registered metrics and rendered none of them has lost all of
+            # them, which is the same defect the cap used to cause, at its
+            # limit.
+            self.issues.append("executive tray rendered no cards at all")
         if node["is_card"]:
             missing = sorted(REQUIRED_KPI_CARD_PARTS - node["parts"])
             if missing:
@@ -216,34 +226,59 @@ class KpiVisualAuditParserTests(SimpleTestCase):
         self.assertTrue(any("legacy KPI class" in issue for issue in issues))
         self.assertTrue(any("outside the approved tray" in issue for issue in issues))
 
-    def test_more_than_six_tiles_fails(self):
-        card = """
+    CARD = """
         <div data-component="kpi-card">
           <span class="kpi-strip__topline"><span class="kpi-strip__icon-container"></span></span>
           <span class="kpi-strip__item-details"><span class="kpi-strip__label"></span><span class="kpi-strip__value"></span></span>
         </div>
+        """
+
+    def test_seven_tiles_is_no_longer_a_fault(self):
+        """FE-02, decided: the count follows the work.
+
+        This asserted that seven cards raised "maximum is 6", and across the
+        real crawl it was flagging seven live pages — /clusters, /debriefs,
+        /my-plan, /planning, /schools, /core-schools and
+        /my-professional-development — each of which registers seven or eight
+        metrics. The cap was not protecting them; it was the reason they were
+        losing one or two apiece with nothing on screen to say so.
         """
         issues = self._issues(
             '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
-            + card * 7
+            + self.CARD * 7
             + "</section>"
         )
-        self.assertTrue(any("maximum is 6" in issue for issue in issues))
+        self.assertEqual(
+            [issue for issue in issues if "maximum" in issue],
+            [],
+            "the crawl is capping the headline tray again",
+        )
 
-    def test_multiple_valid_trays_cannot_bypass_the_page_maximum(self):
-        card = """
-        <div data-component="kpi-card">
-          <span class="kpi-strip__topline"><span class="kpi-strip__icon-container"></span></span>
-          <span class="kpi-strip__item-details"><span class="kpi-strip__label"></span><span class="kpi-strip__value"></span></span>
-        </div>
+    def test_a_tray_that_renders_nothing_is_still_a_fault(self):
+        """The rule that replaced the cap.
+
+        Removing the maximum must not leave the crawl indifferent to what the
+        tray does. An empty headline tray is the old defect at its limit: a
+        page that registered metrics and shows none of them has lost all of
+        them.
         """
-        tray = (
+        issues = self._issues(
             '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
-            + card * 4
+            "</section>"
+        )
+        self.assertIn("executive tray rendered no cards at all", issues)
+
+    def test_every_card_must_still_be_a_complete_card(self):
+        """Uncapped is not unpoliced: each card is still checked part by part."""
+        issues = self._issues(
+            '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
+            + self.CARD * 7
+            + '<div data-component="kpi-card"></div>'
             + "</section>"
         )
-        issues = self._issues(tray + tray)
-        self.assertIn("page rendered 8 KPI cards; maximum is 6", issues)
+        self.assertTrue(
+            any("missing approved visual parts" in issue for issue in issues)
+        )
 
 
 def _zero_argument_routes() -> list[str]:

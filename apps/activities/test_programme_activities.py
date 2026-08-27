@@ -448,13 +448,32 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
             self.assertNotIn(f'name="{retired}"', html)
 
         # Real catalogue entries, grouped by their programme category.
-        for label in (
-            "School Leadership",
-            "Teacher Leadership Conference/Camp/Retreat",
-            "Programme",
-            "Student Programmes",
-        ):
-            self.assertIn(label, html)
+        #
+        # Read from the catalogue rather than from a list of four labels typed
+        # here. Those four included "School Leadership", which the catalogue
+        # renamed to "Leadership" — a rename is not a defect, but it turned
+        # this red, and the sample of four could never have caught the defect
+        # that matters: an item the planner cannot choose because the drawer
+        # never offered it. Assert every governed item instead.
+        from django.utils.html import escape
+
+        offered = list(response.context["items"])
+        self.assertGreater(len(offered), 20, "the drawer offered nothing")
+        missing = [
+            item.display_name
+            for item in offered
+            if f'value="{item.stable_code}"' not in html
+            or escape(item.display_name) not in html
+        ]
+        self.assertEqual(
+            missing,
+            [],
+            "the view selected these governed activities and the drawer "
+            "never rendered them",
+        )
+        # The category groupings the planner navigates by are real too.
+        for grouping in ("Programme", "Student Programmes"):
+            self.assertIn(f'optgroup label="{grouping}"', html)
 
     def test_excel_export_matches_the_work_plan_columns(self):
         from django.test import Client

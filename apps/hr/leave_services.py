@@ -516,6 +516,13 @@ class LeaveRequestService:
         # Recalculate balance to include pending days
         LeaveBalanceService.recalculate_balances(staff, year)
 
+        # Announcing the request belongs to the transition, not to one of its
+        # two doors. The HTMX view fired this and the DRF endpoint at
+        # /api/hr/leave did not, so a request submitted through the API reached
+        # no approver's inbox at all (2026-08 audit D3). Putting it here means a
+        # third door cannot repeat that.
+        LeaveNotificationService.notify_leave_requested(leave)
+
         return leave
 
 
@@ -910,6 +917,24 @@ class LeaveApprovalService:
             leave = type(leave).objects.select_for_update().get(id=leave.id)
             if leave.status not in DECIDABLE_LEAVE_STATUSES:
                 raise BadRequest(f"This leave request is already {leave.status}.")
+
+            # 2026-08-20 HR audit D2: approval branched on `covering_staff`
+            # alone and overwrote `coverage_status`, so a cover who had
+            # DECLINED was still handed an active TemporaryCoverageAssignment —
+            # the absent person's portfolio and supervisee scope, approval
+            # authority through `_covered_staff_ids`, and their own actions
+            # attributed back to the absent person by apps/audit/services.py.
+            # Refuse rather than silently drop the declined cover: the approver
+            # may never have seen the decline, and dropping it would send the
+            # staff member away with nobody covering. Reassigning or clearing
+            # the cover resets `coverage_status` and reopens approval.
+            if leave.covering_staff and leave.coverage_status == "Declined":
+                raise BadRequest(
+                    f"{leave.covering_staff.user.name} declined to cover this "
+                    f"leave. Assign a different covering employee, or clear the "
+                    f"cover, before approving."
+                )
+
             leave.status = "approved"
             leave.reviewed_by_user_id = reviewer_user.id
             leave.reviewed_at = timezone.now()
@@ -1017,6 +1042,10 @@ class LeaveApprovalService:
                 LeaveApprovalService.notify_coverage(leave)
 
         _audit_leave("leave.approved", leave, reviewer_user)
+        # In the transition, not the view — see notify_leave_requested (D3).
+        # This also runs _close_pending_request_notices, so the approver's
+        # "needs approval" notice stops being promoted to urgent at 48 hours.
+        LeaveNotificationService.notify_leave_approved(leave)
         return leave
 
     @staticmethod
@@ -1063,6 +1092,9 @@ class LeaveApprovalService:
             LeaveBalanceService.recalculate_balances(leave.staff, year)
 
         _audit_leave("leave.rejected", leave, reviewer_user, reason=reason)
+        LeaveNotificationService.notify_leave_rejected(
+            leave, getattr(reviewer_user, "name", ""), reason or ""
+        )
         return leave
 
     @staticmethod
@@ -1102,6 +1134,9 @@ class LeaveApprovalService:
         # Returning for correction is a decision like any other: approve and
         # reject were audited, this was not, so repeated returns left no trace.
         _audit_leave("leave.returned", leave, reviewer_user, reason=reason)
+        LeaveNotificationService.notify_leave_returned(
+            leave, getattr(reviewer_user, "name", ""), reason
+        )
         return leave
 
     @staticmethod
@@ -1123,6 +1158,7 @@ class LeaveApprovalService:
         leave.coverage_status = "Accepted"
         leave.save(update_fields=["coverage_status", "updated_at"])
         _audit_leave("leave.coverage_accepted", leave, covering_user)
+        LeaveNotificationService.notify_coverage_decision(leave, accepted=True)
         return leave
 
     @staticmethod
@@ -1171,6 +1207,7 @@ class LeaveApprovalService:
             covering_user,
             reason="Declined by the designated cover",
         )
+        LeaveNotificationService.notify_coverage_decision(leave, accepted=False)
         return leave
 
     @staticmethod
@@ -2093,6 +2130,69 @@ class LeaveNotificationService:
             context_type="Leave",
             context_id=leave.id,
             recipients=[cover.user_id],
+        )
+
+    @staticmethod
+    def notify_coverage_decision(leave: Leave, *, accepted: bool) -> None:
+        """Tell the approver what the nominated cover answered.
+
+        Accepting said "The supervisor is notified." and sent nothing (2026-08
+        audit D4). That is now load-bearing rather than merely untidy: approval
+        refuses outright when a cover has declined, so an approver who never
+        hears the answer meets the refusal with no idea why.
+
+        Closing the proposal notice matters as much as sending this one — the
+        cover has answered, so their "please accept or decline" is done.
+        """
+        from apps.accounts.models import StaffSupervisorAssignment
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            resolve_condition,
+        )
+
+        cover = leave.covering_staff
+        if not cover:
+            return
+
+        try:
+            resolve_condition("leave_coverage_proposed", "Leave", leave.id)
+        except Exception:  # noqa: BLE001 — bookkeeping never fails a decision
+            pass
+
+        supervisor_asgn = StaffSupervisorAssignment.objects.filter(
+            supervisee=leave.staff
+        ).first()
+        supervisor = supervisor_asgn.supervisor if supervisor_asgn else None
+        if not supervisor or not supervisor.user_id:
+            return
+
+        cover_name = cover.user.name if cover.user else "The nominated cover"
+        staff_name = leave.staff.user.name if leave.staff.user else "a staff member"
+        if accepted:
+            title = "Leave Coverage Accepted"
+            body = (
+                f"{cover_name} accepted covering for {staff_name} "
+                f"from {leave.start_date} to {leave.end_date}."
+            )
+        else:
+            title = "Leave Coverage Declined"
+            body = (
+                f"{cover_name} declined to cover for {staff_name} "
+                f"from {leave.start_date} to {leave.end_date}. "
+                "Assign a different covering employee, or clear the cover, "
+                "before approving this request."
+            )
+
+        WorkflowNotificationService.trigger(
+            event_type="leave_coverage_decided",
+            category="leave",
+            # A decline blocks the approval; an acceptance is confirmation.
+            priority="high" if not accepted else "normal",
+            title=title,
+            body=body,
+            context_type="Leave",
+            context_id=leave.id,
+            recipients=[supervisor.user_id],
         )
 
 

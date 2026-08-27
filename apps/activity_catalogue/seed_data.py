@@ -510,27 +510,135 @@ SOURCE_CATALOGUE_ITEMS = [
 #: ``intervention`` is the canonical eight-code SSA dimension used by Edify
 #: analytics.  "Other" is intentionally not forced into a score dimension.
 TRAINING_COURSE_REFERENCE = [
-    ("ACCOUNTING_FINANCIAL_MANAGEMENT", "Accounting and Financial Policies", "Business Transformation", "Fee/Budget/Accounts", INTERVENTION.FINANCIAL_HEALTH),
-    ("BIBLICAL_INTEGRATION", "Biblical Integration", "Christian Transformation", "Exposure to God's Word", INTERVENTION.EXPOSURE_TO_WORD_OF_GOD),
-    ("BUDGETING", "Budgeting", "Business Transformation", "Fee/Budget/Accounts", INTERVENTION.FINANCIAL_HEALTH),
-    ("CLA_CHARACTER_DEVELOPMENT", "Christ-like Character Training", "Christian Transformation", "Christ-Like Behavior", INTERVENTION.CHRISTLIKE_BEHAVIOUR),
+    (
+        "ACCOUNTING_FINANCIAL_MANAGEMENT",
+        "Accounting and Financial Policies",
+        "Business Transformation",
+        "Fee/Budget/Accounts",
+        INTERVENTION.FINANCIAL_HEALTH,
+    ),
+    (
+        "BIBLICAL_INTEGRATION",
+        "Biblical Integration",
+        "Christian Transformation",
+        "Exposure to God's Word",
+        INTERVENTION.EXPOSURE_TO_WORD_OF_GOD,
+    ),
+    (
+        "BUDGETING",
+        "Budgeting",
+        "Business Transformation",
+        "Fee/Budget/Accounts",
+        INTERVENTION.FINANCIAL_HEALTH,
+    ),
+    (
+        "CLA_CHARACTER_DEVELOPMENT",
+        "Christ-like Character Training",
+        "Christian Transformation",
+        "Christ-Like Behavior",
+        INTERVENTION.CHRISTLIKE_BEHAVIOUR,
+    ),
     ("CORE_SCHOOL_ORIENTATION", "Core School Orientation", "Other", "Other", None),
-    ("DISCIPLESHIP_DYNAMICS", "Discipleship Dynamics", "Christian Transformation", "Exposure to God's Word", INTERVENTION.EXPOSURE_TO_WORD_OF_GOD),
-    ("EARLY_CHILDHOOD_EDUCATION_PROJECT", "Early Childhood Education", "Education", "Teaching Environment", INTERVENTION.TEACHING_ENVIRONMENT),
-    ("EDTECH_FOUNDATIONS", "EdTech Foundations Training", "EdTech", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
-    ("EDTECH_INTEGRATION", "EdTech Integration", "EdTech", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
-    ("FEES_ENROLMENT_MARKETING", "Fees, Enrolment, and Marketing Management", "Business Transformation", "Enrollment", INTERVENTION.ENROLMENT),
-    ("FINANCIAL_MANAGEMENT", "Financial Management", "Business Transformation", "Access to Credit", INTERVENTION.FINANCIAL_HEALTH),
-    ("GOVERNMENT_STATUTORY_REQUIREMENTS", "Government and Statutory requirements", "Business Transformation", "Fulfill Government Requirements", INTERVENTION.GOVERNMENT_REQUIREMENT),
-    ("SCHOOL_LEADERSHIP", "Leadership", "Education", "Leadership Practices", INTERVENTION.LEADERSHIP),
-    ("LEARNING_ENVIRONMENT_TRAINING", "Learning environment", "Education", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
-    ("LITERACY_NUMERACY_PROJECT", "Literacy/ Numeracy", "Education", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
+    (
+        "DISCIPLESHIP_DYNAMICS",
+        "Discipleship Dynamics",
+        "Christian Transformation",
+        "Exposure to God's Word",
+        INTERVENTION.EXPOSURE_TO_WORD_OF_GOD,
+    ),
+    (
+        "EARLY_CHILDHOOD_EDUCATION_PROJECT",
+        "Early Childhood Education",
+        "Education",
+        "Teaching Environment",
+        INTERVENTION.TEACHING_ENVIRONMENT,
+    ),
+    (
+        "EDTECH_FOUNDATIONS",
+        "EdTech Foundations Training",
+        "EdTech",
+        "Learning Environment",
+        INTERVENTION.LEARNING_ENVIRONMENT,
+    ),
+    (
+        "EDTECH_INTEGRATION",
+        "EdTech Integration",
+        "EdTech",
+        "Learning Environment",
+        INTERVENTION.LEARNING_ENVIRONMENT,
+    ),
+    (
+        "FEES_ENROLMENT_MARKETING",
+        "Fees, Enrolment, and Marketing Management",
+        "Business Transformation",
+        "Enrollment",
+        INTERVENTION.ENROLMENT,
+    ),
+    (
+        "FINANCIAL_MANAGEMENT",
+        "Financial Management",
+        "Business Transformation",
+        "Access to Credit",
+        INTERVENTION.FINANCIAL_HEALTH,
+    ),
+    (
+        "GOVERNMENT_STATUTORY_REQUIREMENTS",
+        "Government and Statutory requirements",
+        "Business Transformation",
+        "Fulfill Government Requirements",
+        INTERVENTION.GOVERNMENT_REQUIREMENT,
+    ),
+    (
+        "SCHOOL_LEADERSHIP",
+        "Leadership",
+        "Education",
+        "Leadership Practices",
+        INTERVENTION.LEADERSHIP,
+    ),
+    (
+        "LEARNING_ENVIRONMENT_TRAINING",
+        "Learning environment",
+        "Education",
+        "Learning Environment",
+        INTERVENTION.LEARNING_ENVIRONMENT,
+    ),
+    (
+        "LITERACY_NUMERACY_PROJECT",
+        "Literacy/ Numeracy",
+        "Education",
+        "Learning Environment",
+        INTERVENTION.LEARNING_ENVIRONMENT,
+    ),
     ("NEW_SCHOOL_ORIENTATION", "New School Orientation", "Other", "Other", None),
     ("SSA_TRAINING", "SSA Training", "Other", "Other", None),
-    ("TECH_SKILLS_EMPLOYABLE_FUTURE", "Students Digital Skills Training", "EdTech", "Learning Environment", INTERVENTION.LEARNING_ENVIRONMENT),
-    ("TEACHER_PEDAGOGY_PROFESSIONALISM", "Teacher Pedagogy/Professionalism", "Education", "Teaching Environment", INTERVENTION.TEACHING_ENVIRONMENT),
-    ("TAM_I", "Teaching as Mission (TAM)", "Christian Transformation", "Exposure to God's Word", INTERVENTION.EXPOSURE_TO_WORD_OF_GOD),
-    ("TEACHING_ENVIRONMENT", "Teaching Environment", "Education", "Teaching Environment", INTERVENTION.TEACHING_ENVIRONMENT),
+    (
+        "TECH_SKILLS_EMPLOYABLE_FUTURE",
+        "Students Digital Skills Training",
+        "EdTech",
+        "Learning Environment",
+        INTERVENTION.LEARNING_ENVIRONMENT,
+    ),
+    (
+        "TEACHER_PEDAGOGY_PROFESSIONALISM",
+        "Teacher Pedagogy/Professionalism",
+        "Education",
+        "Teaching Environment",
+        INTERVENTION.TEACHING_ENVIRONMENT,
+    ),
+    (
+        "TAM_I",
+        "Teaching as Mission (TAM)",
+        "Christian Transformation",
+        "Exposure to God's Word",
+        INTERVENTION.EXPOSURE_TO_WORD_OF_GOD,
+    ),
+    (
+        "TEACHING_ENVIRONMENT",
+        "Teaching Environment",
+        "Education",
+        "Teaching Environment",
+        INTERVENTION.TEACHING_ENVIRONMENT,
+    ),
 ]
 
 
@@ -542,7 +650,9 @@ def _new_cluster_training(code, name, category, indicator, intervention):
         Delivery.CLUSTER_TRAINING,
         ActivityType.CLUSTER_TRAINING,
         intervention=intervention,
-        mapping_mode=(MappingMode.FIXED if intervention else MappingMode.ADMINISTRATIVE),
+        mapping_mode=(
+            MappingMode.FIXED if intervention else MappingMode.ADMINISTRATIVE
+        ),
         cluster=True,
         school=False,
         requires_ssa=bool(intervention),
@@ -568,9 +678,7 @@ _training_reference_by_code = {
     for code, name, category, indicator, intervention in TRAINING_COURSE_REFERENCE
 }
 for _training_row in [*SOURCE_CATALOGUE_ITEMS, *TRAINING_CATALOGUE_ADDITIONS]:
-    _training_reference = _training_reference_by_code.get(
-        _training_row["stable_code"]
-    )
+    _training_reference = _training_reference_by_code.get(_training_row["stable_code"])
     if _training_reference is None:
         continue
     _name, _category, _indicator, _intervention = _training_reference
@@ -582,9 +690,7 @@ for _training_row in [*SOURCE_CATALOGUE_ITEMS, *TRAINING_CATALOGUE_ADDITIONS]:
         programme_category=_category,
         intervention=_intervention,
         mapping_mode=(
-            MappingMode.FIXED
-            if _intervention
-            else MappingMode.ADMINISTRATIVE
+            MappingMode.FIXED if _intervention else MappingMode.ADMINISTRATIVE
         ),
         requires_current_ssa=bool(_intervention),
     )

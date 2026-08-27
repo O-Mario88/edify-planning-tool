@@ -19,7 +19,6 @@ target-percentage math -- this file proves they can no longer disagree.
 from __future__ import annotations
 
 import random
-import unittest
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase, TestCase
@@ -121,6 +120,56 @@ class TargetFormulaEndToEndTest(TestCase):
             ssa_target=2,
         )
 
+        # Agreed performance priorities, matching the annual profiles above.
+        #
+        # These were not here before, and their absence is why this suite kept
+        # asserting CD numbers derived from the whole TargetArea catalogue.
+        # With CONFLICT-001 decided, both the Country Director and the
+        # Programme Lead weight against the areas a person has AGREED, so a
+        # fixture with no agreement measures nothing on either surface and
+        # every consistency assertion below would read 0 == 0 -- true, and
+        # proving nothing.
+        #
+        # The fix is the fixture, not the assertions. Giving these CCEOs the
+        # agreement their annual targets imply keeps every invariant this
+        # suite exists to check (overachievement reads above 100, quarters
+        # stay consistent, CD agrees with PL) testing the real path.
+        self._agree_priorities(self.cceo1_sp, visits=13, meetings=7, trainings=5, ssa=3)
+        self._agree_priorities(self.cceo2_sp, visits=10, meetings=4, trainings=6, ssa=2)
+
+    def _agree_priorities(self, staff, *, visits, meetings, trainings, ssa):
+        """An agreed annual-priorities review carrying the same numbers."""
+        from apps.hr.models import (
+            PerformancePriority,
+            PerformanceReview,
+            ReviewStage,
+            ReviewType,
+        )
+
+        review = PerformanceReview.objects.create(
+            staff=staff,
+            fy=self.fy,
+            period=self.fy,
+            due_date=timezone.localdate(),
+            review_type=ReviewType.ANNUAL_PRIORITIES,
+            stage=ReviewStage.PRIORITIES_AGREED,
+        )
+        rows = (
+            ("direct_visits", "Complete school visits", visits, 30),
+            ("cluster_meetings", "Hold cluster meetings", meetings, 15),
+            ("trainings", "Deliver cluster trainings", trainings, 20),
+            ("ssa_coverage", "Complete SSAs", ssa, 25),
+        )
+        for sequence, (metric_key, outcome, target, weight) in enumerate(rows, start=1):
+            PerformancePriority.objects.create(
+                review=review,
+                metric_key=metric_key,
+                outcome_statement=outcome,
+                target_number=target,
+                weight=weight,
+                sequence=sequence,
+            )
+
     # ── fixture helpers ───────────────────────────────────────────────────────
     def _staff(self, email, name, role):
         u = User.objects.create_user(
@@ -200,18 +249,37 @@ class TargetFormulaEndToEndTest(TestCase):
         return pct
 
     def _cd_style_pct_for_month_list(self, users, months):
-        """Mirrors CDAnalyticsService._weighted_achievement()'s internals
-        exactly, but with an explicit month_list (CD's own public interface
-        is quarter/FY granularity only) -- proves the SHARED functions agree
-        at month granularity too, since CD's math is built from the same
-        general-purpose primitives."""
-        areas = list(TargetArea.objects.filter(active=True))
-        targets, achieved = pooled_monthly_series(users, self.fy, areas=areas)
-        pct, _a, _t = weighted_period_pct(areas, targets, achieved, months)
+        """The CD's real area resolution, at month granularity.
+
+        This used to hard-code ``TargetArea.objects.filter(active=True)`` and
+        call itself a mirror of ``_weighted_achievement``. It was a mirror of
+        the *defect*: it reproduced the catalogue fallback locally, so fixing
+        the service would not have made this test pass and fixing this test
+        would not have proved the service fixed. A test that reimplements the
+        code it checks can only ever agree with itself.
+
+        It now asks the same resolver the service asks —
+        ``agreed_target_areas`` — so it moves when the service moves. The
+        month-granularity pooling stays local because the CD's public surface
+        exposes quarter/FY only, and this test is about the two agreeing at
+        every granularity.
+        """
+        from apps.targets.my_targets import (
+            agreed_target_areas,
+            per_user_monthly_series,
+            team_weighted_pct,
+        )
+
+        areas = agreed_target_areas(users, self.fy)
+        if not areas:
+            return 0
+        series = per_user_monthly_series(users, self.fy, areas=areas)
+        pct, _a, _t = team_weighted_pct(
+            [u.id for u in users], series, months, lambda _user_id: areas
+        )
         return pct
 
     # ── required named tests ─────────────────────────────────────────────────
-    @unittest.expectedFailure
     def test_cd_pl_target_percentage_matches_pl_team_targets(self):
         """End-to-end, real production code paths: seed activities in the
         CURRENT month (the only granularity PLTeamTargetsService.get_page()
@@ -298,16 +366,27 @@ class TargetFormulaEndToEndTest(TestCase):
         self.assertEqual(cd_pct, my_pct)
 
     def _consistent_quarter(self, quarter):
+        """CD's quarter number must equal the shared primitives over the same
+        people and the same months.
+
+        This used to compare against a locally-built number that pooled the
+        whole TargetArea catalogue and divided sum-by-sum. Both halves of that
+        were the defect: the catalogue invented a denominator nobody agreed,
+        and the sum-by-sum rollup let a CCEO with no target in a month push
+        their achievement into another CCEO's denominator. The assertion
+        therefore pinned CONFLICT-001 in place rather than catching it — which
+        is why fixing the service broke these four cases and why the earlier
+        attempt at the fix was reverted.
+
+        The comparison now runs against the same shared functions the service
+        calls, which is what the test always claimed to be doing.
+        """
         months = Cal.months_of_quarter(quarter)
         self._visit(self.cceo1_sp, months[0])
         self._visit(self.cceo2_sp, months[1])
         cd_pct = self._cd_pl_pct(quarter=quarter)
-        pooled_pct, _a, _t = weighted_period_pct(
-            list(TargetArea.objects.filter(active=True)),
-            *pooled_monthly_series([self.cceo1, self.cceo2], self.fy),
-            months,
-        )
-        self.assertEqual(cd_pct, pooled_pct)
+        shared_pct = self._cd_style_pct_for_month_list([self.cceo1, self.cceo2], months)
+        self.assertEqual(cd_pct, shared_pct)
 
     def test_target_percentage_consistent_q1(self):
         self._consistent_quarter("Q1")
@@ -363,12 +442,86 @@ class TargetFormulaEndToEndTest(TestCase):
             trainings_target=0,
             ssa_target=0,
         )
+        # The agreement the profile implies, single-area for the same reason:
+        # only visits carries a target, so the other four stay genuinely
+        # unassigned and are excluded from the weighted average rather than
+        # diluting it.
+        self._agree_priorities(sp, visits=1, meetings=0, trainings=0, ssa=0)
         for m in (1, 2, 3, 4, 5):
             self._visit(sp, 1, sf=f"SV-OVER-{m}")
         cd_pct = self._cd_style_pct_for_month_list([u], [1])
         my_pct = self._my_targets_pct_for(u, [1])
         self.assertGreater(cd_pct, 100)
         self.assertEqual(cd_pct, my_pct)
+
+    # ── CONFLICT-001, decided: the two regressions that must stay caught ──
+    def test_work_by_someone_with_no_agreement_is_not_counted(self):
+        """A CCEO with no agreed priorities measures nothing, however hard
+        they work.
+
+        This is the half of CONFLICT-001 about the DENOMINATOR. The Country
+        Director's surfaces used to fall back to the whole TargetArea
+        catalogue, so a person nobody had agreed a target with still had one
+        invented for them and their work counted against it.
+
+        Deliberately a person with no agreement AND no monthly targets: the
+        legacy per-user monthly-target fallback in
+        priority_target_areas_for_users is a real and intended path, and this
+        test is about the catalogue, not about that.
+        """
+        user, staff = self._staff(
+            "noagreement@tfu.org", "No Agreement", EdifyRole.CCEO.value
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=staff
+        )
+        self._visit(staff, self.now["month_of_fy"], sf="SV-NOAGREE-1")
+
+        # Through the REAL service, not this module's month-granularity
+        # helper. The helper resolves areas itself, so a catalogue fallback
+        # reintroduced inside CDAnalyticsService would not reach it -- the
+        # first version of this test asserted against the helper and stayed
+        # green under exactly that mutation.
+        pct, achieved, target = CDAnalyticsService._weighted_achievement(
+            self.fy, None, [user.id], []
+        )
+        self.assertEqual(
+            (pct, target),
+            (0, 0),
+            "a CCEO with no agreed priority still measured against a target -- "
+            "the catalogue fallback is back, and leadership is reading work "
+            "counted against a target nobody assigned",
+        )
+        self.assertEqual(
+            achieved,
+            0,
+            "achievement was pooled for someone who has no measurable "
+            "priority at all",
+        )
+
+    def test_one_persons_work_never_lands_in_anothers_denominator(self):
+        """The half about the ROLLUP, and the one that produced the 200%.
+
+        In month 12 the fixture's annual targets prorate so that cceo1 carries
+        a single visit target and cceo2 carries none at all. Give each of them
+        one completed visit and the honest answer is 100%: cceo1 did exactly
+        what was asked, and cceo2 had nothing asked of them this month, so
+        they are not in the average.
+
+        Summing instead -- two achievements over one target -- reports 200%,
+        which is the number a Country Director actually saw. Both people did
+        precisely what was asked and leadership read double.
+        """
+        month = 12
+        self._visit(self.cceo1_sp, month, sf="SV-DENOM-1")
+        self._visit(self.cceo2_sp, month, sf="SV-DENOM-2")
+
+        self.assertEqual(
+            self._cd_style_pct_for_month_list([self.cceo1, self.cceo2], [month]),
+            100,
+            "an achievement was pooled into a denominator its owner did not "
+            "contribute a target to. This is CONFLICT-001's 200%.",
+        )
 
     def test_target_percentage_after_returned_activity(self):
         """An IA-returned activity must reverse its credit identically on

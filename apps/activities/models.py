@@ -450,7 +450,46 @@ class Activity(SoftDeleteModel):
                     slot.status = self.status
                     if self.scheduled_date:
                         slot.scheduled_for = self.scheduled_date.date()
-                    slot.save(update_fields=["status", "scheduled_for", "updated_at"])
+                    # The DRF-only "complete" branch of _apply_slot_action
+                    # records the Activity SF ID and the evidence URI and
+                    # REFUSES to complete a slot without them. This mirror is
+                    # the path completions actually take, so it has to carry
+                    # the same two facts across — otherwise System Health's
+                    # coreVerifiedSlotsMissingSfId /
+                    # coreVerifiedSlotsMissingEvidence ratchets alarm for ever
+                    # on work that was completed correctly. Both facts already
+                    # live on the Activity being mirrored.
+                    #
+                    # The SF ID moves in lock-step (it is uniquely constrained
+                    # on the Activity, which is the record of the work); the
+                    # evidence URI only fills a blank, because a slot holds one
+                    # URI while an activity may accumulate many files. Neither
+                    # ever blanks a value the slot already holds — a reschedule
+                    # or a re-save runs this same block.
+                    if self.salesforce_activity_id:
+                        slot.salesforce_id = self.salesforce_activity_id
+                    if not slot.evidence_uri:
+                        from apps.evidence.models import EvidenceRecord
+
+                        # Quarantined files are not evidence anywhere else in
+                        # the app — see activities.services._partner_evidence_exists.
+                        slot.evidence_uri = (
+                            EvidenceRecord.objects.filter(
+                                activity_id=self.id, quarantined=False
+                            )
+                            .order_by("-created_at")
+                            .values_list("uri", flat=True)
+                            .first()
+                        )
+                    slot.save(
+                        update_fields=[
+                            "status",
+                            "scheduled_for",
+                            "salesforce_id",
+                            "evidence_uri",
+                            "updated_at",
+                        ]
+                    )
                     # Keep the CorePlan's 4+4 package counters in lock-step
                     # with the slot's real, mirrored status (this is the real
                     # reachable path — see resync_plan_completion docstring).

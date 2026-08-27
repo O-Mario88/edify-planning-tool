@@ -1254,21 +1254,50 @@ def core_oversight_send_action(request):
             BadRequest("This school has no core plan for the selected year."),
             status=400,
         )
+    # Ordered most- to least-blocking, and filtered to what the recipient can
+    # actually do. CORE-01: `core_assessment_missing` is the more severe
+    # blocker, but while no catalogue item can schedule a core assessment it is
+    # an ask nobody can close — so it is skipped rather than sent, and the
+    # supervisor still gets the package ask, which IS resolvable. Falling
+    # through rather than refusing is the point: a Programme Lead must not lose
+    # the ability to send an action because the platform has a configuration
+    # gap in an unrelated slot.
+    from apps.planning.action_service import sendable_issue_keys
+
+    sendable = sendable_issue_keys()
+    candidates = []
     if not plan.assessment_completed:
-        key, detail = (
-            "core_assessment_missing",
-            "The core assessment for this year is not on file.",
+        candidates.append(
+            (
+                "core_assessment_missing",
+                "The core assessment for this year is not on file.",
+            )
         )
-    elif not CorePackageSchedulingService.summary(plan)["package_complete"]:
-        key, detail = (
-            "core_package_behind",
-            "The 4 visits + 4 trainings core package is not fully allocated.",
+    if not CorePackageSchedulingService.summary(plan)["package_complete"]:
+        candidates.append(
+            (
+                "core_package_behind",
+                "The 4 visits + 4 trainings core package is not fully allocated.",
+            )
         )
-    else:
+    actionable = [(k, d) for k, d in candidates if k in sendable]
+    if not actionable:
+        if candidates:
+            return error_fragment(
+                BadRequest(
+                    "The only thing outstanding on this core package is the "
+                    "core assessment, and no Activity Catalogue item can "
+                    "schedule one — so there is nothing the recipient could "
+                    "do with this ask. This is a Country Director "
+                    "configuration gap; see Scheduling Health."
+                ),
+                status=400,
+            )
         return error_fragment(
             BadRequest("This core package is complete, so there is nothing to send."),
             status=400,
         )
+    key, detail = actionable[0]
 
     try:
         action = send_action(

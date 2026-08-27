@@ -399,8 +399,8 @@ def request_leave_drawer_view(request):
                 f"Leave request for {leave.days_charged} working days submitted successfully.",
             )
 
-            # Send notifications — notify supervisor + HR that approval is needed
-            LeaveNotificationService.notify_leave_requested(leave)
+            # The supervisor and HR are notified by LeaveRequestService itself
+            # now, so the DRF door at /api/hr/leave announces the request too.
 
             # Detect conflicts post request and alert
             conflicts = LeaveConflictDetectionService.detect(
@@ -1006,9 +1006,6 @@ def leave_approve_action(request, leave_id):
 
         LeaveApprovalService.approve_request(leave_id, request.user)
         leave.refresh_from_db()
-
-        # Trigger notifications
-        LeaveNotificationService.notify_leave_approved(leave)
         messages.success(
             request, "Leave approved. Coverage notifications sent to the team."
         )
@@ -1024,8 +1021,6 @@ def leave_reject_action(request, leave_id):
     reason = request.POST.get("reason", "").strip()
     try:
         LeaveApprovalService.reject_request(leave_id, request.user, reason)
-        leave = Leave.objects.get(id=leave_id)
-        LeaveNotificationService.notify_leave_rejected(leave, request.user.name, reason)
         messages.success(request, "Leave request rejected. Staff member notified.")
     except Exception as e:
         messages.error(request, f"Failed to reject request: {e}")
@@ -1043,8 +1038,6 @@ def leave_return_action(request, leave_id):
 
     try:
         LeaveApprovalService.return_request(leave_id, request.user, reason)
-        leave = Leave.objects.get(id=leave_id)
-        LeaveNotificationService.notify_leave_returned(leave, request.user.name, reason)
         messages.success(
             request,
             "Leave request returned to submitter for changes. Staff member notified.",

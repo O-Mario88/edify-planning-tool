@@ -52,6 +52,44 @@ def _standard_kind_gaps() -> list[str]:
     return sorted(set(REQUIRED_STANDARD_KINDS) - covered)
 
 
+#: How a planner reaches each slot type the Core package declares mandatory
+#: (apps.core_schools.services.CORE_PACKAGE_SPEC: 1 assessment, 4 visits, 4
+#: trainings). Visits and trainings each have a drawer in
+#: frontend/views/core_schools_views that offers governed catalogue items — the
+#: visit drawer pins CORE_SCHOOL_FOLLOWUP_VISIT, the training drawer offers the
+#: recommended governed items — so neither is checked by resolver alone, which
+#: returns None for `core_training` while a planner can plainly schedule one.
+#:
+#: The assessment has neither. No drawer offers it, no route posts it, and no
+#: active catalogue item carries its activity type, so
+#: `resolve_item_for_workflow_kind("core_assessment_visit")` is None and
+#: `CorePlan.assessment_completed` is 0 for every core school in every year.
+#: That is the gap this check exists to report, and it goes green by itself
+#: the moment a Country Director configures the item.
+CORE_PACKAGE_WORKFLOW_KINDS = ("core_assessment_visit",)
+
+
+def core_package_kind_gaps() -> list[str]:
+    """Core package slot types with no schedulable Catalogue item at all.
+
+    The healthy answer is an empty list. A slot the package declares mandatory
+    and the catalogue cannot serve is not a school failing to do its work —
+    it is configuration, and reporting it as the former is how a critical
+    nobody can clear ends up on every core school row.
+    """
+    from .services import resolve_item_for_workflow_kind
+
+    gaps = []
+    for kind in CORE_PACKAGE_WORKFLOW_KINDS:
+        has_typed_item = ActivityCatalogueItem.objects.filter(
+            activity_type=kind, status=CatalogueStatus.ACTIVE
+        ).exists()
+        if has_typed_item or resolve_item_for_workflow_kind(kind) is not None:
+            continue
+        gaps.append(kind)
+    return sorted(gaps)
+
+
 def _duplicate_standard_kinds() -> list[str]:
     """Two standard items for one kind puts the purpose → costing resolver
     back where it started: unable to choose, so it chooses nothing."""
@@ -71,6 +109,7 @@ def scheduling_health() -> dict:
 
     standard_gaps = _standard_kind_gaps()
     duplicate_standard = _duplicate_standard_kinds()
+    core_slot_gaps = core_package_kind_gaps()
 
     # A Workflow Profile that requires a Project, on an activity that has
     # none. The inverse of the original defect and just as wrong.
@@ -163,6 +202,13 @@ def scheduling_health() -> dict:
             "status": "pass" if not standard_gaps else "fail",
             "count": len(standard_gaps),
             "detail": ", ".join(standard_gaps),
+        },
+        {
+            "key": "scheduling_core_package_slot_unschedulable",
+            "label": "Mandatory Core package slot with no schedulable Catalogue item",
+            "status": "pass" if not core_slot_gaps else "fail",
+            "count": len(core_slot_gaps),
+            "detail": ", ".join(core_slot_gaps),
         },
         {
             "key": "scheduling_standard_support_ambiguous",

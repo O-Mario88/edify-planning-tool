@@ -10,10 +10,24 @@ register = template.Library()
 
 @register.simple_tag
 def professional_kpis(items, variant="executive", density=None):
-    """Build the final render payload instead of hiding surplus cards."""
+    """Build the final render payload instead of hiding surplus cards.
 
-    limit = 2 if density == "compact" else 6
-    return consolidate_kpi_items(items, max_items=limit)
+    FE-02, decided: the dashboard tray no longer caps at six. The count
+    follows the work — "it should not limit to 4 or 6 based on how many things
+    need to be tracked" — so a page that registers eight metrics shows eight.
+    Fourteen payload groups were feeding more than six into a six-slot tray and
+    losing the rest with nothing on screen to say so.
+
+    The compact density keeps its limit of two, and that one is a layout fact
+    rather than a policy: the mobile tray is two cards wide and reflows badly
+    past that. It is the only cap left, and because it is real, the surface
+    that uses it should disclose what it left out — ``dropped_kpi_items``
+    answers that.
+    """
+
+    if density == "compact":
+        return consolidate_kpi_items(items, max_items=2)
+    return consolidate_kpi_items(items)
 
 
 @register.simple_tag

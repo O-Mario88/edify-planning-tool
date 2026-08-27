@@ -8,6 +8,7 @@ in NetSuite; the advance never pays cancelled work and the clearance never
 jumps the verification gate.
 """
 
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from django.utils import timezone
 
@@ -25,6 +26,17 @@ ADVANCE = PLANNED // 2
 
 class PartnerMouPaymentTest(TestCase):
     def setUp(self):
+        # "acct-1" is a real Program Accountant, not a loose string: pay_partner
+        # asserts `payment.act` on the actor it is handed (FIN-03), so the
+        # fixture has to name someone who actually holds it.
+        get_user_model().objects.create(
+            id="acct-1",
+            email="mou-acct@test.org",
+            name="MOU Accountant",
+            roles=["Accountant"],
+            active_role="Accountant",
+            is_active=True,
+        )
         self.region = Region.objects.create(name="MOU Region")
         self.district = District.objects.create(name="MOU District", region=self.region)
         self.school = School.objects.create(

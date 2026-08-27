@@ -55,6 +55,27 @@ CORE_SLOT_DONE_WITH_LEGACY = CORE_SLOT_DONE_STATUSES | {
     "iaVerify",
 }
 
+# CorePlan.status is a LIFECYCLE, not a live/dead flag. Three writers exist:
+# onboard() stamps "Active", upload_follow_up_ssa() below moves the plan on to
+# "Impact Measured" or "Champion Candidate" once the follow-up assessment
+# lands, and repair_core_data archives orphans. The first two are stages of a
+# package that is still THIS YEAR'S live package, so a reader asking for
+# status="Active" deletes a school from its own pipeline at the exact moment
+# its impact is measured — the champion scorer returned 0.0 / "No active Core
+# Plan" for every school that had just qualified. Only these spellings mean
+# the plan is over; "Package Complete"/"Complete" deliberately are NOT here
+# (a finished package is precisely when a school is a champion candidate),
+# and no writer sets them today anyway — see the closure check in
+# apps.system_health.services.
+CORE_PLAN_CLOSED_STATUSES = {
+    "Archived",
+    "archived",
+    "Cancelled",
+    "cancelled",
+    "Exited",
+    "exited",
+}
+
 # The mandatory Core School package: 1 Core Assessment + 4 visits + 4
 # trainings = 9 slots. This spec is the single source of truth for slot
 # creation (onboard + self-heal) and every completion threshold — never
@@ -85,6 +106,31 @@ def create_package_slots(
                     "sequence_number": seq,
                 },
             )
+
+
+def get_live_core_plan(school_id: str, fy: str | None = None) -> CorePlan | None:
+    """The school's live Core package for a fiscal year — the one every
+    single-plan reader should ask for.
+
+    Keyed on FY, not just on status, because nothing ever closes a finished
+    package: from the 1 Oct rollover a school owns two plans that both read as
+    live. `.first()` on an unordered queryset orders by primary key, and
+    FY2026's legacy id (``cplan-{school}``) sorts before every later FY's
+    (``cplan-{school}-{fy}``), so the stale prior-year package would have won
+    every one of those reads for ever.
+
+    Falls back to the newest FY the school actually has a plan for so a school
+    not yet onboarded into the new FY keeps its package instead of dropping
+    out of the pipeline entirely — that is the FY2027 hard stop (see
+    apps.core_schools.models) in reader form.
+    """
+    live = CorePlan.objects.filter(school_id=school_id).exclude(
+        status__in=CORE_PLAN_CLOSED_STATUSES
+    )
+    return (
+        live.filter(fy=fy or get_operational_fy()).first()
+        or live.order_by("-fy").first()
+    )
 
 
 def list_candidates(principal) -> list[dict]:
@@ -234,12 +280,19 @@ def onboard(school_id: str, data: dict, principal) -> dict:
 
 
 def list_plans(principal) -> list[dict]:
-    qs = CorePlan.objects.filter(status="Active")
+    # Same lifecycle reading as get_live_core_plan(): a plan whose follow-up
+    # SSA has landed is still a running plan, so status="Active" silently
+    # dropped every measured school off this list too.
+    qs = CorePlan.objects.exclude(status__in=CORE_PLAN_CLOSED_STATUSES)
     return [_serialize_plan(p) for p in qs]
 
 
 def get_detail(school_id: str, principal) -> dict:
-    plan = CorePlan.objects.filter(school_id=school_id).first()
+    # A bare `.first()` orders by primary key, so from the FY rollover this
+    # returned the stale legacy plan (and its stale slot statuses) rather than
+    # the year's package — the same ambiguity get_live_core_plan() exists to
+    # settle. Every single-plan reader in this app goes through it.
+    plan = get_live_core_plan(school_id)
     if not plan:
         raise NotFoundError("No core plan for this school.")
     data = _serialize_plan(plan)

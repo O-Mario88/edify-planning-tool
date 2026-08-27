@@ -123,13 +123,31 @@ class AccountReturnView(APIView):
 # The responsible user confirms their own advances (VIEW perm — the actor is the
 # owner). Disbursement/accountability/reimbursement are PAYMENT (Accountant).
 def _advance_view(fn, perm, takes_data=True):
+    """Wrap one advance service call as a permission-gated POST endpoint.
+
+    ``takes_data=False`` means the service does not accept a payload at all,
+    so it must not be passed one. It used to mean "pass an empty dict", which
+    is a different thing: ``approve_accountability(advance_id, principal)``
+    takes two arguments and was handed three, so
+    ``POST /api/fund-requests/advances/<id>/account-approve`` raised
+    ``TypeError`` and returned 500 to every caller, always (FIN-06).
+
+    Nothing noticed because no test had ever issued an HTTP request to it —
+    the service beneath is correct and well covered, the view is routed and
+    permission-gated, and only the join between them was broken. The
+    ``AdvancePlApproveView`` below wraps its own two-argument service in a
+    lambda that absorbs the payload, which is the same problem solved the
+    other way; this makes the flag honest so both spellings work.
+    """
+
     class _V(APIView):
         permission_classes = [IsAuthenticated, RequirePermissions]
         required_permissions = perm
 
         def post(self, request: Request, advance_id: str) -> Response:
-            data = request.data if takes_data else {}
-            return Response(fn(advance_id, data, request.user))
+            if not takes_data:
+                return Response(fn(advance_id, request.user))
+            return Response(fn(advance_id, request.data, request.user))
 
     return _V
 

@@ -3,7 +3,10 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ("activity_catalogue", "0011_remove_activityinterventionmapping_uniq_catalogue_intervention_mode_and_more"),
+        (
+            "activity_catalogue",
+            "0011_remove_activityinterventionmapping_uniq_catalogue_intervention_mode_and_more",
+        ),
     ]
 
     operations = [

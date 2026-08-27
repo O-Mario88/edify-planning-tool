@@ -30,7 +30,7 @@ from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
-from apps.core.rbac import EdifyRole
+from apps.core.rbac import EdifyRole, Permission
 from apps.targets.fy_calendar import FinancialYearCalendarService as Cal
 
 from .models import (
@@ -1490,7 +1490,7 @@ def confirm_milestone(milestone: PriorityMilestone, *, data: dict, principal):
     needs-confirmation flag. Blocked once the master is published — after
     that, changes are amendments."""
 
-    _assert_master_author(principal)
+    _assert_master_editor(principal)
     milestone = PriorityMilestone.objects.select_for_update().get(pk=milestone.pk)
     if milestone.priority.status == StrategicPriorityStatus.PUBLISHED:
         raise BadRequest(
@@ -1634,13 +1634,41 @@ def publish_uganda_master(fy: str, *, principal, country_id: str = "Uganda"):
 
 
 def _assert_master_author(principal) -> None:
-    # §4.4 (audit R5): publication and source confirmation are the COUNTRY
-    # DIRECTOR'S authority alone — Admin supports, but must not publish on
-    # the CD's behalf.
+    # §4.4 (audit R5): PUBLICATION is the COUNTRY DIRECTOR'S authority alone —
+    # Admin supports, but must not publish on the CD's behalf.
+    #
+    # Editing a figure is a different act and has a different guard below.
+    # CONFLICT-002 was decided in favour of Impact Assessment being able to
+    # edit Master Priority rows, on the stated basis that IA works WITH the
+    # Country Director to assign priorities. Working with somebody is not
+    # signing on their behalf, so publication did not move.
     role = getattr(principal, "active_role", "")
     if role != EdifyRole.COUNTRY_DIRECTOR.value:
+        raise BadRequest("The Uganda master is published by the Country Director.")
+
+
+def _assert_master_editor(principal) -> None:
+    """Who may amend a source figure before the master is published.
+
+    CONFIRMED by the permission matrix rather than by comparing role strings,
+    which is SEC-03's lesson: that P0 existed because an act checked no
+    authority at all, and the fix was to read the matrix at the act. A second
+    role now holds this, so a hard-coded comparison here would be a second
+    place to keep in step with the first.
+
+    Editing is deliberately separable from approving and publishing. IA holds
+    ``milestones.define`` and does not hold ``strategicPriorities.approve``,
+    and ``_assert_master_author`` above still restricts publication to the
+    Country Director. Every confirmation is audited with the actor and their
+    role, which is what keeps "who changed this figure" answerable now that
+    the answer is not always the same person.
+    """
+    from apps.core.permissions import has_permission
+
+    if not has_permission(principal, Permission.MILESTONES_DEFINE.value):
         raise BadRequest(
-            "The Uganda master is owned and confirmed by the Country Director."
+            "Master Priority figures are set by the Country Director and "
+            "Impact Assessment."
         )
 
 
@@ -1767,7 +1795,13 @@ def _milestone_progress(milestone: PriorityMilestone, approved_rows) -> dict | N
     Counts sum; rates are tracked per holder (their coverage denominators
     differ), so a rate milestone reports holder count instead of a fabricated
     country percentage.
+
+    TGT-03: each holder's own year figure comes from `range_actual`, so a
+    school one CCEO reached twice is one school before the holders are added
+    together. Holders are still added — their portfolios are disjoint by
+    assignment, so no school sits in two of them.
     """
+    from .milestone_progress import range_actual
 
     if not approved_rows:
         return None
@@ -1786,10 +1820,11 @@ def _milestone_progress(milestone: PriorityMilestone, approved_rows) -> dict | N
     plan = Decimal("0")
     actual = Decimal("0")
     for allocation in approved_rows:
-        for row in allocation.period_targets.all():
-            if row.period_type == "month":
-                plan += row.planned_value
-                actual += row.actual_value
+        months = [
+            row for row in allocation.period_targets.all() if row.period_type == "month"
+        ]
+        plan += sum((row.planned_value for row in months), Decimal("0"))
+        actual += range_actual(allocation, months, milestone=milestone)
     pct = round(float(actual / plan * 100), 1) if plan else None
     return {
         "summable": True,
@@ -2260,6 +2295,8 @@ def team_distribution_workspace(fy: str, *, principal) -> dict:
 
     from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 
+    from .milestone_progress import range_actual
+
     role = getattr(principal, "active_role", "")
     lead_id = getattr(principal, "staff_profile_id", None)
     if role == EdifyRole.ADMIN.value and not lead_id:
@@ -2355,13 +2392,18 @@ def team_distribution_workspace(fy: str, *, principal) -> dict:
             if spread_pending:
                 pending_spreads += 1
             child_planned = planned_output(child)
-            child_verified = sum(
-                (
-                    row.actual_value
+            # TGT-03: the year does not come from adding the month rows up when
+            # the measure counts distinct schools. The milestone is handed over
+            # from the parent allocation, whose rules are already prefetched —
+            # a child is always carved from its parent's milestone.
+            child_verified = range_actual(
+                child,
+                [
+                    row
                     for row in child.period_targets.all()
                     if row.period_type == "month"
-                ),
-                Decimal("0"),
+                ],
+                milestone=allocation.milestone,
             )
             child_target = _q2(child.allocated_target)
             member_rows.append(

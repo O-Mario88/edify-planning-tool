@@ -113,13 +113,54 @@ class DrawerAsksForPurposeTest(TestCase):
         self.assertNotIn('id="training_project_id"', source)
         self.assertIn("purposeOfVisit === 'in_school_training'", source)
 
-    def test_switching_training_fetches_its_mapped_intervention(self):
+    def test_the_training_and_its_intervention_can_never_disagree(self):
+        """The invariant, not the mechanism that used to enforce it.
+
+        This asserted `@change="ensureTrainingActivity()"` on the Focus
+        Intervention select, plus an
+        `activity.interventions.includes(this.focusIntervention)` filter. Both
+        are gone, and their absence is not a regression — the drawer was
+        rebuilt so the disagreement they guarded against cannot be composed:
+
+          * the manual intervention select and the training picker are
+            mutually exclusive (`showManualIntervention` is defined as
+            `!showTrainingActivityPicker && ...`), so there is no state in
+            which a planner can set an intervention beside a training, and
+          * choosing a training now DERIVES the intervention from it
+            (`onTrainingActivityChange` assigns
+            `focusIntervention = selected.ssaIntervention`).
+
+        Pinning the old handler would have failed a rework that made the
+        invariant stronger, which is the wrong direction for a test to push.
+        So assert the invariant itself. If someone reintroduces a manually
+        settable intervention alongside the training picker, or stops deriving
+        it, this goes red — and those are the changes that would actually let a
+        training and its stated intervention disagree.
+
+        `main` reached the same conclusion independently in the same hours,
+        as `test_switching_training_fetches_its_mapped_intervention`. This is
+        the union of both: its binding assertion is kept below, because the
+        derivation is only reached if something still calls the handler.
+        """
         source = _drawer_source()
+
+        self.assertIn(
+            "get showManualIntervention() { return !this.showTrainingActivityPicker",
+            source,
+            "the manual intervention picker may coexist with the training "
+            "picker again — a planner could set the two to disagree",
+        )
+        # main's assertion: the handler is actually wired to the picker.
         self.assertIn('@change="onTrainingActivityChange()"', source)
         self.assertIn(
             "this.focusIntervention = selected ? selected.ssaIntervention : '';",
             source,
+            "the intervention is no longer derived from the chosen training",
         )
+        # And a training that is no longer offered does not survive as a
+        # stale submitted value.
+        self.assertIn("ensureTrainingActivity() {", source)
+        self.assertIn("this.trainingActivityId = '';", source)
 
 
 class PurposeDrivesCostingTest(TestCase):

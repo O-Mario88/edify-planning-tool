@@ -44,6 +44,25 @@ them.
 
 ## What is actually running
 
+> **DEP-01 — a later record disagrees with this section, and it has not been
+> settled.** `docs/live-production-audit-2026-08-09.md` describes a *different*
+> DigitalOcean application: `edify-planning-fra`
+> (`8f8682cd-a00a-42d9-b9a6-4fa4b4140bde`) with **2** web instances, managed
+> PostgreSQL 17 and Valkey 8, and a dedicated pre-deploy migration job. That
+> record is five days newer than this one and labels itself LIVE PRODUCTION
+> VERIFIED, while this section labels itself documentation rather than input —
+> so do not treat the numbers below as authoritative without checking.
+>
+> The instance count is the part that matters: with two web instances and
+> `RUN_MIGRATIONS` on the web service, migrations run on boot in parallel,
+> which is the configuration `DEPLOY.md` calls unsafe and the reason an
+> advisory lock was added around migrate.
+>
+> Export the live spec before relying on either record. Held by
+> `apps/core/tests/test_deployment_record_is_singular.py`, which fails the
+> build the moment the two are reconciled so this note has to be removed with
+> them.
+
 Recorded 2026-08-04 after the spec repair. Treat as documentation, not as input:
 
 - app `edify-planning-app`, region `fra`

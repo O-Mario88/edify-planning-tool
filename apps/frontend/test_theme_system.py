@@ -26,7 +26,12 @@ class ThemeSystemContractTest(TestCase):
             self.assertContains(response, f"setTheme('{mode}')")
         self.assertContains(response, "Matches your device appearance")
         self.assertContains(response, "Night black")
-        self.assertContains(response, "OLED-friendly")
+        # "OLED-friendly" was here, and the dark ground stopped being pure
+        # black — the one condition under which that claim is true. The
+        # accuracy of this description is now held by
+        # test_bootstrap_and_runtime_keep_system_as_a_real_preference, which
+        # ties it to the token instead of to a literal typed twice.
+        self.assertContains(response, "low-glare")
 
     def test_bootstrap_and_runtime_keep_system_as_a_real_preference(self):
         response = self.client.get("/settings")
@@ -47,5 +52,27 @@ class ThemeSystemContractTest(TestCase):
         design_system = (
             Path(settings.BASE_DIR) / "static/css/design-system.css"
         ).read_text(encoding="utf-8")
-        self.assertIn("--edify-bg: #000000", design_system)
         self.assertIn("--edify-canvas-treatment: none", design_system)
+
+        # The dark ground, and the Settings copy that describes it, must agree.
+        #
+        # This asserted `--edify-bg: #000000` while Settings advertised
+        # "True-black, low-glare and OLED-friendly". The dark theme was later
+        # rebuilt around a deep navy (#0e151c) so stacked cards and table rows
+        # have something to sit on — a good change — but the copy went on
+        # promising true black, and "OLED-friendly" is a claim only pure black
+        # can keep, since that is when OLED pixels are actually off. A screen
+        # describing a feature the code no longer implements is the same defect
+        # class as a button with no handler; it is just cheaper to fix.
+        #
+        # So pin them to each other rather than to a literal. Change the
+        # ground and this fails until the words change with it.
+        dark_block = design_system.split(":root.theme-dark {", 1)[1].split("\n}", 1)[0]
+        self.assertIn("--edify-bg:", dark_block)
+        is_true_black = "--edify-bg: #000000" in dark_block
+        self.assertEqual(
+            is_true_black,
+            "True-black" in response.content.decode(),
+            "the dark theme's background and the words Settings uses to "
+            "describe it no longer agree",
+        )

@@ -22,6 +22,7 @@ from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 from apps.accounts.hr_dashboard_service import HRDashboardService
 from apps.analytics.cd_dashboard_service import CDDashboardService
 from apps.analytics.rvp_dashboard_service import RVPDashboardService
+from apps.targets.priority_fixtures import agree_priorities
 
 User = get_user_model()
 FY = "2026"
@@ -240,6 +241,7 @@ class RoleDashboardsTest(TestCase):
         )
         StaffSchoolAssignment.objects.create(staff=self.cceo_sp, school_id=school.id)
         StaffTargetProfile.objects.create(staff=self.cceo_sp, fy=FY, visits_target=2)
+        agree_priorities(self.cceo_sp, FY, school_visits=2)
         Activity.objects.create(
             school=school,
             activity_type="school_visit",

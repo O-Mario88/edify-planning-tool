@@ -710,6 +710,60 @@ class TemporaryCoverageAssignment(TimeStampedModel):
 
     class Meta:
         db_table = "temporary_coverage_assignment"
+        constraints = [
+            # ── INT-02: one active coverage per leave request ─────────────
+            # This Meta held nothing but db_table. "One active assignment"
+            # rested entirely on a revoke-then-create pair under a row lock
+            # in apps/hr/leave_services.py, so a second writer (the reassign
+            # path, the decline path, an import, a shell) could leave two
+            # people simultaneously holding one absent person's authority.
+            # Nothing downstream disambiguates them: _covered_staff_ids and
+            # review_authority._covering_for both return EVERY match, so the
+            # absent person's approvals, portfolio and audit attribution
+            # silently fan out to two delegates.
+            #
+            # KEYED ON leave_request, AND THAT CHOICE IS THE WHOLE POINT.
+            # `is_live` warns that nothing ever writes "expired", so every
+            # grant ever created still reads "active" — which makes a partial
+            # index on status="active" wrong for any key that RECURS over
+            # time. Key on original_staff and the delegation somebody held
+            # two years ago would refuse a legitimate new one today.
+            # leave_request does not recur: a leave is approved exactly once
+            # (approve_request refuses to re-run on an approved leave), and
+            # both the reassign and the decline paths revoke the standing
+            # assignment before writing another. So a stale "active" row can
+            # only ever collide with a second assignment on the SAME leave —
+            # which is precisely the state being forbidden, never a
+            # legitimate later one.
+            #
+            # This does not, by itself, forbid two live coverages for one
+            # PERSON across two different leaves. It does not need to:
+            # leave_services refuses overlapping leave requests for the same
+            # staff member outright (the "3b. Overlapping leave" guard), so
+            # two overlapping windows for one person cannot be reached from
+            # two separate leaves. Stating the per-person rule directly would
+            # need a GiST exclusion constraint over a tstzrange, and that
+            # means CREATE EXTENSION btree_gist at migrate time — a
+            # privilege a managed-Postgres role may not have, i.e. a deploy
+            # that fails on the release rather than a constraint that holds.
+            # Not worth buying a deployment prerequisite for a state the
+            # upstream guard already closes.
+            models.UniqueConstraint(
+                fields=["leave_request"],
+                condition=models.Q(status="active"),
+                name="uniq_active_coverage_per_leave_request",
+            ),
+            # An inverted window is a delegation that silently grants
+            # nothing: every authority check tests `start <= now <= end`
+            # (see is_live above), so it can never be true, and the absent
+            # person's approvals stall with an assignment on screen that
+            # looks live. Equal ends stay legal — a zero-length window is
+            # degenerate but unambiguous.
+            models.CheckConstraint(
+                condition=models.Q(end_datetime__gte=models.F("start_datetime")),
+                name="coverage_window_ordered",
+            ),
+        ]
 
     def __str__(self) -> str:
         return f"{self.covering_staff.user.name} covering for {self.original_staff.user.name}"

@@ -124,8 +124,14 @@ def pay_transport_provider(payment_id: str, data: dict, principal) -> dict:
     from django.utils import timezone
 
     from .finance_models import TransportPayment
+    from .finance_services import _assert_may_pay
 
-    _assert_may_decide(principal)
+    # Deciding how a mission cost is PAID is a Finance-wide call
+    # (_assert_may_decide above); actually paying the provider is not. This
+    # moves money, so it needs `payment.act` — which the 2026-08 audit's
+    # AUD-004 withholds from Admin, and which CountryDirector has never held
+    # (FIN-03). Strictly tighter than _assert_may_decide, never wider.
+    _assert_may_pay(principal)
     with transaction.atomic():
         payment = (
             TransportPayment.objects.select_for_update()

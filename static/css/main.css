@@ -4468,6 +4468,9 @@
   .marker\:text-slate-400::-webkit-details-marker {
     color: var(--color-slate-400);
   }
+  .file\:mr-2::file-selector-button {
+    margin-right: calc(var(--spacing) * 2);
+  }
   .file\:mr-3::file-selector-button {
     margin-right: calc(var(--spacing) * 3);
   }

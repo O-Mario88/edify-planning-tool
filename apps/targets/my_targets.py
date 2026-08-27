@@ -349,6 +349,82 @@ def weighted_period_pct(
     return round(psum / wsum), tot_a, tot_t
 
 
+def agreed_target_areas(users, fy: str) -> list:
+    """The union of the target areas these people have actually agreed, deduped.
+
+    The team-wide companion to :func:`priority_target_areas_for_users`, which
+    answers per user. Every leadership surface that pools several people's
+    numbers needs this same union, and until CONFLICT-001 was decided the
+    Country Director's surfaces did not use it — they fell back to
+    ``active_target_areas()``, the whole catalogue, and so counted a CCEO's
+    work against targets nobody had assigned. For a team with no signed
+    agreements that produced 200% on the CD dashboard while the same team's
+    Programme Lead honestly showed "Not Assigned".
+
+    An empty list is the correct answer for a team with no agreements, and the
+    callers rely on it: :func:`weighted_period_pct` sees no area carrying a
+    target, so it reports unassigned rather than inventing a denominator.
+
+    Order follows the roster then each person's own priority sequence, so the
+    first-listed area is stable between renders.
+    """
+    by_user = priority_target_areas_for_users(users, fy)
+    seen: set[str] = set()
+    areas: list = []
+    for user in users:
+        for area in by_user.get(str(user.id), []):
+            if area.key in seen:
+                continue
+            seen.add(area.key)
+            areas.append(area)
+    return areas
+
+
+def team_weighted_pct(user_ids, per_user_series, month_list, areas_for) -> tuple:
+    """THE canonical way to roll several people's target performance into one %.
+
+    Each person's own weighted percentage is computed first, then those are
+    averaged. Someone with no target in the period contributes nothing to the
+    average — ``none_if_unassigned`` marks them, and they are skipped.
+
+    The alternative, summing everyone's targets and everyone's achievements
+    and dividing once, is what CONFLICT-001 turned out to be. It lets a person
+    who has no target this month still contribute their achievement to
+    somebody else's denominator: one CCEO with target 1 and achievement 1,
+    another with target 0 and achievement 1, pooled as 2 ÷ 1 = 200%. Both
+    people did exactly what was asked of them and leadership read double.
+
+    So this is the one implementation. ``areas_for(user_id)`` supplies each
+    person's own measurable areas, because Team Targets narrows them per member
+    when a category filter is applied and the Country Director does not.
+    Returns ``(weighted_pct, total_achieved, total_target)`` — the same triple
+    ``weighted_period_pct`` returns, so callers are interchangeable.
+    """
+    pcts: list[int] = []
+    total_achieved = total_target = 0
+    for user_id in user_ids:
+        series = per_user_series.get(user_id)
+        if series is None:
+            continue
+        targets, achieved = series
+        pct, achieved_total, target_total = weighted_period_pct(
+            areas_for(user_id),
+            targets,
+            achieved,
+            month_list,
+            none_if_unassigned=True,
+        )
+        total_achieved += achieved_total
+        total_target += target_total
+        if pct is not None:
+            pcts.append(pct)
+    return (
+        (round(sum(pcts) / len(pcts)) if pcts else 0),
+        total_achieved,
+        total_target,
+    )
+
+
 def per_user_monthly_series(users, fy: str, areas=None) -> dict:
     """Per-person building block underneath pooled_monthly_series: rebuilds
     each user's achievement ledger and fetches their monthly_targets/

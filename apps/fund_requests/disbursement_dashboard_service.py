@@ -618,6 +618,53 @@ _STATUS_SORT = {
 }
 
 
+def returned_correction_queue():
+    """Advances an Accountant sent back for correction, still uncorrected.
+
+    FIN-05. The Accountant's home card links its Returned figure to
+    /accounts/returned/, and that page read `FinanceReturn` — a table with no
+    writer anywhere in this codebase, so the queue could never hold a row while
+    the figure beside it was real. Worse than a dead page: the empty state
+    asserts "All corrections resolved", so a live returned balance led to a
+    positive statement that nothing was outstanding.
+
+    The money it counts is here. `return_weekly_request` is the only writer of
+    AdvanceRequestStatus.RETURNED, and it records everything the page renders:
+    the reason on `last_note`, the person it went back to on
+    `responsible_user_id`, the moment on `updated_at`. So this reads the same
+    ledger `month_overview_all_fund_types` aggregates, rather than a parallel
+    table nothing fills.
+
+    A standing queue, not a month-scoped one. The figure that links here is
+    this month's; a correction returned in March is still outstanding in April
+    and still belongs on a work list. Showing a superset of the figure cannot
+    mislead an Accountant into thinking money is settled — showing a subset
+    could, which is the failure this replaces.
+    """
+    from .models import AdvanceRequest, AdvanceRequestStatus
+
+    advances = list(
+        AdvanceRequest.objects.filter(status=AdvanceRequestStatus.RETURNED)
+        .select_related("activity", "activity__school")
+        .order_by("-updated_at")
+    )
+    names = _user_names([a.responsible_user_id for a in advances])
+    return [
+        {
+            "advance": advance,
+            "activity": advance.activity,
+            "amount": advance.amount,
+            # Formatted the same way the figure that links here is formatted,
+            # so the page and the card state the money at one precision.
+            "amount_fmt": _ugx(advance.amount),
+            "returned_to": names.get(advance.responsible_user_id, "Unassigned"),
+            "reason": advance.last_note or "No reason recorded.",
+            "returned_at": advance.updated_at,
+        }
+        for advance in advances
+    ]
+
+
 # ── Detail building ───────────────────────────────────────────────────────────
 def _monthly_detail(item, fy, month):
     """Funding breakdown + plan snapshot for a monthly plan, derived from its

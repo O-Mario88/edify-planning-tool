@@ -13,13 +13,42 @@ def _read(relative_path: str) -> str:
 
 
 class GlobalSurfaceRefreshTest(SimpleTestCase):
-    def test_every_theme_defines_borderless_elevated_card_tokens(self):
+    def test_every_theme_defines_its_own_card_surface_tokens(self):
+        """No theme may leave a card token to another theme's value.
+
+        This required `--edify-card-border: transparent` in at least three
+        blocks, and the dark theme now sets `#2d3d49` instead — a deliberate
+        change, because on a dark ground a hairline is what separates stacked
+        cards and table rows where a shadow alone does not read. "Borderless"
+        was never the property worth protecting; it was one theme's answer to
+        it.
+
+        The property worth protecting is that every theme answers. A theme
+        that defines the shadow but not the border inherits whatever the
+        previous cascade left, and cards then carry the wrong theme's edge —
+        the class of bug that is invisible in the theme you happen to be
+        developing in. So count definitions, not values, and check the values
+        only where a value is actually the contract.
+        """
         tokens = _read("static/css/design-system.css")
 
-        self.assertGreaterEqual(tokens.count("--edify-card-border: transparent"), 3)
-        self.assertGreaterEqual(tokens.count("--edify-card-shadow:"), 3)
-        self.assertGreaterEqual(tokens.count("--edify-card-shadow-hover:"), 3)
-        self.assertGreaterEqual(tokens.count("--page-header-border: transparent"), 3)
+        for token in (
+            "--edify-card-border:",
+            "--edify-card-shadow:",
+            "--edify-card-shadow-hover:",
+            "--page-header-border:",
+        ):
+            self.assertGreaterEqual(
+                tokens.count(token),
+                3,
+                f"{token} is not defined in every theme — cards will inherit "
+                f"another theme's value",
+            )
+
+        # The light grounds stay borderless: there, elevation alone separates
+        # a card and an added edge reads as a box. Two of the three, because
+        # dark is the deliberate exception documented above.
+        self.assertGreaterEqual(tokens.count("--edify-card-border: transparent"), 2)
 
     def test_shared_bridge_covers_legacy_and_modern_surface_families(self):
         bridge = _read("static/css/consistency.css")

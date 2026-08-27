@@ -447,9 +447,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("REFERENCE-ALIGNED FLOATING WORKSPACE", drawers)
         self.assertIn("container: drawer / inline-size", drawers)
         self.assertIn("@container drawer (min-width: 44rem)", drawers)
-        self.assertIn(
-            "grid-template-columns: repeat(2, minmax(0, 1fr))", drawers
-        )
+        self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", drawers)
         self.assertIn(
             'form:not(.cluster-create-form):not([data-drawer-layout="stack"])',
             drawers,
@@ -461,9 +459,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         # Blue and dark modes may flatten page cards, but must not erase the
         # modal hierarchy and focus separation of an active workflow.
-        self.assertIn(
-            ":is(.theme-blue, .theme-dark) .drawer-surface", consistency
-        )
+        self.assertIn(":is(.theme-blue, .theme-dark) .drawer-surface", consistency)
         self.assertIn("box-shadow: var(--drawer-shadow) !important", consistency)
         self.assertIn("20260826modal1", base)
 

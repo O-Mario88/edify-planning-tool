@@ -65,12 +65,69 @@ def _build(request: HttpRequest) -> JsonResponse:
     return response
 
 
+_CACHE_PROBE_TTL_SECONDS = 30
+_cache_probe: dict[str, float | str] = {"at": 0.0, "state": "unknown"}
+
+
+def _cache_state() -> str:
+    """Report the cache as up, unshared or down, memoised for the probe rate.
+
+    A write-and-read-back rather than a ping: a cache that accepts writes and
+    returns nothing is the failure that matters, and it does not announce
+    itself. Memoised in a module global rather than in the cache, for the
+    obvious reason that the thing being tested is the cache.
+    """
+    import time
+
+    now = time.monotonic()
+    if now - float(_cache_probe["at"]) < _CACHE_PROBE_TTL_SECONDS:
+        return str(_cache_probe["state"])
+
+    from django.core.cache import cache
+
+    try:
+        cache.set("health:cache-probe", "ok", timeout=_CACHE_PROBE_TTL_SECONDS)
+        reachable = cache.get("health:cache-probe") == "ok"
+    except Exception:  # noqa: BLE001 — a probe must never be the thing that 500s
+        reachable = False
+
+    if not reachable:
+        state = "down"
+    elif "locmem" in settings.CACHES["default"]["BACKEND"].lower():
+        # Reachable but per-process. Redis was unreachable at boot and the
+        # cache fell back, which is a different failure from "no cache".
+        state = "unshared"
+    else:
+        state = "up"
+
+    _cache_probe["at"] = now
+    _cache_probe["state"] = state
+    return state
+
+
 def _readiness(request: HttpRequest) -> JsonResponse:
     """Can this process safely serve traffic right now?
 
-    Cheap by design: `SELECT 1`, not a survey of the schema. A readiness probe
-    runs every few seconds on every instance, so anything expensive here is a
-    load generator pointed at the dependency it is meant to be protecting.
+    Cheap by design: `SELECT 1` and a memoised cache read-back, not a survey of
+    the schema. A readiness probe runs every few seconds on every instance, so
+    anything expensive here is a load generator pointed at the dependency it is
+    meant to be protecting.
+
+    Only the database decides the STATUS CODE. That asymmetry is deliberate and
+    is the whole design of this endpoint. A process that cannot reach the
+    database can serve nothing, so taking it out of rotation is right. A process
+    whose cache has gone is degraded but still useful — and Redis is shared, so
+    a 503 here would pull every instance at once and turn a degradation into a
+    full outage. Failing all of production to signal a cache problem is worse
+    than the cache problem.
+
+    But it must not report "ok" either, which is what it used to do: this
+    endpoint answered 200 {"status": "ok"} with Redis genuinely down, while the
+    login rate limit had quietly become per-worker (apps/core/throttling.py) and
+    cached figures had begun to differ between workers (apps/core/health.py).
+    Both were visible only to someone who thought to open /system-health. The
+    body now names the degradation, so an alert can watch the field the
+    orchestrator is right to ignore.
     """
     from django.db import connections
     from django.db.utils import OperationalError
@@ -80,8 +137,22 @@ def _readiness(request: HttpRequest) -> JsonResponse:
         connections["default"].cursor().execute("SELECT 1").fetchone()
     except OperationalError:
         db = "down"
+
+    cache_state = _cache_state()
+    # An unshared cache is only a defect in production — locally LocMemCache is
+    # the point, and a dev server permanently reporting "degraded" is a signal
+    # nobody would keep reading. Same judgement `_cache_backend_check` makes in
+    # apps/core/health.py. Unreachable is a defect everywhere.
+    degraded_cache = cache_state == "down" or (
+        cache_state == "unshared" and getattr(settings, "IS_PRODUCTION", False)
+    )
+    healthy = db == "up" and not degraded_cache
     return JsonResponse(
-        {"status": "ok" if db == "up" else "degraded", "db": db},
+        {
+            "status": "ok" if healthy else "degraded",
+            "db": db,
+            "cache": cache_state,
+        },
         status=200 if db == "up" else 503,
     )
 

@@ -8,9 +8,17 @@ is theirs to watch.
 was view permission. Every school a PL could see, a PL could edit, which for a
 Program Lead means every school belonging to every CCEO on their team. Nothing
 in the interface offered those controls, so the hole was invisible until
-someone reached the endpoint directly; template hiding is not authorization,
-and the API, the HTMX endpoints and the bulk actions all resolve through this
-one function.
+someone reached the endpoint directly; template hiding is not authorization.
+
+That first fix was written believing "the API, the HTMX endpoints and the bulk
+actions all resolve through this one function". They do not — `can_update` has
+no production caller. So these tests went green over an edit drawer that was
+still gating its write on a READ helper, and a supervisor could take ownership
+of a supervised school for months afterwards.
+
+Both halves are held here now. The endpoint tests are the ones that would have
+caught it, and `can_update` delegates the school question to `may_write_school`
+so the advisory answer and the enforced one cannot drift apart again.
 
 The distinction these tests hold: a PL keeps every authorized action on their
 own schools, and loses only mutation on their team's.
@@ -91,6 +99,77 @@ class ProgramLeadSchoolAccessTest(TestCase):
 
     def test_a_program_lead_cannot_delete_a_supervised_cceos_school(self):
         self.assertFalse(RolePermissionService.can_delete(self.pl, self.team_school))
+
+    def test_the_edit_drawer_refuses_a_supervisors_write(self):
+        """The same rule, asked of the endpoint instead of the helper.
+
+        `can_update` above has no production caller — every school-row write
+        reaches its own guard — so the two tests before this one held while the
+        edit drawer stayed open. It gated on `get_scoped_object_or_404`, which
+        answers the READ question a PL is meant to pass for a team school, and
+        then wrote `account_owner_id` and rebuilt `StaffSchoolAssignment`: the
+        row `resolve_user_scope` reads to decide planning, targets and budget
+        scope. A supervisor could move a supervised school onto themselves.
+
+        `apps/frontend/test_bulk_school_actions_scope.py` calls that outcome
+        "the worst one to lose" while its docstring records the single-school
+        paths as never affected. This is the test that would have disagreed.
+        """
+        self.client.force_login(self.pl)
+        response = self.client.post(
+            f"/schools/{self.team_school.id}/edit-drawer",
+            {
+                "school_id": "TEAM-1",
+                "name": "TAKEN BY THE SUPERVISOR",
+                "school_type": "client",
+                "district_id": str(self.district.id),
+                "account_owner_id": self.pl_profile.id,
+            },
+        )
+        self.assertEqual(
+            response.status_code,
+            403,
+            "a Programme Lead reached the write path on a supervised school",
+        )
+        self.team_school.refresh_from_db()
+        self.assertEqual(
+            self.team_school.name,
+            "School TEAM-1",
+            "the supervised school was renamed by its supervisor",
+        )
+        self.assertEqual(
+            self.team_school.account_owner_id,
+            self.cceo_profile.id,
+            "ownership moved off the CCEO — this is the root of the scoping "
+            "chain, so the school's planning, targets and budget moved with it",
+        )
+        self.assertTrue(
+            StaffSchoolAssignment.objects.filter(
+                school_id=self.team_school.id, staff=self.cceo_profile
+            ).exists(),
+            "the CCEO's own assignment row was deleted by their supervisor",
+        )
+
+    def test_the_edit_drawer_still_accepts_the_owners_write(self):
+        """A fix that refused everyone would pass the test above."""
+        self.client.force_login(self.pl)
+        response = self.client.post(
+            f"/schools/{self.own_school.id}/edit-drawer",
+            {
+                "school_id": "PL-OWN",
+                "name": "Renamed By Its Owner",
+                "school_type": "client",
+                "district_id": str(self.district.id),
+                "account_owner_id": self.pl_profile.id,
+            },
+        )
+        self.assertNotEqual(
+            response.status_code,
+            403,
+            "the PL was refused a write on a school in their own portfolio",
+        )
+        self.own_school.refresh_from_db()
+        self.assertEqual(self.own_school.name, "Renamed By Its Owner")
 
     # ── what must NOT regress ────────────────────────────────────────────────
 

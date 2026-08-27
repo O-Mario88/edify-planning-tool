@@ -18,6 +18,15 @@ logger = logging.getLogger("edify.milestone_progress")
 
 QUALIFYING_STATES = {"ia_verified", "accountant_confirmed", "closed"}
 
+# Measurement types whose achievement is a RATE, and which therefore need a
+# denominator to mean anything. Named once because it was written out by hand
+# in four places and one of them disagreed: the allocation workspace populated
+# the denominator only for "percentage", while this module and
+# performance_scores both treat "ratio" as a rate too. Every ratio milestone
+# allocated through that page was left without the number its own achievement
+# calculation requires, and scored zero for ever (2026-08 audit TGT-01).
+RATE_MEASUREMENT_TYPES = frozenset({"percentage", "ratio"})
+
 # Counting bases grouped by the UNIT they produce. Bases inside one family
 # share an aggregation and combine correctly (two school bases both count
 # distinct schools). Bases across families do not: schools and teachers are
@@ -31,6 +40,18 @@ SCHOOL_BASES = frozenset(
 )
 TEACHER_BASES = frozenset({"UNIQUE_PARTICIPANTS", "TEACHERS_TRAINED"})
 LEADER_BASES = frozenset({"SCHOOL_LEADERS_TRAINED"})
+
+# The bases whose figure is a count of DISTINCT ENTITIES rather than a running
+# total — exactly the bases `_aggregate_credits` answers with `distinct=True`.
+# 2026-08 audit, TGT-03: annual and quarterly achievement was built by adding
+# up the stored period rows, which is right for a total and wrong for a
+# distinct count. A school supported in October and again in March is one
+# unique school, and the figure whose own name says "unique" was reporting
+# two. Any figure spanning more than one stored period therefore has to come
+# from a single distinct query over that whole span (see `range_actual`). The
+# teacher and leader bases sum attendance headcounts and are genuinely
+# additive, so they stay as they are.
+DISTINCT_ENTITY_BASES = SCHOOL_BASES
 
 
 def counting_basis_families(bases) -> set[str]:
@@ -204,8 +225,8 @@ def record_activity_progress(activity) -> int:
     return created_count
 
 
-def refresh_period_targets(milestone_id: str) -> None:
-    """Recompute every period's verified actual from the surviving credits.
+def _scoped_credits(milestone_id, *, scope, start, end, employee, project_id, team_id):
+    """The surviving credits one scope owns between two dates, inclusive.
 
     Partner-delivered work is excluded from the employee and team scopes and
     only from those: a partner visit is real programme delivery and belongs in
@@ -217,50 +238,124 @@ def refresh_period_targets(milestone_id: str) -> None:
     milestone's rule left `required_executor_type` blank — which 45 of the 51
     seeded rules do.
     """
+    credits = MilestoneProgressCredit.objects.filter(
+        rule__milestone_id=milestone_id,
+        reversed_at__isnull=True,
+        activity__planned_date__gte=start,
+        activity__planned_date__lte=end,
+    )
+    if scope == "employee" and employee is not None:
+        owner_ids = {str(employee.id), str(employee.user_id or "")}
+        return credits.filter(
+            Q(activity__responsible_staff_id__in=owner_ids)
+            | Q(activity__monitored_by_staff_id__in=owner_ids)
+        ).exclude(activity__delivery_type="partner")
+    if scope == "project" and project_id:
+        return credits.filter(activity__project_id=project_id)
+    if scope == "team" and team_id:
+        from apps.accounts.models import StaffSupervisorAssignment
+
+        member_ids = list(
+            StaffSupervisorAssignment.objects.filter(supervisor_id=team_id).values_list(
+                "supervisee_id", flat=True
+            )
+        )
+        return credits.filter(
+            Q(activity__responsible_staff_id__in=member_ids)
+            | Q(activity__monitored_by_staff_id__in=member_ids)
+        ).exclude(activity__delivery_type="partner")
+    return credits
+
+
+def _aggregate_credits(credits, bases):
+    """The verified figure these credits produce, in their basis' own unit."""
+    if bases & SCHOOL_BASES:
+        return credits.exclude(activity__school__isnull=True).aggregate(
+            value=Count("activity__school", distinct=True)
+        )["value"]
+    if bases & TEACHER_BASES:
+        return credits.aggregate(value=Sum("activity__teachers_attended"))["value"]
+    if bases & LEADER_BASES:
+        return credits.aggregate(value=Sum("activity__leaders_attended"))["value"]
+    return credits.aggregate(value=Sum("credited_value"))["value"]
+
+
+def counts_distinct_entities(milestone) -> bool:
+    """Whether this milestone's figure counts entities, not occurrences."""
+    return bool(
+        {rule.counting_basis for rule in milestone.activity_rules.all() if rule.active}
+        & DISTINCT_ENTITY_BASES
+    )
+
+
+def range_actual(allocation, rows, *, milestone=None) -> Decimal:
+    """One allocation's verified figure over the whole span `rows` cover.
+
+    TGT-03: every quarterly and annual roll-up used to add the stored period
+    rows together. That is correct for an additive measure and wrong for a
+    distinct one, so a distinct measure is re-read here with ONE distinct
+    query over the full span instead. The stored rows are left exactly as the
+    progress engine wrote them — each is the honest distinct count for its own
+    month, which is what the monthly view asks for — and only the roll-up
+    changes.
+
+    `milestone` lets a caller hand over an instance whose activity rules are
+    already prefetched; it is always the allocation's own milestone.
+    """
+    rows = list(rows)
+    total = sum((row.actual_value for row in rows), Decimal("0"))
+    milestone = milestone if milestone is not None else allocation.milestone
+    if not rows or not counts_distinct_entities(milestone):
+        return total
+    credits = _scoped_credits(
+        milestone.id,
+        scope=allocation.allocated_to_type,
+        start=min(row.period_start for row in rows),
+        end=max(row.period_end for row in rows),
+        employee=allocation.employee,
+        project_id=allocation.project_id,
+        team_id=allocation.team_id,
+    )
+    bases = set(credits.values_list("rule__counting_basis", flat=True).distinct())
+    if not bases & DISTINCT_ENTITY_BASES:
+        # Nothing on a distinct basis landed in this span, so the stored rows
+        # were not written by the distinct branch either. Summing them is the
+        # answer their own aggregation gives.
+        return total
+    return Decimal(_aggregate_credits(credits, bases) or 0)
+
+
+def refresh_period_targets(milestone_id: str) -> None:
+    """Recompute every period's verified actual from the surviving credits.
+
+    Each row is computed over its OWN date range, so a stored quarter row is
+    already a distinct count across the quarter. Only roll-ups assembled from
+    several rows need `range_actual` (TGT-03).
+    """
     targets = MilestonePeriodTarget.objects.filter(
         milestone_id=milestone_id
     ).select_related("employee", "allocation", "milestone")
     for target in targets:
-        credits = MilestoneProgressCredit.objects.filter(
-            rule__milestone_id=milestone_id,
-            reversed_at__isnull=True,
-            activity__planned_date__gte=target.period_start,
-            activity__planned_date__lte=target.period_end,
+        credits = _scoped_credits(
+            milestone_id,
+            scope=target.scope,
+            start=target.period_start,
+            end=target.period_end,
+            employee=target.employee if target.employee_id else None,
+            project_id=target.allocation.project_id if target.allocation_id else None,
+            team_id=target.team_id,
         )
-        if target.scope == "employee" and target.employee_id:
-            owner_ids = {
-                str(target.employee_id),
-                str(target.employee.user_id or ""),
-            }
-            credits = credits.filter(
-                Q(activity__responsible_staff_id__in=owner_ids)
-                | Q(activity__monitored_by_staff_id__in=owner_ids)
-            ).exclude(activity__delivery_type="partner")
-        elif target.scope == "project" and target.allocation.project_id:
-            credits = credits.filter(activity__project_id=target.allocation.project_id)
-        elif target.scope == "team" and target.team_id:
-            from apps.accounts.models import StaffSupervisorAssignment
-
-            member_ids = list(
-                StaffSupervisorAssignment.objects.filter(
-                    supervisor_id=target.team_id
-                ).values_list("supervisee_id", flat=True)
-            )
-            credits = credits.filter(
-                Q(activity__responsible_staff_id__in=member_ids)
-                | Q(activity__monitored_by_staff_id__in=member_ids)
-            ).exclude(activity__delivery_type="partner")
         bases = set(credits.values_list("rule__counting_basis", flat=True).distinct())
         families = counting_basis_families(bases)
         if len(families) > 1:
             # Two counting bases from different UNIT families on one milestone
             # (schools and teachers, say) have no common total: the branch
-            # order below would silently keep one and discard the rest, and a
-            # target would read as under-delivered for a reason nobody could
-            # see. This is a definition error in the rules, not a number to
-            # guess at, so say so loudly and name the milestone. The figure
-            # still computes from the first family, unchanged, so surfacing it
-            # never destabilises an existing number.
+            # order in `_aggregate_credits` would silently keep one and discard
+            # the rest, and a target would read as under-delivered for a reason
+            # nobody could see. This is a definition error in the rules, not a
+            # number to guess at, so say so loudly and name the milestone. The
+            # figure still computes from the first family, unchanged, so
+            # surfacing it never destabilises an existing number.
             logger.error(
                 "milestone %s mixes counting-basis families %s — its verified "
                 "actual counts only %s; the rules must agree on one unit",
@@ -268,20 +363,8 @@ def refresh_period_targets(milestone_id: str) -> None:
                 sorted(families),
                 sorted(families)[0],
             )
-        if bases & SCHOOL_BASES:
-            actual = credits.exclude(activity__school__isnull=True).aggregate(
-                value=Count("activity__school", distinct=True)
-            )["value"]
-        elif bases & TEACHER_BASES:
-            actual = credits.aggregate(value=Sum("activity__teachers_attended"))[
-                "value"
-            ]
-        elif bases & LEADER_BASES:
-            actual = credits.aggregate(value=Sum("activity__leaders_attended"))["value"]
-        else:
-            actual = credits.aggregate(value=Sum("credited_value"))["value"]
-        target.actual_value = Decimal(actual or 0)
-        if target.milestone.measurement_type in {"percentage", "ratio"}:
+        target.actual_value = Decimal(_aggregate_credits(credits, bases) or 0)
+        if target.milestone.measurement_type in RATE_MEASUREMENT_TYPES:
             if target.allocation_id and target.allocation.denominator:
                 # A rate target holds the rate (e.g. 90) as planned_value
                 # while credits arrive as raw units (schools reached).

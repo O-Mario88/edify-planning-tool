@@ -27,7 +27,11 @@ from apps.activities.services import reschedule
 from apps.budget.models import CostSetting
 from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole
-from apps.fund_requests.models import AdvanceRequest, AdvanceRequestStatus
+from apps.fund_requests.models import (
+    MONEY_MOVED_ADVANCE_STATUSES,
+    AdvanceRequest,
+    AdvanceRequestStatus,
+)
 from apps.geography.models import District, Region
 from apps.schools.models import School
 
@@ -120,6 +124,51 @@ class CostSnapshotLockTest(TestCase):
         self.assertTrue(
             ActivityScheduleCostLine.objects.filter(id=self.line.id).exists()
         )
+
+    def test_every_money_moved_status_locks_the_snapshot(self):
+        """Asked of the canonical set, not of a list written out here.
+
+        The guard in costing_service kept its own copy of these statuses, and
+        the copy fell two behind: ACCOUNTABILITY_PL_PENDING and
+        REIMBURSEMENT_PL_PENDING were money-moved everywhere else and absent
+        there, so rescheduling in either state passed the lock and
+        CASCADE-deleted the disbursed figures with the cost lines. The two
+        tests above only ever exercised DISBURSED, which is why the suite
+        stayed green through it.
+
+        Parametrising over MONEY_MOVED_ADVANCE_STATUSES is the part that
+        matters: a status added to the canonical set and forgotten in the
+        guard fails here instead of shipping.
+
+        The payload carries the same reason the passing reschedule below uses,
+        and the assertion reads the message. Without either, `reschedule`
+        refuses on the scheduling policy long before it reaches the lock, and a
+        bare assertRaises(BadRequest) passes against the drifted guard — which
+        is what the first draft of this test did.
+        """
+        payload = {
+            "scheduledDate": date(2026, 8, 1).isoformat(),
+            "reason": "Below CD daily target — single-school reschedule for test.",
+        }
+        for status in MONEY_MOVED_ADVANCE_STATUSES:
+            with self.subTest(status=status):
+                AdvanceRequest.objects.filter(id=self.adv.id).update(status=status)
+                with self.assertRaises(BadRequest) as caught:
+                    reschedule(self.activity.id, payload, principal=self.cceo)
+                self.assertIn(
+                    "cost snapshot is locked",
+                    str(caught.exception),
+                    f"the reschedule was refused with an advance in {status}, but "
+                    "for some other reason — the cost-snapshot lock did not fire",
+                )
+                self.assertTrue(
+                    AdvanceRequest.objects.filter(id=self.adv.id).exists(),
+                    f"the {status} advance was destroyed by the reschedule",
+                )
+                self.assertTrue(
+                    ActivityScheduleCostLine.objects.filter(id=self.line.id).exists(),
+                    f"the cost line behind the {status} advance was destroyed",
+                )
 
     def test_reschedule_still_works_before_any_disbursement(self):
         """The lock must only engage once money has actually moved — a

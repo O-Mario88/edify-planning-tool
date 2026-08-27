@@ -46,6 +46,23 @@ def _may_close_stage(req, principal) -> bool:
     return _may_review_hr_stage(req, principal)
 
 
+def _close_pd_reminders(req, event_types) -> None:
+    """Close the reminder notices whose condition this transition just ended.
+
+    A notification with no resolution path IS the INTG-03 defect: it stays
+    "Action Required" forever and the 48-hour escalation job promotes it to
+    urgent. Best-effort — a notification must never block the workflow.
+    """
+    if not event_types:
+        return
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition(list(event_types), "pd_request", req.id)
+    except Exception:  # noqa: BLE001
+        pass
+
+
 # HR return-reason → the status the record snaps back to, and who must act.
 RETURN_REASON_TARGETS = {
     "certificate_missing": PDStatus.MARKED_COMPLETE,
@@ -88,16 +105,29 @@ class PDCourseTrackingService:
         page read, no cron required. Never advances past what the employee/HR
         workflow has actually reached (e.g. never touches DRAFT or anything
         awaiting a human decision)."""
+        from apps.professional_development.reminders import (
+            PD_COURSE_IN_PROGRESS,
+            PD_COURSE_STARTING,
+        )
+
         today = today or date.today()
         changed = False
+        satisfied = []
         if req.status == PDStatus.ENROLLMENT_CONFIRMED and today >= req.start_date:
             req.status = PDStatus.IN_PROGRESS
+            satisfied.append(PD_COURSE_STARTING)
             changed = True
         if req.status == PDStatus.IN_PROGRESS and today >= req.end_date:
             req.status = PDStatus.ENDED
+            satisfied.append(PD_COURSE_IN_PROGRESS)
             changed = True
         if changed:
             req.save(update_fields=["status", "updated_at"])
+            # The clock is what ends these two reminder chains, so the clock is
+            # what closes them. Without this the "starts in 3 days" notice sat
+            # unread past the course itself and the escalation job promoted it
+            # to urgent (INTG-03).
+            _close_pd_reminders(req, satisfied)
         return req
 
     @staticmethod
@@ -158,6 +188,12 @@ class PDCourseTrackingService:
         req.marked_complete_at = timezone.now()
         req.status = PDStatus.MARKED_COMPLETE
         req.save()
+        # The condition every course reminder announced is now satisfied
+        # (INTG-03) — the overdue chase in particular, which also reached the
+        # supervisor and HR.
+        from apps.professional_development.reminders import PD_REMINDER_EVENTS
+
+        _close_pd_reminders(req, PD_REMINDER_EVENTS)
         return req
 
     @staticmethod
@@ -208,6 +244,11 @@ class PDCourseTrackingService:
         req.status = PDStatus.DEFERRED if outcome == "deferred" else PDStatus.WITHDRAWN
         req.deferred_withdrawn_reason = reason[:512]
         req.save()
+        # A deferred or withdrawn course is never going to be completed, so
+        # every reminder chasing it is dead too (INTG-03).
+        from apps.professional_development.reminders import PD_REMINDER_EVENTS
+
+        _close_pd_reminders(req, PD_REMINDER_EVENTS)
         from apps.professional_development.approval_service import _audit_decision
 
         _audit_decision(

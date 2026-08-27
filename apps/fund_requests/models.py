@@ -80,6 +80,43 @@ class FundRequest(TimeStampedModel):
                 fields=["submitted_by_user_id", "period", "period_key", "scope"],
                 name="uniq_request_period_owner",
             ),
+            # ── INT-01: money floors, enforced by Postgres ────────────────
+            # This table carried SEVEN unique constraints and ZERO checks, so
+            # a negative disbursement was a legal row. Every service that
+            # writes these fields bounds them (services.disburse,
+            # disbursement_dashboard_service.disburse), but one unbounded
+            # write reaches them —`services.py` sets accounted_amount and
+            # returned_amount straight from the request payload — and a
+            # management command, a shell or a repair script reaches all of
+            # them. The floor belongs where nothing can route around it.
+            #
+            # >= 0, not > 0, on every one of these: total_amount is the sum
+            # of ActivityScheduleCostLine amounts, and apps/budget/costing.py
+            # prices a line at 0 when its rate is missing or its quantity is
+            # zero, so a legitimately-zero total is reachable. Only a
+            # NEGATIVE figure is arithmetically impossible here.
+            models.CheckConstraint(
+                condition=models.Q(total_amount__gte=0),
+                name="fund_request_total_amount_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(disbursed_amount__isnull=True)
+                | models.Q(disbursed_amount__gte=0),
+                name="fund_request_disbursed_amount_non_negative",
+            ),
+            # accounted_amount == disbursed - returned + reimbursed, so a
+            # full return legitimately accounts for 0 spent. Never negative.
+            models.CheckConstraint(
+                condition=models.Q(accounted_amount__isnull=True)
+                | models.Q(accounted_amount__gte=0),
+                name="fund_request_accounted_amount_non_negative",
+            ),
+            # Returning nothing is the normal case, so 0 must stay legal.
+            models.CheckConstraint(
+                condition=models.Q(returned_amount__isnull=True)
+                | models.Q(returned_amount__gte=0),
+                name="fund_request_returned_amount_non_negative",
+            ),
         ]
         indexes = [
             models.Index(fields=["status"]),
@@ -108,6 +145,13 @@ class FundRequestItem(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["fund_request", "activity_schedule_cost_line_id"],
                 name="uniq_request_costline",
+            ),
+            # INT-01. A request item mirrors one cost line, and
+            # apps/budget/costing.py emits amount=0 for a line whose rate is
+            # missing, so 0 is a real priced line, not a bug. Negative is.
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name="fund_request_item_amount_non_negative",
             ),
         ]
         indexes = [models.Index(fields=["activity_id"])]
@@ -281,6 +325,78 @@ class AdvanceRequest(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["budget_line"], name="uniq_advance_per_budget_line"
             ),
+            # ── INT-01: money floors on the shared advance ledger ─────────
+            # These rows are the one ledger every disbursement channel
+            # converges on (see MONEY_MOVED_ADVANCE_STATUSES above), so a
+            # negative figure here is a negative figure in every budget
+            # rollup, every dashboard and every reconciliation identity.
+            #
+            # Mirrors the budget line, which prices at 0 for a missing rate
+            # or a zero quantity (apps/budget/costing.py) — so >= 0.
+            models.CheckConstraint(
+                condition=models.Q(amount__gte=0),
+                name="advance_request_amount_non_negative",
+            ),
+            # >= 0 and NOT > 0, deliberately: the weekly channel splits a
+            # partial disbursement across the week's advances by largest
+            # remainder (weekly_service.disburse) and the legacy activity
+            # channel scales by a rounded fraction (finance_services), and
+            # both legitimately allot 0 to a line. A `> 0` floor here would
+            # reject a correct split at the database.
+            models.CheckConstraint(
+                condition=models.Q(disbursed_amount__isnull=True)
+                | models.Q(disbursed_amount__gte=0),
+                name="advance_request_disbursed_amount_non_negative",
+            ),
+            # 0 is legitimate: an employee who spent nothing and returned the
+            # whole advance satisfies accounted == disbursed - returned.
+            models.CheckConstraint(
+                condition=models.Q(accounted_amount__isnull=True)
+                | models.Q(accounted_amount__gte=0),
+                name="advance_request_accounted_amount_non_negative",
+            ),
+            # Returning nothing is the ordinary outcome — 0 stays legal.
+            models.CheckConstraint(
+                condition=models.Q(returned_amount__isnull=True)
+                | models.Q(returned_amount__gte=0),
+                name="advance_request_returned_amount_non_negative",
+            ),
+            # The one money field here where 0 IS meaningless, hence > 0.
+            # advance_service.reimburse() refuses to pay unless due_amount is
+            # strictly positive and the payout equals it exactly, so a
+            # reimbursement of 0 records a payment that never happened while
+            # moving the advance into REIMBURSEMENT_DISBURSED — a state whose
+            # only exit is the employee's receipt confirmation. Null stays
+            # legal: most advances are never reimbursed at all.
+            models.CheckConstraint(
+                condition=models.Q(reimbursed_amount__isnull=True)
+                | models.Q(reimbursed_amount__gt=0),
+                name="advance_request_reimbursed_amount_positive",
+            ),
+            # ── INTG-07: one NetSuite Code clears one advance ─────────────
+            # approve_accountability() gates finance clearance on this field
+            # merely being non-empty, so without uniqueness a single NetSuite
+            # expense reference satisfied the gate on unlimited advances —
+            # the rule FinanceBlockedReasonService names as "Rule 5:
+            # Duplicate NetSuite ID risk check" and never implemented.
+            # NetSuiteExpenseRecord.netsuite_expense_id is already globally
+            # unique; this is the same law on the field the clearance gate
+            # actually reads.
+            #
+            # PARTIAL, on the Activity.uniq_activity_salesforce_id pattern:
+            # the great majority of advances legitimately carry no code (not
+            # yet accounted, self-funded, cancelled), and both NULL and ""
+            # occur in the wild, so both are excluded. There is no soft
+            # delete on this table — a superseded advance is hard-deleted by
+            # advance_service.sync_for_activity — so a tombstone exclusion
+            # has nothing to exclude here and the identifier is freed by the
+            # delete itself.
+            models.UniqueConstraint(
+                fields=["accountability_netsuite_id"],
+                condition=models.Q(accountability_netsuite_id__isnull=False)
+                & ~models.Q(accountability_netsuite_id=""),
+                name="uniq_advance_accountability_netsuite_id",
+            ),
         ]
         indexes = [
             models.Index(fields=["status"]),
@@ -328,6 +444,38 @@ class WeeklyFundRequest(TimeStampedModel):
                 fields=["responsible_user", "week_start_date"],
                 name="uniq_weekly_request_owner_week",
             ),
+            # INT-01, same floors as the monthly FundRequest above: this is
+            # the third channel money leaves through, and it was equally
+            # unprotected. total_amount is the sum of the week's fundable
+            # cost lines, any of which may legitimately price at 0.
+            models.CheckConstraint(
+                condition=models.Q(total_amount__gte=0),
+                name="weekly_fund_request_total_amount_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(disbursed_amount__isnull=True)
+                | models.Q(disbursed_amount__gte=0),
+                name="weekly_fund_request_disbursed_amount_non_negative",
+            ),
+            # Both roll up the week's child advances by summation
+            # (disbursement_dashboard_service), so they inherit those floors
+            # and, like them, are legitimately 0.
+            models.CheckConstraint(
+                condition=models.Q(accounted_amount__isnull=True)
+                | models.Q(accounted_amount__gte=0),
+                name="weekly_fund_request_accounted_amount_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(returned_amount__isnull=True)
+                | models.Q(returned_amount__gte=0),
+                name="weekly_fund_request_returned_amount_non_negative",
+            ),
+            # NOT constrained, deliberately (INTG-07): this table's
+            # accountability_netsuite_id is a comma-joined LIST of its child
+            # advances' codes, truncated to 128 chars — see
+            # disbursement_dashboard_service. It is a display roll-up, not an
+            # identifier, and uniqueness on it would be meaningless. The
+            # per-advance code carries the constraint instead.
         ]
 
 

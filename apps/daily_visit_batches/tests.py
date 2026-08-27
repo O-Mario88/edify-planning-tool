@@ -535,10 +535,77 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         )
         self.assertEqual(lunch_total, 30000)
 
-        # The training still carries its own session components on top.
+        from apps.budget.costing import GROUP_TRAINING_RATE_KEYS
+
+        # The training carries NO session components of its own.
+        #
+        # This asserted the opposite — participant meals, a facilitation fee
+        # and a venue fee on top of the day pool. That was the rule until the
+        # costing engine was deliberately changed to price an in-school
+        # training from the visit recipe, with the reason stated in
+        # `cost_for_activity`: it "is delivered during the same school mission
+        # as a school visit ... not a second journey or a venue-based group
+        # training", so Planning, partner payments and the CD Cost Catalogue
+        # all tell the same story.
+        #
+        # Mechanically it is an elif order: `is_in_school_training` now matches
+        # the VISIT_TYPES branch, which sits above the TRAINING_TYPES branch,
+        # so an in-school training can only ever take the visit recipe. The two
+        # cannot both apply, and the old expectation is the superseded one.
+        #
+        # What this test still protects is the part that did not change: the
+        # training joins the day pool, and transport and lunch are counted once
+        # across the day rather than once per activity — asserted above.
         training_keys = set(
             training.schedule_cost_lines.values_list("cost_setting_key", flat=True)
         )
-        self.assertIn("group_training_participant_meal_cost_per_head", training_keys)
-        self.assertIn("group_training_facilitation_fee", training_keys)
-        self.assertIn("group_training_venue_cost", training_keys)
+        self.assertEqual(
+            training_keys & set(GROUP_TRAINING_RATE_KEYS),
+            set(),
+            "an in-school training priced venue or facilitation as if it were "
+            "a group training held somewhere other than the school",
+        )
+        # And it is not costless: it still carries the visit recipe's own keys
+        # through the shared day pool, so "no session components" cannot pass
+        # by the training having no cost lines at all.
+        self.assertTrue(training_keys, "the training carries no cost lines")
+
+        # Assert the rule where the rule actually lives, too.
+        #
+        # The assertions above are on PERSISTED lines, and reverting the one
+        # line in `cost_for_activity` that implements this rule does not make
+        # them fail — the scheduling path that writes those lines reaches the
+        # same answer by another route. So they record the outcome without
+        # pinning the rule, and a test that cannot fail when the rule is
+        # removed is not holding it.
+        #
+        # This one does. Measured both ways: as written the recipe is
+        # transport + lunch at 86,000; with `or is_in_school_training` removed
+        # from the VISIT_TYPES branch the activity falls through to
+        # TRAINING_TYPES and the recipe becomes participant meals plus
+        # facilitation plus venue at 210,000 — a different recipe, not an
+        # addition to this one.
+        from apps.budget.costing import cost_for_activity
+
+        recipe = cost_for_activity(
+            {
+                "activityType": "in_school_training",
+                "deliveryType": "staff",
+                "districtType": "primary",
+                "expectedParticipants": 10,
+            },
+            {
+                "primary_transport_per_day": 56000,
+                "primary_lunch_per_day": 30000,
+                "group_training_participant_meal_cost_per_head": 9000,
+                "group_training_facilitation_fee": 50000,
+                "group_training_venue_cost": 70000,
+            },
+        )
+        self.assertEqual(
+            [line.key for line in recipe.lines],
+            ["primary_transport_per_day", "primary_lunch_per_day"],
+            "an in-school training is priced from the visit recipe, not the "
+            "venue-based group-training one",
+        )
+        self.assertEqual(recipe.amount, 86000)

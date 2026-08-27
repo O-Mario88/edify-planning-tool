@@ -355,6 +355,28 @@ JOB_REGISTRY: list[JobSpec] = [
         retryable=True,
         max_retries=2,
     ),
+    JobSpec(
+        name="scheduler_watchdog",
+        description=(
+            "Notifies Admins when a scheduled job has failed, never run or "
+            "gone overdue, and closes the notice when it recovers."
+        ),
+        cron="every 30 minutes",
+        cron_kwargs={"minute": "0,30"},
+        expected_runtime_seconds=5,
+        max_interval_minutes=120,
+        idempotent=True,
+        idempotency_note=(
+            "Notifications are keyed on (event, scheduled_job, job name), so a "
+            "job that stays broken re-fires into the notice already open "
+            "rather than adding one every half hour."
+        ),
+        # Not retried: the next run is thirty minutes away and reports the same
+        # state. Retrying a watchdog only multiplies the noise it exists to
+        # control.
+        retryable=False,
+        max_retries=0,
+    ),
 ]
 
 JOB_NAMES = {spec.name for spec in JOB_REGISTRY}

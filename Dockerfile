@@ -20,8 +20,26 @@ ENV NODE_ENV=production \
     PORT=4000
 # Runtime deps: libpq (psycopg), libexpat (ASGI), and headless LibreOffice for
 # the evidence DOCX→PDF rendition pipeline (optional; skipped if absent).
+#
+# The three OpenSSL packages are named explicitly, and not because anything
+# here links against them directly — the base image already carries them. They
+# are listed so `apt-get install` takes the newest version the archive has
+# rather than whatever the base image tag happened to freeze.
+#
+# DEP-08 is why. CVE-2026-14456 (OpenSSL denial of service through unbounded
+# memory growth in the QUIC server path, rated High) landed in the scanner's
+# database while `python:3.13-slim` still shipped 3.5.6-1~deb13u2, and Debian
+# had already published the fix as 3.5.7-1~deb13u2. Nothing in this repository
+# had changed; the image simply carried a vulnerability that a rebuild could
+# clear. Without this line a rebuild would keep shipping it, because the
+# earlier `apt-get install` list gave apt no reason to touch them.
+#
+# This is deliberately narrow rather than `apt-get upgrade`: upgrading
+# everything in the runtime image changes more than the finding asks for, on a
+# production image nobody can re-test between build and deploy.
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     libpq5 libexpat1 curl \
+    libssl3t64 openssl openssl-provider-legacy \
     libreoffice --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 # Site-packages from the build stage.

@@ -383,15 +383,45 @@ class FrontendViewsTestCase(TestCase):
         self.assertNotContains(response, "Confirm this week")
 
         html = response.content.decode()
-        # Admin's dashboard has one six-card headline across mobile and desktop.
+        # Admin's dashboard has ONE headline strip across mobile and desktop.
         # Country business metrics remain in their owning workspaces instead of
         # creating a second scorecard below the platform-operations scorecard.
         self.assertEqual(html.count('aria-label="Platform pulse"'), 0)
         self.assertEqual(html.count('aria-label="Platform operations summary"'), 1)
         self.assertEqual(html.count('aria-label="Country operational summary"'), 0)
-        # The retired page-specific ``admin-kpi`` tile does not bypass the
-        # six-headline information hierarchy.
-        self.assertEqual(html.count('data-component="kpi-card"'), 6)
+
+        # The card count is whatever the page registered, not a literal.
+        #
+        # This asserted `== 6` and that literal was the bug, not the guard.
+        # FE-02: fourteen payload groups were feeding more than six metrics
+        # into a six-slot tray, and the surplus was discarded with nothing on
+        # screen to say so. A test pinned to 6 could not tell "the dashboard
+        # shows its six metrics" from "the dashboard registered seven and threw
+        # one away" — it reported both as a pass. The user's decision settled
+        # the policy: "It should not limit to 4 or 6 based on how many things
+        # need to be tracked."
+        #
+        # So compare the render against the payload the view actually handed
+        # the strip, run through the same consolidation the template tag runs.
+        # Deleting the cap keeps this green; re-introducing one turns it red,
+        # which is the direction that matters.
+        from apps.core.metrics import consolidate_kpi_items
+
+        registered = response.context["dashboard_kpi_items"]
+        rendered = consolidate_kpi_items(registered)
+        self.assertEqual(html.count('data-component="kpi-card"'), len(rendered))
+        # Nothing is lost between registering and rendering. Consolidation
+        # deduplicates by identity, so a difference here means the view
+        # registered the same metric twice or two metrics collided on one
+        # identity — both real defects, and both invisible to a count literal.
+        self.assertEqual(
+            len(rendered),
+            len(registered),
+            "consolidation removed a registered KPI from the platform scorecard",
+        )
+        # And it is still a scorecard, not an empty strip: the emptiness rule
+        # from the route crawl, applied at the one surface this test owns.
+        self.assertGreaterEqual(len(rendered), 6)
         # Renamed with the read-only labels (97770f39): Admin does business
         # work here, so the strip below the command centre is the platform's
         # business overview rather than something merely "observed".

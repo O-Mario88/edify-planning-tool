@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from django.contrib.postgres.fields import ArrayField
 from django.db import models
+from django.db.models.functions import Coalesce
 
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
 
@@ -281,6 +282,82 @@ class PartnerAssignment(TimeStampedModel):
     class Meta:
         db_table = "partner_assignment"
         ordering = ["-created_at"]
+        constraints = [
+            # ── INT-02: one live assignment per partner per support slot ──
+            # The rule is already written twice in code and enforced by
+            # neither the database nor most of the creation paths:
+            # withdrawal_service._assert_replacement_eligible ("One live
+            # assignment per support slot. Without this a school could end up
+            # with two partners both believing they own the same visit, and
+            # both eventually billing for it") checks it on the replacement
+            # path only, and system_health.planning_oversight_health
+            # ._two_live_assignments_on_one_slot reports the rows that got in
+            # anyway. This is the ambiguity the reassignment-lineage comment
+            # above describes: "a partner with two assignments at one school
+            # made both pairings ambiguous, and every count and every
+            # shilling downstream inherited the ambiguity."
+            #
+            # Scoped to (school, PARTNER, slot) and not to (school, slot),
+            # which is the wider rule the health check reports. Two DIFFERENT
+            # partners on one slot is a real, transitional operational state
+            # — it is what a contested handover looks like before somebody
+            # resolves it — and it is resolvable by a human from the health
+            # board. One partner holding the same slot twice has no reading
+            # at all: it is the same organisation double-entered against the
+            # same entitlement, and it is what makes a pairing ambiguous.
+            #
+            # Partial on two axes:
+            #   * returned_to_staff rows have let the slot go
+            #     (withdrawal_service sets exactly this status when a
+            #     withdrawal takes effect), so they must not block the
+            #     replacement that succeeds them.
+            #   * a row must actually NAME a slot. Support slots are a Core
+            #     Schools concept (Visit 1..4, Training 1..4); ordinary
+            #     handovers name none, and two of those at one school are two
+            #     different pieces of work, not a double booking — the same
+            #     carve-out the health check makes for the same reason.
+            #
+            # COALESCE, because both spellings of "no value" are live in the
+            # data: the Core Schools view writes "" into whichever of
+            # visit_number/training_number does not apply, while every other
+            # creation path leaves all three NULL. Without normalising, a ""
+            # row and a NULL row would read as different slots (Postgres
+            # unique indexes treat NULLs as distinct) and the constraint
+            # would miss exactly the collision it exists to catch.
+            #
+            # No soft-delete term: PartnerAssignment has no deleted_at — a
+            # superseded assignment keeps its row as history and signals
+            # release through `status`, which the condition already reads.
+            models.UniqueConstraint(
+                "school",
+                "partner",
+                Coalesce("support_type", models.Value("")),
+                Coalesce("visit_number", models.Value("")),
+                Coalesce("training_number", models.Value("")),
+                condition=(
+                    # Literal rather than STATUS_RETURNED_TO_STAFF: a Meta
+                    # body cannot see the enclosing class's attributes, and a
+                    # migration must freeze the value anyway.
+                    ~models.Q(status="returned_to_staff")
+                    & models.Q(school__isnull=False)
+                    & (
+                        (
+                            models.Q(support_type__isnull=False)
+                            & ~models.Q(support_type="")
+                        )
+                        | (
+                            models.Q(visit_number__isnull=False)
+                            & ~models.Q(visit_number="")
+                        )
+                        | (
+                            models.Q(training_number__isnull=False)
+                            & ~models.Q(training_number="")
+                        )
+                    )
+                ),
+                name="uniq_live_partner_support_slot",
+            ),
+        ]
 
 
 class PartnerActivityAllowance(TimeStampedModel):

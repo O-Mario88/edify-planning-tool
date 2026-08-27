@@ -28,6 +28,11 @@ from apps.professional_development.models import (
 
 FINANCE_ROLE = "Accountant"
 
+# The Accountant's disbursement queue item, named so that disbursing (or
+# returning) the request can close it — the resolution path the raw insert it
+# replaces never had (INTG-03).
+PD_FUND_PENDING_DISBURSEMENT = "pd_fund_request_pending_disbursement"
+
 
 def _assert_finance_role(req: ProfessionalDevelopmentRequest, principal) -> None:
     role = getattr(principal, "active_role", "")
@@ -72,20 +77,18 @@ class PDFundRequestService:
 
             approver = _pick_approver(FINANCE_ROLE, req.owner_user_id)
             if approver:
-                from apps.notifications.models import Notification
-
-                Notification.objects.create(
-                    recipient_id=approver.id,
-                    title="PD fund request awaiting disbursement",
-                    body=f"{req.staff_name} — “{req.course_name}” "
-                    f"({req.currency} {req.requested_amount_cents/100:,.0f}).",
-                    category="professional_development",
-                    context_type="pd_fund_request",
-                    context_id=fr.id,
-                    target_route=f"/my-professional-development/request?id={req.id}",
-                    action_label="Open",
-                    action_required=True,
-                    priority="high",
+                # Through `_notify`, not a raw insert (INTG-03). The raw insert
+                # set no `source_event_type`, so the Accountant's disbursement
+                # queue item could never be closed by disbursing it — it stayed
+                # "Action Required" past the payment and the 48-hour escalation
+                # job then promoted it to urgent.
+                PDFundRequestService._notify(
+                    approver.id,
+                    "PD fund request awaiting disbursement",
+                    f"{req.staff_name} — “{req.course_name}” "
+                    f"({req.currency} {req.requested_amount_cents / 100:,.0f}).",
+                    req,
+                    event_type=PD_FUND_PENDING_DISBURSEMENT,
                 )
         except Exception:  # noqa: BLE001 — notification is supportive, never blocking
             pass
@@ -120,6 +123,8 @@ class PDFundRequestService:
         from apps.professional_development.approval_service import _audit_decision
 
         _audit_decision("pd_disburse", req, principal)
+        # Paying it is what ends "awaiting disbursement" (INTG-03).
+        PDFundRequestService._close_pending_disbursement(req)
         PDFundRequestService._notify(
             req.owner_user_id,
             "PD funds disbursed",
@@ -156,6 +161,9 @@ class PDFundRequestService:
         req.status = PDStatus.RETURNED_BY_HR  # back into the correction loop
         req.hr_note = f"Finance returned: {reason}"[:512]
         req.save(update_fields=["status", "hr_note", "updated_at"])
+        # It has left the disbursement queue for the correction loop, so the
+        # Accountant's queue item is satisfied too (INTG-03).
+        PDFundRequestService._close_pending_disbursement(req)
         PDFundRequestService._notify(
             req.owner_user_id, "PD funding request returned", reason, req
         )
@@ -217,7 +225,22 @@ class PDFundRequestService:
         return req
 
     @staticmethod
-    def _notify(recipient_user_id, title, body, req) -> None:
+    def _close_pending_disbursement(req) -> None:
+        """Close the Accountant's queue item once the request leaves the queue.
+
+        Best-effort: a notification must never block a money movement.
+        """
+        try:
+            from apps.notifications.services import resolve_condition
+
+            resolve_condition(PD_FUND_PENDING_DISBURSEMENT, "pd_request", req.id)
+        except Exception:  # noqa: BLE001
+            pass
+
+    @staticmethod
+    def _notify(
+        recipient_user_id, title, body, req, event_type="pd_action_required"
+    ) -> None:
         if not recipient_user_id:
             return
         try:
@@ -227,7 +250,7 @@ class PDFundRequestService:
             from apps.notifications.services import WorkflowNotificationService
 
             WorkflowNotificationService.trigger(
-                event_type="pd_action_required",
+                event_type=event_type,
                 category="professional_development",
                 priority="high",
                 title=title,

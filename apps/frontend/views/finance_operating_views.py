@@ -1,14 +1,19 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
+from django.http import HttpResponse
 
 from apps.core.donut import build_rings
-from apps.core.permissions import require_export_permission, require_page_permission
+from apps.core.permissions import (
+    has_permission,
+    require_export_permission,
+    require_page_permission,
+)
+from apps.core.rbac import Permission
 from apps.activities.models import Activity
 from apps.fund_requests.models import (
     AdvanceRequestStatus,
     ReimbursementClaim,
     AccountabilityRecord,
-    FinanceReturn,
     VarianceReview,
     FinanceAuditLog,
     WeeklyFundRequest,
@@ -27,6 +32,25 @@ from apps.analytics.platform_engine import finance_health
 
 
 from apps.core.metrics import format_ugx_compact  # noqa: F401  (re-exported)
+
+
+def _lacks_payment_authority(request):
+    """403 when the caller may not move money, else None.
+
+    The disbursements PAGE is open to Admin (navigation.py maps it to
+    {Accountant, Admin}) so the queue can be read, but seeing a payment queue
+    is not authority to pay out of it — the rule
+    disbursement_dashboard_service._require_accountant_action already records
+    in prose. These two actions carried only the page gate (FIN-03); this is
+    the same `payment.act` check the sibling
+    finance_views.clear_partner_payment_action carries, read from the matrix
+    the 2026-08 audit's AUD-004 configured rather than from a role tuple.
+    The services assert it again at the money.
+    """
+    if not has_permission(request.user, Permission.PAYMENT_ACT.value):
+        return HttpResponse("Unauthorized", status=403)
+    return None
+
 
 # This module previously defined its own `format_ugx_compact` with the
 # docstring "same as apps/frontend/views/budget_views.py". It was not: that
@@ -495,6 +519,9 @@ def partner_payments_view(request):
 @require_page_permission("disbursements")
 def pay_partner_action(request, activity_id):
     """POST to pay partner."""
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
     activity = get_object_or_404(Activity, id=activity_id)
 
     if request.method == "POST":
@@ -532,6 +559,9 @@ def pay_transport_action(request, payment_id):
     """POST — settle one mission day's transport with the provider."""
     from apps.fund_requests.vendor_channel import pay_transport_provider
 
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
     if request.method == "POST":
         try:
             result = pay_transport_provider(
@@ -704,12 +734,24 @@ def variance_review_view(request):
 
 @require_page_permission("disbursements")
 def returned_view(request):
-    """Returned Finance Items Page."""
-    returns = FinanceReturn.objects.filter(status="pending").select_related(
-        "activity", "activity__school"
+    """Returned Finance Items Page.
+
+    FIN-05: this read `FinanceReturn.objects.filter(status="pending")`, and
+    nothing in this codebase writes a FinanceReturn — no service, no view, no
+    command, not even a test. The queue was structurally empty while the
+    Accountant dashboard row linking here carried a real, non-zero returned
+    balance from the AdvanceRequest ledger, and the empty state announced
+    "All corrections resolved."
+
+    `returned_correction_queue` reads that same ledger, so the page now answers
+    the question the click asked. See its docstring for why the queue is
+    standing rather than month-scoped.
+    """
+    from apps.fund_requests.disbursement_dashboard_service import (
+        returned_correction_queue,
     )
 
-    context = {"returns": returns}
+    context = {"returns": returned_correction_queue()}
     return render(request, "pages/accounts/returned.html", context)
 
 
@@ -973,6 +1015,9 @@ def partner_invoice_pay_action(request, invoice_id):
     """POST — pay the invoice's instalment (delegates to pay_partner)."""
     from apps.fund_requests.partner_invoices import pay_invoice
 
+    denied = _lacks_payment_authority(request)
+    if denied:
+        return denied
     if request.method == "POST":
         try:
             result = pay_invoice(

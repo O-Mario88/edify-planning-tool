@@ -391,8 +391,15 @@ def _save_allocation_rows(request, milestone, *, scope, parent=None):
     # portfolio DENOMINATOR, or coverage math falls into the units÷rate
     # fallback. For a team scope the denominator is the supervised members'
     # combined portfolio; for an employee scope, their own portfolio.
+    from apps.hr.milestone_progress import RATE_MEASUREMENT_TYPES
+
     denominators: dict[str, int] = {}
-    if milestone.measurement_type == "percentage":
+    # RATE_MEASUREMENT_TYPES, not a literal "percentage": the achievement
+    # calculation in milestone_progress treats "ratio" as a rate too, and this
+    # page is the only thing that populates the numeric denominator it needs.
+    # Every ratio milestone allocated here was therefore left without one and
+    # scored zero for ever (2026-08 audit TGT-01).
+    if milestone.measurement_type in RATE_MEASUREMENT_TYPES:
         from apps.accounts.models import StaffSupervisorAssignment
         from apps.hr.target_distribution import _portfolio_counts
 
@@ -465,7 +472,13 @@ def _save_allocation_rows(request, milestone, *, scope, parent=None):
             existing.core_target = core_v
             existing.client_target = client_v
             existing.allocation_reason = reason
-            if holder_id in denominators:
+            # A zero denominator is the same unusable state as none at all —
+            # `_portfolio_counts` returns total 0 for a holder with no active
+            # assignments, and writing that here was a silent route into the
+            # score-zero-for-ever case create_allocation already refuses
+            # (TGT-01). Leave the existing figure alone rather than replacing
+            # a real one with nothing.
+            if denominators.get(holder_id):
                 existing.denominator = Decimal(denominators[holder_id])
             existing.save(
                 update_fields=[
@@ -524,10 +537,18 @@ def target_distribution_action(request):
     action = request.POST.get("action", "")
     try:
         if action == "confirm_milestone":
-            if not _is_cd(request):
-                raise BadRequest(
-                    "Source figures are confirmed by the Country Director."
-                )
+            # No role check here. `engine.confirm_milestone` calls
+            # `_assert_master_editor`, which reads `milestones.define` from the
+            # permission matrix, and the BadRequest it raises is caught below
+            # and shown to the user exactly like any other refusal.
+            #
+            # This used to duplicate the rule as `if not _is_cd(request)`, and
+            # when CONFLICT-002 was decided in favour of Impact Assessment
+            # editing Master Priority rows, granting the permission and opening
+            # the service would have changed nothing: the door would still have
+            # refused IA while the act allowed them. The `publish_master`
+            # branch immediately below never had a duplicate and trusts its
+            # service the same way, which is the pattern followed here.
             milestone = PriorityMilestone.objects.get(id=request.POST.get("milestone"))
             engine.confirm_milestone(
                 milestone, data=request.POST.dict(), principal=request.user

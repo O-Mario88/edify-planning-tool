@@ -57,7 +57,11 @@ def rvp_project_decision_view(request, project_id):
         return HttpResponseForbidden("RVP only.")
     if request.method != "POST":
         return HttpResponseBadRequest("POST required.")
-    from apps.monthly_work_plan.services import _rvp_audit, _rvp_notify
+    from apps.monthly_work_plan.services import (
+        SPECIAL_PROJECT_DECISION,
+        _rvp_audit,
+        _rvp_notify,
+    )
     from apps.projects.models import Project
 
     ALLOWED = {
@@ -101,11 +105,15 @@ def rvp_project_decision_view(request, project_id):
     for cd_user in User.objects.filter(
         roles__contains=["CountryDirector"], status="active"
     ):
+        # INTG-03: named and addressed to the project it decides, so the route
+        # reaches the record itself and the notice is addressable at all.
         _rvp_notify(
             cd_user.id,
             f"RVP decision: {ALLOWED[action]}",
             f"{project.name} — {reason or 'strategic decision recorded.'}{status_note}",
-            "/projects",
+            event_type=SPECIAL_PROJECT_DECISION,
+            context_type="Project",
+            context_id=project.id,
         )
     messages.success(
         request, f"{ALLOWED[action]} recorded for {project.name}.{status_note}"

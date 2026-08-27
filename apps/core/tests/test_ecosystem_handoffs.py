@@ -365,6 +365,14 @@ class PartnerDoublePayTest(TestCase):
         from apps.fund_requests.finance_services import PartnerPaymentService
 
         activity = self._paid_world()
+        # A real Program Accountant, not the bare string this passed before.
+        # pay_partner now asks the permission matrix for payment.act (FIN-03),
+        # so an actor id matching no user is refused as Forbidden — and this
+        # test would then pass for the wrong reason, never reaching the
+        # one-payout-per-activity rule it exists to hold.
+        accountant = _user(
+            "eco-doublepay@edify.test", EdifyRole.PROGRAM_ACCOUNTANT.value
+        )
         with self.assertRaises(BadRequest):
             PartnerPaymentService.pay_partner(
                 activity,
@@ -372,7 +380,7 @@ class PartnerDoublePayTest(TestCase):
                 60_000,
                 "bank",
                 "REF-ECO-2",
-                "acct",
+                accountant.id,
                 netsuite_id="NS-ECO-1",
             )
 

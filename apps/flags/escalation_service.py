@@ -40,6 +40,13 @@ CATEGORIES = [
     ("other", "Other"),
 ]
 
+# The three conditions this channel announces. Each is named so the transition
+# that ends it can close it (INTG-03): the RVP deciding closes both the open
+# queue item and the CD's acknowledgement notice.
+ESCALATION_OPEN = "leadership_escalation_open"
+ESCALATION_ACKNOWLEDGED = "leadership_escalation_acknowledged"
+ESCALATION_DECIDED = "leadership_escalation_decided"
+
 DECISIONS = [
     ("approved", "Approved"),
     ("declined", "Declined"),
@@ -125,7 +132,12 @@ def acknowledge(escalation_id: str, principal) -> LeadershipEscalation:
             "updated_at",
         ]
     )
-    _notify_raiser(esc, "Your escalation was acknowledged", esc.subject)
+    _notify_raiser(
+        esc,
+        "Your escalation was acknowledged",
+        esc.subject,
+        ESCALATION_ACKNOWLEDGED,
+    )
     audit_log(
         action="escalation_acknowledge",
         subject_kind="LeadershipEscalation",
@@ -161,17 +173,21 @@ def resolve(escalation_id: str, data: dict, principal) -> LeadershipEscalation:
         esc.acknowledged_at = timezone.now()
         esc.acknowledged_by_user_id = _actor_id(principal)
     esc.save()
-    # The RVPs no longer need to act on it.
+    # The RVPs no longer need to act on it, and the CD's "acknowledged" notice
+    # is answered by the decision it was waiting for (INTG-03).
     try:
         from apps.notifications.services import resolve_condition
 
-        resolve_condition("leadership_escalation_open", "escalation", esc.id)
+        resolve_condition(
+            [ESCALATION_OPEN, ESCALATION_ACKNOWLEDGED], "escalation", esc.id
+        )
     except Exception:  # noqa: BLE001
         pass
     _notify_raiser(
         esc,
         f"RVP decision: {dict(DECISIONS)[decision]}",
         f"{esc.subject} — {note[:200]}",
+        ESCALATION_DECIDED,
     )
     audit_log(
         action="escalation_resolve",
@@ -270,7 +286,7 @@ def _notify_rvps(esc: LeadershipEscalation, title: str | None = None) -> None:
         if not recipients:
             return
         WorkflowNotificationService.trigger(
-            event_type="leadership_escalation_open",
+            event_type=ESCALATION_OPEN,
             category="leadership",
             priority=(
                 "high" if esc.severity != EscalationSeverity.NORMAL.value else "normal"
@@ -285,20 +301,34 @@ def _notify_rvps(esc: LeadershipEscalation, title: str | None = None) -> None:
         pass
 
 
-def _notify_raiser(esc: LeadershipEscalation, title: str, body: str) -> None:
-    try:
-        from apps.notifications.models import Notification
+def _notify_raiser(
+    esc: LeadershipEscalation, title: str, body: str, event_type: str
+) -> None:
+    """Tell the CD what happened to their escalation — through the canonical
+    service, like the RVP-facing half above.
 
-        Notification.objects.create(
-            recipient_id=esc.raised_by_user_id,
+    This was the last raw `Notification.objects.create` in the channel and it
+    set no `source_event_type`, so `resolve_condition` could never match it:
+    the "acknowledged" notice outlived the decision that answered it and sat in
+    the CD's rail permanently (INTG-03). The acknowledgement is closed by
+    `resolve()`; the decision notice is genuinely terminal — the channel ends
+    there — so it is `normal` priority and never becomes an action-required row
+    for the 48-hour escalation job to promote.
+    """
+    if not esc.raised_by_user_id:
+        return
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type=event_type,
+            category="leadership",
+            priority="normal",
             title=title,
             body=body[:300],
-            category="leadership",
             context_type="escalation",
             context_id=esc.id,
-            target_route="/escalations",
-            action_label="Open",
-            priority="normal",
+            recipients=[esc.raised_by_user_id],
         )
     except Exception:  # noqa: BLE001
         pass

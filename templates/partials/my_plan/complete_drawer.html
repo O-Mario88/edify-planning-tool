@@ -62,7 +62,7 @@ class="edify-text-caption text-slate-500 file:mr-3 file:py-1.5 file:px-3 file:ro
 <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 {% for item in evidence_checklist %}
 <div class="flex items-center gap-2 rounded-control border px-3 py-2 {% if item.uploaded %}border-emerald-200 bg-emerald-50 text-emerald-700{% else %}border-slate-200 bg-slate-50 text-slate-500{% endif %}">
-<span aria-hidden="true">{% if item.uploaded %}✓{% else %}○{% endif %}</span>
+{% if item.uploaded %}<svg aria-hidden="true" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% else %}<svg aria-hidden="true" class="h-4 w-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="7"/></svg>{% endif %}
 <span class="edify-text-caption font-semibold">{{ item.recordLabel }} · {{ item.label }}</span>
 </div>
 {% endfor %}
@@ -162,13 +162,13 @@ Finalize details
 <label for="salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Training ID <span class="text-rose-500">*</span></label>
 <input type="text" name="salesforce_id" id="salesforce_id" required autocomplete="off"
 placeholder="TS-…" value="{{ act.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 edify-primary-focus">
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 <div>
 <label for="visit_salesforce_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">School Visit ID <span class="text-rose-500">*</span></label>
 <input type="text" name="visit_salesforce_id" id="visit_salesforce_id" required autocomplete="off"
 placeholder="SVE-…" value="{{ paired_school_visit.salesforceActivityId|default:'' }}"
-class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 bg-white focus:outline-none focus:ring-2 edify-primary-focus">
+class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] mt-1 edify-surface focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 </div>
 </div>

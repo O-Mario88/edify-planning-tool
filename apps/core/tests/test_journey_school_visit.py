@@ -1,4 +1,12 @@
-"""Journey 1 — the platform's primary spine, walked once, end to end.
+"""Journey 3 — Standard staff school visit, walked once, end to end.
+
+Journey 3 of the mandate's twenty-two: Plan, Cost, Schedule, Fund request,
+Approval, Disbursement, Start, Evidence, PL review, IA verification,
+Accountability, Closure. (This docstring said "Journey 1" and walked
+Journey 3; Journey 1 is Priority to verified performance, which starts from a
+published priority and ends at a reconciling drill-down. A census built from
+docstrings would have ticked the wrong box.) The manifest in
+apps/core/tests/release_journeys.py is the register, and it points here.
 
 The 2026-08 audit's coverage sweep found that no test walks a whole journey.
 The suite splits this one in two and each half fabricates the other's outcome:

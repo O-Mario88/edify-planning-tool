@@ -65,7 +65,9 @@ def define_milestone(milestone, *, data: dict, principal):
     if target <= 0:
         raise BadRequest("Target must be greater than zero.")
     denominator = (data.get("denominatorDefinition") or "").strip()
-    if data["measurementType"] in {"percentage", "ratio"} and not denominator:
+    from apps.hr.milestone_progress import RATE_MEASUREMENT_TYPES
+
+    if data["measurementType"] in RATE_MEASUREMENT_TYPES and not denominator:
         raise BadRequest("Percentage and ratio milestones require a denominator.")
 
     metric, _ = MilestoneMetricDefinition.objects.update_or_create(

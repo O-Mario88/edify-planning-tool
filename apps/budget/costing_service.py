@@ -477,6 +477,7 @@ def apply_to_activity(
         activity.fy = fiscal_year
 
     from apps.fund_requests.models import (
+        MONEY_MOVED_ADVANCE_STATUSES,
         AdvanceRequest,
         AdvanceRequestStatus,
         FundRequest,
@@ -508,18 +509,15 @@ def apply_to_activity(
         # the lines below would silently erase that financial record. Once
         # money has actually moved, this snapshot is locked history; the
         # caller must use a formal amendment/variance workflow instead.
-        if any(
-            adv.status
-            in (
-                AdvanceRequestStatus.DISBURSED,
-                AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
-                AdvanceRequestStatus.ACCOUNTED,
-                AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
-                AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
-                AdvanceRequestStatus.REIMBURSED,
-            )
-            for adv in locked_advances
-        ):
+        #
+        # Asked of the canonical set rather than a copy of it. The copy had
+        # drifted two states behind: ACCOUNTABILITY_PL_PENDING and
+        # REIMBURSEMENT_PL_PENDING are money-moved — the first is a disbursed
+        # advance whose accountability is with the PL, the second an employee's
+        # own spend awaiting repayment — and neither appeared here, so
+        # rescheduling in either state passed the guard and CASCADE-deleted the
+        # disbursed figures with the cost lines.
+        if any(adv.status in MONEY_MOVED_ADVANCE_STATUSES for adv in locked_advances):
             raise BadRequest(
                 "This activity already has a disbursed or accounted advance — its "
                 "cost snapshot is locked. Use a budget amendment instead of "

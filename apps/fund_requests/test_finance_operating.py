@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.test import TestCase
 from datetime import date
 from apps.core.exceptions import BadRequest
@@ -30,6 +31,17 @@ from apps.fund_requests.finance_services import (
 
 class FinanceOperatingSystemTest(TestCase):
     def setUp(self):
+        # "accountant_jane" is a real Program Accountant, not a loose string:
+        # pay_partner asserts `payment.act` on the actor it is handed (FIN-03),
+        # so the fixture has to name someone who actually holds it.
+        get_user_model().objects.create(
+            id="accountant_jane",
+            email="accountant-jane@test.org",
+            name="Accountant Jane",
+            roles=["Accountant"],
+            active_role="Accountant",
+            is_active=True,
+        )
         # Create Geography Hierarchy
         self.region = Region.objects.create(name="Central Region")
         self.district = District.objects.create(name="Kampala", region=self.region)
@@ -597,7 +609,17 @@ class FinanceOperatingSystemTest(TestCase):
             # never close (2026-08 audit, AUD-009).
             salesforce_activity_id="VS-PARTNER-QUEUE-1",
         )
-        ActivityCertificationService.certify_activity(activity, {}, "ia_user")
+        # A real Impact Assessment user: certify_activity asserts `ia.verify`
+        # on the actor it is handed (SEC-03).
+        ia_user = get_user_model().objects.create(
+            id="ia_user",
+            email="ia-user@edify.org",
+            name="Finance IA",
+            roles=["ImpactAssessment"],
+            active_role="ImpactAssessment",
+            is_active=True,
+        )
+        ActivityCertificationService.certify_activity(activity, {}, ia_user.id)
         activity.refresh_from_db()
         self.assertEqual(activity.payment_status, "ia_confirmed")
 

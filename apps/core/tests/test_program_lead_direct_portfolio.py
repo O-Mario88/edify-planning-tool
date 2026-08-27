@@ -558,7 +558,23 @@ class ApprovalAndOversightRemainTest(ProgramLeadDirectPortfolioBase):
         action = TeamAction.objects.get(school_id=self.team_core.id)
         self.assertEqual(action.state, ActionState.OPEN)
         self.assertEqual(action.recipient_id, self.cceo.id)
-        self.assertEqual(action.issue_type, "core_assessment_missing")
+        self.assertEqual(
+            action.issue_type,
+            "core_assessment_missing",
+            # CORE-01, and its own prediction coming true. For a while this
+            # asserted `core_package_behind`, because the more severe blocker
+            # — a missing core assessment — was unsendable: no catalogue item
+            # could schedule one, so nobody could ever close it. The send
+            # falls through to the next blocker rather than refusing, which
+            # kept THIS test's actual subject true: a supervisor can send an
+            # action to the responsible CCEO.
+            #
+            # That comment ended "configure the catalogue item and the
+            # assessment ask becomes sendable again and wins on severity."
+            # D5 is that configuration — a Core Assessment is costed as the
+            # school visit the staff are already making — so it does, and the
+            # assertion is back to what it was before the gap existed.
+        )
         self.assertIsNotNone(action.due_date)
 
     def test_sending_creates_no_activity_and_moves_no_work(self):

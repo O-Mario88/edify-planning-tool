@@ -337,6 +337,34 @@ class ActivityReturnService:
             return _serialize(activity)
 
 
+def _assert_may_certify(actor) -> None:
+    """Only a holder of `ia.verify` may certify that work was done.
+
+    Read from the permission matrix rather than a role tuple, the same
+    contract `RolePermissionService.can_verify_ia` enforces on the page
+    surface and `finance_services._assert_may_pay` enforces on the money.
+    `ia.verify` is one of the authorities ADMIN_EXCLUDED_PERMISSIONS withholds
+    from Admin, so that no single account can both verify work and release the
+    money for it — that separation is only real if it is asserted where the
+    verification actually happens.
+
+    `actor` is a principal or the bare `actor_id` this service is handed by
+    every caller. An actor that does not resolve has no authority anyone can
+    establish, and this is the last gate before an activity is stamped
+    verified, so it is refused.
+    """
+    from apps.core.exceptions import Forbidden
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+
+    if isinstance(actor, str):
+        from apps.accounts.models import User
+
+        actor = User.objects.filter(id=actor).first()
+    if not has_permission(actor, Permission.IA_VERIFY.value):
+        raise Forbidden("Only Impact Assessment can verify an activity.")
+
+
 def _assert_verifiable(activity) -> None:
     """The preconditions verification must not skip, on either door.
 
@@ -386,6 +414,18 @@ class ActivityCertificationService:
     def certify_activity(
         activity: Activity, checklist_data: dict, actor_id: str
     ) -> dict:
+        # Authority first, before the status read and before any write. This
+        # service took actor_id on trust and stamped it onto ia_confirmed_by,
+        # with the only guard living in one view (ia_views.ia_verify_action).
+        # That is the FIN-03 shape, and FIN-03's own fix says why it matters:
+        # "asserting here, at the money, is what stops the next screen
+        # re-opening the hole." Permission.IA_VERIFY sits in
+        # ADMIN_EXCLUDED_PERMISSIONS precisely so no single account can verify
+        # work AND release the money for it — a separation the service was
+        # handing to whichever caller happened to show up. "False IA
+        # verification" is a P0 by name. Found by the Journey 19 sweep, where
+        # all fourteen roles certified successfully.
+        _assert_may_certify(actor_id)
         # Same race/replay guard as ActivityReturnService.return_activity,
         # and the same two-layer shape: the early check is a courtesy, the
         # re-check under select_for_update is the guard. Without it, two IA

@@ -154,6 +154,12 @@ def submit_to_rvp(budget_id: str, principal) -> dict:
     from apps.monthly_work_plan import country_budget_service
 
     b = country_budget_service.send_to_rvp(principal, budget_id)
+    # Resubmitting is what answers "returned by RVP" (INTG-03). NOTE: this
+    # closes it only for callers that come through here. The CD workspace calls
+    # country_budget_service.send_to_rvp directly, so the same
+    # `_rvp_resolve` belongs inside send_to_rvp itself — that file is outside
+    # this change's ownership.
+    _rvp_resolve(COUNTRY_BUDGET_RETURNED, "MonthlyWorkPlanBudget", b.id)
     return _serialize(b)
 
 
@@ -210,22 +216,61 @@ def _rvp_audit(
     )
 
 
-def _rvp_notify(recipient_id, title, body, route):
-    try:
-        from apps.notifications.models import Notification
+# The RVP decision channel's events. The two monthly-budget names are
+# deliberately the ones country_budget_service already emits: the REST path
+# here and the CD workspace path there announce the SAME condition about the
+# SAME budget, so one `resolve_condition` at the transition that satisfies it
+# must close both. Inventing a parallel name would have left half the rows open.
+COUNTRY_BUDGET_SUBMITTED = "country_budget_submitted"
+COUNTRY_BUDGET_APPROVED = "country_budget_approved"
+COUNTRY_BUDGET_RETURNED = "country_budget_returned"
+ANNUAL_BUDGET_SUBMITTED = "annual_budget_submitted"
+ANNUAL_BUDGET_APPROVED = "annual_budget_approved"
+ANNUAL_BUDGET_RETURNED = "annual_budget_returned"
+STRATEGY_NOTE_ISSUED = "strategy_note_issued"
+SPECIAL_PROJECT_DECISION = "special_project_decision"
 
-        Notification.objects.create(
-            recipient_id=recipient_id,
+
+def _rvp_notify(recipient_id, title, body, *, event_type, context_type, context_id):
+    """Route through the central service, not a raw insert (INTG-03).
+
+    This wrote `Notification.objects.create` with no `source_event_type` and —
+    worse — no `context_id` at all, so nothing could address the row, let alone
+    close it. Every RVP decision left the Country Director a permanent "Action
+    Required" notice that the 48-hour escalation job promoted to urgent, which
+    is how the urgent count stopped meaning anything (2026-08-20 HR audit).
+
+    `target_route` is no longer passed: NotificationLinkResolver derives it
+    from the context and the reader's role, which is the point of routing
+    through the service.
+    """
+    if not recipient_id:
+        return
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type=event_type,
+            category="finance",
+            priority="high",
             title=title,
             body=body,
-            category="country_budget",
-            context_type="rvp_decision",
-            target_route=route,
-            action_label="Open",
-            action_required=True,
-            priority="high",
+            context_type=context_type,
+            context_id=context_id,
+            recipients=[recipient_id],
         )
     except Exception:  # noqa: BLE001 — notification is supportive, not blocking
+        pass
+
+
+def _rvp_resolve(event_types, context_type, context_id) -> None:
+    """Close the notices this transition has just answered. Best-effort — a
+    notification must never block a budget decision."""
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition(event_types, context_type, context_id)
+    except Exception:  # noqa: BLE001
         pass
 
 
@@ -250,13 +295,17 @@ def rvp_approve(budget_id: str, data: dict, principal) -> dict:
         amount=b.total_amount,
         fy=b.fy,
     )
+    # Deciding is what ends "ready for your approval" (INTG-03).
+    _rvp_resolve(COUNTRY_BUDGET_SUBMITTED, "MonthlyWorkPlanBudget", b.id)
     if b.submitted_by_user_id:
         _rvp_notify(
             b.submitted_by_user_id,
             "General Budget approved by RVP",
             f"The {b.month_key} General Budget was approved — the "
             "Accountant can now receive the allocation.",
-            "/country-budget",
+            event_type=COUNTRY_BUDGET_APPROVED,
+            context_type="MonthlyWorkPlanBudget",
+            context_id=b.id,
         )
     return _serialize(b)
 
@@ -288,12 +337,15 @@ def rvp_return(budget_id: str, data: dict, principal) -> dict:
         amount=b.total_amount,
         fy=b.fy,
     )
+    _rvp_resolve(COUNTRY_BUDGET_SUBMITTED, "MonthlyWorkPlanBudget", b.id)
     if b.submitted_by_user_id:
         _rvp_notify(
             b.submitted_by_user_id,
             "Monthly budget returned by RVP",
             note,
-            "/country-budget",
+            event_type=COUNTRY_BUDGET_RETURNED,
+            context_type="MonthlyWorkPlanBudget",
+            context_id=b.id,
         )
     return _serialize(b)
 
@@ -314,6 +366,8 @@ def submit_annual_to_rvp(budget_id: str, principal):
     b.submitted_at = timezone.now()
     b.submitted_by_user_id = principal.user_id
     b.save(update_fields=["status", "submitted_at", "submitted_by_user_id"])
+    # Resubmitting answers the return that asked for it (INTG-03).
+    _rvp_resolve(ANNUAL_BUDGET_RETURNED, "CountryAnnualBudget", b.id)
     return b
 
 
@@ -344,6 +398,8 @@ def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
     b.rvp_reviewed_at = timezone.now()
     b.rvp_reviewed_by_user_id = principal.user_id
     b.save()
+    # Deciding is what ends "ready for your approval" (INTG-03).
+    _rvp_resolve(ANNUAL_BUDGET_SUBMITTED, "CountryAnnualBudget", b.id)
     _rvp_audit(
         "annual_budget",
         b.id,
@@ -359,7 +415,13 @@ def rvp_annual_decide(budget_id: str, action: str, data: dict, principal):
             b.submitted_by_user_id,
             f"Annual budget {'approved' if action == 'approve' else 'returned'} by RVP",
             b.rvp_review_note or "Annual baseline locked.",
-            "/country-budget",
+            event_type=(
+                ANNUAL_BUDGET_APPROVED
+                if action == "approve"
+                else ANNUAL_BUDGET_RETURNED
+            ),
+            context_type="CountryAnnualBudget",
+            context_id=b.id,
         )
     return b
 
@@ -418,11 +480,18 @@ def create_strategy_note(data: dict, principal):
         review_date=data.get("review_date") or None,
     )
     if note.responsible_cd_id:
+        # No transition closes this one: nothing in the platform ever moves a
+        # StrategyNote off "open", so there is no terminal event to resolve it
+        # from. Routed through the service anyway so that the day a note can be
+        # completed, one `resolve_condition(STRATEGY_NOTE_ISSUED, …)` closes it
+        # (INTG-03).
         _rvp_notify(
             note.responsible_cd_id,
             "New strategic guidance from RVP",
             instruction[:300],
-            "/dashboard",
+            event_type=STRATEGY_NOTE_ISSUED,
+            context_type="StrategyNote",
+            context_id=note.id,
         )
     _rvp_audit(
         "strategy_note",
@@ -436,12 +505,17 @@ def create_strategy_note(data: dict, principal):
 
 
 def mark_sent_to_accountant(budget_id: str, principal) -> dict:
-    return _transition(
+    b = _transition(
         budget_id,
         MonthlyWorkPlanBudgetStatus.SENT_TO_ACCOUNTANT,
         principal,
         field="sent_to_accountant_at",
     )
+    # Handing it to the Accountant is the action "approved by RVP" was asking
+    # for — from the CD here and from country_budget_service.approve, which
+    # emits the same event for the same budget (INTG-03).
+    _rvp_resolve(COUNTRY_BUDGET_APPROVED, "MonthlyWorkPlanBudget", b.id)
+    return b
 
 
 # M8 — the legal lifecycle map for the transitions this helper may perform.

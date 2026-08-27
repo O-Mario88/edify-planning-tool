@@ -7,6 +7,7 @@ from django.db.models import Count, Q
 
 from apps.core.exceptions import BadRequest
 
+from .milestone_progress import RATE_MEASUREMENT_TYPES, range_actual
 from .models import (
     ActivityPriorityLink,
     MilestoneAllocation,
@@ -183,6 +184,16 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
         raise BadRequest("Denominator and weight must be numeric.") from exc
     if denominator is not None and denominator <= 0:
         raise BadRequest("Denominator must be greater than zero.")
+    # A rate milestone without a denominator cannot produce an achievement
+    # figure at all — milestone_progress logs the allocation and scores an
+    # honest zero, for ever. That guard stays, because it protects rows written
+    # before this check existed; this stops new ones being created (TGT-01).
+    if milestone.measurement_type in RATE_MEASUREMENT_TYPES and not denominator:
+        raise BadRequest(
+            "A percentage or ratio milestone needs the denominator its "
+            "achievement is measured against — the eligible portfolio this "
+            "holder is being asked to cover."
+        )
     if weight < 0 or weight > 100:
         raise BadRequest("Weight must be between 0 and 100.")
 
@@ -469,9 +480,12 @@ def _allocation_projection(
             if periods
             else allocation.allocated_target or Decimal("0")
         )
-        fy_actual = sum((target.actual_value for target in periods), Decimal("0"))
+        # TGT-03: a distinct measure does not add up across periods, so the
+        # year and the quarter are re-read distinct over their own span rather
+        # than summed off the month rows. Additive counts still sum.
+        fy_actual = range_actual(allocation, periods, milestone=milestone)
         quarter_plan = sum((target.planned_value for target in quarter), Decimal("0"))
-        quarter_actual = sum((target.actual_value for target in quarter), Decimal("0"))
+        quarter_actual = range_actual(allocation, quarter, milestone=milestone)
     else:
         # Rates never sum: a 90% coverage commitment is 90% in every period,
         # and adding three months of it is not 270%. The FY view of a rate is
@@ -564,7 +578,9 @@ def _approved_employee_allocations(*, staff_ids, fy):
             "milestone__priority",
             "milestone__metric_definition",
         )
-        .prefetch_related("period_targets")
+        # The rules come along because `range_actual` reads the counting basis
+        # off them to decide whether a roll-up sums or is re-read distinct.
+        .prefetch_related("period_targets", "milestone__activity_rules")
         .order_by(
             "milestone__priority__sequence",
             "milestone__source_order",

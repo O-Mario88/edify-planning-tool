@@ -25,6 +25,7 @@ from apps.activities.models import Activity
 from apps.core.rbac import EdifyRole
 from apps.geography.models import District, Region
 from apps.schools.models import School
+from apps.targets.priority_fixtures import agree_priorities
 
 User = get_user_model()
 FY = "2026"
@@ -57,6 +58,10 @@ class TimePeriodTargetsTest(TestCase):
         )
         # Annual target: 8 visits. Q share = 2 per quarter.
         StaffTargetProfile.objects.create(staff=self.cceo_sp, fy=FY, visits_target=8)
+        # The agreement those 8 visits imply. Since CONFLICT-001 was decided,
+        # a person with no agreed priority measures nothing anywhere -- which
+        # is right, and would turn this proration test into 0 == 0.
+        agree_priorities(self.cceo_sp, FY, school_visits=8)
         # Real work: 1 completed visit in Q1, 2 in Q3.
         self._visit("Q1", date(2025, 11, 10))
         self._visit("Q3", date(2026, 4, 10))
@@ -144,11 +149,37 @@ class TimePeriodTargetsTest(TestCase):
         self.assertNotIn("Mid-Year", html)
 
     def test_my_target_does_not_invent_rows_from_official_area_catalogue(self):
+        """The honest empty state, for somebody who genuinely has nothing.
+
+        Uses a fresh CCEO rather than the fixture's, who now carries the
+        agreement their annual profile implies. This test is about the
+        catalogue never inventing rows, so its subject has to be a person with
+        no agreement at all — otherwise it would pass by having priorities to
+        show, which is the opposite of what it checks.
+        """
+        unagreed, unagreed_sp = self._staff(
+            "unagreed@tp.org", "No Agreement", EdifyRole.CCEO.value
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisor=self.pl_sp, supervisee=unagreed_sp
+        )
         c = Client()
-        c.force_login(self.cceo)
+        c.force_login(unagreed)
         html = c.get("/my-targets").content.decode()
         self.assertIn("No measurable performance priorities agreed", html)
         self.assertNotIn("Performance Priorities by Time Period", html)
+
+    def test_my_target_shows_the_priorities_that_were_agreed(self):
+        """The other side of the same rule: an agreement IS shown.
+
+        Without this, the test above could pass because the page renders
+        nothing for anybody.
+        """
+        c = Client()
+        c.force_login(self.cceo)
+        html = c.get("/my-targets").content.decode()
+        self.assertNotIn("No measurable performance priorities agreed", html)
+        self.assertIn("Performance Priorities by Time Period", html)
 
     def test_core_school_tracker_tracks_4_visits_4_trainings(self):
         from apps.core_schools.models import CoreActivitySlot, CorePlan

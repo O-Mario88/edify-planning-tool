@@ -170,6 +170,52 @@ class LeaveDecisionTests(TestCase):
             "the person who refused the cover kept the delegated access",
         )
 
+    def test_approving_does_not_hand_access_to_a_cover_who_declined(self):
+        """Approval read `covering_staff` and never `coverage_status`, so a
+        cover who had refused was granted the delegated access anyway."""
+        leave = self._leave(cover=self.cover_sp)
+        LeaveApprovalService.decline_coverage(leave.id, self.cover)
+
+        with self.assertRaises(BadRequest) as caught:
+            LeaveApprovalService.approve_request(leave.id, self.pl)
+        self.assertIn("declined to cover", str(caught.exception))
+
+        leave.refresh_from_db()
+        self.assertEqual(leave.status, "pending")
+        self.assertNotEqual(
+            leave.coverage_status,
+            "Approved",
+            "approval overwrote the cover's refusal",
+        )
+        self.assertFalse(
+            TemporaryCoverageAssignment.objects.filter(
+                leave_request_id=leave.id,
+                covering_staff_id=self.cover_sp.id,
+                status="active",
+            ).exists(),
+            "the person who refused the cover was granted the delegated access",
+        )
+
+    def test_a_declined_cover_can_be_replaced_and_the_leave_then_approved(self):
+        """The refusal above must not strand the absent person: naming another
+        cover is the supervisor's remedy and reopens approval."""
+        second_cover, second_sp = _staff("CCEO", "cover3@ld.test")
+        leave = self._leave(cover=self.cover_sp)
+        LeaveApprovalService.decline_coverage(leave.id, self.cover)
+
+        leave.covering_staff = second_sp
+        leave.coverage_status = "Awaiting Acceptance"
+        leave.save(update_fields=["covering_staff", "coverage_status"])
+
+        LeaveApprovalService.approve_request(leave.id, self.pl)
+        leave.refresh_from_db()
+        self.assertEqual(leave.status, "approved")
+        live = TemporaryCoverageAssignment.objects.filter(
+            leave_request_id=leave.id, status="active"
+        )
+        self.assertEqual(live.count(), 1)
+        self.assertEqual(live.first().covering_staff_id, second_sp.id)
+
     def test_reassigning_the_cover_moves_the_delegated_access(self):
         """The replaced cover kept full access for the whole window, and the
         new cover got none — and approve_request refuses to re-run, so there

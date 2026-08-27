@@ -363,3 +363,67 @@ class PartnerWorkReachesItsSupervisorsTest(PartnerOversightFixture):
         found = self._partner_items(self.rival_pl_user)
 
         self.assertEqual([i.activity_id for i in found], [])
+
+
+class PaymentPendingMeansIAVerifiedTest(PartnerOversightFixture):
+    """Partner Payments Pending is a claim about verification, not lateness.
+
+    The metric's registered definition is "partner work Impact Assessment has
+    verified that the accountant has not yet paid", and its drilldown is the
+    Accountant's payment queue. Folding it on the delivery-phase tuple counted
+    `completed` and `closed` too — terminal states an activity can reach with
+    `ia_verification_status` still `pending`, which is exactly what the seeded
+    and legacy rows look like. That put unverified work in front of an
+    accountant under a heading promising it was verified (INTG-05).
+    """
+
+    def _verified(self, activity):
+        activity.status = "ia_verified"
+        activity.ia_verification_status = "confirmed"
+        activity.save()
+        return activity
+
+    def test_completed_work_ia_never_verified_is_not_payment_pending(self):
+        activity = self.schedule(self.assign(), status="completed")
+        self.assertEqual(activity.ia_verification_status, "pending")
+
+        summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
+
+        self.assertEqual(summary["payment_pending"], 0)
+
+    def test_closed_work_ia_never_verified_is_not_payment_pending(self):
+        activity = self.schedule(self.assign(), status="closed")
+        self.assertEqual(activity.ia_verification_status, "pending")
+
+        summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
+
+        self.assertEqual(summary["payment_pending"], 0)
+
+    def test_verified_and_unpaid_work_is_still_counted(self):
+        """The metric has to keep measuring the thing it exists to measure."""
+        self._verified(self.schedule(self.assign()))
+
+        summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
+
+        self.assertEqual(summary["payment_pending"], 1)
+
+    def test_only_the_verified_half_of_a_mixed_page_is_counted(self):
+        self._verified(self.schedule(self.assign()))
+        self.schedule(self.assign(), status="completed")
+        self.schedule(self.assign(), status="closed")
+
+        summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
+
+        self.assertEqual(summary["payment_pending"], 1)
+        # The completed/closed rows are still delivered work — this narrows
+        # who is owed money, not what the page shows as finished.
+        self.assertEqual(summary["completed"], 3)
+
+    def test_verified_work_already_paid_is_not_payment_pending(self):
+        activity = self._verified(self.schedule(self.assign()))
+        activity.payment_status = "paid"
+        activity.save()
+
+        summary = svc.summarize(svc.build_items(self.pl_user, fy=self.fy))
+
+        self.assertEqual(summary["payment_pending"], 0)

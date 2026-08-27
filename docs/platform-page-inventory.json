@@ -145,7 +145,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5485,
+      "bytes": 5595,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance",
@@ -2256,7 +2256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22625,
+      "bytes": 22354,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2272,7 +2272,8 @@
       "states": [
         "default",
         "empty",
-        "disabled"
+        "disabled",
+        "open"
       ],
       "tables": 0,
       "template": "partials/clusters/cluster_action_planner_drawer.html",
@@ -2716,9 +2717,10 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 7460,
+      "bytes": 9198,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/assign-partner"
@@ -2729,12 +2731,10 @@
       "kind": "application-partial",
       "name": "Assign Partner Drawer",
       "purpose": "Reusable assign partner drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty",
         "error",
-        "disabled",
         "open"
       ],
       "tables": 0,
@@ -2956,9 +2956,10 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 14529,
+      "bytes": 15212,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -2969,12 +2970,11 @@
       "kind": "application-partial",
       "name": "Schedule Training Drawer",
       "purpose": "Reusable schedule training drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty",
         "error",
-        "disabled",
         "open"
       ],
       "tables": 0,
@@ -5541,7 +5541,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15399,
+      "bytes": 19785,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/complete-drawer"
@@ -5552,7 +5552,7 @@
       "kind": "application-partial",
       "name": "Complete Drawer",
       "purpose": "Reusable complete drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "open"
@@ -6440,7 +6440,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8274,
+      "bytes": 9381,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/assign-partner-modal"
@@ -6451,7 +6451,7 @@
       "kind": "application-partial",
       "name": "Assign Partner Drawer",
       "purpose": "Reusable assign partner drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "error",
@@ -6534,7 +6534,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 20954,
+      "bytes": 21169,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -6563,7 +6563,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 30536,
+      "bytes": 31766,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -6575,7 +6575,7 @@
       "kind": "application-partial",
       "name": "Schedule Drawer",
       "purpose": "Reusable schedule drawer interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "error",
@@ -7146,7 +7146,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 9553,
+      "bytes": 9940,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects",
@@ -7764,7 +7764,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13235,
+      "bytes": 16072,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7773,12 +7773,12 @@
       "kind": "application-partial",
       "name": "Performance Workspace",
       "purpose": "Reusable performance workspace interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty"
       ],
-      "tables": 4,
+      "tables": 5,
       "template": "partials/ssa/performance_workspace.html",
       "variants": [
         "danger",
@@ -7789,7 +7789,8 @@
         "{{ cell.band.tone }}",
         "{{ district.band.tone }}",
         "{{ insight.tone }}",
-        "{{ intervention.band.tone }}"
+        "{{ intervention.band.tone }}",
+        "{{ row.tone }}"
       ]
     },
     {
@@ -8312,9 +8313,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 5360,
+      "bytes": 6368,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan/add"
@@ -22612,7 +22614,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.core_schools_views",
       "backend_view": "apps.frontend.views.core_schools_views.core_assign_partner_drawer",
       "card_count": 0,
@@ -22679,8 +22681,8 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": true,
-        "empty": true,
+        "disabled": false,
+        "empty": false,
         "error": true,
         "loading": false
       },
@@ -22700,7 +22702,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -23168,7 +23171,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.8,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.core_schools_views",
       "backend_view": "apps.frontend.views.core_schools_views.core_schedule_training_drawer",
       "card_count": 0,
@@ -23235,7 +23238,7 @@
         "standalone-document-or-fragment"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": true,
         "error": true,
         "loading": false
@@ -23257,6 +23260,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[18px]",
         "text-[20px]"
       ]
@@ -41264,6 +41268,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]"
       ]
     },
@@ -41636,6 +41641,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]"
       ]
     },
@@ -59548,7 +59554,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -60331,6 +60338,20 @@
         "max_retries": 2,
         "name": "admin_maintenance_generation",
         "retryable": true
+      },
+      {
+        "cron": "every 30 minutes",
+        "cron_kwargs": {
+          "minute": "0,30"
+        },
+        "description": "Notifies Admins when a scheduled job has failed, never run or gone overdue, and closes the notice when it recovers.",
+        "expected_runtime_seconds": 5,
+        "idempotency_note": "Notifications are keyed on (event, scheduled_job, job name), so a job that stays broken re-fires into the notice already open rather than adding one every half hour.",
+        "idempotent": true,
+        "max_interval_minutes": 120,
+        "max_retries": 0,
+        "name": "scheduler_watchdog",
+        "retryable": false
       }
     ]
   },
@@ -75985,7 +76006,7 @@
     "permission_keys": 100,
     "roles": 14,
     "routed_surfaces": 570,
-    "scheduled_jobs": 22,
+    "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
       "high": 0,

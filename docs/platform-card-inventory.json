@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 612,
+  "titled_cards": 613,
   "templates": 219,
-  "distinct_titles": 584,
+  "distinct_titles": 585,
   "with_card_key": 13,
-  "untitled_surfaces": 1014,
+  "untitled_surfaces": 1017,
   "untitled_chrome": 237,
-  "untitled_nested": 389,
-  "untitled_headless": 388,
+  "untitled_nested": 388,
+  "untitled_headless": 392,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 22,
   "ambiguous_titles": 1
@@ -5919,7 +5919,7 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 131,
+   "line": 140,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
@@ -6470,6 +6470,15 @@
   {
    "template": "templates/partials/ssa/performance_workspace.html",
    "line": 136,
+   "title": "FY baseline \u2192 FY follow-up",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "sp-card sp-fy-comparison",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ssa/performance_workspace.html",
+   "line": 178,
    "title": "SSA performance trend by year",
    "heading_level": 2,
    "has_card_key": false,

@@ -1,9 +1,13 @@
 import logging
 from django.db import transaction
 from apps.schools.models import School
-from apps.core_schools.models import CoreSchoolProfile, CorePlan
+from apps.core_schools.models import CoreSchoolProfile
 from apps.core.scoping import assert_may_write_school
-from apps.core_schools.services import CORE_SLOT_DONE_STATUSES, EXPECTED_CORE_SLOTS
+from apps.core_schools.services import (
+    CORE_SLOT_DONE_STATUSES,
+    EXPECTED_CORE_SLOTS,
+    get_live_core_plan,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -12,10 +16,17 @@ class ChampionEligibilityService:
     @staticmethod
     def calculate_score(school: School) -> dict:
         """Calculates the Champion Score and check items using the official formula."""
-        # Retrieve CorePlan
-        plan = CorePlan.objects.filter(
-            school_id=school.school_id, status="Active"
-        ).first()
+        # Retrieve CorePlan. Asking for status="Active" made the act that
+        # QUALIFIES a school disqualify it: upload_follow_up_ssa — the
+        # follow-up assessment that makes a school a candidate — moves the
+        # plan to "Champion Candidate"/"Impact Measured", and this lookup then
+        # found nothing and scored the school 0.0 / "No active Core Plan", on
+        # the candidates page and in the review drawer alike. Those statuses
+        # record how far through the year the package is and are worth
+        # keeping; it is the reader that was wrong. get_live_core_plan()
+        # holds the one definition of "this school's live package", FY
+        # included — see apps.core_schools.services.
+        plan = get_live_core_plan(school.school_id)
         if not plan:
             return {"score": 0.0, "eligible": False, "reason": "No active Core Plan"}
 

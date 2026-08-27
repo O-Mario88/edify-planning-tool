@@ -122,6 +122,19 @@ class TargetArea(TimeStampedModel):
     class Meta:
         db_table = "target_area"
         ordering = ["sort_order"]
+        constraints = [
+            # INT-01. `weight` is a PERCENT share (the docstring above: the
+            # active areas' weights must total 100), and weighted_period_pct
+            # in my_targets.py divides by their sum. A negative weight would
+            # subtract an area's achievement from Overall Progress; a weight
+            # above 100 would let one area outvote a full board on its own.
+            # 0 is legal and meaningful — an area that is tracked but does
+            # not count toward the weighted score.
+            models.CheckConstraint(
+                condition=models.Q(weight__gte=0) & models.Q(weight__lte=100),
+                name="target_area_weight_0_100",
+            ),
+        ]
 
     def __str__(self) -> str:
         return self.label
@@ -150,7 +163,26 @@ class MonthlyPersonalTarget(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["user_id", "area", "fy", "month_of_fy"],
                 name="uniq_monthly_personal_target",
-            )
+            ),
+            # INT-01. month_of_fy is a closed domain the field comment above
+            # already states (1 = October … 12 = September) and the only
+            # writer enumerates exactly (hr/performance_engine.py spreads an
+            # annual commitment over `enumerate(monthly, start=1)`). Out of
+            # range, the row is unreachable by every quarter and FY roll-up
+            # that derives its period from this number — it silently stops
+            # counting rather than failing.
+            models.CheckConstraint(
+                condition=models.Q(month_of_fy__gte=1) & models.Q(month_of_fy__lte=12),
+                name="monthly_personal_target_month_1_12",
+            ),
+            # >= 0, not > 0: the largest-remainder phasing legitimately
+            # assigns 0 to months a commitment does not land in, and the
+            # field's own `default=0` is "no target set". A negative target
+            # would make achievement percentages nonsense.
+            models.CheckConstraint(
+                condition=models.Q(target__gte=0),
+                name="monthly_personal_target_non_negative",
+            ),
         ]
         indexes = [models.Index(fields=["user_id", "fy"])]
 
@@ -175,6 +207,21 @@ class TargetAdjustment(TimeStampedModel):
 
     class Meta:
         db_table = "target_adjustment"
+        constraints = [
+            # INT-01. Both columns record MonthlyPersonalTarget.target values
+            # either side of an audited change, so they must accept exactly
+            # the domain that field accepts — otherwise a legal target
+            # becomes an unrecordable adjustment. Same >= 0 boundary, same
+            # 1..12 month domain.
+            models.CheckConstraint(
+                condition=models.Q(old_target__gte=0) & models.Q(new_target__gte=0),
+                name="target_adjustment_values_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(month_of_fy__gte=1) & models.Q(month_of_fy__lte=12),
+                name="target_adjustment_month_1_12",
+            ),
+        ]
 
 
 class TargetAchievementLedger(TimeStampedModel):

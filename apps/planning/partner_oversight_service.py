@@ -745,12 +745,20 @@ def summarize(items) -> dict:
         "completed": len(by_phase.get("completed", [])),
         # Only scheduled work carries money, so this sums exactly those items.
         "scheduled_budget": sum(i.planned_cost or 0 for i in scheduled),
+        # Verified-and-unpaid, and the verification is asked for directly.
+        # `_COMPLETE_STATUSES` answers "is delivery over", not "did IA sign
+        # it off": `completed` has no IA gate at all and `closed` can be
+        # written past ClosureEligibilityService's checklist, so both reach
+        # this fold with ia_verification_status still `pending`. Folding on
+        # the phase tuple alone therefore offered the Accountant unverified
+        # work under a heading that promises IA verified it (INTG-05).
         "payment_pending": len(
             [
                 i
                 for i in scheduled
                 if i.payment_status in ("", "none", "pending")
                 and i.activity_status in _COMPLETE_STATUSES
+                and i.ia_status == "confirmed"
             ]
         ),
         "at_risk": len([i for i in items if i.at_risk]),

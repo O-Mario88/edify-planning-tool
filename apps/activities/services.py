@@ -4161,6 +4161,16 @@ def _cancel_or_defer(
         a.status = new_status
         a.last_reason = data.get("reason")
         a.save(update_fields=["status", "last_reason", "updated_at"])
+        # Work that has been called off is not achieved work: the milestone
+        # credit an already-verified activity earned at ia_confirm is withdrawn
+        # with it, exactly as `ia_return` withdraws it on a return (2026-08
+        # audit TGT-02 — cancelled deliveries kept counting as verified
+        # achievement for ever). A no-op when nothing was ever credited.
+        from apps.hr.milestone_progress import reverse_activity_progress
+
+        transaction.on_commit(
+            lambda: reverse_activity_progress(a, reason=f"Activity {new_status}")
+        )
         _detach_from_daily_visit_batch(a)
         AdvanceRequest.objects.filter(activity=a).exclude(
             status__in=MONEY_MOVED_ADVANCE_STATUSES
