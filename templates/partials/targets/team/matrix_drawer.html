@@ -30,7 +30,7 @@
       <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
         {% for r in rows %}
         <tr class="hover:bg-slate-50/50">
-          <td class="py-1.5 px-3 sticky left-0 edify-surface z-10 whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}</span></td>
+          <td class="py-1.5 px-3 sticky left-0 edify-surface z-10 whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}{% if r.area_source %} · {{ r.area_source }}{% endif %}</span></td>
           {% for c in r.cells %}
           <td class="py-1.5 text-center tabular-nums border-l border-slate-50{% if c.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">{{ c.t }}</td>
           <td class="py-1.5 text-center tabular-nums text-emerald-600{% if c.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">{{ c.a }}</td>

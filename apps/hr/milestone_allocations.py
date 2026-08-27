@@ -459,14 +459,62 @@ def _allocation_projection(
 
     milestone = allocation.milestone
     summable = milestone.measurement_type in {"count", "currency"}
+    all_period_targets = list(allocation.period_targets.all())
     periods = sorted(
+        (target for target in all_period_targets if target.period_type == "month"),
+        key=lambda target: target.period_start,
+    )
+    quarter_period_targets = sorted(
         (
             target
-            for target in allocation.period_targets.all()
-            if target.period_type == "month"
+            for target in all_period_targets
+            if target.period_type == "quarter"
         ),
         key=lambda target: target.period_start,
     )
+
+    def period_cell(
+        key: str, label: str, period_rows, *, actual_override=None
+    ) -> dict:
+        """Project one comparable target/actual cell for the target matrices.
+
+        Counts and currency add across the selected span. Rates keep their
+        annual denominator and use the best verified achievement in the span,
+        matching the quarter/FY arithmetic below. Distinct-school measures are
+        re-read over the complete span by ``range_actual`` instead of adding the
+        same School once per month.
+        """
+
+        period_rows = list(period_rows)
+        if summable:
+            target = sum(
+                (period.planned_value for period in period_rows), Decimal("0")
+            )
+            actual = (
+                actual_override
+                if actual_override is not None
+                else range_actual(allocation, period_rows, milestone=milestone)
+            )
+        else:
+            target = allocation.allocated_target or Decimal("0")
+            if actual_override is not None:
+                actual = actual_override
+            else:
+                best = max(
+                    (period.achievement_percentage for period in period_rows),
+                    default=Decimal("0"),
+                )
+                actual = (best * target / 100).quantize(Decimal("0.01"))
+        return {
+            "key": key,
+            "label": label,
+            "t": target,
+            "a": actual,
+            "pct": round(float(actual / target * 100)) if target else None,
+            "start": period_rows[0].period_start if period_rows else None,
+            "end": period_rows[-1].period_end if period_rows else None,
+        }
+
     current = periods[month_of_fy - 1] if len(periods) >= month_of_fy else None
     quarter_start = ((month_of_fy - 1) // 3) * 3
     quarter = periods[quarter_start : quarter_start + 3]
@@ -517,6 +565,39 @@ def _allocation_projection(
             else Decimal("0")
         )
     progress = round(float(fy_actual / fy_plan * 100), 1) if fy_plan else 0
+    period_cells = [
+        period_cell(
+            "month",
+            "Selected month",
+            [current] if current is not None else [],
+            actual_override=month_actual,
+        )
+    ]
+    for quarter_index in range(4):
+        start = quarter_index * 3
+        stored_quarter = (
+            quarter_period_targets[quarter_index]
+            if len(quarter_period_targets) > quarter_index
+            else None
+        )
+        stored_actual = None
+        if stored_quarter is not None:
+            stored_actual = stored_quarter.actual_value
+            if not summable:
+                stored_actual = (
+                    stored_quarter.achievement_percentage * fy_plan / 100
+                ).quantize(Decimal("0.01"))
+        period_cells.append(
+            period_cell(
+                f"Q{quarter_index + 1}",
+                f"Quarter {quarter_index + 1}",
+                periods[start : start + 3],
+                actual_override=stored_actual,
+            )
+        )
+    period_cells.append(
+        period_cell("fy", "Full year", periods, actual_override=fy_actual)
+    )
     # One vocabulary. This block used to compute its own "Achieved / In
     # Progress / Not Started" and "On track / Watch / Needs attention" beside
     # the canonical classification, so the same allocation could be described
@@ -556,6 +637,7 @@ def _allocation_projection(
         "quarterActual": quarter_actual,
         "fyPlan": fy_plan,
         "fyActual": fy_actual,
+        "periodCells": period_cells,
         "remaining": remaining,
         "progress": progress,
         "classification": classification,

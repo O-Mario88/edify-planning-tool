@@ -223,7 +223,7 @@ class MyTargetsPageTest(TestCase):
         c.force_login(self.user)
         html = c.get("/my-targets").content.decode()
         self.assertIn("No measurable performance priorities agreed", html)
-        self.assertNotIn("Performance Priorities by Time Period", html)
+        self.assertNotIn("Cumulative progress by time period", html)
 
     def test_my_target_rows_use_the_users_agreed_priority_wording_and_weight(self):
         from apps.hr.models import PerformancePriority, PerformanceReview

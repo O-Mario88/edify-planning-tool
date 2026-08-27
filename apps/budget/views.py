@@ -65,6 +65,113 @@ class CostingPreviewView(APIView):
         return Response(preview(request.data))
 
 
+class ManagementCostingPreviewView(APIView):
+    """Restricted dual-card preview; never share this serializer with staff."""
+
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.ACTIVITY_REFERENCE_COST_VIEW.value]
+
+    def post(self, request: Request) -> Response:
+        from .costing_service import management_preview
+
+        return Response(management_preview(request.data))
+
+
+class RateCardsView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.RATE_CARD_OPERATIONAL_VIEW.value]
+
+    def get(self, request: Request) -> Response:
+        from .governance_service import list_rate_cards
+
+        return Response(list_rate_cards(request.user, fy=request.query_params.get("fy")))
+
+    def post(self, request: Request) -> Response:
+        from .governance_service import create_rate_card_version
+
+        return Response(create_rate_card_version(request.user, request.data), status=201)
+
+
+class RateCardLineView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [
+        Permission.RATE_CARD_OPERATIONAL_MANAGE.value,
+        Permission.RATE_CARD_REFERENCE_MANAGE.value,
+    ]
+
+    def post(self, request: Request, card_id: str) -> Response:
+        from .governance_service import upsert_rate_card_line
+
+        return Response(upsert_rate_card_line(request.user, card_id, request.data))
+
+
+class RateCardPublishView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [
+        Permission.RATE_CARD_OPERATIONAL_MANAGE.value,
+        Permission.RATE_CARD_REFERENCE_MANAGE.value,
+    ]
+
+    def post(self, request: Request, card_id: str) -> Response:
+        from .governance_service import publish_rate_card
+
+        return Response(publish_rate_card(request.user, card_id))
+
+
+class ActivityCostReviewView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.COST_AMENDMENT_REQUEST.value]
+
+    def post(self, request: Request, activity_id: str) -> Response:
+        from .governance_service import request_cost_review
+
+        return Response(
+            request_cost_review(request.user, activity_id, request.data), status=201
+        )
+
+
+class ActivityCostReviewDecisionView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.COST_AMENDMENT_APPROVE.value]
+
+    def post(self, request: Request, review_id: str) -> Response:
+        from .governance_service import decide_cost_review
+
+        return Response(decide_cost_review(request.user, review_id, request.data))
+
+
+class StrategicReserveView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.STRATEGIC_RESERVE_VIEW.value]
+
+    def get(self, request: Request) -> Response:
+        from .governance_service import reserve_summary
+
+        return Response(reserve_summary(request.user, fy=request.query_params.get("fy")))
+
+
+class StrategicReserveActivationView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.STRATEGIC_RESERVE_MANAGE.value]
+
+    def post(self, request: Request, reserve_id: str) -> Response:
+        from .governance_service import request_reserve_activation
+
+        return Response(
+            request_reserve_activation(request.user, reserve_id, request.data), status=201
+        )
+
+
+class StrategicReserveActivationApprovalView(APIView):
+    permission_classes = [IsAuthenticated, RequirePermissions]
+    required_permissions = [Permission.STRATEGIC_RESERVE_APPROVE.value]
+
+    def post(self, request: Request, activation_id: str) -> Response:
+        from .governance_service import approve_reserve_activation
+
+        return Response(approve_reserve_activation(request.user, activation_id))
+
+
 class BudgetFromScheduleView(APIView):
     permission_classes = [IsAuthenticated, RequirePermissions]
     required_permissions = VIEW

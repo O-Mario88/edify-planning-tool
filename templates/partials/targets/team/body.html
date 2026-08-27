@@ -7,8 +7,8 @@
       <header class="tt-panel__header">
         <div>
           <span class="tt-eyebrow">Validated performance</span>
-          <h2>Team targets performance</h2>
-          <p>{{ month_label }} · {{ selected_category_label }} · agreed employee performance priorities · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
+          <h2>Cumulative progress by time period</h2>
+          <p>{{ month_label }} · {{ selected_category_label }} · agreed performance priorities and approved strategic allocations · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
         </div>
         <div class="tt-segmented" aria-label="Filter performance status">
           <button type="button" @click="staffFilter='all'" :aria-pressed="staffFilter === 'all'" :class="staffFilter === 'all' && 'is-active'">All</button>
@@ -17,14 +17,14 @@
         </div>
       </header>
 
-      {% if members and areas %}
+      {% if members and areas or members and strategic_milestones %}
       <div class="tt-matrix-scroll-guide" aria-hidden="true">
         <span>Period comparison</span>
         <span>Scroll horizontally to compare Q3, Q4, and full-year performance&nbsp;→</span>
       </div>
       <div class="tt-matrix-scroll" data-table-scroll-region tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
         <table class="tt-matrix">
-          <caption class="sr-only">Team performance by reporting period</caption>
+          <caption class="sr-only">Team cumulative target and verified achievement by reporting period</caption>
           <colgroup>
             <col class="tt-matrix__member-column">
             {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
@@ -102,7 +102,7 @@
                       {% for area in member.area_matrix %}
                       <tr>
                         <th scope="row">
-                          <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<span>{{ area.label }}</span></span>
+                          <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<span>{{ area.label }}{% if area.source %}<small>{{ area.source }}</small>{% endif %}</span></span>
                         </th>
                         {% for period in area.periods %}
                         <td{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>

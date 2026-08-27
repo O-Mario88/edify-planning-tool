@@ -447,6 +447,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # evidence dataset linked from its verification workspace.
     "evidence_center": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, CD, IA, ADMIN},
     "cost_settings": {CD, ADMIN},
+    "cost_intelligence": {RVP, ACCOUNTANT},
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
     "ia_verification_queue": {IA, ADMIN},
@@ -1510,6 +1511,12 @@ SIDEBAR_ITEMS = [
                 "label": "Cost Settings",
                 "url": "/cost-settings",
                 "page_key": "cost_settings",
+            },
+            {
+                "label": "Cost Intelligence",
+                "url": "/cost-intelligence",
+                "page_key": "cost_intelligence",
+                "visible_to": {RVP, ACCOUNTANT},
             },
         ],
     },

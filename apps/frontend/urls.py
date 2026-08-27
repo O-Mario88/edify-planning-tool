@@ -1393,6 +1393,11 @@ urlpatterns = [
     ),
     path("cost-settings", finance_views.cost_settings_view, name="cost_settings"),
     path(
+        "cost-intelligence",
+        finance_views.cost_intelligence_view,
+        name="cost_intelligence",
+    ),
+    path(
         "finance/fund-allocation",
         finance_views.fund_allocation_view,
         name="fund_allocation",

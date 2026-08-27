@@ -167,7 +167,7 @@ class TimePeriodTargetsTest(TestCase):
         c.force_login(unagreed)
         html = c.get("/my-targets").content.decode()
         self.assertIn("No measurable performance priorities agreed", html)
-        self.assertNotIn("Performance Priorities by Time Period", html)
+        self.assertNotIn("Cumulative progress by time period", html)
 
     def test_my_target_shows_the_priorities_that_were_agreed(self):
         """The other side of the same rule: an agreement IS shown.
@@ -179,7 +179,7 @@ class TimePeriodTargetsTest(TestCase):
         c.force_login(self.cceo)
         html = c.get("/my-targets").content.decode()
         self.assertNotIn("No measurable performance priorities agreed", html)
-        self.assertIn("Performance Priorities by Time Period", html)
+        self.assertIn("Cumulative progress by time period", html)
 
     def test_core_school_tracker_tracks_4_visits_4_trainings(self):
         from apps.core_schools.models import CoreActivitySlot, CorePlan

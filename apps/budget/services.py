@@ -11,14 +11,19 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Sum
+from django.db.models import Max, Sum
 from django.utils import timezone
 
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
 
-from .models import CostSetting, CostSettingHistory
+from .models import (
+    CostCatalogue,
+    CostSetting,
+    CostSettingHistory,
+    RateCardStatus,
+)
 from .reference import CANONICAL_RATE_KEYS, RETIRED_COST_SETTING_KEYS
 from apps.core.activity_types import TRAINING_TYPES, NON_FUNDABLE_ACTIVITY_STATUSES
 
@@ -73,6 +78,10 @@ def list_cost_settings(principal, query: dict) -> dict:
 
 def upsert_cost_setting(data: dict, principal) -> dict:
     """CD upserts a rate. Bumps version + appends to history on change."""
+    if getattr(principal, "active_role", None) != "CountryDirector":
+        raise Forbidden(
+            "Only the Country Director may publish an operational rate change."
+        )
     key = data.get("key")
     if not key:
         raise BadRequest("key is required.")
@@ -90,6 +99,12 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     new_cost = data.get("unitCost")
     if new_cost is None:
         raise BadRequest("unitCost is required.")
+    try:
+        new_cost = int(str(new_cost).replace(",", ""))
+    except (TypeError, ValueError):
+        raise BadRequest("unitCost must be a whole UGX value.") from None
+    if new_cost < 0:
+        raise BadRequest("unitCost cannot be negative.")
     fy = data.get("fy")
 
     from .costing_service import active_catalogue
@@ -102,61 +117,137 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         )
 
     with transaction.atomic():
-        existing = CostSetting.objects.filter(key=key).first()
-        if existing:
-            if existing.catalogue_id != catalogue.id:
-                raise BadRequest(
-                    "This cost item is not attached to the active CD Cost "
-                    "Catalogue. Initialize or repair the active catalogue "
-                    "before editing it."
+        catalogue = CostCatalogue.objects.select_for_update().get(id=catalogue.id)
+        existing = CostSetting.objects.filter(key=key, catalogue=catalogue).first()
+        old_cost = existing.unit_cost if existing else None
+        now = timezone.now()
+        next_version = (
+            CostCatalogue.objects.filter(
+                country=catalogue.country,
+                fy=catalogue.fy,
+                kind=catalogue.kind,
+            ).aggregate(max_version=Max("version"))[
+                "max_version"
+            ]
+            or 0
+        ) + 1
+        catalogue.is_active = False
+        catalogue.status = RateCardStatus.SUPERSEDED
+        catalogue.superseded_at = now
+        catalogue.save(
+            update_fields=["is_active", "status", "superseded_at", "updated_at"]
+        )
+        next_catalogue = CostCatalogue.objects.create(
+            country=catalogue.country,
+            fy=catalogue.fy,
+            kind=catalogue.kind,
+            version=next_version,
+            is_active=True,
+            status=RateCardStatus.PUBLISHED,
+            label=catalogue.label,
+            effective_from=catalogue.effective_from,
+            effective_to=catalogue.effective_to,
+            currency=catalogue.currency,
+            created_by=principal.user_id,
+            approved_by=principal.user_id,
+            published_by=principal.user_id,
+            published_at=now,
+            activated_at=now,
+            notes=data.get("reason") or catalogue.notes,
+            material_difference_threshold_bps=catalogue.material_difference_threshold_bps,
+            required_school_visits_per_day=catalogue.required_school_visits_per_day,
+        )
+        cloned = []
+        for rate in CostSetting.objects.filter(catalogue=catalogue):
+            is_target = rate.key == key
+            if is_target and existing is not None:
+                # Preserve the target row's identity for legacy callers while
+                # moving it to the newly-published card. A replacement copy
+                # with the old value remains on the superseded card, so its
+                # historical version is still complete and immutable.
+                continue
+            cloned.append(
+                CostSetting(
+                    catalogue=next_catalogue,
+                    key=rate.key,
+                    label=label if is_target else rate.label,
+                    unit_cost=new_cost if is_target else rate.unit_cost,
+                    fy=next_catalogue.fy,
+                    version=rate.version + 1 if is_target else rate.version,
+                    unit=rate.unit,
+                    approved_minimum=rate.approved_minimum,
+                    geographic_scope=rate.geographic_scope,
+                    costing_profile_scope=rate.costing_profile_scope,
+                    created_by=principal.user_id,
                 )
-            old_cost = existing.unit_cost
+            )
+        if existing is None:
+            cloned.append(
+                CostSetting(
+                    catalogue=next_catalogue,
+                    key=key,
+                    label=label,
+                    unit_cost=new_cost,
+                    fy=next_catalogue.fy,
+                    version=1,
+                    created_by=principal.user_id,
+                )
+            )
+        CostSetting.objects.bulk_create(cloned)
+        if existing is not None:
+            old_state = {
+                "label": existing.label,
+                "unit_cost": existing.unit_cost,
+                "fy": existing.fy,
+                "version": existing.version,
+                "unit": existing.unit,
+                "approved_minimum": existing.approved_minimum,
+                "geographic_scope": existing.geographic_scope,
+                "costing_profile_scope": existing.costing_profile_scope,
+                "created_by": existing.created_by,
+            }
+            existing.catalogue = next_catalogue
             existing.label = label
             existing.unit_cost = new_cost
-            existing.fy = fy or existing.fy
+            existing.fy = next_catalogue.fy
             existing.version += 1
             existing.created_by = principal.user_id
-            existing.save(
-                update_fields=[
-                    "label",
-                    "unit_cost",
-                    "fy",
-                    "version",
-                    "created_by",
-                    "updated_at",
-                ]
-            )
-            CostSettingHistory.objects.create(
+            existing.save()
+            CostSetting.objects.create(
+                catalogue=catalogue,
                 key=key,
-                label=label,
-                old_unit_cost=old_cost,
-                new_unit_cost=new_cost,
-                version=existing.version,
-                fy=fy or existing.fy,
-                changed_by_user_id=principal.user_id,
-                reason=data.get("reason"),
+                **old_state,
             )
             setting = existing
         else:
-            setting = CostSetting.objects.create(
-                key=key,
-                label=label,
-                unit_cost=new_cost,
-                fy=catalogue.fy,
-                created_by=principal.user_id,
-                version=1,
-                catalogue=catalogue,
-            )
-            CostSettingHistory.objects.create(
-                key=key,
-                label=label,
-                old_unit_cost=None,
-                new_unit_cost=new_cost,
-                version=1,
-                fy=fy,
-                changed_by_user_id=principal.user_id,
-                reason=data.get("reason"),
-            )
+            setting = CostSetting.objects.get(catalogue=next_catalogue, key=key)
+        CostSettingHistory.objects.create(
+            key=key,
+            label=label,
+            old_unit_cost=old_cost,
+            new_unit_cost=new_cost,
+            version=setting.version,
+            fy=next_catalogue.fy,
+            changed_by_user_id=principal.user_id,
+            reason=data.get("reason"),
+        )
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="rate_card.operational.version.published",
+            subject_kind="CostCatalogue",
+            subject_id=next_catalogue.id,
+            actor_id=principal.user_id,
+            actor_role=getattr(principal, "active_role", None),
+            payload={
+                "supersedes": catalogue.id,
+                "version": next_catalogue.version,
+                "changedKey": key,
+                "oldUnitCost": old_cost,
+                "newUnitCost": new_cost,
+            },
+            required=True,
+        )
     return {
         "id": setting.id,
         "key": setting.key,

@@ -99,6 +99,12 @@ class NotificationLinkResolver:
         if event_type.startswith("annual_budget_"):
             return "/country-budget", "Open Annual Budget"
 
+        if event_type == "activity_cost_review_requested":
+            return "/cost-settings?tab=cost-reviews", "Review Cost Request"
+
+        if event_type.startswith("strategic_reserve."):
+            return "/cost-settings?tab=strategic-reserve", "Open Strategic Reserve"
+
         if event_type == "strategy_note_issued":
             return "/dashboard", "Open Strategic Guidance"
 

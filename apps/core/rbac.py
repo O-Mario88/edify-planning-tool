@@ -134,6 +134,18 @@ class Permission(str, Enum):
     # The CD-owned rate card. Only CD (and Admin) may create/edit official cost
     # settings — no staff invents costs.
     COST_SETTINGS_MANAGE = "costSettings.manage"
+    RATE_CARD_REFERENCE_VIEW = "rateCard.reference.view"
+    RATE_CARD_REFERENCE_MANAGE = "rateCard.reference.manage"
+    RATE_CARD_OPERATIONAL_VIEW = "rateCard.operational.view"
+    RATE_CARD_OPERATIONAL_MANAGE = "rateCard.operational.manage"
+    ACTIVITY_REFERENCE_COST_VIEW = "activityCost.reference.view"
+    ACTIVITY_OPERATIONAL_COST_VIEW = "activityCost.operational.view"
+    ACTIVITY_COST_APPROVE = "activityCost.approve"
+    STRATEGIC_RESERVE_VIEW = "strategicReserve.view"
+    STRATEGIC_RESERVE_MANAGE = "strategicReserve.manage"
+    STRATEGIC_RESERVE_APPROVE = "strategicReserve.approve"
+    COST_AMENDMENT_REQUEST = "costAmendment.request"
+    COST_AMENDMENT_APPROVE = "costAmendment.approve"
     STAFF_MANAGE = "staff.manage"
     # Provision + onboard user accounts. Held by the people/onboarding roles.
     USER_MANAGE = "user.manage"
@@ -280,6 +292,15 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.COUNTRY_BUDGET_SUBMIT,
         Permission.COUNTRY_BUDGET_APPROVE,
         Permission.FUND_REQUEST_APPROVE_ESCALATED,
+        Permission.RATE_CARD_REFERENCE_VIEW,
+        Permission.RATE_CARD_REFERENCE_MANAGE,
+        Permission.RATE_CARD_OPERATIONAL_MANAGE,
+        Permission.ACTIVITY_REFERENCE_COST_VIEW,
+        Permission.ACTIVITY_COST_APPROVE,
+        Permission.STRATEGIC_RESERVE_VIEW,
+        Permission.STRATEGIC_RESERVE_MANAGE,
+        Permission.STRATEGIC_RESERVE_APPROVE,
+        Permission.COST_AMENDMENT_APPROVE,
         # A technical super-role has no implicit governed lending authority,
         # including record-level reads.
         Permission.BUSINESS_TRANSFORMATION_VIEW,
@@ -351,6 +372,17 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.COUNTRY_BUDGET_SUBMIT,
         P.FUND_REQUEST_APPROVE_ESCALATED,
         P.COST_SETTINGS_MANAGE,
+        P.RATE_CARD_REFERENCE_VIEW,
+        P.RATE_CARD_REFERENCE_MANAGE,
+        P.RATE_CARD_OPERATIONAL_VIEW,
+        P.RATE_CARD_OPERATIONAL_MANAGE,
+        P.ACTIVITY_REFERENCE_COST_VIEW,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
+        P.ACTIVITY_COST_APPROVE,
+        P.STRATEGIC_RESERVE_VIEW,
+        P.STRATEGIC_RESERVE_MANAGE,
+        P.COST_AMENDMENT_REQUEST,
+        P.COST_AMENDMENT_APPROVE,
         P.STAFF_MANAGE,
         P.USER_MANAGE,
         P.STAFF_PERFORMANCE_VIEW,
@@ -419,6 +451,13 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # annual baseline lock. This is the authority the old role-string
         # checks actually enforced; naming it here makes it auditable.
         P.COUNTRY_BUDGET_APPROVE,
+        P.RATE_CARD_REFERENCE_VIEW,
+        P.RATE_CARD_OPERATIONAL_VIEW,
+        P.ACTIVITY_REFERENCE_COST_VIEW,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
+        P.STRATEGIC_RESERVE_VIEW,
+        P.STRATEGIC_RESERVE_APPROVE,
+        P.COST_AMENDMENT_APPROVE,
         P.ANALYTICS_VIEW,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
         # Region/country summary + approval-level decision review.
@@ -465,6 +504,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.EVIDENCE_REVIEW,
         P.BUDGET_VIEW_DETAIL,
         P.BUDGET_APPROVE,
+        P.RATE_CARD_OPERATIONAL_VIEW,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
+        P.COST_AMENDMENT_REQUEST,
         P.PARTNER_VIEW,
         # The PL is the routine decision maker for scheduled and active partner
         # work in their team, and answers the withdrawal requests their CCEOs
@@ -511,6 +553,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # submits their own consolidated monthly request up to the PL.
         P.BUDGET_VIEW_DETAIL,
         P.BUDGET_APPROVE,
+        P.RATE_CARD_OPERATIONAL_VIEW,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
+        P.COST_AMENDMENT_REQUEST,
         P.ANALYTICS_VIEW,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
         P.BUDGET_INTELLIGENCE_VIEW,  # own planned/funded activities view
@@ -548,6 +593,7 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # country_budget page set and the service's READ_ROLES); the matrix
         # previously recorded no budget right at all.
         P.BUDGET_VIEW_SUMMARY,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
         P.ANALYTICS_VIEW,
         P.ACTIVITY_CATALOGUE_VIEW,
         P.EXPORT,
@@ -595,6 +641,11 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # matrix recorded no summary right. Summary is a subset of detail.
         P.BUDGET_VIEW_SUMMARY,
         P.BUDGET_VIEW_DETAIL,
+        P.RATE_CARD_REFERENCE_VIEW,
+        P.RATE_CARD_OPERATIONAL_VIEW,
+        P.ACTIVITY_REFERENCE_COST_VIEW,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
+        P.STRATEGIC_RESERVE_VIEW,
         P.ANALYTICS_VIEW,
         P.EXPORT,
         # Finance-implication view only — no staff/partner decision authority.
@@ -659,6 +710,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         # Object scope still limits coordinators to Projects they manage.
         P.PROJECT_CONFIGURE_PRIORITIES,
         P.PROJECT_ASSIGN_SCHOOL,
+        P.RATE_CARD_OPERATIONAL_VIEW,
+        P.ACTIVITY_OPERATIONAL_COST_VIEW,
+        P.COST_AMENDMENT_REQUEST,
         P.PARTNER_VIEW,
         P.ANALYTICS_VIEW,
         P.STRATEGIC_PRIORITIES_VIEW,

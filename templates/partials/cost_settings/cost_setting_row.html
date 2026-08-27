@@ -108,6 +108,7 @@ phone screen — labelled explicitly so it can never read as a bare number.
 UGX {{ c.unit_cost|currency }}
 </td>
 <td class="px-4 py-3 text-right align-middle" data-record-action>
+{% if can_manage_rates %}
 <button
 type="button"
 hx-get="/cost-settings/row/{{ c.key }}?mode=edit"
@@ -120,6 +121,9 @@ class="h-7 px-2.5 rounded-control border border-[var(--edify-border)] hover:bg-s
 </svg>
 Edit
 </button>
+{% else %}
+<span class="edify-text-caption font-semibold text-[var(--edify-text-muted)]">Read only</span>
+{% endif %}
 </td>
 </tr>
 {% endif %}

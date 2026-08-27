@@ -518,6 +518,23 @@ def get_country_monthly_budget(principal, filters=None):
         cat_totals[cat] += li.amount
     program_total = int(source["program_total"])
     total_monthly = program_total + admin_total
+    from apps.budget.executable_budget_service import monthly_executable_budget
+
+    executable_budget = monthly_executable_budget(fy=fy, month=month_num)
+    if not has_permission(principal, Permission.ACTIVITY_REFERENCE_COST_VIEW.value):
+        # IA/Admin may read the operational country budget for their existing
+        # duties, but reference benchmarks are a distinct restricted layer.
+        executable_budget = {
+            key: value
+            for key, value in executable_budget.items()
+            if key
+            not in {
+                "referenceForecast",
+                "referenceConfigurationMissingCount",
+                "potentialCostAvoidance",
+                "operationalPremium",
+            }
+        }
     staff_included = len(staff_rows) + (1 if admin_lines else 0)
     total_activities = int(source["activity_count"])
 
@@ -760,6 +777,10 @@ def get_country_monthly_budget(principal, filters=None):
         },
         "total_monthly": total_monthly,
         "total_monthly_fmt": _ugx(total_monthly),
+        "monthly_executable_budget": executable_budget,
+        "can_view_reference_cost": has_permission(
+            principal, Permission.ACTIVITY_REFERENCE_COST_VIEW.value
+        ),
         "program_source_label": source["label"],
         "uses_pl_request_workflow": source["uses_pl_request_workflow"],
         "pl_request_rows": pl_request_rows,
