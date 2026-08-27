@@ -102,9 +102,7 @@ class PurposeOwnsTheWorkflowTest(StandardSupportBase):
         )
 
         self.assertIn(response.status_code, (200, 204))
-        activity = Activity.objects.filter(
-            activity_type="in_school_training"
-        ).first()
+        activity = Activity.objects.filter(activity_type="in_school_training").first()
         self.assertIsNotNone(activity)
         self.assertEqual(activity.activity_type, "in_school_training")
         self.assertEqual(activity.training_course_id, pinned.id)
