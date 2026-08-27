@@ -16,9 +16,9 @@ tests that each verify a step, with the seams between them faked, is exactly
 the coverage this platform cannot rely on: either half passes while the join
 is broken.
 
-A journey may list more than one such test, and journeys 5 and 7 now do: one
-walk through the services and one through the platform's own HTTP endpoints,
-for each. That is
+A journey may list more than one such test, and journeys 3, 5 and 7 now do:
+one walk through the services and one through the platform's own HTTP
+endpoints, for each. That is
 not the split this rule forbids — each walks the entire journey alone, and they
 prove different layers of it. The distinction is between two complete walks and
 two half-walks. The traceability matrix traces every pointer listed here and
@@ -112,6 +112,16 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_school_visit:"
             "SchoolVisitSpineJourneyTest."
             "test_a_funded_visit_can_be_executed_verified_accounted_and_closed",
+            # The same spine over HTTP (JRN-01), thirteen doors in the order a
+            # real week goes through them. Four of them enforce contracts the
+            # service walk never sees — an SSA reason on completion, a
+            # different field name and shape on accountability, a weekly
+            # request rather than an advance for the accountant's clearance —
+            # and the closure door refuses the very actor the service walk
+            # closes as.
+            "apps.core.tests.test_journey_school_visit:"
+            "SchoolVisitSpineJourneyTest."
+            "test_the_same_spine_walked_through_the_platform_s_own_doors",
         ),
     ),
     Journey(
