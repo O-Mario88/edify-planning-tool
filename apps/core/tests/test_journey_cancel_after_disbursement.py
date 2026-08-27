@@ -304,6 +304,113 @@ class CancelAfterDisbursementJourneyTest(TestCase):
             "called off, and still counted as delivered",
         )
 
+    def test_the_same_cancellation_walks_the_doors_that_exist(self):
+        """JRN-01: journey 8 over HTTP — and the doors are not where you expect.
+
+        The walk above proves the SERVICES compose: cancel, keep the disbursed
+        money, account for what was spent, return the rest. It never issues a
+        request, so it cannot see which of those steps a person can actually
+        reach.
+
+        Mapping them found two things worth more than the walk itself.
+
+        CANCEL-01. The mandate's first step for this journey is Cancellation,
+        and the ONLY door to it is `POST /api/activities/<id>/cancel` — the DRF
+        endpoint built by `_action_view(services.cancel, ASSIGN)`. No screen
+        reaches it. Checked three ways: `apps/frontend/urls.py` has no cancel
+        route for activities (the one `/cancel` form in templates belongs to
+        extra work), nothing in templates or JS posts to the API path, and
+        every `"cancelled"` reference in `apps/frontend/views/` is a READ —
+        five modules exclude or filter it, none writes it. So the UI has a
+        full vocabulary for cancelled work and no way to produce it.
+
+        Whether that is deliberate is a product question and is recorded
+        rather than assumed. What this test can do meanwhile is pin the door
+        that DOES exist, so the behaviour is held either way — and so that a
+        screen added later has something to conform to.
+
+        SSA-01 is recorded separately: the API completion twin does not carry
+        the SSA-or-reason rule the web form enforces. Not exercised here;
+        journey 8 cancels rather than completes.
+        """
+        from apps.activities.models import Activity
+        from apps.fund_requests.models import AdvanceRequest
+
+        activity, advances = self._fund_a_visit()
+        disbursed = {a.id: a.disbursed_amount for a in advances}
+        self.assertTrue(disbursed, "nothing was disbursed, so there is no journey")
+
+        # ── 1. Cancellation, through the only door there is ───────────────
+        self.client.force_login(self.cceo)
+        with self.captureOnCommitCallbacks(execute=True):
+            response = self.client.post(
+                f"/api/activities/{activity.id}/cancel",
+                {"reason": "School closed for the term"},
+                content_type="application/json",
+            )
+        self.assertEqual(
+            response.status_code,
+            200,
+            f"the cancellation endpoint refused the responsible CCEO: "
+            f"{response.status_code} {response.content[:200]!r}",
+        )
+        activity.refresh_from_db()
+        self.assertEqual(activity.status, "cancelled")
+
+        # ── 2. Money that already moved SURVIVES ──────────────────────────
+        # FIN-01's shape: a cancellation that reaches through to a disbursed
+        # advance destroys the figures the person accountable for the cash
+        # must settle against. Asserted through the door because that is the
+        # path a real cancellation takes.
+        for advance_id, amount in disbursed.items():
+            survivor = AdvanceRequest.objects.filter(id=advance_id).first()
+            self.assertIsNotNone(
+                survivor,
+                "cancelling through the endpoint deleted an advance whose "
+                "money had already been disbursed — the cash is real and now "
+                "has no record to settle against",
+            )
+            self.assertEqual(
+                survivor.disbursed_amount,
+                amount,
+                "the disbursed figure changed when the activity was cancelled "
+                "through the endpoint",
+            )
+
+        # ── 3-4. Accountability stays reachable on cancelled work ─────────
+        # Money that moved settles through this workflow or not at all, and
+        # FIN-04 was precisely this becoming impossible. The web door is the
+        # one a CCEO actually uses, so use it: one post, allocated across
+        # every disbursed advance, with the `netsuite_code` field name the
+        # form uses rather than the service's `netsuiteId`.
+        total = sum(disbursed.values())
+        spent = total // 3  # some cost was genuinely incurred before the call-off
+        self.client.post(
+            f"/my-plan/{activity.id}/accountability",
+            {
+                "amount_spent": str(spent),
+                "amount_returned": str(total - spent),
+                "netsuite_code": "NS-CANCEL-DOOR",
+                "variance_note": "Visit called off; transport already committed.",
+            },
+        )
+        for advance in advances:
+            advance.refresh_from_db()
+            self.assertEqual(
+                advance.status,
+                "accountability_pl_pending",
+                f"accountability on CANCELLED work could not be submitted "
+                f"through the endpoint; advance {advance.id} sits at "
+                f"{advance.status}. Money that moved must still settle.",
+            )
+
+        # ── 5. The planned output is gone, but the money record is not ────
+        self.assertEqual(
+            Activity.objects.filter(id=activity.id, status="cancelled").count(),
+            1,
+            "the cancelled activity stopped existing rather than stopping " "counting",
+        )
+
     def test_the_cancelled_activity_stops_counting_as_planned_output(self):
         """Planned output reversal — step 2, asserted on its own.
 

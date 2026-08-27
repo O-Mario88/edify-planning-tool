@@ -22,7 +22,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 37 | 27 | 2 | 2 | 1 | 4 | 54 |
 | `journey-06` | Special Project | ✓ | 0 | 54 | 31 | 4 | 5 | 5 | 15 | 46 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 53 | 29 | 5 | 10 | 8 | 21 | 46 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 0 | 40 | 22 | 2 | 2 | 7 | 16 | 45 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 50 | 23 | 3 | 6 | 7 | 17 | 45 |
 | `journey-09` | Leave and temporary coverage | ✓ | 0 | 20 | 14 | 0 | 0 | 1 | 4 | 10 |
 | `journey-10` | Quarterly Performance Conversation | ✓ | 0 | 55 | 36 | 3 | 3 | 5 | 22 | 46 |
 | `journey-11` | Professional Development | ✓ | 0 | 10 | 7 | 0 | 0 | 1 | 1 | 0 |
@@ -184,19 +184,19 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 
 Steps: Cancellation → Planned output reversal → Unused balance → Accountability → Recovery → No achievement
 
-**Evidence test:** `apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement`
+**Evidence tests:** `apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement`, `apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_the_same_cancellation_walks_the_doors_that_exist`
 
 | Dimension | Traced to |
 | --- | --- |
-| Roles that hold the checked permissions | `Accountant`, `CountryDirector` |
-| Routes / API | — |
-| Permissions checked | `fundRequest.approveEscalated`, `payment.act` |
-| Page gates checked | — |
+| Roles that hold the checked permissions | `Accountant`, `Admin`, `CCEO`, `CountryDirector`, `Program Lead`, `ProjectCoordinator` |
+| Routes / API | `POST /api/activities/{id}/cancel`, `POST /my-plan/{id}/accountability` |
+| Permissions checked | `activity.assign`, `fundRequest.approveEscalated`, `payment.act` |
+| Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/models.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/audit/services.py`, `apps/budget/costing.py`, `apps/budget/costing_service.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py` _+30 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `audit.AuditLog`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest`, `fund_requests.FundRequestItem`, `fund_requests.TransportPayment` _+10 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/activities/views.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing.py` _+40 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `audit.AuditLog`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest`, `fund_requests.FundRequestItem`, `fund_requests.TransportPayment` _+11 more_ |
 | Notifications raised | `advance_accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.advance_accountability_pl_approved`, `notification.advance_accountability_ready`, `notification.advance_accountability_submitted` _+8 more_ |
+| Audit actions (evidence) | `accountability_submitted`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.advance_accountability_pl_approved`, `notification.advance_accountability_ready` _+9 more_ |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_returned_for_correction`, `ia_salesforce_verification_pending`, `ia_verification_overdue` _+37 more_ |
 
