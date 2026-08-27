@@ -13,14 +13,14 @@ hand-maintained copy of an authority is how SEC-01 happened.
 
 | Role | Guarded surfaces reachable |
 | --- | --- |
-| CCEO | 465 |
+| CCEO | 466 |
 | Program Lead | 540 |
 | CountryDirector | 532 |
 | RegionalVicePresident | 293 |
 | ImpactAssessment | 400 |
-| Accountant | 281 |
+| Accountant | 282 |
 | HumanResources | 264 |
-| ProjectCoordinator | 396 |
+| ProjectCoordinator | 397 |
 | PartnerAdmin | 201 |
 | PartnerFieldOfficer | 201 |
 | BusinessTransformationOfficer | 212 |
@@ -623,7 +623,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/ia/verification/<str:activity_id>/` | ia_review_workspace |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/ia/verification/<str:activity_id>/return` | ia_review_workspace |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/ia/verification/<str:activity_id>/verify` | ia_review_workspace |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
-| `/impact` | impact_analytics |  | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
+| `/impact` | impact_analytics | Y | Y | Y | Y | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/leave-requests` | personal_time_off | Y | Y | Y | Y | Y | Y | Y | Y |  |  | Y | Y | Y | Y |
 | `/leave/<str:leave_id>/attachment` | personal_time_off | Y | Y | Y | Y | Y | Y | Y | Y |  |  | Y | Y | Y | Y |
 | `/leave/approvals` | leave_approvals |  | Y | Y | Y |  |  | Y |  |  |  |  |  |  | Y |

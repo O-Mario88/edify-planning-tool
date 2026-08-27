@@ -348,6 +348,73 @@ class ImpactEngineStatsTest(TestCase):
         )
         self.assertEqual(flat_test["verdict"], "insufficient data")
 
+    def test_lagging_reports_the_total_it_capped(self):
+        """The table shows ten rows. It must say how many there were.
+
+        A cap that hides rows without saying so is how somebody comes to
+        believe they have seen every lagging district when they have seen ten
+        of them. The engine carries the total so the page can state it.
+        """
+        school_ids = [s.id for s in self.treated + self.untreated]
+        imp = impact_engine.improvement_frame(school_ids, self.fy)
+        districts = {s.id: s.district.name for s in self.treated + self.untreated}
+        geo = impact_engine.geographic_performance(imp, districts)
+
+        self.assertIn("lagging_total", geo)
+        self.assertEqual(geo["lagging_total"], len(geo["lagging"]))
+        self.assertLessEqual(len(geo["lagging"]), impact_engine.LAGGING_SHOWN)
+
+    def test_lagging_total_counts_past_the_cap(self):
+        """The total is the count BEFORE the slice, not after it.
+
+        Every ORM fixture in this file produces fewer lagging combinations than
+        the cap, so a test built on one would assert `total == len(shown)` and
+        pass whichever number the engine put there — the one thing this field
+        exists for would go unchecked. Drive the engine with a frame that
+        overshoots the cap instead: three districts of eight schools, every one
+        of the eight interventions declining, is 24 combinations against a cap
+        of 10.
+        """
+        rows = []
+        school_id = 0
+        districts = {}
+        for district_index, district in enumerate(("Alpha", "Bravo", "Charlie")):
+            for _ in range(impact_engine.MIN_GROUP_N):
+                school_id += 1
+                districts[school_id] = district
+                for i, intervention in enumerate(impact_engine.ALL_INTERVENTIONS):
+                    rows.append(
+                        {
+                            "school_id": school_id,
+                            "intervention": intervention,
+                            # Every cell gets its OWN median, comfortably past
+                            # DECLINE_THRESHOLD. A single shared value would
+                            # make the ordering assertion below hold whichever
+                            # way the engine sorted, so it would check nothing.
+                            "delta": -1.0
+                            - district_index
+                            - i * len(impact_engine.ALL_INTERVENTIONS) * 0.01,
+                        }
+                    )
+        frame = impact_engine.pd.DataFrame(rows)
+
+        geo = impact_engine.geographic_performance(frame, districts)
+
+        combinations = 3 * len(impact_engine.ALL_INTERVENTIONS)
+        self.assertEqual(geo["lagging_total"], combinations)
+        self.assertEqual(len(geo["lagging"]), impact_engine.LAGGING_SHOWN)
+        self.assertGreater(geo["lagging_total"], len(geo["lagging"]))
+        # Worst first, so the ten shown are the ten steepest and not ten
+        # arbitrary ones.
+        deltas = [row["median_delta"] for row in geo["lagging"]]
+        self.assertEqual(deltas, sorted(deltas))
+
+    def test_empty_frame_still_reports_a_lagging_total(self):
+        """The early return must carry the field too, or the page reads a
+        missing key as an empty string and prints "The 0 steepest of "."""
+        geo = impact_engine.geographic_performance(impact_engine.pd.DataFrame(), {})
+        self.assertEqual(geo["lagging_total"], 0)
+
     def test_field_reality_overlay_reports_debrief_signals(self):
         debrief = DailyDebrief.objects.create(
             fy=self.fy,

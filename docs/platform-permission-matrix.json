@@ -9504,10 +9504,13 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/impact",
@@ -13845,10 +13848,10 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 281,
+  "Accountant": 282,
   "Admin": 762,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 465,
+  "CCEO": 466,
   "CountryDirector": 532,
   "HumanResources": 264,
   "ImpactAssessment": 400,
@@ -13857,7 +13860,7 @@
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
   "Program Lead": 540,
-  "ProjectCoordinator": 396,
+  "ProjectCoordinator": 397,
   "RegionalVicePresident": 293
  },
  "summary": {

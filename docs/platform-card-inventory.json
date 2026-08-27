@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 614,
+  "titled_cards": 615,
   "templates": 220,
-  "distinct_titles": 586,
+  "distinct_titles": 587,
   "with_card_key": 13,
   "untitled_surfaces": 1017,
   "untitled_chrome": 237,
@@ -4133,126 +4133,28 @@
   },
   {
    "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 35,
+   "line": 43,
    "title": "No paired assessment cycles yet",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-8 text-center space-y-2",
    "branch_path": [
     [
-     1,
+     2,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 47,
-   "title": "Dose\u2013response: support intensity vs improvement",
-   "heading_level": 3,
+   "line": 113,
+   "title": "Portfolio comparison by",
+   "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "classes": "impact-deferred-section edify-surface rounded-surface border border-slate-100 shadow-sm p-4 sm:p-5 space-y-3",
    "branch_path": [
     [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 59,
-   "title": "Funding vs improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 73,
-   "title": "Focused visits: treated vs untreated schools with weak initial SSA scores",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 96,
-   "title": "Focused trainings: treated vs untreated schools with weak initial SSA scores",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 121,
-   "title": "Funding efficiency quadrants",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 139,
-   "title": "Target achievement \u2194 school improvement",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-amber-100 bg-amber-50/40 p-3",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 163,
-   "title": "Geography: median delta by district \u00d7 intervention",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/analytics/impact_workspace.html",
-   "line": 187,
-   "title": "Does geography matter?",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": [
-    [
-     1,
+     2,
      1
     ]
    ]
@@ -4260,13 +4162,125 @@
   {
    "template": "templates/partials/analytics/impact_workspace.html",
    "line": 198,
+   "title": "Dose\u2013response: support intensity vs improvement",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 210,
+   "title": "Funding vs improvement",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 224,
+   "title": "Focused visits: treated vs untreated schools with weak initial SSA scores",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 247,
+   "title": "Focused trainings: treated vs untreated schools with weak initial SSA scores",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 272,
+   "title": "Funding efficiency quadrants",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 290,
+   "title": "Target achievement \u2194 school improvement",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-amber-100 bg-amber-50/40 p-3",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 314,
+   "title": "Geography: median delta by district \u00d7 intervention",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 lg:col-span-2",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 363,
+   "title": "Does geography matter?",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": [
+    [
+     2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/impact_workspace.html",
+   "line": 374,
    "title": "Field reality: why interventions are (not) moving",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
    "branch_path": [
     [
-     1,
+     2,
      1
     ]
    ]

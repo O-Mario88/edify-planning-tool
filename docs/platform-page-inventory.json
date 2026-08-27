@@ -1326,14 +1326,15 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
+        "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18184,
+      "bytes": 29919,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 3,
       "kind": "application-partial",
       "name": "Impact Workspace",
       "purpose": "Reusable impact workspace interface primitive",
@@ -1342,7 +1343,7 @@
         "default",
         "empty"
       ],
-      "tables": 3,
+      "tables": 6,
       "template": "partials/analytics/impact_workspace.html",
       "variants": [
         "executive"
@@ -1808,7 +1809,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 80525,
+      "bytes": 81403,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -35940,14 +35941,17 @@
       "permission_key": "impact_analytics",
       "primary_action": "Impact Analytics",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Statistical impact intelligence: did visits, trainings, and money move the SSA scores \u2014 and what does the field say where they didn't?",
+      "purpose": "Role-scoped SSA contribution analysis across verified activity families.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
+        "CCEO",
         "CD",
         "IA",
         "PL",
+        "PROJECT_COORDINATOR",
         "RVP"
       ],
       "route": "/impact",
