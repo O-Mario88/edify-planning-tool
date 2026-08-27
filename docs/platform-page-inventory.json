@@ -5541,19 +5541,12 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19455,
+      "bytes": 19785,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/complete-drawer"
       ],
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 1,
       "htmx_controls": 2,
       "kind": "application-partial",
@@ -41184,7 +41177,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.2,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.my_plan_views",
       "backend_view": "apps.frontend.views.my_plan_views.complete_drawer_view",
       "card_count": 0,
@@ -41196,16 +41189,8 @@
         "permission:my_plan"
       ],
       "filters": "none",
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "finding_id": "UI-FINDING-27E9DF9EF9",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
@@ -41227,7 +41212,7 @@
       "primary_action": "Complete Drawer",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate complete drawer within the frontend workflow.",
-      "remediation": "Use the semantic card, elevated or muted surface token.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
@@ -76026,7 +76011,7 @@
       "critical": 0,
       "high": 0,
       "low": 0,
-      "medium": 1
+      "medium": 0
     },
     "tablet_contract_pass": 375,
     "test_referenced": 525,
