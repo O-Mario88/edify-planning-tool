@@ -410,6 +410,7 @@ JOURNEYS_THAT_KNOCK = {
     "journey-03",
     "journey-05",
     "journey-07",
+    "journey-08",
     "journey-19",
 }
 
@@ -423,7 +424,7 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
     assessment gets updated in the same commit instead of the gain going
     unrecorded.
 
-    The gap it describes is real and mostly still open: for the sixteen
+    The gap it describes is real and mostly still open: for the fourteen
     journeys not listed above, nothing exercises URL routing,
     ``require_page_permission``, ``RequirePermissions``, view-level scoping,
     serializers or templates. A defect living between the door and the service

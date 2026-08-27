@@ -16,8 +16,8 @@ tests that each verify a step, with the seams between them faked, is exactly
 the coverage this platform cannot rely on: either half passes while the join
 is broken.
 
-A journey may list more than one such test, and journeys 1, 3, 5 and 7 now
-do: one walk through the services and one that also asks the platform's own
+A journey may list more than one such test, and journeys 1, 3, 5, 7 and 8
+now do: one walk through the services and one that also asks the platform's own
 HTTP surfaces. That is
 not the split this rule forbids — each walks the entire journey alone, and they
 prove different layers of it. The distinction is between two complete walks and
@@ -246,6 +246,12 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_cancel_after_disbursement:"
             "CancelAfterDisbursementJourneyTest."
             "test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement",
+            # The same call-off through the doors that exist. Mapping them is
+            # what found CANCEL-01: the only door to Cancellation is the DRF
+            # endpoint, and no screen reaches it.
+            "apps.core.tests.test_journey_cancel_after_disbursement:"
+            "CancelAfterDisbursementJourneyTest."
+            "test_the_same_cancellation_walks_the_doors_that_exist",
         ),
     ),
     Journey(

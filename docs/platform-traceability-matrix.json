@@ -1287,19 +1287,31 @@
         "No achievement"
       ],
       "tests": [
-        "apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement"
+        "apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_cancelling_funded_work_keeps_the_money_and_drops_the_achievement",
+        "apps.core.tests.test_journey_cancel_after_disbursement:CancelAfterDisbursementJourneyTest.test_the_same_cancellation_walks_the_doors_that_exist"
       ],
       "untracedBecause": "",
       "roles": [
         "Accountant",
-        "CountryDirector"
+        "Admin",
+        "CCEO",
+        "CountryDirector",
+        "Program Lead",
+        "ProjectCoordinator"
       ],
-      "routes": [],
+      "routes": [
+        "POST /api/activities/{id}/cancel",
+        "POST /my-plan/{id}/accountability"
+      ],
       "services": [
+        "apps/accounts/jwt.py",
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/models.py",
         "apps/activities/services.py",
+        "apps/activities/views.py",
         "apps/activity_catalogue/services.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
@@ -1309,7 +1321,9 @@
         "apps/core/calendar_policy.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
@@ -1318,6 +1332,8 @@
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
+        "apps/documents/gate.py",
+        "apps/frontend/views/my_plan_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
@@ -1335,7 +1351,9 @@
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
         "apps/ssa/models.py",
-        "apps/ssa/services.py"
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -1358,14 +1376,18 @@
         "routes.DailyVisitRouteBatch",
         "routes.SchoolLocationConfidence",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecord",
         "ssa.SsaScore"
       ],
       "permissions": [
+        "activity.assign",
         "fundRequest.approveEscalated",
         "payment.act"
       ],
-      "pages": [],
+      "pages": [
+        "my_plan"
+      ],
       "objectGuards": [],
       "notifications": [
         "advance_accountability_pl_approved",
@@ -1377,6 +1399,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "accountability_submitted",
         "activity.scheduled",
         "advance_request.approve_accountability",
         "advance_request.pl_approve_accountability",
