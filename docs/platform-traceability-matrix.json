@@ -250,30 +250,56 @@
         "Leadership view updated"
       ],
       "tests": [
-        "apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_a_school_that_improves_between_confirmed_assessments_is_measured"
+        "apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_a_school_that_improves_between_confirmed_assessments_is_measured",
+        "apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_the_improvement_reaches_the_leadership_view_over_http"
       ],
       "untracedBecause": "",
-      "roles": [],
-      "routes": [],
+      "roles": [
+        "Accountant",
+        "Admin",
+        "BusinessTransformationOfficer",
+        "CCEO",
+        "CountryDirector",
+        "HumanResources",
+        "ImpactAssessment",
+        "Program Lead",
+        "ProjectCoordinator",
+        "RegionalVicePresident"
+      ],
+      "routes": [
+        "GET /api/analytics/role-overview"
+      ],
       "services": [
+        "apps/accounts/jwt.py",
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/analytics/decision_engine.py",
         "apps/analytics/platform_engine.py",
+        "apps/analytics/role_analytics.py",
+        "apps/analytics/services.py",
+        "apps/analytics/views.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
+        "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/documents/gate.py",
         "apps/outbox/services.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
         "apps/ssa/models.py",
         "apps/ssa/recommendation_engine.py",
-        "apps/ssa/services.py"
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -283,10 +309,13 @@
         "geography.Region",
         "outbox.OutboxEvent",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecord",
         "ssa.SsaScore"
       ],
-      "permissions": [],
+      "permissions": [
+        "analytics.view"
+      ],
       "pages": [],
       "objectGuards": [],
       "notifications": [],

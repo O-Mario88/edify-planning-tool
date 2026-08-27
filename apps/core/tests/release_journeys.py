@@ -98,6 +98,13 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_ssa_improvement:"
             "SsaToImprovementJourneyTest."
             "test_a_school_that_improves_between_confirmed_assessments_is_measured",
+            # The same cascade with its last step asked at the door: the
+            # improvement must reach the Country Director's own overview, not
+            # merely be computable. "Leadership view updated" is the step this
+            # journey ends on, and a service call cannot prove it.
+            "apps.core.tests.test_journey_ssa_improvement:"
+            "SsaToImprovementJourneyTest."
+            "test_the_improvement_reaches_the_leadership_view_over_http",
         ),
     ),
     Journey(

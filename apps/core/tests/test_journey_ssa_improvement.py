@@ -162,6 +162,95 @@ class SsaToImprovementJourneyTest(TestCase):
             "confirmed averages",
         )
 
+    def test_the_improvement_reaches_the_leadership_view_over_http(self):
+        """JRN-01: journey 2's last step — "leadership view updated" — at the door.
+
+        The walk above proves `ssa_improvement` computes the delta. It calls
+        the function directly, so it cannot say whether the improvement ever
+        reaches a leader. That last step is the whole point of the journey:
+        a school moved, and the people who decide where to send help are
+        supposed to be able to see that it moved.
+
+        Journey 3 established that a mandated journey CAN reach the display
+        layer; this asks the same question of the cascade that starts at an
+        SSA. The door is `GET /api/analytics/role-overview`, which composes
+        `ssa_improvement` into the CD's own overview.
+
+        Asserted on the payload, not on a status code: the endpoint returns
+        200 with an overview whether or not the improvement is in it, so a
+        status-only check would report a leadership view that shows nothing
+        as a success.
+        """
+        import json
+
+        # ── 1-3. Baseline confirmed, weak, so there is something to fix ───
+        _assessment(
+            self.school,
+            fy=self.PREV_FY,
+            score=WEAK,
+            weakest=[self.weakest_key],
+            when=timezone.make_aware(datetime.datetime(2025, 6, 1, 9, 0)),
+        )
+        # ── 8. The follow-up, confirmed and better ────────────────────────
+        _assessment(
+            self.school,
+            fy=self.THIS_FY,
+            score=STRONG,
+            when=timezone.make_aware(datetime.datetime(2026, 6, 1, 9, 0)),
+        )
+
+        # What the service says, so the screen can be held to it rather than
+        # to a number typed here.
+        expected = self._improvement()
+        expected_row = next(
+            row
+            for row in expected["improved"]
+            if row["schoolId"] == self.school.school_id
+        )
+
+        # ── 9-10. The leadership view, through its own door ───────────────
+        self.client.force_login(self.cd)
+        response = self.client.get(f"/api/analytics/role-overview?fy={self.THIS_FY}")
+        self.assertEqual(
+            response.status_code,
+            200,
+            f"the Country Director cannot open their own analytics overview: "
+            f"{response.content[:200]!r}",
+        )
+        payload = json.loads(response.content)
+
+        # `ssaImprovement`, camelCase, as the API serialises it. The first
+        # version of this read `improvement` and got an empty set — which
+        # looks exactly like "the leader cannot see it" and was in fact a
+        # wrong key. An absent result and an absent feature are indis-
+        # tinguishable from the outside, so the payload was printed and read
+        # before this assertion was believed.
+        improvement = payload.get("ssaImprovement") or {}
+        improved = improvement.get("improved") or []
+        self.assertTrue(
+            improvement,
+            "the overview carried no ssaImprovement block at all, so the "
+            "assertion below could not fail for the right reason",
+        )
+        self.assertIn(
+            self.school.school_id,
+            {row.get("schoolId") for row in improved},
+            "a school that improved between two confirmed assessments is "
+            "absent from the Country Director's overview. The measurement "
+            "exists and the leader cannot see it, which is the step this "
+            "journey ends on.",
+        )
+        shown = next(
+            row for row in improved if row.get("schoolId") == self.school.school_id
+        )
+        self.assertAlmostEqual(
+            float(shown["delta"]),
+            float(expected_row["delta"]),
+            places=2,
+            msg="the delta on the leadership view is not the delta the "
+            "engine computed",
+        )
+
     def test_an_unconfirmed_follow_up_never_counts_as_improvement(self):
         """Only confirmed assessments measure impact.
 

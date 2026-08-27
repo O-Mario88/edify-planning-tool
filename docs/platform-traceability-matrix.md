@@ -16,7 +16,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | `journey-01` | Priority to verified performance | ✓ | 2 | 77 | 34 | 3 | 3 | 5 | 17 | 46 |
-| `journey-02` | SSA to school improvement | ✓ | 0 | 18 | 9 | 0 | 0 | 0 | 0 | 14 |
+| `journey-02` | SSA to school improvement | ✓ | 1 | 30 | 10 | 1 | 10 | 0 | 0 | 14 |
 | `journey-03` | Standard staff school visit | ✓ | 13 | 75 | 36 | 4 | 8 | 9 | 25 | 46 |
 | `journey-04` | Cluster training | ✓ | 0 | 17 | 14 | 0 | 0 | 0 | 1 | 41 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 37 | 27 | 2 | 2 | 1 | 4 | 54 |
@@ -64,17 +64,17 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 
 Steps: IA confirms SSA → Recommendation generated → School prioritized → Activity planned → Budgeted → Delivered → Verified → Follow-up SSA confirmed → Impact measured → Leadership view updated
 
-**Evidence test:** `apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_a_school_that_improves_between_confirmed_assessments_is_measured`
+**Evidence tests:** `apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_a_school_that_improves_between_confirmed_assessments_is_measured`, `apps.core.tests.test_journey_ssa_improvement:SsaToImprovementJourneyTest.test_the_improvement_reaches_the_leadership_view_over_http`
 
 | Dimension | Traced to |
 | --- | --- |
-| Roles that hold the checked permissions | — |
-| Routes / API | — |
-| Permissions checked | — |
+| Roles that hold the checked permissions | `Accountant`, `Admin`, `BusinessTransformationOfficer`, `CCEO`, `CountryDirector`, `HumanResources`, `ImpactAssessment`, `Program Lead`, `ProjectCoordinator`, `RegionalVicePresident` |
+| Routes / API | `GET /api/analytics/role-overview` |
+| Permissions checked | `analytics.view` |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/models.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/cuid.py`, `apps/core/enums.py`, `apps/core/models.py`, `apps/core/rbac.py`, `apps/core/request_cache.py` _+8 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `geography.District`, `geography.Region`, `outbox.OutboxEvent`, `schools.School`, `ssa.SsaRecord`, `ssa.SsaScore` |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/admin_ops/detection.py`, `apps/analytics/decision_engine.py`, `apps/analytics/platform_engine.py`, `apps/analytics/role_analytics.py`, `apps/analytics/services.py`, `apps/analytics/views.py`, `apps/business_transformation/signals.py` _+20 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.User`, `geography.District`, `geography.Region`, `outbox.OutboxEvent`, `schools.School`, `sessions.Session`, `ssa.SsaRecord`, `ssa.SsaScore` |
 | Notifications raised | — |
 | Audit actions (evidence) | — |
 | Metrics computed in the run | — |
