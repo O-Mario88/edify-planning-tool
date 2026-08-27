@@ -19,7 +19,7 @@ def monthly_executable_budget(*, fy: str, month: int, country: str = "Uganda") -
         MONEY_MOVED_ADVANCE_STATUSES,
         AdvanceRequest,
     )
-    from apps.monthly_work_plan.models import AdminBudgetLine, MonthlyWorkPlanBudget
+    from apps.monthly_work_plan.models import AdminBudgetLine
 
     base = ActivityScheduleCostLine.objects.filter(
         activity__deleted_at__isnull=True,

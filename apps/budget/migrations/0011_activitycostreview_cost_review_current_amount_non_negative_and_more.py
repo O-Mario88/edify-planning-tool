@@ -46,37 +46,84 @@ def backfill_snapshot_finance_state(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0049_activity_training_course_and_paired_visit'),
-        ('budget', '0010_activitycostreview_activitycostsnapshot_and_more'),
-        ('fund_requests', '0016_advancerequest_advance_request_amount_non_negative_and_more'),
+        ("activities", "0049_activity_training_course_and_paired_visit"),
+        ("budget", "0010_activitycostreview_activitycostsnapshot_and_more"),
+        (
+            "fund_requests",
+            "0016_advancerequest_advance_request_amount_non_negative_and_more",
+        ),
     ]
 
     operations = [
-        migrations.RunPython(backfill_snapshot_finance_state, migrations.RunPython.noop),
-        migrations.AddConstraint(
-            model_name='activitycostreview',
-            constraint=models.CheckConstraint(condition=models.Q(('current_operational_cost__gte', 0)), name='cost_review_current_amount_non_negative'),
+        migrations.RunPython(
+            backfill_snapshot_finance_state, migrations.RunPython.noop
         ),
         migrations.AddConstraint(
-            model_name='activitycostreview',
-            constraint=models.CheckConstraint(condition=models.Q(('proposed_operational_cost__isnull', True), ('proposed_operational_cost__gte', 0), _connector='OR'), name='cost_review_proposed_amount_non_negative'),
+            model_name="activitycostreview",
+            constraint=models.CheckConstraint(
+                condition=models.Q(("current_operational_cost__gte", 0)),
+                name="cost_review_current_amount_non_negative",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='activitycostsnapshot',
-            constraint=models.CheckConstraint(condition=models.Q(('approved_operating_limit__isnull', True), ('approved_operating_limit__gte', 0), _connector='OR'), name='activity_approved_limit_non_negative'),
+            model_name="activitycostreview",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("proposed_operational_cost__isnull", True),
+                    ("proposed_operational_cost__gte", 0),
+                    _connector="OR",
+                ),
+                name="cost_review_proposed_amount_non_negative",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='activitycostsnapshot',
-            constraint=models.CheckConstraint(condition=models.Q(('amount_disbursed__gte', 0), ('actual_accounted_spend__gte', 0), ('unused_balance__gte', 0), ('reimbursement_amount__gte', 0)), name='activity_cost_ledger_amounts_non_negative'),
+            model_name="activitycostsnapshot",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("approved_operating_limit__isnull", True),
+                    ("approved_operating_limit__gte", 0),
+                    _connector="OR",
+                ),
+                name="activity_approved_limit_non_negative",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='countrystrategicactivityreserve',
-            constraint=models.CheckConstraint(condition=models.Q(('opening_reserve__gte', 0), ('approved_additions__gte', 0), ('cleared_savings_transferred__gte', 0), ('amount_committed__gte', 0), ('amount_disbursed__gte', 0), ('amount_returned__gte', 0)), name='strategic_reserve_amounts_non_negative'),
+            model_name="activitycostsnapshot",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("amount_disbursed__gte", 0),
+                    ("actual_accounted_spend__gte", 0),
+                    ("unused_balance__gte", 0),
+                    ("reimbursement_amount__gte", 0),
+                ),
+                name="activity_cost_ledger_amounts_non_negative",
+            ),
         ),
         migrations.AddConstraint(
-            model_name='strategicreserveactivation',
-            constraint=models.CheckConstraint(condition=models.Q(('operational_cost__gte', 0), ('requested_amount__gt', 0), ('balance_before__gte', 0), ('balance_after__gte', 0)), name='reserve_activation_amounts_valid'),
+            model_name="countrystrategicactivityreserve",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("opening_reserve__gte", 0),
+                    ("approved_additions__gte", 0),
+                    ("cleared_savings_transferred__gte", 0),
+                    ("amount_committed__gte", 0),
+                    ("amount_disbursed__gte", 0),
+                    ("amount_returned__gte", 0),
+                ),
+                name="strategic_reserve_amounts_non_negative",
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name="strategicreserveactivation",
+            constraint=models.CheckConstraint(
+                condition=models.Q(
+                    ("operational_cost__gte", 0),
+                    ("requested_amount__gt", 0),
+                    ("balance_before__gte", 0),
+                    ("balance_after__gte", 0),
+                ),
+                name="reserve_activation_amounts_valid",
+            ),
         ),
     ]

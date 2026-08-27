@@ -126,9 +126,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                 country=catalogue.country,
                 fy=catalogue.fy,
                 kind=catalogue.kind,
-            ).aggregate(max_version=Max("version"))[
-                "max_version"
-            ]
+            ).aggregate(max_version=Max("version"))["max_version"]
             or 0
         ) + 1
         catalogue.is_active = False

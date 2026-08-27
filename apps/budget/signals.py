@@ -6,7 +6,9 @@ from django.dispatch import receiver
 from apps.fund_requests.models import AdvanceRequest
 
 
-@receiver(post_save, sender=AdvanceRequest, dispatch_uid="budget.sync_activity_cost_actuals")
+@receiver(
+    post_save, sender=AdvanceRequest, dispatch_uid="budget.sync_activity_cost_actuals"
+)
 def sync_activity_cost_actuals(sender, instance, **kwargs):
     from .costing_service import sync_snapshot_actuals
 

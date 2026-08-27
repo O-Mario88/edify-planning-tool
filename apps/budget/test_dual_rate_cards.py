@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from django.conf import settings
 from rest_framework.test import APITestCase
 
 from apps.accounts.jwt import issue_access_token

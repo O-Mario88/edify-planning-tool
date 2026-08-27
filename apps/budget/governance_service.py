@@ -80,8 +80,10 @@ def list_rate_cards(principal, *, fy: str | None = None) -> dict:
         Permission.RATE_CARD_OPERATIONAL_VIEW,
         "You do not have access to country rate cards.",
     )
-    qs = CostCatalogue.objects.all().prefetch_related("rates").order_by(
-        "kind", "-fy", "-version"
+    qs = (
+        CostCatalogue.objects.all()
+        .prefetch_related("rates")
+        .order_by("kind", "-fy", "-version")
     )
     if fy:
         qs = qs.filter(fy=str(fy))
@@ -261,8 +263,7 @@ def publish_rate_card(principal, card_id: str) -> dict:
         ).exclude(id=card.id)
         if card.effective_from:
             overlap = overlap.filter(
-                Q(effective_to__isnull=True)
-                | Q(effective_to__gte=card.effective_from)
+                Q(effective_to__isnull=True) | Q(effective_to__gte=card.effective_from)
             )
         if card.effective_to:
             overlap = overlap.filter(
@@ -335,10 +336,14 @@ def request_cost_review(principal, activity_id: str, data: dict) -> dict:
     if snapshot is None:
         raise BadRequest("The activity does not yet have an operational cost.")
     if ActivityCostReview.objects.filter(
-        activity=activity, status__in=("submitted", "under_review", "amendment_required")
+        activity=activity,
+        status__in=("submitted", "under_review", "amendment_required"),
     ).exists():
         raise BadRequest("A cost review for this activity is already unresolved.")
-    proposed_inputs = {**snapshot.calculation_inputs, **(data.get("changedInputs") or {})}
+    proposed_inputs = {
+        **snapshot.calculation_inputs,
+        **(data.get("changedInputs") or {}),
+    }
     proposed = calculate_dual(proposed_inputs)["operational"]
     with transaction.atomic():
         review = ActivityCostReview.objects.create(
@@ -453,9 +458,11 @@ def decide_cost_review(principal, review_id: str, data: dict) -> dict:
             )
             if not any(marker in str(exc).lower() for marker in finance_lock_markers):
                 raise
-            current = ActivityCostSnapshot.objects.select_for_update().filter(
-                activity=review.activity, is_current=True
-            ).first()
+            current = (
+                ActivityCostSnapshot.objects.select_for_update()
+                .filter(activity=review.activity, is_current=True)
+                .first()
+            )
             if current:
                 current.cost_status = "amendment_required"
                 current.save(update_fields=["cost_status", "updated_at"])
@@ -624,16 +631,18 @@ def request_reserve_activation(principal, reserve_id: str, data: dict) -> dict:
                 ReserveActivationStatus.DISBURSED,
             ),
         ).exists():
-            raise BadRequest("This activity already has an unresolved reserve activation.")
+            raise BadRequest(
+                "This activity already has an unresolved reserve activation."
+            )
         if requested_amount > reserve.available_balance:
-            raise BadRequest("The requested amount exceeds the available reserve balance.")
+            raise BadRequest(
+                "The requested amount exceeds the available reserve balance."
+            )
         before = reserve.available_balance
         activation = StrategicReserveActivation.objects.create(
             reserve=reserve,
             activity=activity,
-            reason_normal_funding_insufficient=data[
-                "reasonNormalFundingInsufficient"
-            ],
+            reason_normal_funding_insufficient=data["reasonNormalFundingInsufficient"],
             operational_cost=activity.est_cost_cents,
             requested_amount=requested_amount,
             expected_outcome=data["expectedOutcome"],
@@ -683,12 +692,16 @@ def approve_reserve_activation(principal, activation_id: str) -> dict:
             id=activation.reserve_id
         )
         if activation.requested_amount > reserve.available_balance:
-            raise BadRequest("The reserve balance changed and can no longer cover this request.")
+            raise BadRequest(
+                "The reserve balance changed and can no longer cover this request."
+            )
         reserve.amount_committed += activation.requested_amount
         reserve.save(update_fields=["amount_committed", "updated_at"])
         activation.status = ReserveActivationStatus.APPROVED
         activation.rvp_approved_by = _user_id(principal)
-        activation.balance_before = reserve.available_balance + activation.requested_amount
+        activation.balance_before = (
+            reserve.available_balance + activation.requested_amount
+        )
         activation.balance_after = reserve.available_balance
         activation.save(
             update_fields=[

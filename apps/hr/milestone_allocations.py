@@ -465,17 +465,11 @@ def _allocation_projection(
         key=lambda target: target.period_start,
     )
     quarter_period_targets = sorted(
-        (
-            target
-            for target in all_period_targets
-            if target.period_type == "quarter"
-        ),
+        (target for target in all_period_targets if target.period_type == "quarter"),
         key=lambda target: target.period_start,
     )
 
-    def period_cell(
-        key: str, label: str, period_rows, *, actual_override=None
-    ) -> dict:
+    def period_cell(key: str, label: str, period_rows, *, actual_override=None) -> dict:
         """Project one comparable target/actual cell for the target matrices.
 
         Counts and currency add across the selected span. Rates keep their
@@ -487,9 +481,7 @@ def _allocation_projection(
 
         period_rows = list(period_rows)
         if summable:
-            target = sum(
-                (period.planned_value for period in period_rows), Decimal("0")
-            )
+            target = sum((period.planned_value for period in period_rows), Decimal("0"))
             actual = (
                 actual_override
                 if actual_override is not None

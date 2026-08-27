@@ -84,12 +84,16 @@ class RateCardsView(APIView):
     def get(self, request: Request) -> Response:
         from .governance_service import list_rate_cards
 
-        return Response(list_rate_cards(request.user, fy=request.query_params.get("fy")))
+        return Response(
+            list_rate_cards(request.user, fy=request.query_params.get("fy"))
+        )
 
     def post(self, request: Request) -> Response:
         from .governance_service import create_rate_card_version
 
-        return Response(create_rate_card_version(request.user, request.data), status=201)
+        return Response(
+            create_rate_card_version(request.user, request.data), status=201
+        )
 
 
 class RateCardLineView(APIView):
@@ -147,7 +151,9 @@ class StrategicReserveView(APIView):
     def get(self, request: Request) -> Response:
         from .governance_service import reserve_summary
 
-        return Response(reserve_summary(request.user, fy=request.query_params.get("fy")))
+        return Response(
+            reserve_summary(request.user, fy=request.query_params.get("fy"))
+        )
 
 
 class StrategicReserveActivationView(APIView):
@@ -158,7 +164,8 @@ class StrategicReserveActivationView(APIView):
         from .governance_service import request_reserve_activation
 
         return Response(
-            request_reserve_activation(request.user, reserve_id, request.data), status=201
+            request_reserve_activation(request.user, reserve_id, request.data),
+            status=201,
         )
 
 

@@ -223,7 +223,11 @@ class ActivityCostSnapshot(TimeStampedModel):
         default=ActivityCostStatus.ESTIMATED,
     )
     supersedes = models.ForeignKey(
-        "self", on_delete=models.PROTECT, null=True, blank=True, related_name="revisions"
+        "self",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="revisions",
     )
 
     class Meta:
@@ -387,7 +391,9 @@ class StrategicReserveActivation(TimeStampedModel):
         related_name="activations",
     )
     activity = models.ForeignKey(
-        "activities.Activity", on_delete=models.PROTECT, related_name="reserve_activations"
+        "activities.Activity",
+        on_delete=models.PROTECT,
+        related_name="reserve_activations",
     )
     reason_normal_funding_insufficient = models.TextField()
     operational_cost = models.BigIntegerField(default=0)

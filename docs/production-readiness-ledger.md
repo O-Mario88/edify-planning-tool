@@ -605,6 +605,56 @@ screen-reader semantics and the dark theme are unmeasured. Saying so is the
 point: this row moved from "no tooling" to "some tooling, and here is exactly
 what it does and does not see".
 
+### INTG-01 · The screens claimed a Salesforce integration the code does not have · **CLAIM FIXED; TRANSPORT STILL ABSENT**
+
+`apps/integrations/services.py:push_to_external` is a single unconditional
+`raise IntegrationNotConfigured`, and so is `validate_external_reference`.
+There is no HTTP transport for Salesforce anywhere in the codebase. That is a
+deliberate, documented seam — *"Until then it refuses loudly rather than
+pretending."*
+
+The code refuses loudly. Two screens did not:
+
+| Screen | Said | Actually happens |
+| --- | --- | --- |
+| IA partner-completion drawer | "Completing verifies the evidence and **confirms Salesforce**" | a person types a reference; its prefix and local uniqueness are checked; it is stored |
+| IA verification queue header | "Verify activity completions, **confirm Salesforce records integrity**" | nothing checks the integrity of anything in Salesforce |
+
+That stored string gates activity closure, IA partner confirmation,
+core-activity verification and partner-payment eligibility. So an IA who read
+those sentences and believed the platform had checked Salesforce was releasing
+money on a belief the platform never earned. It is the same shape as BASE-02
+(Settings promising a dark mode that no longer existed), in a place where the
+consequence is financial rather than cosmetic.
+
+**Fixed:** the drawer now reads "records the Salesforce reference you enter —
+the system does not contact Salesforce", and the queue header "record the
+Salesforce reference for each".
+
+**Gated** by `apps/system_health/test_integration_claims_match_reality.py`,
+which ties the copy to the code: it fails while any screen puts the *system* in
+the subject position of a Salesforce claim, and its first assertion is that
+`push_to_external` still refuses — so the day the transport lands, the test
+says so and asks to be deleted rather than silently outliving its reason.
+
+The boundary is grammatical and deliberate. "Confirm Salesforce Entry" on a
+button and "Confirm that this loan has been entered into Salesforce" are
+addressed to a person about their own action, are true, and stay. "Confirms
+Salesforce" is the system claiming a check. Banning the word outright would
+force rewrites of honest copy, and a gate that cries wolf gets deleted.
+
+Proven able to fail — five mutations, each confirmed present before the verdict
+was read: the old drawer wording restored; the old queue wording restored; a
+new screen saying "synced to Salesforce"; the honest replacement sentence
+deleted (which the absence-only test would have accepted); and the transport
+implemented, which correctly flips the premise assertion.
+
+**Still open, and not closable from here.** The transport itself is the
+credentialed half of Phase 2c. Until it lands, Salesforce reconciliation is
+manual and unverified — the release scope has to say that plainly, which is the
+second of the two options INTG-01 always offered. The screens now say it; the
+release note should too.
+
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
 Measured: **p95 829ms against an 800ms budget, on 501 queries**, at 702 schools.

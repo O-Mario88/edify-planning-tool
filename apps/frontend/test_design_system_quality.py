@@ -860,7 +860,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("Funding &amp; Execution", intelligence_row)
         self.assertIn('aside class="pl-funding-card ', dashboard)
         self.assertLess(
-            dashboard.index("SSA Intelligence"), dashboard.index("Funding &amp; Execution")
+            dashboard.index("SSA Intelligence"),
+            dashboard.index("Funding &amp; Execution"),
         )
         self.assertLess(
             dashboard.index("Funding &amp; Execution"), dashboard.index("Team Backlog")

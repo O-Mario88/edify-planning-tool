@@ -2537,6 +2537,23 @@
   {
    "page_permission": "",
    "required_permissions": [
+    "costAmendment.request"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/api/budget(?:/|)activities/<str:activity_id>/cost-review",
+   "route_name": "activity-cost-review",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
     "planning.view"
    ],
    "role_exclusive": false,
@@ -2557,6 +2574,20 @@
   {
    "page_permission": "",
    "required_permissions": [
+    "costAmendment.approve"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident"
+   ],
+   "route": "/api/budget(?:/|)cost-reviews/<str:review_id>/decision",
+   "route_name": "activity-cost-review-decision",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
     "planning.view"
    ],
    "role_exclusive": false,
@@ -2572,6 +2603,21 @@
    ],
    "route": "/api/budget(?:/|)cost-settings/history",
    "route_name": "cost-settings-history",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "activityCost.reference.view"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "Accountant"
+   ],
+   "route": "/api/budget(?:/|)costing/management-preview",
+   "route_name": "management-costing-preview",
    "view": "apps.budget.views.view"
   },
   {
@@ -2612,6 +2658,94 @@
    ],
    "route": "/api/budget(?:/|)from-schedule",
    "route_name": "from-schedule",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "rateCard.operational.view"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/api/budget(?:/|)rate-cards",
+   "route_name": "rate-cards",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "rateCard.operational.manage",
+    "rateCard.reference.manage"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector"
+   ],
+   "route": "/api/budget(?:/|)rate-cards/<str:card_id>/lines",
+   "route_name": "rate-card-line",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "rateCard.operational.manage",
+    "rateCard.reference.manage"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector"
+   ],
+   "route": "/api/budget(?:/|)rate-cards/<str:card_id>/publish",
+   "route_name": "rate-card-publish",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "strategicReserve.view"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "Accountant"
+   ],
+   "route": "/api/budget(?:/|)strategic-reserve",
+   "route_name": "strategic-reserve",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "strategicReserve.manage"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector"
+   ],
+   "route": "/api/budget(?:/|)strategic-reserve/<str:reserve_id>/activations",
+   "route_name": "strategic-reserve-activation",
+   "view": "apps.budget.views.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [
+    "strategicReserve.approve"
+   ],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident"
+   ],
+   "route": "/api/budget(?:/|)strategic-reserve/activations/<str:activation_id>/approve",
+   "route_name": "strategic-reserve-activation-approve",
    "view": "apps.budget.views.view"
   },
   {
@@ -7317,6 +7451,19 @@
    "route": "/core-schools/strategy-playbook",
    "route_name": "core_strategy_playbook_drawer",
    "view": "apps.frontend.views.core_schools_views.core_strategy_playbook_drawer"
+  },
+  {
+   "page_permission": "cost_intelligence",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "Accountant",
+    "Admin"
+   ],
+   "route": "/cost-intelligence",
+   "route_name": "cost_intelligence",
+   "view": "apps.frontend.views.finance_views.cost_intelligence_view"
   },
   {
    "page_permission": "cost_settings",
@@ -13848,26 +13995,26 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 282,
-  "Admin": 762,
+  "Accountant": 286,
+  "Admin": 765,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 466,
-  "CountryDirector": 532,
+  "CCEO": 468,
+  "CountryDirector": 540,
   "HumanResources": 264,
   "ImpactAssessment": 400,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
-  "Program Lead": 540,
-  "ProjectCoordinator": 397,
-  "RegionalVicePresident": 293
+  "Program Lead": 542,
+  "ProjectCoordinator": 399,
+  "RegionalVicePresident": 299
  },
  "summary": {
-  "page_keys_declared": 147,
-  "page_keys_in_navigation": 164,
-  "routes_guarded": 847,
-  "routes_total": 1030,
+  "page_keys_declared": 148,
+  "page_keys_in_navigation": 165,
+  "routes_guarded": 857,
+  "routes_total": 1040,
   "routes_unguarded": 183,
   "surfaces_no_role_can_reach": 0
  },

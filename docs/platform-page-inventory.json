@@ -3113,7 +3113,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5427,
+      "bytes": 5571,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
@@ -3302,7 +3302,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 12783,
+      "bytes": 12720,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -4063,7 +4063,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 25998,
+      "bytes": 28663,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/action"
@@ -4926,7 +4926,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3919,
+      "bytes": 4430,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"
@@ -7870,9 +7870,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "keyboard focus visibility"
       ],
-      "bytes": 21143,
+      "bytes": 23153,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -8002,7 +8003,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 23519,
+      "bytes": 23685,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8060,7 +8061,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3677,
+      "bytes": 3733,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/matrix"
@@ -23678,11 +23679,93 @@
       ]
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.finance_views",
+      "backend_view": "apps.frontend.views.finance_views.cost_intelligence_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:cost_intelligence"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-B2C7B8534B",
+      "page_title": "Cost Intelligence",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cost_intelligence",
+      "primary_action": "Cost Intelligence",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Read-only RVP/Accountant view of the same governed cost intelligence.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "RVP"
+      ],
+      "route": "/cost-intelligence",
+      "route_name": "cost_intelligence",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.budget.models",
+        "apps.budget.services",
+        "apps.fund_requests.models",
+        "apps.geography.models",
+        "apps.partners.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.finance_views",
       "backend_view": "apps.frontend.views.finance_views.cost_settings_view",
       "card_count": 0,
@@ -23713,7 +23796,7 @@
       "permission_key": "cost_settings",
       "primary_action": "Initialize Default Catalogue",
       "primary_user_decision": "What governed configuration change is required?",
-      "purpose": "CD Cost Catalogue management.",
+      "purpose": "Governed operational/reference cost control for finance leadership.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -23743,7 +23826,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": true,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "page",
@@ -23764,6 +23847,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[14px]",
+        "text-[16px]",
         "text-[18px]",
         "text-[20px]",
         "text-[36px]"
@@ -24236,7 +24320,9 @@
         "text-[12px]",
         "text-[13px]",
         "text-[14px]",
-        "text-[15px]"
+        "text-[15px]",
+        "text-[16px]",
+        "text-[20px]"
       ]
     },
     {
@@ -60194,6 +60280,18 @@
       "countryBudget.approve",
       "fundRequest.approveEscalated",
       "costSettings.manage",
+      "rateCard.reference.view",
+      "rateCard.reference.manage",
+      "rateCard.operational.view",
+      "rateCard.operational.manage",
+      "activityCost.reference.view",
+      "activityCost.operational.view",
+      "activityCost.approve",
+      "strategicReserve.view",
+      "strategicReserve.manage",
+      "strategicReserve.approve",
+      "costAmendment.request",
+      "costAmendment.approve",
       "staff.manage",
       "user.manage",
       "partner.view",
@@ -64540,10 +64638,48 @@
       ],
       "page_permission": "",
       "required_permissions": [
+        "costAmendment.request"
+      ],
+      "route": "/api/budget(?:/|)activities/<str:activity_id>/cost-review",
+      "route_name": "activity-cost-review",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
         "planning.view"
       ],
       "route": "/api/budget(?:/|)board",
       "route_name": "board",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "costAmendment.approve"
+      ],
+      "route": "/api/budget(?:/|)cost-reviews/<str:review_id>/decision",
+      "route_name": "activity-cost-review-decision",
       "templates": []
     },
     {
@@ -64595,6 +64731,25 @@
       ],
       "page_permission": "",
       "required_permissions": [
+        "activityCost.reference.view"
+      ],
+      "route": "/api/budget(?:/|)costing/management-preview",
+      "route_name": "management-costing-preview",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
         "planning.view"
       ],
       "route": "/api/budget(?:/|)costing/preview",
@@ -64618,6 +64773,122 @@
       ],
       "route": "/api/budget(?:/|)from-schedule",
       "route_name": "from-schedule",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "rateCard.operational.view"
+      ],
+      "route": "/api/budget(?:/|)rate-cards",
+      "route_name": "rate-cards",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "rateCard.operational.manage",
+        "rateCard.reference.manage"
+      ],
+      "route": "/api/budget(?:/|)rate-cards/<str:card_id>/lines",
+      "route_name": "rate-card-line",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "rateCard.operational.manage",
+        "rateCard.reference.manage"
+      ],
+      "route": "/api/budget(?:/|)rate-cards/<str:card_id>/publish",
+      "route_name": "rate-card-publish",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "strategicReserve.view"
+      ],
+      "route": "/api/budget(?:/|)strategic-reserve",
+      "route_name": "strategic-reserve",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "strategicReserve.manage"
+      ],
+      "route": "/api/budget(?:/|)strategic-reserve/<str:reserve_id>/activations",
+      "route_name": "strategic-reserve-activation",
+      "templates": []
+    },
+    {
+      "callback": "apps.budget.views.view",
+      "kind": "api",
+      "methods": [
+        "DELETE",
+        "GET",
+        "PATCH",
+        "POST",
+        "PUT",
+        "TRACE"
+      ],
+      "page_permission": "",
+      "required_permissions": [
+        "strategicReserve.approve"
+      ],
+      "route": "/api/budget(?:/|)strategic-reserve/activations/<str:activation_id>/approve",
+      "route_name": "strategic-reserve-activation-approve",
       "templates": []
     },
     {
@@ -70580,6 +70851,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.finance_views.cost_intelligence_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cost_intelligence",
+      "required_permissions": [],
+      "route": "/cost-intelligence",
+      "route_name": "cost_intelligence",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.finance_views.cost_settings_view",
       "kind": "page",
       "methods": [
@@ -76263,28 +76546,28 @@
   "summary": {
     "accessibility_contract_pass": 376,
     "activity_states": 23,
-    "all_routes": 1030,
-    "api_routes": 349,
+    "all_routes": 1040,
+    "api_routes": 358,
     "component_templates": 341,
     "full_pages": 203,
     "mobile_contract_pass": 376,
-    "nonvisual_actions": 178,
+    "nonvisual_actions": 179,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 348,
+      "interaction-fragment": 349,
       "operational-queue": 121,
       "planning-or-creation": 6,
       "record-detail": 25,
       "report": 25
     },
     "partials_and_drawers": 170,
-    "permission_gated": 562,
-    "permission_keys": 100,
+    "permission_gated": 563,
+    "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 572,
+    "routed_surfaces": 573,
     "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,

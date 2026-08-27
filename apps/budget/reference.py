@@ -172,7 +172,12 @@ def ensure_active_catalogue():
 
 def ensure_cost_reference(catalogue=None) -> int:
     """Create any missing canonical rate. Returns how many were created."""
-    from apps.budget.models import CostCatalogue, CostSetting, RateCardKind, RateCardStatus
+    from apps.budget.models import (
+        CostCatalogue,
+        CostSetting,
+        RateCardKind,
+        RateCardStatus,
+    )
 
     catalogue = catalogue or ensure_active_catalogue()
     CostCatalogue.objects.get_or_create(
