@@ -146,9 +146,31 @@ class BrowserLoginIsRateLimitedTest(TestCase):
     # The limit is pinned here rather than inherited: the developer .env sets
     # RATE_LIMIT_LOGIN_PER_MIN=1000 so local work is not throttled, which would
     # make this test silently vacuous on a laptop and meaningful only on CI.
-    @override_settings(RATE_LIMIT_LOGIN_PER_MIN=10)
+    #
+    # The hasher is pinned for a different reason: this test races a clock.
+    # The throttle is a 60-SECOND SLIDING window that drops hits as they age
+    # out, so reaching the limit requires limit+1 requests inside 60 seconds.
+    # Each request is a full login, and login's dominant cost is bcrypt at
+    # cost 12 — deliberately slow, and run even for an unknown email so the
+    # response time does not disclose whether the account exists. Measured at
+    # 0.24s per request locally: 13 requests took 3.15s against a 60s window,
+    # a margin of only 19x. Four parallel workers on a contended CI runner
+    # eat margins like that, and when they do the early hits expire, the
+    # bucket never fills, and the test reports "the throttle is missing" —
+    # about a throttle that is working perfectly.
+    #
+    # This failed exactly that way on CI while passing locally on the same
+    # commit. The mechanism above is established; that it was the cause is
+    # not proven. So rather than re-run and hope, the dependency is removed:
+    # a fast hasher and a smaller limit take the wall-clock to milliseconds,
+    # and the assertion below is untouched. A security test that can pass or
+    # fail on machine speed is not evidence either way.
+    @override_settings(
+        RATE_LIMIT_LOGIN_PER_MIN=3,
+        PASSWORD_HASHERS=["django.contrib.auth.hashers.MD5PasswordHasher"],
+    )
     def test_repeated_sign_in_attempts_from_one_address_are_capped(self):
-        limit = 10
+        limit = 3
         statuses = [
             self.client.post(
                 "/login",
