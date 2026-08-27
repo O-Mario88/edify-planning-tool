@@ -84,8 +84,7 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
         styles = _read("static/css/pages.css")
         ssa_template = _read("templates/partials/dashboards/pl/ssa_intelligence.html")
         selector = (
-            ".pl-dashboard-stack :is(.pl-ssa-matrix-scroll, "
-            ".pl-urgent-table-scroll)"
+            ".pl-dashboard-stack :is(.pl-ssa-matrix-scroll, " ".pl-urgent-table-scroll)"
         )
         rule = styles.split(selector, 1)[1].split("}", 1)[0]
 
