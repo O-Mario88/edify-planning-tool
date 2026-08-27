@@ -1435,7 +1435,13 @@ know what is deployed.**
   There is no advisory lock around migrate (grep for `pg_advisory_lock` finds only two
   unrelated call sites). If the two-instance record is the accurate one, production has
   been running the exact configuration `DEPLOY.md` calls unsafe.
-- **DEP-03 · P0 ·** `scripts/backup_restore_rehearsal.sh` is a genuinely rigorous
+- **DEP-03 · P0 ·** *(Superseded — see ISSUE-008 in `docs/production-readiness-ledger.md`.
+  "Genuinely rigorous" was wrong: the row-count parity read BOTH sides from the live
+  source, so on an empty database every comparison was `0 == 0`; the unvalidated-FK
+  assertion sat behind a floor of 20 that a wiped database clears with 382; and the app
+  smoke scored HTTP 200 after following redirects, which an anonymous client also scores
+  on all eight pages. The script has since been rebuilt. The rest of this entry stands.)*
+  `scripts/backup_restore_rehearsal.sh` is a genuinely rigorous
   round-trip (row-count parity, `django_migrations` parity, unvalidated-FK assertion, app
   smoke). But it defaults to the local database, no CI job invokes it, and every recorded
   run was against the local estate. No backup schedule, retention or PITR setting exists in

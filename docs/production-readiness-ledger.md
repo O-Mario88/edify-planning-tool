@@ -212,16 +212,241 @@ it because automation exists.
 
 | Gate | Status | Evidence |
 | --- | --- | --- |
-| Backup restore rehearsal (§53) | **PASSED** | `scripts/backup_restore_rehearsal.sh` run at this commit: 228 tables, 203 migrations, 250 validated FK constraints, environment stamp preserved, audit hash chain intact, 8 pages served from the restored copy |
+| Backup restore rehearsal (§53) | **RE-RUN AND PASSED against `edify` — production source still unexercised** | The PASS originally recorded here established one thing: the commands in `scripts/backup_restore_rehearsal.sh` ran without erroring. It established nothing about the restore, because every threshold it used clears on a database with no rows in it — see ISSUE-008. The gate was rebuilt around `scripts/restore_manifest.py`, rebuilt again after two adversarial reviews, and then had two further defects found by running it rather than reading it (ISSUE-008c). It has now been run end to end against the platform's own developer source `edify` at commit `cad73c69`: **exit 0, 25 PASS, 0 FAIL**, 8,789 comparisons against a manifest of the dump, 8 pages served to *signed-in* accounts from the restored copy across 10 roles, audit hash chain walked 161 of 161 rows, scratch copy dropped. Proven able to fail: **12 of 12 testable corruption classes caught** (ISSUE-008c). This is a dev-estate source of 700 schools and 27,828 rows; **the production source has still never been dumped or restored by anyone**, so §53 is satisfied for the mechanism and not for the estate it will run against |
 | Latency budgets (§46) | **RUN — 1 breach** | `scripts/latency_budget.py`, 15 samples per page per role after 2 discarded, 702 schools. 23 of 24 page/role combinations within budget; `/todos` for the Country Director breached |
 | Scale invariance (§46) | **PASSED** | `apps/system_health/test_load_scale.py` at 15,000 schools + 3,000 growth, in the green suite |
 | Wall-clock p95 at 15,000 schools | **STILL UNVERIFIED** | The latency run above is against the 702-school dev estate. The scale harness proves query counts do not grow; it does not measure production wall time, and says so |
-| Rollback rehearsal (§53) | **STILL UNVERIFIED** | Not attempted this pass |
+| Rollback rehearsal (§53) | **STILL UNVERIFIED against the platform's source** | `scripts/rollback_rehearsal.sh` carried the same defects as the backup gate and has been repaired alongside it: the dead scratch-name guard, the `check()` that passed on two empty strings (removed — it had no call sites left), `pg_dump \| pg_restore >/dev/null 2>&1` with every error discarded, a step 3 with no failing path, a relative `PYTHON_BIN` that made the script exit 127 in silence from any directory but the repository root, no ERR trap and so no verdict on an abort, and `git worktree remove --force` running unconditionally ahead of its own ownership check — which destroyed a pre-existing worktree holding uncommitted work. Run end to end against the platform's own developer source `edify` at commit `cad73c69`: **exit 0, 16 PASS, 0 FAIL** — `7c27f2f6` serves the schema `cad73c69` leaves behind, 320 migrations known to the previous release with 0 missing, 8 pages served to signed-in accounts from the migrated copy. Not run against the production source |
 | Visual regression / accessibility tooling (§4) | **STILL UNVERIFIED** | Not configured in this repository |
 | 95% planning-time reduction (§2) | **STILL UNVERIFIED** | Mechanical half measured (see §7); human half needs staff observations |
 
 Two gates that were UNVERIFIED are now executed with evidence, and the latency
 run found a real defect.
+
+### ISSUE-008 · The backup gate could not fail, and its PASS was recorded as evidence · **HIGH**
+
+> Note on numbering: §9 below carries a different, closed ISSUE-008 (reminder
+> dedupe). The identifier was reused by mistake when this entry was written.
+> References elsewhere in the repository to "ISSUE-008" mean this one, the
+> backup gate. Renumbering either would break the other's history, so both
+> keep their number and this note disambiguates them.
+
+The row above previously read **PASSED**. It was withdrawn because the check
+that produced it cannot distinguish a good restore from a wiped database.
+
+`scripts/backup_restore_rehearsal.sh` verified a restore with three floors and
+one comparison. Measured against this schema **with every table empty**:
+
+| Check | Floor | A wiped database measures | Verdict |
+| --- | --- | --- | --- |
+| dump size | > 100,000 bytes | 1,778,821 bytes | passes by 17.8x |
+| table count | >= 50 | 308 | passes by 6.2x |
+| FK constraints | >= 20 | 382 | passes by 19.1x |
+| per-table row counts | source == restored | both read from the LIVE source, so `0 == 0` | prints "PASS all table row counts 308 tables identical" |
+
+Run against a schema-only (zero-row) copy of this database, the pre-change
+script prints `RESTORE REHEARSAL PASSED -- 308 tables, 0 migrations verified.`
+and exits 0. Seven further defects compounded it: the scratch-vs-source refusal
+was dead code (`restore_rehearsal_${SOURCE_DB}` is a strict superstring of
+`SOURCE_DB`, so the equality could never hold — the same dead guard sat in
+`rollback_rehearsal.sh`); `check()` passed when both sides were empty strings;
+step 6 had no failing path at all; a SQL error aborted the run with no FAIL
+line and the EXIT trap then dropped the scratch database, leaving nothing to
+inspect; `PGPASSWORD` was not exported to `restore_smoke.py`; and `PYTHON_BIN`
+defaulted to the **relative** `.venv/bin/python`, so running the script from
+any other directory downgraded the only check that exercises the product to a
+WARN and still printed PASSED.
+
+The rehearsal now captures a manifest inside the dump's own snapshot
+(`pg_export_snapshot()` -> `pg_dump --snapshot=<id>` -> read the manifest in
+the same still-open transaction) and diffs the restored copy against it.
+
+**What the withdrawn PASS actually established.** That `pg_dump`, `createdb`,
+`pg_restore` and eight `psql` calls exited zero. That is a real thing to know
+and it is not what the row claimed. It did not establish that any row, index,
+constraint, privilege or sequence came back, because nothing in the script
+compared the restored copy against the backup: the three floors are cleared by
+an empty database, and the fourth comparison read both of its sides from the
+live source.
+
+### ISSUE-008a · The rebuilt gate still had six routes to a false PASS · **HIGH**
+
+The rebuild above closed the row-shaped hole and left the rest of the database
+unguarded. Two adversarial reviews measured the following, on restores the
+rebuilt gate certified as good. Four of the six needed no tampering at all —
+they fired on every run:
+
+| Route | Measured | No tampering? |
+| --- | --- | --- |
+| Materialised views are re-computed by the restore, not restored | a matview holding 260 rows came back holding 0; another came back with 100 rows silently re-dated | yes |
+| `--no-privileges` discarded every GRANT | the certified copy raised `permission denied for table school` for the application role | yes |
+| No `--create`, so `pg_db_role_setting` was dropped | source carried `statement_timeout`, `TimeZone`, `search_path`; the copy carried none | yes |
+| Bare `CREATE DATABASE` took its locale from the cluster | an ICU `de-DE-u-co-phonebk` source was certified as a `C.UTF-8` copy — every text index in a different order | yes |
+| Bare `CREATE DATABASE` inherits `template1` | a `SECURITY DEFINER` function planted in `template1` appeared in the "restored copy" | no |
+| The dump was hashed once, by the process that had just written it | swapping the file between the hash and `pg_restore` produced a full PASS on a copy missing 1,881 indexes, an entire schema, every large object, and with a `CHECK` reduced to `CHECK (true)` | no |
+
+Unchecked entirely: indexes, views, matviews, functions, triggers, large
+objects, extensions, defaults, `NOT NULL`, constraint *definitions* (the census
+counted 382 foreign keys whether or not one had gained `ON DELETE CASCADE`),
+ACLs, ownership, database settings, encoding, collation, comments, RLS
+policies, and everything outside the `public` schema.
+
+The application smoke test carried the same defect class it was meant to
+detect. `check("sequences carry their position", True, ...)` — the literal
+`True`, a check that could not fail. Every page was scored on
+`status_code == 200` after following redirects, and an **anonymous** client
+scores 200 on all eight: "8 pages served from the restored copy" was satisfied
+by eight renderings of the login form, and on seeded data by eight renderings
+of a mandatory-policy interstitial. It declared itself "deliberately read-only"
+while inserting 331 rows across 13 tables — including into the audit chain it
+then pronounced intact — and changing fields of `school` and `user` in place,
+which is precisely the corruption signature the digests exist to catch.
+
+And it produced false FAILURES on four conditions that describe normal
+operation: a source taking writes (sequences are not transactional, so the
+reference was read after the dump had already been taken and disagreed with
+it), a source with `idle_in_transaction_session_timeout` set below the dump
+time, two runs against the same source at once (the scratch name was
+deterministic and the second run dropped the first one's database), and a fresh
+install.
+
+### ISSUE-008b · What the gate checks now · **RESOLVED IN CODE, UNRUN AGAINST THE PLATFORM**
+
+The dump is taken with `--create` and **with** owners and privileges, so the
+artifact is complete. The scratch database is created by replaying the
+artifact's own `CREATE DATABASE ... TEMPLATE template0 ... LOCALE ...` and
+`ALTER DATABASE ... SET` statements, retargeted at the scratch name — so its
+locale, encoding and settings come from the backup and not from the cluster,
+and `template1` cannot leak into it. `scripts/restore_manifest.py` then
+compares, for every non-system schema:
+
+schemas · relations with kind, owner, ACL, persistence, reloptions, RLS flags
+and populated state · every column's type, `NOT NULL`, `DEFAULT`, identity,
+generated and collation · every index by `pg_get_indexdef` · every constraint
+by `pg_get_constraintdef` and validated state · every view and matview
+definition · every function and procedure · every trigger · every RLS policy ·
+every extension and version · every comment · every default ACL · large object
+count and content digest · the database's encoding, collate, ctype, locale
+provider, ICU locale, ACL and owner · its `pg_db_role_setting` entries ·
+per-table row counts and order-independent content digests · materialised view
+contents, reported with the reason they can differ · and sequence positions
+**read out of the dump artifact's own `setval` calls**, which is the only
+reference that describes the backup rather than a source that has moved on.
+
+Measured on a plain `migrate` + `seed --demo` database (702 schools, 308
+tables, 2,403 indexes, 1,065 constraints, 27,828 rows): **8,789 comparisons,
+0.47 seconds** for the diff, about 25 seconds for the whole rehearsal
+end to end. On the same database with a second schema, two materialised views,
+a view, a trigger, a function, a large object, an application role holding
+GRANTs and two `ALTER DATABASE ... SET` settings added: **8,816 comparisons.**
+
+Demonstrated to FAIL, each corruption then reverted and the copy re-verified to
+prove it is not stuck on FAIL: one row deleted; one field changed with no
+row-count change; a table dropped; a sequence reset; a foreign key dropped; one
+index dropped out of 2,403; all 1,857 non-unique indexes dropped; a `CHECK`
+replaced by `CHECK (true)`; a foreign key that gained `ON DELETE CASCADE`;
+`NOT NULL` dropped from a column; a column's identity dropped; a whole schema
+dropped; a view dropped; a matview left unpopulated; a matview re-computed to
+different contents; the large object deleted; a trigger dropped; a function
+dropped; the application role's GRANT revoked; an `ALTER DATABASE ... SET`
+removed; an extension dropped; the dump file swapped for another one during the
+restore; and an object arriving from `template1`.
+
+Demonstrated to PASS, where it used to fail: a source taking a write every 20ms
+throughout the run (the sequence advanced 303 → 539 on the source; the gate read
+363 from the artifact and passed); a source with
+`idle_in_transaction_session_timeout=250ms` and `statement_timeout=150ms`
+against a manifest read that takes 527ms; two runs two seconds apart, both
+passing; a retained post-mortem copy surviving the next run; and the rehearsal
+run from a working directory that is not the repository root.
+
+A fresh install now reports **NOT PROVEN (exit 3)** rather than FAILED: the
+round trip is faithful, there is no account to sign in as, and "your backup is
+broken" is a different answer from "this run could not tell". A wiped database
+still reports FAILED.
+
+**A correction of record, not only of code.** §2 of this ledger forbids
+claiming a gate because automation exists. This row claimed one because
+automation *passed*, without anyone asking whether it could fail. The floors
+were plausible-looking numbers that no measurement stood behind — and the first
+rebuild replaced them with 638 real assertions about rows while leaving
+everything that is not a row unexamined. Both times the failure was the same
+one: nobody asked what the check could not see.
+
+### ISSUE-008c · Two defects the rebuilt gate kept until somebody ran it · **RESOLVED, MEASURED**
+
+The rebuild in ISSUE-008b was reviewed adversarially twice and read line by
+line for its destructive paths. Both defects below survived all of that and
+were found within ten minutes of executing the script. Neither is subtle; both
+are only visible from the outside.
+
+**1 · The retarget rewrote the database's owning role.** Creating the scratch
+database from the artifact's own statements means rewriting the database name
+in each of them. That was done by substituting every occurrence of the
+identifier. This project's database and the role that owns it are both named
+`edify` — the ordinary arrangement, and the one on staging and production too —
+so `ALTER DATABASE edify OWNER TO edify;` became
+`ALTER DATABASE "restore_rehearsal_…" OWNER TO "restore_rehearsal_…";` and the
+run died on `role "restore_rehearsal_…" does not exist`. **The rebuilt gate
+could not complete a single run against dev, staging or production.** It now
+rewrites the name where the grammar says the database name is and nowhere else,
+and refuses any database-level statement whose head it does not recognise
+rather than guessing.
+
+**2 · A failed create orphaned a full copy of the source, silently.** The flag
+that records "this run owns the scratch database" was set after the whole
+create pipeline succeeded. The artifact's database section is several
+statements, so a failure part way through — defect 1, every time — left the
+database created and the flag clear. `cleanup` consults the flag, so it dropped
+nothing and said nothing. Two runs left **two 7.3 MB copies of the source
+database on the host**, which is the exact outcome the script's own header
+warns about. Ownership of the name is now claimed *before* anything can create
+it; this is safe because the name has already matched the strict pattern and
+preflight has already proven it did not exist, and `drop_scratch` re-asserts
+the pattern at the moment of the drop.
+
+**Proven able to fail.** Each corruption was applied to a good restore and the
+verifier run against the dump's manifest. The harness asserts the mutation
+actually changed the database *before* it reads the verdict — three of the
+first attempts silently no-oped on object names that do not exist in this
+schema, and would otherwise have been filed as gate defects:
+
+| Corruption | Caught | First failure reported |
+| --- | --- | --- |
+| *(control — untouched restore)* | passes, exit 0 | — |
+| delete one row | yes | `total_rows: expected 27828 got 27827` |
+| edit one field, row count unchanged | yes | `row_digest[public.school]` differs |
+| drop a table | yes | `relation: 1 MISSING: public.user_invitation` |
+| rewind a sequence | yes | `sequence[public.auth_permission_id_seq]` |
+| drop a foreign key | yes | `constraint: 1 MISSING` |
+| drop a non-key index | yes | `index: 1 MISSING` |
+| revoke a GRANT | yes | `relation[public.school]` acl differs |
+| truncate every table | yes | 26 failures, `total_rows: expected 27828 got 0` |
+| drop a CHECK constraint | yes | `constraint: 1 MISSING` |
+| weaken a CHECK to `CHECK (true)` | yes | `constraint[…planned_school_count_check]` |
+| loosen an FK to `ON DELETE CASCADE` | yes | `constraint[…user_id_fk]` differs |
+| drop a trigger | *not testable here* | this schema has no user triggers; the harness refused to report a verdict rather than record a false pass |
+
+**Proven that the verdict follows the verifier**, which is the linkage the old
+gate lost: a `verify` that fails makes the script exit 1 and print FAILED *even
+though the smoke test passed on the same run* — one green does not overwrite a
+red. An interpreter that answers every invocation with silent success is
+REFUSED (exit 2), not skipped-and-passed. A missing interpreter is REFUSED.
+
+**Proven non-destructive.** Twelve hostile `SCRATCH_DB` values — including
+`edify` itself, the command that destroyed this host's developer database
+earlier in this audit, plus `postgres`, `template1`, `test_w2b`, a name with an
+embedded `"; DROP DATABASE edify; --`, and newline, space, hyphen and
+case-dodge variants — each exit 2 with a `REFUSING` line, and the developer
+database's fingerprint (308 tables / 32 users / 700 schools, and its five
+protected peers) is unchanged after every one. Zero scratch databases remain
+after the full matrix.
+
+**Why this entry exists.** ISSUE-008 was "the check could not fail". ISSUE-008a
+was "the rebuilt check still could not see most of the database". This one is
+different in kind and worth naming separately: the code was correct on every
+reading and wrong on every execution. Reading a script establishes what its
+author meant. Only running it establishes what it does.
 
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
@@ -442,10 +667,19 @@ see the route, which is what §9 is about.
 
 | Gate | Status |
 | --- | --- |
-| Backup restore rehearsal | **PASSED** — 228 tables, 203 migrations, 250 validated FK constraints, audit chain intact, 8 pages served from the restored copy |
-| Rollback rehearsal | **PASSED** — the previous release serves the schema HEAD leaves behind. Rollback is a deploy of the older image; the database stays put |
+| Backup restore rehearsal | ~~**PASSED** — 228 tables, 203 migrations, 250 validated FK constraints, audit chain intact, 8 pages served from the restored copy~~ **SUPERSEDED — see ISSUE-008** |
+| Rollback rehearsal | ~~**PASSED** — the previous release serves the schema HEAD leaves behind. Rollback is a deploy of the older image; the database stays put~~ **SUPERSEDED — see the §8 row** |
 | Wall-clock p95 at 15,000 schools | **MEASURED, all inside budget** |
 | Latency budgets (702-school dev estate) | **24/24 inside budget** |
+
+The two rehearsal rows are struck through rather than deleted, because the runs
+happened and the record of them should stand. What they established was that
+the scripts exited zero. The backup gate's every threshold is cleared by a
+database with no rows in it — 228 tables against a floor of 50, 250 foreign
+keys against a floor of 20, a 1.78 MB dump against a floor of 100,000 bytes —
+and "8 pages served from the restored copy" was measured by following redirects
+and scoring HTTP 200, which an anonymous client also scores on all eight. Both
+scripts have since been rebuilt; ISSUE-008 carries the measurements.
 
 p95 at 15,000 schools:
 

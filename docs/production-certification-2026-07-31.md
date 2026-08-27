@@ -199,7 +199,15 @@ These are recorded as unverified. None is waived, and each blocks the formal
 
 Both gates that held the recommendation were run on this machine.
 
-### Gate 1 — Backup → restore → verify: **PASSED**
+### Gate 1 — Backup → restore → verify: ~~**PASSED**~~ **SUPERSEDED**
+
+> **Superseded 2026-08-27.** This PASS was produced by a version of
+> `scripts/backup_restore_rehearsal.sh` whose every threshold is cleared by a
+> database with no rows in it, and whose row-count comparison read both of its
+> sides from the live source. What the run below established is that the
+> commands exited zero. It did not establish that the restore preserved
+> anything. The record is kept rather than deleted; see ISSUE-008 in
+> `docs/production-readiness-ledger.md` for the measurements.
 
 `scripts/backup_restore_rehearsal.sh` against `edify_pm`. Non-destructive to
 the source: it only creates and drops a prefixed scratch database, and refuses

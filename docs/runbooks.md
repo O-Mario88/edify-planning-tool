@@ -55,7 +55,10 @@ tier.** Restarting does not bring a database back and destroys the warm
 capacity that would have served the recovery.
 
 **Recover** Database owner's problem: failover, restart, or restore. The
-application needs nothing beyond the database answering again.
+application needs nothing beyond the database answering again. If it comes to
+a restore from backup, §11 below is the runbook for that; do not treat a
+green backup-gate result from an earlier commit as evidence that the backup is
+good.
 
 **Data integrity** Check for financial records committed either side of the
 outage: `Disbursement`, `PartnerPayment`, `AccountabilityRecord`. Run the
@@ -302,3 +305,75 @@ and a filter that stopped using an index.
 **After** A page that regressed without a failing test needs a query budget —
 that is what makes the regression visible at the point it is written rather
 than in production.
+
+---
+
+## 11. Restoring from backup
+
+**Detect** You are here because the database is gone, corrupted, or has lost
+data nobody can reconstruct, and §2 has already established the database itself
+is not coming back on its own.
+
+**Confirm** Establish two things before touching anything: which artifact you
+intend to restore, and what it actually contains. Do not assume. Run the
+rehearsal against a copy of the artifact first if there is any time at all to
+do so — the whole point of `scripts/backup_restore_rehearsal.sh` is that it
+answers this question in about ninety seconds:
+
+```
+PGDATABASE=<source> scripts/backup_restore_rehearsal.sh
+```
+
+It dumps the source, creates a scratch database **from the artifact's own
+`CREATE DATABASE` statement** — so the copy carries the backup's encoding,
+locale and `ALTER DATABASE ... SET` settings rather than the cluster's
+defaults — restores into it, and compares the result against a manifest taken
+inside the dump's own snapshot. It always drops the scratch copy afterwards.
+
+**Read its exit code, not its output:**
+
+| Exit | Meaning |
+| --- | --- |
+| 0 | PASSED. The restore matched the dump on all ~8,800 comparisons |
+| 1 | FAILED. Something is wrong with the backup or the restore. The FAIL lines name it |
+| 2 | REFUSED. The rehearsal declined to start; it did not run and proved nothing |
+| 3 | NOT PROVEN. Nothing failed and nothing was shown — an empty or never-used source cannot evidence a round trip. **Not** a passing result |
+
+`KEEP_SCRATCH_ON_FAIL=1` retains the restored copy for post-mortem instead of
+dropping it. The rehearsal will not touch a scratch database it did not create
+in that same run, so a retained copy survives the next run.
+
+**Contain** Take the application out of rotation before restoring. A partial
+restore serving traffic writes rows that the completed restore will then
+overwrite.
+
+**Recover** Restore with `pg_restore --exit-on-error`. Never `--no-privileges`
+or `--no-owner` unless you have decided to re-grant by hand afterwards: a
+database restored without its GRANTs is one the application role cannot read,
+and it looks perfectly healthy from `psql` as the owner.
+
+**Data integrity** Four things a row count will not tell you, all of which the
+rehearsal checks and none of which are obvious by eye:
+
+* **Sequences.** A sequence behind the column it feeds collides on the first
+  insert, not on the restore.
+* **Materialised views.** `pg_dump` carries the DEFINITION, never the CONTENTS.
+  The restore re-executes `REFRESH`, so a matview over anything time-dependent
+  comes back holding different data — or, if its window has passed, nothing.
+* **Privileges and database settings.** Carried only if the dump was taken with
+  `--create` and without `--no-privileges`.
+* **Large objects and non-`public` schemas.** Easy to lose and invisible to
+  anything that only looks at tables.
+
+Then run the audit chain end to end (`verify_chain(full=True)`) — the default
+is incremental and will happily report a restored database intact having hashed
+zero rows.
+
+**Communication** Database owner leads. Say which window of writes is lost:
+everything committed between the backup's timestamp and the incident.
+
+**After** A backup that has not been restored is not a backup, it is a file.
+Whatever the rehearsal did not check that bit you this time belongs in
+`scripts/restore_manifest.py`, with the measurement that shows the old check
+could not see it — see ISSUE-008 in the production-readiness ledger for the
+form that takes.
