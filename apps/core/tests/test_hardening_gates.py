@@ -444,8 +444,12 @@ class ConcurrentMutationTest(TransactionTestCase):
         )
 
         def _close():
+            # `system=True`: this drill is about the row lock, not authority.
+            # CLOSE-01 made `close()` assert its actor, and "drill-user"
+            # resolves to nobody — saying so is clearer than inventing a user
+            # whose permissions have nothing to do with what is being tested.
             return ActivityClosureService.close(
-                activity, closed_by="drill-user", bypass_checks=True
+                activity, closed_by="drill-user", bypass_checks=True, system=True
             )
 
         results = self._race(_close)
@@ -485,7 +489,7 @@ class ConcurrentMutationTest(TransactionTestCase):
             status="ia_verified", salesforce_activity_id="SF-DRILL-REOPEN"
         )
         ActivityClosureService.close(
-            activity, closed_by="drill-user", bypass_checks=True
+            activity, closed_by="drill-user", bypass_checks=True, system=True
         )
         activity.refresh_from_db()
 
@@ -623,7 +627,7 @@ class FailureIsolationTest(TestCase):
             side_effect=RuntimeError("notification service down"),
         ):
             ActivityClosureService.close(
-                activity, closed_by="system", bypass_checks=True
+                activity, closed_by="system", bypass_checks=True, system=True
             )
         activity.refresh_from_db()
         self.assertEqual(activity.status, "closed")

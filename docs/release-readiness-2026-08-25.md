@@ -1951,3 +1951,126 @@ answer is an amendment path owned by the Country Director, with IA able to propo
 is the shape the platform already uses for loan purposes: `purpose.request` on the partner,
 `purpose.review` on the BT Officer, `purpose.define` on IA, `purpose.approve` on the CD.
 Four roles, one object, nobody holding two ends of it.
+
+---
+
+## 4h. The last four findings, and what the verdict now rests on — 2026-08-27
+
+Four findings were open when this section was written: **SSA-01**, **CANCEL-01**,
+**DARK-01** and **CLOSE-01**. All four are closed. With them, **every code-level finding
+this audit produced is closed.** The verdict is nevertheless unchanged, and §2 is the whole
+reason — that distinction is the point of this section.
+
+### The recurring shape, in its fourth and fifth variants
+
+This audit named a defect class: *a designed capability with readers and no writers*. The
+four findings here extend it:
+
+| Variant | Finding |
+| --- | --- |
+| A rule written on one door only | **SSA-01** — the SSA-or-reason question lived in the web form; the generated API twin never asked |
+| An act with no door | **CANCEL-01** — `services.cancel` worked completely and nothing in the product could reach it |
+| A token with no reader | **DARK-01** — `--edify-sidebar-active` was defined and read by nothing; `--edify-danger-solid` sat beside its own measurement while the one component it was built for ignored it |
+| Authority at the door, none at the act | **CLOSE-01** — every other terminal act asserts its own authority; closure did not |
+
+### SSA-01 · An SSA visit is only valid work once the scores are entered
+
+Measured before the fix: an activity with `ssa_collection_expected=True`, completed through
+`POST /api/activities/<id>/complete`, returned 200, advanced to `submitted_to_pl`, then
+verified to `ia_verified` with `ssa_not_collected_reason` still `None` — counted, reported,
+and feeding the improvement analytics, with nobody having answered the question.
+
+The rule is the programme owner's, given on 2026-08-27: *"the ssa support visits is only
+considered valid if the ssa scores are entered."* A CCEO who finds the school shut closes
+the visit out with a reason — the record stays honest and the work is not stuck in their
+queue — but IA cannot verify it and it does not count. Asking moved into `complete()`;
+refusing is new, on both verification doors.
+
+`SSAValidationService.validate_ssa` had looked like the gate for as long as it existed. It
+was a **recommendation**: `get_verification_checks` puts its result into the dict that
+prepopulates the IA's checklist, and the form submits fine with the box ticked over it.
+
+### CANCEL-01 · A screen, a reason, and an authority rule that was withdrawn
+
+`services.cancel` withdraws the cost from every draft funding surface, reverses milestone
+credit, deletes advances whose money has not moved, preserves those that have, and notifies
+an assigned partner. Journey 8 walks all of it. Nothing in the product could reach it.
+
+That matters because staff whose plans change do one of three things instead, and all three
+are worse: leave dead work in the plan for ever, complete a visit that never happened, or
+ask someone to edit the database — which §6 forbids in as many words.
+
+**An authority rule was added, measured, and withdrawn**, and it is recorded because the
+reasoning is the useful part. It escalated cancellation of *funded* work to the Programme
+Lead, by analogy with `partners.withdrawal_service.assert_may_withdraw`. The suite refused
+it: `_assert_may_execute` cites §1B — supervision does not license cancelling someone
+else's work — so a Programme Lead cannot reach the act at all, and the two rules together
+made funded work **permanently uncancellable**. The financial control it reached for
+already exists downstream (FIN-01, FIN-04). What shipped is the screen and a mandatory
+reason; who may cancel is exactly what it was.
+
+### DARK-01 · Two known failures, four found, one of them mine
+
+Measured in Chromium across six pages in both themes.
+
+| Finding | Measured |
+| --- | --- |
+| 146 CSS rules painted **text** with `--edify-accent`, the button *fill* token | 3.56:1 as ink on a dark card; `--edify-accent-text` exists for this and is 8.52:1 |
+| `.btn-danger` filled with `--edify-danger` over a hard-coded `#ffffff` | 3.76:1 — while `--edify-danger-solid` / `--edify-danger-on-solid` sit in the design system **with that exact measurement written beside them** |
+| `--edify-sidebar-active` defined, read by nothing | sidebar label 4.18:1 on the plain accent, 6.6:1 on the active step |
+| Analytics CTA asks for `bg-amber-400 text-slate-900`, rendered near-white | 1.53:1 → 9.32:1 via a new `--edify-on-warm-fill` constant |
+
+Result: six pages, dark theme, **zero contrast failures**. Light mode is unchanged — and
+that was verified rather than assumed: its failure counts are identical before and after
+the 146-rule sweep (171 and 172), because `--edify-accent-text` resolves to the same value
+as `--edify-accent` in the light themes. Those light-mode "failures" remain the sidebar
+**gradient**, which reads as transparent to `backgroundColor`; settled by screenshot.
+
+### CLOSE-01 · Filed correctly, doubted wrongly, and confirmed
+
+`ActivityClosureService.close` took `closed_by` on trust and stamped it onto the closure
+record. Closure is terminal — it locks the record, freezes the financial snapshot and writes
+a hash-chained audit entry — and the only guard lived in one view.
+
+The finding was filed as *"the closure test asserts an actor who cannot close."* Mid-fix it
+was briefly judged a false positive, on the ground that a CCEO **can** reach the closure
+page (measured: {CCEO, PL, ProjectCoordinator, CD, Admin}). That judgement was wrong and is
+recorded because the correction matters: the tests do not use a CCEO. Three used the
+**Accountant**, who cannot close through any door, and one passed the bare string
+`"cceo_user"`, which resolves to no user at all. Those greens meant "the function runs when
+called directly", not "this person can close" — and nothing in the suite could tell the two
+apart. `close()` asserts the same rule the door applies now, read from the permission matrix
+so the two cannot drift.
+
+The fix also had to be corrected once, and the suite is what corrected it. A first pass
+assumed the closure endpoint was the only live caller. It is not: `finance_services`
+closes from `clear_partner_payment` and `enter_netsuite_id` as the automatic consequence
+of an Accountant's payment act — and the Accountant deliberately cannot reach the closure
+surface, so the new assertion refused 25 tests. Those two callers now pass a keyword-only
+`system=True` and state at the call site that their authorization is the payment act above
+them. That is still authority living in a caller, but declared rather than inherited: a
+fourth caller has to make the decision explicitly instead of getting it by silence.
+
+### What the verdict rests on now
+
+**Still NO-GO, and now for exactly one reason.**
+
+Every code-level finding is closed. What remains is §2's nine gates, and this audit
+re-tested from *this* container whether any of them had become reachable:
+
+| Probe | Result |
+| --- | --- |
+| `doctl version` | `command not found` — DEP-01's `doctl apps spec get` still cannot run |
+| `curl https://edifyplanning.app/` | `CONNECT tunnel failed, response 403` — the production smoke test cannot be attempted |
+| `DATABASE_URL`, `DIGITALOCEAN_*`, managed-Postgres credentials | unset — no backup restore, no rollback rehearsal |
+
+So the nine gates are not stale assumptions carried forward; they were re-checked on
+2026-08-27 and remain unreachable. Under §6.4 none may be marked Green, and the mandate's
+own rule is that **Not Tested is never Green**.
+
+This is a materially different No-Go from the one at the top of this document. That one
+rested on three things: infrastructure, product decisions, and missing capabilities. The
+decisions were answered on 2026-08-26 (§4c) and the capabilities were built or descoped.
+What is left needs a staging environment, deploy credentials and a person to run four
+rehearsals — none of which is a code change, and none of which any source-only audit can
+produce.

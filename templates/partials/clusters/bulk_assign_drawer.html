@@ -67,7 +67,7 @@ class="w-full h-10 pl-9 pr-4 rounded-control border border-slate-200 text-[12px]
 <input
 type="checkbox"
 @change="toggleAll($event.target.checked)"
-class="rounded-control border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)]"
+class="rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)]"
 >
 <span>Select All Visible Schools</span>
 </label>
@@ -103,7 +103,7 @@ value="{{ s.id }}"
 data-enrollment="{{ s.enrollment|default:0 }}"
 data-ssa="{{ s.current_ssa_average|default:0 }}"
 @change="updateMetrics()"
-class="school-checkbox rounded-control border-slate-300 text-[var(--edify-primary)] focus:ring-[var(--edify-primary)] h-4 w-4 cursor-pointer"
+class="school-checkbox rounded-control border-slate-300 text-[var(--edify-accent-text)] focus:ring-[var(--edify-primary)] h-4 w-4 cursor-pointer"
 >
 <div class="text-[12px] font-semibold text-slate-800">
 <p class="font-semibold text-slate-900 leading-snug">{{ s.name }}</p>
@@ -139,15 +139,15 @@ style="display: none;"
 <div class="grid grid-cols-3 gap-2 text-center">
 <div>
 <span class="text-slate-400 edify-text-caption block uppercase">Schools</span>
-<span class="text-[14px] font-semibold text-[var(--edify-primary)]" x-text="selectedCount">0</span>
+<span class="text-[14px] font-semibold text-[var(--edify-accent-text)]" x-text="selectedCount">0</span>
 </div>
 <div>
 <span class="text-slate-400 edify-text-caption block uppercase">Enrollment</span>
-<span class="text-[14px] font-semibold text-[var(--edify-primary)]" x-text="totalEnrollment">0</span>
+<span class="text-[14px] font-semibold text-[var(--edify-accent-text)]" x-text="totalEnrollment">0</span>
 </div>
 <div>
 <span class="text-slate-400 edify-text-caption block uppercase">Avg SSA</span>
-<span class="text-[14px] font-semibold text-[var(--edify-primary)]" x-text="ssaCount > 0 ? (ssaSum / ssaCount).toFixed(1) : '—'">—</span>
+<span class="text-[14px] font-semibold text-[var(--edify-accent-text)]" x-text="ssaCount > 0 ? (ssaSum / ssaCount).toFixed(1) : '—'">—</span>
 </div>
 </div>
 </div>

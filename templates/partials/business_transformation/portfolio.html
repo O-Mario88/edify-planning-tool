@@ -12,7 +12,7 @@
         <tbody>
           {% for referral in referrals_pager.rows %}
           <tr>
-            <td data-record-title><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' referral.case.school.school_id %}">{{ referral.case.school.name }}</a><small class="block text-slate-500">{{ referral.case.school.school_id }}</small></td>
+            <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' referral.case.school.school_id %}">{{ referral.case.school.name }}</a><small class="block text-slate-500">{{ referral.case.school.school_id }}</small></td>
             <td data-label="MFI">{{ referral.mfi.name }}</td>
             <td data-label="Purpose">{{ referral.purpose.label }}{% if referral.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
             <td data-label="Requested">{% if referral.requested_amount is not None %}{{ referral.requested_amount|ugx }}{% else %}—{% endif %}</td>
@@ -40,7 +40,7 @@
       <tbody>
         {% for loan in loans_pager.rows %}
         <tr>
-          <td data-record-title><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{{ loan.school.name }}</a><small class="block text-slate-500">{{ loan.school.district.name|default:"District not set" }}</small></td>
+          <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{{ loan.school.name }}</a><small class="block text-slate-500">{{ loan.school.district.name|default:"District not set" }}</small></td>
           <td data-label="MFI / reference"><strong>{{ loan.mfi.name }}</strong><small class="block text-slate-500">{{ loan.external_loan_reference }}</small></td>
           <td data-label="Purpose">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
           <td data-label="Disbursed">{% if loan.disbursed_amount is not None %}{{ loan.disbursed_amount|ugx }}<small class="block text-slate-500">{{ loan.disbursement_date|date:"d M Y" }}</small>{% else %}<span class="text-slate-500">Not disbursed</span>{% endif %}</td>

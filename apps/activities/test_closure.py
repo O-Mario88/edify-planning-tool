@@ -121,8 +121,19 @@ class ActivityClosureSystemTest(TestCase):
         self.assertTrue(ClosureEligibilityService.is_eligible(self.activity))
         self.assertEqual(len(blockers), 0)
 
-        # Perform Closure
-        closure = ActivityClosureService.close(self.activity, closed_by="cceo_user")
+        # Perform Closure. CLOSE-01: `close()` asserts authority at the act
+        # now, so the actor has to be someone the platform can actually
+        # identify and who may reach the closure surface. This used to pass
+        # the bare string "cceo_user", which resolves to no user at all.
+        closer = User.objects.create_user(
+            email="closer@test.org",
+            name="Closing CCEO",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="password",
+            is_active=True,
+        )
+        closure = ActivityClosureService.close(self.activity, closed_by=str(closer.id))
         self.assertEqual(closure.status, "closed")
 
         self.activity.refresh_from_db()
@@ -263,3 +274,104 @@ class ActivityClosureSystemTest(TestCase):
         )
         self.activity.refresh_from_db()
         self.assertEqual(self.activity.status, "ia_verified")
+
+
+class ClosureAssertsItsOwnAuthority(TestCase):
+    """CLOSE-01 — authority at the act, not only at the door.
+
+    Closure is terminal: it locks the record, freezes the financial snapshot,
+    writes a hash-chained audit entry and moves the activity into Completed
+    Activities. `ActivityClosureService.close` took `closed_by` on trust and
+    stamped it onto the closure record; the only guard lived in one view,
+    behind `@require_page_permission("planning")`.
+
+    Not a live hole — there is exactly one door and it is guarded — but it is
+    the FIN-03 and SEC-03 shape, and their fixes say why it matters: asserting
+    at the act is what stops the next screen re-opening the hole. Every other
+    terminal act in this platform asserts its own authority; closure was the
+    one that did not.
+
+    The finding was filed as "the closure test asserts an actor who cannot
+    close", and that was exactly right: three tests and one journey step closed
+    activities as the ACCOUNTANT, who cannot reach the closure surface, and one
+    passed the bare string "cceo_user", which resolves to no user at all. Those
+    greens meant "the function runs when called directly", not "this person can
+    close" — and nothing in the suite could tell the two apart.
+    """
+
+    def setUp(self):
+        self.region = Region.objects.create(name="Authority Region")
+        self.district = District.objects.create(
+            name="Authority District", region=self.region
+        )
+        self.school = School.objects.create(
+            name="Authority School", region=self.region, district=self.district
+        )
+        self.activity = Activity.objects.create(
+            school=self.school,
+            delivery_type="staff",
+            activity_type=ActivityType.SCHOOL_VISIT,
+            status=ActivityStatus.COMPLETED,
+            payment_status="pending",
+            responsible_staff_id="closure-authority",
+            planned_date=date(2026, 7, 2),
+        )
+
+    def _user(self, role, email):
+        return User.objects.create_user(
+            email=email,
+            name=f"Closure {role}",
+            roles=[role],
+            active_role=role,
+            password="password",
+            is_active=True,
+        )
+
+    def test_an_actor_the_platform_cannot_identify_is_refused(self):
+        """The literal shape of the original finding: a bare string."""
+        from apps.core.exceptions import Forbidden
+
+        with self.assertRaises(Forbidden):
+            ActivityClosureService.close(
+                self.activity, closed_by="cceo_user", bypass_checks=True
+            )
+
+        self.activity.refresh_from_db()
+        self.assertNotEqual(self.activity.status, "closed")
+
+    def test_the_accountant_cannot_close(self):
+        """They clear the money; closure comes after, on the planning surface."""
+        from apps.core.exceptions import Forbidden
+
+        accountant = self._user(
+            EdifyRole.PROGRAM_ACCOUNTANT.value, "closer-acct@test.org"
+        )
+
+        with self.assertRaises(Forbidden):
+            ActivityClosureService.close(
+                self.activity, closed_by=str(accountant.id), bypass_checks=True
+            )
+
+        self.activity.refresh_from_db()
+        self.assertNotEqual(self.activity.status, "closed")
+
+    def test_a_cceo_may_close(self):
+        """Anti-vacuity. Without this the gate could refuse everyone and the
+        two tests above would still pass."""
+        cceo = self._user(EdifyRole.CCEO.value, "closer-cceo@test.org")
+
+        ActivityClosureService.close(
+            self.activity, closed_by=str(cceo.id), bypass_checks=True
+        )
+
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "closed")
+
+    def test_an_automated_closure_must_say_so(self):
+        """`system=True` is keyword-only and no caller passes it today, so a
+        scheduled job added later has to declare itself rather than inheriting
+        a bypass from the `closed_by="system"` default."""
+        ActivityClosureService.close(self.activity, bypass_checks=True, system=True)
+
+        self.activity.refresh_from_db()
+        self.assertEqual(self.activity.status, "closed")

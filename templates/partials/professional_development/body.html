@@ -179,7 +179,7 @@
       <div class="divide-y divide-slate-50">
         {% for m in hr_messages %}
         <a href="/messages{% if m.context_id %}?thread={{ m.context_id }}{% endif %}" class="py-2.5 flex items-start gap-2.5 group">
-          <span class="h-7 w-7 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-primary)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ m.sender_name|avatar_initials }}</span>
+          <span class="h-7 w-7 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] flex items-center justify-center edify-text-caption font-bold shrink-0">{{ m.sender_name|avatar_initials }}</span>
           <div class="min-w-0 flex-1">
             <div class="flex items-center justify-between gap-2">
               <span class="edify-text-caption font-bold text-slate-600 truncate">{{ m.sender_name }}</span>

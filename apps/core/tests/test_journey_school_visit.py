@@ -310,16 +310,19 @@ class SchoolVisitSpineJourneyTest(TestCase):
                 f"accounts_cleared={checklist.accounts_cleared} "
                 f"netsuite={checklist.netsuite_id_entered}"
             )
-        # NOTE — the actor here is not one who could do this through a door.
+        # CLOSE-01, now closed. This step used to pass the ACCOUNTANT, with a
+        # note explaining that it proved the closure machinery runs rather than
+        # that this person can close — because `close()` asserted no authority
+        # of its own and the Accountant cannot reach the closure surface (the
+        # endpoint is gated on the `planning` page: {CCEO, PL,
+        # ProjectCoordinator, CD, Admin}).
         #
-        # `close()` asserts no authority of its own, so this passes with the
-        # Accountant. The Accountant cannot close through any screen: the
-        # endpoint is gated on the `planning` page, which is {CCEO, PL,
-        # ProjectCoordinator, CD, Admin}. Read this assertion narrowly — it
-        # proves the closure MACHINERY runs on an eligible activity, not that
-        # this person can close one. The door walk in this module closes as the
-        # PL, which is the claim about people.
-        ActivityClosureService.close(activity, closed_by=str(self.accountant.id))
+        # `close()` asserts that itself now, at the act, so the gap between
+        # "the function runs when called directly" and "the spine closes" is
+        # gone: an actor who could not do this through a door cannot do it
+        # here either. The service walk and the door walk finally make the
+        # same claim about the same person.
+        ActivityClosureService.close(activity, closed_by=str(self.pl.id))
         activity.refresh_from_db()
         self.assertEqual(activity.status, "closed")
 
@@ -556,14 +559,20 @@ class SchoolVisitSpineJourneyTest(TestCase):
         # not "the spine closes" — and only a walk through the door can tell
         # the two apart.
         #
-        # Every real path to close() IS gated, so this is not an open hole:
-        # the endpoint by the page gate, and the two finance callers
-        # (finance_services.py:638, :881) as an automatic consequence of a
-        # payment act their own authority check already cleared. What is worth
-        # keeping in view is that the gating lives entirely in the callers, so
-        # a fourth caller would introduce a hole with nothing to catch it —
-        # the opposite of the partner-payment path, which asserts at three
-        # independent layers.
+        # CLOSE-01 closed the gap this comment used to describe. The gating no
+        # longer "lives entirely in the callers", where a later caller would
+        # have introduced a hole with nothing to catch it: `close()` asserts
+        # the same rule the door applies, read from the permission matrix so
+        # the two cannot drift.
+        #
+        # The two finance callers (finance_services.py, in `clear_partner_payment`
+        # and `enter_netsuite_id`) now pass `system=True` and say why: closure
+        # there is the automatic CONSEQUENCE of an Accountant's payment act,
+        # whose own authority check has already cleared them, and the Accountant
+        # deliberately cannot reach the closure surface. That is still authority
+        # living in a caller — but it is now declared at the call site instead
+        # of inherited from a default, so a fourth caller has to make the same
+        # decision explicitly rather than getting it by silence.
         response = post(f"/activities/{activity.id}/closure/close", who=self.pl)
         activity.refresh_from_db()
         # The view turns a refused close into a flash message and a redirect,

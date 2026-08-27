@@ -71,7 +71,7 @@ Confirm Advance Request
 
 <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/self-funded?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
 {% csrf_token %}
-<button type="submit" class="flex items-center gap-1.5 h-9 px-3.5 edify-surface border border-slate-200 text-[var(--edify-primary)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm">
+<button type="submit" class="flex items-center gap-1.5 h-9 px-3.5 edify-surface border border-slate-200 text-[var(--edify-accent-text)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
 Mark as Self-Funded
 </button>

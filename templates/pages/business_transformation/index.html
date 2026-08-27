@@ -50,7 +50,7 @@
         <tbody>
           {% for case in cases %}
           <tr>
-            <td data-record-title><a class="font-bold text-[var(--edify-primary)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{{ case.school.name }}</a><small class="block text-slate-500">{{ case.school.school_id }}</small></td>
+            <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{{ case.school.name }}</a><small class="block text-slate-500">{{ case.school.school_id }}</small></td>
             <td data-label="Location">{{ case.school.district.name|default:"District not set" }} · {{ case.school.region.name|default:"Region not set" }}</td>
             <td data-label="Recommendation">
               {% for recommendation in case.recommendations.all|slice:":2" %}<span class="block text-xs">{{ recommendation.get_kind_display }}</span>{% empty %}<span class="text-slate-500">No open recommendation</span>{% endfor %}

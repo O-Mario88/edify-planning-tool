@@ -41,7 +41,7 @@ hx-swap="innerHTML"
 >
 <td class="px-2 py-2 text-slate-400 font-semibold">{{ c.rank }}</td>
 <td class="px-3 py-2 font-bold text-slate-800">{{ c.name }}</td>
-<td class="px-3 py-2 text-center font-semibold text-[var(--edify-primary)]">{% if c.ssa_avg is not None %}{{ c.ssa_avg }}/10{% else %}—{% endif %}</td>
+<td class="px-3 py-2 text-center font-semibold text-[var(--edify-accent-text)]">{% if c.ssa_avg is not None %}{{ c.ssa_avg }}/10{% else %}—{% endif %}</td>
 <td class="px-3 py-2 edify-text-caption text-emerald-600 font-bold truncate max-w-[100px]">{{ c.best_intervention }}</td>
 <td class="px-3 py-2 edify-text-caption text-rose-600 font-bold truncate max-w-[100px]">{{ c.worst_intervention }}</td>
 <td class="px-2 py-2 text-center font-semibold">{{ c.trainings }}</td>

@@ -25,7 +25,7 @@
 </div>
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Monthly Period</p>
-<p class="font-semibold text-[var(--edify-primary)] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
+<p class="font-semibold text-[var(--edify-accent-text)] mt-0.5">{{ selected_month }} {{ selected_fy }}</p>
 </div>
 </div>
 
@@ -59,7 +59,7 @@
 <td class="px-3 py-3 font-semibold text-slate-500">{{ line.cost_category }}</td>
 <td class="px-3 py-3 text-center font-bold text-slate-700">{{ line.quantity|stringformat:".2f" }}</td>
 <td class="px-3 py-3 text-right text-slate-500">{{ line.unit_cost|ugx }}</td>
-<td class="px-4 py-3 text-right font-semibold text-[var(--edify-primary)]">{{ line.total_cost|ugx }}</td>
+<td class="px-4 py-3 text-right font-semibold text-[var(--edify-accent-text)]">{{ line.total_cost|ugx }}</td>
 </tr>
 {% endfor %}
 </tbody>

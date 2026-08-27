@@ -47,7 +47,7 @@ class="h-8 w-8 flex items-center justify-center rounded-control hover:bg-slate-2
 <div class="grid grid-cols-2 gap-4 text-[12px]">
 <div>
 <p class="edify-text-caption uppercase font-bold text-slate-400">Target Entity</p>
-<p class="font-semibold text-[var(--edify-primary)] mt-0.5">
+<p class="font-semibold text-[var(--edify-accent-text)] mt-0.5">
 {% if act.school %}
 <svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0v7m-5-4v4a5 5 0 0010 0v-4"/></svg> {{ act.school.name }} (ID: {{ act.school.school_id }})
 {% elif act.cluster %}
@@ -81,7 +81,7 @@ id="activity-detail-tab-overview" type="button" role="tab" aria-controls="activi
 :aria-selected="activeTab === 'details'" :tabindex="activeTab === 'details' ? 0 : -1"
 @click="activeTab = 'details'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
-:class="activeTab === 'details' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
+:class="activeTab === 'details' ? 'border-[var(--edify-primary)] text-[var(--edify-accent-text)]' : 'border-transparent text-slate-400'"
 >
 Overview & Description
 </button>
@@ -90,7 +90,7 @@ id="activity-detail-tab-finance" type="button" role="tab" aria-controls="activit
 :aria-selected="activeTab === 'finance'" :tabindex="activeTab === 'finance' ? 0 : -1"
 @click="activeTab = 'finance'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
-:class="activeTab === 'finance' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
+:class="activeTab === 'finance' ? 'border-[var(--edify-primary)] text-[var(--edify-accent-text)]' : 'border-transparent text-slate-400'"
 >
 Finance & Budget
 </button>
@@ -99,7 +99,7 @@ id="activity-detail-tab-evidence" type="button" role="tab" aria-controls="activi
 :aria-selected="activeTab === 'evidence'" :tabindex="activeTab === 'evidence' ? 0 : -1"
 @click="activeTab = 'evidence'"
 class="pb-2 text-[12px] font-bold border-b-2 transition-all"
-:class="activeTab === 'evidence' ? 'border-[var(--edify-primary)] text-[var(--edify-primary)]' : 'border-transparent text-slate-400'"
+:class="activeTab === 'evidence' ? 'border-[var(--edify-primary)] text-[var(--edify-accent-text)]' : 'border-transparent text-slate-400'"
 >
 Evidence & SF ID ({{ evidence_list|length }})
 </button>
@@ -146,7 +146,7 @@ Evidence & SF ID ({{ evidence_list|length }})
 <div id="activity-detail-panel-finance" role="tabpanel" aria-labelledby="activity-detail-tab-finance" x-show="activeTab === 'finance'" class="space-y-4" x-transition>
 <div class="bg-slate-50 p-4 border border-slate-100 rounded-surface">
 <p class="edify-text-caption uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
-<p class="text-[24px] font-semibold text-[var(--edify-primary)] leading-none">{{ act.est_cost_cents|ugx }}</p>
+<p class="text-[24px] font-semibold text-[var(--edify-accent-text)] leading-none">{{ act.est_cost_cents|ugx }}</p>
 <p class="edify-text-caption text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
 </div>
 

@@ -517,7 +517,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 29214,
+      "bytes": 29226,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -900,7 +900,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13967,
+      "bytes": 13971,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director/drilldown"
@@ -1163,7 +1163,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3133,
+      "bytes": 3137,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1187,7 +1187,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2216,
+      "bytes": 2224,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1303,7 +1303,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2814,
+      "bytes": 2818,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -2023,7 +2023,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7337,
+      "bytes": 7341,
       "deprecated_alternatives": [],
       "example_pages": [
         "/loans/<str:loan_id>/drawer"
@@ -2052,7 +2052,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4848,
+      "bytes": 4856,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/portfolio"
@@ -2229,7 +2229,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7075,
+      "bytes": 7095,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2256,7 +2256,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22354,
+      "bytes": 22358,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2911,7 +2911,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7855,
+      "bytes": 7871,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3086,7 +3086,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1751,
+      "bytes": 1755,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/cost-preview",
@@ -3866,7 +3866,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6891,
+      "bytes": 6895,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3887,7 +3887,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 6510,
+      "bytes": 6514,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3906,7 +3906,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4328,
+      "bytes": 4336,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -3927,7 +3927,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3776,
+      "bytes": 3780,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/drilldown"
@@ -4186,7 +4186,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 16955,
+      "bytes": 16959,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4485,7 +4485,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15489,
+      "bytes": 15493,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4543,7 +4543,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 11368,
+      "bytes": 11372,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -5083,7 +5083,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 10904,
+      "bytes": 10916,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5160,7 +5160,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18626,
+      "bytes": 18634,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5231,7 +5231,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3793,
+      "bytes": 3797,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages/new",
@@ -5257,7 +5257,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6845,
+      "bytes": 6849,
       "deprecated_alternatives": [],
       "example_pages": [
         "/messages",
@@ -5376,7 +5376,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12987,
+      "bytes": 13007,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -5427,7 +5427,7 @@
       "accessibility_requirements": [
         "keyboard focus visibility"
       ],
-      "bytes": 7540,
+      "bytes": 7548,
       "deprecated_alternatives": [],
       "example_pages": [
         "/evidence/returned"
@@ -5473,7 +5473,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9456,
+      "bytes": 9460,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5519,7 +5519,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2791,
+      "bytes": 2795,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5541,7 +5541,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3146,
+      "bytes": 3150,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5715,7 +5715,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3829,
+      "bytes": 3833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5786,7 +5786,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2785,
+      "bytes": 2789,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5853,7 +5853,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2875,
+      "bytes": 2879,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -6641,7 +6641,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 14698,
+      "bytes": 14710,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -6757,7 +6757,7 @@
       "accessibility_requirements": [
         "announced dynamic state"
       ],
-      "bytes": 21001,
+      "bytes": 21005,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development",
@@ -7339,7 +7339,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 13560,
+      "bytes": 13568,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/add-to-cluster"
@@ -7541,7 +7541,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15196,
+      "bytes": 15200,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/edit-drawer"
