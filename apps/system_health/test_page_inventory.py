@@ -22,6 +22,41 @@ from apps.system_health.page_inventory import (
 )
 
 
+def _describe_drift(was, now, path="") -> str:
+    """The first handful of differing paths through two nested structures.
+
+    A truncated `assertEqual` on a multi-megabyte manifest tells a reader
+    nothing except that something changed. This walks both sides and names the
+    keys, so a CI failure a developer cannot reproduce still says where to
+    look.
+    """
+    if type(was) is not type(now):
+        return f"{path or 'root'}: {type(was).__name__} -> {type(now).__name__}"
+    if isinstance(was, dict):
+        out = []
+        for key in sorted(set(was) | set(now), key=str):
+            if key not in was:
+                out.append(f"{path}.{key} added")
+            elif key not in now:
+                out.append(f"{path}.{key} removed")
+            elif was[key] != now[key]:
+                out.append(_describe_drift(was[key], now[key], f"{path}.{key}"))
+            if len(out) >= 5:
+                break
+        return "; ".join(p for p in out if p)
+    if isinstance(was, list):
+        if len(was) != len(now):
+            return f"{path}: {len(was)} entries -> {len(now)}"
+        out = []
+        for index, (a, b) in enumerate(zip(was, now)):
+            if a != b:
+                out.append(_describe_drift(a, b, f"{path}[{index}]"))
+            if len(out) >= 5:
+                break
+        return "; ".join(p for p in out if p)
+    return f"{path}: {was!r} -> {now!r}"
+
+
 class PageInventoryTest(SimpleTestCase):
     def test_checked_in_manifests_match_the_live_platform(self):
         """Generated evidence must describe this exact source revision."""
@@ -36,11 +71,15 @@ class PageInventoryTest(SimpleTestCase):
         checked_in_components = (docs / "platform-component-catalogue.md").read_text(
             encoding="utf-8"
         )
-        self.assertEqual(
-            checked_in_json,
-            inventory,
-            "platform-page-inventory.json is stale; run build_page_inventory",
-        )
+        # Name what drifted rather than leaving a 2.9-million-character diff
+        # that unittest truncates to two unreadable fragments. Same reason as
+        # the card inventory: this manifest went stale on CI while matching on
+        # a developer machine, and the message could not say which key moved.
+        if checked_in_json != inventory:
+            self.fail(
+                "platform-page-inventory.json is stale; run "
+                f"build_page_inventory. {_describe_drift(checked_in_json, inventory)}"
+            )
         self.assertEqual(
             checked_in_markdown,
             inventory_as_markdown(inventory),

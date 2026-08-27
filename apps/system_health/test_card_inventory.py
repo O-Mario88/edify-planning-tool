@@ -187,11 +187,42 @@ class LiveTemplateScanTests(SimpleTestCase):
 
         path = Path(settings.BASE_DIR) / "docs/platform-card-inventory.json"
         checked_in = json.loads(path.read_text(encoding="utf-8"))
-        self.assertEqual(
-            checked_in,
-            json.loads(json.dumps(self.inventory.as_dict())),
-            "platform-card-inventory.json is stale; run build_card_inventory",
-        )
+        live = json.loads(json.dumps(self.inventory.as_dict()))
+
+        # Name the cards that differ, instead of leaving a 235,000-character
+        # diff that unittest truncates to two unidentifiable fragments. This
+        # manifest drifted on CI while matching on a developer machine, and the
+        # truncated message could not say WHICH card moved or in which
+        # template — which is the only thing a reader needs.
+        if checked_in != live:
+            by_key = lambda cards: {  # noqa: E731
+                (c["template"], c["title"], tuple(map(tuple, c["branch_path"]))): c
+                for c in cards
+            }
+            was, now = by_key(checked_in["cards"]), by_key(live["cards"])
+            moved = [
+                f"{k[0]}::{k[1]!r} line {was[k]['line']} -> {now[k]['line']}"
+                for k in was.keys() & now.keys()
+                if was[k] != now[k]
+            ]
+            gone = [f"{k[0]}::{k[1]!r}" for k in was.keys() - now.keys()]
+            added = [f"{k[0]}::{k[1]!r}" for k in now.keys() - was.keys()]
+            detail = "; ".join(
+                part
+                for part in (
+                    f"changed: {moved[:10]}" if moved else "",
+                    f"only in the checked-in file: {gone[:10]}" if gone else "",
+                    f"only in the live scan: {added[:10]}" if added else "",
+                    f"summary {checked_in['summary']} -> {live['summary']}"
+                    if checked_in.get("summary") != live.get("summary")
+                    else "",
+                )
+                if part
+            )
+            self.fail(
+                "platform-card-inventory.json is stale; run "
+                f"build_card_inventory. {detail}"
+            )
 
     def test_no_page_renders_the_same_card_title_twice(self):
         """§6 of the card mandate: required same-page duplicate count is 0."""
