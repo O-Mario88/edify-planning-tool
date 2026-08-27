@@ -405,7 +405,13 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
 #: docs/release-readiness-2026-08-25.md in the same commit. It is pinned rather
 #: than derived so that neither growing nor losing door coverage can happen
 #: without somebody saying so.
-JOURNEYS_THAT_KNOCK = {"journey-05", "journey-07", "journey-19"}
+JOURNEYS_THAT_KNOCK = {
+    "journey-01",
+    "journey-03",
+    "journey-05",
+    "journey-07",
+    "journey-19",
+}
 
 
 class WhichJourneysReachTheDoorTest(unittest.TestCase):
@@ -417,7 +423,7 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
     assessment gets updated in the same commit instead of the gain going
     unrecorded.
 
-    The gap it describes is real and mostly still open: for the eighteen
+    The gap it describes is real and mostly still open: for the sixteen
     journeys not listed above, nothing exercises URL routing,
     ``require_page_permission``, ``RequirePermissions``, view-level scoping,
     serializers or templates. A defect living between the door and the service
@@ -487,31 +493,61 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
             "the assessment's §4b together.",
         )
 
-    def test_no_traced_journey_computes_a_registered_metric(self):
-        """The same gap, one layer higher, and the more surprising half.
+    #: The metrics journey 3's door walk computes, and the only ones any
+    #: mandated journey computes at all.
+    METRICS_JOURNEY_03_COMPUTES = [
+        "frontend_views_budget_views_accountability_pending",
+        "frontend_views_budget_views_approved",
+        "frontend_views_budget_views_awaiting_approval",
+        "frontend_views_budget_views_ready_for_disbursement",
+        "frontend_views_budget_views_returned_for_review",
+        "frontend_views_budget_views_total_requested_this_month",
+        "fund_request_monthly_admin_budget",
+        "fund_request_monthly_meetings_budget",
+        "fund_request_monthly_total",
+        "fund_request_monthly_trainings_budget",
+        "fund_request_monthly_visits_budget",
+    ]
 
-        The journeys move the data that 75 registered metrics are computed
-        from, but not one of them ever calls a metric's own computing
-        function. So no mandated journey verifies a number a user is actually
-        shown — they verify the domain state those numbers are derived from,
-        and the derivation is left to the metric suite to check separately.
-        That is the same seam as the route gap: the join between what the
-        platform knows and what it displays is proven by nothing end to end.
+    def test_exactly_one_journey_computes_a_metric_a_user_is_shown(self):
+        """The same gap one layer higher — and the half that has now moved.
 
-        ``MetricAttributionTest`` proves this zero is a reading and not a
-        broken join, which is the only reason it is safe to state.
+        This asserted that NO traced journey computes a registered metric,
+        and that zero was the more surprising half of JRN-01: the journeys
+        move the data that 75 registered metrics are derived from, and not
+        one of them ever called a metric's own computing function. They
+        verified the domain state; whether the number a user is shown follows
+        from it was proven by nothing end to end.
+
+        Journey 3's door walk closed part of that. Driving the spine over HTTP
+        renders the finance screens, and rendering them computes eleven real
+        metrics from the money this journey actually moved — six budget-queue
+        KPIs and the five monthly fund-request totals. The number on the
+        Accountant's screen is now derived, in a test, from a visit that was
+        planned, funded, executed, verified and accounted through the
+        platform's own doors.
+
+        Pinned in both directions, like the route set: this fails if journey 3
+        stops computing them, and it fails if another journey starts. The
+        second is an improvement and should be recorded here rather than pass
+        unnoticed.
+
+        ``MetricAttributionTest`` proves this reading is a real attribution and
+        not a broken join, which is what makes it safe to state either way.
         """
         rows = load_matrix()["requirements"]
         computing = {
-            row["requirement"]: row["metricsComputed"]
+            row["requirement"]: sorted(row["metricsComputed"])
             for row in rows
             if row["metricsComputed"]
         }
         self.assertEqual(
             computing,
-            {},
-            "a journey now computes a registered metric — good. Update this "
-            "test and the assessment's §4b together.",
+            {"journey-03": sorted(self.METRICS_JOURNEY_03_COMPUTES)},
+            "which journeys compute a displayed metric has changed. If a "
+            "journey gained one, that is good — update this test and the "
+            "assessment's §4b together. If journey 3 lost one, the join "
+            "between its money and the Accountant's screen is broken.",
         )
 
 

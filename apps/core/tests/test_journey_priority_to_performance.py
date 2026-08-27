@@ -527,6 +527,129 @@ class PriorityToVerifiedPerformanceJourneyTest(TestCase):
             "figure computed somewhere else",
         )
 
+    def test_the_reconciled_number_reaches_the_screens_that_show_it(self):
+        """JRN-01: journey 1's last step, at the door instead of the service.
+
+        Steps 9-11 are the reason this journey exists: My Targets and
+        `live_progress` count the same verified visit by different code from
+        different tables, and the drill-down behind them has to reconcile. The
+        walk above proves those two FUNCTIONS agree. It never loads a page, so
+        it cannot show that the agreed number is the one a person is actually
+        shown — and "the figure on the screen" is the whole deliverable of this
+        cascade.
+
+        That gap is not hypothetical here. CONFLICT-001 was exactly a
+        disagreement about which denominator leadership reads, and it was
+        found in the service layer. A service-only walk cannot tell whether
+        the corrected figure survives the trip to the template.
+
+        So: deliver and verify the work, then open the two surfaces as the
+        people who read them and require the numbers to be present and to
+        agree with the ledger.
+        """
+        from apps.hr.performance_engine import live_progress
+        from apps.targets.my_targets import (
+            MyTargetQueryService,
+            TargetAchievementService,
+        )
+
+        _, priority = self._agreed_review()
+        self._delivered_and_verified()
+        TargetAchievementService.rebuild(self.cceo, self.fy)
+
+        achievements = MyTargetQueryService.monthly_achievements(self.cceo, self.fy)
+        visits_achieved = sum(achievements.get("school_visits", []))
+        self.assertEqual(visits_achieved, 1, "the ledger lost the verified visit")
+        progress = live_progress(priority)
+
+        # ── The owner's own targets page ──────────────────────────────────
+        self.client.force_login(self.cceo)
+        response = self.client.get("/my-targets")
+        self.assertEqual(
+            response.status_code,
+            200,
+            "the CCEO cannot open the page that shows their own targets",
+        )
+
+        # Asked of the month the ledger actually credited — and every word of
+        # that was earned by getting it wrong twice.
+        #
+        # The first version searched every integer in the template context for
+        # the achievement count. It passed, and it was worthless: the count is
+        # 1, and 1 is in any page's context. Re-run with nothing delivered at
+        # all, it still passed. A test that cannot fail when the work never
+        # happened is not evidence.
+        #
+        # The second read `area_cards` on the default view and found
+        # "0 / 1 · Off Track" beside a ledger holding the visit. That looks
+        # exactly like a defect and is not one: the card is scoped to the
+        # CURRENT month, and a visit scheduled a week out is delivered in the
+        # NEXT one. Both surfaces were right. Reporting it would have been a
+        # false finding.
+        #
+        # The third assumed `matrix_rows` cells were months. They are period
+        # buckets — six of them, not twelve — so indexing by month raised
+        # IndexError rather than a wrong answer, which is the kinder failure.
+        #
+        # What is true, and worth holding: open the month the work landed in
+        # and the screen shows the verified visit against its commitment.
+        credited = [
+            index
+            for index, count in enumerate(achievements.get("school_visits", []))
+            if count
+        ]
+        self.assertEqual(
+            len(credited), 1, "the ledger credited the visit to no month, or to several"
+        )
+        credited_month = credited[0] + 1
+
+        response = self.client.get(f"/my-targets?month={credited_month}")
+        self.assertEqual(response.status_code, 200)
+        cards = {card["key"]: card for card in response.context["area_cards"]}
+        self.assertIn(
+            "school_visits",
+            cards,
+            "the targets page has no card for the area this journey measures",
+        )
+        card = cards["school_visits"]
+        self.assertEqual(
+            card["achieved"],
+            visits_achieved,
+            f"the ledger credits {visits_achieved} school visit(s) to month "
+            f"{credited_month} and the CCEO's own targets page shows "
+            f"{card['achieved']} there. The cascade's entire deliverable is "
+            f"that these agree.",
+        )
+        self.assertEqual(
+            card["pct"],
+            round(100 * card["achieved"] / card["target"]) if card["target"] else 0,
+            "the percentage on the card is not the two numbers beside it",
+        )
+
+        # ── The performance conversation, as the PL who holds it ──────────
+        self.client.force_login(self.pl)
+        conversation = self.client.get("/performance-conversation")
+        self.assertEqual(
+            conversation.status_code,
+            200,
+            "the Program Lead cannot open the performance conversation",
+        )
+
+        # ── The two surfaces agree with each other ────────────────────────
+        # This is the join CONFLICT-001 broke: the same verified work, read
+        # two ways, must give one answer.
+        self.assertEqual(
+            progress["actual"],
+            visits_achieved,
+            "the performance agreement and My Targets disagree about the same "
+            "verified visit",
+        )
+        self.assertEqual(
+            progress["pct"],
+            round(100 * visits_achieved / ANNUAL_VISITS),
+            "the percentage is not the two numbers beside it",
+        )
+
     def test_unverified_work_moves_neither_surface(self):
         """Guard the premise: both numbers above must come from verification.
 

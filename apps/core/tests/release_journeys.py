@@ -16,9 +16,9 @@ tests that each verify a step, with the seams between them faked, is exactly
 the coverage this platform cannot rely on: either half passes while the join
 is broken.
 
-A journey may list more than one such test, and journeys 5 and 7 now do: one
-walk through the services and one through the platform's own HTTP endpoints,
-for each. That is
+A journey may list more than one such test, and journeys 1, 3, 5 and 7 now
+do: one walk through the services and one that also asks the platform's own
+HTTP surfaces. That is
 not the split this rule forbids — each walks the entire journey alone, and they
 prove different layers of it. The distinction is between two complete walks and
 two half-walks. The traceability matrix traces every pointer listed here and
@@ -68,6 +68,15 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_priority_to_performance:"
             "PriorityToVerifiedPerformanceJourneyTest."
             "test_steps_9_to_11_achievement_performance_and_drilldown_agree",
+            # The same cascade, with its last step asked at the door: the
+            # month the ledger credited is opened on the CCEO's own targets
+            # page and the verified visit must be shown there. CONFLICT-001
+            # was a disagreement about which denominator leadership reads, and
+            # a service-only walk cannot say whether the corrected figure
+            # survives the trip to the template.
+            "apps.core.tests.test_journey_priority_to_performance:"
+            "PriorityToVerifiedPerformanceJourneyTest."
+            "test_the_reconciled_number_reaches_the_screens_that_show_it",
         ),
     ),
     Journey(
@@ -112,6 +121,16 @@ JOURNEYS: tuple[Journey, ...] = (
             "apps.core.tests.test_journey_school_visit:"
             "SchoolVisitSpineJourneyTest."
             "test_a_funded_visit_can_be_executed_verified_accounted_and_closed",
+            # The same spine over HTTP (JRN-01), thirteen doors in the order a
+            # real week goes through them. Four of them enforce contracts the
+            # service walk never sees — an SSA reason on completion, a
+            # different field name and shape on accountability, a weekly
+            # request rather than an advance for the accountant's clearance —
+            # and the closure door refuses the very actor the service walk
+            # closes as.
+            "apps.core.tests.test_journey_school_visit:"
+            "SchoolVisitSpineJourneyTest."
+            "test_the_same_spine_walked_through_the_platform_s_own_doors",
         ),
     ),
     Journey(

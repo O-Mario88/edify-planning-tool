@@ -301,9 +301,255 @@ class SchoolVisitSpineJourneyTest(TestCase):
                 f"accounts_cleared={checklist.accounts_cleared} "
                 f"netsuite={checklist.netsuite_id_entered}"
             )
+        # NOTE — the actor here is not one who could do this through a door.
+        #
+        # `close()` asserts no authority of its own, so this passes with the
+        # Accountant. The Accountant cannot close through any screen: the
+        # endpoint is gated on the `planning` page, which is {CCEO, PL,
+        # ProjectCoordinator, CD, Admin}. Read this assertion narrowly — it
+        # proves the closure MACHINERY runs on an eligible activity, not that
+        # this person can close one. The door walk in this module closes as the
+        # PL, which is the claim about people.
         ActivityClosureService.close(activity, closed_by=str(self.accountant.id))
         activity.refresh_from_db()
         self.assertEqual(activity.status, "closed")
+
+    def test_the_same_spine_walked_through_the_platform_s_own_doors(self):
+        """JRN-01: journey 3, over HTTP, at every step that has an endpoint.
+
+        The walk above proves the spine's SERVICES compose. It never issues a
+        request, so it cannot see URL routing, page gates, view-level scoping,
+        form parsing or the principal a view hands its service — the layer
+        where SEC-01 lived and where journey 7's door walk found FIN-06, a 500
+        returned to every caller of an endpoint 6,081 tests had called green.
+
+        Journey 3 is the platform's most-travelled path and touches money at
+        three points and authority at three more, so it is the one most worth
+        proving twice. Thirteen doors, in the order a real week goes through
+        them.
+
+        Asserted on STATE after each step, never on the status code alone.
+        Several of these views turn a refusal into a flash message and a 200,
+        so a status-only walk would report a journey that never moved as a
+        complete success — the same trap journey 5's denial sweep documents.
+        """
+        from apps.activities.models import Activity
+        from apps.activity_catalogue.services import resolve_item_for_workflow_kind
+        from apps.evidence.models import EvidenceRecord
+        from django.contrib.messages import get_messages
+
+        def as_user(user):
+            self.client.force_login(user)
+
+        def post(path, data=None, who=None):
+            if who is not None:
+                as_user(who)
+            return self.client.post(path, data or {})
+
+        # ── 1. Plan, through the scheduling endpoint ──────────────────────
+        item = resolve_item_for_workflow_kind("school_visit")
+        post(
+            "/planning/schedule-action",
+            {
+                "school_id": self.school.school_id,
+                "catalogue_item_id": item.id,
+                "scheduled_date": _at(self.day).isoformat(),
+                "activity_purpose_text": "Journey 3 door walk",
+                "purpose_of_visit": "ssa_support",
+                "delivery_type": "staff",
+                "executor_type": "staff",
+            },
+            who=self.cceo,
+        )
+        activity = Activity.objects.filter(school=self.school).first()
+        self.assertIsNotNone(
+            activity, "the scheduling endpoint created no activity at all"
+        )
+        self.assertEqual(activity.status, "scheduled")
+        self.assertGreater(
+            activity.est_cost_cents,
+            0,
+            "the endpoint scheduled a visit with no cost, so nothing "
+            "downstream can be funded",
+        )
+
+        # ── 2-5. The week's money, through the four finance doors ─────────
+        wfr = WeeklyFundRequest.objects.get(responsible_user=self.cceo.id)
+        post(f"/fund-requests/weekly/{wfr.id}/confirm", who=self.cceo)
+        post(f"/fund-requests/weekly/{wfr.id}/approve", who=self.pl)
+        post(
+            f"/fund-requests/weekly/{wfr.id}/disburse",
+            {"method": "Bank", "reference": "JN3-DOOR-1"},
+            who=self.accountant,
+        )
+        wfr.refresh_from_db()
+        self.assertEqual(
+            wfr.status,
+            "disbursed",
+            f"the money did not move through the endpoints; it sits at "
+            f"{wfr.status}",
+        )
+
+        post(f"/fund-requests/weekly/{wfr.id}/confirm-receipt", who=self.cceo)
+        wfr.refresh_from_db()
+        self.assertIsNotNone(
+            wfr.receipt_confirmed_at,
+            "the owner's receipt confirmation did not land, and "
+            "accountability stays closed until it does",
+        )
+
+        advances = list(
+            AdvanceRequest.objects.filter(
+                budget_line__weekly_request_lines__weekly_fund_request=wfr
+            ).distinct()
+        )
+        self.assertTrue(advances, "disbursement created no advance to account for")
+
+        # ── 6-7. Execute and complete ─────────────────────────────────────
+        post(f"/activities/{activity.id}/start/action", who=self.cceo)
+        EvidenceRecord.objects.create(
+            activity_id=activity.id,
+            kind="school_visit_form",
+            uri="journey3/door-visit-form.pdf",
+            original_name="door-visit-form.pdf",
+            file_size=2048,
+            uploaded_by=self.cceo.id,
+        )
+        # The endpoint asks for something the service does not: either the
+        # SSA was collected on the visit, or a reason it was not. Posting
+        # without it returns a 400 fragment and leaves the activity parked at
+        # `completion_started` — found by this walk, and invisible to the
+        # service test above, which calls `complete_activity` directly and is
+        # never asked. See the note on `complete_activity` below.
+        post(
+            f"/my-plan/{activity.id}/complete",
+            {
+                "salesforce_id": "SVE-300001",
+                "ssa_not_collected_reason": "School closed for holidays",
+            },
+            who=self.cceo,
+        )
+        activity.refresh_from_db()
+        self.assertIn(
+            activity.status,
+            ("submitted_to_pl", "awaiting_ia_verification"),
+            f"a completed visit did not enter the review chain through the "
+            f"endpoint; it sits at {activity.status}",
+        )
+
+        # ── 8. PL review ──────────────────────────────────────────────────
+        if activity.status == "submitted_to_pl":
+            post(f"/pl/review-queue/{activity.id}/confirm", who=self.pl)
+            activity.refresh_from_db()
+        self.assertEqual(activity.status, "awaiting_ia_verification")
+
+        # ── 9. IA verification, through the door SEC-03 left unguarded ────
+        with self.captureOnCommitCallbacks(execute=True):
+            post(
+                f"/ia/verification/{activity.id}/verify",
+                {
+                    "evidence_complete": "on",
+                    "ssa_uploaded": "on",
+                    "correct_school": "on",
+                    "correct_cluster": "on",
+                    "correct_intervention": "on",
+                    "sf_id_entered": "on",
+                    "duplicate_check_passed": "on",
+                    "analytics_ready": "on",
+                },
+                who=self.ia,
+            )
+        activity.refresh_from_db()
+        self.assertEqual(
+            activity.status,
+            "ia_verified",
+            f"IA verification through the endpoint left the activity at "
+            f"{activity.status}",
+        )
+        self.assertEqual(activity.ia_verification_status, "confirmed")
+
+        # ── 10-12. Accountability, through its three doors ────────────────
+        # One declared total for the activity, which the view allocates across
+        # every disbursed advance proportionally — not one post per advance,
+        # and the NetSuite field is `netsuite_code` here rather than the
+        # `netsuiteId` the service takes. Both are contracts only the door
+        # knows; the service walk above cannot see either.
+        total_disbursed = sum(a.disbursed_amount or 0 for a in advances)
+        post(
+            f"/my-plan/{activity.id}/accountability",
+            {
+                "amount_spent": str(total_disbursed),
+                "amount_returned": "0",
+                "netsuite_code": "NS-JN3-DOOR",
+            },
+            who=self.cceo,
+        )
+        for advance in advances:
+            advance.refresh_from_db()
+            self.assertEqual(
+                advance.status,
+                "accountability_pl_pending",
+                f"accountability submission through the endpoint left "
+                f"advance {advance.id} at {advance.status}",
+            )
+
+        for advance in advances:
+            post(f"/fund-requests/advances/{advance.id}/pl-approve", who=self.pl)
+            advance.refresh_from_db()
+            self.assertEqual(advance.status, "accountability_pending")
+
+        # The accountant clears the WEEKLY REQUEST, not an advance: this door
+        # takes `request_id` and walks every linked advance itself. A third
+        # contract the service walk never sees.
+        post(
+            "/finance/actions/confirm_accountability",
+            {"request_id": wfr.id},
+            who=self.accountant,
+        )
+        for advance in advances:
+            advance.refresh_from_db()
+            self.assertEqual(
+                advance.status,
+                "accounted",
+                f"the accountant's endpoint left advance {advance.id} at "
+                f"{advance.status}",
+            )
+
+        # ── 13. Closure ───────────────────────────────────────────────────
+        # Closed by the PL, not the Accountant.
+        #
+        # The service walk above closes as the Accountant and passes, because
+        # `ActivityClosureService.close()` asserts no authority of its own. The
+        # Accountant cannot close through any door: the endpoint is gated on
+        # the `planning` page, which is {CCEO, PL, ProjectCoordinator, CD,
+        # Admin}. So that green means "the function runs when called directly",
+        # not "the spine closes" — and only a walk through the door can tell
+        # the two apart.
+        #
+        # Every real path to close() IS gated, so this is not an open hole:
+        # the endpoint by the page gate, and the two finance callers
+        # (finance_services.py:638, :881) as an automatic consequence of a
+        # payment act their own authority check already cleared. What is worth
+        # keeping in view is that the gating lives entirely in the callers, so
+        # a fourth caller would introduce a hole with nothing to catch it —
+        # the opposite of the partner-payment path, which asserts at three
+        # independent layers.
+        response = post(f"/activities/{activity.id}/closure/close", who=self.pl)
+        activity.refresh_from_db()
+        # The view turns a refused close into a flash message and a redirect,
+        # so name what it said rather than reporting a bare status mismatch.
+        flash = [
+            m.message
+            for m in get_messages(response.wsgi_request)
+            if "Closure failed" in m.message
+        ]
+        self.assertEqual(
+            activity.status,
+            "closed",
+            "a fully executed, verified and accounted visit could not be "
+            "closed through the closure endpoint. "
+            + (f"The view said: {flash[0]}" if flash else "No reason was given."),
+        )
 
     def test_the_verified_visit_credits_the_ledger_exactly_once(self):
         """Verified work must reach the achievement ledger — and only once.
