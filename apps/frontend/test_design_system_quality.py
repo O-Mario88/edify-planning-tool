@@ -55,7 +55,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         system_health = _read("templates/pages/system_health/index.html")
 
         self.assertNotIn(
-            ":has(", bridge,
+            ":has(",
+            bridge,
             "Global relational selectors force ancestor invalidation for every descendant class change.",
         )
         self.assertIn("function enhanceStructuralMarkers(root)", behavior)
@@ -72,17 +73,33 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         """
         standard_shades = {50, *range(100, 1000, 100), 950}
         colour_names = {
-            "slate", "gray", "zinc", "neutral", "stone", "red", "orange",
-            "amber", "yellow", "lime", "green", "emerald", "teal", "cyan",
-            "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink",
+            "slate",
+            "gray",
+            "zinc",
+            "neutral",
+            "stone",
+            "red",
+            "orange",
+            "amber",
+            "yellow",
+            "lime",
+            "green",
+            "emerald",
+            "teal",
+            "cyan",
+            "sky",
+            "blue",
+            "indigo",
+            "violet",
+            "purple",
+            "fuchsia",
+            "pink",
             "rose",
         }
         theme = _read("assets/css/_theme.css")
         custom_shades = {
             (name, int(shade))
-            for name, shade in re.findall(
-                r"--color-([a-z]+)-(\d+):", theme
-            )
+            for name, shade in re.findall(r"--color-([a-z]+)-(\d+):", theme)
         }
         utility = re.compile(
             r"(?<![\w-])(?:bg|text|border|ring|outline|divide|from|via|to)-"
@@ -99,9 +116,14 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                 if colour not in colour_names:
                     continue
                 shade = int(shade_text)
-                if shade not in standard_shades and (colour, shade) not in custom_shades:
+                if (
+                    shade not in standard_shades
+                    and (colour, shade) not in custom_shades
+                ):
                     line = source.count("\n", 0, match.start()) + 1
-                    offenders.append(f"{path.relative_to(ROOT)}:{line}:{match.group(0)}")
+                    offenders.append(
+                        f"{path.relative_to(ROOT)}:{line}:{match.group(0)}"
+                    )
 
         self.assertEqual(
             offenders,
