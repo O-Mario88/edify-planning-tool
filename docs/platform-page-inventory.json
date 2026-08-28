@@ -1140,7 +1140,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14531,
+      "bytes": 14601,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/closure-quality"
@@ -1452,7 +1452,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1571,
+      "bytes": 1700,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead/drilldown",
@@ -2132,7 +2132,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6074,
+      "bytes": 5722,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation/business-accounting-finance",
@@ -2354,7 +2354,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6343,
+      "bytes": 6174,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partials/clusters/<str:cluster_id>/schools"
@@ -2912,7 +2912,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7871,
+      "bytes": 7958,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3014,7 +3014,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6406,
+      "bytes": 6038,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -6257,7 +6257,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19009,
+      "bytes": 19385,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -6642,7 +6642,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 171,
+      "bytes": 197,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule",
@@ -6666,7 +6666,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5461,
+      "bytes": 5282,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -7315,7 +7315,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 14883,
+      "bytes": 11318,
       "deprecated_alternatives": [],
       "example_pages": [
         "/",
@@ -7517,7 +7517,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6031,
+      "bytes": 5903,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -7836,7 +7836,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 171,
+      "bytes": 197,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa/manual/",
@@ -7862,7 +7862,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16072,
+      "bytes": 16147,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -7945,7 +7945,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 23153,
+      "bytes": 23277,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
