@@ -126,3 +126,34 @@ class DashboardCardRowContractTest(SimpleTestCase):
         self.assertIn("CCEO Area Results", oversight)
         self.assertIn("Supervised CCEOs · All Target Areas", drawer)
         self.assertIn("{% for area in c.areas %}", drawer)
+
+
+class TemplateCommentSyntaxTest(SimpleTestCase):
+    """A `{# #}` comment is single-line only; a wrapped one leaks onto the page.
+
+    Django's hash comment ends at the first `#}` on the SAME line. Wrap one
+    over several lines and the tag never closes: the opener plus every line
+    after it renders as visible text — a paragraph of design rationale
+    printed across the top of a dashboard. `{% comment %}` is the multi-line
+    form. Caught in review on two role dashboards; this keeps the next one
+    from shipping.
+    """
+
+    def test_no_template_wraps_a_hash_comment_over_several_lines(self):
+        import re
+        from pathlib import Path
+
+        from django.conf import settings
+
+        pattern = re.compile(r"\{#(?:(?!#\}).)*?\n", re.S)
+        offenders = [
+            str(path.relative_to(Path(settings.BASE_DIR)))
+            for path in (Path(settings.BASE_DIR) / "templates").rglob("*.html")
+            if pattern.search(path.read_text(encoding="utf-8"))
+        ]
+        self.assertEqual(
+            offenders,
+            [],
+            "Multi-line {# #} comments render as page text; use "
+            f"{{% comment %}}: {offenders}",
+        )

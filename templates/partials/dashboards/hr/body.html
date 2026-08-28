@@ -159,6 +159,15 @@ numbered headings still read 1, 2, 3 … down and across.
         </div>
         <span class="edify-text" class="tabular-nums w-8 text-right">{{ jl.count }} <span class="edify-text-caption text-slate-400">({{ jl.pct }}%)</span></span>
       </div>
+      {% empty %}
+      {% comment %}
+        A card that renders nothing says nothing — this one drew an empty
+        void the height of its neighbours' charts. Job levels come from
+        staff records, so the honest line names what is missing and where
+        it comes from rather than leaving the reader to guess whether the
+        page is broken or the data is.
+      {% endcomment %}
+      {% include "components/empty_state.html" with title="No job levels recorded" message="Levels appear once staff records carry one." compact="true" %}
       {% endfor %}
     </div>
   </div>

@@ -3205,7 +3205,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 30355,
+      "bytes": 30723,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3230,7 +3230,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 25309,
+      "bytes": 25860,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -3243,7 +3243,8 @@
       "purpose": "Reusable body interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "empty"
       ],
       "tables": 3,
       "template": "partials/dashboards/hr/body.html",
@@ -3302,7 +3303,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 12720,
+      "bytes": 13050,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",

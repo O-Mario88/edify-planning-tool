@@ -124,12 +124,19 @@
   </div>
 
   {# ── SSA Intelligence + Funding & Execution ─────────────────────────── #}
-  <div class="pl-ssa-funding-grid">
+  <div class="pl-ssa-funding-grid edify-pack-cols">
+    <div class="edify-pack-col">
     <section class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-ssa-intelligence-title">
       <h2 id="pl-ssa-intelligence-title" class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
       <p class="text-[12px] mb-2 edify-text-subtle">By cluster (score out of 10)</p>
       {% include "partials/dashboards/pl/ssa_intelligence.html" %}
     </section>
+
+    <div class="rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
+      <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">Team Backlog</h2></div>
+      {% include "partials/dashboards/pl/backlog_snapshot.html" %}
+    </div>
+    </div>
 
     <aside class="pl-funding-card rounded-surface p-4 edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-funding-execution-title">
       <h2 id="pl-funding-execution-title" class="text-[13px] font-semibold mb-3 edify-text">Funding &amp; Execution</h2>
@@ -139,13 +146,15 @@
     </aside>
   </div>
 
-  {# ── Backlog + Route Capacity ────────────────────────────────────────── #}
-  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-3">
-    <div class="lg:col-span-6 rounded-surface overflow-hidden flex flex-col edify-surface border edify-border edify-shadow-sm">
-      <div class="p-4 pb-2"><h2 class="text-[13px] font-semibold edify-text">Team Backlog</h2></div>
-      {% include "partials/dashboards/pl/backlog_snapshot.html" %}
-    </div>
-    <div class="lg:col-span-6 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
+  {# ── Route Capacity ──────────────────────────────────────────────── #}
+  {% comment %}
+  Team Backlog moved up beside SSA Intelligence: both answer "what is wrong
+  in my portfolio", and pairing them fills the height the tall funding
+  column used to leave empty. The route table reads across five CCEOs, so
+  it keeps the full width this row now gives it.
+  {% endcomment %}
+  <div class="edify-card-row grid grid-cols-1 gap-3">
+    <div class="rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
       <h2 class="text-[13px] font-semibold mb-3 edify-text">Smart Route &amp; Capacity</h2>
       {% include "partials/dashboards/pl/route_capacity.html" %}
     </div>
