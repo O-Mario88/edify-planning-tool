@@ -1,6 +1,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
+const { signIn } = require('./helpers/auth');
 
 const inventory = JSON.parse(
   fs.readFileSync(path.join(__dirname, '..', 'docs', 'platform-page-inventory.json'), 'utf8')
@@ -35,16 +36,6 @@ function routesForRole(role) {
     .map(surface => surface.route))].sort();
 }
 
-async function login(page, email) {
-  await page.goto('/login');
-  await page.getByLabel('Email address').fill(email);
-  await page.locator('#current-password').fill(defaultPassword);
-  await Promise.all([
-    page.waitForURL(url => !url.pathname.endsWith('/login') && url.pathname !== '/'),
-    page.getByRole('button', { name: 'Access workspace' }).click(),
-  ]);
-}
-
 for (const [accountRole, inventoryRole, email] of roleAccounts) {
   test(`${accountRole}: every permitted argument-free page opens and exposes operable controls`, async ({
     page,
@@ -54,7 +45,7 @@ for (const [accountRole, inventoryRole, email] of roleAccounts) {
     test.skip(browserName !== 'chromium' || isMobile, 'Full role crawl runs once; critical public UI runs on every browser/device.');
     test.setTimeout(15 * 60_000);
 
-    await login(page, email);
+    await signIn(page, email, defaultPassword);
     const records = [];
     const errors = [];
     let currentRoute = '';
@@ -75,6 +66,7 @@ for (const [accountRole, inventoryRole, email] of roleAccounts) {
       }
 
       const status = response?.status() || 0;
+      const finalPath = new URL(page.url()).pathname;
       const pageRecord = await page.evaluate(() => {
         const normalizedText = value => value?.trim().replace(/\s+/g, ' ').slice(0, 160) || '';
         const accessibleName = element => {
@@ -123,6 +115,9 @@ for (const [accountRole, inventoryRole, email] of roleAccounts) {
         control.visible && !control.disabled && !control.label && control.tag !== 'select'
       );
       if (status >= 400) errors.push(`${route}: HTTP ${status}`);
+      if (finalPath.startsWith('/policy-agreement') || finalPath.startsWith('/documents/') || finalPath === '/login') {
+        errors.push(`${route}: redirected to onboarding gate ${finalPath}`);
+      }
       if (pageRecord.domNodes > 10_000) errors.push(`${route}: ${pageRecord.domNodes} DOM nodes`);
       if (pageRecord.horizontalOverflow) errors.push(`${route}: horizontal overflow`);
       if (unlabeledVisibleControls.length) {

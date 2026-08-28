@@ -1,4 +1,5 @@
 const { test, expect } = require('@playwright/test');
+const { signIn: authenticate } = require('./helpers/auth');
 
 const adminEmail = process.env.EDIFY_E2E_ADMIN_EMAIL || 'admin@edify.org';
 const password = process.env.EDIFY_E2E_PASSWORD || 'edify';
@@ -16,13 +17,7 @@ test('formerly freezing pages remain bounded and responsive', async ({ page }, t
   test.skip(testInfo.project.name !== 'chromium-desktop', 'The full freeze trace runs once.');
   test.setTimeout(180_000);
 
-  await page.goto('/login');
-  await page.getByLabel('Email address').fill(adminEmail);
-  await page.locator('#current-password').fill(password);
-  await Promise.all([
-    page.waitForURL(url => !url.pathname.endsWith('/login') && url.pathname !== '/'),
-    page.getByRole('button', { name: 'Access workspace' }).click(),
-  ]);
+  await signIn(page);
 
   const measurements = [];
   const consoleErrors = [];
@@ -41,7 +36,7 @@ test('formerly freezing pages remain bounded and responsive', async ({ page }, t
       domNodes: document.querySelectorAll('*').length,
       horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
     }));
-    measurements.push({ route, status: response?.status(), durationMs, ...state });
+    measurements.push({ route, finalPath: new URL(page.url()).pathname, status: response?.status(), durationMs, ...state });
   }
 
   await testInfo.attach('freeze-regression-measurements.json', {
@@ -51,6 +46,7 @@ test('formerly freezing pages remain bounded and responsive', async ({ page }, t
 
   for (const result of measurements) {
     expect(result.status, result.route).toBeLessThan(500);
+    expect(result.finalPath, result.route).toBe(result.route);
     expect(result.domNodes, result.route).toBeLessThan(5_000);
     expect(result.durationMs, result.route).toBeLessThan(8_000);
     expect(result.horizontalOverflow, result.route).toBe(false);
@@ -59,13 +55,7 @@ test('formerly freezing pages remain bounded and responsive', async ({ page }, t
 });
 
 async function signIn(page) {
-  await page.goto('/login');
-  await page.getByLabel('Email address').fill(adminEmail);
-  await page.locator('#current-password').fill(password);
-  await Promise.all([
-    page.waitForURL(url => !url.pathname.endsWith('/login') && url.pathname !== '/'),
-    page.getByRole('button', { name: 'Access workspace' }).click(),
-  ]);
+  await authenticate(page, adminEmail, password);
 }
 
 function median(values) {
