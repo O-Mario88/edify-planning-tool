@@ -1,6 +1,20 @@
 # Release validation decision — 2026-08-28
 
-> **NO-GO**
+> **APPROVED WITH CONDITIONS — infrastructure update**
+
+The original audit below correctly recorded a No-Go when no recoverable
+production backup, retained runtime logs, production-equivalent staging, or
+database standby existed. Those infrastructure blockers have now been closed
+and are evidenced in [the rollout infrastructure closure](11-rollout-infrastructure-closure.md)
+and [the isolated restore rehearsal](10-production-backup-restore-rehearsal.md).
+The release remains conditional on independent approval and merge of PR #76,
+acceptance of or improvement to the measured 2,570 ms staging p95, and the
+manual physical-device/integration checks that require product-owned accounts
+or hardware.
+
+## Original audit decision
+
+> **NO-GO at the time of the initial audit**
 
 The local release candidate is materially safer and faster, and its automated browser, scale, reliability, security, and formatting gates pass. It is not eligible for a production-readiness declaration under the requested acceptance standard because there is no production-equivalent staging clone, no approved isolated production test tenancy/accounts, and no access to production infrastructure telemetry or external integration sandboxes. Consequently, destructive workflows, every state-dependent control, production-authenticated role coverage, full device coverage, capacity/stress/soak testing, service-worker upgrade across two real deployments, and production alert verification remain unproven.
 
@@ -41,4 +55,6 @@ The costing engine now applies the two governed layers to all canonical cost com
 - [Production monitoring](07-production-monitoring.md)
 - [Optimization change log](08-optimization-change-log.md)
 - [Acceptance gates](09-acceptance-gates.md)
+- [Production backup and isolated restore rehearsal](10-production-backup-restore-rehearsal.md)
+- [Rollout infrastructure closure](11-rollout-infrastructure-closure.md)
 - [Machine-readable evidence](evidence-summary.json)

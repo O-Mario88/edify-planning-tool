@@ -28,14 +28,14 @@ has to be writing the backups.
 WHY THIS IS A TEST AND NOT A COMMENT
 
 The tier is one word in a YAML file. It reverts by a copy-paste from
-`staging.yaml`, where `production: false` is correct and says so. Nothing in a
-deploy would object, and the failure is invisible until the day it matters, at
-which point it is not fixable. So the invariant is asserted where it will be
-read: in the suite, on every commit.
+`staging.yaml`. Nothing in a deploy would object, and the failure is invisible
+until the day it matters, at which point it is not fixable. So the invariant is
+asserted where it will be read: in the suite, on every commit.
 
-STAGING IS DELIBERATELY EXEMPT. `.do/staging.yaml` carries seeded data, not the
-live estate, and says "Dev-tier is intentional". Losing it costs a reseed. The
-rule here is about the file that describes production.
+STAGING IS MANAGED TOO. It carries seeded rather than live data, but a
+production-equivalent estate must exercise managed PostgreSQL/Valkey,
+failover, shared-cache behavior and private service bindings. Its clusters are
+isolated from production and can still be rebuilt from the seed command.
 """
 
 from __future__ import annotations
@@ -125,14 +125,13 @@ class ProductionDatabaseHasBackupsTest(SimpleTestCase):
         self.assertIn("BACKUP-01", text)
         self.assertIn("do not support backups", text)
 
-    def test_staging_is_allowed_to_be_dev_tier_and_says_so(self):
-        """The exemption is real, and it is asserted so it stays deliberate."""
+    def test_staging_uses_isolated_managed_clusters_and_says_so(self):
+        """Production-equivalent staging must not silently become dev-tier."""
         text = _spec("staging.yaml")
         entries = _database_entries(text)
         self.assertTrue(entries, "no database entries parsed out of staging.yaml")
-        self.assertFalse(
-            any(_is_managed(body) for _, body in entries),
-            "staging is expected on the dev tier; if that changed on purpose, "
-            "this test is the thing to update",
+        self.assertTrue(
+            all(_is_managed(body) for _, body in entries),
+            "production-equivalent staging must use managed clusters",
         )
-        self.assertIn("Dev-tier is intentional", text)
+        self.assertIn("isolated managed clusters", text)

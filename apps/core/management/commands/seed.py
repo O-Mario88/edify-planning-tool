@@ -174,6 +174,13 @@ class Command(BaseCommand):
                 )
 
         self.stdout.write(self.style.MIGRATE_HEADING("Seeding Edify API..."))
+        # Reset must happen before any reference data is rebuilt.  The purge
+        # deliberately clears geography as well as operational rows so a demo
+        # seed can replace an incomplete legacy hierarchy.  Running it after
+        # _seed_geography left District empty and made _seed_sample_data fail
+        # while choosing a district for the first school.
+        if demo and options["reset"]:
+            self._purge_operational()
         self._seed_permissions()
         # Uganda's administrative boundaries are REFERENCE data, not demo data.
         # They were seeded only under --demo, so production came up with no
@@ -187,8 +194,6 @@ class Command(BaseCommand):
         if demo:
             if settings.IS_PRODUCTION:  # defensive double-check
                 raise CommandError("Demo seed blocked in production.")
-            if options["reset"]:
-                self._purge_operational()
             self._seed_demo_accounts()
             self._seed_sample_data()
             # Mark THIS database as demo-seeded — if this database ever
