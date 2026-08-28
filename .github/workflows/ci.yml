@@ -180,7 +180,7 @@ jobs:
           server_pid=$!
           trap 'kill "$server_pid" 2>/dev/null || true' EXIT
           for attempt in $(seq 1 30); do
-            if curl --fail --silent http://127.0.0.1:8000/health/live >/dev/null; then
+            if curl --fail --silent http://127.0.0.1:8000/api/health/live >/dev/null; then
               break
             fi
             if [ "$attempt" -eq 30 ]; then
