@@ -224,7 +224,7 @@ def main() -> int:
         print(
             f"{'page':<16}{'ctrls':>5}{'heapMB→':>9}{'after':>9}"
             f"{'lsnrs':>7}{'after':>7}{'nodes':>8}{'after':>8}"
-            f"{'charts':>7}{'destr':>6}{'longms':>8}"
+            f"{'charts':>7}{'loadms':>8}{'interms':>8}"
         )
         print("-" * 90)
 
@@ -308,7 +308,19 @@ def main() -> int:
                         ".filter(el => el.offsetParent !== null).length",
                         SELECTOR,
                     )
+                    # Long tasks are accumulated from page load. The initial
+                    # render is one big task on any heavy page and is a
+                    # different defect from a page that stalls while you use
+                    # it — conflating them means an interaction fix can never
+                    # show up in the number. Record the load cost, then clear,
+                    # so `longest` below is interaction only.
+                    load_cost = page.evaluate(
+                        "() => { const l = (window.__freeze.longTasks || []);"
+                        " const m = l.length ? Math.max(...l) : 0;"
+                        " window.__freeze.longTasks = []; return m; }"
+                    )
                     before = snapshot(f"{path} @0")
+                    before["load"] = load_cost
                     for cycle in range(CYCLES):
                         page.evaluate(
                             "([sel, n]) => { const els = [...document.querySelectorAll(sel)]"
@@ -327,12 +339,13 @@ def main() -> int:
                             "after": after,
                         }
                     )
+                    after["load"] = load_cost
                     print(
                         f"{path:<16}{count:>5}"
                         f"{before['heap'] / 1e6:>9.1f}{after['heap'] / 1e6:>9.1f}"
                         f"{before['listeners']:>7}{after['listeners']:>7}"
                         f"{before['nodes']:>8}{after['nodes']:>8}"
-                        f"{after['charts']:>7}{after['destroyed']:>6}"
+                        f"{after['charts']:>7}{load_cost:>8}"
                         f"{after['longest']:>8}"
                     )
             finally:
