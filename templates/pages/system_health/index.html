@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load static %}
 
 {% block title %}System Health & Integrity - Edify{% endblock %}
 {% comment %}
@@ -8,9 +9,11 @@ adds a full-document selector pass to every live status refresh. Keep this
 modern workspace out of that compatibility layer.
 {% endcomment %}
 {% block consistency_css %}{% endblock %}
+{% block platform_css %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/system-health.css' %}?v=20260828recalc2">{% endblock %}
 
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<div class="px-4 sm:px-6 pt-5 max-w-[1500px] mx-auto">
 
 <!-- Premium Header Pane -->
 <div class="edify-page-header platform-hero">
@@ -29,6 +32,12 @@ Autonomous monitoring of workflow exceptions, role-based access controls, audit 
 </div>
 
 <!-- Main Grid Layout -->
+{% comment %}
+Keep the live monitoring grid in its own top-level workspace region. Status
+refreshes and header state changes can then invalidate only the region they
+touch instead of forcing Chromium to rematch the entire 50+ check dashboard.
+{% endcomment %}
+<div class="px-4 sm:px-6 py-4 max-w-[1500px] mx-auto">
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
 <!-- Left column: Security & RBAC scan -->

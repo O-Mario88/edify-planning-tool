@@ -37,7 +37,14 @@ route produced these medians against the 16 ms frame budget:
 |---|---:|---:|
 | `/analytics` | 1.37 ms | <16 ms |
 | `/schools` | 1.43 ms | <16 ms |
-| `/system-health` | 12.87 ms | <16 ms |
+| `/system-health` | 6.48 ms | <16 ms |
+
+The first Linux CI run exposed that the earlier `/system-health` margin was
+too narrow: its slower runner measured 16.54 ms and 16.66 ms. That workspace
+is already built from canonical components and Tailwind utilities, so it now
+opts out of the unrelated legacy platform presentation bridge and retains only
+its page-scoped hero treatment. An 11-sample local CDP diagnostic then measured
+the 6.48 ms median above, and the complete three-route freeze gate passed.
 
 The `/schools` tab test then completed 50 real HTMX interactions in one
 document with forced garbage collection every ten cycles. Listener count was

@@ -57109,7 +57109,9 @@
       "page_id": "UI-PAGE-79D481D180",
       "page_title": "System Health & Integrity - Edify",
       "page_type": "operational-queue",
-      "per_page_css": [],
+      "per_page_css": [
+        "css/pages/system-health.css"
+      ],
       "permission_key": "system_health",
       "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",

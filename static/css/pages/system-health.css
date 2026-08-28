@@ -1,0 +1,40 @@
+/* System Health is a large, live operational ledger. It already uses the
+   canonical component and Tailwind layers, so loading the broad legacy
+   platform presentation bridge makes every status mutation rematch hundreds
+   of unrelated workspace selectors. Keep only this page's intentional hero
+   treatment here; shared surface, type, theme, and interaction behavior still
+   comes from design-system.css and components.css. */
+
+main .platform-hero {
+  isolation: isolate;
+  overflow: hidden;
+  position: relative;
+  padding: clamp(1.5rem, 1.1rem + 1.25vw, 2.25rem);
+  border: 1px solid rgba(123, 189, 232, 0.2);
+  border-radius: var(--edify-radius-xl);
+  background:
+    radial-gradient(circle at 88% 0%, rgba(73, 118, 159, 0.34), transparent 44%),
+    linear-gradient(125deg, var(--brand-primary-active) 0%, var(--brand-primary) 64%, var(--brand-primary-hover) 100%);
+  box-shadow: 0 18px 42px rgba(0, 29, 57, 0.18);
+}
+
+main .platform-hero h1 {
+  max-inline-size: none;
+  color: #fff;
+  font-size: var(--edify-text-display-size);
+  font-weight: 600;
+}
+
+main .platform-hero p {
+  max-inline-size: 68ch;
+  color: rgba(232, 244, 252, 0.76);
+  font-size: var(--edify-text-body-size);
+  font-weight: 400;
+  line-height: 1.55;
+}
+
+main .platform-hero__eyebrow {
+  color: #9edcff;
+  background: rgba(123, 189, 232, 0.1);
+  border-color: rgba(123, 189, 232, 0.26);
+}

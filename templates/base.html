@@ -100,7 +100,7 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260826modal1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260827density2">
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260827density2">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states

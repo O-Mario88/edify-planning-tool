@@ -3756,7 +3756,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 38,
+   "line": 47,
    "title": "Data Leakage Scan",
    "heading_level": 3,
    "has_card_key": false,
@@ -3765,7 +3765,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 58,
+   "line": 67,
    "title": "RBAC Gating Scan",
    "heading_level": 3,
    "has_card_key": false,
@@ -3774,7 +3774,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 81,
+   "line": 90,
    "title": "Audit Chain Integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -3783,7 +3783,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 93,
+   "line": 102,
    "title": "Scheduling Rules",
    "heading_level": 3,
    "has_card_key": false,
@@ -3792,7 +3792,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 121,
+   "line": 130,
    "title": "Background Automation",
    "heading_level": 3,
    "has_card_key": false,
@@ -3801,7 +3801,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 140,
+   "line": 149,
    "title": "Staff Time Standard",
    "heading_level": 3,
    "has_card_key": false,
@@ -3810,7 +3810,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 176,
+   "line": 185,
    "title": "Durable Outbox",
    "heading_level": 3,
    "has_card_key": false,
@@ -3819,7 +3819,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 198,
+   "line": 207,
    "title": "External Integrations",
    "heading_level": 3,
    "has_card_key": false,
@@ -3828,7 +3828,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 218,
+   "line": 227,
    "title": "Data Quality Queues",
    "heading_level": 3,
    "has_card_key": false,
@@ -3837,7 +3837,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 243,
+   "line": 252,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3846,7 +3846,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 259,
+   "line": 268,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3855,7 +3855,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 280,
+   "line": 289,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3864,7 +3864,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1083,
+   "line": 1092,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3873,7 +3873,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1116,
+   "line": 1125,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,

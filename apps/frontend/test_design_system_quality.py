@@ -52,7 +52,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
     def test_consistency_bridge_uses_explicit_relationship_markers(self):
         bridge = _read("static/css/consistency.css")
         behavior = _read("static/js/micro-ux.js")
+        base = _read("templates/base.html")
         system_health = _read("templates/pages/system_health/index.html")
+        system_health_css = _read("static/css/pages/system-health.css")
 
         self.assertNotIn(
             ":has(",
@@ -61,7 +63,11 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertIn("function enhanceStructuralMarkers(root)", behavior)
         self.assertIn("enhanceStructuralMarkers(root);", behavior)
+        self.assertIn("{% block platform_css %}", base)
         self.assertIn("{% block consistency_css %}{% endblock %}", system_health)
+        self.assertIn("{% block platform_css %}{% endblock %}", system_health)
+        self.assertIn("css/pages/system-health.css", system_health)
+        self.assertNotIn(":has(", system_health_css)
 
     def test_numeric_colour_utilities_use_compiled_tailwind_shades(self):
         """A class that Tailwind cannot compile is a silent visual defect.
