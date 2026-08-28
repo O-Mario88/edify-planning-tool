@@ -528,24 +528,24 @@ controller exists by the time a drawer's x-init runs.
       }, opts);
     },
 
-    /* FREEZE-01. Build the chart OUTSIDE <main>, then move it in.
+    /* FREEZE-01. Build the chart OUTSIDE the main landmark, then move it in.
 
        ApexCharts sizes its text by appending an element and reading its
        geometry back, about ninety times per render. That read flushes pending
-       style, and on this application a style flush inside <main> is not cheap:
+       style, and on this application a style flush inside the main landmark is not cheap:
        ~11,000 selectors across 17 stylesheets, ~650 of them built from
        :is()/:where() chains rooted at `main`, which cannot be indexed per
-       element the way a class selector can. One append inside <main> measures
+       element the way a class selector can. One append inside main measures
        87.9ms on /analytics against 0.10ms outside it. Ninety of those is the
        six-second freeze; Chromium's own counters put 6,245ms of a real load —
        49% of wall clock — in RecalcStyleDuration against 298ms of layout.
 
-       So the chart is built off-screen under <body>, where those selectors
+       So the chart is built off-screen under body, where those selectors
        cannot match, and moved into its slot once it is finished. Measured on
        the real /analytics chart, three ways:
 
-           built inside <main> (as it was)   8361ms
-           built off-screen under <body>      221ms   <- this
+           built inside main (as it was)     8361ms
+           built off-screen under body        221ms   <- this
            built fully detached              112ms
 
        Fully detached is faster still, but a detached element has no layout, so
@@ -553,7 +553,7 @@ controller exists by the time a drawer's x-init runs.
        number. A stated width is a FIXED width: it disables ApexCharts' own
        resize handling, and the obvious replacement — updateOptions on resize —
        re-renders the chart attached, which is this whole defect again on every
-       window drag. Staging under <body> keeps `100%` meaningful and leaves
+       window drag. Staging under body keeps `100%` meaningful and leaves
        native resize untouched, for 109ms that nobody can perceive.
 
        This is deliberately NOT a deferral. Rendering the chart after the load
@@ -604,7 +604,7 @@ controller exists by the time a drawer's x-init runs.
 
       var chart = new ApexCharts(stage, options);
       /* Both arms move the chart in: a failed render must not leave the panel
-         empty AND the holder orphaned under <body>. */
+         empty AND the holder orphaned under body. */
       chart.render().then(settle, settle);
 
       return chart;

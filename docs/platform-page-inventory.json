@@ -986,7 +986,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2808,
+      "bytes": 2802,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1094,7 +1094,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2942,
+      "bytes": 2936,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1380,7 +1380,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2233,
+      "bytes": 2236,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1565,7 +1565,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2976,
+      "bytes": 2970,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1739,7 +1739,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1640,
+      "bytes": 1634,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1760,7 +1760,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2470,
+      "bytes": 2464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -3205,7 +3205,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 30355,
+      "bytes": 30345,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3230,7 +3230,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24851,
+      "bytes": 24926,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -3302,7 +3302,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 12720,
+      "bytes": 12766,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3443,7 +3443,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2006,
+      "bytes": 2000,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3647,7 +3647,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 12605,
+      "bytes": 12575,
       "deprecated_alternatives": [],
       "example_pages": [
         "/debriefs"
@@ -4766,7 +4766,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24833,
+      "bytes": 24813,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cpd-learning"
@@ -7901,7 +7901,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 23153,
+      "bytes": 23143,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
