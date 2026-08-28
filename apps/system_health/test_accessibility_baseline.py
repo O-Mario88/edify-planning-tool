@@ -40,20 +40,31 @@ BASELINE = Path(settings.BASE_DIR) / "docs" / "accessibility-baseline.json"
 AUDIT = Path(settings.BASE_DIR) / "scripts" / "accessibility_audit.py"
 
 
-def _pages_the_audit_scans() -> list[str]:
-    """The audit's own DEFAULT_PAGES, read from its source.
+def _tuple_from(source: str, name: str) -> list[str]:
+    block = source.split(f"{name} = (", 1)[1].split(")", 1)[0]
+    return [
+        part.strip().strip(",").strip('"')
+        for part in block.replace("\n", " ").split(",")
+        if part.strip().strip(",").strip('"')
+    ]
 
-    Read rather than duplicated. A copy of the list here would drift from the
-    one that matters, and the drift would be invisible: this test would keep
-    passing about pages the audit had stopped scanning.
+
+def _keys_the_audit_scans() -> list[str]:
+    """Every `theme:page` the audit covers, read from its own source.
+
+    Read rather than duplicated. A copy of either list here would drift from
+    the one that matters, and the drift would be invisible: this test would
+    keep passing about combinations the audit had stopped scanning.
+
+    Themes matter as much as pages. Colour contrast is most of what axe checks
+    and is entirely a property of the palette, so a clean light theme says
+    nothing about the other two — this project ships three, and DARK-01
+    established that its dark theme has carried real contrast failures before.
     """
     source = AUDIT.read_text(encoding="utf-8")
-    block = source.split("DEFAULT_PAGES = (", 1)[1].split(")", 1)[0]
-    return [
-        line.strip().strip(",").strip('"')
-        for line in block.splitlines()
-        if line.strip().startswith('"')
-    ]
+    pages = _tuple_from(source, "DEFAULT_PAGES")
+    themes = _tuple_from(source, "THEMES")
+    return [f"{theme}:{page}" for theme in themes for page in pages]
 
 
 class AccessibilityBaselineTest(SimpleTestCase):
@@ -66,17 +77,31 @@ class AccessibilityBaselineTest(SimpleTestCase):
             f"only after checking the numbers it writes are the ones you meant.",
         )
 
-    def test_it_covers_every_page_the_audit_scans(self):
+    def test_it_covers_every_theme_and_page_the_audit_scans(self):
         recorded = json.loads(BASELINE.read_text(encoding="utf-8"))["pages"]
-        scanned = _pages_the_audit_scans()
-        self.assertTrue(scanned, "parsed no pages out of the audit script")
+        scanned = _keys_the_audit_scans()
+        self.assertTrue(scanned, "parsed no theme/page pairs out of the audit")
         self.assertEqual(
             sorted(recorded),
             sorted(scanned),
-            "the baseline and the audit disagree about which pages are "
-            "covered. A page in the audit but not the baseline is ungated; a "
-            "page in the baseline but not the audit is a stale entry hiding "
-            "the fact that nothing scans it any more.",
+            "the baseline and the audit disagree about what is covered. A "
+            "combination in the audit but not the baseline is ungated; one in "
+            "the baseline but not the audit is a stale entry hiding the fact "
+            "that nothing scans it any more. Dropping a whole THEME is the "
+            "quiet way to lose two thirds of this gate.",
+        )
+
+    def test_every_theme_is_actually_represented(self):
+        """A baseline covering one theme three times would satisfy the check
+        above only if the audit also dropped to one theme — which is exactly
+        the regression worth naming separately."""
+        recorded = json.loads(BASELINE.read_text(encoding="utf-8"))["pages"]
+        themes = {key.split(":", 1)[0] for key in recorded}
+        self.assertGreaterEqual(
+            len(themes),
+            3,
+            f"the baseline covers only {sorted(themes)}. This product ships "
+            f"light, dark and blue, and contrast is a property of the palette.",
         )
 
     def test_the_counts_are_the_measured_zero(self):

@@ -1,13 +1,29 @@
 {
   "_comment": "Serious + critical axe violations per page. A RATCHET: these may go down and never up. Regenerate with A11Y_WRITE_BASELINE=1 scripts/accessibility_audit.py only after fixing violations, never to absorb new ones.",
   "pages": {
-    "/analytics": 0,
-    "/dashboard": 0,
-    "/my-plan": 0,
-    "/notifications": 0,
-    "/schools": 0,
-    "/settings": 0,
-    "/system-health": 0,
-    "/todos": 0
+    "blue:/analytics": 0,
+    "blue:/dashboard": 0,
+    "blue:/my-plan": 0,
+    "blue:/notifications": 0,
+    "blue:/schools": 0,
+    "blue:/settings": 0,
+    "blue:/system-health": 0,
+    "blue:/todos": 0,
+    "dark:/analytics": 0,
+    "dark:/dashboard": 0,
+    "dark:/my-plan": 0,
+    "dark:/notifications": 0,
+    "dark:/schools": 0,
+    "dark:/settings": 0,
+    "dark:/system-health": 0,
+    "dark:/todos": 0,
+    "light:/analytics": 0,
+    "light:/dashboard": 0,
+    "light:/my-plan": 0,
+    "light:/notifications": 0,
+    "light:/schools": 0,
+    "light:/settings": 0,
+    "light:/system-health": 0,
+    "light:/todos": 0
   }
 }

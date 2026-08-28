@@ -89,6 +89,17 @@ DEFAULT_PAGES = (
     "/system-health",
 )
 
+#: Every theme a user can actually select, from templates/base.html:
+#: system | light | blue | dark. "system" resolves to light or dark by
+#: prefers-color-scheme and so adds no palette of its own.
+#:
+#: Scanning only the default was scanning one of three palettes. Colour
+#: contrast is most of what axe checks and it is entirely a property of the
+#: palette, so a clean light theme says nothing whatsoever about the other two
+#: — and DARK-01 established that this project's dark theme has carried real
+#: contrast failures before.
+THEMES = ("light", "dark", "blue")
+
 #: Only these two block. `minor` and `moderate` are recorded and reported, so
 #: the trend is visible, but they do not fail a release on their own.
 BLOCKING = ("critical", "serious")
@@ -113,6 +124,13 @@ def _pages() -> tuple[str, ...]:
     if override:
         return tuple(p.strip() for p in override.split(",") if p.strip())
     return DEFAULT_PAGES
+
+
+def _themes() -> tuple[str, ...]:
+    override = os.environ.get("A11Y_THEMES", "").strip()
+    if override:
+        return tuple(t.strip() for t in override.split(",") if t.strip())
+    return THEMES
 
 
 def _load_baseline() -> dict:
@@ -193,6 +211,7 @@ def main() -> int:
 
         print(f"\nAccessibility audit — axe-core against {base}")
         print(f"Signed in as one of: {', '.join(a.email for a in accounts)}\n")
+        print(f"Themes: {', '.join(_themes())}\n")
         print(
             f"{'page':<20}{'role':<16}{'crit':>6}{'serious':>9}"
             f"{'mod':>6}{'minor':>7}{'rules':>7}{'nodes':>8}  verdict"
@@ -215,12 +234,20 @@ def main() -> int:
                     executable_path=CHROMIUM, args=["--no-sandbox"]
                 )
                 try:
-                    for path in pages:
-                        result = _scan_page(
-                            browser, base, path, signed_in, axe_source, failures
-                        )
-                        if result is not None:
-                            measured[path] = result
+                    for theme in _themes():
+                        print(f"\n  -- {theme} theme --")
+                        for path in pages:
+                            result = _scan_page(
+                                browser,
+                                base,
+                                path,
+                                signed_in,
+                                axe_source,
+                                failures,
+                                theme,
+                            )
+                            if result is not None:
+                                measured[f"{theme}:{path}"] = result
                 finally:
                     browser.close()
         finally:
@@ -229,12 +256,22 @@ def main() -> int:
     return _report(measured, baseline, failures, pages)
 
 
-def _scan_page(browser, base, path, signed_in, axe_source, failures) -> int | None:
+def _scan_page(
+    browser, base, path, signed_in, axe_source, failures, theme="light"
+) -> int | None:
     """Scan one page as the first account that can actually reach it."""
     last_detail = "no account was served this page"
     for account, session_key in signed_in:
         context = browser.new_context(viewport={"width": 1440, "height": 900})
         try:
+            # base.html reads localStorage['edify_theme'] in a blocking script
+            # in <head>, before first paint. An init script runs before any
+            # page script, so the palette is already chosen by the time
+            # anything renders — no flash, and no race with axe.
+            context.add_init_script(
+                f"try {{ localStorage.setItem('edify_theme', '{theme}'); }} "
+                f"catch (e) {{}}"
+            )
             context.add_cookies(
                 [
                     {
@@ -255,6 +292,19 @@ def _scan_page(browser, base, path, signed_in, axe_source, failures) -> int | No
                 if landed.startswith("/login"):
                     last_detail += " — SIGNED OUT"
                 continue
+
+            applied = page.evaluate("document.documentElement.dataset.theme")
+            if applied != theme:
+                # Without this the run scans the default palette three times
+                # and reports three clean themes, which is the same shape of
+                # lie as scanning the login form eight times.
+                failures.append(
+                    f"{theme}:{path}: asked for the {theme} theme, page "
+                    f"rendered {applied!r} — the palette under test was not "
+                    f"the palette measured"
+                )
+                context.close()
+                return None
 
             node_count = page.evaluate("document.querySelectorAll('*').length")
             page.add_script_tag(content=axe_source)
