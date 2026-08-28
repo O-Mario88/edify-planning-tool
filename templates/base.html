@@ -573,6 +573,16 @@ controller exists by the time a drawer's x-init runs.
     renderDetached: function (el, options) {
       if (!el || typeof ApexCharts !== 'function') { return null; }
 
+      /* Call sites re-render by calling destroy() and then this again — a
+         theme change, a filter, a period switch. destroy() tears down
+         ApexCharts' own DOM but knows nothing about the holder below, so
+         without this every re-render left another empty div behind: measured
+         at 2 -> 6 children over five re-renders. Removing only what this
+         helper put here, rather than clearing the slot, keeps any other
+         content the caller owns. */
+      var previous = el.querySelector(':scope > [data-edify-chart-stage]');
+      if (previous) { previous.remove(); }
+
       var slot = Math.round(el.getBoundingClientRect().width);
       if (!slot) {
         /* No measurable slot: the honest fallback is the old path. */
@@ -584,6 +594,7 @@ controller exists by the time a drawer's x-init runs.
       /* Off-screen rather than hidden: `display: none` gives no layout, and
          `100%` would resolve to zero exactly as it does when detached. */
       var holder = document.createElement('div');
+      holder.setAttribute('data-edify-chart-stage', '');
       holder.style.width = slot + 'px';
       holder.style.position = 'absolute';
       holder.style.left = '-99999px';
@@ -604,8 +615,21 @@ controller exists by the time a drawer's x-init runs.
 
       var chart = new ApexCharts(stage, options);
       /* Both arms move the chart in: a failed render must not leave the panel
-         empty AND the holder orphaned under body. */
-      chart.render().then(settle, settle);
+         empty AND the holder stranded off-screen under body, where it would be
+         invisible to the user and to any check that looks inside the slot.
+         render() returning something without .then, or throwing outright, has
+         to settle too — for the same reason. */
+      try {
+        var pending = chart.render();
+        if (pending && typeof pending.then === 'function') {
+          pending.then(settle, settle);
+        } else {
+          settle();
+        }
+      } catch (e) {
+        settle();
+        throw e;
+      }
 
       return chart;
     },

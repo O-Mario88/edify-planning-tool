@@ -115,6 +115,35 @@ class ChartsRenderDetachedTest(SimpleTestCase):
             "hidden panel renders at zero width — fast, and wrong.",
         )
 
+    def test_the_helper_clears_its_own_previous_stage(self):
+        """Otherwise every re-render leaves an empty div behind.
+
+        Call sites re-render by calling `destroy()` and then the helper again —
+        a theme change, a filter, a period switch. `destroy()` tears down
+        ApexCharts' own DOM and knows nothing about the holder the helper
+        added, so the first version of this leaked one div per re-render:
+        measured at 2 -> 6 children over five re-renders, which is DOM growth
+        on a repeated user action, the exact shape `freeze_hunt` exists to
+        catch. After the fix it is 1 -> 1.
+
+        The holder is removed by its own marker rather than by clearing the
+        slot, so content the caller owns is not destroyed along with it.
+        """
+        text = HELPER.read_text(encoding="utf-8")
+        self.assertIn(
+            "data-edify-chart-stage",
+            text,
+            "the helper no longer marks the container it adds, so it cannot "
+            "tell its own leftovers from the caller's content and can only "
+            "either leak or over-delete.",
+        )
+        self.assertIn(
+            "previous.remove()",
+            text,
+            "nothing removes the previous stage, so every re-render leaves an "
+            "empty div in the slot.",
+        )
+
     def test_no_call_site_constructs_a_chart_directly(self):
         offenders = []
         for path in _sources():
