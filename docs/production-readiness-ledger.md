@@ -218,7 +218,7 @@ it because automation exists.
 | Scale invariance (§46) | **PASSED** | `apps/system_health/test_load_scale.py` at 15,000 schools + 3,000 growth, in the green suite |
 | Wall-clock at 15,000 schools | **MEASURED — every page inside budget** | First measurement ever taken at full estate size. `/dashboard` 230ms of an 800ms budget, `/my-plan` 81, `/schools` 161, `/todos` 177, `/notifications` 28, `/settings` 20, `/analytics` 420 of 1500, `/system-health` 9. The worst page sits at 29% of its budget at 21x the dev estate. Now gated by `test_pages_stay_inside_their_budgets_at_scale`. **Caveat, and it is not a small one:** this container, single request, no concurrency, synthetic estate — it is not a p95 and it is not production hardware. See PERF-01 |
 | Rollback rehearsal (§53) | **STILL UNVERIFIED against the platform's source** | `scripts/rollback_rehearsal.sh` carried the same defects as the backup gate and has been repaired alongside it: the dead scratch-name guard, the `check()` that passed on two empty strings (removed — it had no call sites left), `pg_dump \| pg_restore >/dev/null 2>&1` with every error discarded, a step 3 with no failing path, a relative `PYTHON_BIN` that made the script exit 127 in silence from any directory but the repository root, no ERR trap and so no verdict on an abort, and `git worktree remove --force` running unconditionally ahead of its own ownership check — which destroyed a pre-existing worktree holding uncommitted work. Run end to end against the platform's own developer source `edify` at commit `cad73c69`: **exit 0, 16 PASS, 0 FAIL** — `7c27f2f6` serves the schema `cad73c69` leaves behind, 320 migrations known to the previous release with 0 missing, 8 pages served to signed-in accounts from the migrated copy. Not run against the production source |
-| Accessibility tooling (§4) | **CONFIGURED, RUN, AND ONE DEFECT FIXED** | `scripts/accessibility_audit.py` drives Chromium through axe-core over the eight core pages, signed in as a real account, with the real stylesheet. First run found **6 serious WCAG AA colour-contrast failures**; all six are fixed and the measured state is now **0 critical, 0 serious** across 8 pages at 63–65 rules each. Ratcheted at zero in `docs/accessibility-baseline.json`. See A11Y-01 |
+| Accessibility tooling (§4) | **RUN ACROSS ALL THREE THEMES — 0 blocking** | `scripts/accessibility_audit.py` drives Chromium through axe-core over the eight core pages in **light, dark and blue**, signed in, with the real stylesheet: **24 scans, 0 critical, 0 serious**. The first run (light only) found 6 serious contrast failures and all six were fixed rather than baselined. Palettes verified genuinely distinct, and the dark scan proven to catch a dark-only failure. Ratcheted at zero. Covers only what axe detects automatically — keyboard traps, focus order and screen-reader semantics are unmeasured. See A11Y-01 and A11Y-02 |
 | Visual regression tooling (§4) | **STILL UNVERIFIED** | No screenshot baseline exists. The accessibility half of this row is now covered; the pixel-diff half is not, and needs a decision about where baselines live before it is worth building |
 | 95% planning-time reduction (§2) | **STILL UNVERIFIED** | Mechanical half measured (see §7); human half needs staff observations |
 
@@ -778,6 +778,71 @@ synthetic estate built by the harness. It is not a p95, not production
 hardware, and not a load test. The row above says so rather than letting
 "measured" imply more than was measured. Concurrency and real hardware remain
 unverified, and only a real deployment can settle them.
+
+### A11Y-02 · The accessibility scan covered one of three palettes · **EXTENDED, MEASURED, CLEAN**
+
+A11Y-01 pointed a browser at the product for the first time and found six real
+contrast failures. It scanned the default theme.
+
+This product ships **three** user-selectable palettes — `light`, `dark` and
+`blue` (`system` resolves to one of the first two and adds no palette of its
+own). Colour contrast is most of what axe checks and it is *entirely* a
+property of the palette, so a clean light theme is evidence about light and
+nothing else. DARK-01 had already established that this project's dark theme
+carried real contrast failures, which makes the omission worse than
+theoretical.
+
+The audit now scans **3 themes x 8 pages = 24 combinations**, seeding
+`localStorage['edify_theme']` through an init script so the palette is chosen
+before first paint.
+
+**Measured: 0 critical and 0 serious across all three themes.** The DARK-01
+sweep held. That is a real result and it is the first evidence for the dark and
+blue palettes.
+
+**The scan is not vacuous, and that was checked rather than assumed.** Three
+themes reporting identical numbers is exactly what a broken theme switch also
+looks like, so the palettes were measured directly on `/dashboard`:
+
+| Theme | body background | body text |
+| --- | --- | --- |
+| light | `rgb(227, 242, 250)` | `rgb(23, 35, 43)` |
+| dark | `rgb(14, 21, 28)` | `rgb(237, 243, 247)` |
+| blue | `rgb(0, 29, 57)` | `rgb(245, 251, 255)` |
+
+Three genuinely different palettes. The audit also now asserts
+`documentElement.dataset.theme` matches the theme it asked for, and refuses the
+page if it does not — without that, a silently-ignored theme setting scans the
+default three times and reports three clean themes, which is the same shape of
+lie as scanning the login form eight times.
+
+**Proven able to fail in dark specifically.** A dark-only contrast rule
+(`#2a3138` helper text on the `rgb(14,21,28)` ground) produced 7 violations on
+`/dashboard` and 8 on `/schools` **in dark only**, with light and blue still
+clean — so the per-theme isolation works and failures do not leak between
+palettes.
+
+That mutation took two attempts, and the first is worth recording. It used
+`.theme-dark .kpi-strip__helper` — two classes of specificity against the three
+in the rule it needed to beat, so it never applied and the audit correctly
+reported no violations. A mutation that loses the cascade proves nothing and is
+indistinguishable from a gate that cannot see. The second attempt measured the
+computed colour to prove the mutation was live *before* reading any verdict.
+
+**The ratchet now covers themes.** `test_accessibility_baseline.py` reads both
+`DEFAULT_PAGES` and `THEMES` out of the audit's own source, so dropping a theme
+cannot silently shrink the gate. Proven able to fail:
+
+| Mutation | Caught by |
+| --- | --- |
+| the audit drops to one theme | `test_it_covers_every_theme_and_page_the_audit_scans` |
+| the baseline loses the dark entries | that, and `test_every_theme_is_actually_represented` |
+| a dark count raised to absorb 7 violations | `test_the_counts_are_the_measured_zero` |
+
+**Still not covered:** keyboard traps, focus order, screen-reader semantics,
+and the 564 routed surfaces outside the eight core pages. Only what axe detects
+automatically, which is roughly a third of the WCAG criteria. Saying so is the
+point.
 
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
