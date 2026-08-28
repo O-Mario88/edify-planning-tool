@@ -15,8 +15,8 @@ from apps.core.models import CuidField, TimeStampedModel
 
 
 class RateCardKind(models.TextChoices):
-    REFERENCE = "reference", "Internal Reference"
-    OPERATIONAL = "operational", "Country Approved Operational"
+    REFERENCE = "reference", "Regional Standard Funding"
+    OPERATIONAL = "operational", "Country Operational"
 
 
 class RateCardStatus(models.TextChoices):

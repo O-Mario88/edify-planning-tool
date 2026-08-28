@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Blocked Items - Edify Command Center{% endblock %}
 
@@ -21,6 +22,7 @@ Review activities that are currently gated because of missing compliance items. 
 </div>
 
 <!-- Table Card -->
+{% paginate blocked "blocked_page" as blocked_pager %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 <table class="edify-record-table w-full text-[12px] font-semibold">
@@ -36,8 +38,8 @@ Review activities that are currently gated because of missing compliance items. 
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100">
-{% if blocked %}
-{% for item in blocked %}
+{% if blocked_pager.rows %}
+{% for item in blocked_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <!-- ID -->
 <td class="px-6 py-4" data-record-title>
@@ -104,5 +106,6 @@ Inspect
 </table>
 </div>
 </div>
+{% include "components/table_pager.html" with pager=blocked_pager param="blocked_page" %}
 </div>
 {% endblock %}

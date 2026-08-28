@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters kpi_metrics %}
+{% load frontend_filters kpi_metrics table_pagination %}
 
 {% block title %}Priority Setting Dashboard · Edify{% endblock %}
 
@@ -90,6 +90,16 @@
       <p class="max-w-xl text-[12px] text-slate-500">Select the disclosure control at the end of a row to review its source detail and the actions authorized for your role.</p>
     </div>
 
+    <ul class="flex flex-wrap gap-2" aria-label="Priority groups in this cycle">
+      {% for group in group_rows %}
+      <li class="rounded-control border border-slate-200 bg-slate-50 px-2.5 py-1.5 text-[12px] font-semibold text-slate-700">
+        {{ group.priority.title }}
+        <span class="ml-1 text-slate-400">{{ group.milestone_count }}</span>
+      </li>
+      {% endfor %}
+    </ul>
+
+    {% paginate milestone_rows "milestones_page" 10 as milestones_pager %}
     <div class="priority-record-shell edify-surface" role="region" aria-label="Priority groups and milestones table" tabindex="0" data-table-scroll-region>
       <div class="priority-record-grid" role="table" aria-rowcount="{{ milestone_count }}">
         <div class="priority-record-header priority-record-columns" role="row">
@@ -104,13 +114,13 @@
           <span role="columnheader" aria-label="Actions"></span>
         </div>
 
-        {% for row in group_rows %}
-          {% for milestone in row.milestones %}
+        {% for item in milestones_pager.rows %}
+          {% with milestone=item.milestone priority=item.priority %}
           <details class="priority-record-row priority-milestone-record">
             <summary class="priority-record-summary priority-record-columns" role="row" aria-label="{{ milestone.title }} details">
               <span class="priority-record-number" role="cell">{{ milestone.source_order }}</span>
               <span class="priority-record-name" role="cell" id="milestone-{{ milestone.id }}">{{ milestone.title }}</span>
-              <span role="cell">{{ row.priority.title }}</span>
+              <span role="cell">{{ priority.title }}</span>
               <span role="cell">{% if milestone.metric_definition %}{{ milestone.metric_definition.canonical_label }}{% else %}Metric not yet defined{% endif %}</span>
               <span class="priority-record-date" role="cell">{{ milestone.created_at|date:"d/m/Y, H:i" }}</span>
               <span class="priority-record-state" role="cell" aria-label="{% if milestone.definition_status == 'defined' or milestone.definition_status == 'approved' %}Defined{% else %}Not defined{% endif %}">
@@ -134,10 +144,11 @@
             </summary>
             {% include "partials/hr/priority_milestone_detail.html" %}
           </details>
-          {% endfor %}
+          {% endwith %}
         {% endfor %}
       </div>
     </div>
+    {% include "components/table_pager.html" with pager=milestones_pager param="milestones_page" %}
   </section>
 
   <footer class="edify-surface rounded-surface border border-slate-100 p-4 sm:flex sm:items-center sm:justify-between sm:gap-4">

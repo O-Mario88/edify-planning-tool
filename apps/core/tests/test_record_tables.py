@@ -74,9 +74,11 @@ class RecordTableMarkupContractTests(SimpleTestCase):
         src = (TEMPLATES / "partials" / "my_plan" / "activity_row.html").read_text()
         self.assertIn("data-record-action", src)
 
-    def test_the_cost_catalogue_rate_keeps_its_source_label(self):
+    def test_the_cost_catalogue_rates_keep_their_governed_source_labels(self):
         src = (
             TEMPLATES / "partials" / "cost_settings" / "cost_setting_row.html"
         ).read_text()
-        self.assertIn('data-label="Rate"', src)
+        for label in ("Regional standard", "Country operational", "Minimum viable"):
+            with self.subTest(label=label):
+                self.assertIn(f'data-label="{label}"', src)
         self.assertIn("data-record-title", src)

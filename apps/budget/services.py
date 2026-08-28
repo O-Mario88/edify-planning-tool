@@ -105,6 +105,9 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         raise BadRequest("unitCost must be a whole UGX value.") from None
     if new_cost < 0:
         raise BadRequest("unitCost cannot be negative.")
+    reason = str(data.get("reason") or "").strip()
+    if not reason:
+        raise BadRequest("An adjustment reason is required for every rate change.")
     fy = data.get("fy")
 
     from .costing_service import active_catalogue
@@ -119,6 +122,16 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     with transaction.atomic():
         catalogue = CostCatalogue.objects.select_for_update().get(id=catalogue.id)
         existing = CostSetting.objects.filter(key=key, catalogue=catalogue).first()
+        if (
+            existing is not None
+            and existing.approved_minimum is not None
+            and new_cost < int(existing.approved_minimum)
+        ):
+            raise BadRequest(
+                "The country operational rate is below the approved minimum "
+                "viable cost. Revise the activity scope, delivery method, or "
+                "rate before publishing."
+            )
         old_cost = existing.unit_cost if existing else None
         now = timezone.now()
         next_version = (
@@ -151,7 +164,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             published_by=principal.user_id,
             published_at=now,
             activated_at=now,
-            notes=data.get("reason") or catalogue.notes,
+            notes=reason,
             material_difference_threshold_bps=catalogue.material_difference_threshold_bps,
             required_school_visits_per_day=catalogue.required_school_visits_per_day,
         )
@@ -227,7 +240,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             version=setting.version,
             fy=next_catalogue.fy,
             changed_by_user_id=principal.user_id,
-            reason=data.get("reason"),
+            reason=reason,
         )
         from apps.audit.services import log as audit_log
 

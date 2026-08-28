@@ -80,6 +80,64 @@
       </div>
     </div>
   </section>
+
+  <section class="rounded-surface border border-[var(--border-card)] edify-surface shadow-sm" aria-labelledby="country-envelope-heading">
+    <div class="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-end sm:justify-between">
+      <div>
+        <p class="edify-page-eyebrow">Governed funding allocation</p>
+        <h2 id="country-envelope-heading" class="text-[15px] font-bold text-slate-800">Country Monthly Envelope</h2>
+        <p class="mt-0.5 text-[12px] font-medium text-slate-500">The regional rate sets the activity ceiling. Country operational rates set what teams may request and spend.</p>
+      </div>
+      <p class="text-left sm:text-right"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total country request</span><span class="text-[20px] font-extrabold tabular-nums text-[var(--edify-accent)]">{{ country_workflow.country_envelope.totalCountryRequest|ugx }}</span></p>
+    </div>
+
+    <div class="overflow-x-auto">
+      <table class="w-full min-w-[680px] border-collapse text-left text-[12px]">
+        <caption class="sr-only">Country envelope allocation for {{ country_workflow.month_label }} FY {{ country_workflow.fy }}</caption>
+        <thead class="bg-slate-50/70 text-slate-500">
+          <tr>
+            <th scope="col" class="px-4 py-2.5 font-bold">Funding layer</th>
+            <th scope="col" class="px-4 py-2.5 text-right font-bold">Amount</th>
+            <th scope="col" class="px-4 py-2.5 font-bold">Purpose</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Regional Standard Funding Ceiling</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.regionalStandardCeiling|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Regional benchmark for scheduled activities</td></tr>
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Operational Activity Allocation</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.operationalActivityRequirement|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Country Operational Cost visible to teams</td></tr>
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Strategic Reserve</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.strategicReserveRequested|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Regional-to-operational difference; approved but undisbursed</td></tr>
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Unrequested / Deferred Amount</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.deferredAmount|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Zero when the complete regional ceiling is submitted</td></tr>
+          {% if country_workflow.country_envelope.approvedFixedCommitments %}<tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Administrative Fixed Commitments</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.approvedFixedCommitments|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Separate CD admin-plan exception; not presented as activity need</td></tr>{% endif %}
+        </tbody>
+      </table>
+    </div>
+
+    {% if country_workflow.country_envelope.countryFundingShortfall %}
+    <div class="border-t border-rose-100 bg-rose-50 px-4 py-2.5 text-[12px] font-semibold text-rose-800" role="status">Country Funding Shortfall: {{ country_workflow.country_envelope.countryFundingShortfall|ugx }}. Operational activity need exceeds the regional ceiling.</div>
+    {% elif country_workflow.country_envelope.referenceConfigurationMissingCount %}
+    <div class="border-t border-amber-100 bg-amber-50 px-4 py-2.5 text-[12px] font-semibold text-amber-800" role="status">{{ country_workflow.country_envelope.referenceConfigurationMissingCount }} scheduled activit{{ country_workflow.country_envelope.referenceConfigurationMissingCount|pluralize:'y,ies' }} lack a Regional Standard Funding Cost. Reserve capacity remains unavailable until regional finance completes the reference card.</div>
+    {% endif %}
+
+    <p class="border-t border-slate-100 px-4 py-3 text-[12px] font-semibold text-slate-600">
+      The RVP receives the full Regional Standard Funding Ceiling. Only the Operational Activity Allocation becomes staff spending authority; the remaining difference stays in the country strategic reserve.
+    </p>
+  </section>
+
+  {% if country_workflow.reconciliation %}
+  <section class="rounded-surface border border-slate-200 edify-surface shadow-sm" aria-labelledby="actual-spending-heading">
+    <div class="border-b border-slate-100 px-4 py-3">
+      <p class="edify-page-eyebrow">Actual spending</p>
+      <h2 id="actual-spending-heading" class="text-[15px] font-bold text-slate-800">Disbursement and Accountability</h2>
+    </div>
+    <dl class="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Approved Operating Limits</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.approved_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Committed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.committed_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Amount Disbursed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.disbursed_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Actual Accounted Spend</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.accounted_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Returned Balance</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.returned_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Reimbursements</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.reimbursed_fmt }}</dd></div>
+    </dl>
+  </section>
+  {% endif %}
   {% endif %}
 
   {% if country_workflow.prior_month_pending %}

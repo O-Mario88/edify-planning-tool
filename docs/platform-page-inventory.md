@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **573**
-- All registered routes: **1041**
+- Routed product surfaces: **575**
+- All registered routes: **1043**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **23**
 - Activity states: **23**
-- Shared component templates: **342**
+- Shared component templates: **344**
 - Full pages: **203**
-- Partials and drawers: **170**
-- Permission-gated surfaces: **563**
-- Referenced by automated tests: **527**
+- Partials and drawers: **172**
+- Permission-gated surfaces: **565**
+- Referenced by automated tests: **530**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -384,7 +384,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-F155B4F7CE | /messages/thread/<str:thread_id>/reply | Message Thread Reply | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-70F6DE8C6B | /messages/thread/<str:thread_id>/star | Message Thread Star | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F513132000 | /mfi-portal | MFI Partner Portal | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-2A8C6B46DF | /mfi-portal/<str:section> | MFI Partner Portal | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-2A8C6B46DF | /mfi-portal/<str:section> | MFI Partner Portal | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-00C9E3437D | /my-performance | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3F93C61FF3 | /my-performance/development | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-394F17A694 | /my-performance/documents | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -483,6 +483,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-739AAF8574 | /planning/schedule | Schedule Activity - Edify Command Center | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CB5D63ABE3 | /planning/schedule-action | Planning Schedule Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2AF2FF5ECA | /planning/schedule-modal | Planning Schedule Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C597B8F97C | /planning/schedule/schools | Planning Schedule School Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8354F50663 | /policies | Policies & Documents | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-43B307D6C8 | /policy-agreement | Policy Agreement | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-433A02DA3B | /policy-agreement/restricted | Access Restricted | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -547,6 +548,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-4A86903104 | /ssa | SSA Performance | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E33623599D | /ssa/export | Ssa Performance Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1B9D56BC39 | /ssa/manual/ | Add SSA Score - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-498447B0C2 | /ssa/manual/schools | Ssa Manual School Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A49DCD919B | /ssa/unmatched | Unmatched SSA Queue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9AAA2B91B2 | /ssa/upload/ | Upload SSA Scores | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8FDF0B692E | /ssa/upload/<str:batch_id>/preview/ | SSA Upload Preview | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

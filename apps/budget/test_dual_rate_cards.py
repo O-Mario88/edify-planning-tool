@@ -8,7 +8,7 @@ from apps.accounts.jwt import issue_access_token
 from apps.accounts.models import User
 from apps.budget import services
 from apps.budget.costing_service import active_catalogue
-from apps.budget.governance_service import list_rate_cards
+from apps.budget.governance_service import list_rate_cards, publish_rate_card
 from apps.budget.models import (
     CostCatalogue,
     CostSetting,
@@ -18,6 +18,7 @@ from apps.budget.models import (
     StrategicReserveStatus,
 )
 from apps.core.fy import get_operational_fy
+from apps.core.exceptions import BadRequest
 from apps.core.rbac import EdifyRole, permissions_for_role
 
 
@@ -117,6 +118,52 @@ class DualRateCardSecurityTest(APITestCase):
         self.assertIsNotNone(response.json()["referenceCost"])
         self.assertIn("operationalCost", response.json())
 
+    def test_every_training_component_uses_the_same_plan_with_its_own_card(self):
+        reference = self._publish_reference_copy_for_test()
+        operational = active_catalogue(self.fy)
+        component_rates = {
+            "group_training_participant_meal_cost_per_head": (12_000, 22_000),
+            "group_training_facilitation_fee": (30_000, 50_000),
+            "group_training_venue_cost": (40_000, 70_000),
+        }
+        for key, (operational_rate, reference_rate) in component_rates.items():
+            CostSetting.objects.filter(catalogue=operational, key=key).update(
+                unit_cost=operational_rate
+            )
+            CostSetting.objects.filter(catalogue=reference, key=key).update(
+                unit_cost=reference_rate
+            )
+
+        self._as(self.cd)
+        response = self.client.post(
+            "/api/budget/costing/management-preview",
+            {
+                "activityType": "training",
+                "deliveryType": "staff",
+                "expectedParticipants": 10,
+                "days": 1,
+            },
+            format="json",
+        )
+        self.assertEqual(response.status_code, 200, response.content)
+        payload = response.json()
+        operational_lines = {
+            line["key"]: line for line in payload["operationalBreakdown"]
+        }
+        reference_lines = {line["key"]: line for line in payload["referenceBreakdown"]}
+        self.assertEqual(
+            operational_lines["group_training_participant_meal_cost_per_head"][
+                "amount"
+            ],
+            120_000,
+        )
+        self.assertEqual(
+            reference_lines["group_training_participant_meal_cost_per_head"]["amount"],
+            220_000,
+        )
+        self.assertEqual(payload["operationalCost"], 190_000)
+        self.assertEqual(payload["referenceCost"], 340_000)
+
     def test_management_preview_is_forbidden_to_field_staff(self):
         self._as(self.cceo)
         response = self.client.post(
@@ -181,6 +228,28 @@ class DualRateCardSecurityTest(APITestCase):
         self.assertGreater(new_card.version, old_card.version)
         self.assertEqual(result["unitCost"], old_amount + 500)
 
+    def test_cd_dashboard_rate_edit_respects_approved_minimum(self):
+        card = active_catalogue(self.fy)
+        line = CostSetting.objects.filter(catalogue=card, unit_cost__gt=0).first()
+        line.approved_minimum = line.unit_cost
+        line.save(update_fields=["approved_minimum", "updated_at"])
+        principal = SimpleNamespace(
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            user_id=self.cd.id,
+        )
+        with self.assertRaisesMessage(BadRequest, "below the approved minimum"):
+            services.upsert_cost_setting(
+                {
+                    "key": line.key,
+                    "label": line.label,
+                    "unitCost": line.unit_cost - 1,
+                    "fy": self.fy,
+                    "reason": "Test a non-viable rate",
+                },
+                principal,
+            )
+        self.assertEqual(active_catalogue(self.fy).id, card.id)
+
     def test_country_director_can_create_and_rvp_can_approve_reserve(self):
         self._as(self.cd)
         create_response = self.client.post(
@@ -211,6 +280,35 @@ class DualRateCardSecurityTest(APITestCase):
         reserve.refresh_from_db()
         self.assertEqual(reserve.status, StrategicReserveStatus.APPROVED)
         self.assertEqual(reserve.approved_by, str(self.rvp.id))
+
+    def test_operational_card_below_approved_minimum_cannot_be_published(self):
+        latest = (
+            CostCatalogue.objects.filter(fy=self.fy, kind=RateCardKind.OPERATIONAL)
+            .order_by("-version")
+            .first()
+        )
+        draft = CostCatalogue.objects.create(
+            country="Uganda",
+            fy=self.fy,
+            kind=RateCardKind.OPERATIONAL,
+            version=latest.version + 1,
+            status=RateCardStatus.DRAFT,
+            is_active=False,
+            currency="UGX",
+        )
+        CostSetting.objects.create(
+            catalogue=draft,
+            key="primary_transport_per_day",
+            label="Primary transport per day",
+            unit_cost=50_000,
+            approved_minimum=70_000,
+        )
+        principal = SimpleNamespace(
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            user_id=self.cd.id,
+        )
+        with self.assertRaisesMessage(BadRequest, "below the approved minimum"):
+            publish_rate_card(principal, draft.id)
 
     def test_rvp_cannot_create_strategic_reserve(self):
         self._as(self.rvp)

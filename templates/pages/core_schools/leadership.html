@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load static %}
+{% load static table_pagination %}
 
 {% block title %}Core School Health — Edify{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260809layout8">{% endblock %}
@@ -67,6 +67,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% endif %}
 
 {% if d.stalledSlots %}
+{% paginate d.stalledSlots "stalled_page" as stalled_pager %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-3 border-b border-[var(--edify-border)]">
 <h2 class="text-[13px] font-extrabold text-slate-800">Stuck at the completion gate</h2>
@@ -83,7 +84,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for s in d.stalledSlots %}
+{% for s in stalled_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 font-bold text-slate-800" data-record-title>{{ s.school }}<span class="block edify-text-caption text-slate-400 font-semibold">{{ s.district }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="Slot">{{ s.slot }}<span class="block edify-text-caption text-slate-400">{{ s.intervention|title }}</span></td>
@@ -94,10 +95,12 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=stalled_pager param="stalled_page" %}
 </div>
 {% endif %}
 
 {% if d.canViewSchoolDetail %}
+{% paginate d.plans "plans_page" as plans_pager %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-3 border-b border-[var(--edify-border)]">
 <h2 class="text-[13px] font-extrabold text-slate-800">Package progress</h2>
@@ -116,7 +119,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for p in d.plans %}
+{% for p in plans_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3" data-record-title><span class="font-bold text-slate-900 block leading-tight">{{ p.name }}</span><span class="edify-text-caption text-slate-400 font-semibold">{{ p.code }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="District">{{ p.district }}</td>
@@ -139,8 +142,10 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=plans_pager param="plans_page" %}
 </div>
 {% else %}
+{% paginate d.districts "districts_page" as districts_pager %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
 <div class="px-5 py-3 border-b border-[var(--edify-border)]">
 <h2 class="text-[13px] font-extrabold text-slate-800">By district</h2>
@@ -158,7 +163,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-semibold">
-{% for r in d.districts %}
+{% for r in districts_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 font-bold text-slate-800" data-record-title>{{ r.district }}</td>
 <td class="px-4 py-3 text-right tabular-nums text-slate-600" data-label="Packages">{{ r.planCount }}</td>
@@ -170,6 +175,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=districts_pager param="districts_page" %}
 </div>
 {% endif %}
 

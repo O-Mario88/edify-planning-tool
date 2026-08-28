@@ -6,7 +6,10 @@
 {{ c.label }}
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
-<td class="px-4 py-3 align-middle" colspan="2">
+<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle">
+{% if c.reference_unit_cost is not None %}UGX {{ c.reference_unit_cost|currency }}{% else %}—{% endif %}
+</td>
+<td class="px-4 py-3 align-middle" colspan="3">
 <form hx-post="/cost-settings/row/{{ c.key }}" hx-target="#cost-setting-row-{{ c.key }}" hx-swap="outerHTML" class="m-0 space-y-2">
 {% csrf_token %}
 <div class="flex flex-wrap items-center gap-2">
@@ -104,8 +107,14 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 The rate is the reason this page exists and it was the column that fell off a
 phone screen — labelled explicitly so it can never read as a bare number.
 {% endcomment %}
-<td class="px-4 py-3 font-semibold edify-primary-text align-middle" data-label="Rate">
+<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle" data-label="Regional standard">
+{% if c.reference_unit_cost is not None %}UGX {{ c.reference_unit_cost|currency }}{% else %}—{% endif %}
+</td>
+<td class="px-4 py-3 text-right font-semibold edify-primary-text align-middle" data-label="Country operational">
 UGX {{ c.unit_cost|currency }}
+</td>
+<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle" data-label="Minimum viable">
+{% if c.approved_minimum is not None %}UGX {{ c.approved_minimum|currency }}{% else %}<span title="No approved minimum; management warning rules apply">Not set</span>{% endif %}
 </td>
 <td class="px-4 py-3 text-right align-middle" data-record-action>
 {% if can_manage_rates %}

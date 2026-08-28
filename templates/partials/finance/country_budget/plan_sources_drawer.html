@@ -12,7 +12,7 @@
     <div class="drawer-header px-5 py-4 border-b border-slate-100 flex items-start justify-between shrink-0">
       <div>
         <h2 id="plan-sources-title" class="text-[15px] font-semibold text-slate-800 tracking-tight">Plan Sources — {{ month_label }} {{ fy }}</h2>
-        <p class="edify-text-caption font-semibold text-slate-400">{{ count }} scheduled, costed activity line{{ count|pluralize }} behind this month's budget.</p>
+        <p class="edify-text-caption font-semibold text-slate-400">{{ count }} scheduled activit{{ count|pluralize:'y,ies' }} with governed funding comparisons.</p>
       </div>
       <button aria-label="Close" @click="$dispatch('close-drawer')" class="text-slate-400 hover:text-slate-600 shrink-0"><svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg></button>
     </div>
@@ -20,15 +20,17 @@
       {# Data tables sit inside cards that clip to keep their rounded corners, so a table wider than the viewport lost its trailing columns on phones instead of letting the reader scroll to them. #}
       <div class="overflow-x-auto">
       {% paginate rows "rows_page" as rows_pager %}
-<table class="w-full text-left border-collapse">
+<table class="min-w-[940px] w-full text-left border-collapse">
+        <caption class="sr-only">Regional standard and country operational cost comparison for scheduled activities</caption>
         <thead class="sticky top-0 bg-slate-50/95 backdrop-blur">
           <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-4 py-2.5">Activity</th>
             <th class="px-3 py-2.5">Staff</th>
-            <th class="px-3 py-2.5">School</th>
-            <th class="px-3 py-2.5">Planned Date</th>
-            <th class="px-3 py-2.5 text-right">Amount</th>
-            <th class="px-3 py-2.5 text-center">Status</th>
+            <th class="px-3 py-2.5 text-right">Regional Standard Funding Cost</th>
+            <th class="px-3 py-2.5 text-right">Country Operational Cost</th>
+            <th class="px-3 py-2.5 text-right">Country-Controlled Difference</th>
+            <th class="px-3 py-2.5">Funding status</th>
+            <th class="px-3 py-2.5">Operational viability</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-50">
@@ -36,19 +38,17 @@
           <tr class="hover:bg-slate-50/50 text-[12px]">
             <td class="px-4 py-2.5">
               <p class="font-bold text-slate-800">{{ r.activity_type }}</p>
-              <p class="edify-text-caption font-semibold text-slate-400">{{ r.label }} · {{ r.delivery_type|title }}</p>
+              <p class="edify-text-caption font-semibold text-slate-400">{{ r.school }} · {{ r.planned_date|date:"M j, Y"|default:"—" }} · {{ r.delivery_type|title }}</p>
             </td>
             <td class="px-3 py-2.5 font-semibold text-slate-600">{{ r.staff }}</td>
-            <td class="px-3 py-2.5 text-slate-500">{{ r.school }}</td>
-            <td class="px-3 py-2.5 text-slate-500 tabular-nums">{{ r.planned_date|date:"M j, Y"|default:"—" }}</td>
-            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.amount_fmt }}</td>
-            <td class="px-3 py-2.5 text-center">
-              <span class="inline-flex items-center px-1.5 py-0.5 rounded-pill edify-text-caption font-bold
-                {% if r.status == 'Plan-backed' %}bg-emerald-50 text-emerald-700{% elif r.status == 'Missing Cost' or r.status == 'Needs Review' %}bg-amber-50 text-amber-700{% else %}bg-slate-100 text-slate-500{% endif %}">{{ r.status }}</span>
-            </td>
+            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.reference_cost_fmt }}</td>
+            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.operational_cost_fmt }}</td>
+            <td class="px-3 py-2.5 text-right font-bold tabular-nums {% if r.reserve_eligible %}text-amber-700{% else %}text-slate-500{% endif %}">{{ r.difference_fmt }}<span class="mt-0.5 block edify-text-caption font-semibold">{% if r.reserve_eligible %}Reserve eligible{% else %}No capacity{% endif %}</span></td>
+            <td class="px-3 py-2.5 font-semibold text-slate-600">{{ r.funding_status }}</td>
+            <td class="px-3 py-2.5"><span class="inline-flex rounded-pill px-2 py-1 edify-text-caption font-bold {% if r.viability == 'Viable' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-800{% endif %}">{{ r.viability }}</span></td>
           </tr>
           {% empty %}
-          <tr><td colspan="6" class="px-4 py-10 text-center text-[12px] font-semibold text-slate-400">No plan sources for this month.</td></tr>
+          <tr><td colspan="7" class="px-4 py-10 text-center text-[12px] font-semibold text-slate-400">No plan sources for this month.</td></tr>
           {% endfor %}
         </tbody>
       </table>

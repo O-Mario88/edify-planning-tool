@@ -14,6 +14,7 @@ from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.audit.models import AuditLog
+from apps.budget.models import ActivityCostSnapshot, CountryStrategicActivityReserve
 from apps.command_center.todo_service import get_todos
 from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden
@@ -327,6 +328,111 @@ class CountryMonthlyBudgetTest(TestCase):
     def test_valid_budget_can_be_submitted(self):
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         self.assertTrue(ctx["can_send_to_rvp"])
+
+    def test_full_reference_ceiling_is_submitted_with_difference_as_reserve(self):
+        ActivityCostSnapshot.objects.create(
+            activity=self.act1,
+            operational_cost=100_000,
+            reference_cost=140_000,
+            calculated_at=timezone.now(),
+        )
+        ActivityCostSnapshot.objects.create(
+            activity=self.act2,
+            operational_cost=200_000,
+            reference_cost=260_000,
+            calculated_at=timezone.now(),
+        )
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        self.assertEqual(ctx["country_envelope"]["regionalStandardCeiling"], 400_000)
+        self.assertEqual(
+            ctx["country_envelope"]["operationalActivityRequirement"], 300_000
+        )
+        self.assertEqual(ctx["country_envelope"]["maximumReserveCapacity"], 100_000)
+
+        budget = MonthlyWorkPlanBudget.objects.get(id=ctx["budget_id"])
+        self.assertEqual(budget.strategic_reserve_requested, 100_000)
+        self.assertEqual(budget.deferred_amount, 0)
+        self.assertEqual(budget.total_amount, 400_000)
+
+        submitted = svc.send_to_rvp(self.cd_p, budget.id)
+        snapshot = submitted.snapshots.get(version=submitted.submission_version)
+        self.assertEqual(snapshot.regional_standard_ceiling, 400_000)
+        self.assertEqual(snapshot.operational_activity_requirement, 300_000)
+        self.assertEqual(snapshot.strategic_reserve_requested, 100_000)
+        self.assertEqual(snapshot.deferred_amount, 0)
+        self.assertEqual(snapshot.total_amount, 400_000)
+        svc.approve(self.rvp_p, submitted.id)
+        reserve = CountryStrategicActivityReserve.objects.get(
+            country="Uganda", fy=FY, period_key=submitted.month_key
+        )
+        self.assertEqual(reserve.opening_reserve, 100_000)
+        self.assertEqual(reserve.available_balance, 100_000)
+        self.assertEqual(reserve.status, "approved")
+
+    def test_cd_cannot_reduce_the_automatic_full_ceiling_request(self):
+        ActivityCostSnapshot.objects.create(
+            activity=self.act1,
+            operational_cost=100_000,
+            reference_cost=120_000,
+            calculated_at=timezone.now(),
+        )
+        ActivityCostSnapshot.objects.create(
+            activity=self.act2,
+            operational_cost=200_000,
+            reference_cost=230_000,
+            calculated_at=timezone.now(),
+        )
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        with self.assertRaisesMessage(BadRequest, "full Regional Standard"):
+            svc.set_envelope_allocation(self.cd_p, ctx["budget_id"], 40_000)
+
+    def test_training_uses_12000_for_staff_but_submits_22000_to_rvp(self):
+        ActivityCostSnapshot.objects.create(
+            activity=self.act1,
+            operational_cost=100_000,
+            reference_cost=100_000,
+            calculated_at=timezone.now(),
+        )
+        ActivityCostSnapshot.objects.create(
+            activity=self.act2,
+            operational_cost=200_000,
+            reference_cost=200_000,
+            calculated_at=timezone.now(),
+        )
+        training = self._activity(self.cceo.id, ActivityType.TRAINING, "staff")
+        participant_count = 10
+        self._cost_line(training, 12_000 * participant_count)
+        ActivityCostSnapshot.objects.create(
+            activity=training,
+            operational_cost=12_000 * participant_count,
+            reference_cost=22_000 * participant_count,
+            calculated_at=timezone.now(),
+        )
+
+        ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        training_row = next(
+            row
+            for row in svc.get_plan_sources(self.cd_p, {"fy": FY, "month": MONTH})[
+                "rows"
+            ]
+            if row["activity_id"] == training.id
+        )
+        self.assertEqual(training_row["operational_cost"], 120_000)
+        self.assertEqual(training_row["reference_cost"], 220_000)
+        self.assertEqual(ctx["country_envelope"]["strategicReserveRequested"], 100_000)
+        self.assertEqual(ctx["country_envelope"]["totalCountryRequest"], 520_000)
+
+        submitted = svc.send_to_rvp(self.cd_p, ctx["budget_id"])
+        self.assertEqual(submitted.total_amount, 520_000)
+        self.assertEqual(submitted.operational_activity_requirement, 420_000)
+        self.assertEqual(submitted.regional_standard_ceiling, 520_000)
+        snapshot = submitted.snapshots.get(version=submitted.submission_version)
+        training_line = next(
+            item for item in snapshot.line_items if item["activity_id"] == training.id
+        )
+        self.assertEqual(training_line["operational_amount"], 120_000)
+        self.assertEqual(training_line["reference_amount"], 220_000)
+        self.assertEqual(training_line["difference"], 100_000)
 
     def test_pl_monthly_request_does_not_replace_planned_activity_source(self):
         """Fund requests trace planned costs but never gate the General Budget."""

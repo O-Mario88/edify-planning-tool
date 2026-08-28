@@ -30,6 +30,7 @@ from apps.core.navigation import (
     ADMIN,
     ANALYTICS_SECTIONS,
     PAGE_PERMISSIONS,
+    ROLE_EXCLUSIVE_PAGES,
     SIDEBAR_ITEMS,
 )
 from apps.core.enums import ActivityStatus
@@ -1006,7 +1007,7 @@ def build_page_inventory() -> dict:
             else re.sub(r"[_-]+", " ", route_name or view_name).title()
         )
         roles = set(PAGE_PERMISSIONS.get(permission_key, set()))
-        if permission_key:
+        if permission_key and permission_key not in ROLE_EXCLUSIVE_PAGES:
             roles.add(ADMIN)  # RolePermissionService has an explicit admin bypass.
 
         findings = _template_findings(source, " ".join(templates))

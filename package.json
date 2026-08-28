@@ -4,9 +4,12 @@
   "description": "CSS build pipeline: compiles assets/css/tailwind.source.css (Tailwind v4 + custom.css) into the committed bundle static/css/main.css. Never edit main.css by hand.",
   "scripts": {
     "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css && tailwindcss -i assets/css/tokens.source.css -o static/css/tokens.css",
-    "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch"
+    "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:list": "playwright test --list"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/cli": "4.3.3",
     "axe-core": "4.13.0",
     "tailwindcss": "4.3.3"
