@@ -168,8 +168,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
              cfg.labels = [{% for s in status_distribution %}'{{ s.label|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
              cfg.chart.height = 220;
              cfg.colors = ['var(--edify-text-subtle)', 'var(--edify-chart-blue)', 'var(--edify-chart-amber)', 'var(--edify-chart-purple)', 'var(--edify-chart-green)'];
-             this.chart = new ApexCharts(el, cfg);
-             this.chart.render();
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
            }
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">4a. Course Status Distribution</h2>
@@ -198,8 +197,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
              cfg.chart.height = 220;
              cfg.colors = ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-text-muted)'];
              cfg.plotOptions.pie.donut.labels.total.formatter = () => '{{ fund_utilization.accounted_pct }}%';
-             this.chart = new ApexCharts(el, cfg);
-             this.chart.render();
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
            }
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">4b. Fund Utilization</h2>

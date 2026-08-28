@@ -213,14 +213,13 @@
 
   var chartEl = document.querySelector('#plDashPerfChart');
   if (chartEl) {
-    var perfChart = new ApexCharts(chartEl, buildChart());
-    perfChart.render();
+    var perfChart = window.EdifyChartSystem.renderDetached(chartEl, buildChart());
 
     // Re-render on theme change
     window.addEventListener('edify-theme-change', function() {
-      perfChart.destroy();
-      perfChart = new ApexCharts(chartEl, buildChart());
-      perfChart.render();
+      if (perfChart) perfChart.destroy();
+      chartEl.replaceChildren();
+      perfChart = window.EdifyChartSystem.renderDetached(chartEl, buildChart());
     });
   }
 })();
