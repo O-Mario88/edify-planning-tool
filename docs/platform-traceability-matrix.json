@@ -47,6 +47,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -125,6 +126,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -166,6 +168,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "hr.priorities_agreed",
@@ -399,6 +402,7 @@
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
         "apps/budget/services.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -482,6 +486,7 @@
         "activities.VerificationHistory",
         "audit.AuditLog",
         "audit.DomainEventLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -529,6 +534,7 @@
       "auditActions": [
         "accountability_submitted",
         "activity.closed",
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "advance_request.approve_accountability",
@@ -928,6 +934,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/handlers.py",
         "apps/business_transformation/services.py",
         "apps/business_transformation/signals.py",
@@ -986,6 +993,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1022,6 +1030,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "notification.activity_submitted_for_review",
@@ -1137,6 +1146,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -1192,6 +1202,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1232,6 +1243,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "advance_request.confirm_reimbursement_receipt",
@@ -1344,6 +1356,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -1391,6 +1404,7 @@
         "accounts.User",
         "activities.Activity",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "fund_requests.AdvanceRequest",
@@ -1429,6 +1443,7 @@
       ],
       "auditActions": [
         "accountability_submitted",
+        "activity.cost.calculated",
         "activity.scheduled",
         "advance_request.approve_accountability",
         "advance_request.pl_approve_accountability",
@@ -1610,6 +1625,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -1670,6 +1686,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1710,6 +1727,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "hr.performance_window_activated",
@@ -2722,6 +2740,8 @@
         "apps/accounts/models.py",
         "apps/activities/models.py",
         "apps/audit/services.py",
+        "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -2841,5 +2861,11 @@
       "set": "Metric definitions",
       "reason": "apps/core/metrics/registry.py already carries per-metric traceability as required fields -- owning service, source models, owner page, roles, drill-down and refresh events -- and registry.check() verifies the service paths resolve. This matrix joins to it rather than restating it."
     }
-  ]
+  ],
+  "fingerprint": {
+    "payload": "0ef34886eafc36adfd848582d7203bf40a12995ccd73cd3528f8240a3e460323",
+    "sources": "db71cb4d39b7db71ac02b59f82bf6e5dd8e9f6d7d56ee07ac58a5cf61f90ceba",
+    "sourceCount": 159,
+    "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
+  }
 }

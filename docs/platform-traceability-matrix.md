@@ -15,16 +15,16 @@ Each requirement's covering test is executed with the platform instrumented; eve
 
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `journey-01` | Priority to verified performance | ✓ | 2 | 77 | 34 | 3 | 3 | 5 | 17 | 46 |
+| `journey-01` | Priority to verified performance | ✓ | 2 | 78 | 35 | 3 | 3 | 5 | 18 | 46 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 30 | 10 | 1 | 10 | 0 | 0 | 14 |
-| `journey-03` | Standard staff school visit | ✓ | 13 | 75 | 36 | 4 | 8 | 9 | 25 | 46 |
+| `journey-03` | Standard staff school visit | ✓ | 13 | 76 | 37 | 4 | 8 | 9 | 26 | 46 |
 | `journey-04` | Cluster training | ✓ | 0 | 17 | 14 | 0 | 0 | 0 | 1 | 41 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 37 | 27 | 2 | 2 | 1 | 4 | 54 |
-| `journey-06` | Special Project | ✓ | 0 | 54 | 31 | 4 | 5 | 5 | 15 | 46 |
-| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 53 | 29 | 5 | 10 | 8 | 21 | 46 |
-| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 50 | 23 | 3 | 6 | 7 | 17 | 45 |
+| `journey-06` | Special Project | ✓ | 0 | 55 | 32 | 4 | 5 | 5 | 16 | 46 |
+| `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 54 | 30 | 5 | 10 | 8 | 22 | 46 |
+| `journey-08` | Activity canceled after disbursement | ✓ | 2 | 51 | 24 | 3 | 6 | 7 | 18 | 45 |
 | `journey-09` | Leave and temporary coverage | ✓ | 0 | 20 | 14 | 0 | 0 | 1 | 4 | 10 |
-| `journey-10` | Quarterly Performance Conversation | ✓ | 0 | 55 | 36 | 3 | 3 | 5 | 22 | 46 |
+| `journey-10` | Quarterly Performance Conversation | ✓ | 0 | 56 | 37 | 3 | 3 | 5 | 23 | 46 |
 | `journey-11` | Professional Development | ✓ | 0 | 10 | 7 | 0 | 0 | 1 | 1 | 0 |
 | `journey-12` | Policy lifecycle | ✓ | 0 | 18 | 11 | 0 | 0 | 1 | 10 | 4 |
 | `journey-13` | PIP | ✓ | 0 | 7 | 6 | 0 | 0 | 0 | 3 | 0 |
@@ -36,7 +36,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-19` | Cross-role security | ✓ | 4 | 32 | 11 | 2 | 2 | 0 | 1 | 49 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
-| `journey-22` | Financial-year rollover | ✓ | 0 | 20 | 16 | 0 | 0 | 1 | 3 | 49 |
+| `journey-22` | Financial-year rollover | ✓ | 0 | 22 | 16 | 0 | 0 | 1 | 3 | 49 |
 
 ## Each requirement in full
 
@@ -53,10 +53,10 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Permissions checked | `fundRequest.approveEscalated`, `ia.verify`, `payment.act` |
 | Page gates checked | `my_target`, `performance_conversations` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py` _+67 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+22 more_ |
+| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py` _+68 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+23 more_ |
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement`, `notification.activity_submitted_for_review` _+9 more_ |
+| Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement` _+10 more_ |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+38 more_ |
 
@@ -93,10 +93,10 @@ Steps: Plan → Cost → Schedule → Fund request → Approval → Disbursement
 | Permissions checked | `fundRequest.approveEscalated`, `ia.verify`, `payment.act`, `planning.manualActivity.create` |
 | Page gates checked | `disbursements`, `fund_requests`, `ia_review_workspace`, `my_plan`, `planning`, `weekly_fund_request_disburse` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/closure_services.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+65 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+24 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/closure_services.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+66 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityClosure`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.ActivityTimelineEvent`, `activities.AnalyticsPublishRecord`, `activities.ClosureBlocker`, `activities.ClosureChecklist` _+25 more_ |
 | Notifications raised | `activity_closed`, `activity_submitted_for_review`, `advance_accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready` _+1 more_ |
-| Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `complete_activity` _+17 more_ |
+| Audit actions (evidence) | `accountability_submitted`, `activity.closed`, `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability` _+18 more_ |
 | Metrics computed in the run | `frontend_views_budget_views_accountability_pending`, `frontend_views_budget_views_approved`, `frontend_views_budget_views_awaiting_approval`, `frontend_views_budget_views_ready_for_disbursement`, `frontend_views_budget_views_returned_for_review`, `frontend_views_budget_views_total_requested_this_month`, `fund_request_monthly_admin_budget`, `fund_request_monthly_meetings_budget` _+3 more_ |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+38 more_ |
 
@@ -153,10 +153,10 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Permissions checked | `fundRequest.approveEscalated`, `ia.verify`, `payment.act`, `project.configurePriorities` |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py`, `apps/budget/costing.py`, `apps/budget/costing_service.py` _+44 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+19 more_ |
+| Services executed | `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py`, `apps/budget/costing.py`, `apps/budget/costing_service.py` _+45 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+20 more_ |
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready`, `notification.weekly_fund_request_submitted`, `pl_review_confirm` _+7 more_ |
+| Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready`, `notification.weekly_fund_request_submitted` _+8 more_ |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+38 more_ |
 
@@ -173,10 +173,10 @@ Steps: Advance → Actual spend exceeds advance → Accountability → Reimburse
 | Permissions checked | `budget.approve`, `fundRequest.approveEscalated`, `ia.verify`, `payment.act`, `planning.view` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+43 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+17 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py` _+44 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+18 more_ |
 | Notifications raised | `activity_submitted_for_review`, `advance_accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability`, `notification.activity_submitted_for_review` _+13 more_ |
+| Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `advance_request.confirm_reimbursement_receipt`, `advance_request.pl_approve_accountability`, `advance_request.reimburse`, `advance_request.route_to_reimbursement`, `advance_request.submit_accountability` _+14 more_ |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+38 more_ |
 
@@ -193,10 +193,10 @@ Steps: Cancellation → Planned output reversal → Unused balance → Accountab
 | Permissions checked | `activity.assign`, `fundRequest.approveEscalated`, `payment.act` |
 | Page gates checked | `my_plan` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/activities/views.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing.py` _+40 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `audit.AuditLog`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest`, `fund_requests.FundRequestItem`, `fund_requests.TransportPayment` _+11 more_ |
+| Services executed | `apps/accounts/jwt.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/models.py`, `apps/activities/services.py`, `apps/activities/views.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing.py` _+41 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `audit.AuditLog`, `budget.ActivityCostSnapshot`, `budget.CostSetting`, `daily_visit_batches.DailyVisitBatch`, `fund_requests.AdvanceRequest`, `fund_requests.FundRequest`, `fund_requests.FundRequestItem` _+12 more_ |
 | Notifications raised | `advance_accountability_pl_approved`, `advance_accountability_ready`, `advance_accountability_submitted`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `accountability_submitted`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.advance_accountability_pl_approved`, `notification.advance_accountability_ready` _+9 more_ |
+| Audit actions (evidence) | `accountability_submitted`, `activity.cost.calculated`, `activity.scheduled`, `advance_request.approve_accountability`, `advance_request.pl_approve_accountability`, `advance_request.submit_accountability`, `advance_request.verify_return`, `notification.advance_accountability_pl_approved` _+10 more_ |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_returned_for_correction`, `ia_salesforce_verification_pending`, `ia_verification_overdue` _+37 more_ |
 
@@ -233,10 +233,10 @@ Steps: HR unlocks → Employee evaluates → Manager evaluates → Automatic val
 | Permissions checked | `fundRequest.approveEscalated`, `ia.verify`, `payment.act` |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/audit/services.py`, `apps/budget/costing.py`, `apps/budget/costing_service.py`, `apps/business_transformation/signals.py` _+45 more_ |
-| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+24 more_ |
+| Services executed | `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/audit/services.py`, `apps/budget/costing.py`, `apps/budget/costing_service.py`, `apps/budget/signals.py` _+46 more_ |
+| Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+25 more_ |
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
-| Audit actions (evidence) | `activity.salesforce_id_entered`, `activity.scheduled`, `hr.performance_window_activated`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_acknowledged`, `hr.review_assessed`, `hr.review_calibrated` _+14 more_ |
+| Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.performance_window_activated`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_acknowledged`, `hr.review_assessed` _+15 more_ |
 | Metrics computed in the run | — |
 | Metrics whose sources it moves | `bt_schools_financed`, `country_operational_health_rate`, `country_schools_needing_attention`, `country_schools_ready_for_action`, `ia_awaiting_verification`, `ia_evidence_ready_for_review`, `ia_returned_for_correction`, `ia_salesforce_verification_pending` _+38 more_ |
 
@@ -445,7 +445,7 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Permissions checked | — |
 | Page gates checked | — |
 | Object-level guards | — |
-| Services executed | `apps/accounts/models.py`, `apps/activities/models.py`, `apps/audit/services.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py`, `apps/core/cuid.py`, `apps/core/fy.py`, `apps/core/models.py`, `apps/core/request_cache.py` _+10 more_ |
+| Services executed | `apps/accounts/models.py`, `apps/activities/models.py`, `apps/audit/services.py`, `apps/budget/costing_service.py`, `apps/budget/signals.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py`, `apps/core/cuid.py`, `apps/core/fy.py` _+12 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `fund_requests.AdvanceRequest`, `hr.FiscalYearRollover`, `hr.PerformanceCycle`, `hr.PerformancePriority`, `hr.PerformanceReview`, `hr.PerformanceSnapshot`, `hr.StrategicPriorityCycle` _+4 more_ |
 | Notifications raised | `fiscal_year_priority_setting` |
 | Audit actions (evidence) | `hr.fiscal_year_rolled_over`, `hr.performance_agreement_drafted`, `notification.fiscal_year_priority_setting` |
