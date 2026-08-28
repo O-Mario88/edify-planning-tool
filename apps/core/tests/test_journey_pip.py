@@ -135,6 +135,11 @@ class PipJourneyTest(TestCase):
         self.assertEqual(plan.outcome, "completed")
         self.assertIsNotNone(plan.closed_at)
 
+        self.client.force_login(self.hr)
+        response = self.client.get("/recovery-plans")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.employee.name)
+
     def test_a_recommendation_without_a_recorded_reason_is_refused(self):
         """Verified context. A PIP founded on nothing is founded on nobody."""
         with self.assertRaises(BadRequest):

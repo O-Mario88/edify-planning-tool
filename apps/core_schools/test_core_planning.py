@@ -756,17 +756,23 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertNotIn("monthly SSA improvement", html.lower())
 
     # ── 21–22: package completion + champions ────────────────────────────────
-    def test_package_complete_only_after_all_slots_verified(self):
-        from apps.system_health.services import _workflow_issues
+    def test_package_complete_is_computed_from_verified_slots(self):
+        from apps.core_schools.core_planning_services import (
+            CorePackageSchedulingService,
+        )
 
-        CorePlan.objects.filter(id=self.plan.id).update(status="Package Complete")
-        issues = _workflow_issues()
-        self.assertGreaterEqual(issues["corePackageCompleteMissingSlots"], 1)
+        # Package completion is a derived fact, not a second lifecycle status
+        # somebody must remember to write.  CorePlan.status continues through
+        # Impact Measured / Champion Candidate while this answer stays true.
+        self.assertFalse(
+            CorePackageSchedulingService.summary(self.plan)["package_complete"]
+        )
         CoreActivitySlot.objects.filter(core_plan=self.plan).update(
             status="Completed", salesforce_id="SF-OK", evidence_uri="e.jpg"
         )
-        issues = _workflow_issues()
-        self.assertEqual(issues["corePackageCompleteMissingSlots"], 0)
+        self.assertTrue(
+            CorePackageSchedulingService.summary(self.plan)["package_complete"]
+        )
 
     def test_champion_candidate_requires_verified_criteria(self):
         from apps.core_schools.champion_services import ChampionEligibilityService

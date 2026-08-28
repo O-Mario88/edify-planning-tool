@@ -149,12 +149,7 @@ These need access, not judgement.
 
 ## What engineering can still do without any of the above
 
-**JRN-01 — take more journeys through the door.** The requirements traceability matrix
-found that nineteen of the twenty walked journeys never issue an HTTP request, so most of
-the platform's 810 route-level authority gates are exercised by no mandated journey.
-Journey 19 is converted and now reproduces SEC-01 at the endpoint it lived at. The
-remaining nineteen are real, unblocked work.
-
-It is worth being clear that finishing it **would not change the verdict.** It closes an
-evidence gap, not a release blocker. Everything that actually stands between this
-platform and a Go is on the two lists above.
+**JRN-01 is closed (2026-08-28).** All twenty implemented journeys now reach a
+real role-gated HTTP surface inside their whole-journey test. Seven also compute
+registered display metrics. The traceability artefact was rebuilt and both the
+route set and metric counts are regression-pinned.

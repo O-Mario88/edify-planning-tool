@@ -196,6 +196,11 @@ class TeamOversightJourneyTest(TestCase):
             "delegating the school assigned it to the Programme Lead",
         )
 
+        self.client.force_login(self.pl)
+        response = self.client.get("/team-planning-oversight/")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Team Oversight")
+
     def test_the_supervisor_still_cannot_write_the_school_they_delegated(self):
         """SEC-01, asked at the moment it is most tempting to allow.
 

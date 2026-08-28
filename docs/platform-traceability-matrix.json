@@ -47,6 +47,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -125,6 +126,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -166,6 +168,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "hr.priorities_agreed",
@@ -399,6 +402,7 @@
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
         "apps/budget/services.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -482,6 +486,7 @@
         "activities.VerificationHistory",
         "audit.AuditLog",
         "audit.DomainEventLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -529,6 +534,7 @@
       "auditActions": [
         "accountability_submitted",
         "activity.closed",
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "advance_request.approve_accountability",
@@ -632,25 +638,46 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /clusters/{id}"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
+        "apps/clusters/services.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
+        "apps/core/enums.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
+        "apps/core/pagination.py",
+        "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/templatetags/table_pagination.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/cluster_views.py",
+        "apps/messaging/services.py",
+        "apps/professional_development/services.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/ssa/presentation.py",
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -666,10 +693,14 @@
         "evidence.EvidenceRecord",
         "geography.District",
         "geography.Region",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [],
-      "pages": [],
+      "pages": [
+        "cluster_detail",
+        "planning"
+      ],
       "objectGuards": [],
       "notifications": [],
       "auditActions": [
@@ -916,36 +947,52 @@
         "ImpactAssessment",
         "ProjectCoordinator"
       ],
-      "routes": [],
+      "routes": [
+        "GET /projects/{id}"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
         "apps/activity_catalogue/services.py",
+        "apps/admin_ops/detection.py",
         "apps/analytics/platform_engine.py",
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/handlers.py",
         "apps/business_transformation/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
         "apps/core/calendar_policy.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/metrics/reconciled_registry.py",
+        "apps/core/metrics/registry.py",
+        "apps/core/metrics/states.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/templatetags/kpi_metrics.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/extended_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
@@ -953,12 +1000,15 @@
         "apps/fund_requests/vendor_channel.py",
         "apps/fund_requests/weekly_service.py",
         "apps/integrations/services.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/services.py",
+        "apps/professional_development/services.py",
         "apps/projects/handlers.py",
         "apps/projects/models.py",
+        "apps/projects/scoping.py",
         "apps/projects/services.py",
         "apps/projects/signals.py",
         "apps/projects/ssa_impact.py",
@@ -971,7 +1021,9 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/recommendation_models.py",
         "apps/ssa/recommendation_service.py",
-        "apps/ssa/services.py"
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -986,6 +1038,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1002,6 +1055,7 @@
         "routes.DailyVisitRouteBatch",
         "routes.SchoolLocationConfidence",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecommendation",
         "ssa.SsaRecord",
         "ssa.SsaScore"
@@ -1012,7 +1066,9 @@
         "payment.act",
         "project.configurePriorities"
       ],
-      "pages": [],
+      "pages": [
+        "projects"
+      ],
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
@@ -1022,6 +1078,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "notification.activity_submitted_for_review",
@@ -1038,7 +1095,10 @@
         "weekly_fund_request.receipt_confirmed",
         "weekly_fund_request.submit"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "frontend_views_extended_views_assigned_schools",
+        "frontend_views_extended_views_assigned_staff"
+      ],
       "metricsAffected": [
         "bt_schools_financed",
         "country_operational_health_rate",
@@ -1137,6 +1197,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -1192,6 +1253,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1232,6 +1294,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "advance_request.confirm_reimbursement_receipt",
@@ -1344,6 +1407,7 @@
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
@@ -1391,6 +1455,7 @@
         "accounts.User",
         "activities.Activity",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "fund_requests.AdvanceRequest",
@@ -1429,6 +1494,7 @@
       ],
       "auditActions": [
         "accountability_submitted",
+        "activity.cost.calculated",
         "activity.scheduled",
         "advance_request.approve_accountability",
         "advance_request.pl_approve_accountability",
@@ -1513,28 +1579,50 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /leave/approvals"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
+        "apps/core/calendar_policy.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
         "apps/core/logging_filters.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/metrics/reconciled_registry.py",
+        "apps/core/metrics/registry.py",
+        "apps/core/metrics/states.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
+        "apps/core/pagination.py",
+        "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/core/templatetags/table_pagination.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/leave_views.py",
         "apps/hr/leave_services.py",
         "apps/hr/target_distribution.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
+        "apps/professional_development/services.py",
         "apps/realtime/bus.py",
         "apps/realtime/domain_events.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.Leave",
@@ -1550,10 +1638,13 @@
         "geography.District",
         "geography.Region",
         "notifications.Notification",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [],
-      "pages": [],
+      "pages": [
+        "leave_approvals"
+      ],
       "objectGuards": [],
       "notifications": [
         "leave_approved"
@@ -1564,7 +1655,14 @@
         "leave.approved",
         "notification.leave_approved"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "frontend_views_leave_views_approved_7_days",
+        "frontend_views_leave_views_away_this_week",
+        "frontend_views_leave_views_balance_alerts",
+        "frontend_views_leave_views_coverage_ready",
+        "frontend_views_leave_views_critical_conflicts",
+        "frontend_views_leave_views_pending_approvals"
+      ],
       "metricsAffected": [
         "bt_schools_financed",
         "country_operational_health_rate",
@@ -1599,26 +1697,35 @@
         "CountryDirector",
         "ImpactAssessment"
       ],
-      "routes": [],
+      "routes": [
+        "GET /performance-conversation"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
         "apps/activity_catalogue/services.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/budget/costing.py",
         "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
         "apps/core/calendar_policy.py",
         "apps/core/clock.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
         "apps/core/fy.py",
+        "apps/core/metrics/ratio.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
@@ -1627,6 +1734,9 @@
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
         "apps/daily_visit_batches/workload.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/hr_views.py",
         "apps/fund_requests/advance_service.py",
         "apps/fund_requests/fundable.py",
         "apps/fund_requests/funding_guard.py",
@@ -1641,10 +1751,12 @@
         "apps/hr/priority_portfolio.py",
         "apps/hr/review_authority.py",
         "apps/integrations/services.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/services.py",
+        "apps/professional_development/services.py",
         "apps/projects/signals.py",
         "apps/projects/staff_priorities.py",
         "apps/routes/engine.py",
@@ -1653,9 +1765,11 @@
         "apps/schools/models.py",
         "apps/ssa/models.py",
         "apps/ssa/services.py",
+        "apps/targets/apps.py",
         "apps/targets/fy_calendar.py",
         "apps/targets/my_targets.py",
-        "apps/targets/performance.py"
+        "apps/targets/performance.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -1670,6 +1784,7 @@
         "activities.VerificationDecision",
         "activities.VerificationHistory",
         "audit.AuditLog",
+        "budget.ActivityCostSnapshot",
         "budget.CostSetting",
         "daily_visit_batches.DailyVisitBatch",
         "evidence.EvidenceRecord",
@@ -1691,6 +1806,7 @@
         "routes.DailyVisitRouteBatch",
         "routes.SchoolLocationConfidence",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecord",
         "ssa.SsaScore",
         "targets.MonthlyPersonalTarget"
@@ -1700,7 +1816,9 @@
         "ia.verify",
         "payment.act"
       ],
-      "pages": [],
+      "pages": [
+        "performance_conversations"
+      ],
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
@@ -1710,6 +1828,7 @@
         "weekly_fund_request_submitted"
       ],
       "auditActions": [
+        "activity.cost.calculated",
         "activity.salesforce_id_entered",
         "activity.scheduled",
         "hr.performance_window_activated",
@@ -1801,18 +1920,41 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /my-professional-development"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/metrics/reconciled_registry.py",
+        "apps/core/metrics/registry.py",
+        "apps/core/metrics/states.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
+        "apps/core/pagination.py",
+        "apps/core/permissions.py",
+        "apps/core/request_cache.py",
         "apps/core/request_context.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/core/templatetags/table_pagination.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/pd_views.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/professional_development/approval_service.py",
-        "apps/professional_development/services.py"
+        "apps/professional_development/completion_service.py",
+        "apps/professional_development/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -1821,10 +1963,13 @@
         "audit.AuditLog",
         "notifications.Notification",
         "professional_development.ProfessionalDevelopmentAllocation",
-        "professional_development.ProfessionalDevelopmentRequest"
+        "professional_development.ProfessionalDevelopmentRequest",
+        "sessions.Session"
       ],
       "permissions": [],
-      "pages": [],
+      "pages": [
+        "my_professional_development"
+      ],
       "objectGuards": [],
       "notifications": [
         "pd_action_required"
@@ -1832,7 +1977,16 @@
       "auditActions": [
         "notification.pd_action_required"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "professional_development_services_accountability_pending",
+        "professional_development_services_active_courses",
+        "professional_development_services_annual_pd_allocation",
+        "professional_development_services_certificates_pending",
+        "professional_development_services_committed_amount",
+        "professional_development_services_completed_courses",
+        "professional_development_services_funds_used_accounted",
+        "professional_development_services_remaining_fund"
+      ],
       "metricsAffected": []
     },
     {
@@ -1853,12 +2007,18 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /policy-agreement"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
         "apps/core/private_storage.py",
@@ -1866,13 +2026,19 @@
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/documents/gate.py",
         "apps/documents/help_sync.py",
         "apps/documents/models.py",
         "apps/documents/services.py",
         "apps/documents/storage.py",
+        "apps/documents/views.py",
         "apps/evidence/services.py",
         "apps/evidence/validation.py",
-        "apps/notifications/services.py"
+        "apps/messaging/services.py",
+        "apps/notifications/services.py",
+        "apps/professional_development/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -1885,7 +2051,8 @@
         "help_center.HelpArticle",
         "help_center.HelpArticleRoleAccess",
         "help_center.HelpCategory",
-        "notifications.Notification"
+        "notifications.Notification",
+        "sessions.Session"
       ],
       "permissions": [],
       "pages": [],
@@ -1932,15 +2099,36 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /recovery-plans"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/metrics/reconciled_registry.py",
+        "apps/core/metrics/registry.py",
+        "apps/core/metrics/states.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
+        "apps/core/permissions.py",
+        "apps/core/request_cache.py",
         "apps/core/request_context.py",
-        "apps/hr/performance_engine.py"
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/hr_views.py",
+        "apps/hr/performance_engine.py",
+        "apps/messaging/services.py",
+        "apps/professional_development/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -1948,10 +2136,13 @@
         "accounts.User",
         "audit.AuditLog",
         "hr.PerformanceImprovementPlan",
-        "hr.RecoveryMilestone"
+        "hr.RecoveryMilestone",
+        "sessions.Session"
       ],
       "permissions": [],
-      "pages": [],
+      "pages": [
+        "recovery_plans"
+      ],
       "objectGuards": [],
       "notifications": [],
       "auditActions": [
@@ -1959,7 +2150,68 @@
         "hr.pip_outcome",
         "hr.pip_recommended"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "frontend_views_hr_views_6_12_months",
+        "frontend_views_hr_views_acting_roles",
+        "frontend_views_hr_views_active",
+        "frontend_views_hr_views_applications",
+        "frontend_views_hr_views_approved",
+        "frontend_views_hr_views_average_score",
+        "frontend_views_hr_views_closed",
+        "frontend_views_hr_views_compensation_profiles",
+        "frontend_views_hr_views_completed",
+        "frontend_views_hr_views_compliance_gaps",
+        "frontend_views_hr_views_compliant",
+        "frontend_views_hr_views_configured",
+        "frontend_views_hr_views_countries",
+        "frontend_views_hr_views_coverage_gaps",
+        "frontend_views_hr_views_critical",
+        "frontend_views_hr_views_critical_cases",
+        "frontend_views_hr_views_current_period",
+        "frontend_views_hr_views_departments",
+        "frontend_views_hr_views_development_required",
+        "frontend_views_hr_views_due_soon",
+        "frontend_views_hr_views_escalated",
+        "frontend_views_hr_views_events",
+        "frontend_views_hr_views_exceptions",
+        "frontend_views_hr_views_handover_gaps",
+        "frontend_views_hr_views_headcount",
+        "frontend_views_hr_views_hired",
+        "frontend_views_hr_views_in_progress",
+        "frontend_views_hr_views_in_review",
+        "frontend_views_hr_views_in_screening",
+        "frontend_views_hr_views_interviews",
+        "frontend_views_hr_views_jurisdictions",
+        "frontend_views_hr_views_leave_records",
+        "frontend_views_hr_views_manager_pending",
+        "frontend_views_hr_views_mandatory",
+        "frontend_views_hr_views_missing_or_expired",
+        "frontend_views_hr_views_missing_profiles",
+        "frontend_views_hr_views_nominations",
+        "frontend_views_hr_views_open",
+        "frontend_views_hr_views_open_cases",
+        "frontend_views_hr_views_open_relations_cases",
+        "frontend_views_hr_views_optional",
+        "frontend_views_hr_views_overdue",
+        "frontend_views_hr_views_past_exit_date_still_active",
+        "frontend_views_hr_views_pending",
+        "frontend_views_hr_views_pending_approval",
+        "frontend_views_hr_views_people",
+        "frontend_views_hr_views_people_in_scope",
+        "frontend_views_hr_views_plans",
+        "frontend_views_hr_views_ready",
+        "frontend_views_hr_views_ready_now",
+        "frontend_views_hr_views_refused_actions",
+        "frontend_views_hr_views_requirements",
+        "frontend_views_hr_views_resolved",
+        "frontend_views_hr_views_reviews",
+        "frontend_views_hr_views_reviews_due",
+        "frontend_views_hr_views_screening",
+        "frontend_views_hr_views_showing",
+        "frontend_views_hr_views_staff_checked",
+        "frontend_views_hr_views_triage",
+        "frontend_views_hr_views_vacancies"
+      ],
       "metricsAffected": []
     },
     {
@@ -1979,27 +2231,50 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /team-planning-oversight/"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activity_catalogue/scheduling_health.py",
         "apps/activity_catalogue/services.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/clusters/eligibility.py",
+        "apps/clusters/oversight_service.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/metrics/registry.py",
+        "apps/core/metrics/spec.py",
+        "apps/core/metrics/states.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
+        "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/oversight_views.py",
         "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/planning/action_service.py",
+        "apps/planning/flagged_schools.py",
+        "apps/planning/oversight_service.py",
+        "apps/planning/risk_service.py",
         "apps/planning/urgent_attention.py",
+        "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -2014,10 +2289,14 @@
         "messaging.MessageThread",
         "notifications.Notification",
         "planning.TeamAction",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [],
-      "pages": [],
+      "pages": [
+        "team_planning_oversight",
+        "team_targets"
+      ],
       "objectGuards": [],
       "notifications": [
         "message",
@@ -2028,7 +2307,17 @@
         "school_action.acknowledged",
         "school_action.sent"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "oversight_awaiting_verification",
+        "oversight_country_activities_at_risk",
+        "oversight_country_activities_planned",
+        "oversight_country_planned_budget",
+        "oversight_execution_progress",
+        "oversight_partner_awaiting_schedule",
+        "oversight_team_activities_planned",
+        "oversight_team_planned_budget",
+        "oversight_team_work_needing_attention"
+      ],
       "metricsAffected": [
         "bt_schools_financed",
         "country_operational_health_rate",
@@ -2064,27 +2353,41 @@
         "ImpactAssessment",
         "Program Lead"
       ],
-      "routes": [],
+      "routes": [
+        "GET /business-transformation/business-accounting-finance"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/analytics/platform_engine.py",
         "apps/audit/services.py",
+        "apps/business_transformation/frontend_views.py",
         "apps/business_transformation/handlers.py",
         "apps/business_transformation/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
+        "apps/professional_development/services.py",
         "apps/projects/handlers.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
@@ -2094,7 +2397,9 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/recommendation_models.py",
         "apps/ssa/recommendation_service.py",
-        "apps/ssa/services.py"
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -2110,6 +2415,7 @@
         "notifications.Notification",
         "outbox.OutboxEvent",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecommendation",
         "ssa.SsaRecord",
         "ssa.SsaScore"
@@ -2118,7 +2424,9 @@
         "businessTransformation.ia.validate",
         "businessTransformation.schoolSupport.manage"
       ],
-      "pages": [],
+      "pages": [
+        "business_transformation_finance"
+      ],
       "objectGuards": [
         "apps/core/scoping.py::assert_may_plan_school"
       ],
@@ -2173,26 +2481,40 @@
         "ImpactAssessment",
         "Program Lead"
       ],
-      "routes": [],
+      "routes": [
+        "GET /business-transformation/government-requirements"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
+        "apps/business_transformation/frontend_views.py",
         "apps/business_transformation/handlers.py",
         "apps/business_transformation/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/enums.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/scoping.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
+        "apps/professional_development/services.py",
         "apps/projects/handlers.py",
         "apps/projects/signals.py",
         "apps/schools/data_quality.py",
@@ -2202,7 +2524,9 @@
         "apps/ssa/recommendation_engine.py",
         "apps/ssa/recommendation_models.py",
         "apps/ssa/recommendation_service.py",
-        "apps/ssa/services.py"
+        "apps/ssa/services.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -2218,6 +2542,7 @@
         "notifications.Notification",
         "outbox.OutboxEvent",
         "schools.School",
+        "sessions.Session",
         "ssa.SsaRecommendation",
         "ssa.SsaRecord",
         "ssa.SsaScore"
@@ -2226,7 +2551,9 @@
         "businessTransformation.ia.validate",
         "businessTransformation.schoolSupport.manage"
       ],
-      "pages": [],
+      "pages": [
+        "business_transformation_government"
+      ],
       "objectGuards": [
         "apps/core/scoping.py::assert_may_plan_school"
       ],
@@ -2287,26 +2614,45 @@
         "MfiPartnerAdmin",
         "RegionalVicePresident"
       ],
-      "routes": [],
+      "routes": [
+        "GET /business-transformation/impact-reports"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
+        "apps/business_transformation/frontend_views.py",
         "apps/business_transformation/lending_impact.py",
         "apps/business_transformation/lending_ledger.py",
         "apps/business_transformation/models.py",
         "apps/business_transformation/services.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
+        "apps/core/pagination.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
+        "apps/core/request_cache.py",
         "apps/core/request_context.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/core/templatetags/table_pagination.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
         "apps/integrations/services.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
+        "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.User",
@@ -2332,7 +2678,8 @@
         "geography.District",
         "geography.Region",
         "notifications.Notification",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [
         "businessTransformation.allocation.manage",
@@ -2347,7 +2694,9 @@
         "businessTransformation.salesforce.confirm",
         "businessTransformation.sensitive.view"
       ],
-      "pages": [],
+      "pages": [
+        "business_transformation_reports"
+      ],
       "objectGuards": [],
       "notifications": [
         "bt.loan.disbursed",
@@ -2421,26 +2770,46 @@
         "MfiLoanOfficer",
         "MfiPartnerAdmin"
       ],
-      "routes": [],
+      "routes": [
+        "GET /business-transformation/overview"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
+        "apps/business_transformation/frontend_views.py",
         "apps/business_transformation/lending_impact.py",
         "apps/business_transformation/lending_ledger.py",
         "apps/business_transformation/models.py",
         "apps/business_transformation/services.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
+        "apps/core/metrics/registry.py",
+        "apps/core/metrics/spec.py",
+        "apps/core/metrics/states.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
         "apps/core/permissions.py",
         "apps/core/rbac.py",
+        "apps/core/request_cache.py",
         "apps/core/request_context.py",
+        "apps/core/templatetags/kpi_metrics.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
         "apps/integrations/services.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
+        "apps/professional_development/services.py",
         "apps/schools/data_quality.py",
-        "apps/schools/models.py"
+        "apps/schools/models.py",
+        "apps/targets/apps.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.User",
@@ -2462,18 +2831,23 @@
         "geography.District",
         "geography.Region",
         "notifications.Notification",
-        "schools.School"
+        "schools.School",
+        "sessions.Session"
       ],
       "permissions": [
         "businessTransformation.allocation.manage",
+        "businessTransformation.case.manage",
         "businessTransformation.disbursement.write",
         "businessTransformation.facility.approve",
         "businessTransformation.facility.manage",
         "businessTransformation.facility.transfer",
         "businessTransformation.ia.validate",
-        "businessTransformation.loan.write"
+        "businessTransformation.loan.write",
+        "businessTransformation.mfi.manage"
       ],
-      "pages": [],
+      "pages": [
+        "business_transformation"
+      ],
       "objectGuards": [],
       "notifications": [
         "bt.loan.disbursed"
@@ -2489,7 +2863,21 @@
         "bt.loan.purpose_plan_created",
         "notification.bt.loan.disbursed"
       ],
-      "metricsComputed": [],
+      "metricsComputed": [
+        "bt_active_portfolio",
+        "bt_amount_overdue",
+        "bt_collection_rate",
+        "bt_defaulted_portfolio",
+        "bt_edtech_share",
+        "bt_new_loans",
+        "bt_par30",
+        "bt_positive_impact",
+        "bt_repaid_amount",
+        "bt_salesforce_backlog",
+        "bt_schools_financed",
+        "bt_use_verified",
+        "bt_value_disbursed"
+      ],
       "metricsAffected": [
         "bt_active_portfolio",
         "bt_defaulted_portfolio",
@@ -2717,28 +3105,46 @@
       ],
       "untracedBecause": "",
       "roles": [],
-      "routes": [],
+      "routes": [
+        "GET /my-performance"
+      ],
       "services": [
+        "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/activities/models.py",
+        "apps/admin_ops/detection.py",
         "apps/audit/services.py",
+        "apps/budget/costing_service.py",
+        "apps/budget/signals.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
         "apps/core/audit_hash.py",
+        "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/middleware.py",
         "apps/core/models.py",
+        "apps/core/navigation.py",
+        "apps/core/permissions.py",
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
+        "apps/documents/gate.py",
+        "apps/frontend/templatetags/frontend_filters.py",
+        "apps/frontend/views/hr_views.py",
         "apps/hr/fiscal_year_rollover.py",
         "apps/hr/performance_engine.py",
         "apps/hr/priority_cascade.py",
+        "apps/messaging/services.py",
         "apps/notifications/services.py",
         "apps/outbox/services.py",
+        "apps/professional_development/services.py",
         "apps/projects/signals.py",
+        "apps/projects/staff_priorities.py",
         "apps/schools/data_quality.py",
         "apps/schools/models.py",
-        "apps/targets/my_targets.py"
+        "apps/targets/apps.py",
+        "apps/targets/my_targets.py",
+        "apps/telemetry/middleware.py"
       ],
       "modelsWritten": [
         "accounts.StaffProfile",
@@ -2756,10 +3162,13 @@
         "notifications.Notification",
         "outbox.OutboxEvent",
         "schools.School",
+        "sessions.Session",
         "targets.TargetAchievementLedger"
       ],
       "permissions": [],
-      "pages": [],
+      "pages": [
+        "my_performance"
+      ],
       "objectGuards": [],
       "notifications": [
         "fiscal_year_priority_setting"

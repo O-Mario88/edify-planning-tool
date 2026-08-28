@@ -207,6 +207,22 @@ services:
       timeout_seconds: 10
       success_threshold: 1
       failure_threshold: 5
+    alerts:
+      - rule: CPU_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
+      - rule: MEM_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 85
+        window: TEN_MINUTES
+      - rule: RESTART_COUNT
+        disabled: false
+        operator: GREATER_THAN
+        value: 1
+        window: FIVE_MINUTES
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
@@ -229,6 +245,17 @@ workers:
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
     run_command: python manage.py runscheduler
+    alerts:
+      - rule: CPU_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
+      - rule: RESTART_COUNT
+        disabled: false
+        operator: GREATER_THAN
+        value: 1
+        window: FIVE_MINUTES
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME

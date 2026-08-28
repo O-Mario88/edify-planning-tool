@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from datetime import timedelta
 
-from django.test import Client, TestCase
+from django.test import Client, TestCase, override_settings
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, User
@@ -556,6 +556,21 @@ class MaintenanceTests(AdminOpsTestBase):
         spec = get_spec("admin_maintenance_generation")
         self.assertIsNotNone(spec)
         self.assertTrue(spec.idempotent)
+
+
+class DefaultIncidentOwnerTests(AdminOpsTestBase):
+    def test_a_new_incident_is_owned_by_the_named_operator(self):
+        with override_settings(INCIDENT_OWNER_EMAIL=self.admin.email):
+            incident = SystemIncidentService.report(
+                title="Database latency",
+                category=WorkItemCategory.PERFORMANCE,
+                severity=Severity.HIGH,
+                route="/api/health/ready",
+                error="latency_threshold",
+                environment="test",
+            )
+
+        self.assertEqual(incident.owner_id, self.admin.id)
 
 
 # ── Deep links (§20) ─────────────────────────────────────────────────────────

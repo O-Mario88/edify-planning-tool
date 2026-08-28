@@ -666,6 +666,11 @@ class QuarterlyConversationJourneyTest(TestCase):
         self.assertEqual(snapshot.data["priorities"][0]["actual"], frozen)
         self.assertEqual(live_progress(priority)["actual"], 2)
 
+        self.client.force_login(self.cceo)
+        response = self.client.get("/performance-conversation")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Performance Conversation")
+
     def test_a_closed_conversation_cannot_be_assessed_again_in_place(self):
         """Reopening is a governed act; posting into a closed review is not."""
         from apps.hr import performance_service

@@ -583,6 +583,12 @@ class LoanJourneyTest(TestCase):
         self.assertEqual(untouched["schoolsFinanced"], 0)
         self.assertGreaterEqual(untouched["eligibleSchools"], 1)
 
+        self.client.force_login(self.bt)
+        response = self.client.get("/business-transformation/impact-reports")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Schools financed")
+        self.assertContains(response, "Students reached")
+
     def test_the_follow_up_snapshot_is_what_makes_impact_readable(self):
         """Guard the premise of step 10: unverified evidence counts for nothing."""
         _, loan = self._disbursed_loan("LOANJ-LN-UNVERIFIED")

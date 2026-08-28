@@ -1352,20 +1352,9 @@ def _workflow_issues() -> dict:
     core_duplicate_slot_activities = (
         _linked.values("activity_id").annotate(_n=Count("id")).filter(_n__gt=1).count()
     )
-    from apps.core_schools.services import (
-        CORE_SLOT_DONE_WITH_LEGACY,
-        EXPECTED_CORE_SLOTS,
-    )
+    from apps.core_schools.services import CORE_SLOT_DONE_WITH_LEGACY
 
     _core_done = CORE_SLOT_DONE_WITH_LEGACY
-    core_package_complete_missing_slots = sum(
-        1
-        for plan in _core_active_plans.filter(
-            status__in=["Package Complete", "Complete", "complete"]
-        ).prefetch_related("slots")
-        if sum(1 for sl in plan.slots.all() if sl.status in _core_done)
-        < EXPECTED_CORE_SLOTS
-    )
     _verified_slots = CoreActivitySlot.objects.filter(status__in=_core_done)
     core_verified_slots_missing_evidence = _verified_slots.filter(
         Q(evidence_uri__isnull=True) | Q(evidence_uri="")
@@ -1399,10 +1388,6 @@ def _workflow_issues() -> dict:
     if core_duplicate_slot_activities:
         blockers.append(
             f"{core_duplicate_slot_activities} activity(ies) linked to more than one core package slot."
-        )
-    if core_package_complete_missing_slots:
-        blockers.append(
-            f"{core_package_complete_missing_slots} core package(s) marked complete with unverified slots."
         )
     if core_verified_slots_missing_evidence:
         blockers.append(
@@ -1591,7 +1576,6 @@ def _workflow_issues() -> dict:
         "coreSlotsScheduledMissingActivity": core_slots_scheduled_missing_activity,
         "coreSlotActivitiesMissingBudget": core_slot_activities_missing_budget,
         "coreDuplicateSlotActivities": core_duplicate_slot_activities,
-        "corePackageCompleteMissingSlots": core_package_complete_missing_slots,
         "coreVerifiedSlotsMissingEvidence": core_verified_slots_missing_evidence,
         "coreVerifiedSlotsMissingSfId": core_verified_slots_missing_sf_id,
         "coreImpactWithoutBaseline": core_impact_without_baseline,

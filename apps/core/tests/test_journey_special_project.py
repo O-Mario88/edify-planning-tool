@@ -407,6 +407,12 @@ class SpecialProjectJourneyTest(TestCase):
         )
         self.assertIn("not enough", impact["limitation"].lower())
 
+        self.client.force_login(self.cd)
+        response = self.client.get(f"/projects/{project.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, project.name)
+        self.assertContains(response, self.school.name)
+
     def test_an_unverified_delivery_measures_nothing(self):
         """Guard the premise: a plan is not an intervention."""
         from apps.activity_catalogue.services import resolve_item_for_workflow_kind

@@ -179,6 +179,11 @@ class PolicyLifecycleJourneyTest(TestCase):
             "application, so the obligation has no force",
         )
 
+        self.client.force_login(self.cceo)
+        response = self.client.get("/policy-agreement")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, document.title)
+
     def test_the_lazy_backfill_cannot_repair_a_missed_superseding_obligation(self):
         """Naming the seam rather than assuming it holds.
 

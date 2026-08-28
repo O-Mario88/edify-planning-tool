@@ -239,6 +239,23 @@ services:
       success_threshold: 1
       failure_threshold: 5
 
+    alerts:
+      - rule: CPU_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
+      - rule: MEM_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 85
+        window: TEN_MINUTES
+      - rule: RESTART_COUNT
+        disabled: false
+        operator: GREATER_THAN
+        value: 1
+        window: FIVE_MINUTES
+
     envs:
       # ── Platform wiring ────────────────────────────────────────────────────
       - key: DJANGO_SETTINGS_MODULE
@@ -287,6 +304,8 @@ services:
         type: SECRET
         value: REPLACE_ME_openssl_rand_hex_32
       - key: SUPER_ADMIN_EMAIL
+        value: edwin.omario@gmail.com
+      - key: INCIDENT_OWNER_EMAIL
         value: edwin.omario@gmail.com
       - key: SUPER_ADMIN_PASSWORD
         scope: RUN_TIME
@@ -463,6 +482,22 @@ workers:
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
     run_command: python manage.py runscheduler
+    alerts:
+      - rule: CPU_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 80
+        window: TEN_MINUTES
+      - rule: RESTART_COUNT
+        disabled: false
+        operator: GREATER_THAN
+        value: 1
+        window: FIVE_MINUTES
+      - rule: MEM_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 85
+        window: TEN_MINUTES
     envs:
       - key: DJANGO_SETTINGS_MODULE
         value: config.settings.prod
@@ -498,6 +533,8 @@ workers:
         type: SECRET
         value: REPLACE_ME_openssl_rand_hex_32
       - key: SUPER_ADMIN_EMAIL
+        value: edwin.omario@gmail.com
+      - key: INCIDENT_OWNER_EMAIL
         value: edwin.omario@gmail.com
       - key: SUPER_ADMIN_PASSWORD
         scope: RUN_TIME

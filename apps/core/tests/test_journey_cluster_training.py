@@ -240,3 +240,10 @@ class ClusterTrainingJourneyTest(TestCase):
             ACTUAL_TEACHERS * 2,
             "participant attendances were deduplicated across sessions",
         )
+
+        # JRN-01: the same result must survive routing, role gating and the
+        # cluster presentation layer a CCEO actually reads.
+        self.client.force_login(self.cceo)
+        response = self.client.get(f"/clusters/{self.cluster.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.cluster.name)

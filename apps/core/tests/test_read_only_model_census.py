@@ -143,13 +143,6 @@ KNOWN_READ_ONLY = {
         "Descoped the same way, with the same comment. Succession Planning is "
         "not offered in navigation; its URL still answers, empty and honest."
     ),
-    "MaintenanceTemplate": (
-        "GOV-02, and the only one of its group still advertised: the "
-        "Maintenance Calendar is linked in navigation and is a drilldown "
-        "target. 'No maintenance templates are configured yet' reads as "
-        "pending rather than absent, and admin_ops_stale_maintenance reports "
-        "Maintenance Generation ok permanently over the empty table."
-    ),
     "AnalyticsReportSchedule": (
         "Retired, second order. AnalyticsReportScheduleForm is a real "
         "ModelForm with no caller; the drawer a user actually sees sends an "
