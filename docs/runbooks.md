@@ -414,7 +414,30 @@ resource and attaches an empty one. The dev database is deleted with the
 attachment, so a mistake here is not recoverable — which is the whole problem
 restated.
 
-**Recover** The migration, in the order that keeps a copy at every step:
+**Recover** `scripts/migrate_to_managed_cluster.sh` performs the whole of the
+sequence below as one command, and — this is the point of it — cannot skip its
+own verification:
+
+```
+SOURCE_URL="postgresql://…/live" \
+TARGET_URL="postgresql://…/new-cluster" \
+    scripts/migrate_to_managed_cluster.sh
+```
+
+    0  VERIFIED   the copy matches the backup; safe to cut over
+    1  FAILED     do not cut over
+    2  REFUSED    preconditions not met; nothing was done
+
+It never writes to the source, never drops anything, and **does not cut over**
+— it gets the new cluster to a state you can prove is correct and then stops,
+because pointing production at it is a decision to make with the evidence in
+hand rather than a step in a script. It refuses if source and target resolve to
+the same database (compared by cluster identity, not by URL string), if the
+target already holds relations, if the interpreter cannot actually read a
+manifest, or if the source turns out to be empty.
+
+The manual sequence it automates, kept here because you may need to do this by
+hand on a day the script will not run:
 
 1. **Take a verified dump of the live database first.** Not `pg_dump` alone —
    dump *and* describe it, so you can prove afterwards that what arrived is

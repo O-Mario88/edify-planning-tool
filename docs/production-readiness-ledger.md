@@ -655,6 +655,69 @@ manual and unverified — the release scope has to say that plainly, which is th
 second of the two options INTG-01 always offered. The screens now say it; the
 release note should too.
 
+### BACKUP-01a · The migration is now one verified command, and testing it cost two rows · **TOOLING ADDED; INCIDENT RECORDED**
+
+§12 described the move to a backed-up database as five manual steps. Five
+manual steps carried out under deadline pressure, possibly during an incident,
+is how step 3 — the verification — gets skipped, and step 3 is the entire
+point. `scripts/migrate_to_managed_cluster.sh` is those steps as one command
+that cannot skip its own check.
+
+It never writes to the source, never drops anything, and deliberately **does
+not cut over**: it brings the new cluster to a provably correct state and
+stops. Run against the developer database it dumped 8.2 MB, restored, and
+verified **8,955 checks over 312 tables / 28,533 rows / 2,433 indexes / 1,093
+constraints**, exit 0.
+
+Proven able to fail. A shimmed `pg_restore` that succeeded but silently dropped
+one row produced:
+
+```
+FAIL total_rows: expected 28533 got 28532
+FAIL row_count[public.activity_catalogue_alias]: expected 94 got 93
+FAIL row_digest[public.activity_catalogue_alias]: … (CONTENT differs)
+MIGRATION FAILED — DO NOT cut over. The source is untouched.
+```
+
+Five refusals also verified: no `SOURCE_URL`, no `TARGET_URL`, source and
+target resolving to the same database (compared by cluster identity, not URL
+string), an interpreter that answers everything with silent success, and an
+unreachable source. All exit 2 having done nothing.
+
+**And a defect the writing did not catch.** The first run failed on
+`pg_restore: option '--no-owner' doesn't allow an argument` — the script had
+`--no-owner=false`, reaching for a flag that does not exist to express "keep
+the owners", when the mechanism is simply to omit the flag. Harmless because
+`pg_restore` rejected it outright; had it been a flag that silently accepted a
+value, the migration would have restored without GRANTs and looked healthy
+right up until real traffic hit `permission denied for table school`.
+
+**THE INCIDENT.** Testing that failure path damaged the developer database, and
+this is the second time in this audit a harness — not the code under test — has
+done so.
+
+The shim was `pg_restore "$@"` followed by a `DELETE` against whatever database
+followed `-d`. `scripts/restore_manifest.py` legitimately invokes `pg_restore`
+three times **without** `-d`: once for `-l` to read the TOC, once for the
+sequence section, once for the database section. On those calls the shim's
+target variable was unset, and `psql -d ""` does not fail — libpq defaults the
+database name to the connecting user, which here is `edify`. Two of those calls
+each deleted a row from the live developer database. 94 aliases became 92.
+
+Recovered in full from the migration dump taken minutes earlier, and the repair
+was itself verified: `restore_manifest.py verify` against the pre-damage
+manifest passed all **8,955** checks. The tool built to prove restores proved
+this one.
+
+**The rule this earns**, and it generalises past this repository: *a test
+harness must never connect to a default-resolved database.* Every destructive
+tool in a test path needs its target named explicitly and refused when absent —
+`psql -d ""` silently meaning "the database named after me" is a loaded gun
+pointed at whatever the developer happens to be called. Both database
+incidents in this audit came from a harness, not from the code it was testing,
+and both from a destructive path that had not been made to prove its own blast
+radius first.
+
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
 Measured: **p95 829ms against an 800ms budget, on 501 queries**, at 702 schools.
