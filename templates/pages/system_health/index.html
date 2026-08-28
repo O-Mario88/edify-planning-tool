@@ -1,6 +1,13 @@
 {% extends "layouts/shell.html" %}
 
 {% block title %}System Health & Integrity - Edify{% endblock %}
+{% comment %}
+System Health is already authored entirely with platform/Tailwind components.
+The legacy consistency bridge both overrides its intentional dark hero and
+adds a full-document selector pass to every live status refresh. Keep this
+modern workspace out of that compatibility layer.
+{% endcomment %}
+{% block consistency_css %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">

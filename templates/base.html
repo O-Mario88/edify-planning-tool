@@ -74,7 +74,7 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260823aura2">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260828utilities1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
@@ -105,8 +105,8 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260827density2">
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260827responsiveness1">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260828recalc1">{% endblock %}
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260828recalc1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -159,7 +159,7 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260823install1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260828tabs1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -213,7 +213,7 @@ controller exists by the time a drawer's x-init runs.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260827responsiveness1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260828recalc1"></script>
 <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).

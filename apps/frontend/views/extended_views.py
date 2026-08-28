@@ -1248,17 +1248,17 @@ def reports_view(request):
         if pct >= 70:
             status, status_class = (
                 "On Track",
-                "bg-emerald-50 text-emerald-700 border-emerald-250",
+                "bg-emerald-50 text-emerald-700 border-emerald-300",
             )
         elif pct >= 50:
             status, status_class = (
                 "At Risk",
-                "bg-amber-50 text-amber-700 border-amber-250",
+                "bg-amber-50 text-amber-700 border-amber-300",
             )
         else:
             status, status_class = (
                 "Off Track",
-                "bg-rose-50 text-rose-700 border-rose-250",
+                "bg-rose-50 text-rose-700 border-rose-300",
             )
         priorities.append(
             {

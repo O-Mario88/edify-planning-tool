@@ -13,6 +13,7 @@ hx-target="#schools-table-container"
 hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
 hx-indicator="#schools-tab-loading"
+hx-headers='{"X-Edify-Update-Scope":"table"}'
 @click="document.getElementById('filters-tab-input').value = 'all'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'all' or not active_tab %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
@@ -32,6 +33,7 @@ hx-target="#schools-table-container"
 hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
 hx-indicator="#schools-tab-loading"
+hx-headers='{"X-Edify-Update-Scope":"table"}'
 @click="document.getElementById('filters-tab-input').value = 'unclustered'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'unclustered' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
@@ -51,6 +53,7 @@ hx-target="#schools-table-container"
 hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
 hx-indicator="#schools-tab-loading"
+hx-headers='{"X-Edify-Update-Scope":"table"}'
 @click="document.getElementById('filters-tab-input').value = 'clustered'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'clustered' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
@@ -70,6 +73,7 @@ hx-target="#schools-table-container"
 hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
 hx-indicator="#schools-tab-loading"
+hx-headers='{"X-Edify-Update-Scope":"table"}'
 @click="document.getElementById('filters-tab-input').value = 'not_assigned'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'not_assigned' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >
@@ -89,6 +93,7 @@ hx-target="#schools-table-container"
 hx-include="#filters-form, #topbar-search-input"
 hx-push-url="true"
 hx-indicator="#schools-tab-loading"
+hx-headers='{"X-Edify-Update-Scope":"table"}'
 @click="document.getElementById('filters-tab-input').value = 'assigned'; document.getElementById('filters-page-input').value = '1'"
 class="h-9 px-4 flex items-center justify-center text-[12px] font-semibold transition-all border-b-2 whitespace-nowrap {% if active_tab == 'assigned' %}edify-primary-border edify-primary-text{% else %}border-transparent text-slate-500 hover:text-slate-800 hover:border-slate-200{% endif %}"
 >

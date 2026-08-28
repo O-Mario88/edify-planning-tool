@@ -1021,7 +1021,7 @@ main :is(
   #project-filters,
   #cluster-filters,
   [data-component="filter-toolbar"]
-):not(:has(.work-plan-filter-popover)) {
+):not(.edify-has-work-plan-filter-popover) {
   overflow-x: auto;
   overflow-y: visible;
   overscroll-behavior-inline: contain;
@@ -1054,7 +1054,7 @@ main :is(
   #project-filters,
   #cluster-filters,
   [data-component="filter-toolbar"]
-) > :is(label, div):has(> :is(select, input:not([type="hidden"]), textarea)) {
+) > .edify-filter-field {
   display: flex;
   flex: 1 0 7.5rem;
   min-inline-size: 7.5rem;
@@ -1073,7 +1073,7 @@ main :is(
    selectors. This shared modifier keeps their label and control together on
    narrow toolbars without changing the one-row scrolling contract. */
 main :is(.platform-filter-bar, .edify-filter-bar, [data-component="filter-toolbar"])
-  > :is(label, div).platform-filter-search:has(> :is(select, input:not([type="hidden"]), textarea)) {
+  > .edify-filter-field.platform-filter-search {
   flex: 1 0 12rem !important;
   min-inline-size: 12rem !important;
 }
@@ -1107,7 +1107,7 @@ main :is(
   #project-filters,
   #cluster-filters,
   [data-component="filter-toolbar"]
-) > :is(label, div):has(> :is(select, input:not([type="hidden"]), textarea))
+) > .edify-filter-field
   > span:not(.sr-only) {
   white-space: nowrap;
 }
@@ -1349,16 +1349,7 @@ main :is(
   section.edify-surface[class*="rounded"],
   article.edify-surface[class*="rounded"],
   aside.edify-surface[class*="rounded"]
-):not(.p-0):not([data-edify-padding="flush"]):not(:has(> :is(
-  header,
-  [class*="__header"],
-  [class*="titlebar"],
-  table,
-  .overflow-x-auto,
-  .overflow-auto,
-  [class*="table-wrap"],
-  [class*="table-scroll"]
-))) {
+):not(.p-0):not([data-edify-padding="flush"]):not(.edify-structured-surface) {
   padding: var(--edify-surface-padding) !important;
 }
 
@@ -1414,7 +1405,7 @@ main .settings-detail-tile {
 
 /* Tables use one filter-like perimeter and quiet row dividers instead of a
    shadowed card plus an inner spreadsheet grid. */
-:is(.theme-blue, .theme-dark) main :where(.overflow-x-auto, .overflow-auto):has(> table) {
+:is(.theme-blue, .theme-dark) main .edify-table-scroll-region {
   background-color: var(--edify-card-surface) !important;
   border: 1px solid var(--edify-card-border) !important;
   border-radius: var(--edify-radius-sm) !important;
@@ -1644,7 +1635,7 @@ main .edify-card-action {
   border-color: var(--edify-control-border, var(--edify-border-strong)) !important;
 }
 
-.theme-dark main :where(.overflow-x-auto, .overflow-auto):has(> table) {
+.theme-dark main .edify-table-scroll-region {
   background-color: var(--edify-table-canvas) !important;
   border-color: var(--edify-table-divider) !important;
 }
@@ -1659,7 +1650,7 @@ main :is(
   .card-interactive,
   a.card,
   button.card,
-  .kpi-strip__item:has(.kpi-strip__item-body--link)
+  .kpi-strip__item.edify-interactive-card
 ):is(:hover, :focus-within) {
   background-color: var(--edify-surface-hover) !important;
   border-color: var(--edify-card-border) !important;
@@ -2100,19 +2091,7 @@ main :where(.edify-status-text, [data-edify-tone="neutral"])[data-edify-tone="ne
 /* Legacy pages often rendered a bare grid whose direct children were all
    independent tiles. Treat that collection as the parent card, then flatten
    its content children. Header KPI grids opt out through the explicit marker. */
-main :where(div, section, article)[class*="grid"]:has(
-  > :is(
-    .card,
-    .panel,
-    .mini,
-    .edify-tile,
-    .edify-surface[class*="rounded"],
-    [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]),
-    div[class*="rounded"][class*="border"],
-    section[class*="rounded"][class*="border"],
-    article[class*="rounded"][class*="border"]
-  )
-):not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi]):not(
+main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi]):not(
   .platform-major-grid, .platform-support-grid, .platform-page-grid,
   [class*="filter"], [role="listbox"], [role="radiogroup"]
 ) {
@@ -2124,19 +2103,7 @@ main :where(div, section, article)[class*="grid"]:has(
   box-shadow: var(--edify-card-shadow) !important;
 }
 
-main :where(div, section, article)[class*="grid"]:has(
-  > :is(
-    .card,
-    .panel,
-    .mini,
-    .edify-tile,
-    .edify-surface[class*="rounded"],
-    [class*="-card"]:not([class*="-card-"]):not([class*="-card__"]),
-    div[class*="rounded"][class*="border"],
-    section[class*="rounded"][class*="border"],
-    article[class*="rounded"][class*="border"]
-  )
-):not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi])
+main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kpi-strip__grid):not([data-edify-summary-kpi])
 > :is(
   .card,
   .panel,
@@ -2642,7 +2609,7 @@ main :is(.apexcharts-datalabel-value) {
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  .edify-record-table tbody tr:is([aria-selected="true"], [data-selected="true"], :has(input[type="checkbox"]:checked)) > :is(td, th) {
+  .edify-record-table tbody tr:is([aria-selected="true"], [data-selected="true"], .edify-row-selected) > :is(td, th) {
   background-color: var(--edify-table-row-selected, var(--edify-surface-selected)) !important;
 }
 
@@ -2693,7 +2660,7 @@ main :is(.apexcharts-datalabel-value) {
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   .edify-record-table :is([data-record-action], .edify-table__actions)
-  :is(button, summary, a:has(> svg)):not(.btn, [class*="button"]) {
+  :is(button, summary, a):not(.btn, [class*="button"]) {
   min-inline-size: var(--edify-table-action-size);
   min-block-size: var(--edify-table-action-size);
   border-radius: var(--edify-radius-sm);
@@ -2735,7 +2702,7 @@ main :is(.apexcharts-datalabel-value) {
 /* The wrapper owns the small amount of chrome. It also remains the single
    horizontal scroll affordance on tablet and phone. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  :is(.overflow-x-auto, .overflow-auto, .edify-record-table-wrap, .edify-table-scroll-region):has(> .edify-record-table) {
+  .edify-table-scroll-region {
   border-radius: var(--edify-table-radius);
   background-color: var(--edify-table-canvas, var(--edify-surface));
   scrollbar-gutter: stable;
@@ -2745,7 +2712,7 @@ main :is(.apexcharts-datalabel-value) {
 @media (pointer: coarse) {
   :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
     .edify-record-table :is([data-record-action], .edify-table__actions)
-    :is(button, summary, a:has(> svg)) {
+    :is(button, summary, a) {
     min-inline-size: 2.75rem;
     min-block-size: 2.75rem;
   }
@@ -2889,14 +2856,12 @@ main.edify-workspace :where(.space-y-5, .space-y-6, .space-y-8, .space-y-10, .sp
 /* Content cards do not inherit the tallest neighbour's block size. Explicit
  * items-stretch layouts, full-height workspaces, KPI strips and data canvases
  * are left alone. */
-main .grid:not([class*="items-"]):not(.kpi-grid):not(.signal-grid):has(
-  > :is(.card, .edify-surface, article, section)
-) {
+main .grid.edify-tile-grid:not([class*="items-"]):not(.kpi-grid):not(.signal-grid) {
   align-items: start;
 }
 
 /* A lone card or no-data result should not sit beside reserved empty tracks. */
-main .grid:has(> :is(.card, .edify-surface, article, section):only-child:not([class*="col-span"]))
+main .grid.edify-single-tile-grid
   > :is(.card, .edify-surface, article, section):only-child:not([class*="col-span"]) {
   grid-column: 1 / -1;
 }
@@ -2958,14 +2923,14 @@ main table tbody > tr:only-child > td[colspan] {
 /* Legacy non-table empty panels frequently expressed the same state as a
  * text-centred p-12/p-16 utility. Limit only their vertical inset; populated
  * cards and actionable form panels are excluded. */
-main :is(div, section, article, p, li)[class*="text-center"]:is(
+main :is(div, section, article, p, li).edify-empty-copy:is(
   [class~="p-8"],
   [class~="p-12"],
   [class~="p-16"],
   [class~="py-8"],
   [class~="py-12"],
   [class~="py-16"]
-):not(:has(:is(form, input, select, textarea, canvas, img, embed))) {
+) {
   padding-block: 1.25rem !important;
 }
 

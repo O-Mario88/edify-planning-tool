@@ -57,6 +57,85 @@
     '.edify-section-nav__link'
   ].join(', ');
 
+  var filterToolbarSelector = [
+    '.platform-filter-bar', '.edify-filter-bar', '.sp-filter-panel',
+    '.spp-filter-panel', '.spa-filter-panel', '.tt-filter-panel',
+    '.school-filters-form', '.school-filter-canvas', '#filters-form',
+    '#core-filters-form', '#analytics-filters-form', '#pl-analytics-filters',
+    '#cd-analytics-filters', '#cb-filters', '#debrief-filters',
+    '#visits-filters', '#trainings-filters', '#pd-filters', '#spp-filters',
+    '#spa-filters', '#sp-plan-filters', '#pl-dashboard-filters',
+    '#project-filters', '#cluster-filters', '[data-component="filter-toolbar"]'
+  ].join(', ');
+
+  var tileSelector = [
+    '.card', '.panel', '.mini', '.edify-tile',
+    '.edify-surface[class*="rounded"]',
+    '[class*="-card"]:not([class*="-card-"]):not([class*="-card__"])',
+    'div[class*="rounded"][class*="border"]',
+    'section[class*="rounded"][class*="border"]',
+    'article[class*="rounded"][class*="border"]'
+  ].join(', ');
+
+  function elementsWithin(root, selector) {
+    var elements = [];
+    if (root.matches && root.matches(selector)) elements.push(root);
+    root.querySelectorAll(selector).forEach(function (element) { elements.push(element); });
+    return elements;
+  }
+
+  /* Relational :has() selectors in a global stylesheet force Chrome to walk
+   * ancestors whenever any descendant class changes. Resolve those stable DOM
+   * relationships once into ordinary classes instead. HTMX-added roots pass
+   * through this same enhancer, so the markers remain correct after swaps. */
+  function enhanceStructuralMarkers(root) {
+    elementsWithin(root, filterToolbarSelector).forEach(function (toolbar) {
+      toolbar.classList.toggle(
+        'edify-has-work-plan-filter-popover',
+        Boolean(toolbar.querySelector('.work-plan-filter-popover'))
+      );
+      Array.from(toolbar.children).forEach(function (child) {
+        if (!child.matches('label, div')) return;
+        var field = child.querySelector(':scope > select, :scope > input:not([type="hidden"]), :scope > textarea');
+        child.classList.toggle('edify-filter-field', Boolean(field));
+      });
+    });
+
+    elementsWithin(root, 'main .grid').forEach(function (grid) {
+      var directTiles = Array.from(grid.children).filter(function (child) {
+        return child.matches(tileSelector);
+      });
+      grid.classList.toggle('edify-tile-grid', directTiles.length > 0);
+      grid.classList.toggle(
+        'edify-single-tile-grid',
+        directTiles.length === 1 && !directTiles[0].className.includes('col-span')
+      );
+    });
+
+    elementsWithin(root, 'main .kpi-strip__item').forEach(function (item) {
+      item.classList.toggle('edify-interactive-card', Boolean(item.querySelector('.kpi-strip__item-body--link')));
+    });
+
+    elementsWithin(root, 'main :is(.card, .card-elevated, .card-flat, .card-insight, .premium-card, .premium-card-elevated, .panel, .mini, .summary-card, .rail-card, .edify-kpi-card, .card-kpi, .edify-tile, [class*="-card"], [class*="-panel"], [class*="-tile"], .edify-surface[class*="rounded"])').forEach(function (surface) {
+      var structured = Array.from(surface.children).some(function (child) {
+        return child.matches('header, [class*="__header"], [class*="titlebar"], table, .overflow-x-auto, .overflow-auto, [class*="table-wrap"], [class*="table-scroll"]');
+      });
+      surface.classList.toggle('edify-structured-surface', structured);
+    });
+
+    elementsWithin(root, 'main :is(div, section, article, p, li)[class*="text-center"]').forEach(function (element) {
+      element.classList.toggle(
+        'edify-empty-copy',
+        !element.querySelector('form, input, select, textarea, canvas, img, embed')
+      );
+    });
+
+    elementsWithin(root, '.edify-record-table input[type="checkbox"]').forEach(function (choice) {
+      var row = choice.closest('tbody tr');
+      if (row) row.classList.toggle('edify-row-selected', choice.checked);
+    });
+  }
+
   function cleanText(value) {
     return (value || '').replace(/\s+/g, ' ').trim();
   }
@@ -230,18 +309,6 @@
     if (tablist.dataset.edifyTabRevealReady === 'true') return;
     tablist.dataset.edifyTabRevealReady = 'true';
 
-    tablist.addEventListener('click', function (event) {
-      var selected = event.target.closest(tabSelector);
-      if (!selected || !tablist.contains(selected)) return;
-      revealTab(selected, true);
-    });
-
-    tablist.addEventListener('focusin', function (event) {
-      var focused = event.target.closest(tabSelector);
-      if (!focused || !tablist.contains(focused)) return;
-      revealTab(focused, false);
-    });
-
     var active = tablist.querySelector(
       '[role="tab"][aria-selected="true"], .edify-tab-btn.active, [data-edify-tab][aria-pressed="true"], ' +
       '[data-edify-tab][aria-current="true"], [data-edify-tab][aria-current="page"], ' +
@@ -258,20 +325,53 @@
     enhanceTabReveal(tablist);
     if (tablist.dataset.edifyTabsReady === 'true') return;
     tablist.dataset.edifyTabsReady = 'true';
-    tablist.addEventListener('keydown', function (event) {
-      if (!['ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
-      var tabs = availableTabs(tablist);
-      if (!tabs.length) return;
-      var current = Math.max(0, tabs.indexOf(document.activeElement));
-      var next = current;
-      if (event.key === 'ArrowLeft') next = (current - 1 + tabs.length) % tabs.length;
-      if (event.key === 'ArrowRight') next = (current + 1) % tabs.length;
-      if (event.key === 'Home') next = 0;
-      if (event.key === 'End') next = tabs.length - 1;
-      event.preventDefault();
-      tabs[next].focus();
-    });
   }
+
+  /* Tabs are replaced frequently by HTMX. Per-tablist handlers used to leave
+   * one click, focus and keydown closure behind for every replacement until
+   * the browser's next collection cycle. One document-level owner works for
+   * both present and future tablists, so replacement does not create listener
+   * or detached-tree churn. */
+  function eventTab(event) {
+    var tab = event.target && event.target.closest && event.target.closest(tabSelector);
+    var tablist = tab && tab.closest(tablistSelector);
+    return tablist && tablist.contains(tab) ? { tab: tab, tablist: tablist } : null;
+  }
+
+  document.addEventListener('click', function (event) {
+    var match = eventTab(event);
+    if (!match) return;
+    if (match.tab.matches('[role="tab"]')) {
+      match.tablist.querySelectorAll('[role="tab"]').forEach(function (tab) {
+        var active = tab === match.tab;
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.tabIndex = active ? 0 : -1;
+      });
+    }
+    revealTab(match.tab, true);
+  });
+
+  document.addEventListener('focusin', function (event) {
+    var match = eventTab(event);
+    if (match) revealTab(match.tab, false);
+  });
+
+  document.addEventListener('keydown', function (event) {
+    if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return;
+    var match = eventTab(event);
+    if (!match) return;
+    var tabs = availableTabs(match.tablist);
+    var current = tabs.indexOf(match.tab);
+    if (current < 0 || !tabs.length) return;
+    var next = current;
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = (current - 1 + tabs.length) % tabs.length;
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = (current + 1) % tabs.length;
+    if (event.key === 'Home') next = 0;
+    if (event.key === 'End') next = tabs.length - 1;
+    event.preventDefault();
+    tabs[next].focus();
+    if (tabs[next].matches('[role="tab"]')) tabs[next].click();
+  });
 
   function enhanceTabs(root) {
     if (root.matches && root.matches(tablistSelector)) enhanceTabList(root);
@@ -492,6 +592,7 @@
 
   function enhanceCritical(root) {
     enhanceTables(root);
+    enhanceStructuralMarkers(root);
     enhanceTabs(root);
     enhanceCustomDialogs(root);
     enhanceFormLabels(root);
@@ -576,6 +677,11 @@
   });
   document.addEventListener('htmx:sendError', function () {
     announce('The network request failed. Check your connection and try again.', 'assertive');
+  });
+  document.addEventListener('change', function (event) {
+    var choice = event.target.closest && event.target.closest('.edify-record-table input[type="checkbox"]');
+    var row = choice && choice.closest('tbody tr');
+    if (row) row.classList.toggle('edify-row-selected', choice.checked);
   });
 
   window.EdifyMicroUX = Object.freeze({ enhance: enhance, announce: announce });

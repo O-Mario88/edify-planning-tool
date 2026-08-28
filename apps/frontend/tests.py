@@ -598,6 +598,25 @@ class FrontendViewsTestCase(TestCase):
         self.assertContains(response, 'id="filters-tab-input"')
         self.assertContains(response, 'value="clustered"')
 
+        table_only = self.client.get(
+            "/schools",
+            {"tab": "clustered", "per_page": "25"},
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="schools-table-container",
+            HTTP_X_EDIFY_UPDATE_SCOPE="table",
+        )
+        self.assertEqual(table_only.status_code, 200)
+        self.assertTemplateUsed(table_only, "partials/schools/table.html")
+        self.assertNotContains(table_only, 'id="school-tabs-header"')
+        self.assertNotContains(table_only, 'id="kpi-cards-row"')
+
+        full_page = self.client.get("/schools")
+        self.assertContains(
+            full_page,
+            'hx-headers=\'{"X-Edify-Update-Scope":"table"}\'',
+            count=5,
+        )
+
         invalid = self.client.get("/schools", {"tab": "invented"})
         self.assertEqual(invalid.context["active_tab"], "all")
 

@@ -2262,6 +2262,9 @@
   .border-emerald-300 {
     border-color: var(--color-emerald-300);
   }
+  .border-emerald-400 {
+    border-color: var(--color-emerald-400);
+  }
   .border-emerald-500 {
     border-color: var(--color-emerald-500);
   }
@@ -4603,6 +4606,9 @@
     }
     .hover\:border-slate-300:hover {
       border-color: var(--color-slate-300);
+    }
+    .hover\:border-slate-400:hover {
+      border-color: var(--color-slate-400);
     }
     @media (hover: hover) {
       .hover\:hover\:border-slate-300:hover:hover {

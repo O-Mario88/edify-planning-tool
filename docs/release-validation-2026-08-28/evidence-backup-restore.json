@@ -1,0 +1,35 @@
+{
+  "gate": "BACKUP-01",
+  "status": "passed",
+  "rehearsed_at": "2026-08-28",
+  "source": {
+    "cluster_id": "5c96f186-d354-43b9-ade2-e021f9470528",
+    "cluster_name": "edify-production-fra",
+    "engine": "PostgreSQL 17",
+    "region": "fra1",
+    "backup_timestamp_utc": "2026-08-28T02:43:30Z",
+    "backup_size_gib": 0.319480,
+    "listed_backup_count": 8
+  },
+  "restore": {
+    "temporary_cluster_id": "9cc47ab8-2906-4177-aa33-03735433dc85",
+    "temporary_cluster_name": "edify-restore-rehearsal-20260828",
+    "create_event_utc": "2026-08-28T10:49:19Z",
+    "master_promotion_utc": "2026-08-28T10:53:47Z",
+    "infrastructure_rto_seconds": 268,
+    "recovery_point_age_seconds_at_start": 29149,
+    "recovery_migration_seconds": 201,
+    "application_smoke_seconds": 259,
+    "temporary_cluster_deleted": true
+  },
+  "verification": {
+    "sequences_checked": 13,
+    "critical_pages_passed": 8,
+    "active_roles_available": 9,
+    "audit_rows_walked": 1713,
+    "audit_rows_total": 1713,
+    "audit_chain_broken_at": null,
+    "credentials_or_row_data_recorded": false,
+    "production_mutated": false
+  }
+}

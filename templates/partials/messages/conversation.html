@@ -64,7 +64,7 @@
     <div class="flex items-center gap-1.5 mt-3 flex-wrap">
       <span class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider mr-1">Participants ({{ selected.participants|length }})</span>
       {% for p in selected.participants %}
-      <span class="inline-flex items-center gap-1 pl-0.5 pr-2 py-0.5 rounded-pill bg-slate-50 border border-slate-150 edify-text-caption font-semibold text-slate-600">
+      <span class="inline-flex items-center gap-1 pl-0.5 pr-2 py-0.5 rounded-pill bg-slate-50 border border-slate-200 edify-text-caption font-semibold text-slate-600">
         <span class="h-5 w-5 rounded-pill bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] flex items-center justify-center edify-text-caption font-bold">{{ p.name|avatar_initials }}</span>
         {{ p.name }}{% if p.recipient_type == 'cc' %} <span class="text-slate-400">(cc)</span>{% endif %}
       </span>
@@ -102,7 +102,7 @@
       <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-1.5">
         {% for a in m.attachments %}
         <a href="{{ a.url }}" download
-           class="flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-150 bg-slate-50/60 hover:bg-slate-100 transition-colors">
+           class="flex items-center gap-2.5 p-2.5 rounded-surface border border-slate-200 bg-slate-50/60 hover:bg-slate-100 transition-colors">
           {% if ".pdf" in a.name %}
           <span class="h-8 w-8 rounded-pill bg-rose-50 text-rose-500 flex items-center justify-center shrink-0 edify-text-caption font-black">PDF</span>
           {% elif ".xls" in a.name %}

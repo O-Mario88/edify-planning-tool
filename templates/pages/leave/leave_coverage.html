@@ -73,7 +73,7 @@
             <td class="px-4 py-4">
               <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold border tracking-wider
                 {% if cov.is_live %}edify-primary-soft edify-primary-text edify-primary-border
-                {% elif cov.revoked_at %}bg-rose-50 text-rose-700 border-rose-250
+                {% elif cov.revoked_at %}bg-rose-50 text-rose-700 border-rose-300
                 {% else %}bg-slate-50 text-slate-500 border-slate-200{% endif %}">
                 {% if cov.is_live %}active{% elif cov.revoked_at %}revoked{% else %}expired{% endif %}
               </span>

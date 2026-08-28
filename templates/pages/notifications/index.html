@@ -20,7 +20,7 @@
         <input type="hidden" name="action" value="mark_all_read">
         <button
           type="submit"
-          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-400 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Mark All Read
         </button>
@@ -31,7 +31,7 @@
         <input type="hidden" name="action" value="archive_all_read">
         <button
           type="submit"
-          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-350 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-400 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Archive All Read
         </button>
@@ -55,7 +55,7 @@
           <span class="edify-filter-label">Status</span>
           <select aria-label="Status"
             name="status"
-            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none edify-primary-focus cursor-pointer"
+            class="w-full h-10 px-3 edify-surface border border-slate-300 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none edify-primary-focus cursor-pointer"
           >
             <option value="all" {% if selected_status == 'all' %}selected{% endif %}>All (except archived)</option>
             <option value="unread" {% if selected_status == 'unread' %}selected{% endif %}>Unread</option>
@@ -70,7 +70,7 @@
           <span class="edify-filter-label">Priority</span>
           <select aria-label="Priority"
             name="priority"
-            class="w-full h-10 px-3 edify-surface border border-slate-250 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none edify-primary-focus cursor-pointer"
+            class="w-full h-10 px-3 edify-surface border border-slate-300 rounded-control text-[13px] font-semibold text-slate-800 focus:outline-none edify-primary-focus cursor-pointer"
           >
             <option value="" {% if not selected_priority %}selected{% endif %}>All Priorities</option>
             <option value="low" {% if selected_priority == 'low' %}selected{% endif %}>Low</option>
@@ -88,7 +88,7 @@
             <span class="edify-filter-label">Category</span>
             <select aria-label="Category"
               name="category"
-              class="h-9 px-3 edify-surface border border-slate-250 rounded-control text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
+              class="h-9 px-3 edify-surface border border-slate-300 rounded-control text-[12px] font-bold text-slate-800 focus:outline-none cursor-pointer"
             >
               <option value="" {% if not selected_category %}selected{% endif %}>All Categories</option>
               {% for cat in categories %}
@@ -113,7 +113,7 @@
         <div class="flex items-center gap-2.5">
           <a
             href="/notifications"
-            class="h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-650 flex items-center justify-center cursor-pointer transition-colors"
+            class="h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center cursor-pointer transition-colors"
           >
             Reset Filters
           </a>
@@ -225,7 +225,7 @@
                 {% if n.status == 'unread' %}
                   <a
                     href="/notifications/{{ n.id }}/read?redirect=/notifications"
-                    class="edify-text-caption font-bold text-slate-450 hover:transition-colors"
+                    class="edify-text-caption font-bold text-slate-500 hover:transition-colors"
                   >
                     Mark read
                   </a>
@@ -239,7 +239,7 @@
                     <input type="hidden" name="notification_id" value="{{ n.id }}">
                     <button
                       type="submit"
-                      class="edify-text-caption font-bold text-slate-450 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 p-0"
+                      class="edify-text-caption font-bold text-slate-500 hover:text-red-600 transition-colors cursor-pointer bg-transparent border-0 p-0"
                     >
                       Archive
                     </button>
@@ -255,7 +255,7 @@
       <div class="p-16 text-center select-none">
         <span class="text-[44px] block mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg></span>
         <h2 class="text-[15px] font-black">All caught up!</h2>
-        <p class="text-[12px] text-slate-450 mt-1 font-semibold max-w-xs mx-auto leading-relaxed">
+        <p class="text-[12px] text-slate-500 mt-1 font-semibold max-w-xs mx-auto leading-relaxed">
           No notifications match your current search criteria. You will be alerted when new workflow actions are dispatched.
         </p>
       </div>

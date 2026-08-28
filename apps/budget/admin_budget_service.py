@@ -27,7 +27,7 @@ class AdminBudgetAllocationService:
                 "exists": False,
                 "approved": False,
                 "status_label": "No Plan Found",
-                "status_class": "bg-rose-50 text-rose-700 border-rose-250",
+                "status_class": "bg-rose-50 text-rose-700 border-rose-300",
                 "planned_total": 0,
                 "allocated_total": 0,
                 "total": 0,
@@ -45,9 +45,9 @@ class AdminBudgetAllocationService:
 
         status_label = mwp.get_status_display()
         if not approved:
-            status_class = "bg-amber-50 text-amber-700 border-amber-250 animate-pulse"
+            status_class = "bg-amber-50 text-amber-700 border-amber-300 animate-pulse"
         else:
-            status_class = "bg-emerald-50 text-emerald-700 border-emerald-250"
+            status_class = "bg-emerald-50 text-emerald-700 border-emerald-300"
 
         # Only active admin lines count toward money totals — the same filter
         # every other admin-line aggregation applies (a removed/inactive line

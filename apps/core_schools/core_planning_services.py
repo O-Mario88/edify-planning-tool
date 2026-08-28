@@ -652,7 +652,7 @@ class CorePackageProgressService:
                     badge_class = "bg-emerald-50 text-emerald-600 border-emerald-200"
                 else:
                     score_label = "Strong"
-                    badge_class = "bg-emerald-100 text-emerald-800 border-emerald-350"
+                    badge_class = "bg-emerald-100 text-emerald-800 border-emerald-400"
 
             # Map slots status
             visits = []
@@ -850,7 +850,7 @@ class CorePackageProgressService:
             ]:
                 return {
                     "status": "IA Verified",
-                    "pill_class": "bg-emerald-100 text-emerald-850 border-emerald-300",
+                    "pill_class": "bg-emerald-100 text-emerald-900 border-emerald-300",
                     "label": "✔",
                 }
             return {

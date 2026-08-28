@@ -89,7 +89,9 @@ class GlobalSurfaceRefreshTest(SimpleTestCase):
             self.assertIn(token, tokens)
         self.assertIn("padding: var(--edify-surface-padding) !important", bridge)
         self.assertIn(':not([data-edify-padding="flush"])', bridge)
-        self.assertIn(":not(:has(> :is(", bridge)
+        self.assertIn(":not(.edify-structured-surface)", bridge)
+        behavior = _read("static/js/micro-ux.js")
+        self.assertIn("surface.classList.toggle('edify-structured-surface'", behavior)
         self.assertIn("padding: var(--edify-kpi-padding) !important", bridge)
         self.assertIn("padding: var(--edify-kpi-padding);", components)
 

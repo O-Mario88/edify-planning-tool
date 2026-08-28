@@ -380,19 +380,11 @@ form that takes.
 
 ---
 
-## 12. Moving production onto a database that has backups (BACKUP-01)
+## 12. Managed production backup recovery (BACKUP-01)
 
-**Detect** You are here because `.do/app.yaml` declares the production
-database on App Platform's dev tier — `production: false` — and DigitalOcean
-documents that tier as having **no backups at all**:
-
-> "App Platform's dev databases do not support backups."
-> "because dev databases lack these features, we do not recommend using dev
-> databases in production environments."
-
-Everything in §11 describes what to do *with* a backup. On the dev tier
-nothing is taking one. There is no snapshot to restore, no point-in-time
-recovery, and no failover.
+**Detect** Do not infer production topology from `.do/app.yaml`. The checked-in
+spec may be intentionally non-applicable or stale. Read the running app spec,
+resolve its database resource to a cluster ID, and list recovery points:
 
 **Confirm** `apps/core/tests/test_production_database_is_backupable.py` fails
 while the spec is on the dev tier. Confirm what is actually running, which is
@@ -404,9 +396,33 @@ doctl databases list
 doctl apps spec get <app-id>
 ```
 
-If the live app is on the dev tier, the platform currently has no recoverable
-copy of the financial ledger, the SSA history or the child-welfare records.
-Treat that as the standing incident it is, not as a scheduled improvement.
+An empty backup list is a live recoverability incident. A non-empty list proves
+that recovery points exist; it does **not** prove they can serve the app.
+
+**Rehearse the managed recovery path** by forking an explicitly listed point
+into a uniquely named temporary cluster. Never attach the fork to the running
+app and never run destructive workflow tests against production:
+
+```
+doctl databases fork edify-restore-rehearsal-YYYYMMDD \
+  --restore-from-cluster-id <production-cluster-id> \
+  --restore-from-timestamp "YYYY-MM-DD HH:MM:SS +0000 UTC" \
+  --wait
+```
+
+Connect the application to the fork only, run `showmigrations`, apply any
+release migrations to the fork, then run `scripts/restore_smoke.py`. Record the
+source point, promotion time, migration gap, sequences, authenticated pages,
+and audit-chain result without recording credentials or row data. The
+2026-08-28 example is in
+`docs/release-validation-2026-08-28/10-production-backup-restore-rehearsal.md`.
+
+After the evidence passes, re-read the temporary cluster's ID and name, delete
+that exact fork, and confirm it no longer lists. A rehearsal copy contains
+production data and must not become an unmanaged shadow database.
+
+The migration procedure below remains the contingency only when the live app
+actually resolves to a dev-tier database without backups.
 
 **Contain** Do not swap the database resource on a running app and hope.
 Swapping it **does not migrate the data**: App Platform detaches the old

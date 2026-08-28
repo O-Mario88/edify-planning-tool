@@ -2,7 +2,7 @@
 {% for r in records %}
 <button type="button"
         @click="$dispatch('toggle-linked', { type: '{{ context_tab|escapejs }}', id: '{{ r.id|escapejs }}', label: '{{ r.title|escapejs }}', status: '{{ r.status|escapejs }}' })"
-        :class="linked.find(i => i.id === '{{ r.id|escapejs }}') ? 'edify-primary-border ring-1 edify-primary-ring edify-primary-soft-alpha-40' : 'border-slate-150 edify-surface edify-primary-border-hover'"
+        :class="linked.find(i => i.id === '{{ r.id|escapejs }}') ? 'edify-primary-border ring-1 edify-primary-ring edify-primary-soft-alpha-40' : 'border-slate-200 edify-surface edify-primary-border-hover'"
         class="flex items-center gap-2.5 p-3 rounded-surface border text-left transition-all w-full">
   <span :class="linked.find(i => i.id === '{{ r.id|escapejs }}') ? 'edify-primary-solid edify-primary-border' : 'edify-surface border-slate-300'"
         class="h-4 w-4 rounded-small border-2 flex items-center justify-center shrink-0 transition-colors">
@@ -16,7 +16,7 @@
   <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide
     {% if 'scheduled' in r.status|lower %}bg-emerald-50 text-emerald-700 border border-emerald-100
     {% elif 'progress' in r.status|lower %}edify-primary-soft edify-primary-text border edify-primary-border
-    {% else %}bg-slate-50 text-slate-500 border border-slate-150{% endif %}">{{ r.status }}</span>
+    {% else %}bg-slate-50 text-slate-500 border border-slate-200{% endif %}">{{ r.status }}</span>
   {% endif %}
 </button>
 {% empty %}
@@ -36,7 +36,7 @@
     <p class="edify-text-caption font-semibold text-slate-400 truncate">{{ r.meta }}</p>
   </div>
   {% if r.status %}
-  <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide bg-slate-50 text-slate-500 border border-slate-150">{{ r.status }}</span>
+  <span class="shrink-0 inline-flex px-1.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wide bg-slate-50 text-slate-500 border border-slate-200">{{ r.status }}</span>
   {% endif %}
 </button>
 {% empty %}

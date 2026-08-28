@@ -763,6 +763,8 @@ def school_directory_view(request):
     }
 
     if request.headers.get("HX-Request") == "true":
+        if request.headers.get("X-Edify-Update-Scope") == "table":
+            return render(request, "partials/schools/table.html", context)
         return render(request, "partials/schools/htmx_response.html", context)
 
     return render(request, "pages/schools/index.html", context)

@@ -49,6 +49,67 @@ def _contrast_ratio(foreground, background):
 
 
 class PlatformDesignSystemQualityTest(SimpleTestCase):
+    def test_consistency_bridge_uses_explicit_relationship_markers(self):
+        bridge = _read("static/css/consistency.css")
+        behavior = _read("static/js/micro-ux.js")
+        system_health = _read("templates/pages/system_health/index.html")
+
+        self.assertNotIn(
+            ":has(", bridge,
+            "Global relational selectors force ancestor invalidation for every descendant class change.",
+        )
+        self.assertIn("function enhanceStructuralMarkers(root)", behavior)
+        self.assertIn("enhanceStructuralMarkers(root);", behavior)
+        self.assertIn("{% block consistency_css %}{% endblock %}", system_health)
+
+    def test_numeric_colour_utilities_use_compiled_tailwind_shades(self):
+        """A class that Tailwind cannot compile is a silent visual defect.
+
+        Standard palettes expose 50, 100..900 and 950. Product-specific shades
+        are allowed only when the shared @theme declares the exact colour token.
+        Scan templates and authored Python class strings because both feed the
+        production Tailwind source globs.
+        """
+        standard_shades = {50, *range(100, 1000, 100), 950}
+        colour_names = {
+            "slate", "gray", "zinc", "neutral", "stone", "red", "orange",
+            "amber", "yellow", "lime", "green", "emerald", "teal", "cyan",
+            "sky", "blue", "indigo", "violet", "purple", "fuchsia", "pink",
+            "rose",
+        }
+        theme = _read("assets/css/_theme.css")
+        custom_shades = {
+            (name, int(shade))
+            for name, shade in re.findall(
+                r"--color-([a-z]+)-(\d+):", theme
+            )
+        }
+        utility = re.compile(
+            r"(?<![\w-])(?:bg|text|border|ring|outline|divide|from|via|to)-"
+            r"([a-z]+)-(\d+)(?![\w-])"
+        )
+        offenders = []
+        paths = [*ROOT.glob("templates/**/*.html"), *ROOT.glob("apps/**/*.py")]
+        for path in paths:
+            if "/migrations/" in path.as_posix():
+                continue
+            source = path.read_text(encoding="utf-8")
+            for match in utility.finditer(source):
+                colour, shade_text = match.groups()
+                if colour not in colour_names:
+                    continue
+                shade = int(shade_text)
+                if shade not in standard_shades and (colour, shade) not in custom_shades:
+                    line = source.count("\n", 0, match.start()) + 1
+                    offenders.append(f"{path.relative_to(ROOT)}:{line}:{match.group(0)}")
+
+        self.assertEqual(
+            offenders,
+            [],
+            "Undefined numeric Tailwind colour utilities silently emit no CSS:\n"
+            + "\n".join(offenders),
+        )
+
     def test_geist_sans_is_the_global_and_compiled_ui_font(self):
         base = _read("templates/base.html")
         theme = _read("assets/css/_theme.css")
@@ -380,7 +441,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn(".kpi-strip__item", consistency)
         self.assertIn(".settings-detail-tile", consistency)
         self.assertIn(".premium-card-elevated", consistency)
-        self.assertIn(":has(> table)", consistency)
+        self.assertIn(".edify-table-scroll-region", consistency)
         self.assertIn(".shadow-2xl", consistency)
         self.assertIn("background-color: var(--edify-card-surface)", consistency)
         self.assertIn("border-width: 1px", consistency)
@@ -955,7 +1016,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn('role="tabpanel"', templates)
 
     def test_tabs_have_shared_keyboard_navigation(self):
-        script = _read("static/js/alpine-components.js")
+        script = _read("static/js/micro-ux.js")
         for key in ("ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp", "Home", "End"):
             self.assertIn(key, script)
         self.assertIn("htmx:afterSettle", script)

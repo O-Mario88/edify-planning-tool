@@ -544,56 +544,6 @@ document.addEventListener('alpine:init', () => {
   }));
 });
 
-/* Shared accessible tabs --------------------------------------------------
-   The selected dataset remains server/URL-owned. This small progressive
-   enhancement only supplies the keyboard behavior required by the ARIA tabs
-   pattern and is safe to rerun after HTMX swaps. */
-function enhanceEdifyTabs(root = document) {
-  root.querySelectorAll('[role="tablist"]').forEach((tablist) => {
-    if (tablist.dataset.edifyTabsReady === 'true') return;
-    tablist.dataset.edifyTabsReady = 'true';
-
-    tablist.addEventListener('click', (event) => {
-      const selected = event.target.closest('[role="tab"]');
-      if (!selected || !tablist.contains(selected)) return;
-      tablist.querySelectorAll('[role="tab"]').forEach((tab) => {
-        const active = tab === selected;
-        tab.setAttribute('aria-selected', active ? 'true' : 'false');
-        tab.tabIndex = active ? 0 : -1;
-      });
-    });
-
-    tablist.addEventListener('keydown', (event) => {
-      const tabs = Array.from(
-        tablist.querySelectorAll('[role="tab"]:not([aria-disabled="true"]):not(:disabled)')
-      );
-      if (!tabs.length) return;
-
-      const current = tabs.indexOf(document.activeElement);
-      if (current < 0) return;
-
-      let next = null;
-      if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
-        next = tabs[(current + 1) % tabs.length];
-      } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
-        next = tabs[(current - 1 + tabs.length) % tabs.length];
-      } else if (event.key === 'Home') {
-        next = tabs[0];
-      } else if (event.key === 'End') {
-        next = tabs[tabs.length - 1];
-      }
-
-      if (!next) return;
-      event.preventDefault();
-      next.focus();
-      next.click();
-    });
-  });
-}
-
-document.addEventListener('DOMContentLoaded', () => enhanceEdifyTabs());
-document.addEventListener('htmx:afterSettle', (event) => enhanceEdifyTabs(event.target));
-
 document.addEventListener('alpine:init', () => {
   /* School Visit Effectiveness charts — one payload element, per-type
      options. Series colours follow the platform chart semantics (actual =

@@ -8,7 +8,7 @@
         {% for c in clusters %}
           <div
             x-data="{ expanded: false }"
-            class="group border border-slate-150 rounded-surface edify-surface shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 text-slate-700"
+            class="group border border-slate-200 rounded-surface edify-surface shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 text-slate-700"
             :class="expanded ? 'border-slate-300 bg-slate-50/10' : ''"
           >
             <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -187,7 +187,7 @@
             hx-get="/planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
             hx-target="#schools-table-container"
             hx-swap="outerHTML"
-            class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-55 flex items-center justify-center cursor-pointer"
+            class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center cursor-pointer"
           >
             &lt;
           </button>
@@ -213,7 +213,7 @@
             hx-get="/planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}"
             hx-target="#schools-table-container"
             hx-swap="outerHTML"
-            class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-55 flex items-center justify-center cursor-pointer"
+            class="h-7 w-7 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 flex items-center justify-center cursor-pointer"
           >
             &gt;
           </button>

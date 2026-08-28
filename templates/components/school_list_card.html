@@ -1,6 +1,6 @@
 {% load frontend_filters %}
 <div
-  class="school-list-card group border border-slate-150 rounded-surface edify-surface shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 text-slate-700"
+  class="school-list-card group border border-slate-200 rounded-surface edify-surface shadow-xs p-5 transition-all duration-300 hover:shadow-md hover:border-slate-300 text-slate-700"
   :class="openSchoolId === '{{ school.id }}' ? 'border-slate-300 bg-slate-50/10' : ''"
 >
   <!-- Card Header Row (Click the school record to show its details) -->
@@ -308,7 +308,7 @@
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-[12px]">
           <!-- Visits Progress -->
-          <div class="bg-slate-50/50 rounded-surface p-3 border border-slate-150/50 space-y-2">
+          <div class="bg-slate-50/50 rounded-surface p-3 border border-slate-200/50 space-y-2">
             <span class="font-bold text-slate-500 uppercase edify-text-caption">4 Visits Package Slots:</span>
             <div class="flex flex-wrap gap-2 pt-1">
               {% for slot in school.visits %}
@@ -320,7 +320,7 @@
           </div>
 
           <!-- Trainings Progress -->
-          <div class="bg-slate-50/50 rounded-surface p-3 border border-slate-150/50 space-y-2">
+          <div class="bg-slate-50/50 rounded-surface p-3 border border-slate-200/50 space-y-2">
             <span class="font-bold text-slate-500 uppercase edify-text-caption">4 Trainings Package Slots:</span>
             <div class="flex flex-wrap gap-2 pt-1">
               {% for slot in school.trainings %}

@@ -221,10 +221,9 @@ class FilterCanvasToolbarContractTests(TestCase):
             "Labels and field groups are layout only", 1
         )[0]
 
-        self.assertIn(
-            '> :is(label, div):has(> :is(select, input:not([type="hidden"]), textarea))',
-            contract,
-        )
+        self.assertIn("> .edify-filter-field", contract)
+        behavior = (ROOT / "static/js/micro-ux.js").read_text()
+        self.assertIn("child.classList.toggle('edify-filter-field'", behavior)
         self.assertIn("padding: 0 !important;", contract)
         self.assertIn("border: 0 !important;", contract)
         self.assertIn("background: transparent !important;", contract)

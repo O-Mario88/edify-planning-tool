@@ -65,7 +65,7 @@
         {% for block in upcoming_holidays %}
         <div class="flex items-center justify-between p-3 bg-rose-50/20 border border-rose-100/50 rounded-surface">
           <div>
-            <span class="font-bold text-slate-850 text-[13px] block">{{ block.title }}</span>
+            <span class="font-bold text-slate-900 text-[13px] block">{{ block.title }}</span>
             <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ block.start_date }}{% if block.start_date != block.end_date %} to {{ block.end_date }}{% endif %}</span>
           </div>
           {% if is_editor %}
@@ -94,7 +94,7 @@
         {% for block in blackout_dates %}
         <div class="flex items-center justify-between p-3 bg-slate-50 border border-slate-200/50 rounded-surface">
           <div>
-            <span class="font-bold text-slate-850 text-[13px] block">{{ block.title }}</span>
+            <span class="font-bold text-slate-900 text-[13px] block">{{ block.title }}</span>
             <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ block.start_date }} to {{ block.end_date }}</span>
             {% if block.description %}
             <p class="edify-text-caption text-slate-500 font-medium mt-1">{{ block.description }}</p>
@@ -126,7 +126,7 @@
         {% for block in conferences %}
         <div class="flex items-center justify-between p-3 bg-purple-50/20 border border-purple-100/50 rounded-surface">
           <div>
-            <span class="font-bold text-slate-850 text-[13px] block">{{ block.title }}</span>
+            <span class="font-bold text-slate-900 text-[13px] block">{{ block.title }}</span>
             <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ block.start_date }} to {{ block.end_date }}</span>
             {% if block.description %}
             <p class="edify-text-caption text-slate-500 font-medium mt-1">{{ block.description }}</p>
@@ -158,7 +158,7 @@
         {% for block in regional_events %}
         <div class="flex items-center justify-between p-3 edify-primary-soft-alpha-20 border edify-primary-border-alpha-50 rounded-surface">
           <div>
-            <span class="font-bold text-slate-850 text-[13px] block">{{ block.title }}</span>
+            <span class="font-bold text-slate-900 text-[13px] block">{{ block.title }}</span>
             <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ block.start_date }} to {{ block.end_date }}</span>
             <p class="edify-text-caption edify-primary-text font-semibold mt-1">Applies to: Region {{ block.region.name|default:"All" }}</p>
           </div>
@@ -199,7 +199,7 @@
       <div class="fixed inset-y-0 right-0 pl-10 max-w-full flex">
         <div class="edify-form-dialog__surface w-screen max-w-md edify-surface border-l border-slate-100 shadow-2xl flex flex-col p-6 space-y-6">
           <div class="flex items-center justify-between border-b pb-4">
-            <h3 id="add-calendar-block-title" class="text-[16px] font-bold text-slate-850">Add Calendar Block</h3>
+            <h3 id="add-calendar-block-title" class="text-[16px] font-bold text-slate-900">Add Calendar Block</h3>
             <button type="button" aria-label="Close calendar block form" @click="showAddDrawer = false" class="text-slate-400 hover:text-slate-600 text-[20px]">&times;</button>
           </div>
 

@@ -59,7 +59,11 @@ class DesignSystemContractTest(SimpleTestCase):
             self.assertNotIn("@view-transition", stylesheet)
             self.assertNotIn("::view-transition-old(root)", stylesheet)
             self.assertNotIn("::view-transition-new(root)", stylesheet)
-        self.assertIn("css/main.css' %}?v=20260823aura2", base)
+        self.assertRegex(
+            base,
+            r"css/main\.css' %}\?v=\d{8}[a-z0-9]+",
+            "The compiled stylesheet must keep a release-specific cache key.",
+        )
 
     def test_workspace_route_links_prefetch_without_global_page_swaps(self):
         """Likely sibling views warm up natively, while navigation stays real.

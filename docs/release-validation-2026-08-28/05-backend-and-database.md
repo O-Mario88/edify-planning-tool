@@ -34,6 +34,13 @@ No new migration drift exists (`makemigrations --check --dry-run` passed). Two m
 - RVP approval persists the envelope/reserve, while staff authority remains the operational amount.
 - Snapshot fields and per-line amounts preserve the approval-time financial record.
 
+## Production backup recovery
+
+BACKUP-01 passed a real managed-cluster restore rehearsal. The isolated fork
+promoted in 4m28s; two release migrations applied in 201s; all eight critical
+authenticated pages, 13 sequences, and the 1,713-row audit chain passed on the
+restored copy. See [the production restore evidence](10-production-backup-restore-rehearsal.md).
+
 ## Not available
 
 No production-equivalent PostgreSQL instance was available for `EXPLAIN ANALYZE`, `pg_stat_statements`, lock-wait/deadlock review, connection saturation, bloat, or production index-use analysis. Those are unclosed database acceptance gates.

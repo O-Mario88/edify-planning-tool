@@ -78,7 +78,7 @@
       {% for step in selected.panel.timeline %}
       <div class="flex items-start gap-2.5 {% if not forloop.last %}pb-4{% endif %} relative">
         {% if not forloop.last %}
-        <div class="absolute left-[7px] top-4 bottom-0 w-px {% if step.done %}bg-emerald-200{% else %}bg-slate-150{% endif %}"></div>
+        <div class="absolute left-[7px] top-4 bottom-0 w-px {% if step.done %}bg-emerald-200{% else %}bg-slate-100{% endif %}"></div>
         {% endif %}
         <div class="h-[15px] w-[15px] rounded-pill shrink-0 mt-0.5 flex items-center justify-center
           {% if step.current %}edify-primary-solid ring-4 edify-primary-ring{% elif step.done %}bg-emerald-500{% else %}edify-surface border-2 border-slate-200{% endif %}">

@@ -3,9 +3,7 @@
 
 {% block title %}School Directory - Edify Command Center{% endblock %}
 
-{% block shell_content %}
-<div
-class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto"
+{% block main_attributes %}
 x-data="{
 selectedSchools: [],
 assignClusterOpen: false,
@@ -14,7 +12,10 @@ matchStaffOpen: false,
 addSchoolOpen: false
 }"
 data-mobile-family="directory"
->
+{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 pt-5 max-w-[1500px] mx-auto">
 <!-- Page Header -->
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
@@ -64,6 +65,9 @@ data-mobile-family="directory"
 </div>
 </div>
 </div>
+
+</div>
+<div class="px-4 sm:px-6 pb-5 pt-4 space-y-4 max-w-[1500px] mx-auto">
 
 {% if messages %}
 <div class="space-y-2" aria-live="polite">

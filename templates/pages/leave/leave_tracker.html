@@ -60,7 +60,7 @@
   <!-- Team Leave Tracker Table (matching bottom card design of Reference 2) -->
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden flex flex-col">
     <div class="p-5 border-b border-slate-100 flex items-center justify-between">
-      <h3 class="text-[15px] font-bold text-slate-850">Team Resource Cockpit</h3>
+      <h3 class="text-[15px] font-bold text-slate-900">Team Resource Cockpit</h3>
       <span class="edify-text-caption bg-slate-100 text-slate-600 px-2 py-0.5 rounded-pill font-bold">Active Year: {% now "Y" %}</span>
     </div>
 
@@ -84,17 +84,17 @@
               <div class="w-8 h-8 rounded-pill edify-primary-soft border edify-primary-border edify-primary-text font-extrabold flex items-center justify-center edify-text-caption">
                 {{ sp.name|slice:":2"|upper }}
               </div>
-              <span class="font-bold text-slate-850 block text-[13px]">{{ sp.name }}</span>
+              <span class="font-bold text-slate-900 block text-[13px]">{{ sp.name }}</span>
             </td>
             <td class="px-4 py-4">
-              <span class="font-semibold text-slate-650 block">{{ sp.title }}</span>
+              <span class="font-semibold text-slate-700 block">{{ sp.title }}</span>
               <span class="edify-text-caption text-slate-400 font-bold block uppercase mt-0.5">{{ sp.role }}</span>
             </td>
             <td class="px-4 py-4 text-center">
-              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.pto_remaining }} days</span>
+              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-200 text-slate-800">{{ sp.pto_remaining }} days</span>
             </td>
             <td class="px-4 py-4 text-center">
-              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-150 text-slate-800">{{ sp.sick_remaining }} days</span>
+              <span class="font-extrabold text-[13px] px-2.5 py-1 rounded-pill bg-slate-50 border border-slate-200 text-slate-800">{{ sp.sick_remaining }} days</span>
             </td>
             <td class="px-4 py-4">
               <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-bold tracking-wider border
@@ -138,7 +138,7 @@
   <!-- Heatmap Matrix Component at bottom of tracker page (matching design specifications) -->
   <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm space-y-4">
     <div class="flex items-center justify-between border-b pb-3">
-      <h3 class="text-[14px] font-bold text-slate-850">Team Availability Matrix (Heatmap)</h3>
+      <h3 class="text-[14px] font-bold text-slate-900">Team Availability Matrix (Heatmap)</h3>
       <a href="{% url 'frontend:team_availability' %}" class="edify-text-caption edify-primary-text font-bold hover:underline">View full report &rarr;</a>
     </div>
 
@@ -147,7 +147,7 @@
       <div class="flex items-center justify-between edify-text-caption font-semibold">
         <div class="w-1/3 truncate">
           <span class="font-bold text-slate-800 block">{{ row.staff_name }}</span>
-          <span class="edify-text-caption text-slate-450 block uppercase mt-0.5">{{ row.role }}</span>
+          <span class="edify-text-caption text-slate-500 block uppercase mt-0.5">{{ row.role }}</span>
         </div>
 
         <div class="w-2/3 flex gap-1 justify-end">
