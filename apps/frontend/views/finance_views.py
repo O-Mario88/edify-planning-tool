@@ -608,6 +608,20 @@ def cost_settings_view(request):
                 key__in=CANONICAL_RATE_KEYS,
             ).order_by("label")
         )
+        reference_by_key = {}
+        if reference_catalogue:
+            reference_by_key = {
+                line.key: line
+                for line in CostSetting.objects.filter(
+                    catalogue=reference_catalogue,
+                    key__in=CANONICAL_RATE_KEYS,
+                )
+            }
+        for item in cost_items:
+            reference_line = reference_by_key.get(item.key)
+            item.reference_unit_cost = (
+                reference_line.unit_cost if reference_line is not None else None
+            )
 
     governed_activities = list(
         effective_items()
@@ -630,7 +644,9 @@ def cost_settings_view(request):
         "reference_catalogue": reference_catalogue,
     }
     if can_view_reference:
-        current_snapshots = ActivityCostSnapshot.objects.filter(is_current=True)
+        current_snapshots = ActivityCostSnapshot.objects.filter(
+            is_current=True, activity__fy=fy
+        )
         comparison = current_snapshots.aggregate(
             reference_total=Sum("reference_cost"),
             operational_total=Sum("operational_cost"),
@@ -992,7 +1008,7 @@ def export_drawer_view(request):
 def cost_setting_row_view(request, key):
     from django.shortcuts import get_object_or_404
     from django.http import HttpResponse
-    from apps.budget.models import CostSetting
+    from apps.budget.models import CostSetting, RateCardKind
     from apps.budget import services as budget_services
     from apps.budget.costing_service import active_catalogue
     from apps.budget.reference import CANONICAL_RATE_KEYS
@@ -1055,6 +1071,15 @@ def cost_setting_row_view(request, key):
             )
             for row in history:
                 row["changedByName"] = names.get(row.get("changedByUserId"))
+
+    reference_catalogue = active_catalogue(setting.fy, kind=RateCardKind.REFERENCE)
+    setting.reference_unit_cost = None
+    if reference_catalogue is not None:
+        setting.reference_unit_cost = (
+            CostSetting.objects.filter(catalogue=reference_catalogue, key=key)
+            .values_list("unit_cost", flat=True)
+            .first()
+        )
 
     context = {
         "c": setting,
@@ -1301,6 +1326,13 @@ def country_budget_action_view(request):
                 request.POST.get("note"),
             )
             ok = "Program Lead request returned for changes."
+        elif action == "set_envelope_allocation":
+            svc.set_envelope_allocation(
+                request.user,
+                budget_id,
+                request.POST.get("strategic_reserve_requested"),
+            )
+            ok = "Country envelope allocation saved."
         elif action == "add_admin_line":
             from apps.monthly_work_plan import services as monthly_plan_service
 

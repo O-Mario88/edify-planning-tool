@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.utils import timezone
 
 from apps.audit.services import log as audit_log
@@ -195,6 +195,11 @@ def upsert_rate_card_line(principal, card_id: str, data: dict) -> dict:
     key = data.get("code")
     if key not in CANONICAL_RATE_KEYS:
         raise BadRequest("The cost-component code is not governed by the catalogue.")
+    adjustment_reason = str(data.get("adjustmentReason") or "").strip()
+    if card.kind == RateCardKind.OPERATIONAL and not adjustment_reason:
+        raise BadRequest(
+            "An adjustmentReason is required for every country operational rate."
+        )
     try:
         amount = int(data.get("amount"))
     except (TypeError, ValueError):
@@ -232,7 +237,12 @@ def upsert_rate_card_line(principal, card_id: str, data: dict) -> dict:
             subject_id=line.id,
             actor_id=_user_id(principal),
             actor_role=getattr(principal, "active_role", None),
-            payload={"rateCardId": card.id, "code": key, "amount": amount},
+            payload={
+                "rateCardId": card.id,
+                "code": key,
+                "amount": amount,
+                "adjustmentReason": adjustment_reason,
+            },
             required=True,
         )
     return _card_dict(card, include_lines=True)
@@ -255,6 +265,23 @@ def publish_rate_card(principal, card_id: str) -> dict:
             raise BadRequest("Uganda activity rate cards must use UGX.")
         if not card.rates.exists():
             raise BadRequest("Add governed rates before publishing this rate card.")
+        below_minimum = (
+            list(
+                card.rates.filter(
+                    approved_minimum__isnull=False,
+                    unit_cost__lt=F("approved_minimum"),
+                ).values_list("label", flat=True)
+            )
+            if card.kind == RateCardKind.OPERATIONAL
+            else []
+        )
+        if below_minimum:
+            sample = ", ".join(below_minimum[:3])
+            raise BadRequest(
+                "The Country Operational Rate Card contains a rate below the "
+                f"approved minimum viable cost ({sample}). Revise the activity "
+                "scope, delivery method, or rate before publishing."
+            )
         overlap = CostCatalogue.objects.filter(
             country=card.country,
             fy=card.fy,

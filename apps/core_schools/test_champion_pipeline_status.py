@@ -29,7 +29,9 @@ from __future__ import annotations
 from datetime import timedelta
 from unittest import mock
 
+from django.db import connection
 from django.test import TestCase
+from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
 from apps.accounts.models import User
@@ -176,6 +178,37 @@ class ImpactMeasurementKeepsTheSchoolInTheEngineTest(ChampionPipelineFixture):
         )
         profile.refresh_from_db()
         self.assertEqual(profile.champion_status, "Potential Champion")
+
+    def test_candidate_sweep_query_count_is_constant_as_schools_are_added(self):
+        """The candidates page must batch the estate instead of scoring N+1.
+
+        This is the regression for the live freeze: the old implementation
+        exceeded Django's 9,000-query capture limit and took 23.5 seconds on
+        the development clone.  A larger candidate population must add rows,
+        not database round trips.
+        """
+
+        def eligible_school(school_id: str):
+            school = self._school(school_id)
+            plan = self._plan(school.school_id)
+            self._profile(school.school_id, plan)
+            self._complete_slots(plan)
+            self._baseline_ssa(school, 7.0)
+            self._follow_up(plan, 8.5)
+
+        eligible_school("CH-BATCH-ONE")
+        with CaptureQueriesContext(connection) as one_school_queries:
+            ChampionEligibilityService.evaluate_all()
+
+        eligible_school("CH-BATCH-TWO")
+        eligible_school("CH-BATCH-THREE")
+        CoreSchoolProfile.objects.update(champion_status="Not Eligible")
+        with CaptureQueriesContext(connection) as three_school_queries:
+            candidates = ChampionEligibilityService.evaluate_all()
+
+        self.assertEqual(len(candidates), 3)
+        self.assertEqual(len(three_school_queries), len(one_school_queries))
+        self.assertLessEqual(len(three_school_queries), 8)
 
     def test_an_impact_measured_plan_is_still_scored(self):
         """The not-yet-a-candidate branch keeps its metrics too — the review

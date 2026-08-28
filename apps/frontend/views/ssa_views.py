@@ -1,6 +1,7 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.http import Http404, HttpResponse, HttpResponseForbidden
+from django.db.models import Q
 from apps.core.redirects import local_redirect
 from apps.core.permissions import (
     has_permission,
@@ -211,6 +212,14 @@ def ssa_manual_entry_view(request):
         school_queryset=scoped_schools,
         initial=initial,
     )
+    selected_school_id = (
+        request.POST.get("school_id", "").strip() or initial["school_id"]
+    )
+    selected_schools = (
+        scoped_schools.filter(school_id=selected_school_id)[:1]
+        if selected_school_id
+        else School.objects.none()
+    )
 
     if request.method == "POST" and form.is_valid():
         collector_type = (
@@ -239,8 +248,36 @@ def ssa_manual_entry_view(request):
         {
             "form": form,
             "score_fields": form.score_fields,
-            "schools": scoped_schools,
+            "schools": selected_schools,
         },
+    )
+
+
+@require_page_permission("ssa")
+def ssa_manual_school_options_view(request):
+    """Return a small, role-scoped datalist window for manual SSA entry."""
+    if not _may_upload_ssa(request):
+        return HttpResponseForbidden()
+
+    query = request.GET.get("school_id", "").strip()
+    if len(query) < 2:
+        schools = School.objects.none()
+    else:
+        scope = resolve_user_scope(request.user)
+        schools = school_queryset(scope)
+        if schools is None:
+            schools = School.objects.none()
+        else:
+            schools = (
+                schools.filter(deleted_at__isnull=True)
+                .filter(Q(school_id__istartswith=query) | Q(name__icontains=query))
+                .select_related("district")
+                .order_by("school_id")[:25]
+            )
+    return render(
+        request,
+        "partials/ssa/manual_school_options.html",
+        {"schools": schools},
     )
 
 

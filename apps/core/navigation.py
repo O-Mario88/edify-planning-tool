@@ -42,6 +42,7 @@ ALL_ROLES = {
 # least-privilege rule.
 ROLE_EXCLUSIVE_PAGES = {
     "loans",
+    "mfi_portal",
     "business_transformation_finance",
     "business_transformation_government",
 }

@@ -149,6 +149,7 @@ def reconcile_month(budget: MonthlyWorkPlanBudget) -> dict:
     disbursed = moved.aggregate(t=Sum("disbursed_amount"))["t"] or 0
     accounted = moved.aggregate(t=Sum("accounted_amount"))["t"] or 0
     returned = moved.aggregate(t=Sum("returned_amount"))["t"] or 0
+    reimbursed = moved.aggregate(t=Sum("reimbursed_amount"))["t"] or 0
     committed = advances.aggregate(t=Sum("amount"))["t"] or 0
 
     # Money in this month that could not be attributed to a country. Reported,
@@ -184,6 +185,7 @@ def reconcile_month(budget: MonthlyWorkPlanBudget) -> dict:
         "disbursedTotal": disbursed,
         "accountedTotal": accounted,
         "returnedTotal": returned,
+        "reimbursedTotal": reimbursed,
         "utilisationPct": utilisation,
         "unattributedTotal": unattributed_total,
         "unattributedCount": unattributed_moved.count(),

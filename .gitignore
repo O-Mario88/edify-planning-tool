@@ -37,6 +37,8 @@ htmlcov/
 # install resolves the tree afresh — so the bundle CI verifies is not
 # necessarily the bundle anyone else would produce.
 node_modules/
+playwright-report/
+test-results/
 
 # Agent/tooling debris that should never reach the repo.
 # _to_delete_git_locks holds empty git .lock files left behind by a crashed

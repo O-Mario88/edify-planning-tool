@@ -85,9 +85,10 @@
         <div class="ad-field">
           <span class="ad-field__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="2" y="6" width="20" height="13" rx="2"/><path stroke-linecap="round" d="M2 11h20"/></svg></span>
           <div>
-            <p class="ad-field__label">Allocated budget</p>
-            <p class="ad-field__value ad-field__value--accent">{{ act.est_cost_cents|ugx }}</p>
-            <p class="ad-field__note">Approved budget</p>
+            <p class="ad-field__label">{{ activity_cost.label }}</p>
+            <p class="ad-field__value ad-field__value--accent">{{ activity_cost.amount|ugx }}</p>
+            <p class="ad-field__note">{{ activity_cost.note }}</p>
+            {% if activity_cost.amount_disbursed %}<p class="ad-field__note">Amount disbursed: {{ activity_cost.amount_disbursed|ugx }}</p>{% endif %}
           </div>
         </div>
       </div>

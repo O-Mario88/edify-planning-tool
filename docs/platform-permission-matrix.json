@@ -10594,11 +10594,10 @@
   {
    "page_permission": "mfi_portal",
    "required_permissions": [],
-   "role_exclusive": false,
+   "role_exclusive": true,
    "roles": [
     "MfiPartnerAdmin",
-    "MfiLoanOfficer",
-    "Admin"
+    "MfiLoanOfficer"
    ],
    "route": "/mfi-portal",
    "route_name": "mfi_portal",
@@ -10607,11 +10606,10 @@
   {
    "page_permission": "mfi_portal",
    "required_permissions": [],
-   "role_exclusive": false,
+   "role_exclusive": true,
    "roles": [
     "MfiPartnerAdmin",
-    "MfiLoanOfficer",
-    "Admin"
+    "MfiLoanOfficer"
    ],
    "route": "/mfi-portal/<str:section>",
    "route_name": "mfi_portal_section",
@@ -12262,6 +12260,21 @@
    "view": "apps.frontend.views.planning_views.schedule_modal_view"
   },
   {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/schedule/schools",
+   "route_name": "planning_schedule_school_options",
+   "view": "apps.frontend.views.planning_views.schedule_school_options_view"
+  },
+  {
    "page_permission": "policies",
    "required_permissions": [],
    "role_exclusive": false,
@@ -13246,6 +13259,22 @@
    "view": "apps.frontend.views.ssa_views.ssa_manual_entry_view"
   },
   {
+   "page_permission": "ssa",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ssa/manual/schools",
+   "route_name": "ssa_manual_school_options",
+   "view": "apps.frontend.views.ssa_views.ssa_manual_school_options_view"
+  },
+  {
    "page_permission": "data_quality_center",
    "required_permissions": [],
    "role_exclusive": false,
@@ -13996,23 +14025,23 @@
   "Accountant": 285,
   "Admin": 765,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 468,
-  "CountryDirector": 539,
+  "CCEO": 470,
+  "CountryDirector": 541,
   "HumanResources": 264,
-  "ImpactAssessment": 400,
+  "ImpactAssessment": 401,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
-  "Program Lead": 542,
-  "ProjectCoordinator": 399,
-  "RegionalVicePresident": 299
+  "Program Lead": 544,
+  "ProjectCoordinator": 400,
+  "RegionalVicePresident": 300
  },
  "summary": {
   "page_keys_declared": 148,
   "page_keys_in_navigation": 165,
-  "routes_guarded": 857,
-  "routes_total": 1041,
+  "routes_guarded": 859,
+  "routes_total": 1043,
   "routes_unguarded": 184,
   "surfaces_no_role_can_reach": 0
  },

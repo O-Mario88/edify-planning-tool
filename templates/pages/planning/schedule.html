@@ -37,17 +37,26 @@ hx-trigger="change, keyup delay:400ms"
 {% if action == 'visit' %}
 <div>
 <label for="school_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Target School</label>
-<select
+<input
+type="text"
 name="school_id"
 id="school_id"
 required
+list="planning-schedule-school-options"
+autocomplete="off"
+placeholder="Type a School ID or name"
+value="{{ selected_school.school_id|default:'' }}"
+hx-get="/planning/schedule/schools"
+hx-trigger="input changed delay:250ms"
+hx-target="#planning-schedule-school-options"
+hx-swap="innerHTML"
+hx-include="this"
 class="w-full h-10 px-3 rounded-control border border-[var(--edify-border)] text-[12px] bg-slate-50 mt-1 focus:outline-none focus:ring-2 focus:ring-[var(--edify-accent)]/20"
 >
-<option value="">Select School...</option>
-{% for s in schools %}
-<option value="{{ s.school_id }}" {% if selected_school.school_id == s.school_id %}selected{% endif %}>{{ s.name }} ({{ s.school_id }})</option>
-{% endfor %}
-</select>
+<datalist id="planning-schedule-school-options">
+{% include "partials/planning/schedule_school_options.html" %}
+</datalist>
+<p class="mt-1 edify-text-caption font-semibold text-slate-400">Type at least two characters, then choose a school in your direct portfolio.</p>
 </div>
 {% else %}
 <div>

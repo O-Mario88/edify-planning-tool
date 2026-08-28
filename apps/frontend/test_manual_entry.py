@@ -168,6 +168,47 @@ class ManualSchoolAndSsaEntryTest(TestCase):
         for code, _label in SsaIntervention.choices:
             self.assertContains(response, f'name="score_{code}"')
 
+    def test_manual_ssa_page_does_not_render_the_whole_school_directory(self):
+        School.objects.bulk_create(
+            [
+                School(
+                    school_id=f"SSA-SEARCH-{index:03d}",
+                    name=f"Searchable Academy {index:03d}",
+                    district=self.district,
+                    region=self.region,
+                )
+                for index in range(60)
+            ]
+        )
+        self.client.force_login(self.ia)
+
+        response = self.client.get("/ssa/manual/")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.count(b"<option"), 0)
+        self.assertContains(response, 'hx-get="/ssa/manual/schools"')
+
+    def test_manual_ssa_school_search_is_scoped_and_bounded(self):
+        School.objects.bulk_create(
+            [
+                School(
+                    school_id=f"SSA-LOOKUP-{index:03d}",
+                    name=f"Lookup Academy {index:03d}",
+                    district=self.district,
+                    region=self.region,
+                )
+                for index in range(40)
+            ]
+        )
+        self.client.force_login(self.ia)
+
+        response = self.client.get("/ssa/manual/schools", {"school_id": "SSA-LOOKUP"})
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.content.count(b"<option"), 25)
+        self.assertContains(response, 'value="SSA-LOOKUP-000"')
+        self.assertNotContains(response, 'value="SSA-LOOKUP-039"')
+
     def test_ssa_template_uses_enrolment_only_as_a_score(self):
         self.client.force_login(self.ia)
 

@@ -20,6 +20,7 @@
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
 <div class="overflow-x-auto">
 {% paginate roles "roles_page" as roles_pager %}
+{% paginate pages "pages_page" 25 as pages_pager %}
 <table class="w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
@@ -32,13 +33,13 @@
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for page in pages %}
+{% for page in pages_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-3.5 border-r border-slate-50">
 <span class="font-semibold text-slate-800 block">{{ page.name }}</span>
 <span class="edify-text-caption text-slate-400 font-bold block mt-0.5">{{ page.path }}</span>
 </td>
-{% for role in roles %}
+{% for role in roles_pager.rows %}
 <td class="px-3 py-3.5 text-center">
 {% with val=matrix|lookup:page.name %}
 {% with allowed=val|lookup:role %}
@@ -68,6 +69,7 @@
 </tbody>
 </table>
 {% include "components/table_pager.html" with pager=roles_pager param="roles_page" %}
+{% include "components/table_pager.html" with pager=pages_pager param="pages_page" %}
 </div>
 </div>
 

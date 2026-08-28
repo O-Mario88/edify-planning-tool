@@ -141,6 +141,12 @@ class PageInventoryTest(SimpleTestCase):
         self.assertIn("state_coverage", dashboard)
         self.assertIsNone(dashboard["manual_quality_score"])
 
+        mfi_portal = next(
+            page for page in inventory["pages"] if page["route"] == "/mfi-portal"
+        )
+        self.assertNotIn("ADMIN", mfi_portal["role_access"])
+        self.assertEqual(set(mfi_portal["role_access"]), {"MFI_ADMIN", "MFI_OFFICER"})
+
     def test_every_permission_gated_surface_has_a_role_mapping(self):
         inventory = build_page_inventory()
         missing = [

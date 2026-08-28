@@ -578,10 +578,10 @@
         "/accounts/activities/<str:activity_id>/",
         "/accounts/approval-history",
         "/accounts/approval-history/",
+        "/accounts/blocked",
+        "/accounts/blocked/",
         "/accounts/budget-amendments",
-        "/accounts/monthly-request",
-        "/accounts/monthly-request/",
-        "/accounts/monthly-request/action"
+        "/accounts/monthly-request"
       ],
       "findings": [],
       "forms": 0,
@@ -2257,7 +2257,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22358,
+      "bytes": 22364,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2960,7 +2960,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15212,
+      "bytes": 15189,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -2987,7 +2987,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 14856,
+      "bytes": 14848,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3087,7 +3087,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1755,
+      "bytes": 1761,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/cost-preview",
@@ -3113,7 +3113,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5571,
+      "bytes": 6294,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
@@ -4012,7 +4012,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4255,
+      "bytes": 4771,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/plan-sources"
@@ -4063,7 +4063,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 28663,
+      "bytes": 28701,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/action"
@@ -5405,7 +5405,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13007,
+      "bytes": 13165,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -6641,6 +6641,28 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 171,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/planning/schedule",
+        "/planning/schedule/schools"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Schedule School Options",
+      "purpose": "Reusable schedule school options interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/planning/schedule_school_options.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
@@ -7810,6 +7832,28 @@
       ],
       "tables": 0,
       "template": "partials/schools/toast_success.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 171,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/ssa/manual/",
+        "/ssa/manual/schools"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Manual School Options",
+      "purpose": "Reusable manual school options interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/ssa/manual_school_options.html",
       "variants": []
     },
     {
@@ -9236,6 +9280,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -12339,6 +12384,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -12442,6 +12488,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -12538,6 +12585,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -12880,6 +12928,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -12969,6 +13018,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13066,6 +13116,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13161,6 +13212,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13258,6 +13310,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13358,6 +13411,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13453,6 +13507,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13624,6 +13679,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13718,6 +13774,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13812,6 +13869,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -13906,6 +13964,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -14000,6 +14059,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -14094,6 +14154,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -14188,6 +14249,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -14282,6 +14344,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -14372,6 +14435,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -19371,7 +19435,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION"
       ],
       "route": "/business-transformation/business-accounting-finance",
@@ -19525,7 +19588,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION"
       ],
       "route": "/business-transformation/government-requirements",
@@ -24131,8 +24193,8 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -24150,7 +24212,8 @@
         "text-[13px]",
         "text-[14px]",
         "text-[15px]",
-        "text-[18px]"
+        "text-[18px]",
+        "text-[20px]"
       ]
     },
     {
@@ -24230,8 +24293,8 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 3,
@@ -24249,7 +24312,8 @@
         "text-[13px]",
         "text-[14px]",
         "text-[15px]",
-        "text-[18px]"
+        "text-[18px]",
+        "text-[20px]"
       ]
     },
     {
@@ -28806,6 +28870,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -28898,6 +28963,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -38284,7 +38350,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38367,7 +38432,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38448,7 +38512,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38524,7 +38587,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38600,7 +38662,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38676,7 +38737,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38752,7 +38812,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38828,7 +38887,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -38904,7 +38962,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ADMIN",
         "BUSINESS_TRANSFORMATION",
         "CD",
         "IA",
@@ -40463,7 +40520,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
-        "ADMIN",
         "MFI_ADMIN",
         "MFI_OFFICER"
       ],
@@ -40511,7 +40567,7 @@
       "drawers": true,
       "evidence": [
         "template:pages/business_transformation/mfi_portal.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:mfi_portal"
       ],
       "filters": "none",
@@ -40540,7 +40596,6 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
-        "ADMIN",
         "MFI_ADMIN",
         "MFI_OFFICER"
       ],
@@ -40569,7 +40624,7 @@
       "templates": [
         "pages/business_transformation/mfi_portal.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -41007,6 +41062,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41110,6 +41166,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41212,6 +41269,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41307,6 +41365,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41401,6 +41460,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41495,6 +41555,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41590,6 +41651,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41690,6 +41752,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41784,6 +41847,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41873,6 +41937,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -41967,6 +42032,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -42062,6 +42128,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -48461,6 +48528,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -48555,6 +48623,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -48644,6 +48713,7 @@
         "apps.activities.services",
         "apps.audit.models",
         "apps.audit.services",
+        "apps.budget.models",
         "apps.core.scoping",
         "apps.evidence.models",
         "apps.evidence.services",
@@ -49281,6 +49351,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "POST /partials/costing/preview",
+        "GET /planning/schedule/schools",
         "POST /planning/schedule?action={{ action }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49553,6 +49624,99 @@
         "text-[13px]",
         "text-[14px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.planning_views",
+      "backend_view": "apps.frontend.views.planning_views.schedule_school_options_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/planning/schedule_school_options.html",
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C597B8F97C",
+      "page_title": "Planning Schedule School Options",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Planning Schedule School Options",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Small, direct-portfolio lookup for the legacy scheduling page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/schedule/schools",
+      "route_name": "planning_schedule_school_options",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.planning.services",
+        "apps.projects.models",
+        "apps.schools.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/planning/schedule_school_options.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -55683,6 +55847,89 @@
         "text-[14px]",
         "text-[15px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.ssa_views",
+      "backend_view": "apps.frontend.views.ssa_views.ssa_manual_school_options_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:partials/ssa/manual_school_options.html",
+        "test:referenced-by-automated-test",
+        "permission:ssa"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-498447B0C2",
+      "page_title": "Ssa Manual School Options",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "ssa",
+      "primary_action": "Ssa Manual School Options",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Return a small, role-scoped datalist window for manual SSA entry.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "RVP"
+      ],
+      "route": "/ssa/manual/schools",
+      "route_name": "ssa_manual_school_options",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.core.scoping",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/ssa/manual_school_options.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -74881,6 +75128,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.planning_views.schedule_school_options_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/planning/schedule/schools",
+      "route_name": "planning_schedule_school_options",
+      "templates": [
+        "partials/planning/schedule_school_options.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.hr_views.policies_view",
       "kind": "action",
       "methods": [
@@ -75795,6 +76056,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.ssa_views.ssa_manual_school_options_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "ssa",
+      "required_permissions": [],
+      "route": "/ssa/manual/schools",
+      "route_name": "ssa_manual_school_options",
+      "templates": [
+        "partials/ssa/manual_school_options.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extended_views.unmatched_ssa_queue_view",
       "kind": "page",
       "methods": [
@@ -76586,30 +76861,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 376,
+    "accessibility_contract_pass": 378,
     "activity_states": 23,
-    "all_routes": 1041,
+    "all_routes": 1043,
     "api_routes": 359,
-    "component_templates": 342,
+    "component_templates": 344,
     "full_pages": 203,
-    "mobile_contract_pass": 376,
+    "mobile_contract_pass": 378,
     "nonvisual_actions": 179,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 349,
+      "interaction-fragment": 351,
       "operational-queue": 121,
       "planning-or-creation": 6,
       "record-detail": 25,
       "report": 25
     },
-    "partials_and_drawers": 170,
-    "permission_gated": 563,
+    "partials_and_drawers": 172,
+    "permission_gated": 565,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 573,
+    "routed_surfaces": 575,
     "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
@@ -76617,8 +76892,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 376,
-    "test_referenced": 527,
-    "theme_contract_pass": 376
+    "tablet_contract_pass": 378,
+    "test_referenced": 530,
+    "theme_contract_pass": 378
   }
 }

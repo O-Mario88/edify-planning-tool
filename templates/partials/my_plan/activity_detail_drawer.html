@@ -145,9 +145,10 @@ Evidence & SF ID ({{ evidence_list|length }})
 <!-- Tab Finance: Budget Lines & Fund requests -->
 <div id="activity-detail-panel-finance" role="tabpanel" aria-labelledby="activity-detail-tab-finance" x-show="activeTab === 'finance'" class="space-y-4" x-transition>
 <div class="bg-slate-50 p-4 border border-slate-100 rounded-surface">
-<p class="edify-text-caption uppercase font-bold text-slate-400 mb-1">Total Allocated Budget</p>
-<p class="text-[24px] font-semibold text-[var(--edify-accent-text)] leading-none">{{ act.est_cost_cents|ugx }}</p>
-<p class="edify-text-caption text-slate-400 font-bold mt-1.5">Created automatically upon planning schedule</p>
+<p class="edify-text-caption uppercase font-bold text-slate-400 mb-1">{{ activity_cost.label }}</p>
+<p class="text-[24px] font-semibold text-[var(--edify-accent-text)] leading-none">{{ activity_cost.amount|ugx }}</p>
+<p class="edify-text-caption text-slate-400 font-bold mt-1.5">{{ activity_cost.note }}</p>
+{% if activity_cost.amount_disbursed %}<p class="edify-text-caption text-slate-500 font-bold mt-1">Amount disbursed: {{ activity_cost.amount_disbursed|ugx }}</p>{% endif %}
 </div>
 
 <div>

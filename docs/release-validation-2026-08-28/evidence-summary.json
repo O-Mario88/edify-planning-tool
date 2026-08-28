@@ -1,0 +1,104 @@
+{
+  "decision": "NO-GO",
+  "date": "2026-08-28",
+  "candidate": {
+    "branch": "main",
+    "baseCommit": "a16f9763e68b483c237b3c92d1227c9fffa39e1d",
+    "workingTreeCommitted": false,
+    "productionUrl": "https://www.edifyplanning.app",
+    "stagingUrl": null
+  },
+  "inventory": {
+    "routes": 1043,
+    "apiRoutes": 359,
+    "routedSurfaces": 575,
+    "fullPages": 203,
+    "roles": 14,
+    "permissionKeys": 112,
+    "scheduledJobs": 23,
+    "guardedRoutes": 859,
+    "unguardedRoutes": 184
+  },
+  "browserAudit": {
+    "roleRouteVisits": 879,
+    "uniqueArgumentFreeRoutes": 159,
+    "inventoriedControlInstances": 97699,
+    "visibleControlInstances": 47554,
+    "crawlErrors": 0,
+    "playwright": {
+      "executedPassed": 27,
+      "deliberatelySkipped": 75,
+      "unexpected": 0,
+      "flaky": 0,
+      "durationMs": 481988.257
+    },
+    "productionPublicSmoke": {
+      "passed": 12,
+      "profiles": [
+        "chromium-desktop",
+        "firefox-desktop",
+        "webkit-desktop",
+        "android-360",
+        "iphone-390",
+        "tablet-768"
+      ]
+    }
+  },
+  "roleCoverage": [
+    {"role": "CCEO", "pages": 63, "controls": 7399, "visibleControls": 3375, "errors": 0},
+    {"role": "PL", "pages": 79, "controls": 11240, "visibleControls": 5196, "errors": 0},
+    {"role": "CD", "pages": 89, "controls": 11534, "visibleControls": 5229, "errors": 0},
+    {"role": "RVP", "pages": 68, "controls": 1490, "visibleControls": 930, "errors": 0},
+    {"role": "IA", "pages": 75, "controls": 8270, "visibleControls": 4121, "errors": 0},
+    {"role": "ACCOUNTANT", "pages": 70, "controls": 6463, "visibleControls": 2991, "errors": 0},
+    {"role": "HR", "pages": 60, "controls": 7707, "visibleControls": 3695, "errors": 0},
+    {"role": "PROJECT_COORDINATOR", "pages": 56, "controls": 1475, "visibleControls": 971, "errors": 0},
+    {"role": "PARTNER_ADMIN", "pages": 38, "controls": 1169, "visibleControls": 773, "errors": 0},
+    {"role": "PARTNER", "pages": 38, "controls": 3918, "visibleControls": 2265, "errors": 0},
+    {"role": "BUSINESS_TRANSFORMATION", "pages": 32, "controls": 781, "visibleControls": 405, "errors": 0},
+    {"role": "MFI_ADMIN", "pages": 28, "controls": 761, "visibleControls": 393, "errors": 0},
+    {"role": "MFI_OFFICER", "pages": 28, "controls": 761, "visibleControls": 393, "errors": 0},
+    {"role": "ADMIN", "pages": 155, "controls": 34731, "visibleControls": 16817, "errors": 0}
+  ],
+  "freezeRegression": [
+    {"route": "/core-schools/champion-candidates", "durationMs": 497, "domNodes": 1211, "overflow": false},
+    {"route": "/activities/closure/blocked", "durationMs": 506, "domNodes": 1335, "overflow": false},
+    {"route": "/core-school-health", "durationMs": 769, "domNodes": 1390, "overflow": false},
+    {"route": "/planning/schedule", "durationMs": 679, "domNodes": 1232, "overflow": false},
+    {"route": "/ssa/manual/", "durationMs": 207, "domNodes": 1254, "overflow": false},
+    {"route": "/strategic-priorities", "durationMs": 427, "domNodes": 2555, "overflow": false}
+  ],
+  "scaleP95Ms": {
+    "/dashboard": 493,
+    "/my-plan": 71,
+    "/schools": 189,
+    "/todos": 205,
+    "/notifications": 21,
+    "/settings": 16,
+    "/analytics": 533,
+    "/system-health": 11
+  },
+  "djangoSuite": {
+    "tests": 6194,
+    "durationSeconds": 1029.953,
+    "unexpectedFailures": 0,
+    "expectedFailures": 2
+  },
+  "productionReadinessAtCheck": {
+    "status": "ok",
+    "db": "up",
+    "cache": "up"
+  },
+  "blockedReleaseGates": [
+    "No production-equivalent staging clone",
+    "No approved isolated production synthetic accounts and records",
+    "No authenticated production role crawl",
+    "No exhaustive real-browser mutation/state/control coverage",
+    "No production-equivalent capacity, stress, spike, or extended soak test",
+    "No production infrastructure, database, cache, scheduler, queue, or RUM telemetry access",
+    "No real external integration sandbox credentials",
+    "No two-deployment service-worker upgrade rehearsal",
+    "No complete native/physical device and Edge matrix",
+    "No production monitoring dashboard and alert-delivery verification"
+  ]
+}

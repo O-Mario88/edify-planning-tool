@@ -276,6 +276,44 @@ def activity_detail_view(request, activity_id):
         },
     ]
 
+    # Staff finance wording follows the governed state machine and contains
+    # only the country operational layer. Regional benchmark and reserve
+    # capacity never enter this context.
+    from apps.budget.models import ActivityCostSnapshot, ActivityCostStatus
+
+    cost_snapshot = ActivityCostSnapshot.objects.filter(
+        activity=a, is_current=True
+    ).first()
+    if cost_snapshot and cost_snapshot.cost_status in (
+        ActivityCostStatus.ACCOUNTED,
+        ActivityCostStatus.CLOSED,
+    ):
+        activity_cost = {
+            "label": "Actual Accounted Spend",
+            "amount": int(cost_snapshot.actual_accounted_spend),
+            "note": "Recorded after approved accountability",
+            "amount_disbursed": int(cost_snapshot.amount_disbursed),
+        }
+    elif cost_snapshot and cost_snapshot.approved_operating_limit is not None:
+        activity_cost = {
+            "label": "Approved Operating Limit",
+            "amount": int(cost_snapshot.approved_operating_limit),
+            "note": "Maximum authorized activity spend",
+            "amount_disbursed": int(cost_snapshot.amount_disbursed),
+        }
+    else:
+        activity_cost = {
+            "label": "Estimated Operational Cost",
+            "amount": int(
+                cost_snapshot.operational_cost if cost_snapshot else a.est_cost_cents
+            ),
+            "note": (
+                "Calculated using the current Uganda operational rates. "
+                "Final funding is subject to approval."
+            ),
+            "amount_disbursed": 0,
+        }
+
     context = {
         "act": a,
         "evidence_list": evidence_list,
@@ -284,6 +322,7 @@ def activity_detail_view(request, activity_id):
         "status_tone": status_tone(status_class),
         "responsible_staff_name": staff_name,
         "timeline": timeline,
+        "activity_cost": activity_cost,
         "can_complete_partner_ssa_support": (
             RolePermissionService.can_complete_partner_ssa_support(request.user, a)
             and a.status == "awaiting_ia_verification"

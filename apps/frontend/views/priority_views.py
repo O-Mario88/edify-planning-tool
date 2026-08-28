@@ -99,6 +99,7 @@ def priority_configuration_page(request):
 
     priorities = list(cycle.priorities.all()) if cycle else []
     group_rows = []
+    milestone_rows = []
     milestone_count = 0
     needs_definition_count = 0
     defined_count = 0
@@ -106,6 +107,9 @@ def priority_configuration_page(request):
     allocation_count = 0
     for priority in priorities:
         milestones = list(priority.milestones.all())
+        milestone_rows.extend(
+            {"priority": priority, "milestone": milestone} for milestone in milestones
+        )
         group_needs_definition = sum(
             1 for milestone in milestones if milestone.requires_definition
         )
@@ -150,6 +154,10 @@ def priority_configuration_page(request):
             "can_author": role in _STRATEGY_AUTHORS,
             "priorities": priorities,
             "group_rows": group_rows,
+            # The configuration template paginates this flattened collection.
+            # Keeping the priority beside each milestone avoids eagerly
+            # rendering every nested definition/allocation form in the cycle.
+            "milestone_rows": milestone_rows,
             "cycle_years": cycle_years,
             "milestone_count": milestone_count,
             "needs_definition_count": needs_definition_count,

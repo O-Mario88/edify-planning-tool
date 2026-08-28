@@ -65,6 +65,26 @@ DEMO_ACCOUNTS = [
         "Literacy Uganda Officer",
         EdifyRole.PARTNER_FIELD_OFFICER.value,
     ),
+    (
+        "partner-admin@edify.org",
+        "Demo Partner Administrator",
+        EdifyRole.PARTNER_ADMIN.value,
+    ),
+    (
+        "business-transformation@edify.org",
+        "Demo Business Transformation Officer",
+        EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+    ),
+    (
+        "mfi-admin@edify.org",
+        "Demo MFI Partner Administrator",
+        EdifyRole.MFI_PARTNER_ADMIN.value,
+    ),
+    (
+        "mfi-officer@edify.org",
+        "Demo MFI Loan Officer",
+        EdifyRole.MFI_LOAN_OFFICER.value,
+    ),
 ]
 
 # Realistic Uganda geography (reference admin boundaries) — local-test seed only.
@@ -298,6 +318,15 @@ class Command(BaseCommand):
             )
             u.set_password(demo_pw)
             u.save()
+            if role not in {
+                EdifyRole.PARTNER_ADMIN.value,
+                EdifyRole.PARTNER_FIELD_OFFICER.value,
+                EdifyRole.MFI_PARTNER_ADMIN.value,
+                EdifyRole.MFI_LOAN_OFFICER.value,
+            }:
+                StaffProfile.objects.update_or_create(
+                    user=u, defaults={"onboarding_state": "active"}
+                )
 
         # Program Leads (4) + CCEOs (20) with staff profiles + supervisor links.
         pls = []
@@ -542,21 +571,26 @@ class Command(BaseCommand):
             districts = list(District.objects.all())
             subs = list(SubCounty.objects.all())
 
+        sample_school_ids = [str(1000 + i) for i in range(700)]
         for i in range(700):
             d = rnd.choice(districts)
             sc = subs[i % len(subs)] if subs else rnd.choice(subs)
-            s = School.objects.create(
+            s, _ = School.objects.update_or_create(
                 school_id=str(1000 + i),
-                name=f"{sc.name} {name_frags[i % len(name_frags)]}",
-                region=d.region,
-                district=d,
-                sub_county=sc,
-                enrollment=rnd.randint(80, 900),
-                school_type=rnd.choices(
-                    ["client", "core", "champion"], weights=[80, 15, 5]
-                )[0],
-                current_fy_ssa_status="done" if rnd.random() < 0.15 else "not_done",
-                source="local_test_upload",
+                defaults={
+                    "name": f"{sc.name} {name_frags[i % len(name_frags)]}",
+                    "region": d.region,
+                    "district": d,
+                    "sub_county": sc,
+                    "enrollment": rnd.randint(80, 900),
+                    "school_type": rnd.choices(
+                        ["client", "core", "champion"], weights=[80, 15, 5]
+                    )[0],
+                    "current_fy_ssa_status": (
+                        "done" if rnd.random() < 0.15 else "not_done"
+                    ),
+                    "source": "local_test_upload",
+                },
             )
             if cceos:
                 # Primary owner: Paul Chinyama (cceos[0]) gets all schools assigned
@@ -569,7 +603,10 @@ class Command(BaseCommand):
             from apps.ssa.services import _recompute_readiness
 
             _recompute_readiness(s)
-        self.stdout.write(f"  sample schools: {School.objects.count()} (local only)")
+        seeded_schools = School.objects.filter(school_id__in=sample_school_ids)
+        self.stdout.write(
+            f"  sample schools: {seeded_schools.count()} fixture rows (local only)"
+        )
 
         # Sample SSA.
         from apps.ssa.models import SsaRecord, SsaScore
@@ -580,22 +617,17 @@ class Command(BaseCommand):
         interventions = [i.value for i in SsaIntervention]
         fy = get_operational_fy()
         prev_fy = str(int(fy) - 1)
-        for s in School.objects.all():
+        for s in seeded_schools:
             for fyyy, score_base in [(prev_fy, 3.0), (fy, 4.0)]:
                 if fyyy == fy and s.school_type == "client" and rnd.random() > 0.3:
                     continue
                 avg = round(score_base + rnd.random() * 4, 1)
-                rec = SsaRecord.objects.create(
-                    school=s,
-                    fy=fyyy,
-                    quarter="Q1",
-                    date_of_ssa=timezone.now(),
-                    average_score=avg,
-                    uploaded_by="seed",
-                    collector_type="staff",
-                    verification_status="confirmed",
-                    verification_source="staff_self_verified",
-                    source="local_test_upload",
+                record_defaults = {
+                    "date_of_ssa": timezone.now(),
+                    "average_score": avg,
+                    "collector_type": "staff",
+                    "verification_status": "confirmed",
+                    "verification_source": "staff_self_verified",
                     # A confirmed record carries who confirmed it and when —
                     # the real confirmation paths (apps/ssa/services.py and
                     # upload_service.py) always stamp both. Seeding "confirmed"
@@ -603,17 +635,49 @@ class Command(BaseCommand):
                     # produce, so anything reading verification metadata off
                     # seeded data was reasoning about an impossible row
                     # (2026-08 audit, AUD-008).
-                    verified_at=timezone.now(),
-                    verified_by_user_id="seed",
-                )
+                    "verified_at": timezone.now(),
+                    "verified_by_user_id": "seed",
+                }
+                # Some seeded assessments are protected by planned activities,
+                # so delete-and-recreate is both unsafe and impossible. Reuse
+                # the fixture's canonical row and update it in place instead.
+                rec = SsaRecord.objects.filter(
+                    school=s,
+                    fy=fyyy,
+                    quarter="Q1",
+                    uploaded_by="seed",
+                    source="local_test_upload",
+                ).first()
+                if rec:
+                    for field, value in record_defaults.items():
+                        setattr(rec, field, value)
+                    rec.save(update_fields=[*record_defaults, "updated_at"])
+                else:
+                    rec = SsaRecord.objects.create(
+                        school=s,
+                        fy=fyyy,
+                        quarter="Q1",
+                        uploaded_by="seed",
+                        source="local_test_upload",
+                        **record_defaults,
+                    )
                 for interv in interventions:
-                    SsaScore.objects.create(
+                    SsaScore.objects.update_or_create(
                         ssa_record=rec,
                         intervention=interv,
-                        score=round(max(0, min(10, avg + rnd.uniform(-1.5, 1.5))), 1),
+                        defaults={
+                            "score": round(
+                                max(0, min(10, avg + rnd.uniform(-1.5, 1.5))), 1
+                            )
+                        },
                     )
+        fixture_ssa_count = SsaRecord.objects.filter(
+            school__school_id__in=sample_school_ids,
+            source="local_test_upload",
+            uploaded_by="seed",
+        ).count()
         self.stdout.write(
-            f"  sample SSA records: {SsaRecord.objects.count()} (local only)"
+            f"  sample SSA records: {fixture_ssa_count} fixture rows (local only)"
         )
 
         partner_user = User.objects.filter(email="partner@edify.org").first()
@@ -637,7 +701,47 @@ class Command(BaseCommand):
                     "source": "local_test_upload",
                 },
             )
+
+        partner_admin = User.objects.filter(email="partner-admin@edify.org").first()
+        if partner_admin:
+            Partner.objects.update_or_create(
+                name="Demo Partner Administration",
+                defaults={
+                    "active_status": True,
+                    "contract_status": "active",
+                    "user": partner_admin,
+                    "source": "local_test_upload",
+                },
+            )
         self.stdout.write(f"  sample partners: {Partner.objects.count()} (local only)")
+
+        from apps.business_transformation.models import (
+            MfiMembership,
+            MfiMembershipRole,
+            MfiOrganization,
+        )
+
+        demo_mfi, _ = MfiOrganization.objects.update_or_create(
+            code="DEMO-MFI",
+            defaults={
+                "name": "Demo Lending Partner",
+                "country_code": "UG",
+                "active": True,
+                "data_sharing_agreement_active": True,
+            },
+        )
+        for email, membership_role in (
+            ("mfi-admin@edify.org", MfiMembershipRole.ADMIN),
+            ("mfi-officer@edify.org", MfiMembershipRole.LOAN_OFFICER),
+        ):
+            member = User.objects.filter(email=email).first()
+            if member:
+                MfiMembership.objects.update_or_create(
+                    mfi=demo_mfi,
+                    user=member,
+                    defaults={"role": membership_role, "active": True},
+                )
+        self.stdout.write("  sample MFI tenancy: Demo Lending Partner (local only)")
 
         rate_card = {
             "primary_transport_per_day": 50000,
@@ -705,7 +809,7 @@ class Command(BaseCommand):
             ("SP-ECC", "ECC", "teaching_environment"),
             ("SP-UCU", "UCU", "government_requirement"),
         ]
-        all_schools = list(School.objects.filter(deleted_at__isnull=True)[:25])
+        all_schools = list(seeded_schools.filter(deleted_at__isnull=True)[:25])
         for idx, (code, name, focus) in enumerate(project_defs):
             proj, _ = Project.objects.get_or_create(
                 code=code, defaults={"name": name, "category": "pilot"}
@@ -729,14 +833,14 @@ class Command(BaseCommand):
         )
 
         # Seed activities for April 2026 (for Consolidated Fund Allocation dashboard)
-        from apps.activities.models import Activity, ActivityScheduleCostLine
+        from apps.activities.models import Activity
         from apps.budget.costing_service import apply_to_activity
         from apps.clusters.models import Cluster
         from apps.clusters.models import ClusterSubCounty
         from apps.core.enums import ClusterRecordStatus
         from datetime import datetime, timezone
 
-        schools = list(School.objects.all())
+        schools = list(seeded_schools)
         clusters = []
         for i in range(15):
             cl_name = f"Cluster {chr(65+i)}"
@@ -775,10 +879,22 @@ class Command(BaseCommand):
 
         from apps.partners.models import Partner, PartnerAssignment
 
-        # Assignments reference activities, so they go first.
-        PartnerAssignment.objects.all().delete()
-        Activity.objects.all().delete()
-        ActivityScheduleCostLine.objects.all().delete()
+        # Assignments reference activities, so they go first. Scope cleanup to
+        # the deterministic April-2026 demo fixture; the previous all().delete
+        # calls destroyed unrelated work whenever a developer refreshed seed
+        # data without --reset.
+        from datetime import date
+
+        demo_actor_ids = [cceo.user.user_id for cceo in cceos]
+        seeded_activities = Activity.objects.filter(
+            responsible_staff_id__in=demo_actor_ids,
+            scheduled_date__date__gte=date(2026, 4, 1),
+            scheduled_date__date__lte=date(2026, 4, 30),
+        )
+        PartnerAssignment.objects.filter(
+            scheduled_activity__in=seeded_activities
+        ).delete()
+        seeded_activities.delete()
 
         seed_partners = list(
             Partner.objects.filter(active_status=True).order_by("name")

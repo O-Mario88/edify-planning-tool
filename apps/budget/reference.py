@@ -189,7 +189,7 @@ def ensure_cost_reference(catalogue=None) -> int:
             "status": RateCardStatus.DRAFT,
             "is_active": False,
             "currency": "UGX",
-            "label": "Internal Reference Rate Card — Configuration Required",
+            "label": "Regional Standard Funding Rate Card — Configuration Required",
             "notes": (
                 "Reference rates have not been approved. Operational values were "
                 "not copied into this card."

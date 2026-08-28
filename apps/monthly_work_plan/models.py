@@ -35,6 +35,15 @@ class MonthlyWorkPlanBudget(TimeStampedModel):
     )
     program_total = models.BigIntegerField(default=0)  # UGX
     admin_total = models.BigIntegerField(default=0)  # UGX
+    # Governed country-envelope allocation. ``program_total`` remains the
+    # payable operational activity requirement; the reference ceiling is a
+    # management benchmark and never creates a second staff entitlement.
+    regional_standard_ceiling = models.BigIntegerField(default=0)  # UGX
+    operational_activity_requirement = models.BigIntegerField(default=0)  # UGX
+    strategic_reserve_requested = models.BigIntegerField(default=0)  # UGX
+    deferred_amount = models.BigIntegerField(default=0)  # UGX
+    country_funding_shortfall = models.BigIntegerField(default=0)  # UGX
+    reference_configuration_missing_count = models.PositiveIntegerField(default=0)
     total_amount = models.BigIntegerField(default=0)  # UGX
     activity_count = models.IntegerField(default=0)
     # submission_version counts the number of immutable snapshots taken for
@@ -54,7 +63,15 @@ class MonthlyWorkPlanBudget(TimeStampedModel):
         constraints = [
             models.UniqueConstraint(
                 fields=["country_id", "month_key"], name="uniq_country_month"
-            )
+            ),
+            models.CheckConstraint(
+                condition=models.Q(regional_standard_ceiling__gte=0)
+                & models.Q(operational_activity_requirement__gte=0)
+                & models.Q(strategic_reserve_requested__gte=0)
+                & models.Q(deferred_amount__gte=0)
+                & models.Q(country_funding_shortfall__gte=0),
+                name="monthly_country_envelope_amounts_non_negative",
+            ),
         ]
         indexes = [
             models.Index(fields=["status"]),
@@ -111,6 +128,12 @@ class MonthlyBudgetSubmissionSnapshot(TimeStampedModel):
     country_id = models.CharField(max_length=64, null=True, blank=True)
     program_total = models.BigIntegerField(default=0)  # UGX
     admin_total = models.BigIntegerField(default=0)  # UGX
+    regional_standard_ceiling = models.BigIntegerField(default=0)  # UGX
+    operational_activity_requirement = models.BigIntegerField(default=0)  # UGX
+    strategic_reserve_requested = models.BigIntegerField(default=0)  # UGX
+    deferred_amount = models.BigIntegerField(default=0)  # UGX
+    country_funding_shortfall = models.BigIntegerField(default=0)  # UGX
+    reference_configuration_missing_count = models.PositiveIntegerField(default=0)
     total_amount = models.BigIntegerField(default=0)  # UGX
     activity_count = models.IntegerField(default=0)
     submitted_at = models.DateTimeField(null=True, blank=True)
@@ -127,7 +150,15 @@ class MonthlyBudgetSubmissionSnapshot(TimeStampedModel):
             models.UniqueConstraint(
                 fields=["monthly_budget", "version"],
                 name="uniq_budget_submission_version",
-            )
+            ),
+            models.CheckConstraint(
+                condition=models.Q(regional_standard_ceiling__gte=0)
+                & models.Q(operational_activity_requirement__gte=0)
+                & models.Q(strategic_reserve_requested__gte=0)
+                & models.Q(deferred_amount__gte=0)
+                & models.Q(country_funding_shortfall__gte=0),
+                name="monthly_envelope_snapshot_amounts_non_negative",
+            ),
         ]
         indexes = [models.Index(fields=["monthly_budget"])]
         ordering = ["-version"]

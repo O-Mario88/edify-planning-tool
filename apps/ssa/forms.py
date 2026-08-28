@@ -25,6 +25,11 @@ class ManualSsaEntryForm(forms.Form):
                 "autocomplete": "off",
                 "placeholder": "Type or select a School ID",
                 "aria-describedby": "manual-ssa-school-help",
+                "hx-get": "/ssa/manual/schools",
+                "hx-trigger": "input changed delay:250ms",
+                "hx-target": "#manual-ssa-school-options",
+                "hx-swap": "innerHTML",
+                "hx-include": "this",
             }
         ),
     )

@@ -189,6 +189,9 @@ def canonical_specs() -> list[dict]:
                 "PartnerAdmin",
                 "PartnerFieldOfficer",
                 "ProjectCoordinator",
+                "BusinessTransformationOfficer",
+                "MfiPartnerAdmin",
+                "MfiLoanOfficer",
                 "Admin",
             ],
             summary="Edify connects school intelligence, planning, field delivery, evidence, finance clearance, targets and the next planning cycle through one set of source records.",
@@ -418,6 +421,24 @@ def canonical_content_is_installed() -> bool:
 def ensure_canonical_content() -> dict:
     """Install v1 reviewed material once; never overwrite an editor's draft."""
     if canonical_content_is_installed():
+        # Role registry expansion must still update the universal orientation
+        # article on databases where the canonical content was installed by an
+        # older release. This only adds access rows; it never overwrites an
+        # editor's article content or workflow state.
+        getting_started = HelpArticle.objects.filter(slug="getting-started").first()
+        if getting_started:
+            getting_started_roles = next(
+                spec["roles"]
+                for spec in canonical_specs()
+                if spec["slug"] == "getting-started"
+            )
+            HelpArticleRoleAccess.objects.bulk_create(
+                [
+                    HelpArticleRoleAccess(article=getting_started, role=role)
+                    for role in getting_started_roles
+                ],
+                ignore_conflicts=True,
+            )
         return {"created": 0, "articles": HelpArticle.objects.count()}
 
     now = timezone.now()

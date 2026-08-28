@@ -76,6 +76,23 @@ class KnowledgeCenterTest(TestCase):
         # Contextual help now renders the full article page (not a popup).
         self.assertTemplateUsed(response, "pages/help/article.html")
 
+    def test_getting_started_tracks_every_specialist_role_on_existing_databases(self):
+        article = HelpArticle.objects.get(slug="getting-started")
+        specialist_roles = {
+            EdifyRole.BUSINESS_TRANSFORMATION_OFFICER.value,
+            EdifyRole.MFI_PARTNER_ADMIN.value,
+            EdifyRole.MFI_LOAN_OFFICER.value,
+        }
+        article.role_accesses.filter(role__in=specialist_roles).delete()
+
+        ensure_canonical_content()
+
+        self.assertTrue(
+            specialist_roles.issubset(
+                set(article.role_accesses.values_list("role", flat=True))
+            )
+        )
+
     def test_role_restricted_article_is_denied(self):
         self.client.force_login(self.accountant)
         response = self.client.get("/help/articles/feature-school-directory")

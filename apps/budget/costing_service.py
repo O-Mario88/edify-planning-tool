@@ -218,9 +218,11 @@ def calculate_dual(input: dict) -> dict:
     if below_minimum:
         warnings.append("One or more operational rates are below an approved minimum.")
     if reference_card is None:
-        warnings.append("Internal Reference Rate Card has not been configured.")
+        warnings.append("Regional Standard Funding Rate Card has not been configured.")
     elif reference and reference.cost_missing:
-        warnings.append("Internal Reference Rate Card configuration is incomplete.")
+        warnings.append(
+            "Regional Standard Funding Rate Card configuration is incomplete."
+        )
     elif (
         reference
         and reference.amount
@@ -234,8 +236,9 @@ def calculate_dual(input: dict) -> dict:
         )
         if difference_bps >= operational_card.material_difference_threshold_bps:
             warnings.append(
-                "The operational cost is materially below the internal reference "
-                "estimate. Confirm that the approved activity scope remains executable."
+                "The Country Operational Cost is materially below the Regional "
+                "Standard Funding Cost. "
+                "Confirm that the approved activity scope remains executable."
             )
 
     if operational_card is None or operational.cost_missing:

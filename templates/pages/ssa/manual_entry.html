@@ -53,12 +53,10 @@
           </label>
           <div class="mt-2">{{ form.school_id }}</div>
           <datalist id="manual-ssa-school-options">
-            {% for school in schools %}
-            <option value="{{ school.school_id }}">{{ school.name }}{% if school.district %} — {{ school.district.name }}{% endif %}</option>
-            {% endfor %}
+            {% include "partials/ssa/manual_school_options.html" %}
           </datalist>
           <p id="manual-ssa-school-help" class="mt-1.5 text-[12px] font-semibold text-[var(--edify-text-muted)]">
-            Start typing the School ID, then select the matching directory record.
+            Type at least two characters of the School ID or name, then select the matching directory record.
           </p>
           {% for error in form.school_id.errors %}
           <p class="mt-1 text-[12px] font-bold text-rose-700">{{ error }}</p>

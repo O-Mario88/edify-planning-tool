@@ -548,6 +548,11 @@ urlpatterns = [
         name="planning_schedule",
     ),
     path(
+        "planning/schedule/schools",
+        planning_views.schedule_school_options_view,
+        name="planning_schedule_school_options",
+    ),
+    path(
         "planning/schedule-modal",
         planning_views.schedule_modal_view,
         name="planning_schedule_modal",
@@ -1819,6 +1824,11 @@ urlpatterns = [
         "ssa/manual/",
         ssa_views.ssa_manual_entry_view,
         name="ssa_manual_entry",
+    ),
+    path(
+        "ssa/manual/schools",
+        ssa_views.ssa_manual_school_options_view,
+        name="ssa_manual_school_options",
     ),
     path("ssa/upload/", ssa_views.ssa_upload_center_view, name="ssa_upload_center"),
     path(

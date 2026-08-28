@@ -2114,9 +2114,7 @@ def schedule_activity_form_view(request):
     # come from the direct portfolio, which is the set the create-time guard
     # checks against.
     scope = resolve_user_scope(request.user)
-    schools = (direct_portfolio_schools(scope) or School.objects.none()).order_by(
-        "name"
-    )
+    schools = direct_portfolio_schools(scope) or School.objects.none()
     # `direct_only`, matching the create-time guard in `_target_in_direct_
     # portfolio`. A supervisor's CCEO clusters are read-only oversight; listing
     # them here promised a save the service would refuse.
@@ -2124,7 +2122,9 @@ def schedule_activity_form_view(request):
     partners = assignable_partners()
 
     selected_school = (
-        School.objects.filter(Q(id=school_id) | Q(school_id=school_id)).first()
+        schools.filter(Q(id=school_id) | Q(school_id=school_id))
+        .select_related("district")
+        .first()
         if school_id
         else None
     )
@@ -2217,7 +2217,7 @@ def schedule_activity_form_view(request):
 
     context = {
         "action": action,
-        "schools": schools,
+        "schools": [selected_school] if selected_school else [],
         "clusters": clusters,
         "partners": partners,
         "selected_school": selected_school,
@@ -2226,6 +2226,29 @@ def schedule_activity_form_view(request):
         "interventions": SsaIntervention.choices,
     }
     return render(request, "pages/planning/schedule.html", context)
+
+
+@require_page_permission("planning")
+def schedule_school_options_view(request):
+    """Small, direct-portfolio lookup for the legacy scheduling page."""
+    from apps.core.scoping import direct_portfolio_schools, resolve_user_scope
+
+    query = request.GET.get("school_id", "").strip()
+    schools = direct_portfolio_schools(resolve_user_scope(request.user))
+    if schools is None or len(query) < 2:
+        schools = School.objects.none()
+    else:
+        schools = (
+            schools.filter(deleted_at__isnull=True)
+            .filter(Q(school_id__istartswith=query) | Q(name__icontains=query))
+            .select_related("district")
+            .order_by("school_id")[:25]
+        )
+    return render(
+        request,
+        "partials/planning/schedule_school_options.html",
+        {"schools": schools},
+    )
 
 
 @require_page_permission("planning")

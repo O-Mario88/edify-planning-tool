@@ -278,6 +278,208 @@ def _program_source(fy, month_num):
     }
 
 
+def _envelope_from_source(source) -> dict:
+    """Calculate the two governed funding layers for one calendar month.
+
+    A snapshot stores a whole activity's dual cost, while a multi-day activity
+    may have payable lines split across months.  The reference amount is
+    therefore phased in the same proportion as the operational lines instead
+    of charging the whole reference cost to every month it touches.
+    """
+    from apps.budget.models import ActivityCostSnapshot
+
+    operational_by_activity: dict[str, int] = {}
+    for line in source["lines"]:
+        if _validate_line(line) == "Excluded":
+            continue
+        operational_by_activity[line.activity_id] = operational_by_activity.get(
+            line.activity_id, 0
+        ) + int(line.amount or 0)
+
+    snapshots = {
+        row["activity_id"]: row
+        for row in ActivityCostSnapshot.objects.filter(
+            activity_id__in=operational_by_activity,
+            is_current=True,
+        ).values("activity_id", "reference_cost", "operational_cost")
+    }
+    reference_ceiling = 0
+    missing = 0
+    for activity_id, monthly_operational in operational_by_activity.items():
+        snapshot = snapshots.get(activity_id)
+        if snapshot is None or snapshot["reference_cost"] is None:
+            missing += 1
+            continue
+        whole_operational = int(snapshot["operational_cost"] or 0)
+        whole_reference = int(snapshot["reference_cost"] or 0)
+        if whole_operational <= 0:
+            reference_ceiling += whole_reference if monthly_operational == 0 else 0
+            if monthly_operational > 0:
+                missing += 1
+            continue
+        reference_ceiling += round(
+            whole_reference * monthly_operational / whole_operational
+        )
+
+    operational_requirement = int(source["program_total"] or 0)
+    reserve_capacity = (
+        0 if missing else max(0, reference_ceiling - operational_requirement)
+    )
+    shortfall = (
+        max(0, operational_requirement - reference_ceiling) if not missing else 0
+    )
+    return {
+        "regionalStandardCeiling": reference_ceiling,
+        "operationalActivityRequirement": operational_requirement,
+        "maximumReserveCapacity": reserve_capacity,
+        "countryFundingShortfall": shortfall,
+        "referenceConfigurationMissingCount": missing,
+    }
+
+
+def _reference_amounts_for_lines(lines) -> dict:
+    """Project every operational schedule line through the regional card.
+
+    The costing engine stores both complete component breakdowns on the
+    activity snapshot, while the payable schedule ledger intentionally stores
+    only Country Operational lines. This function reconstructs the matching
+    Regional Standard amount for management views using the same component
+    key and the same phased plan quantity. A per-activity residual correction
+    keeps the component rows equal to the governed activity ceiling exactly.
+    """
+    from apps.budget.models import ActivityCostSnapshot
+
+    lines_by_activity: dict[str, list] = {}
+    for line in lines:
+        if _validate_line(line) != "Excluded":
+            lines_by_activity.setdefault(line.activity_id, []).append(line)
+    snapshots = {
+        row["activity_id"]: row
+        for row in ActivityCostSnapshot.objects.filter(
+            activity_id__in=lines_by_activity,
+            is_current=True,
+        ).values(
+            "activity_id",
+            "reference_cost",
+            "operational_cost",
+            "reference_breakdown",
+            "operational_breakdown",
+        )
+    }
+    result = {}
+    for activity_id, activity_lines in lines_by_activity.items():
+        snapshot = snapshots.get(activity_id)
+        if snapshot is None or snapshot["reference_cost"] is None:
+            result.update({line.id: None for line in activity_lines})
+            continue
+
+        operational_total = int(snapshot["operational_cost"] or 0)
+        selected_operational = sum(int(line.amount or 0) for line in activity_lines)
+        if operational_total <= 0:
+            result.update({line.id: 0 for line in activity_lines})
+            continue
+
+        target_reference = round(
+            int(snapshot["reference_cost"]) * selected_operational / operational_total
+        )
+        reference_by_key = {
+            item.get("key"): int(item.get("amount") or 0)
+            for item in (snapshot["reference_breakdown"] or [])
+            if item.get("key")
+        }
+        operational_by_key = {
+            item.get("key"): int(item.get("amount") or 0)
+            for item in (snapshot["operational_breakdown"] or [])
+            if item.get("key")
+        }
+        for line in activity_lines:
+            key = line.cost_setting_key
+            component_operational = operational_by_key.get(key, 0)
+            if key in reference_by_key and component_operational > 0:
+                amount = round(
+                    reference_by_key[key]
+                    * int(line.amount or 0)
+                    / component_operational
+                )
+            else:
+                amount = (
+                    round(
+                        target_reference * int(line.amount or 0) / selected_operational
+                    )
+                    if selected_operational
+                    else 0
+                )
+            result[line.id] = amount
+
+        residual = target_reference - sum(
+            int(result[line.id] or 0) for line in activity_lines
+        )
+        if residual and activity_lines:
+            largest = max(activity_lines, key=lambda line: int(line.amount or 0))
+            result[largest.id] = int(result[largest.id] or 0) + residual
+    return result
+
+
+def _apply_live_envelope(budget, source) -> dict:
+    """Refresh the governed full-ceiling country request.
+
+    Staff implementation authority remains the operational requirement.  The
+    CD submits the complete Regional Standard Funding Ceiling to the RVP, so
+    every positive difference is explicitly classified as undisbursed
+    strategic reserve rather than being omitted or presented as activity need.
+    """
+    envelope = _envelope_from_source(source)
+    # The active admin lines are the source of truth. Some imports and repair
+    # paths create them directly, so never trust a stale cached parent total.
+    budget.admin_total = sum(
+        int(total or 0)
+        for total in budget.admin_lines.filter(status="active").values_list(
+            "total_cost", flat=True
+        )
+    )
+    capacity = envelope["maximumReserveCapacity"]
+    reserve_requested = capacity
+    deferred = 0
+
+    budget.regional_standard_ceiling = envelope["regionalStandardCeiling"]
+    budget.operational_activity_requirement = envelope["operationalActivityRequirement"]
+    budget.strategic_reserve_requested = reserve_requested
+    budget.deferred_amount = deferred
+    budget.country_funding_shortfall = envelope["countryFundingShortfall"]
+    budget.reference_configuration_missing_count = envelope[
+        "referenceConfigurationMissingCount"
+    ]
+    # Administrative commitments remain an explicit, non-activity exception.
+    # They are requested in addition to the governed activity allocation and
+    # are never disguised as regional-standard activity need.
+    budget.total_amount = (
+        int(budget.operational_activity_requirement)
+        + int(budget.admin_total or 0)
+        + reserve_requested
+    )
+    budget.save(
+        update_fields=[
+            "regional_standard_ceiling",
+            "operational_activity_requirement",
+            "strategic_reserve_requested",
+            "deferred_amount",
+            "country_funding_shortfall",
+            "reference_configuration_missing_count",
+            "admin_total",
+            "total_amount",
+            "updated_at",
+        ]
+    )
+    return {
+        **envelope,
+        "strategicReserveRequested": reserve_requested,
+        "deferredAmount": deferred,
+        "approvedFixedCommitments": int(budget.admin_total or 0),
+        "totalCountryRequest": int(budget.total_amount),
+        "reserveSelectionValid": reserve_requested == capacity,
+    }
+
+
 def _validate_line(li):
     """Per-line validation → status label. A line missing its Cost Catalogue
     version is flagged, never silently included as if it were priced."""
@@ -312,6 +514,7 @@ def _recompute_if_live(budget, source=None):
             )
         else:
             mwp.recompute_program_total(budget)
+        _apply_live_envelope(budget, source)
     return budget
 
 
@@ -517,7 +720,31 @@ def get_country_monthly_budget(principal, filters=None):
         )
         cat_totals[cat] += li.amount
     program_total = int(source["program_total"])
-    total_monthly = program_total + admin_total
+    total_monthly = int(budget.total_amount)
+    reserve_capacity = (
+        0
+        if budget.reference_configuration_missing_count
+        else max(
+            0,
+            int(budget.regional_standard_ceiling)
+            - int(budget.operational_activity_requirement),
+        )
+    )
+    country_envelope = {
+        "regionalStandardCeiling": int(budget.regional_standard_ceiling),
+        "operationalActivityRequirement": int(budget.operational_activity_requirement),
+        "maximumReserveCapacity": reserve_capacity,
+        "strategicReserveRequested": int(budget.strategic_reserve_requested),
+        "deferredAmount": int(budget.deferred_amount),
+        "countryFundingShortfall": int(budget.country_funding_shortfall),
+        "referenceConfigurationMissingCount": int(
+            budget.reference_configuration_missing_count
+        ),
+        "approvedFixedCommitments": int(admin_total),
+        "totalCountryRequest": int(budget.total_amount),
+        "reserveSelectionValid": int(budget.strategic_reserve_requested)
+        <= reserve_capacity,
+    }
     from apps.budget.executable_budget_service import monthly_executable_budget
 
     executable_budget = monthly_executable_budget(fy=fy, month=month_num)
@@ -777,6 +1004,7 @@ def get_country_monthly_budget(principal, filters=None):
         },
         "total_monthly": total_monthly,
         "total_monthly_fmt": _ugx(total_monthly),
+        "country_envelope": country_envelope,
         "monthly_executable_budget": executable_budget,
         "can_view_reference_cost": has_permission(
             principal, Permission.ACTIVITY_REFERENCE_COST_VIEW.value
@@ -834,14 +1062,24 @@ def _execution_context(budget, fy, principal) -> dict:
 
     rec = state["reconciliation"]
     role = getattr(principal, "active_role", None)
+    approved_operating_limit = (
+        int(budget.operational_activity_requirement or 0)
+        if budget.status
+        in {"approved_by_rvp", "sent_to_accountant", "disbursed", "closed"}
+        else 0
+    )
     return {
         "reconciliation": {
             **rec,
-            "approved_fmt": _ugx(rec["approvedTotal"]),
+            # The overall approved envelope also contains an explicit reserve
+            # and may contain fixed administrative commitments. Never label
+            # that larger number as staff operating authority.
+            "approved_fmt": _ugx(approved_operating_limit),
             "committed_fmt": _ugx(rec["committedTotal"]),
             "disbursed_fmt": _ugx(rec["disbursedTotal"]),
             "accounted_fmt": _ugx(rec["accountedTotal"]),
             "returned_fmt": _ugx(rec["returnedTotal"]),
+            "reimbursed_fmt": _ugx(rec["reimbursedTotal"]),
             "netsuite_fmt": _ugx(rec["netsuiteTotal"]),
             "variance_fmt": _ugx(abs(rec["variance"])),
             "system_delta_fmt": _ugx(abs(rec["systemDelta"])),
@@ -1111,6 +1349,73 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
             },
         ]
     )
+    reserve_capacity = (
+        0
+        if budget.reference_configuration_missing_count
+        else max(
+            0,
+            int(budget.regional_standard_ceiling)
+            - int(budget.operational_activity_requirement),
+        )
+    )
+    reserve_over_capacity = int(budget.strategic_reserve_requested) > reserve_capacity
+    if budget.country_funding_shortfall:
+        allocation_balances = (
+            int(budget.operational_activity_requirement)
+            == int(budget.regional_standard_ceiling)
+            + int(budget.country_funding_shortfall)
+            and int(budget.strategic_reserve_requested) == 0
+            and int(budget.deferred_amount) == 0
+        )
+    else:
+        allocation_balances = int(budget.operational_activity_requirement) + int(
+            budget.strategic_reserve_requested
+        ) + int(budget.deferred_amount) == int(budget.regional_standard_ceiling)
+    checks.extend(
+        [
+            {
+                "label": "Regional Standard Funding Cost configured for scheduled activities",
+                "status": (
+                    "warning"
+                    if budget.reference_configuration_missing_count
+                    else "passed"
+                ),
+                "detail": (
+                    f"{budget.reference_configuration_missing_count} activity(ies) "
+                    "do not yet have a regional-standard cost snapshot. Reserve "
+                    "capacity is provisional until regional finance completes the card."
+                    if budget.reference_configuration_missing_count
+                    else ""
+                ),
+            },
+            {
+                "label": "Strategic reserve request stays within available capacity",
+                "status": "failed" if reserve_over_capacity else "passed",
+                "detail": (
+                    f"Requested reserve is {_ugx(budget.strategic_reserve_requested)}; "
+                    f"maximum capacity is {_ugx(reserve_capacity)}."
+                    if reserve_over_capacity
+                    else ""
+                ),
+            },
+            {
+                "label": "Country envelope allocation balances to the regional ceiling",
+                # Missing reference configuration cannot balance truthfully; it
+                # remains a management warning, not fabricated benchmark money.
+                "status": (
+                    "warning"
+                    if budget.reference_configuration_missing_count
+                    else ("passed" if allocation_balances else "failed")
+                ),
+                "detail": (
+                    "Operational allocation, reserve and deferred amount must "
+                    "equal the Regional Standard Funding Ceiling."
+                    if not allocation_balances
+                    else ""
+                ),
+            },
+        ]
+    )
     # Locked-month snapshot invariant — a budget in any LOCKED status was, by
     # definition, submitted; the guarded submit path always writes an
     # immutable MonthlyBudgetSubmissionSnapshot. A locked month with zero
@@ -1276,6 +1581,16 @@ def get_submission_detail(principal, budget_id):
         raise BadRequest("Country monthly budget not found.")
     snapshot = budget.snapshots.first()  # ordering = ["-version"]
     month_num = int(budget.month_key.split("-")[1])
+    financial_record = snapshot or budget
+    reserve_capacity = (
+        0
+        if financial_record.reference_configuration_missing_count
+        else max(
+            0,
+            int(financial_record.regional_standard_ceiling)
+            - int(financial_record.operational_activity_requirement),
+        )
+    )
     return {
         "budget_id": budget.id,
         "month_key": budget.month_key,
@@ -1295,6 +1610,23 @@ def get_submission_detail(principal, budget_id):
         "program_total_fmt": _ugx(budget.program_total),
         "admin_total": budget.admin_total,
         "admin_total_fmt": _ugx(budget.admin_total),
+        "country_envelope": {
+            "regionalStandardCeiling": int(financial_record.regional_standard_ceiling),
+            "operationalActivityRequirement": int(
+                financial_record.operational_activity_requirement
+            ),
+            "maximumReserveCapacity": reserve_capacity,
+            "strategicReserveRequested": int(
+                financial_record.strategic_reserve_requested
+            ),
+            "deferredAmount": int(financial_record.deferred_amount),
+            "countryFundingShortfall": int(financial_record.country_funding_shortfall),
+            "referenceConfigurationMissingCount": int(
+                financial_record.reference_configuration_missing_count
+            ),
+            "approvedFixedCommitments": int(financial_record.admin_total),
+            "totalCountryRequest": int(financial_record.total_amount),
+        },
         "category_order": CATEGORY_ORDER,
         "staff_rows": snapshot.staff_rows if snapshot else [],
         "line_items": snapshot.line_items if snapshot else [],
@@ -1310,11 +1642,44 @@ def get_plan_sources(principal, filters=None):
     fy = filters.get("fy") or get_operational_fy()
     month_num = int(filters.get("month") or timezone.now().month)
     source = _program_source(fy, month_num)
-    lines = sorted(source["lines"], key=lambda line: -int(line.amount or 0))[:200]
+    lines = source["lines"]
     names = _user_names([li.responsible_user for li in lines])
+    from apps.budget.models import ActivityCostSnapshot
+
+    activity_ids = {line.activity_id for line in lines}
+    snapshots = {
+        snapshot.activity_id: snapshot
+        for snapshot in ActivityCostSnapshot.objects.filter(
+            activity_id__in=activity_ids, is_current=True
+        )
+    }
+    lines_by_activity: dict[str, list] = {}
+    for line in lines:
+        lines_by_activity.setdefault(line.activity_id, []).append(line)
+    budget = _get_or_create_budget(fy, month_num)
     rows = []
-    for li in lines:
+    for activity_id, activity_lines in lines_by_activity.items():
+        li = activity_lines[0]
         a = li.activity
+        operational = sum(int(line.amount or 0) for line in activity_lines)
+        snapshot = snapshots.get(activity_id)
+        reference = None
+        if snapshot and snapshot.reference_cost is not None:
+            whole_operational = int(snapshot.operational_cost or 0)
+            reference = (
+                round(int(snapshot.reference_cost) * operational / whole_operational)
+                if whole_operational > 0
+                else int(snapshot.reference_cost)
+            )
+        difference = max(0, int(reference or 0) - operational)
+        if snapshot is None or snapshot.reference_cost is None:
+            viability = "Regional rate required"
+        elif snapshot.missing_configuration:
+            viability = "Cost review required"
+        elif snapshot.warnings:
+            viability = "Review recommended"
+        else:
+            viability = "Viable"
         rows.append(
             {
                 "activity_id": a.id,
@@ -1323,12 +1688,24 @@ def get_plan_sources(principal, filters=None):
                 "staff": names.get(li.responsible_user, "—"),
                 "planned_date": a.planned_date,
                 "delivery_type": a.delivery_type,
-                "label": li.label,
-                "amount_fmt": _ugx(li.amount),
+                "label": ", ".join(
+                    dict.fromkeys(line.label for line in activity_lines)
+                ),
+                "operational_cost": operational,
+                "operational_cost_fmt": _ugx(operational),
+                "reference_cost": reference,
+                "reference_cost_fmt": _ugx(reference) if reference is not None else "—",
+                "difference": difference,
+                "difference_fmt": _ugx(difference),
+                "reserve_eligible": reference is not None and difference > 0,
+                "viability": viability,
+                "funding_status": _approval_status_label(budget.status),
                 "status": _validate_line(li),
                 "catalogue_id": li.catalogue_id or "Missing",
             }
         )
+    rows.sort(key=lambda row: -row["operational_cost"])
+    rows = rows[:200]
     return {
         "fy": fy,
         "month": month_num,
@@ -1340,6 +1717,86 @@ def get_plan_sources(principal, filters=None):
 
 
 # ── Actions ───────────────────────────────────────────────────────────────
+def set_envelope_allocation(principal, budget_id, reserve_amount):
+    """Compatibility guard for the former editable reserve allocation.
+
+    The country now requests the full regional ceiling. Existing clients may
+    still post this action, but they cannot lower the amount presented to the
+    RVP or turn regional benchmark funding into staff operating authority.
+    """
+    from django.db import transaction
+
+    _require_cd(principal)
+    try:
+        requested = int(reserve_amount or 0)
+    except (TypeError, ValueError):
+        raise BadRequest("Strategic reserve must be a whole UGX amount.")
+    if requested < 0:
+        raise BadRequest("Strategic reserve cannot be negative.")
+
+    with transaction.atomic():
+        budget = (
+            MonthlyWorkPlanBudget.objects.select_for_update()
+            .filter(id=budget_id)
+            .first()
+        )
+        if budget is None:
+            raise BadRequest("Country monthly budget not found.")
+        if budget.status in LOCKED_STATUSES:
+            raise BadRequest(
+                "This country envelope is locked. Return it before changing the allocation."
+            )
+        month_num = int(budget.month_key.split("-")[1])
+        source = _program_source(budget.fy, month_num)
+        # Recompute the activity requirement before validating the CD's choice;
+        # a schedule change may have changed reserve capacity since page load.
+        _recompute_if_live(budget, source)
+        capacity = (
+            0
+            if budget.reference_configuration_missing_count
+            else max(
+                0,
+                int(budget.regional_standard_ceiling)
+                - int(budget.operational_activity_requirement),
+            )
+        )
+        if requested != capacity:
+            raise BadRequest(
+                "The country request must include the full Regional Standard "
+                f"Funding Ceiling. Strategic reserve is automatically {_ugx(capacity)}."
+            )
+        previous = int(budget.strategic_reserve_requested or 0)
+        budget.strategic_reserve_requested = requested
+        budget.deferred_amount = capacity - requested
+        budget.total_amount = (
+            int(budget.operational_activity_requirement)
+            + int(budget.admin_total or 0)
+            + requested
+        )
+        budget.save(
+            update_fields=[
+                "strategic_reserve_requested",
+                "deferred_amount",
+                "total_amount",
+                "updated_at",
+            ]
+        )
+    _audit(
+        principal,
+        "country_budget.envelope_allocated",
+        budget,
+        {
+            "regional_standard_ceiling": budget.regional_standard_ceiling,
+            "operational_activity_requirement": budget.operational_activity_requirement,
+            "previous_reserve_requested": previous,
+            "strategic_reserve_requested": requested,
+            "deferred_amount": budget.deferred_amount,
+            "total_country_request": budget.total_amount,
+        },
+    )
+    return budget
+
+
 def approve_pl_monthly_request(principal, request_id):
     """CD approves one submitted PL team-budget snapshot for consolidation."""
     from django.db import transaction
@@ -1452,6 +1909,7 @@ def _create_snapshot(principal, budget, source):
     """
     lines = source["lines"]
     names = _user_names([li.responsible_user for li in lines])
+    reference_by_line = _reference_amounts_for_lines(lines)
 
     # staff_rows — same construction as get_country_monthly_budget.
     rows_by_user: dict[str, dict] = {}
@@ -1465,10 +1923,17 @@ def _create_snapshot(principal, budget, source):
                 "user_id": uid,
                 "name": names.get(uid, "Unassigned"),
                 "cats": {
-                    k: {"qty": 0, "acts": set(), "schools": set(), "total": 0}
+                    k: {
+                        "qty": 0,
+                        "acts": set(),
+                        "schools": set(),
+                        "total": 0,
+                        "reference_total": 0,
+                    }
                     for k in CATEGORY_ORDER
                 },
                 "activity_ids": set(),
+                "reference_missing": False,
             },
         )
         cat = _page_category(
@@ -1479,11 +1944,17 @@ def _create_snapshot(principal, budget, source):
         if li.activity.school_id:
             c["schools"].add(li.activity.school_id)
         c["total"] += int(li.amount or 0)
+        reference_amount = reference_by_line.get(li.id)
+        if reference_amount is None:
+            row["reference_missing"] = True
+        else:
+            c["reference_total"] += int(reference_amount)
         row["activity_ids"].add(li.activity_id)
 
     staff_rows = []
     for row in rows_by_user.values():
         row_total = 0
+        row_reference_total = 0
         cat_cols = {}
         for cat in CATEGORY_ORDER:
             c = row["cats"][cat]
@@ -1496,8 +1967,10 @@ def _create_snapshot(principal, budget, source):
                 "qty": qty,
                 "unit_cost": _ugx(round(c["total"] / qty)) if qty else "—",
                 "total": _ugx(c["total"]),
+                "reference_total": _ugx(c["reference_total"]),
             }
             row_total += c["total"]
+            row_reference_total += c["reference_total"]
         staff_rows.append(
             {
                 "user_id": row["user_id"],
@@ -1505,6 +1978,12 @@ def _create_snapshot(principal, budget, source):
                 "cats": cat_cols,
                 "total": row_total,
                 "total_fmt": _ugx(row_total),
+                "reference_total": (
+                    None if row["reference_missing"] else row_reference_total
+                ),
+                "reference_total_fmt": (
+                    "—" if row["reference_missing"] else _ugx(row_reference_total)
+                ),
                 "activity_count": len(row["activity_ids"]),
             }
         )
@@ -1515,6 +1994,8 @@ def _create_snapshot(principal, budget, source):
     for li in lines:
         if _validate_line(li) == "Excluded":
             continue
+        reference_amount = reference_by_line.get(li.id)
+        operational_amount = int(li.amount or 0)
         line_items.append(
             {
                 "activity_id": li.activity_id,
@@ -1524,8 +2005,26 @@ def _create_snapshot(principal, budget, source):
                     li.activity.delivery_type,
                     _is_project_line(li),
                 ),
-                "amount": int(li.amount or 0),
-                "amount_fmt": _ugx(int(li.amount or 0)),
+                # Backward-compatible amount remains the payable operational
+                # value. Management surfaces lead with reference_amount.
+                "amount": operational_amount,
+                "amount_fmt": _ugx(operational_amount),
+                "operational_amount": operational_amount,
+                "operational_amount_fmt": _ugx(operational_amount),
+                "reference_amount": reference_amount,
+                "reference_amount_fmt": (
+                    _ugx(reference_amount) if reference_amount is not None else "—"
+                ),
+                "difference": (
+                    int(reference_amount) - operational_amount
+                    if reference_amount is not None
+                    else None
+                ),
+                "difference_fmt": (
+                    _ugx(int(reference_amount) - operational_amount)
+                    if reference_amount is not None
+                    else "—"
+                ),
                 "staff": names.get(li.responsible_user, "Unassigned"),
                 "planned_date": li.planned_date.isoformat()
                 if li.planned_date
@@ -1556,6 +2055,14 @@ def _create_snapshot(principal, budget, source):
         country_id=budget.country_id,
         program_total=budget.program_total,
         admin_total=budget.admin_total,
+        regional_standard_ceiling=budget.regional_standard_ceiling,
+        operational_activity_requirement=budget.operational_activity_requirement,
+        strategic_reserve_requested=budget.strategic_reserve_requested,
+        deferred_amount=budget.deferred_amount,
+        country_funding_shortfall=budget.country_funding_shortfall,
+        reference_configuration_missing_count=(
+            budget.reference_configuration_missing_count
+        ),
         total_amount=budget.total_amount,
         activity_count=budget.activity_count,
         submitted_at=budget.submitted_at,
@@ -1634,7 +2141,15 @@ def send_to_rvp(principal, budget_id):
         principal,
         "country_budget.submit_to_rvp",
         budget,
-        {"total": budget.total_amount, "version": version},
+        {
+            "total": budget.total_amount,
+            "version": version,
+            "regional_standard_ceiling": budget.regional_standard_ceiling,
+            "operational_activity_requirement": budget.operational_activity_requirement,
+            "strategic_reserve_requested": budget.strategic_reserve_requested,
+            "deferred_amount": budget.deferred_amount,
+            "country_funding_shortfall": budget.country_funding_shortfall,
+        },
     )
     _notify_role(
         "RegionalVicePresident",
@@ -1647,7 +2162,14 @@ def send_to_rvp(principal, budget_id):
         "country_budget.submitted_to_rvp",
         principal,
         budget,
-        {"total": budget.total_amount, "version": version},
+        {
+            "total": budget.total_amount,
+            "version": version,
+            "regional_standard_ceiling": budget.regional_standard_ceiling,
+            "operational_activity_requirement": budget.operational_activity_requirement,
+            "strategic_reserve_requested": budget.strategic_reserve_requested,
+            "deferred_amount": budget.deferred_amount,
+        },
     )
 
     # §5/§17 — atomically prepare the next month so the active workspace can
@@ -1680,6 +2202,67 @@ def send_to_rvp(principal, budget_id):
     return budget
 
 
+def _approve_monthly_strategic_reserve(principal, budget):
+    """Materialize the approved envelope line as undisbursed country reserve."""
+    from apps.audit.services import log as audit_log
+    from apps.budget.models import (
+        CountryStrategicActivityReserve,
+        StrategicReserveStatus,
+    )
+
+    requested = int(budget.strategic_reserve_requested or 0)
+    reserve = (
+        CountryStrategicActivityReserve.objects.select_for_update()
+        .filter(
+            country=budget.country_id or HOME_COUNTRY_ID,
+            fy=budget.fy,
+            period_key=budget.month_key,
+        )
+        .first()
+    )
+    if reserve is not None:
+        configured = int(reserve.opening_reserve) + int(reserve.approved_additions)
+        if configured != requested:
+            raise BadRequest(
+                "The monthly strategic reserve record does not match this country "
+                "envelope. Reconcile it before RVP approval."
+            )
+        if reserve.status == StrategicReserveStatus.CLOSED:
+            raise BadRequest("A closed strategic reserve cannot be reused.")
+        if reserve.status == StrategicReserveStatus.APPROVED:
+            return reserve
+    elif requested == 0:
+        return None
+    else:
+        reserve = CountryStrategicActivityReserve.objects.create(
+            country=budget.country_id or HOME_COUNTRY_ID,
+            fy=budget.fy,
+            period_key=budget.month_key,
+            opening_reserve=requested,
+            status=StrategicReserveStatus.DRAFT,
+            notes=f"Country monthly envelope {budget.id} version {budget.submission_version}",
+        )
+
+    reserve.status = StrategicReserveStatus.APPROVED
+    reserve.approved_by = principal.user_id
+    reserve.approved_at = timezone.now()
+    reserve.save(update_fields=["status", "approved_by", "approved_at", "updated_at"])
+    audit_log(
+        action="strategic_reserve.approved_from_country_envelope",
+        subject_kind="CountryStrategicActivityReserve",
+        subject_id=reserve.id,
+        actor_id=principal.user_id,
+        actor_role=getattr(principal, "active_role", ""),
+        payload={
+            "monthlyBudgetId": budget.id,
+            "monthKey": budget.month_key,
+            "amount": requested,
+        },
+        required=True,
+    )
+    return reserve
+
+
 def approve(principal, budget_id):
     from django.db import transaction
 
@@ -1696,6 +2279,7 @@ def approve(principal, budget_id):
         if budget.status != "submitted_to_rvp":
             raise BadRequest("Only a submitted budget can be approved.")
 
+        _approve_monthly_strategic_reserve(principal, budget)
         budget.status = "approved_by_rvp"
         budget.rvp_reviewed_at = timezone.now()
         budget.rvp_reviewed_by_user_id = principal.user_id
