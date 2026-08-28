@@ -308,6 +308,75 @@ class ScaleGateTest(TestCase):
         )
         return {"url": url, "queries": query_count, "seconds": elapsed}
 
+    #: The §7 budget for each page, and the factor this gate allows over it.
+    #:
+    #: CATASTROPHIC_SECONDS (30s) is the only time ceiling this file had, while
+    #: /dashboard's actual budget is 800ms. A page could take twenty-nine
+    #: seconds at 15,000 schools and pass — a 37x gap between what the gate
+    #: permitted and what the product promises, which is another threshold too
+    #: loose to fail in the way that matters.
+    #:
+    #: The factor is 4, and it is derived rather than picked. Measured on the
+    #: 15,000-school estate: /dashboard 230ms of 800, /my-plan 81, /schools
+    #: 161, /todos 177, /notifications 28, /settings 20, /analytics 420 of
+    #: 1500, /system-health 9. The worst page sits at 29% of its budget, so 4x
+    #: leaves roughly fourteen times the measured headroom — enough that a slow
+    #: CI runner does not flake, and tight enough that a page falling off a
+    #: cliff (230ms to 3.2s) fails on the day it happens rather than on the day
+    #: a user reports it.
+    #:
+    #: If this starts failing, the fix is the page, not the factor.
+    BUDGETS_MS = (
+        ("/dashboard", 800),
+        ("/my-plan", 800),
+        ("/schools", 800),
+        ("/todos", 800),
+        ("/notifications", 800),
+        ("/settings", 800),
+        ("/analytics", 1500),
+        ("/system-health", 1500),
+    )
+    BUDGET_FACTOR = 4
+
+    def test_pages_stay_inside_their_budgets_at_scale(self):
+        """Wall time, not just query count, at the full estate.
+
+        test_scale_invariance proves the query COUNT does not grow with the
+        school population. That is necessary and not sufficient: a sequential
+        scan over a table that has grown keeps a flat query count while taking
+        steadily longer. This measures the thing a user actually experiences.
+        """
+        self.client.force_login(self.user)
+        schools = School.objects.count()
+        breaches = []
+        measured = []
+
+        for url, budget in self.BUDGETS_MS:
+            # One warm-up, discarded. The first request to a page pays for
+            # template compilation and lazy imports that a warm production
+            # worker does not, and including it measures the harness.
+            self.client.get(url)
+            result = self._measure(url, allow_statuses=(200, 302, 403))
+            ms = result["seconds"] * 1000
+            measured.append((url, ms, budget, result["queries"]))
+            if ms > budget * self.BUDGET_FACTOR:
+                breaches.append(
+                    f"{url}: {ms:.0f}ms at {schools:,} schools, "
+                    f"budget {budget}ms (x{self.BUDGET_FACTOR} allowed here)"
+                )
+
+        self.assertEqual(
+            measured and len(measured),
+            len(self.BUDGETS_MS),
+            "not every page was measured — a silent skip would make this "
+            "assertion pass without checking anything",
+        )
+        self.assertEqual(
+            breaches,
+            [],
+            "pages exceeded their budget at full scale:\n  " + "\n  ".join(breaches),
+        )
+
     def _grow(self, count=GROWTH_SCHOOLS):
         """Add `count` schools mid-test, then refresh planner statistics.
 

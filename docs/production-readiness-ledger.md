@@ -216,7 +216,7 @@ it because automation exists.
 | Backups exist at all (§53) | **NO — RELEASE BLOCKER** | `.do/app.yaml` declared the production database on App Platform's dev tier, which DigitalOcean documents as having no backups and explicitly does not recommend for production. The restore gate above verifies a round trip that nothing was feeding. The spec now declares a managed cluster and a test fails while it does not, but applying it is a data migration nobody has run and this environment has no DigitalOcean credentials to check what is actually live. See BACKUP-01 |
 | Latency budgets (§46) | **RUN — 1 breach** | `scripts/latency_budget.py`, 15 samples per page per role after 2 discarded, 702 schools. 23 of 24 page/role combinations within budget; `/todos` for the Country Director breached |
 | Scale invariance (§46) | **PASSED** | `apps/system_health/test_load_scale.py` at 15,000 schools + 3,000 growth, in the green suite |
-| Wall-clock p95 at 15,000 schools | **STILL UNVERIFIED** | The latency run above is against the 702-school dev estate. The scale harness proves query counts do not grow; it does not measure production wall time, and says so |
+| Wall-clock at 15,000 schools | **MEASURED — every page inside budget** | First measurement ever taken at full estate size. `/dashboard` 230ms of an 800ms budget, `/my-plan` 81, `/schools` 161, `/todos` 177, `/notifications` 28, `/settings` 20, `/analytics` 420 of 1500, `/system-health` 9. The worst page sits at 29% of its budget at 21x the dev estate. Now gated by `test_pages_stay_inside_their_budgets_at_scale`. **Caveat, and it is not a small one:** this container, single request, no concurrency, synthetic estate — it is not a p95 and it is not production hardware. See PERF-01 |
 | Rollback rehearsal (§53) | **STILL UNVERIFIED against the platform's source** | `scripts/rollback_rehearsal.sh` carried the same defects as the backup gate and has been repaired alongside it: the dead scratch-name guard, the `check()` that passed on two empty strings (removed — it had no call sites left), `pg_dump \| pg_restore >/dev/null 2>&1` with every error discarded, a step 3 with no failing path, a relative `PYTHON_BIN` that made the script exit 127 in silence from any directory but the repository root, no ERR trap and so no verdict on an abort, and `git worktree remove --force` running unconditionally ahead of its own ownership check — which destroyed a pre-existing worktree holding uncommitted work. Run end to end against the platform's own developer source `edify` at commit `cad73c69`: **exit 0, 16 PASS, 0 FAIL** — `7c27f2f6` serves the schema `cad73c69` leaves behind, 320 migrations known to the previous release with 0 missing, 8 pages served to signed-in accounts from the migrated copy. Not run against the production source |
 | Accessibility tooling (§4) | **CONFIGURED, RUN, AND ONE DEFECT FIXED** | `scripts/accessibility_audit.py` drives Chromium through axe-core over the eight core pages, signed in as a real account, with the real stylesheet. First run found **6 serious WCAG AA colour-contrast failures**; all six are fixed and the measured state is now **0 critical, 0 serious** across 8 pages at 63–65 rules each. Ratcheted at zero in `docs/accessibility-baseline.json`. See A11Y-01 |
 | Visual regression tooling (§4) | **STILL UNVERIFIED** | No screenshot baseline exists. The accessibility half of this row is now covered; the pixel-diff half is not, and needs a decision about where baselines live before it is worth building |
@@ -717,6 +717,67 @@ pointed at whatever the developer happens to be called. Both database
 incidents in this audit came from a harness, not from the code it was testing,
 and both from a destructive path that had not been made to prove its own blast
 radius first.
+
+### PERF-01 · The scale gate allowed 30 seconds where the budget is 800ms · **MEASURED AND TIGHTENED**
+
+`apps/system_health/test_load_scale.py` is a good gate. Its central assertion —
+scale *invariance* of query counts rather than a fixed ceiling — is the right
+shape, and its docstring explains exactly why a pinned number rots.
+
+But the only time ceiling it carried was `CATASTROPHIC_SECONDS = 30.0`, while
+`/dashboard`'s §7 budget is **800ms**. A page could take twenty-nine seconds at
+15,000 schools and pass. That is a 37x gap between what the gate permitted and
+what the product promises — the same defect class as the backup floors, in the
+one file specifically written to catch what small estates hide.
+
+A flat query count does not imply flat time. A sequential scan over a table
+that has grown keeps its query count constant while taking steadily longer,
+which is precisely the failure a 700-school dev estate cannot show and a
+15,000-school production estate reveals to users on day one.
+
+**Measured, for the first time, at the full estate:**
+
+| Page | Measured | Budget | Queries |
+| --- | --- | --- | --- |
+| `/dashboard` | 230ms | 800 | 92 |
+| `/my-plan` | 81ms | 800 | 32 |
+| `/schools` | 161ms | 800 | 45 |
+| `/todos` | 177ms | 800 | 74 |
+| `/notifications` | 28ms | 800 | 15 |
+| `/settings` | 20ms | 800 | 9 |
+| `/analytics` | 420ms | 1500 | 80 |
+| `/system-health` | 9ms | 1500 | 10 |
+
+**There is no cliff.** The worst page sits at 29% of its budget at 21x the dev
+estate. That is genuinely good news and it is the first evidence anyone has for
+it.
+
+**Now gated.** `test_pages_stay_inside_their_budgets_at_scale` asserts each
+page against its §7 budget times four. The factor is derived, not picked: the
+worst measured page is at 29% of budget, so 4x leaves roughly fourteen times
+the measured headroom — loose enough that a slow CI runner does not flake,
+tight enough that a page falling from 230ms to 3.2s fails on the day it
+happens. If it starts failing, the fix is the page and not the factor.
+
+Proven able to fail. Two mutations, each confirmed present in the file before
+the verdict was read:
+
+| Mutation | Result |
+| --- | --- |
+| `/dashboard` slowed by 4s inside the measured region | caught — `4267ms at 15,000 schools, budget 800ms` |
+| the measurement loop iterating over an empty list | caught by the count assertion |
+
+A third attempt failed to test anything and is worth recording: the first
+version of the slow-page mutation put its `sleep` **outside** the timed region,
+so the suite ran four seconds longer while reporting the same page time and
+passing. A mutation that does not reach the thing under test proves nothing,
+and looks identical to a gate that cannot fail.
+
+**What this is not.** One request, no concurrency, on this container, against a
+synthetic estate built by the harness. It is not a p95, not production
+hardware, and not a load test. The row above says so rather than letting
+"measured" imply more than was measured. Concurrency and real hardware remain
+unverified, and only a real deployment can settle them.
 
 ### ISSUE-007 · `/todos` breaches its latency budget for the Country Director · **HIGH**
 
