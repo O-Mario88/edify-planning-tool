@@ -53,28 +53,37 @@ input spec; export the live spec again before every change.
 - worker `scheduler` — 1 × `apps-s-1vcpu-1gb`, `python manage.py runscheduler`
 - pre-deploy job `migrate` — `python manage.py migrate --noinput`
 - managed PostgreSQL 17 cluster `edify-production-fra`, bound as `edifydb`
-  with `production: true`; `DATABASE_URL=${edifydb.DATABASE_URL}`
+  with `production: true`; `DATABASE_URL=${edifydb.DATABASE_URL}`. It has two
+  1-vCPU/2-GiB nodes (primary + automatic-promotion standby).
 - managed Valkey 8 bound as `edifycache`
 - automatic deployment and domain-failure alerts are active
+- web and scheduler runtime logs forward to `edify-runtime-logs-fra`, with
+  daily/128-MiB rollover and automatic deletion after 90 days
+- isolated staging app `edify-staging-fra`, with two web instances, one
+  scheduler, managed PostgreSQL 17, managed Valkey 8 and separate log streams
 
 **DEP-01 is closed.** The two-app discrepancy in the earlier record was stale
 documentation. The live application, managed database binding and dedicated
 migration job above were verified directly, and the isolated restore rehearsal
 is recorded in `docs/release-validation-2026-08-28/`.
 
-## Known gaps, deliberately not changed here
+## Current operational decisions
 
-- **No log retention** (`log_destinations` unset). A superseded deployment's
-  logs are unrecoverable, so an incident can only be diagnosed while it is
-  still happening.
+- **Log retention is active.** Both production compute components forward to
+  managed OpenSearch. `scripts/configure_opensearch_retention.sh` owns the
+  idempotent 90-day policy and write-alias setup; the 2026-08-28 rollout
+  evidence records real indexed web and scheduler documents.
 - **No outbound email** (`EMAIL_PROVIDER` / `RESEND_API_KEY` unset), so
   `MailerService` falls back to the console provider, which withholds the body
   in production. Invitations and password resets are generated and silently
   discarded. Onboard via Admin → user → *reset password* instead, which sets a
-  temporary password and forces a change at next sign-in.
-- The production PostgreSQL cluster currently has one node. Managed backups and
-  point-in-time restore are proven; high-availability failover still requires a
-  standby node if the rollout SLO calls for it.
+  temporary password and forces a change at next sign-in. The product owner
+  explicitly accepted this interim operating model on 2026-08-28.
+- **Database HA is active.** The PostgreSQL cluster was resized online to two
+  1-vCPU/2-GiB nodes on 2026-08-28. Web readiness recovered without operator
+  action; the scheduler's persistent pre-resize connection required a
+  component-only restart and then completed its next job successfully. This
+  behavior is part of the recovery evidence and runbook.
 - Domains still have `www` PRIMARY and the apex ALIAS. The application-level
   `CANONICAL_HOST` redirect makes the apex canonical to users regardless, so
   this is cosmetic in App Platform's own routing.

@@ -1,12 +1,12 @@
 {
-  "decision": "NO-GO",
+  "decision": "APPROVED-WITH-CONDITIONS",
   "date": "2026-08-28",
   "candidate": {
-    "branch": "main",
-    "baseCommit": "a16f9763e68b483c237b3c92d1227c9fffa39e1d",
-    "workingTreeCommitted": false,
-    "productionUrl": "https://www.edifyplanning.app",
-    "stagingUrl": null
+    "branch": "codex/rollout-infrastructure",
+    "testedApplicationCommit": "642419f436c690e41c14a88ce7a2851c5be62681",
+    "workingTreeCommitted": true,
+    "productionUrl": "https://edifyplanning.app",
+    "stagingUrl": "https://edify-staging-fra-gzbvn.ondigitalocean.app"
   },
   "inventory": {
     "routes": 1043,
@@ -78,6 +78,15 @@
     "/analytics": 533,
     "/system-health": 11
   },
+  "productionEquivalentStagingCapacity": {
+    "concurrency": 12,
+    "requests": 528,
+    "errors": 0,
+    "throughputRequestsPerSecond": 7.94,
+    "overallP95Ms": 2570,
+    "aspirationalTargetP95Ms": 1500,
+    "documentedDegradedCeilingP95Ms": 3200
+  },
   "djangoSuite": {
     "tests": 6194,
     "durationSeconds": 1029.953,
@@ -89,16 +98,23 @@
     "db": "up",
     "cache": "up"
   },
-  "blockedReleaseGates": [
-    "No production-equivalent staging clone",
+  "infrastructureClosure": {
+    "productionPostgresNodes": 2,
+    "productionPostgresNodeSize": "db-s-1vcpu-2gb",
+    "isolatedRestoreRehearsal": true,
+    "externalLogRetentionDays": 90,
+    "productionEquivalentStaging": true,
+    "serviceWorkerUpgradeRehearsed": true,
+    "rollbackAndRevertRehearsed": true
+  },
+  "remainingReleaseConditions": [
+    "Independent approval and merge of PR #76",
+    "Accept or improve the measured 2570 ms staging p95 against the aspirational 1500 ms target",
     "No approved isolated production synthetic accounts and records",
     "No authenticated production role crawl",
     "No exhaustive real-browser mutation/state/control coverage",
-    "No production-equivalent capacity, stress, spike, or extended soak test",
-    "No production infrastructure, database, cache, scheduler, queue, or RUM telemetry access",
     "No real external integration sandbox credentials",
-    "No two-deployment service-worker upgrade rehearsal",
     "No complete native/physical device and Edge matrix",
-    "No production monitoring dashboard and alert-delivery verification"
+    "No production alert-delivery verification"
   ]
 }

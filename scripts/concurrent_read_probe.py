@@ -10,6 +10,8 @@ from __future__ import annotations
 
 import argparse
 import concurrent.futures
+import http.cookiejar
+import http.client
 import os
 import pathlib
 import statistics
@@ -17,19 +19,12 @@ import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
 from collections import Counter, defaultdict
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
-
-import django  # noqa: E402
-
-django.setup()
-
-from django.contrib.auth import get_user_model  # noqa: E402
-from django.test import Client  # noqa: E402
 
 DEFAULT_PATHS = (
     "/dashboard",
@@ -57,7 +52,16 @@ def percentile(samples: list[float], pct: float) -> float:
     return ordered[min(round((len(ordered) - 1) * pct / 100), len(ordered) - 1)]
 
 
-def authenticated_cookie(email: str) -> str:
+def database_cookie(email: str) -> str:
+    """Create a session from the target database when run inside the app."""
+
+    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.dev")
+    import django
+
+    django.setup()
+    from django.contrib.auth import get_user_model
+    from django.test import Client
+
     user = get_user_model().objects.filter(email=email, deleted_at__isnull=True).first()
     if user is None:
         raise SystemExit(f"No active local test account found for {email!r}")
@@ -69,10 +73,50 @@ def authenticated_cookie(email: str) -> str:
     return f"sessionid={session.value}"
 
 
+def remote_login_cookie(base_url: str, email: str, password: str) -> str:
+    """Log in over HTTP so the generator can run outside the target estate."""
+
+    jar = http.cookiejar.CookieJar()
+    opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor(jar))
+    login_url = f"{base_url.rstrip('/')}/login"
+    with opener.open(login_url, timeout=20) as response:
+        response.read()
+    csrf = next((cookie.value for cookie in jar if cookie.name == "csrftoken"), None)
+    if csrf is None:
+        raise SystemExit("Login page did not issue a CSRF cookie")
+    body = urllib.parse.urlencode(
+        {
+            "csrfmiddlewaretoken": csrf,
+            "email": email,
+            "password": password,
+        }
+    ).encode()
+    request = urllib.request.Request(
+        login_url,
+        data=body,
+        headers={
+            "Content-Type": "application/x-www-form-urlencoded",
+            "Referer": login_url,
+            "User-Agent": "edify-staging-probe/1",
+        },
+    )
+    with opener.open(request, timeout=20) as response:
+        response.read()
+    session = next((cookie.value for cookie in jar if cookie.name == "sessionid"), None)
+    if session is None:
+        raise SystemExit("HTTP login did not issue a session cookie")
+    return f"sessionid={session}"
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--base-url", default="http://127.0.0.1:8765")
     parser.add_argument("--email", default="domario@edify.org")
+    parser.add_argument(
+        "--password-env",
+        default="EDIFY_PROBE_PASSWORD",
+        help="environment variable containing a password for remote HTTP login",
+    )
     parser.add_argument("--duration", type=float, default=60)
     parser.add_argument("--concurrency", type=int, default=12)
     parser.add_argument("--timeout", type=float, default=10)
@@ -83,39 +127,91 @@ def main() -> int:
     if args.duration <= 0 or args.concurrency <= 0 or not args.paths:
         parser.error("duration, concurrency and at least one path are required")
 
-    cookie = authenticated_cookie(args.email)
-    deadline = time.monotonic() + args.duration
+    password = os.environ.get(args.password_env)
+    cookie = (
+        remote_login_cookie(args.base_url, args.email, password)
+        if password
+        else database_cookie(args.email)
+    )
     next_path = 0
     path_lock = threading.Lock()
     latencies: dict[str, list[float]] = defaultdict(list)
     statuses: Counter[int | str] = Counter()
     result_lock = threading.Lock()
     opener = urllib.request.build_opener(NoRedirect)
+    parsed_base = urllib.parse.urlsplit(args.base_url)
+    if parsed_base.scheme not in {"http", "https"} or not parsed_base.hostname:
+        parser.error("base-url must be an absolute HTTP(S) URL")
+    connection_type = (
+        http.client.HTTPSConnection
+        if parsed_base.scheme == "https"
+        else http.client.HTTPConnection
+    )
+    base_path = parsed_base.path.rstrip("/")
+
+    # Match the scale contract in apps.system_health.test_load_scale: measure
+    # steady-state capacity after templates, imports and read-only snapshots
+    # have been populated once. Cold-cache latency is a separate deployment
+    # concern and must not make every sample in a short pressure window look
+    # like a capacity failure.
+    for path in args.paths:
+        request = urllib.request.Request(
+            f"{args.base_url.rstrip('/')}{path}",
+            headers={"Cookie": cookie, "User-Agent": "edify-staging-probe/1"},
+        )
+        try:
+            with opener.open(request, timeout=max(args.timeout, 30)) as response:
+                response.read()
+                if response.status != 200:
+                    raise SystemExit(
+                        f"Warm-up failed for {path}: HTTP {response.status}"
+                    )
+        except urllib.error.HTTPError as exc:
+            raise SystemExit(f"Warm-up failed for {path}: HTTP {exc.code}") from exc
+    print(f"warmup={len(args.paths)} paths complete")
+    deadline = time.monotonic() + args.duration
 
     def worker() -> None:
         nonlocal next_path
+        connection = connection_type(
+            parsed_base.hostname,
+            port=parsed_base.port,
+            timeout=args.timeout,
+        )
         while time.monotonic() < deadline:
             with path_lock:
                 path = args.paths[next_path % len(args.paths)]
                 next_path += 1
-            request = urllib.request.Request(
-                f"{args.base_url.rstrip('/')}{path}",
-                headers={"Cookie": cookie, "User-Agent": "edify-staging-probe/1"},
-            )
             started = time.perf_counter()
             status: int | str
             try:
-                with opener.open(request, timeout=args.timeout) as response:
+                connection.request(
+                    "GET",
+                    f"{base_path}{path}",
+                    headers={
+                        "Cookie": cookie,
+                        "User-Agent": "edify-staging-probe/1",
+                    },
+                )
+                response = connection.getresponse()
+                try:
                     response.read()
                     status = response.status
-            except urllib.error.HTTPError as exc:
-                status = exc.code
+                finally:
+                    response.close()
             except Exception as exc:  # noqa: BLE001 - every transport failure is evidence
                 status = type(exc).__name__
+                connection.close()
+                connection = connection_type(
+                    parsed_base.hostname,
+                    port=parsed_base.port,
+                    timeout=args.timeout,
+                )
             elapsed_ms = (time.perf_counter() - started) * 1000
             with result_lock:
                 statuses[status] += 1
                 latencies[path].append(elapsed_ms)
+        connection.close()
 
     started = time.monotonic()
     with concurrent.futures.ThreadPoolExecutor(

@@ -34,6 +34,12 @@ def _app_platform_spec():
     return yaml.safe_load((Path(settings.BASE_DIR) / ".do" / "app.yaml").read_text())
 
 
+def _staging_app_platform_spec():
+    return yaml.safe_load(
+        (Path(settings.BASE_DIR) / ".do" / "staging.yaml").read_text()
+    )
+
+
 def _envs(component):
     return {entry["key"]: entry.get("value") for entry in component.get("envs", [])}
 
@@ -87,6 +93,49 @@ class AppPlatformSpecTests(SimpleTestCase):
         for component in (*spec["services"], *(spec.get("workers") or [])):
             with self.subTest(component=component["name"]):
                 self.assertEqual(_envs(component).get("RUN_MIGRATIONS"), "false")
+
+
+class StagingAppPlatformSpecTests(SimpleTestCase):
+    def test_staging_uses_isolated_managed_postgres_and_valkey(self):
+        databases = {
+            database["name"]: database
+            for database in _staging_app_platform_spec()["databases"]
+        }
+        self.assertEqual(databases["edifydb"]["cluster_name"], "edify-staging-pg-fra")
+        self.assertEqual(
+            databases["edifycache"]["cluster_name"], "edify-staging-cache-fra"
+        )
+        self.assertTrue(databases["edifydb"]["production"])
+        self.assertTrue(databases["edifycache"]["production"])
+
+    def test_staging_matches_production_multi_instance_and_scheduler_topology(self):
+        spec = _staging_app_platform_spec()
+        self.assertEqual(spec["services"][0]["instance_count"], 2)
+        self.assertEqual(spec["services"][0]["instance_size_slug"], "apps-s-1vcpu-2gb")
+        self.assertEqual(
+            _envs(spec["services"][0])["STATIC_VERSION"], "${_self.COMMIT_HASH}"
+        )
+        self.assertEqual(spec["workers"][0]["instance_count"], 1)
+        self.assertEqual(
+            spec["workers"][0]["run_command"], "python manage.py runscheduler"
+        )
+
+    def test_staging_forwards_web_and_scheduler_logs_to_managed_opensearch(self):
+        spec = _staging_app_platform_spec()
+        expected = {
+            "edify-planning-tool": "edify-staging-runtime",
+            "scheduler": "edify-staging-scheduler",
+        }
+        for component in (*spec["services"], *spec["workers"]):
+            with self.subTest(component=component["name"]):
+                destinations = component.get("log_destinations") or []
+                self.assertEqual(len(destinations), 1)
+                destination = destinations[0]
+                self.assertEqual(destination["name"], expected[component["name"]])
+                self.assertEqual(
+                    destination["open_search"]["cluster_name"],
+                    "edify-runtime-logs-fra",
+                )
 
 
 class DeploymentManifestTests(SimpleTestCase):

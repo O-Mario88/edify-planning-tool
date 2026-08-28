@@ -53,13 +53,22 @@ alerts:
   - rule: DEPLOYMENT_FAILED
 
 databases:
-  # Dev-tier is intentional: staging carries seeded data, not the live estate.
+  # Both databases are isolated managed clusters.  App Platform does not offer
+  # a dev-tier Valkey component, and using an in-process cache would not exercise
+  # the shared-cache, locking, scheduler, or multi-instance behavior that staging
+  # exists to certify.
   - name: edifydb
     engine: PG
-    production: false
+    version: "17"
+    production: true
+    cluster_name: edify-staging-pg-fra
+    db_name: edify_staging
+    db_user: doadmin
   - name: edifycache
     engine: VALKEY
-    production: false
+    version: "8"
+    production: true
+    cluster_name: edify-staging-cache-fra
 
 envs:
   - key: DJANGO_SETTINGS_MODULE
@@ -194,11 +203,12 @@ services:
       branch: staging
       deploy_on_push: true
       repo: O-Mario88/edify-planning-tool
-    # One instance is enough to certify workflows. Raise to 2 before running
-    # the concurrency and duplicate-payment race tests, which need two web
-    # processes to be a real test.
-    instance_count: 1
-    instance_size_slug: apps-s-1vcpu-1gb
+    # Match production's two-web-instance, 2 GB failure domain so shared-cache,
+    # locking, SSE, duplicate-submission and capacity checks are representative.
+    # A four-instance and dedicated-CPU trial is recorded in the rollout
+    # evidence; neither is silently baked into this production-equivalent spec.
+    instance_count: 2
+    instance_size_slug: apps-s-1vcpu-2gb
     http_port: 8000
     health_check:
       http_path: /api/health/ready
@@ -223,11 +233,22 @@ services:
         operator: GREATER_THAN
         value: 1
         window: FIVE_MINUTES
+    log_destinations:
+      - name: edify-staging-runtime
+        open_search:
+          cluster_name: edify-runtime-logs-fra
+          index_name: edify-staging-runtime
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${edifydb.DATABASE_URL}
       - key: GIT_COMMIT
+        scope: RUN_TIME
+        value: ${_self.COMMIT_HASH}
+      # Force a fresh worker/cache namespace on every staging deployment so
+      # the two-release upgrade rehearsal observes the real activation path
+      # even when a backend-only candidate leaves the static manifest unchanged.
+      - key: STATIC_VERSION
         scope: RUN_TIME
         value: ${_self.COMMIT_HASH}
       - key: RUN_MIGRATIONS
@@ -251,11 +272,21 @@ workers:
         operator: GREATER_THAN
         value: 80
         window: TEN_MINUTES
+      - rule: MEM_UTILIZATION
+        disabled: false
+        operator: GREATER_THAN
+        value: 85
+        window: TEN_MINUTES
       - rule: RESTART_COUNT
         disabled: false
         operator: GREATER_THAN
         value: 1
         window: FIVE_MINUTES
+    log_destinations:
+      - name: edify-staging-scheduler
+        open_search:
+          cluster_name: edify-runtime-logs-fra
+          index_name: edify-staging-scheduler
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
