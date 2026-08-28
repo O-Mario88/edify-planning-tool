@@ -2811,11 +2811,40 @@ main :is(.apexcharts-datalabel-value) {
    of them happens to match. Repeating the test changes the weight and nothing
    else — it still matches exactly the elements the single test matches.
 
-   --edify-on-warm-fill measures 9.32:1 on amber-400. */
-main [class*="bg-amber-"][class*="bg-amber-"][class*="bg-amber-"],
-main [class*="bg-yellow-"][class*="bg-yellow-"][class*="bg-yellow-"],
+   --edify-on-warm-fill measures 9.32:1 on amber-400.
+
+   THE PALE TINTS ARE EXCLUDED, and that exclusion is the whole point of the
+   `:not()` chains below. The premise above — "the warm fills do not
+   theme-flip" — holds for the saturated ones and is FALSE for the 50/100
+   tints: components.css and custom.css both remap `.dark .bg-amber-50` and
+   friends to a dark translucent brown, because a near-white tint would glare
+   in a dark theme. Pinning a constant dark ink on top of a background that
+   turns dark leaves dark on dark.
+
+   Measured on the /notifications amber badge before this exclusion existed:
+   #17232b on #332e21, ratio 1.18:1 against a required 4.5:1 — text that is
+   not merely low contrast but invisible. axe reported it as three serious
+   violations in dark and one in light on a baseline of zero, and it reproduced
+   identically on a clean checkout of main, so it shipped that way.
+
+   `bg-amber-50` alone appears 190 times across the templates, so this was
+   never one badge on one page.
+
+   The exclusions use `~=` (a whole class token) rather than `*=` (a
+   substring) deliberately: `[class*="bg-amber-50"]` also matches
+   `bg-amber-500`, which is exactly the saturated fill this rule exists to
+   keep legible, and excluding it would undo the fix it is part of. The `/`
+   forms catch Tailwind's opacity variants (`bg-amber-50/30`) without matching
+   `bg-amber-500/30`, since the character after "bg-amber-50" there is "0".
+
+   The excluded set is not free-hand: it is exactly the tints some sheet
+   remaps under `.dark`, and apps/system_health/test_warm_fill_ink.py keeps
+   the two lists in step so a remap added later cannot quietly reintroduce
+   this. */
+main [class*="bg-amber-"][class*="bg-amber-"][class*="bg-amber-"]:not([class~="bg-amber-50"]):not([class~="bg-amber-100"]):not([class*="bg-amber-50/"]):not([class*="bg-amber-100/"]),
+main [class*="bg-yellow-"][class*="bg-yellow-"][class*="bg-yellow-"]:not([class~="bg-yellow-50"]):not([class~="bg-yellow-100"]):not([class*="bg-yellow-50/"]):not([class*="bg-yellow-100/"]),
 main [class*="bg-lime-"][class*="bg-lime-"][class*="bg-lime-"],
-main [class*="bg-orange-"][class*="bg-orange-"][class*="bg-orange-"] {
+main [class*="bg-orange-"][class*="bg-orange-"][class*="bg-orange-"]:not([class~="bg-orange-50"]):not([class*="bg-orange-50/"]) {
   color: var(--edify-on-warm-fill) !important;
 }
 
