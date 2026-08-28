@@ -107,6 +107,7 @@ def core_school_health(principal, query: dict | None = None) -> dict:
             stalled.append(
                 {
                     "school": row["name"],
+                    "code": row["code"],
                     "district": row["district"],
                     "slot": f"{slot.activity_type.title()} {slot.sequence_number}",
                     "intervention": slot.intervention,

@@ -797,6 +797,9 @@ def _build_core_tracker(user):
         rows.append(
             {
                 "school": names.get(plan.school_id, plan.school_id),
+                # CorePlan.school_id stores the operational code, so it is the
+                # display ID directly.
+                "code": plan.school_id,
                 "average_ssa_score": plan.baseline_average,
                 "visits_done": v_done,
                 "trainings_done": t_done,

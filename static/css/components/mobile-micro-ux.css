@@ -465,23 +465,8 @@ main #filters-form .school-filter-grid > * {
   }
 
   .school-record-row__content {
-    grid-template-columns: var(--edify-desktop-list-icon-size) minmax(0, 1fr);
+    grid-template-columns: fit-content(7.5rem) minmax(0, 1fr);
     gap: 0.625rem;
-  }
-
-  .school-record-row__content--with-id {
-    grid-template-columns: var(--edify-desktop-list-icon-size) fit-content(7.5rem) minmax(0, 1fr);
-  }
-
-  .school-record-row__icon {
-    inline-size: var(--edify-desktop-list-icon-size);
-    block-size: var(--edify-desktop-list-icon-size);
-    border-radius: 0.625rem;
-  }
-
-  .school-record-row__icon svg {
-    inline-size: 0.875rem;
-    block-size: 0.875rem;
   }
 
   .school-record-row__actions {
@@ -703,24 +688,15 @@ main #filters-form .school-filter-grid > * {
   }
 
   .school-record-row__content {
-    grid-template-columns: 2.25rem minmax(0, 1fr);
+    grid-template-columns: fit-content(6rem) minmax(0, 1fr);
     gap: 0.55rem;
   }
 
-  .school-record-row__content--with-id {
-    grid-template-columns: 2.25rem fit-content(6rem) minmax(0, 1fr);
-  }
-
-  .school-record-row__icon {
-    inline-size: 2.25rem;
-    block-size: 2.25rem;
-  }
-
-  /* No indent under the icon. This ladder (3.6 / 3.15 / 2.8 / 2.45rem over
-     five breakpoints in two files) aligned the row's second line under the
-     TITLE, leaving an empty band the width of the tick box and the icon,
-     running the full height of the actions. Later lines start under the icon
-     instead — where the eye already is — and run to the card edge. */
+  /* No indent under the leading column. This ladder (3.6 / 3.15 / 2.8 /
+     2.45rem over five breakpoints in two files) aligned the row's second line
+     under the TITLE, leaving an empty band the width of the tick box and the
+     ID chip, running the full height of the actions. Later lines start at the
+     card edge instead — where the eye already is. */
   .school-record-row__actions,
   .school-record-row__summary--selectable > .school-record-row__actions {
     padding-inline-start: 0;
@@ -761,17 +737,8 @@ main #filters-form .school-filter-grid > * {
   }
 
   .school-record-row__content {
-    grid-template-columns: 2rem minmax(0, 1fr);
+    grid-template-columns: fit-content(5rem) minmax(0, 1fr);
     gap: 0.45rem;
-  }
-
-  .school-record-row__content--with-id {
-    grid-template-columns: 2rem fit-content(5rem) minmax(0, 1fr);
-  }
-
-  .school-record-row__icon {
-    inline-size: 2rem;
-    block-size: 2rem;
   }
 
   .school-record-row__actions,

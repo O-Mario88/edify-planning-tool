@@ -89,6 +89,7 @@ loses focus mid-interaction.
         <caption class="sr-only">Closures needing review</caption>
         <thead>
           <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+            <th scope="col" class="px-4 py-2 font-semibold">ID</th>
             <th scope="col" class="px-4 py-2 font-semibold">School</th>
             <th scope="col" class="px-4 py-2 font-semibold">District</th>
             <th scope="col" class="px-4 py-2 font-semibold">Closed</th>
@@ -101,9 +102,9 @@ loses focus mid-interaction.
         <tbody>
           {% for row in pager.rows %}
           <tr class="border-t edify-border">
+            <td class="px-4 py-2.5 text-sm tabular-nums edify-text-muted">{{ row.school.school_id }}</td>
             <td class="px-4 py-2.5">
               <span class="font-semibold">{{ row.school.name }}</span>
-              <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}</span>
             </td>
             <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
             <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>

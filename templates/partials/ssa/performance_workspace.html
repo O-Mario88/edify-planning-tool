@@ -119,8 +119,8 @@
       <div class="sp-table-scroll">
         <table class="sp-table sp-urgent-table">
           <caption>Schools with an intervention score below {{ dashboard.engine.high_risk_score }}</caption>
-          <thead><tr><th scope="col">School</th><th scope="col">District</th><th scope="col">Lowest intervention</th><th scope="col">Score</th><th scope="col">Recommended action</th></tr></thead>
-          <tbody>{% for school in dashboard.urgent_schools|slice:":5" %}<tr><th scope="row">{% if dashboard.scope.can_link_schools %}<a href="/schools/{{ school.id }}">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}</th><td>{{ school.district }}</td><td>{{ school.intervention }}</td><td><strong data-tone="danger">{{ school.score }}</strong></td><td>{{ school.action }}</td></tr>{% empty %}<tr><td colspan="5" class="sp-empty-cell">No schools fall below the urgent-risk threshold in this selection.</td></tr>{% endfor %}</tbody>
+          <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Lowest intervention</th><th scope="col">Score</th><th scope="col">Recommended action</th></tr></thead>
+          <tbody>{% for school in dashboard.urgent_schools|slice:":5" %}<tr><td class="tabular-nums">{{ school.school_id }}</td><th scope="row">{% if dashboard.scope.can_link_schools %}<a href="/schools/{{ school.id }}">{{ school.name }}</a>{% else %}{{ school.name }}{% endif %}</th><td>{{ school.district }}</td><td>{{ school.intervention }}</td><td><strong data-tone="danger">{{ school.score }}</strong></td><td>{{ school.action }}</td></tr>{% empty %}<tr><td colspan="6" class="sp-empty-cell">No schools fall below the urgent-risk threshold in this selection.</td></tr>{% endfor %}</tbody>
         </table>
       </div>
       {% else %}

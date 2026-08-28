@@ -261,6 +261,7 @@
       <table class="w-full text-left edify-text-caption border-collapse min-w-[680px]">
         <thead>
           <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
+            <th class="py-2 px-3">ID</th>
             <th class="py-2 px-3">Core School</th>
             <th class="py-2 px-3 text-center">Average SSA Score</th>
             <th class="py-2 px-3">Visits (4)</th>
@@ -272,6 +273,7 @@
         <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
           {% for c in core_tracker_data.rows|slice:":60" %}
           <tr class="hover:bg-slate-50/50">
+            <td class="py-2.5 px-3 tabular-nums text-slate-500">{{ c.code }}</td>
             <td class="py-2.5 px-3 font-semibold text-slate-800 max-w-[220px] truncate">{{ c.school }}</td>
             <td class="py-2.5 px-3 text-center tabular-nums {% if c.average_ssa_score == None %}text-slate-300{% else %}text-slate-700{% endif %}">{% if c.average_ssa_score != None %}{{ c.average_ssa_score|floatformat:1 }}/10{% else %}—{% endif %}</td>
             <td class="py-2.5 px-3">

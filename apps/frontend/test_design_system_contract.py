@@ -364,8 +364,7 @@ class DesignSystemContractTest(SimpleTestCase):
         row = (ROOT / "templates/partials/core_schools/school_row.html").read_text()
         css = (ROOT / "static/css/platform.css").read_text()
 
-        icon = row.index('class="school-record-row__icon"')
-        school_id = row.index('class="school-record-row__school-id"', icon)
+        school_id = row.index('class="school-record-row__school-id"')
         headline = row.index('class="core-school-row__headline"')
         title = row.index('class="school-record-row__title"', headline)
         actions = row.index(
@@ -373,11 +372,11 @@ class DesignSystemContractTest(SimpleTestCase):
         )
         metadata = row.index('class="school-record-row__metadata', actions)
 
-        self.assertLess(icon, school_id)
+        # The school ID leads the row — no decorative icon ahead of it.
+        self.assertNotIn("school-record-row__icon", row)
         self.assertLess(school_id, title)
         self.assertLess(title, actions)
         self.assertLess(actions, metadata)
-        self.assertIn("school-record-row__content--with-id", row)
         self.assertIn("container: core-school-row / inline-size", css)
         self.assertIn("grid-template-columns: minmax(0, 1fr) auto", css)
         self.assertIn("@container core-school-row (max-width: 30rem)", css)
@@ -634,11 +633,14 @@ class DesignSystemContractTest(SimpleTestCase):
         block = components.split(".kpi-strip.kpi-strip--executive .kpi-strip__value")[1]
         block = block.split("}")[0]
         self.assertIn(
-            "font-weight: 700 !important",
+            "font-weight: 600 !important",
             block,
             "The hero KPI weight lost its !important, so the consistency.css "
             "normalisers will flatten it back to label weight silently.",
         )
+        # Semibold, never bold: the numeral leads its label by size and ink,
+        # not by a heavy block of weight, per the reference tiles.
+        self.assertNotIn("font-weight: 700", block)
         self.assertIn("--edify-text-hero-size", block)
 
     def test_narrow_tiles_move_the_pill_onto_its_own_row(self):

@@ -75,7 +75,7 @@ Project
       <select name="schoolId" required class="mt-1 w-full border border-[var(--border-card)] rounded-control text-[13px] px-3 py-1.5 focus:border-[var(--edify-accent)] focus:ring-4 edify-primary-focus">
         <option value="">Choose a School…</option>
         {% for school in eligible_schools %}
-        <option value="{{ school.school_id }}">{{ school.name }} · {{ school.get_school_type_display }} · {{ school.active_project_count }} Project{{ school.active_project_count|pluralize }}</option>
+        <option value="{{ school.school_id }}">{{ school.school_id }} · {{ school.name }} · {{ school.get_school_type_display }} · {{ school.active_project_count }} Project{{ school.active_project_count|pluralize }}</option>
         {% endfor %}
       </select>
     </label>

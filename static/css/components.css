@@ -701,7 +701,7 @@ main .budget-grand-total .budget-grand-total__label {
 main .budget-grand-total .budget-grand-total__value {
   color: var(--edify-accent-text, var(--edify-accent)) !important;
   font-size: 20px !important;
-  font-weight: 700 !important;
+  font-weight: 600 !important;
   line-height: 1.2 !important;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -1536,13 +1536,20 @@ select:not([multiple]):not(.select-native) {
 
 .kpi-strip__value {
   font-size: var(--edify-text-tile-value-size);
-  font-weight: 700;
+  font-weight: 600;
   color: var(--edify-text);
-  line-height: 1.05;
+  line-height: 1.15;
   letter-spacing: -0.025em;
   font-variant-numeric: tabular-nums;
   max-inline-size: 100%;
-  white-space: nowrap;
+  min-width: 0;
+  /* A value must never leave its tile. The tile clips (`overflow: hidden` on
+     the item), so a nowrap numeral here was CUT at the card edge — "UGX
+     4,000,000" rendered as "UGX 4,00". Long figures now wrap at their spaces
+     and, failing that, break — two calm lines beat one truncated one. */
+  white-space: normal;
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
 /* A tile with no number to show.
@@ -1555,8 +1562,7 @@ select:not([multiple]):not(.select-native) {
   font-weight: 500;
   color: var(--edify-text-subtle);
   letter-spacing: normal;
-  /* Prose, not a numeral: the base rule's nowrap clips "Not measured" at
-     six-across tile widths, so the absent state gets its wrapping back. */
+  /* Prose, not a numeral: "Not measured" wraps like a sentence. */
   white-space: normal;
   text-wrap: balance;
 }
@@ -1936,10 +1942,12 @@ select:not([multiple]):not(.select-native) {
   /* Sized against the CARD, not the viewport — the strip carries six tiles on
      a wide desktop where the reference this follows carried four, so a fixed
      numeral that looks generous at four crowds at six. The container query
-     lets one rule serve both: it reaches the hero tier when a tile has room
-     and steps down when it does not, instead of overflowing or being capped
-     for everyone. */
-  font-size: clamp(1.5rem, 1.3rem + 3.9cqi, var(--edify-text-hero-size));
+     lets one rule serve both: it grows toward the hero ceiling when a tile
+     has room and steps down when it does not, instead of overflowing or
+     being capped for everyone. The floor is the heading tier, not the old
+     24px: a six-up tile holding "UGX 4,000,000" was clipping mid-figure,
+     which is worse than a smaller number that is actually all there. */
+  font-size: clamp(1.125rem, 1rem + 2.2cqi, var(--edify-text-hero-size));
   /* !important, and deliberately so. Three KPI normalisers in consistency.css
      flatten every strip descendant to label weight, to undo template drift
      where hand-rolled font-bold landed on labels and helpers. The hero value
@@ -1948,8 +1956,10 @@ select:not([multiple]):not(.select-native) {
      Those normalisers assert !important, so a component reclaiming its own
      type has to as well — this selector outranks all three on specificity.
      Without it the size lands and the weight silently does not, which is
-     exactly how this regressed the first time. */
-  font-weight: 700 !important;
+     exactly how this regressed the first time. Semibold, not bold: 600 keeps
+     the numeral leading its quiet 500 label without the shouting block of
+     ink the reference tiles deliberately avoid. */
+  font-weight: 600 !important;
   margin-block-end: 0.25rem;
 }
 

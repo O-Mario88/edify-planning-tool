@@ -110,6 +110,30 @@
         'edify-single-tile-grid',
         directTiles.length === 1 && !directTiles[0].className.includes('col-span')
       );
+      /* Two data tables never share a row. Cells never wrap, so a pair of
+         side-by-side tables splits inline space neither table can give up —
+         one or both fall into horizontal scrolling even on screens with
+         room for a single full-width grid. The marker lets consistency.css
+         collapse the row so the second table continues below the first at
+         full width, where the identity column takes the slack instead.
+         Only children that ARE table cards count: a dashboard column that
+         merely contains a table somewhere among its cards keeps its layout.
+         Chart fallbacks (sr-only / presentation tables) are not data grids
+         and must not collapse a row of visual charts. */
+      var tableCards = directTiles.filter(function (tile) {
+        return Boolean(tile.querySelector(
+          'table:not(.sr-only):not(.edify-visually-hidden):not([role="presentation"])'
+        ));
+      });
+      grid.classList.toggle('edify-stacked-table-row', tableCards.length > 1);
+      /* Dense flow may reorder presentational cards to fill the hole a
+         col-span neighbour leaves, but never anything sequential: only a
+         grid whose every child is a card opts in, so form-field grids and
+         mixed-content layouts keep DOM order. */
+      grid.classList.toggle(
+        'edify-dense-tile-grid',
+        directTiles.length > 1 && directTiles.length === grid.children.length
+      );
     });
 
     elementsWithin(root, 'main .kpi-strip__item').forEach(function (item) {

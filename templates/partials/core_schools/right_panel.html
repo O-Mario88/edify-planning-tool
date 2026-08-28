@@ -51,7 +51,7 @@ View Full Guidelines
 <div class="divide-y divide-slate-100 max-h-[290px] overflow-y-auto pr-0.5 scrollbar-thin">
 {% for school in reco_data.attention_needed %}
 <div class="py-3 space-y-1 hover:bg-slate-50/30 transition-colors rounded-surface px-1">
-<p class="text-[12px] font-semibold text-slate-800 leading-tight">{{ school.name }}</p>
+<p class="text-[12px] font-semibold text-slate-800 leading-tight"><span class="text-slate-400 font-normal tabular-nums">{{ school.school_id }}</span> · {{ school.name }}</p>
 <p class="edify-text-caption text-rose-600 font-bold flex items-center gap-1.5">
 <span class="h-1.5 w-1.5 rounded-pill bg-rose-500 animate-pulse shrink-0"></span>
 <span>

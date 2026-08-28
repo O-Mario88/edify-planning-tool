@@ -2271,12 +2271,13 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
 }
 
 /* ═══ CONVENTIONAL WEIGHT HIERARCHY ═════════════════════════════════════
- * Retuned to the reference dashboard, replacing the earlier restrained
- * stance (350 body, everything flattened to regular). Body copy is regular
- * (400); labels, controls, navigation and table headers are medium (500);
- * headings are semibold (600); page titles and KPI numerals are bold (700).
- * The enforcement below is unchanged in shape — templates still cannot
- * invent their own weights — only the token values it enforces moved. */
+ * Tuned to the reference dashboard. Body copy is regular (400); labels,
+ * controls, navigation and table cells are medium (500) at most; headings
+ * are semibold (600); page titles are bold (700). KPI numerals are semibold
+ * (600), never bold — the tile's number leads by size and ink, not by a
+ * heavy block of weight, and table bodies stay regular under their bold
+ * headers. The enforcement below is unchanged in shape — templates still
+ * cannot invent their own weights — only the token values it enforces moved. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"]) {
   font-weight: var(--edify-text-body-weight);
 }
@@ -2476,15 +2477,15 @@ main :is(.apexcharts-text, .apexcharts-legend-text, .apexcharts-datalabel, text,
 }
 
 /* Numbers ON a chart follow the same hierarchy as numbers on a tile: the
-   chrome around them (axis, legend) stays medium, the figures themselves are
-   bold. Written after the flattener above so source order decides the tie —
-   datalabels sit at 600 because they crowd each other at 700, and the donut
-   centre value is a hero numeral, so it carries the hero weight. */
+   chrome around them (axis, legend) stays medium, the figures themselves
+   semibold. Written after the flattener above so source order decides the
+   tie. The donut centre value is a hero numeral, so it carries the hero
+   weight — 600, same as a tile's, never bold. */
 main :is(.apexcharts-datalabel, .apexcharts-datalabels text) {
   font-weight: 600 !important;
 }
 main :is(.apexcharts-datalabel-value) {
-  font-weight: 700 !important;
+  font-weight: 600 !important;
 }
 
 /* ═══ NORMAL CHARACTER SPACING ══════════════════════════════════════════
@@ -2758,6 +2759,33 @@ main :is(.apexcharts-datalabel-value) {
   text-overflow: clip !important;
 }
 
+/* When the table is narrower than its card, the slack goes to the column
+   that holds prose — the record identity — rather than being distributed
+   as awkward even padding across every numeric column. With single-line
+   cells the other columns keep exactly their content width, so the text
+   column grows and the rest stay compact; when content genuinely exceeds
+   the card there is no slack to hand out and the scroll region takes over.
+   This is what keeps a fitting table filling its card edge-to-edge with no
+   horizontal scrollbar. Scoped to the canonical record grid on purpose:
+   specialist matrices pin their row header with position: sticky, and a
+   sticky column asked to take 100% of the width would ride over every data
+   column it is meant to introduce. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .edify-record-table :is([data-record-title], tbody th[scope="row"]) {
+  inline-size: 100%;
+}
+
+/* Two data tables never share a row. Cells never wrap, so side-by-side
+   tables split inline space neither can give up — one or both fall into
+   horizontal scrolling even on viewports with room for either alone. The
+   enhancer marks any layout row whose children carry two or more real data
+   tables; collapsing it moves the second table below the first at full
+   width, where its identity column absorbs the slack instead. DOM order is
+   preserved, so reading order, tab order and the visual order agree. */
+main .grid.edify-stacked-table-row {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
 /* ── Ink on the warm semantic fills ──────────────────────────────────────────
    The warm Tailwind fills do not theme-flip: `bg-amber-400` is amber-400 in
    every theme (measured in the browser, not assumed). Their ink must therefore
@@ -2865,6 +2893,16 @@ main .grid.edify-tile-grid:not([class*="items-"]):not(.kpi-grid):not(.signal-gri
   align-items: start;
 }
 
+/* Dense flow lets a later card step back to fill the hole a col-span
+ * neighbour left behind, so a grid never shows a dead cell while a card that
+ * fits waits below it. The enhancer grants the class only to grids whose
+ * every child is a card — form-field grids and mixed-content layouts keep
+ * strict DOM order — and grids of uniform single-span cards are unaffected
+ * because they never create holes to fill. */
+main .grid.edify-dense-tile-grid:not(.kpi-grid):not(.signal-grid) {
+  grid-auto-flow: dense;
+}
+
 /* A lone card or no-data result should not sit beside reserved empty tracks. */
 main .grid.edify-single-tile-grid
   > :is(.card, .edify-surface, article, section):only-child:not([class*="col-span"]) {
@@ -2886,6 +2924,51 @@ main .grid.edify-single-tile-grid
   display: none !important;
   margin: 0 !important;
   padding: 0 !important;
+}
+
+/* A chart that never rendered must not hold a chart's worth of air.
+ *
+ * Chart mount points reserve their height up front (min-h-[180px],
+ * min-h-[250px] and friends) so the card does not jump when the library
+ * paints into them. When the series is empty the library paints nothing at
+ * all — the mount stays childless — and the reserved height becomes a blank
+ * block inside an otherwise finished card. Four of them sat in one row on
+ * the HR dashboard.
+ *
+ * `:empty` is exactly the distinction that matters: a chart that rendered
+ * (including one that rendered ApexCharts' own "No data for this period"
+ * message) has children and keeps every pixel of its reserved height; one
+ * that never ran has none and collapses to nothing. The card's own padding
+ * still separates its heading from what follows. */
+main :is([id^="chart-"], [id$="-chart"], [class*="chart-canvas"], [data-chart], .apexcharts-canvas):empty {
+  min-block-size: 0 !important;
+  min-height: 0 !important;
+  block-size: 0 !important;
+  margin: 0 !important;
+}
+
+/* ── Packing columns ────────────────────────────────────────────────────────
+ * The shared answer to "a tall card left a hole beside a short one".
+ *
+ * A grid ROW is as tall as its tallest cell, so a chart or long table paired
+ * with a compact summary leaves blank space under the summary — the taller
+ * the pairing, the bigger the hole. These two classes turn such a row into
+ * independent COLUMNS: each stacks its own cards from the top and takes only
+ * the height it needs, so a short card is followed immediately by the next
+ * card rather than by its neighbour's leftover height. DOM order inside each
+ * column is preserved, so reading and tab order still match the page. */
+main .edify-pack-cols {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--edify-content-row-gap, 1rem);
+  align-items: start;
+}
+
+main .edify-pack-col {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--edify-content-row-gap, 1rem);
+  align-content: start;
 }
 
 /* Empty states remain useful guidance, but they no longer impersonate a data

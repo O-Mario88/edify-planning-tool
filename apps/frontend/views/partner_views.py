@@ -256,6 +256,8 @@ def _partner_workspace(request):
             )
             row = {
                 "school_name": target.name if target else "Unassigned target",
+                # Operational school code; empty when the target is a cluster.
+                "school_code": getattr(target, "school_id", "") or "",
                 "district_cluster": _partner_location_label(activity, clusters_by_id),
                 "purpose": visit_purpose_label(
                     activity.purpose_type,
@@ -291,6 +293,8 @@ def _partner_workspace(request):
             status_label = "Overdue" if is_overdue else "Yet to schedule"
             row = {
                 "school_name": target.name if target else "Unassigned target",
+                # Operational school code; empty when the target is a cluster.
+                "school_code": getattr(target, "school_id", "") or "",
                 "district_cluster": _partner_assignment_location_label(
                     assignment, clusters_by_id
                 ),

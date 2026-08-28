@@ -333,7 +333,7 @@
      Type uses stable semantic steps instead of viewport/container arithmetic.
      Layout may reflow responsively; a label, table cell or KPI does not change
      size merely because its card or browser happens to be a few pixels wider.
-       hero    → the one number a card exists to show (28px bold)
+       hero    → the one number a card exists to show (24px semibold)
        display → page titles (20px bold)
        heading → section titles (16px semibold)
        title   → card/panel titles (15px semibold)
@@ -348,12 +348,13 @@
 
   --edify-text-display-size: 1.25rem;
   /* The rung above display, for the one number a card exists to show.
-     30px bold, per the reference design this scale follows: the numeral is
-     the largest text on the page, page titles sit two clear steps below it,
-     and nothing else competes with the data. The executive strip scales
-     fluidly up to this ceiling — declared here so the ladder owns the value
-     instead of it living as an arbitrary clamp. */
-  --edify-text-hero-size: 1.75rem;
+     24px semibold: the numeral still leads its tile, but stays calm enough
+     that a long UGX figure fits the card instead of overflowing it. The
+     reference tiles carry their number with restraint — weight 600 and a
+     modest step above the title tier, never a shouting bold block. The
+     executive strip scales fluidly up to this ceiling — declared here so the
+     ladder owns the value instead of it living as an arbitrary clamp. */
+  --edify-text-hero-size: 1.5rem;
   --edify-text-heading-size: 1rem;
   --edify-text-title-size:   0.9375rem;
   --edify-text-body-size:    0.8125rem;
@@ -382,9 +383,12 @@
      they inherit the same type, colour, focus and numeric rhythm. */
   --edify-table-cell-padding-block: 0.5rem;
   --edify-table-cell-padding-inline: 0.75rem;
+  /* Headers may be bold; the body never is. Cells sit at regular (400) per
+     the reference grid, and the identity column separates itself with ink
+     colour plus a half-step of medium — not a second bold rail. */
   --edify-table-header-weight: 600;
-  --edify-table-body-weight: 450;
-  --edify-table-identity-weight: 600;
+  --edify-table-body-weight: 400;
+  --edify-table-identity-weight: 500;
   --edify-table-action-size: 2rem;
   --edify-table-radius: 0.5rem;
 

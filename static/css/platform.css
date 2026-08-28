@@ -3103,17 +3103,16 @@ main [data-mobile-family="directory"] .school-filter-clear {
   padding-block-start: 0;
 }
 
+/* The row leads with the operational school ID — the code staff quote and
+   type into other systems — where a decorative building glyph used to sit.
+   One track for the ID chip, the rest for identity. */
 .school-record-row__content {
   position: relative;
   display: grid;
-  grid-template-columns: 2.8rem minmax(0, 1fr);
+  grid-template-columns: fit-content(7.5rem) minmax(0, 1fr);
   align-items: start;
   gap: .8rem;
   min-inline-size: 0;
-}
-
-.school-record-row__content--with-id {
-  grid-template-columns: 2.8rem fit-content(7.5rem) minmax(0, 1fr);
 }
 
 .school-record-row__expander {
@@ -3170,23 +3169,6 @@ main [data-mobile-family="directory"] .school-filter-clear {
 .school-record-row__summary--selectable > .school-record-row__actions {
   grid-column: 3;
   grid-row: 1;
-}
-
-.school-record-row__icon {
-  display: grid;
-  inline-size: 2.8rem;
-  block-size: 2.8rem;
-  place-items: center;
-  border: 1px solid color-mix(in oklab, var(--edify-accent-border) 68%, transparent);
-  border-radius: .75rem;
-  background: color-mix(in oklab, var(--edify-accent-light) 68%, var(--edify-surface));
-  color: var(--edify-accent-text);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .72);
-}
-
-.school-record-row__icon svg {
-  inline-size: 1.15rem;
-  block-size: 1.15rem;
 }
 
 .school-record-row__school-id {
@@ -3905,10 +3887,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
 @media (max-width: 33rem) {
   .school-record-row__summary { gap: .75rem; padding: 1rem; }
-  .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
-  .school-record-row__content--with-id { grid-template-columns: 2.5rem fit-content(6.5rem) minmax(0, 1fr); }
-  .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
-  .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
+  .school-record-row__content { grid-template-columns: fit-content(6.5rem) minmax(0, 1fr); gap: .65rem; }
   .school-record-row__title { font-size: 1.13rem; }
   .school-record-row__metadata { gap: .38rem .75rem; }
   .school-record-action { padding-inline: .65rem; }
@@ -3929,10 +3908,7 @@ main [data-mobile-family="directory"] .school-filter-clear {
 
   @container school-record (max-width: 38rem) {
     .school-record-row__summary { gap: .75rem; padding: 1rem; }
-    .school-record-row__content { grid-template-columns: 2.5rem minmax(0, 1fr); gap: .65rem; }
-    .school-record-row__content--with-id { grid-template-columns: 2.5rem fit-content(6.5rem) minmax(0, 1fr); }
-    .school-record-row__icon { inline-size: 2.5rem; block-size: 2.5rem; border-radius: .7rem; }
-    .school-record-row__icon svg { inline-size: 1.05rem; block-size: 1.05rem; }
+    .school-record-row__content { grid-template-columns: fit-content(6.5rem) minmax(0, 1fr); gap: .65rem; }
     .school-record-row__title { font-size: 1.13rem; }
     .school-record-row__metadata { gap: .38rem .75rem; }
     .school-record-action { padding-inline: .65rem; }

@@ -729,9 +729,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         for declaration in (
             "--edify-table-cell-padding-block: 0.5rem",
             "--edify-table-cell-padding-inline: 0.75rem",
+            # Headers may be bold; the body never is. Cells are regular (400)
+            # per the reference grid, and identity separates itself with ink
+            # colour plus a half-step of medium, not a second bold rail.
             "--edify-table-header-weight: 600",
-            "--edify-table-body-weight: 450",
-            "--edify-table-identity-weight: 600",
+            "--edify-table-body-weight: 400",
+            "--edify-table-identity-weight: 500",
             "--edify-table-action-size: 2rem",
             "--edify-table-header-divider:",
         ):
@@ -942,18 +945,21 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         funding = _read("templates/partials/dashboards/pl/funding_execution.html")
         pages = _read("static/css/pages.css")
 
-        self.assertIn('class="pl-ssa-funding-grid"', dashboard)
-        intelligence_row = dashboard[
-            dashboard.index("SSA Intelligence") : dashboard.index("Team Backlog")
-        ]
-        self.assertIn("Funding &amp; Execution", intelligence_row)
+        # Packing columns: SSA Intelligence and Team Backlog stack in the
+        # flexible left track, finance keeps the compact right one. Both
+        # left-column cards answer "what is wrong in my portfolio", and
+        # pairing them fills the height the taller finance column used to
+        # leave as blank space beside a single short card. DOM order is
+        # left column top-to-bottom, then right — which is the order the
+        # page is read in, so assistive tech and the eye agree.
+        self.assertIn('class="pl-ssa-funding-grid edify-pack-cols"', dashboard)
+        self.assertIn('class="edify-pack-col"', dashboard)
         self.assertIn('aside class="pl-funding-card ', dashboard)
         self.assertLess(
-            dashboard.index("SSA Intelligence"),
-            dashboard.index("Funding &amp; Execution"),
+            dashboard.index("SSA Intelligence"), dashboard.index("Team Backlog")
         )
         self.assertLess(
-            dashboard.index("Funding &amp; Execution"), dashboard.index("Team Backlog")
+            dashboard.index("Team Backlog"), dashboard.index("Funding &amp; Execution")
         )
         self.assertIn("pl-funding-card__body", dashboard)
         self.assertIn("pl-funding-summary", funding)
