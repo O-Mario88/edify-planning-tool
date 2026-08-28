@@ -86,7 +86,14 @@ for stream in "$@"; do
       ]
     }
   }')
-  os_request PUT "/_plugins/_ism/policies/${policy_id}" "$policy" >/dev/null
+  policy_path="/_plugins/_ism/policies/${policy_id}"
+  existing_policy=$(os_request GET "$policy_path" 2>/dev/null || true)
+  if [[ -n "$existing_policy" ]]; then
+    seq_no=$(jq -er '._seq_no' <<<"$existing_policy")
+    primary_term=$(jq -er '._primary_term' <<<"$existing_policy")
+    policy_path="${policy_path}?if_seq_no=${seq_no}&if_primary_term=${primary_term}"
+  fi
+  os_request PUT "$policy_path" "$policy" >/dev/null
 
   template=$(jq -nc --arg stream "$stream" --arg policy "$policy_id" '{
     index_patterns: [($stream + "-*")],
@@ -120,4 +127,3 @@ for stream in "$@"; do
       >/dev/null
   echo "configured: ${stream} (rollover 1d/128MiB, delete 90d)"
 done
-

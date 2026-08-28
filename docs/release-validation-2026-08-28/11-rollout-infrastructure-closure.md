@@ -38,6 +38,8 @@ were read from the DigitalOcean API after each operation.
   templates and write aliases. Indices roll at one day or 128 MiB and are
   automatically deleted after 90 days. One shard and zero replicas are
   deliberate for this single-node log cluster.
+- The policy update path uses OpenSearch sequence-number/primary-term guards;
+  two consecutive live reruns completed successfully for all four streams.
 - Measured document counts after live traffic and scheduler execution were
   326 production-web, 602 production-scheduler, 95 staging-web and 85
   staging-scheduler records. Counts are evidence of delivery, not a retention
