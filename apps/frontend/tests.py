@@ -428,9 +428,9 @@ class FrontendViewsTestCase(TestCase):
         self.assertIn("Platform Business Overview", html)
         for region in (
             "admin-workspace",
-            "admin-grid--top",
-            "admin-grid--middle",
-            "admin-grid--lower",
+            "admin-ops-grid",
+            "admin-col--tables",
+            "admin-col--signals",
             "admin-rail",
         ):
             self.assertIn(region, html)

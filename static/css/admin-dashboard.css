@@ -87,25 +87,49 @@
    reading was the one thrown away. Wraps to two lines, then clamps — the card
    keeps a bounded height without truncating mid-word. */
 
-/* Workspace composition */
+/* Workspace composition.
 
+   The workspace is the business overview beside its action rail. The base
+   two-column rule below is load-bearing: it existed only inside the 76rem
+   container query for a while, so on a desktop the rail's six narrow cards
+   rendered as a full-width stack under the main grids — the page ended in a
+   half-screen of skinny cards and air.
+
+   Inside the main area, cards pack in two intrinsic COLUMNS rather than
+   fixed rows. A row is as tall as its taller panel, so every pairing of a
+   long table with a short snapshot left a blank block under the short one.
+   Each column stacks its own cards (align-content: start), so nothing ever
+   waits beside a neighbour's empty space: record tables carry the wider
+   left column, the chart and snapshot grids the right. */
+.admin-workspace {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(17.5rem, 20.5rem);
+  gap: 0.9rem;
+  align-items: start;
+}
 
 .admin-workspace__main,
-.admin-stack,
+.admin-col,
 .admin-rail { min-width: 0; display: grid; gap: 0.9rem; }
 
-.admin-grid { min-width: 0; display: grid; gap: 0.9rem; align-items: start; }
-.admin-grid--top { grid-template-columns: minmax(0, 0.8fr) minmax(0, 1.08fr); }
-/* Two panels since Team Target Progress moved to the action rail: the middle
-   0.58fr track existed only to hold that narrow card, and with it gone a
-   three-track grid would push Priority Schools' table into the 12.5rem slot
-   and leave the third track empty. The survivors keep their old ratio. */
-.admin-grid--middle { grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.86fr); }
-/* Cluster Performance is the primary analysis surface in this row. The
-   Partner Support and Budget snapshots form the narrower supporting stack on
-   the right, leaving the cluster table enough room for names, trends and
-   status without squeezing its columns. */
-.admin-grid--lower { grid-template-columns: minmax(0, 1.45fr) minmax(17rem, 0.72fr); }
+.admin-workspace__main {
+  grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr);
+  align-items: start;
+}
+
+.admin-col { align-content: start; }
+
+/* The two operations panels (Critical Now / Recent Incidents) are short
+   status lists: side by side they read as one glance, stacked full-width
+   they were two thin bars with a screen of air around them. */
+.admin-ops-grid {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+  align-items: start;
+}
 
 .admin-panel {
   min-width: 0;
@@ -222,9 +246,13 @@
 .admin-panel__header-actions {
   min-inline-size: 0;
   display: flex;
+  /* The period tabs and the details link share this row inside the signals
+     column now; wrapping keeps "FY" from running into "View Details" when
+     the card is at its narrowest. */
+  flex-wrap: wrap;
   align-items: safe center;
   justify-content: flex-end;
-  gap: 0.95rem;
+  gap: 0.4rem 0.95rem;
   margin-inline-start: auto;
 }
 .admin-period-switch {
@@ -305,11 +333,11 @@
 .admin-clusters tbody tr:nth-child(3n + 2) .admin-spark-line { color: var(--edify-warning); }
 .admin-clusters tbody tr:nth-child(3n) .admin-spark-line { color: var(--edify-danger); }
 
+/* 2×2, not 4-across: these snapshot grids live in the narrower signals
+   column at every width now, where four cells in a row would crush their
+   numerals. */
 .admin-mini-grid,
-.admin-budget-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.65rem; padding: 0.72rem 0.85rem 0.85rem; }
-.admin-grid--lower :is(.admin-mini-grid, .admin-budget-grid) {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-}
+.admin-budget-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.65rem; padding: 0.72rem 0.85rem 0.85rem; }
 .admin-mini,
 .admin-budget-grid article { min-width: 0; padding: 0.72rem; border: 1px solid var(--edify-border); border-radius: 0.58rem; background: var(--edify-surface-muted); }
 .admin-mini > span:first-child,
@@ -399,10 +427,13 @@
 .theme-dark .admin-command :is(.admin-panel, .admin-kpi) { background: var(--edify-surface-treatment); box-shadow: var(--edify-shadow-md); }
 
 @container admin-command (max-width: 88rem) {
-  /* One column here, not two-plus-a-span: that reflow existed to give the
-     Priority Schools table a full-width row beneath the two narrow panels.
-     With two panels left, stacking keeps the table full-width all the same. */
-  .admin-grid--middle { grid-template-columns: minmax(0, 1fr); }
+  /* Beside the rail, two main columns get too narrow for tables here; the
+     cards continue as one tight stack, which can never leave a hole. */
+  .admin-workspace__main { grid-template-columns: minmax(0, 1fr); }
+}
+
+@container admin-command (max-width: 60rem) {
+  .admin-ops-grid { grid-template-columns: minmax(0, 1fr); }
 }
 
 @container admin-command (max-width: 76rem) {
@@ -411,20 +442,11 @@
   .admin-execution { grid-column: 1 / -1; }
 }
 
-@container admin-command (max-width: 60rem) {
-  .admin-grid--top,
-  .admin-grid--lower { grid-template-columns: minmax(0, 1fr); }
-  .admin-mini-grid,
-  .admin-budget-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-}
-
 @container admin-command (max-width: 48rem) {
   .admin-command { padding: 1rem; }
   .admin-command__actions { width: 100%; }
   .admin-command__actions .admin-button { flex: 1; }
-  .admin-grid--middle,
   .admin-rail { grid-template-columns: minmax(0, 1fr); }
-  .admin-priority-schools,
   .admin-execution { grid-column: auto; }
 }
 

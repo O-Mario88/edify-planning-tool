@@ -1297,7 +1297,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 68,
+   "line": 76,
    "title": "Today\u2019s Priorities",
    "heading_level": 2,
    "has_card_key": true,
@@ -1306,25 +1306,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 95,
-   "title": "Planning Progress",
-   "heading_level": 2,
-   "has_card_key": true,
-   "classes": "admin-panel admin-planning-progress",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/dashboards/main.html",
-   "line": 126,
-   "title": "SSA Performance Snapshot",
-   "heading_level": 2,
-   "has_card_key": true,
-   "classes": "admin-panel admin-ssa",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/dashboards/main.html",
-   "line": 148,
+   "line": 103,
    "title": "Priority Schools",
    "heading_level": 2,
    "has_card_key": true,
@@ -1333,11 +1315,29 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 163,
+   "line": 116,
    "title": "Cluster Performance",
    "heading_level": 2,
    "has_card_key": true,
    "classes": "admin-panel admin-clusters",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/dashboards/main.html",
+   "line": 130,
+   "title": "Planning Progress",
+   "heading_level": 2,
+   "has_card_key": true,
+   "classes": "admin-panel admin-planning-progress",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/dashboards/main.html",
+   "line": 159,
+   "title": "SSA Performance Snapshot",
+   "heading_level": 2,
+   "has_card_key": true,
+   "classes": "admin-panel admin-ssa",
    "branch_path": []
   },
   {
@@ -1360,7 +1360,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 202,
+   "line": 201,
    "title": "Upcoming Today",
    "heading_level": 2,
    "has_card_key": true,
@@ -1369,7 +1369,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 213,
+   "line": 212,
    "title": "Attention Needed",
    "heading_level": 2,
    "has_card_key": true,
@@ -1378,7 +1378,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 231,
+   "line": 230,
    "title": "Next Recommended Action",
    "heading_level": 2,
    "has_card_key": true,
@@ -1387,7 +1387,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 238,
+   "line": 237,
    "title": "Quick Actions",
    "heading_level": 2,
    "has_card_key": true,
@@ -1396,7 +1396,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 261,
+   "line": 260,
    "title": "Team Target Progress",
    "heading_level": 2,
    "has_card_key": true,
@@ -1405,7 +1405,7 @@
   },
   {
    "template": "templates/pages/dashboards/main.html",
-   "line": 271,
+   "line": 270,
    "title": "Execution Summary",
    "heading_level": 2,
    "has_card_key": true,

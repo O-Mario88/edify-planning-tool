@@ -31,7 +31,7 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertNotIn("stretch", row)
         self.assertIn("block-size: auto", pages)
         self.assertIn("grid-column: 1 / -1;", bridge)
-        self.assertIn(".admin-grid", admin)
+        self.assertIn(".admin-col", admin)
         self.assertIn("align-items: start", admin)
         # Dense flow exists in exactly one place: the all-card grids the
         # enhancer marks, where filling a col-span neighbour's hole removes

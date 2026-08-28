@@ -5,7 +5,7 @@
 Scoped here rather than loaded platform-wide: admin-dashboard.css is 29 KB
 and only this page and its own partials use it.
 {% endcomment %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260827density2">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/admin-dashboard.css' %}?v=20260828pack1">{% endblock %}
 
 {% block title %}Main Dashboard — Edify{% endblock %}
 
@@ -64,137 +64,136 @@ and only this page and its own partials use it.
 
   <div class="admin-workspace mobile-home-deferred">
     <div class="admin-workspace__main">
-      <div class="admin-grid admin-grid--top">
-        <section class="admin-panel admin-priorities"
-                 {% include "components/registered_card_attrs.html" with card=cards.todays_priorities %} aria-labelledby="admin-priorities-title">
-          <header class="admin-panel__header">
-            <h2 id="admin-priorities-title">Today’s Priorities <span class="admin-count">{{ priorities|length }}</span></h2>
-            <a href="/calendar">View Calendar</a>
-          </header>
-          <div class="admin-table-wrap">
-            <table class="admin-table admin-table--priorities">
-              <caption class="sr-only">Activities prioritized for today</caption>
-              <thead><tr><th scope="col">Activity</th><th scope="col">Time</th><th scope="col">Related to</th><th scope="col">Status</th></tr></thead>
-              <tbody>
-                {% for item in priorities %}
-                <tr>
-                  <td data-label="Activity"><strong>{{ item.activity }}</strong></td>
-                  <td data-label="Time">{{ item.time }}</td>
-                  <td data-label="Related to">{{ item.related_to }}</td>
-                  <td data-label="Status"><span class="admin-status {{ item.status_class }}">{{ item.status }}</span></td>
-                </tr>
-                {% empty %}
-                <tr class="admin-table__empty-row"><td colspan="4"><div class="admin-empty admin-empty--table"><span>Nothing scheduled for today.</span><small>Your next scheduled activity will appear here.</small></div></td></tr>
-                {% endfor %}
-              </tbody>
-            </table>
-          </div>
-          <a class="admin-panel__footer-link" href="/planning">View all priorities ({{ priorities|length }}) <span aria-hidden="true">→</span></a>
-        </section>
+      {% comment %}
+      Two self-packing columns instead of three fixed rows. A row is as tall
+      as its taller panel, so every pairing of a long table with a short
+      snapshot left a blank block under the short one. Each column now stacks
+      its own cards tightly (align-content: start), so no card ever waits
+      beside a neighbour's empty space: record tables carry the wider left
+      column, charts and snapshot grids the right.
+      {% endcomment %}
+      <div class="admin-col admin-col--tables">
+      <section class="admin-panel admin-priorities"
+                       {% include "components/registered_card_attrs.html" with card=cards.todays_priorities %} aria-labelledby="admin-priorities-title">
+                <header class="admin-panel__header">
+                  <h2 id="admin-priorities-title">Today’s Priorities <span class="admin-count">{{ priorities|length }}</span></h2>
+                  <a href="/calendar">View Calendar</a>
+                </header>
+                <div class="admin-table-wrap">
+                  <table class="admin-table admin-table--priorities">
+                    <caption class="sr-only">Activities prioritized for today</caption>
+                    <thead><tr><th scope="col">Activity</th><th scope="col">Time</th><th scope="col">Related to</th><th scope="col">Status</th></tr></thead>
+                    <tbody>
+                      {% for item in priorities %}
+                      <tr>
+                        <td data-label="Activity"><strong>{{ item.activity }}</strong></td>
+                        <td data-label="Time">{{ item.time }}</td>
+                        <td data-label="Related to">{{ item.related_to }}</td>
+                        <td data-label="Status"><span class="admin-status {{ item.status_class }}">{{ item.status }}</span></td>
+                      </tr>
+                      {% empty %}
+                      <tr class="admin-table__empty-row"><td colspan="4"><div class="admin-empty admin-empty--table"><span>Nothing scheduled for today.</span><small>Your next scheduled activity will appear here.</small></div></td></tr>
+                      {% endfor %}
+                    </tbody>
+                  </table>
+                </div>
+                <a class="admin-panel__footer-link" href="/planning">View all priorities ({{ priorities|length }}) <span aria-hidden="true">→</span></a>
+              </section>
 
-        <section class="admin-panel admin-planning-progress"
-                 {% include "components/registered_card_attrs.html" with card=cards.planning_progress %} aria-labelledby="admin-planning-title">
-          <header class="admin-panel__header admin-planning-progress__header">
-            <h2 id="admin-planning-title">Planning Progress</h2>
-            <div class="admin-panel__header-actions">
-              {% comment %}
-                Real links keep every reporting period available without JS.
-                HTMX only replaces the chart; the pushed URL also drives the
-                active underline after a swap and through history navigation.
-              {% endcomment %}
-              <nav class="admin-period-switch" data-edify-tablist aria-label="Planning progress reporting period">
-                {% for tab in progress_tabs %}
-                <a href="?progress_period={{ tab.period }}"
-                   hx-get="/dashboard/planning-progress?progress_period={{ tab.period }}"
-                   hx-target="#admin-planning-progress-body"
-                   hx-swap="outerHTML"
-                   hx-push-url="true"
-                   data-edify-tab
-                   data-admin-progress-period="{{ tab.period }}"
-                   class="{% if tab.active %}is-active{% endif %}"
-                   {% if tab.active %}aria-current="true"{% endif %}>{{ tab.label }}</a>
-                {% endfor %}
-              </nav>
-              <a class="admin-panel__details-link" href="/planning">View Details</a>
-            </div>
-          </header>
-          {% include "partials/dashboards/admin/_planning_progress_body.html" %}
-        </section>
+      <section class="admin-panel admin-priority-schools"
+                       {% include "components/registered_card_attrs.html" with card=cards.priority_schools %} aria-labelledby="admin-priority-schools-title">
+                <header class="admin-panel__header"><h2 id="admin-priority-schools-title">Priority Schools</h2><a href="/schools">View All</a></header>
+                <div class="admin-table-wrap">
+                  <table class="admin-table admin-table--schools">
+                    <caption class="sr-only">Schools requiring priority action</caption>
+                    <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Weakest area</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
+                    <tbody>{% for school in priority_schools %}<tr><td class="tabular-nums">{{ school.school_id }}</td><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td{% if school.reason %} title="{{ school.reason }}"{% endif %}>{{ school.weakest }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Collect SSA' %}/planning?intent=ssa{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="6"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
+                  </table>
+                </div>
+                <a class="admin-panel__footer-link" href="/schools">View all priority schools <span aria-hidden="true">→</span></a>
+              </section>
+
+      <section class="admin-panel admin-clusters"
+                       {% include "components/registered_card_attrs.html" with card=cards.cluster_performance %} aria-labelledby="admin-clusters-title">
+                <header class="admin-panel__header"><h2 id="admin-clusters-title">Cluster Performance</h2><a href="/clusters">View All</a></header>
+                <div class="admin-table-wrap">
+                  <table class="admin-table">
+                    <caption class="sr-only">Cluster performance by average SSA score</caption>
+                    <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
+                    <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{{ cluster.name }}</strong></td><td>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa }}/10{% else %}—{% endif %}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
+                  </table>
+                </div>
+              </section>
       </div>
 
-      <div class="admin-grid admin-grid--middle">
-        <section class="admin-panel admin-ssa"
-                 {% include "components/registered_card_attrs.html" with card=cards.ssa_snapshot %} aria-labelledby="admin-ssa-title">
-          <header class="admin-panel__header"><h2 id="admin-ssa-title">SSA Performance Snapshot</h2><a href="/reports">View Report</a></header>
-          <div class="admin-intervention-group">
-            <h3>Best performing interventions</h3>
-            {% for item in best_interventions %}
-            <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="success" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
-            {% empty %}<div class="admin-empty admin-empty--compact"><span>No verified SSA scores yet.</span></div>{% endfor %}
-          </div>
-          <div class="admin-intervention-group">
-            <h3>Weakest interventions</h3>
-            {% for item in weakest_interventions %}
-            <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="warning" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
-            {% empty %}<div class="admin-empty admin-empty--compact"><span>No low-performing interventions identified.</span></div>{% endfor %}
-          </div>
-        </section>
+      <div class="admin-col admin-col--signals">
+      <section class="admin-panel admin-planning-progress"
+                       {% include "components/registered_card_attrs.html" with card=cards.planning_progress %} aria-labelledby="admin-planning-title">
+                <header class="admin-panel__header admin-planning-progress__header">
+                  <h2 id="admin-planning-title">Planning Progress</h2>
+                  <div class="admin-panel__header-actions">
+                    {% comment %}
+                      Real links keep every reporting period available without JS.
+                      HTMX only replaces the chart; the pushed URL also drives the
+                      active underline after a swap and through history navigation.
+                    {% endcomment %}
+                    <nav class="admin-period-switch" data-edify-tablist aria-label="Planning progress reporting period">
+                      {% for tab in progress_tabs %}
+                      <a href="?progress_period={{ tab.period }}"
+                         hx-get="/dashboard/planning-progress?progress_period={{ tab.period }}"
+                         hx-target="#admin-planning-progress-body"
+                         hx-swap="outerHTML"
+                         hx-push-url="true"
+                         data-edify-tab
+                         data-admin-progress-period="{{ tab.period }}"
+                         class="{% if tab.active %}is-active{% endif %}"
+                         {% if tab.active %}aria-current="true"{% endif %}>{{ tab.label }}</a>
+                      {% endfor %}
+                    </nav>
+                    <a class="admin-panel__details-link" href="/planning">View Details</a>
+                  </div>
+                </header>
+                {% include "partials/dashboards/admin/_planning_progress_body.html" %}
+              </section>
 
-        {% comment %}
-          Team Target Progress lives in the action rail, below Quick Actions —
-          moved there by request. Still the card's only appearance on the page;
-          .admin-grid--middle is tuned for the two panels that remain.
-        {% endcomment %}
-        <section class="admin-panel admin-priority-schools"
-                 {% include "components/registered_card_attrs.html" with card=cards.priority_schools %} aria-labelledby="admin-priority-schools-title">
-          <header class="admin-panel__header"><h2 id="admin-priority-schools-title">Priority Schools</h2><a href="/schools">View All</a></header>
-          <div class="admin-table-wrap">
-            <table class="admin-table admin-table--schools">
-              <caption class="sr-only">Schools requiring priority action</caption>
-              <thead><tr><th scope="col">ID</th><th scope="col">School</th><th scope="col">District</th><th scope="col">Weakest area</th><th scope="col">Readiness</th><th scope="col">Action</th></tr></thead>
-              <tbody>{% for school in priority_schools %}<tr><td class="tabular-nums">{{ school.school_id }}</td><td><strong>{{ school.name }}</strong></td><td>{{ school.district }}</td><td{% if school.reason %} title="{{ school.reason }}"{% endif %}>{{ school.weakest }}</td><td><span class="admin-status {{ school.readiness_class }}">{{ school.readiness }}</span></td><td><a href="{% if school.action == 'Collect SSA' %}/planning?intent=ssa{% else %}/planning{% endif %}">{{ school.action }}</a></td></tr>{% empty %}<tr><td colspan="6"><div class="admin-empty admin-empty--table"><span>No priority schools in this scope.</span></div></td></tr>{% endfor %}</tbody>
-            </table>
-          </div>
-          <a class="admin-panel__footer-link" href="/schools">View all priority schools <span aria-hidden="true">→</span></a>
-        </section>
-      </div>
+      <section class="admin-panel admin-ssa"
+                       {% include "components/registered_card_attrs.html" with card=cards.ssa_snapshot %} aria-labelledby="admin-ssa-title">
+                <header class="admin-panel__header"><h2 id="admin-ssa-title">SSA Performance Snapshot</h2><a href="/reports">View Report</a></header>
+                <div class="admin-intervention-group">
+                  <h3>Best performing interventions</h3>
+                  {% for item in best_interventions %}
+                  <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="success" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+                  {% empty %}<div class="admin-empty admin-empty--compact"><span>No verified SSA scores yet.</span></div>{% endfor %}
+                </div>
+                <div class="admin-intervention-group">
+                  <h3>Weakest interventions</h3>
+                  {% for item in weakest_interventions %}
+                  <div class="admin-intervention"><span title="{{ item.name }}">{{ item.name }}</span><span class="admin-progress"><span data-tone="warning" style="width:{{ item.percentage }}%"></span></span><strong>{{ item.score }}</strong></div>
+                  {% empty %}<div class="admin-empty admin-empty--compact"><span>No low-performing interventions identified.</span></div>{% endfor %}
+                </div>
+              </section>
 
-      <div class="admin-grid admin-grid--lower">
-        <section class="admin-panel admin-clusters"
-                 {% include "components/registered_card_attrs.html" with card=cards.cluster_performance %} aria-labelledby="admin-clusters-title">
-          <header class="admin-panel__header"><h2 id="admin-clusters-title">Cluster Performance</h2><a href="/clusters">View All</a></header>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <caption class="sr-only">Cluster performance by average SSA score</caption>
-              <thead><tr><th scope="col">Cluster</th><th scope="col">Avg SSA</th><th scope="col">Trend</th><th scope="col">Status</th></tr></thead>
-              <tbody>{% for cluster in cluster_performance %}<tr><td><strong>{{ cluster.name }}</strong></td><td>{% if cluster.avg_ssa is not None %}{{ cluster.avg_ssa }}/10{% else %}—{% endif %}</td><td><svg class="admin-spark-line" viewBox="0 0 56 18" fill="none" aria-hidden="true"><path d="M1 12c6-8 9 3 15-2s8-5 13 0 8 4 13-1 8 2 13-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg></td><td><span class="admin-status {{ cluster.status_class }}">{{ cluster.status }}</span></td></tr>{% empty %}<tr><td colspan="4"><div class="admin-empty admin-empty--table"><span>No clusters configured yet.</span></div></td></tr>{% endfor %}</tbody>
-            </table>
-          </div>
-        </section>
+      <section class="admin-panel admin-partners"
+                       {% include "components/registered_card_attrs.html" with card=cards.partner_support %} aria-labelledby="admin-partners-title">
+                  <header class="admin-panel__header"><h2 id="admin-partners-title">Partner Support Overview</h2><a href="/partners">View All</a></header>
+                  <div class="admin-mini-grid">
+                    <article class="admin-mini" data-tone="success"><span>Assigned Partners</span><strong>{{ support_overview.assigned_partners }}</strong><small>Active</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+                    <article class="admin-mini" data-tone="info"><span>Planned Visits</span><strong>{{ support_overview.planned_visits }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+                    <article class="admin-mini" data-tone="warning"><span>Evidence Pending</span><strong>{{ support_overview.evidence_pending }}</strong><small>Submissions</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+                    <article class="admin-mini" data-tone="purple"><span>Payments Due</span><strong>{{ support_overview.payments_due }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
+                  </div>
+                </section>
 
-        <div class="admin-stack">
-          <section class="admin-panel admin-partners"
-                 {% include "components/registered_card_attrs.html" with card=cards.partner_support %} aria-labelledby="admin-partners-title">
-            <header class="admin-panel__header"><h2 id="admin-partners-title">Partner Support Overview</h2><a href="/partners">View All</a></header>
-            <div class="admin-mini-grid">
-              <article class="admin-mini" data-tone="success"><span>Assigned Partners</span><strong>{{ support_overview.assigned_partners }}</strong><small>Active</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-              <article class="admin-mini" data-tone="info"><span>Planned Visits</span><strong>{{ support_overview.planned_visits }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-              <article class="admin-mini" data-tone="warning"><span>Evidence Pending</span><strong>{{ support_overview.evidence_pending }}</strong><small>Submissions</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-              <article class="admin-mini" data-tone="purple"><span>Payments Due</span><strong>{{ support_overview.payments_due }}</strong><small>This month</small><span class="admin-mini__bars" aria-hidden="true">{% for i in "123456789101112" %}<i></i>{% endfor %}</span></article>
-            </div>
-          </section>
-
-          <section class="admin-panel admin-budget"
-                 {% include "components/registered_card_attrs.html" with card=cards.budget_snapshot %} aria-labelledby="admin-budget-title">
-            <header class="admin-panel__header"><h2 id="admin-budget-title">Budget &amp; Fund Request Snapshot</h2><a href="/finance/fund-allocation">View Details</a></header>
-            <div class="admin-budget-grid">
-              <article><span>This Week</span><strong>{{ budget_snapshot.week }}</strong><small>Planned value</small></article>
-              <article><span>This Month</span><strong>{{ budget_snapshot.month }}</strong><small>Planned value</small></article>
-              <article><span>This Quarter</span><strong>{{ budget_snapshot.quarter }}</strong><small>Planned value</small></article>
-              <article><span>This FY</span><strong>{{ budget_snapshot.fy }}</strong><small>Planned value</small></article>
-            </div>
-          </section>
-        </div>
+      <section class="admin-panel admin-budget"
+                       {% include "components/registered_card_attrs.html" with card=cards.budget_snapshot %} aria-labelledby="admin-budget-title">
+                  <header class="admin-panel__header"><h2 id="admin-budget-title">Budget &amp; Fund Request Snapshot</h2><a href="/finance/fund-allocation">View Details</a></header>
+                  <div class="admin-budget-grid">
+                    <article><span>This Week</span><strong>{{ budget_snapshot.week }}</strong><small>Planned value</small></article>
+                    <article><span>This Month</span><strong>{{ budget_snapshot.month }}</strong><small>Planned value</small></article>
+                    <article><span>This Quarter</span><strong>{{ budget_snapshot.quarter }}</strong><small>Planned value</small></article>
+                    <article><span>This FY</span><strong>{{ budget_snapshot.fy }}</strong><small>Planned value</small></article>
+                  </div>
+                </section>
       </div>
     </div>
 
