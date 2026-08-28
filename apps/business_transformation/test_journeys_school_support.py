@@ -90,6 +90,9 @@ class SchoolSupportJourneyFixture(TestCase):
         cls.cceo, cls.cceo_sp = _person("sup-cceo@edify.org", EdifyRole.CCEO)
         cls.cd, cls.cd_sp = _person("sup-cd@edify.org", EdifyRole.COUNTRY_DIRECTOR)
         cls.ia, cls.ia_sp = _person("sup-ia@edify.org", EdifyRole.IMPACT_ASSESSMENT)
+        cls.bt, cls.bt_sp = _person(
+            "sup-bt@edify.org", EdifyRole.BUSINESS_TRANSFORMATION_OFFICER
+        )
         StaffSchoolAssignment.objects.create(staff=cls.cceo_sp, school_id=cls.school.id)
 
     def setUp(self):
@@ -209,6 +212,13 @@ class FinancialHealthJourneyTest(SchoolSupportJourneyFixture):
         )
         self.assertEqual(latest.average_score, STRONG)
 
+        self.client.force_login(self.bt)
+        response = self.client.get(
+            "/business-transformation/business-accounting-finance"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Business Accounting &amp; Finance", html=True)
+
     def test_a_returned_assessment_is_not_adoption(self):
         """Guard the premise: IA returning it must not read as verified."""
         case = self._case_for(SsaIntervention.FINANCIAL_HEALTH)
@@ -327,6 +337,11 @@ class GovernmentRequirementsJourneyTest(SchoolSupportJourneyFixture):
             self.assertIsNotNone(assessment.expiry_date)
             self.assertEqual(row["nearest_expiry"], assessment.expiry_date)
             self.assertGreater(row["nearest_expiry"], registered_on)
+
+        self.client.force_login(self.bt)
+        response = self.client.get("/business-transformation/government-requirements")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Government Requirements")
 
     def test_an_unverified_certificate_does_not_become_a_live_expiry(self):
         """Guard step 7: nearest_expiry reads verified rows only.

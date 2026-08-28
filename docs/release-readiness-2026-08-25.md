@@ -2,6 +2,15 @@
 
 **Verdict: NO-GO for a 2026-08-26 production rollout.**
 
+> **Status update — 2026-08-28.** The verdict above is the historical verdict
+> against the 2026-08-25 baseline, not the state of the current release
+> candidate. BACKUP-01 has a successful isolated production restore rehearsal,
+> DEP-01 is reconciled to the live DigitalOcean app, all 20 implemented journeys
+> now exercise a role-gated HTTP surface, and all product decisions in §4c have
+> been made and implemented. Current rollout evidence is recorded under
+> `docs/release-validation-2026-08-28/` and supersedes stale “still open” prose
+> retained below as an audit trail.
+
 Baseline commit `e13dce8`. Audit run from a source-only container with PostgreSQL 16,
 no Redis, no Docker daemon, and no access to the production environment.
 
@@ -91,7 +100,7 @@ Everything in this table was run, not inferred.
 | Readiness honesty | live probe, Redis genuinely down | **FAIL** (RC-001) |
 | E2E journey census | `test_release_journey_census` | **PASS as a census; 20 of 22 walked** — nothing unwritten, 2 blocked on FE-01 and INTG-01 |
 | Role × surface authorization matrix | `manage.py build_permission_matrix` + `test_permission_matrix` | **PASS** — 1,028 surfaces, 845 guarded and answered role by role, 183 declaring none and listed, 0 reachable by nobody |
-| Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS as a build; it found JRN-01** — 22 requirements, 20 traced by executing their own test, 2 blocked. Every traced row records what actually ran. Route column empty on 19 of 20 and metrics-computed column empty on all 20: see JRN-01 in §4b |
+| Requirements traceability matrix | `manage.py build_traceability_matrix` + `test_traceability_matrix` | **PASS; JRN-01 closed 2026-08-28** — 22 requirements, 20 implemented journeys traced by executing their own test, 2 explicitly descoped. All 20 implemented journeys now reach a real role-gated HTTP surface; 7 also compute registered display metrics. See §4b |
 | Container vulnerability scan | Trivy, in CI | **PASS on `adf92ec`** — passed twice on 2026-08-25 and again on `54e3cc8`, then failed from `e815d04` on a new upstream CVE (DEP-08). The base-image packages were pinned forward, and CI's Security Scans job has now run to completion on `adf92ec`: image build, non-root check, runtime import and image scan all green. Three earlier attempts never finished — two runs were cancelled by the next push and one hit `startup_failure` — so this is the first completed verification, not a repeat one |
 | Branch CI on the fixed tree | GitHub Actions, head `fe75c79` | **PASS** — all five jobs, whole workflow green |
 | Seed-command safety | code audit of the only hard-delete path | **PASS — three guards** |
@@ -448,17 +457,17 @@ audit cannot reach, a build, or a decision that is not engineering's to take.
 | P0 | DEP-03 | No restore from a production backup has ever been performed | Needs the managed database. The rehearsal harness exists and is rigorous |
 | P0 | DEP-01 | The repository's two records of the live app describe **two different applications**, by UUID | Needs `doctl apps spec get`. Now quarantined by `test_deployment_record_is_singular`, and the asymmetry between the two records is recorded — see §6.1 |
 | P0 | INTG-01 | No Salesforce, NetSuite or MFI transport exists | **Scope decided, 2026-08-26: reconciliation happens IN Salesforce and NetSuite; the platform only stores the IDs that close it there.** Current behaviour is correct by design, so this stops being a defect. It remains a release-note obligation: the gate is a typed reference, not a verified one |
-| P1 | CONFLICT-001 | CD dashboard reports 200% where the PL correctly reports 0% | **Product decision.** Both fix directions break tests encoding the other behaviour |
+| P1 | CONFLICT-001 | **Closed 2026-08-26.** The Country Director now weights only agreed priority areas; a team with no signed agreements reads Not Assigned rather than 200% | The formerly expected-failure regression now passes and the decision is pinned in §4c |
 | P1 | FE-01 | Offline field operation does not exist | **Descoped by the product owner, 2026-08-26: "for now, there is no need for offline operation."** No longer a release blocker. The release notes must say plainly that field staff need connectivity, because the platform cancels an offline action rather than queuing it |
 | P1 | RC-003 | 20 of 22 mandated end-to-end journeys have a real test | The two that remain are blocked on the only two findings an audit genuinely cannot close by writing code: FE-01, which is a build, and INTG-01, which needs credentials or a scope decision. The 22 are enumerated and the count machine-checked |
-| P1 | JRN-01 | **18 of 20** walked journeys still issue no HTTP request, and none computes a registered metric, so most of the **810 route-level authority gates** and every displayed number are exercised by no mandated journey | An evidence gap this audit produced, named, and is closing one journey at a time. Journey 19 sweeps four endpoints as all thirteen roles and reproduces SEC-01 where it lived; journey 7 walks five money endpoints and **found FIN-06 on its first run**. Both mutation-verified. The remaining eighteen are the open part. Pinned in both directions by `WhichJourneysReachTheDoorTest` — see §4b |
+| P1 | JRN-01 | **Closed 2026-08-28.** All 20 implemented journeys issue a real HTTP request inside the same test that walks the domain workflow; 7 compute registered display metrics | The conversions retained the original service walk and added the route, role, scoping and presentation join. The matrix and a static second method pin the exact 20-journey set; display-metric journey counts are pinned separately. Journey 7 still carries the mutation-verified FIN-06 control and journey 19 the SEC-01 control — see §4b |
 | P1 | DEP-08 | **CVE-2026-14456** (OpenSSL QUIC denial of service, HIGH) in the production runtime image | Upstream base-image CVE, not this branch's: the diff between the last green scan and the red one was Python and Markdown only. **Decided, fixed and verified** — the product owner chose to rebuild before go-live, and the runtime stage pins the three OpenSSL packages forward. CI's Security Scans job completed green on `adf92ec` (run 33011894980): the image builds, does not run as root, imports as the runtime user, and the scan passes. **Closed** |
 | P1 | DEP-05/06/07 | No log retention, no error tracker, two alert rules, no named incident owner | Configuration and an org decision. The scheduler half is now fixed |
-| P1 | D5 | `CorePlan.assessment_completed` is unreachable by any route | **A costing decision, not code.** No catalogue item carries `core_assessment_visit`, and adding one means naming what a Core Assessment costs. The costing layer says so itself: an unknown profile raises "Country Director configuration must be repaired before scheduling". Its user-visible half is fixed — see CORE-01 |
-| P2 | GOV-02 | **One** workspace a user can navigate to can never hold data: the Maintenance Calendar. Its empty state says templates are not configured "yet", and the health check beside it reports Maintenance Generation ok, permanently | A build, or a decision to retire it as three sibling pages already were. See §4a |
+| P1 | D5 | **Closed 2026-08-26.** Core Assessment uses the governed school-visit costing profile because it adds no cost beyond the staff visit | `resolve_item_for_workflow_kind("core_assessment_visit")` maps to `school_visit`; scheduling and fund-request tests pin the decision without inventing a second price |
+| P2 | GOV-02 | **Closed 2026-08-28.** The Maintenance Calendar is retained and production-seeded with weekly backup verification, quarterly restore rehearsal, monthly dependency/container review and quarterly access/incident-owner review | A data migration makes the already-built generator operational on deployment; the existing scheduler registration and stale-template health check remain the runtime controls. See §4a |
 | P2 | GAP-02 | IA cannot edit Master Priority rows | **Not unbuilt — built the other way, deliberately.** The matrix gives IA import/allocate/view and withholds edit/define; the cascade explains why. Recorded as CONFLICT-002 |
 | P2 | FE-02 | KPI headline limit enforced at 6, not the stated 4 | **Decided and fixed.** The owner's answer was that the count follows the work, not a fixed number, so the dashboard tray has no cap; seven registered metrics render as seven. The route crawl then named the cost of the old cap exactly: **seven live pages were losing metrics** — `/clusters`, `/debriefs`, `/my-plan`, `/planning`, `/schools`, `/core-schools` and `/my-professional-development` each register seven or eight and each dropped one or two off the end. The compact tray keeps two, which is its real width, and `dropped_kpi_items` now exists so a genuinely capped tray can disclose the remainder. The inventory measures both limits rather than asserting them |
-| P2 | D6 (closure) | "Package Complete" is a status nothing writes | Inventing the closure workflow is a product decision |
+| P2 | D6 (closure) | **Closed 2026-08-28.** Package completion is the derived result of the verified visit/training slots, not a second lifecycle status | The dead health check that watched for an impossible `CorePlan.status="Package Complete"` was removed. `CorePackageSchedulingService.summary()` is the canonical answer while `CorePlan.status` continues through impact and champion stages |
 | P3 | RC-002 | `AUTHZ_MODE` branches nothing at runtime, and `security.summary()` still reports `authzMode` over the API | Smaller than first recorded: no template renders it, and production **cannot boot** unless it is `enforce` (`config/settings/prod.py`). Object-level authz is unconditional either way, so the field describes a boot assertion rather than a mode |
 
 ## 4a. Every model that is read somewhere and written nowhere
@@ -1035,7 +1044,19 @@ keeps the original assertion for every other check. The second failure,
 `healthy` flag for a question about agency bookings; it now asserts against the agency
 checks it is actually about, which is stronger than the flag it used to read.
 
-## 4b. JRN-01 · The mandated journeys are proven below the door, and three of twenty at it
+## 4b. JRN-01 · All twenty implemented journeys now reach the door
+
+**Closed 2026-08-28.** The matrix was rebuilt from a fresh test database after
+converting the remaining thirteen journey tests. Every implemented journey now
+reaches at least one real, role-gated HTTP surface inside the same test that
+walks its domain workflow. Seven journeys also execute registered metrics on
+the page they render: journeys 3, 6, 9, 11, 13, 14 and 18. The two untraced
+requirements remain explicit scope decisions rather than false green tests:
+offline field operation is descoped and external-system outage handling has no
+transport while Salesforce and NetSuite reconciliation remains manual.
+
+The narrative below is retained as the measured history of how the gap was
+found and why the route-level mutation controls matter.
 
 **P1 · evidence gap · partially closed, 3 of 20 — and the second one found a defect**
 
@@ -1087,7 +1108,8 @@ self-approval. Demanding a 403 there would have reported a working separation of
 a security hole. The test asserts the door where the door owns the rule, and asserts *the
 money did not move* everywhere — which is the stronger claim in both cases.
 
-**Eighteen of the twenty still do not knock**, so the finding stands and stays open.
+**At this point in the original audit, eighteen of the twenty still did not
+knock.** The 2026-08-28 closure above supersedes that intermediate count.
 
 The consequence is a seam. This platform declares **810 route-level authority gates** — 526
 `require_page_permission` / `require_any_page_permission` decorations and 284 views
@@ -1148,11 +1170,10 @@ It is pinned in both directions meanwhile. `JOURNEYS_THAT_KNOCK` in
 the improvement both force this section to be rewritten in the same commit, rather than
 either going unrecorded. The metric half is pinned separately and is still at zero.
 
-**Why it does not change the verdict.** The release is already **No-Go** on nine
-infrastructure gates and three product decisions. JRN-01 does not add a blocker; it
-subtracts confidence from evidence already recorded, and this report would be
-misrepresenting that evidence if it left the reading at "20 of 22 journeys covered" without
-saying which layer those twenty cover.
+**Verdict effect at discovery.** JRN-01 originally reduced confidence rather
+than adding a separate blocker. Its closure now restores route-level evidence
+for all twenty implemented journeys; infrastructure and rollout conditions are
+assessed independently.
 
 ## 4d. BASE-01 · The base branch is red, and it was pushed without a pull request
 
@@ -1331,6 +1352,8 @@ all.
 | D-4 | What does a Core Assessment cost? | Nothing extra — it uses the same staff-visit cost | **Fixed** (D5) |
 | D-5 | Offline field operation: build or descope? | **Descoped for now** | **Descoped** (FE-01) |
 | D-6 | Is the KPI headline limit four, or six? | Neither. The count follows how many things need tracking | **Fixed** (FE-02) |
+| D-7 | What writes "Package Complete"? | Nothing should. Completion is derived from verified package slots; the plan's status remains its impact/champion lifecycle | **Fixed** (D6 closure) |
+| D-8 | Build or retire the Maintenance Calendar? | Keep it and seed the recurring production schedule | **Fixed** (GOV-02) |
 | — | DEP-08: ship with the OpenSSL CVE, or rebuild first? | **Rebuild first** | **Patched and verified** — CI scan green on `adf92ec` |
 
 Two of these are release-note obligations rather than code, and they should not be lost
@@ -1853,9 +1876,9 @@ evidence base rather than about the platform.
 | Affected roles | Country Director, Regional Vice President (consumers of the inflated figure); Programme Lead, CCEO (the work being miscounted) |
 | Affected workflow | Achievement → Performance → Leadership Decisions |
 | Financial/data risk | Leadership reads a fabricated achievement figure. The mandate forbids exactly this: "No number may be fabricated", "Pages to calculate different values", "Leadership receives truthful, actionable intelligence" |
-| Product-owner decision | **REQUIRED — NOT YET MADE** |
-| Resolution | Blocked on the decision below |
-| Test proving the resolution | `apps/analytics/test_target_formula_unification.py:214` `test_cd_pl_target_percentage_matches_pl_team_targets` — currently marked `@unittest.expectedFailure` |
+| Product-owner decision | **MADE, 2026-08-26.** Agreed priority areas are authoritative; unassigned work must not fabricate achievement |
+| Resolution | **Implemented.** Country Director analytics use the same agreed-priority denominator as Programme Lead team targets |
+| Test proving the resolution | `apps/analytics/test_target_formula_unification.py` `test_cd_pl_target_percentage_matches_pl_team_targets` — passes without an expected-failure marker |
 
 ### Why this is a conflict and not a bug to patch
 

@@ -195,6 +195,11 @@ class FiscalYearRolloverJourneyTest(TestCase):
             "every prior-year report and every audit of them is now wrong",
         )
 
+        self.client.force_login(self.user)
+        response = self.client.get(f"/my-performance?fy={self.OLD_FY}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Priority Setting Dashboard")
+
     def test_an_approved_obligation_survives_the_year_end(self):
         """Carry approved obligations — money owed does not expire in October."""
         self._roll()

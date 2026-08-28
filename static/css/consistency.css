@@ -2778,11 +2778,16 @@ main :is(.apexcharts-datalabel-value) {
    of them happens to match. Repeating the test changes the weight and nothing
    else — it still matches exactly the elements the single test matches.
 
-   --edify-on-warm-fill measures 9.32:1 on amber-400. */
-main [class*="bg-amber-"][class*="bg-amber-"][class*="bg-amber-"],
-main [class*="bg-yellow-"][class*="bg-yellow-"][class*="bg-yellow-"],
+   --edify-on-warm-fill measures 9.32:1 on amber-400.
+
+   Pale tints are excluded because the dark theme remaps them to dark
+   translucent fills. Pinning the same dark ink on those remapped fills made
+   notification text effectively invisible. Token matching (`~=`) is used so
+   excluding amber-50 never also excludes amber-500. */
+main [class*="bg-amber-"][class*="bg-amber-"][class*="bg-amber-"]:not([class~="bg-amber-50"]):not([class~="bg-amber-100"]):not([class*="bg-amber-50/"]):not([class*="bg-amber-100/"]),
+main [class*="bg-yellow-"][class*="bg-yellow-"][class*="bg-yellow-"]:not([class~="bg-yellow-50"]):not([class~="bg-yellow-100"]):not([class*="bg-yellow-50/"]):not([class*="bg-yellow-100/"]),
 main [class*="bg-lime-"][class*="bg-lime-"][class*="bg-lime-"],
-main [class*="bg-orange-"][class*="bg-orange-"][class*="bg-orange-"] {
+main [class*="bg-orange-"][class*="bg-orange-"][class*="bg-orange-"]:not([class~="bg-orange-50"]):not([class*="bg-orange-50/"]) {
   color: var(--edify-on-warm-fill) !important;
 }
 

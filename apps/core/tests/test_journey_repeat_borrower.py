@@ -271,6 +271,12 @@ class RepeatBorrowerJourneyTest(TestCase):
             "the disbursed value does not equal both loans together",
         )
 
+        self.client.force_login(self.bt)
+        response = self.client.get("/business-transformation/overview")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Value Disbursed")
+        self.assertContains(response, "UGX 1,400")
+
     def test_a_later_baseline_replaces_the_earlier_one_rather_than_adding(self):
         """Which figure is reported when a school has two verified baselines.
 

@@ -174,6 +174,11 @@ class LeaveCoverageJourneyTest(TestCase):
             "is unauthorized access",
         )
 
+        self.client.force_login(self.pl)
+        response = self.client.get("/leave/approvals")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, self.absent.name)
+
     def test_access_expires_with_the_window_even_if_nobody_revokes_it(self):
         """The revocation path is not the only way coverage ends.
 

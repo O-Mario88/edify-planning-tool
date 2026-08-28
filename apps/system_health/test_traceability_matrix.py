@@ -394,12 +394,10 @@ class ManifestMatchesTheJourneysTest(unittest.TestCase):
 
 
 #: Journeys whose covering test drives the platform through its own routes.
-#: JRN-01 was the finding that this set was EMPTY — all twenty walked journeys
-#: proved the domain and none of them ever knocked on the door, leaving the
-#: platform's 810 route-level authority gates exercised by no mandated journey
-#: at all. Journey 19 is the first converted, and it was chosen because its
-#: whole subject is unauthorized access, so proving it only below the door was
-#: the least defensible instance of the gap.
+#: JRN-01 was the finding that this set was EMPTY. Every walked journey now
+#: reaches at least one role-gated HTTP surface in the same complete test that
+#: drives its domain workflow. The route set remains pinned rather than
+#: inferred so a journey cannot silently fall back below the door.
 #:
 #: Add to this set as journeys are converted, and update §4b of
 #: docs/release-readiness-2026-08-25.md in the same commit. It is pinned rather
@@ -409,10 +407,23 @@ JOURNEYS_THAT_KNOCK = {
     "journey-01",
     "journey-02",
     "journey-03",
+    "journey-04",
     "journey-05",
+    "journey-06",
     "journey-07",
     "journey-08",
+    "journey-09",
+    "journey-10",
+    "journey-11",
+    "journey-12",
+    "journey-13",
+    "journey-14",
+    "journey-15",
+    "journey-16",
+    "journey-17",
+    "journey-18",
     "journey-19",
+    "journey-22",
 }
 
 
@@ -425,15 +436,9 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
     assessment gets updated in the same commit instead of the gain going
     unrecorded.
 
-    The gap it describes is real and mostly still open: for the thirteen
-    journeys not listed above, nothing exercises URL routing,
-    ``require_page_permission``, ``RequirePermissions``, view-level scoping,
-    serializers or templates. A defect living between the door and the service
-    — an ungated route, a view handing a service the wrong principal, a
-    serializer widening a field — is invisible to all of them. SEC-01 was
-    exactly that defect, and journey 19's route sweep now reproduces it: delete
-    ``assert_may_write_school`` from the school edit drawer and the sweep
-    reports the Programme Lead's takeover with a 200.
+    Every covered journey is now listed. SEC-01 remains the mutation control:
+    deleting ``assert_may_write_school`` from the school edit drawer makes
+    journey 19 report the Programme Lead's takeover with a 200.
     """
 
     def _journey_numbers_by_module(self) -> dict[str, set[str]]:
@@ -495,8 +500,7 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
             "the assessment's §4b together.",
         )
 
-    #: The metrics journey 3's door walk computes, and the only ones any
-    #: mandated journey computes at all.
+    #: The finance metrics journey 3 must continue to compute end to end.
     METRICS_JOURNEY_03_COMPUTES = [
         "frontend_views_budget_views_accountability_pending",
         "frontend_views_budget_views_approved",
@@ -511,31 +515,14 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
         "fund_request_monthly_visits_budget",
     ]
 
-    def test_exactly_one_journey_computes_a_metric_a_user_is_shown(self):
-        """The same gap one layer higher — and the half that has now moved.
+    def test_the_journeys_compute_the_displayed_metrics_their_pages_register(self):
+        """Pin the display half of JRN-01 in both directions.
 
-        This asserted that NO traced journey computes a registered metric,
-        and that zero was the more surprising half of JRN-01: the journeys
-        move the data that 75 registered metrics are derived from, and not
-        one of them ever called a metric's own computing function. They
-        verified the domain state; whether the number a user is shown follows
-        from it was proven by nothing end to end.
-
-        Journey 3's door walk closed part of that. Driving the spine over HTTP
-        renders the finance screens, and rendering them computes eleven real
-        metrics from the money this journey actually moved — six budget-queue
-        KPIs and the five monthly fund-request totals. The number on the
-        Accountant's screen is now derived, in a test, from a visit that was
-        planned, funded, executed, verified and accounted through the
-        platform's own doors.
-
-        Pinned in both directions, like the route set: this fails if journey 3
-        stops computing them, and it fails if another journey starts. The
-        second is an improvement and should be recorded here rather than pass
-        unnoticed.
-
-        ``MetricAttributionTest`` proves this reading is a real attribution and
-        not a broken join, which is what makes it safe to state either way.
+        Seven journeys now render registered metrics while walking their real
+        page. Counts are pinned so a metric silently disappearing or a newly
+        measured journey both require the evidence record to be refreshed.
+        Journey 3's money metrics remain named individually because they are
+        the release-critical join that originally found FIN-06.
         """
         rows = load_matrix()["requirements"]
         computing = {
@@ -544,12 +531,21 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
             if row["metricsComputed"]
         }
         self.assertEqual(
-            computing,
-            {"journey-03": sorted(self.METRICS_JOURNEY_03_COMPUTES)},
-            "which journeys compute a displayed metric has changed. If a "
-            "journey gained one, that is good — update this test and the "
-            "assessment's §4b together. If journey 3 lost one, the join "
-            "between its money and the Accountant's screen is broken.",
+            {key: len(value) for key, value in computing.items()},
+            {
+                "journey-03": 11,
+                "journey-06": 2,
+                "journey-09": 6,
+                "journey-11": 8,
+                "journey-13": 60,
+                "journey-14": 9,
+                "journey-18": 13,
+            },
+            "display-metric journey coverage changed; rebuild the matrix and "
+            "update the release evidence in the same commit",
+        )
+        self.assertEqual(
+            computing["journey-03"], sorted(self.METRICS_JOURNEY_03_COMPUTES)
         )
 
 

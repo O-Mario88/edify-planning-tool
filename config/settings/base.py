@@ -629,6 +629,11 @@ RATE_LIMIT_FORGOT_PER_10MIN = _as_int(os.environ.get("RATE_LIMIT_FORGOT_PER_10MI
 DEMO_LOGIN_PASSWORD = os.environ.get("DEMO_LOGIN_PASSWORD") or "edify"
 SUPER_ADMIN_EMAIL = os.environ.get("SUPER_ADMIN_EMAIL", "edwin.omario@gmail.com")
 SUPER_ADMIN_PASSWORD = os.environ.get("SUPER_ADMIN_PASSWORD") or ""
+# Production incidents must have a named operational owner at creation time,
+# not only after somebody happens to acknowledge the fifth recurrence.  The
+# deployment may name a different account, but a freshly provisioned estate
+# safely defaults to the configured super-admin who already owns recovery.
+INCIDENT_OWNER_EMAIL = os.environ.get("INCIDENT_OWNER_EMAIL", SUPER_ADMIN_EMAIL)
 
 # App URLs (for email links + CORS).
 APP_BASE_URL = os.environ.get("APP_BASE_URL", "http://localhost:3000")

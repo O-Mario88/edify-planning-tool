@@ -12,6 +12,7 @@ from __future__ import annotations
 import hashlib
 from datetime import date, timedelta
 
+from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -308,6 +309,24 @@ class SupportTicketService:
 _MAX_SAMPLES = 20
 
 
+def _default_incident_owner_id() -> str | None:
+    """Resolve the configured human owner without making detection fragile."""
+    email = str(getattr(settings, "INCIDENT_OWNER_EMAIL", "") or "").strip()
+    if not email:
+        return None
+    from apps.accounts.models import User
+
+    return (
+        User.objects.filter(
+            email__iexact=email,
+            is_active=True,
+            deleted_at__isnull=True,
+        )
+        .values_list("id", flat=True)
+        .first()
+    )
+
+
 class SystemIncidentService:
     @staticmethod
     def signature_of(*, environment: str, category: str, route: str, error: str) -> str:
@@ -353,6 +372,7 @@ class SystemIncidentService:
                         samples=[request_id] if request_id else [],
                         first_detected_at=now,
                         last_detected_at=now,
+                        owner_id=_default_incident_owner_id(),
                     )
                     created = True
                 except IntegrityError:

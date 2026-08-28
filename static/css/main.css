@@ -2937,8 +2937,8 @@
       background-color: color-mix(in oklab, var(--color-red-50) 40%, transparent);
     }
   }
-  .bg-red-600 {
-    background-color: var(--color-red-600);
+  .bg-red-700 {
+    background-color: var(--color-red-700);
   }
   .bg-rose-50 {
     background-color: var(--color-rose-50);

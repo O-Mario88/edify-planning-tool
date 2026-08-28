@@ -137,6 +137,11 @@ class ProfessionalDevelopmentJourneyTest(TestCase):
             "so the envelope can be committed more than once",
         )
 
+        self.client.force_login(self.learner)
+        response = self.client.get("/my-professional-development")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, first.course_name)
+
     def test_a_second_request_beyond_what_is_left_is_refused(self):
         first = self._draft(amount=FIRST, name="Instructional Leadership")
         PDApprovalRoutingService.submit(first, self.learner)
