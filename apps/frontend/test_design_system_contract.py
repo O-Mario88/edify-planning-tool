@@ -634,11 +634,14 @@ class DesignSystemContractTest(SimpleTestCase):
         block = components.split(".kpi-strip.kpi-strip--executive .kpi-strip__value")[1]
         block = block.split("}")[0]
         self.assertIn(
-            "font-weight: 700 !important",
+            "font-weight: 600 !important",
             block,
             "The hero KPI weight lost its !important, so the consistency.css "
             "normalisers will flatten it back to label weight silently.",
         )
+        # Semibold, never bold: the numeral leads its label by size and ink,
+        # not by a heavy block of weight, per the reference tiles.
+        self.assertNotIn("font-weight: 700", block)
         self.assertIn("--edify-text-hero-size", block)
 
     def test_narrow_tiles_move_the_pill_onto_its_own_row(self):

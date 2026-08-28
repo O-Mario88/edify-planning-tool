@@ -729,9 +729,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         for declaration in (
             "--edify-table-cell-padding-block: 0.5rem",
             "--edify-table-cell-padding-inline: 0.75rem",
+            # Headers may be bold; the body never is. Cells are regular (400)
+            # per the reference grid, and identity separates itself with ink
+            # colour plus a half-step of medium, not a second bold rail.
             "--edify-table-header-weight: 600",
-            "--edify-table-body-weight: 450",
-            "--edify-table-identity-weight: 600",
+            "--edify-table-body-weight: 400",
+            "--edify-table-identity-weight: 500",
             "--edify-table-action-size: 2rem",
             "--edify-table-header-divider:",
         ):

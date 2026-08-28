@@ -33,7 +33,16 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertIn("grid-column: 1 / -1;", bridge)
         self.assertIn(".admin-grid", admin)
         self.assertIn("align-items: start", admin)
-        self.assertNotIn("grid-auto-flow: dense", bridge)
+        # Dense flow exists in exactly one place: the all-card grids the
+        # enhancer marks, where filling a col-span neighbour's hole removes
+        # dead space and no sequential content (forms, mixed layouts) can be
+        # visually reordered. A second dense rule would widen that carefully
+        # scoped exception, so the count is pinned along with its selector.
+        self.assertEqual(bridge.count("grid-auto-flow: dense"), 1)
+        dense_rule = bridge.split("main .grid.edify-dense-tile-grid", 1)[1].split(
+            "}", 1
+        )[0]
+        self.assertIn("grid-auto-flow: dense", dense_rule)
 
     def test_executive_kpi_rows_consume_the_full_tray(self):
         css = _read("static/css/components.css")
