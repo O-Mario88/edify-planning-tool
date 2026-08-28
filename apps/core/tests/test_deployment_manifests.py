@@ -111,6 +111,10 @@ class StagingAppPlatformSpecTests(SimpleTestCase):
     def test_staging_matches_production_multi_instance_and_scheduler_topology(self):
         spec = _staging_app_platform_spec()
         self.assertEqual(spec["services"][0]["instance_count"], 2)
+        self.assertEqual(spec["services"][0]["instance_size_slug"], "apps-s-1vcpu-2gb")
+        self.assertEqual(
+            _envs(spec["services"][0])["STATIC_VERSION"], "${_self.COMMIT_HASH}"
+        )
         self.assertEqual(spec["workers"][0]["instance_count"], 1)
         self.assertEqual(
             spec["workers"][0]["run_command"], "python manage.py runscheduler"
