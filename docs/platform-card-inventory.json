@@ -3486,7 +3486,7 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 199,
+   "line": 203,
    "title": "Assign Cluster to Schools",
    "heading_level": 3,
    "has_card_key": false,
@@ -3495,7 +3495,7 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 236,
+   "line": 240,
    "title": "Assign Project to Schools",
    "heading_level": 3,
    "has_card_key": false,
@@ -3504,7 +3504,7 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 273,
+   "line": 277,
    "title": "Match Staff to Schools",
    "heading_level": 3,
    "has_card_key": false,
@@ -3513,7 +3513,7 @@
   },
   {
    "template": "templates/pages/schools/index.html",
-   "line": 312,
+   "line": 316,
    "title": "Add New School",
    "heading_level": 3,
    "has_card_key": false,
@@ -3756,7 +3756,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 31,
+   "line": 38,
    "title": "Data Leakage Scan",
    "heading_level": 3,
    "has_card_key": false,
@@ -3765,7 +3765,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 51,
+   "line": 58,
    "title": "RBAC Gating Scan",
    "heading_level": 3,
    "has_card_key": false,
@@ -3774,7 +3774,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 74,
+   "line": 81,
    "title": "Audit Chain Integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -3783,7 +3783,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 86,
+   "line": 93,
    "title": "Scheduling Rules",
    "heading_level": 3,
    "has_card_key": false,
@@ -3792,7 +3792,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 114,
+   "line": 121,
    "title": "Background Automation",
    "heading_level": 3,
    "has_card_key": false,
@@ -3801,7 +3801,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 133,
+   "line": 140,
    "title": "Staff Time Standard",
    "heading_level": 3,
    "has_card_key": false,
@@ -3810,7 +3810,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 169,
+   "line": 176,
    "title": "Durable Outbox",
    "heading_level": 3,
    "has_card_key": false,
@@ -3819,7 +3819,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 191,
+   "line": 198,
    "title": "External Integrations",
    "heading_level": 3,
    "has_card_key": false,
@@ -3828,7 +3828,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 211,
+   "line": 218,
    "title": "Data Quality Queues",
    "heading_level": 3,
    "has_card_key": false,
@@ -3837,7 +3837,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 236,
+   "line": 243,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3846,7 +3846,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 252,
+   "line": 259,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3855,7 +3855,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 273,
+   "line": 280,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3864,7 +3864,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1076,
+   "line": 1083,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3873,7 +3873,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1109,
+   "line": 1116,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,

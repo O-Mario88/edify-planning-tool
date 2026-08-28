@@ -7785,7 +7785,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5536,
+      "bytes": 5766,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -53055,6 +53055,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/schools/table.html",
         "template:partials/schools/htmx_response.html",
         "template:pages/schools/index.html",
         "test:referenced-by-automated-test",
@@ -53081,7 +53082,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
-      "primary_action": "Assign Cluster",
+      "primary_action": "Open Upload Center",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.",
       "remediation": "No automated remediation outstanding",
@@ -53138,6 +53139,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/schools/table.html",
         "partials/schools/htmx_response.html",
         "pages/schools/index.html"
       ],
@@ -53148,6 +53150,7 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
+        "text-[14px]",
         "text-[15px]",
         "text-[16px]",
         "text-[18px]"
@@ -75630,6 +75633,7 @@
       "route": "/schools",
       "route_name": "schools_directory",
       "templates": [
+        "partials/schools/table.html",
         "partials/schools/htmx_response.html",
         "pages/schools/index.html"
       ]

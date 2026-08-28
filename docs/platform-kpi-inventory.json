@@ -7288,7 +7288,7 @@
     "PROJECT_COORDINATOR"
    ],
    "page_purpose": "Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.",
-   "primary_action": "Assign Cluster",
+   "primary_action": "Open Upload Center",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 6,
    "mobile_result": "At most six distinct headline metrics; the tray reflows without horizontal scrolling",
