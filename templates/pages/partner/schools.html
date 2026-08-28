@@ -22,7 +22,8 @@
 <table class="w-full edify-text-caption">
         <thead>
           <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-            <th class="text-left font-bold py-2 pl-1">School</th>
+            <th class="text-left font-bold py-2 pl-1">ID</th>
+            <th class="text-left font-bold py-2">School</th>
             <th class="text-left font-bold py-2">District</th>
             <th class="text-left font-bold py-2">Sub-county</th>
             <th class="text-right font-bold py-2">Enrollment</th>
@@ -32,7 +33,8 @@
         <tbody class="divide-y divide-slate-50">
           {% for s in schools_pager.rows %}
           <tr>
-            <td class="text-left font-semibold py-2.5 pl-1">{{ s.name }}</td>
+            <td class="text-left tabular-nums text-slate-500 py-2.5 pl-1">{{ s.school_id }}</td>
+            <td class="text-left font-semibold py-2.5">{{ s.name }}</td>
             <td class="text-left text-slate-500 py-2.5">{{ s.district.name|default:"—" }}</td>
             <td class="text-left text-slate-500 py-2.5">{{ s.sub_county.name|default:"—" }}</td>
             <td class="text-right tabular-nums text-slate-500 py-2.5">{{ s.enrollment|default:0|intcomma }}</td>

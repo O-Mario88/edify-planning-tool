@@ -503,6 +503,7 @@ def build_dashboard(principal, query: dict) -> dict:
             urgent_schools.append(
                 {
                     "id": row["id"],
+                    "school_id": row["school_id"],
                     "name": row["name"],
                     "district": row["district__name"],
                     "intervention": dict(SsaIntervention.choices).get(

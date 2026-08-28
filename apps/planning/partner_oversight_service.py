@@ -57,6 +57,9 @@ class PartnerOversightItem:
 
     # Who and where
     school_id: str | None = None
+    # The operational school code (School.school_id) — what tables display,
+    # distinct from the CUID primary key `school_id` above carries.
+    school_code: str = ""
     school_name: str = ""
     school_type: str = ""
     district: str = ""
@@ -333,6 +336,7 @@ def _unassigned_partner_activities(
             partner_assignment_id="",
             partner_activity_id=activity.id,
             school_id=activity.school_id,
+            school_code=getattr(activity.school, "school_id", "") or "",
             school_name=getattr(activity.school, "name", "") or "",
             school_type=getattr(activity.school, "school_type", "") or "",
             district=getattr(getattr(activity.school, "district", None), "name", "")
@@ -509,6 +513,7 @@ def _item_for(assignment, costs, directory) -> PartnerOversightItem:
         partner_assignment_id=assignment.id,
         partner_activity_id=getattr(activity, "id", None),
         school_id=assignment.school_id,
+        school_code=getattr(assignment.school, "school_id", "") or "",
         school_name=getattr(assignment.school, "name", "") or "",
         school_type=getattr(assignment.school, "school_type", "") or "",
         district=getattr(getattr(assignment.school, "district", None), "name", "")

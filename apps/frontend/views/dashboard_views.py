@@ -674,6 +674,7 @@ def dashboard_view(request):
             school_visits_week.append(
                 {
                     "school": a.school.name,
+                    "code": a.school.school_id,
                     "district": a.school.district.name if a.school.district_id else "—",
                     "purpose": a.activity_purpose_text or a.get_activity_type_display(),
                     "date": a.planned_date.strftime("%b %-d, %Y (%a)"),

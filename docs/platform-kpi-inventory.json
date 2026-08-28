@@ -1755,7 +1755,7 @@
    "audit_id": "KPI-SOURCE-090",
    "kind": "breakdown-row",
    "module": "apps/analytics/ssa_performance_service.py",
-   "line": 671,
+   "line": 672,
    "label": null,
    "keys": [
     "label",
@@ -2372,7 +2372,7 @@
    "audit_id": "KPI-SOURCE-119",
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 871,
+   "line": 872,
    "label": "Completed",
    "keys": [
     "color",
@@ -2391,7 +2391,7 @@
    "audit_id": "KPI-SOURCE-120",
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 877,
+   "line": 878,
    "label": "In Progress",
    "keys": [
     "color",
@@ -2410,7 +2410,7 @@
    "audit_id": "KPI-SOURCE-121",
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 883,
+   "line": 884,
    "label": "Planned",
    "keys": [
     "color",
@@ -2429,7 +2429,7 @@
    "audit_id": "KPI-SOURCE-122",
    "kind": "other",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 889,
+   "line": 890,
    "label": "Overdue",
    "keys": [
     "color",
@@ -26251,7 +26251,7 @@
   {
    "audit_id": "KPI-PAYLOAD-004",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 562,
+   "line": 564,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26277,7 +26277,7 @@
   {
    "audit_id": "KPI-PAYLOAD-005",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 610,
+   "line": 612,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26301,7 +26301,7 @@
   {
    "audit_id": "KPI-PAYLOAD-006",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 680,
+   "line": 682,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26325,7 +26325,7 @@
   {
    "audit_id": "KPI-PAYLOAD-007",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 751,
+   "line": 753,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26351,7 +26351,7 @@
   {
    "audit_id": "KPI-PAYLOAD-008",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 786,
+   "line": 788,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26459,7 +26459,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 785,
+   "line": 786,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -26485,7 +26485,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1174,
+   "line": 1175,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,
@@ -26711,7 +26711,7 @@
   {
    "audit_id": "KPI-PAYLOAD-021",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 881,
+   "line": 884,
    "function": "my_team_view",
    "target": "kpi_strip_items",
    "source_item_count": 3,

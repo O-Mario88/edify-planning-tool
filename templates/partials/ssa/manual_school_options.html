@@ -1,1 +1,1 @@
-{% for school in schools %}<option value="{{ school.school_id }}">{{ school.name }}{% if school.district %} — {{ school.district.name }}{% endif %}</option>{% endfor %}
+{% for school in schools %}<option value="{{ school.school_id }}">{{ school.school_id }} · {{ school.name }}{% if school.district %} — {{ school.district.name }}{% endif %}</option>{% endfor %}

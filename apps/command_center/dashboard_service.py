@@ -280,6 +280,7 @@ class DashboardMetricsService:
             band = (recommendation.score_band or "").lower()
             priority_schools.append(
                 {
+                    "school_id": school.school_id,
                     "name": school.name,
                     "district": school.district.name if school.district else "—",
                     "cluster": school.cluster_id or "—",
@@ -309,6 +310,7 @@ class DashboardMetricsService:
             for school in unassessed:
                 priority_schools.append(
                     {
+                        "school_id": school.school_id,
                         "name": school.name,
                         "district": school.district.name if school.district else "—",
                         "cluster": school.cluster_id or "—",

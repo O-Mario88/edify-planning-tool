@@ -14,24 +14,17 @@ class CheckboxListLayoutContractTests(SimpleTestCase):
 
         for row in (directory, planning):
             self.assertIn("school-record-row__summary--selectable", row)
+            # The decorative building glyph is gone: the row leads with the
+            # operational school ID, which is what staff actually quote.
+            self.assertNotIn("school-record-row__icon", row)
             self.assertLess(
                 row.index("school-record-row__select"),
-                row.index("school-record-row__icon"),
+                row.index("school-record-row__school-id"),
             )
             self.assertLess(
-                row.index("school-record-row__icon"),
+                row.index("school-record-row__school-id"),
                 row.index("school-record-row__title"),
             )
-
-        self.assertLess(
-            directory.index("school-record-row__icon"),
-            directory.index("school-record-row__school-id"),
-        )
-        self.assertLess(
-            directory.index("school-record-row__school-id"),
-            directory.index("school-record-row__title"),
-        )
-        self.assertIn("school-record-row__content--with-id", directory)
 
         self.assertIn("grid-template-columns: 2rem minmax(0, 1fr) auto", css)
         self.assertIn("grid-column: 1;", css)

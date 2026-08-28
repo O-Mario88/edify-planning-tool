@@ -77,7 +77,8 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <table class="edify-record-table w-full text-[13px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
-<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">ID</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
 <th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Slot</th>
 <th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Owner</th>
 <th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Blocked on</th>
@@ -86,7 +87,8 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <tbody class="divide-y divide-slate-100 font-semibold">
 {% for s in stalled_pager.rows %}
 <tr class="hover:bg-slate-50/40">
-<td class="px-5 py-3 font-bold text-slate-800" data-record-title>{{ s.school }}<span class="block edify-text-caption text-slate-400 font-semibold">{{ s.district }}</span></td>
+<td class="px-5 py-3 tabular-nums text-slate-500">{{ s.code }}</td>
+<td class="px-4 py-3 font-bold text-slate-800" data-record-title>{{ s.school }}<span class="block edify-text-caption text-slate-400 font-semibold">{{ s.district }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="Slot">{{ s.slot }}<span class="block edify-text-caption text-slate-400">{{ s.intervention|title }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="Owner">{{ s.assignedTo }}</td>
 <td class="px-5 py-3" data-label="Blocked on"><span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700">{{ s.blocker }}</span></td>
@@ -110,7 +112,8 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <table class="edify-record-table w-full text-[13px]">
 <thead>
 <tr class="border-b border-[var(--edify-border)]">
-<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
+<th class="text-left px-5 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">ID</th>
+<th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">School</th>
 <th class="text-left px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">District</th>
 <th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Visits</th>
 <th class="text-right px-4 py-2.5 edify-text-caption font-extrabold uppercase tracking-wider text-slate-400">Trainings</th>
@@ -121,7 +124,8 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 <tbody class="divide-y divide-slate-100 font-semibold">
 {% for p in plans_pager.rows %}
 <tr class="hover:bg-slate-50/40">
-<td class="px-5 py-3" data-record-title><span class="font-bold text-slate-900 block leading-tight">{{ p.name }}</span><span class="edify-text-caption text-slate-400 font-semibold">{{ p.code }}</span></td>
+<td class="px-5 py-3 tabular-nums text-slate-500">{{ p.code }}</td>
+<td class="px-4 py-3" data-record-title><span class="font-bold text-slate-900 block leading-tight">{{ p.name }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="District">{{ p.district }}</td>
 <td class="px-4 py-3 text-right tabular-nums text-slate-600" data-label="Visits">{{ p.visits }}</td>
 <td class="px-4 py-3 text-right tabular-nums text-slate-600" data-label="Trainings">{{ p.trainings }}</td>

@@ -142,19 +142,20 @@
       <div class="overflow-x-auto">
         <table class="w-full text-left">
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
-            <th class="px-5 py-2.5">School</th><th class="px-3 py-2.5">District</th><th class="px-3 py-2.5">Visit Purpose</th><th class="px-3 py-2.5">Planned Date</th><th class="px-3 py-2.5 text-right">Action</th>
+            <th class="px-5 py-2.5">ID</th><th class="px-3 py-2.5">School</th><th class="px-3 py-2.5">District</th><th class="px-3 py-2.5">Visit Purpose</th><th class="px-3 py-2.5">Planned Date</th><th class="px-3 py-2.5 text-right">Action</th>
           </tr></thead>
           <tbody class="divide-y divide-slate-50">
             {% for r in school_visits_week %}
             <tr class="hover:bg-slate-50/50">
-              <td class="px-5 py-3 text-[13px] font-bold text-slate-800">{{ r.school }}</td>
+              <td class="px-5 py-3 edify-text-caption tabular-nums text-slate-500">{{ r.code }}</td>
+              <td class="px-3 py-3 text-[13px] font-bold text-slate-800">{{ r.school }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.district }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-600">{{ r.purpose|truncatechars:32 }}</td>
               <td class="px-3 py-3 edify-text-caption font-semibold text-slate-500 whitespace-nowrap">{{ r.date }}</td>
               <td class="px-3 py-3 text-right"><a href="{{ r.action_url }}" class="inline-flex items-center h-7 px-3 rounded-control edify-text-caption font-bold transition-colors {% if r.action_primary %}edify-primary-solid edify-primary-hover text-white{% else %}border edify-primary-border edify-primary-soft edify-primary-soft-hover edify-primary-text{% endif %}">{{ r.action_label }}</a></td>
             </tr>
             {% empty %}
-            <tr><td colspan="5" class="px-5 py-8 text-center text-[12px] font-semibold edify-danger-text">No school visits scheduled this week.</td></tr>
+            <tr><td colspan="6" class="px-5 py-8 text-center text-[12px] font-semibold edify-danger-text">No school visits scheduled this week.</td></tr>
             {% endfor %}
           </tbody>
         </table>

@@ -6,8 +6,8 @@
   "with_card_key": 13,
   "untitled_surfaces": 1022,
   "untitled_chrome": 237,
-  "untitled_nested": 393,
-  "untitled_headless": 392,
+  "untitled_nested": 392,
+  "untitled_headless": 393,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -755,7 +755,7 @@
   },
   {
    "template": "templates/pages/analytics/declining_schools.html",
-   "line": 148,
+   "line": 149,
    "title": "Where the decline is concentrated",
    "heading_level": 2,
    "has_card_key": false,
@@ -1179,7 +1179,7 @@
   },
   {
    "template": "templates/pages/core_schools/leadership.html",
-   "line": 104,
+   "line": 106,
    "title": "Package progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -1197,7 +1197,7 @@
   },
   {
    "template": "templates/pages/core_schools/leadership.html",
-   "line": 149,
+   "line": 153,
    "title": "By district",
    "heading_level": 2,
    "has_card_key": false,
@@ -1288,7 +1288,7 @@
   },
   {
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 165,
+   "line": 166,
    "title": "Cluster Activities This Week",
    "heading_level": 3,
    "has_card_key": false,
@@ -3070,7 +3070,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 108,
+   "line": 109,
    "title": "Scheduling Status Breakdown",
    "heading_level": 2,
    "has_card_key": false,
@@ -3079,7 +3079,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 120,
+   "line": 121,
    "title": "Pending Partner Reminders",
    "heading_level": 2,
    "has_card_key": false,
@@ -3088,7 +3088,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 130,
+   "line": 131,
    "title": "Upcoming Partner Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -3097,7 +3097,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 140,
+   "line": 141,
    "title": "Quick Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4139,7 +4139,7 @@
   },
   {
    "template": "templates/partials/analytics/closure_quality_workspace.html",
-   "line": 164,
+   "line": 165,
    "title": "By reason",
    "heading_level": 2,
    "has_card_key": false,
@@ -4153,7 +4153,7 @@
   },
   {
    "template": "templates/partials/analytics/closure_quality_workspace.html",
-   "line": 211,
+   "line": 212,
    "title": "Reopened schools",
    "heading_level": 2,
    "has_card_key": false,

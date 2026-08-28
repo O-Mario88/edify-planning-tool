@@ -364,8 +364,7 @@ class DesignSystemContractTest(SimpleTestCase):
         row = (ROOT / "templates/partials/core_schools/school_row.html").read_text()
         css = (ROOT / "static/css/platform.css").read_text()
 
-        icon = row.index('class="school-record-row__icon"')
-        school_id = row.index('class="school-record-row__school-id"', icon)
+        school_id = row.index('class="school-record-row__school-id"')
         headline = row.index('class="core-school-row__headline"')
         title = row.index('class="school-record-row__title"', headline)
         actions = row.index(
@@ -373,11 +372,11 @@ class DesignSystemContractTest(SimpleTestCase):
         )
         metadata = row.index('class="school-record-row__metadata', actions)
 
-        self.assertLess(icon, school_id)
+        # The school ID leads the row — no decorative icon ahead of it.
+        self.assertNotIn("school-record-row__icon", row)
         self.assertLess(school_id, title)
         self.assertLess(title, actions)
         self.assertLess(actions, metadata)
-        self.assertIn("school-record-row__content--with-id", row)
         self.assertIn("container: core-school-row / inline-size", css)
         self.assertIn("grid-template-columns: minmax(0, 1fr) auto", css)
         self.assertIn("@container core-school-row (max-width: 30rem)", css)

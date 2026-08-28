@@ -171,6 +171,7 @@ schedule, and none edits a CCEO's record.
           <caption class="sr-only">Assignments {{ group.name }} has not yet scheduled</caption>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+              <th scope="col" class="px-4 py-2 font-semibold">ID</th>
               <th scope="col" class="px-4 py-2 font-semibold">School</th>
               <th scope="col" class="px-4 py-2 font-semibold">Support</th>
               <th scope="col" class="px-4 py-2 font-semibold">Managing CCEO</th>
@@ -182,6 +183,7 @@ schedule, and none edits a CCEO's record.
           <tbody>
             {% for item in awaiting_page.rows %}
             <tr class="border-t edify-border">
+              <td class="px-4 py-2.5 text-sm tabular-nums edify-text-muted">{{ item.school_code|default:"—" }}</td>
               <td class="px-4 py-2.5">
                 <span class="font-semibold">{{ item.school_name|default:"—" }}</span>
                 {% if item.district %}<span class="block edify-text-caption edify-text-muted">{{ item.district }}</span>{% endif %}
@@ -250,6 +252,7 @@ schedule, and none edits a CCEO's record.
           <caption class="sr-only">Work {{ group.name }} has scheduled</caption>
           <thead>
             <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+              <th scope="col" class="px-4 py-2 font-semibold">ID</th>
               <th scope="col" class="px-4 py-2 font-semibold">School</th>
               <th scope="col" class="px-4 py-2 font-semibold">Support</th>
               <th scope="col" class="px-4 py-2 font-semibold">Scheduled</th>
@@ -262,6 +265,7 @@ schedule, and none edits a CCEO's record.
           <tbody>
             {% for item in scheduled_page.rows %}
             <tr class="border-t edify-border">
+              <td class="px-4 py-2.5 text-sm tabular-nums edify-text-muted">{{ item.school_code|default:"—" }}</td>
               <td class="px-4 py-2.5">
                 <span class="font-semibold">{{ item.school_name|default:"—" }}</span>
                 {% if item.district %}<span class="block edify-text-caption edify-text-muted">{{ item.district }}</span>{% endif %}
