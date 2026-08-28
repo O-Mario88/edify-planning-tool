@@ -4908,16 +4908,16 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 86,
+   "line": 94,
    "title": "1. Workforce Overview",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "lg:col-span-2 rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 95,
+   "line": 105,
    "title": "2. Workforce by Country",
    "heading_level": 2,
    "has_card_key": false,
@@ -4926,7 +4926,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 135,
+   "line": 140,
    "title": "3. Headcount by Department",
    "heading_level": 2,
    "has_card_key": false,
@@ -4935,7 +4935,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 141,
+   "line": 151,
    "title": "4. Job Level Distribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -4944,7 +4944,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 157,
+   "line": 167,
    "title": "5. Leave Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -4953,7 +4953,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 163,
+   "line": 173,
    "title": "6. Performance Overview",
    "heading_level": 2,
    "has_card_key": false,
@@ -4962,7 +4962,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 172,
+   "line": 182,
    "title": "7. Upcoming Reviews &amp; Probations",
    "heading_level": 2,
    "has_card_key": false,
@@ -4971,7 +4971,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 207,
+   "line": 217,
    "title": "8. Compliance Status",
    "heading_level": 2,
    "has_card_key": false,
@@ -4980,7 +4980,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 239,
+   "line": 249,
    "title": "9. Recruitment Funnel",
    "heading_level": 2,
    "has_card_key": false,
@@ -4989,7 +4989,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 251,
+   "line": 261,
    "title": "Pending HR Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4998,7 +4998,7 @@
   },
   {
    "template": "templates/partials/dashboards/hr/body.html",
-   "line": 264,
+   "line": 274,
    "title": "Quick Actions",
    "heading_level": 2,
    "has_card_key": false,

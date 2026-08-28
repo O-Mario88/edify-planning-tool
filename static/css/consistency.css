@@ -2926,6 +2926,51 @@ main .grid.edify-single-tile-grid
   padding: 0 !important;
 }
 
+/* A chart that never rendered must not hold a chart's worth of air.
+ *
+ * Chart mount points reserve their height up front (min-h-[180px],
+ * min-h-[250px] and friends) so the card does not jump when the library
+ * paints into them. When the series is empty the library paints nothing at
+ * all — the mount stays childless — and the reserved height becomes a blank
+ * block inside an otherwise finished card. Four of them sat in one row on
+ * the HR dashboard.
+ *
+ * `:empty` is exactly the distinction that matters: a chart that rendered
+ * (including one that rendered ApexCharts' own "No data for this period"
+ * message) has children and keeps every pixel of its reserved height; one
+ * that never ran has none and collapses to nothing. The card's own padding
+ * still separates its heading from what follows. */
+main :is([id^="chart-"], [id$="-chart"], [class*="chart-canvas"], [data-chart], .apexcharts-canvas):empty {
+  min-block-size: 0 !important;
+  min-height: 0 !important;
+  block-size: 0 !important;
+  margin: 0 !important;
+}
+
+/* ── Packing columns ────────────────────────────────────────────────────────
+ * The shared answer to "a tall card left a hole beside a short one".
+ *
+ * A grid ROW is as tall as its tallest cell, so a chart or long table paired
+ * with a compact summary leaves blank space under the summary — the taller
+ * the pairing, the bigger the hole. These two classes turn such a row into
+ * independent COLUMNS: each stacks its own cards from the top and takes only
+ * the height it needs, so a short card is followed immediately by the next
+ * card rather than by its neighbour's leftover height. DOM order inside each
+ * column is preserved, so reading and tab order still match the page. */
+main .edify-pack-cols {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--edify-content-row-gap, 1rem);
+  align-items: start;
+}
+
+main .edify-pack-col {
+  min-inline-size: 0;
+  display: grid;
+  gap: var(--edify-content-row-gap, 1rem);
+  align-content: start;
+}
+
 /* Empty states remain useful guidance, but they no longer impersonate a data
  * visualisation. The icon, explanation and action determine the height. */
 main :is(

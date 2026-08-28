@@ -80,17 +80,27 @@ under whatever country the filter bar happened to show.
   </div>
 </div>
 
+{% comment %}
+Packing columns, not a plain row: the workforce chart is far taller than the
+country summary beside it, so a fixed row left a blank block under the
+summary. The right column now stacks the country table and the department
+donut, which fills that height with the next card instead of with air. The
+numbered headings still read 1, 2, 3 … down and across.
+{% endcomment %}
 <!-- Row 1: Workforce Overview Charts -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-3 gap-4">
+<div class="edify-pack-cols grid grid-cols-1 lg:grid-cols-3 gap-4">
   <!-- Chart Card -->
-  <div class="lg:col-span-2 rounded-surface border p-5 space-y-4 edify-surface edify-border">
+  <div class="edify-pack-col lg:col-span-2">
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
     <div class="flex items-center justify-between pb-3 border-b edify-border">
       <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">1. Workforce Overview</h2>
       <span class="edify-text-caption px-2 py-0.5 rounded-pill bg-slate-100/10 text-slate-400 font-bold">Last 6 Months</span>
     </div>
     <div id="chart-workforce-overview" class="min-h-[250px]"></div>
   </div>
+  </div>
 
+  <div class="edify-pack-col">
   <!-- Country Summary Table Card -->
   <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
     <div class="flex items-center justify-between pb-3 border-b edify-border">
@@ -127,15 +137,15 @@ under whatever country the filter bar happened to show.
       </table>
     </div>
   </div>
+    <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
+      <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">3. Headcount by Department</h2>
+      <div id="chart-department-headcount" class="min-h-[180px]"></div>
+    </div>
+  </div>
 </div>
 
 <!-- Row 2: Distribution Metrics (Donuts & Bars) -->
-<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-  <!-- Dept Headcount Donut -->
-  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
-    <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">3. Headcount by Department</h2>
-    <div id="chart-department-headcount" class="min-h-[180px]"></div>
-  </div>
+<div class="edify-card-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
 
   <!-- Job Level distribution progress bar/pyramid list -->
   <div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
