@@ -14,6 +14,7 @@ from datetime import date, timedelta
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
+from django.db.models import Count, Q
 from django.utils import timezone
 
 from apps.audit.services import log as audit_log
@@ -816,32 +817,31 @@ class AdminOpsDashboardService:
             TicketStatus.CANCELLED,
             TicketStatus.DUPLICATE,
         ]
+        incident_summary = open_incidents.aggregate(
+            critical=Count("id", filter=Q(severity=Severity.CRITICAL)),
+            unacknowledged=Count("id", filter=Q(status=IncidentStatus.OPEN)),
+            security=Count("id", filter=Q(category=WorkItemCategory.SECURITY)),
+            jobs=Count("id", filter=Q(category=WorkItemCategory.JOB_FAILURE)),
+            performance=Count("id", filter=Q(category=WorkItemCategory.PERFORMANCE)),
+        )
+        item_summary = active_items.aggregate(
+            overdue=Count("id", filter=Q(due_date__lt=today)),
+            unscheduled=Count("id", filter=Q(status=WorkItemStatus.BACKLOG)),
+        )
+        ticket_summary = SupportTicket.objects.aggregate(
+            open=Count("id", filter=~Q(status__in=closed_ticket_states)),
+            untriaged=Count("id", filter=Q(status=TicketStatus.SUBMITTED)),
+        )
         return {
-            "critical_incidents": open_incidents.filter(
-                severity=Severity.CRITICAL
-            ).count(),
-            "unacknowledged_incidents": open_incidents.filter(
-                status=IncidentStatus.OPEN
-            ).count(),
-            "open_tickets": SupportTicket.objects.exclude(
-                status__in=closed_ticket_states
-            ).count(),
-            "untriaged_tickets": SupportTicket.objects.filter(
-                status=TicketStatus.SUBMITTED
-            ).count(),
-            "overdue_admin_work": active_items.filter(due_date__lt=today).count(),
-            "unscheduled_work": active_items.filter(
-                status=WorkItemStatus.BACKLOG
-            ).count(),
-            "security_alerts": open_incidents.filter(
-                category=WorkItemCategory.SECURITY
-            ).count(),
-            "job_incidents": open_incidents.filter(
-                category=WorkItemCategory.JOB_FAILURE
-            ).count(),
-            "performance_incidents": open_incidents.filter(
-                category=WorkItemCategory.PERFORMANCE
-            ).count(),
+            "critical_incidents": incident_summary["critical"],
+            "unacknowledged_incidents": incident_summary["unacknowledged"],
+            "open_tickets": ticket_summary["open"],
+            "untriaged_tickets": ticket_summary["untriaged"],
+            "overdue_admin_work": item_summary["overdue"],
+            "unscheduled_work": item_summary["unscheduled"],
+            "security_alerts": incident_summary["security"],
+            "job_incidents": incident_summary["jobs"],
+            "performance_incidents": incident_summary["performance"],
             "maintenance_due": MaintenanceTemplate.objects.filter(
                 active=True, next_due_date__lte=today
             ).count(),

@@ -3,7 +3,7 @@ from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from collections import defaultdict
 from datetime import date, timedelta
 
-from django.db.models import Avg, Count, Sum
+from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
 from apps.activities.models import Activity
@@ -45,15 +45,37 @@ class DashboardMetricsService:
         from apps.analytics.services import _scoped_schools
 
         schools_qs, scope = _scoped_schools(user)
-        total_schools = schools_qs.count()
+        school_summary = schools_qs.aggregate(
+            total=Count("id", distinct=True),
+            ready=Count(
+                "id",
+                filter=(
+                    Q(planning_readiness__isnull=True)
+                    | ~Q(
+                        planning_readiness__in=[
+                            "requires_cluster",
+                            "data_cleanup_required",
+                        ]
+                    )
+                ),
+                distinct=True,
+            ),
+            without_ssa=Count(
+                "id",
+                filter=(
+                    Q(current_fy_ssa_status__isnull=True)
+                    | ~Q(current_fy_ssa_status="done")
+                ),
+                distinct=True,
+            ),
+        )
+        total_schools = school_summary["total"]
 
         # 1. KPI Cards calculations
-        ready_count = schools_qs.exclude(
-            planning_readiness__in=["requires_cluster", "data_cleanup_required"]
-        ).count()
+        ready_count = school_summary["ready"]
         ready_pct = round(ready_count / total_schools * 100) if total_schools > 0 else 0
 
-        without_ssa_count = schools_qs.exclude(current_fy_ssa_status="done").count()
+        without_ssa_count = school_summary["without_ssa"]
         without_ssa_pct = (
             round(without_ssa_count / total_schools * 100) if total_schools > 0 else 0
         )
@@ -74,18 +96,65 @@ class DashboardMetricsService:
 
         start_week = today - timedelta(days=today.weekday())
         end_week = start_week + timedelta(days=6)
-        activities_this_week = activities_qs.filter(
-            scheduled_date__date__range=[start_week, end_week]
-        ).count()
-
         start_month = today.replace(day=1)
         if today.month == 12:
             end_month = date(today.year + 1, 1, 1) - timedelta(days=1)
         else:
             end_month = date(today.year, today.month + 1, 1) - timedelta(days=1)
-        activities_this_month = activities_qs.filter(
-            scheduled_date__date__range=[start_month, end_month]
-        ).count()
+        current_quarter = get_quarter_for_date(today)
+        activity_summary = activities_qs.aggregate(
+            week=Count(
+                "id",
+                filter=Q(scheduled_date__date__range=[start_week, end_week]),
+            ),
+            month=Count(
+                "id",
+                filter=Q(scheduled_date__date__range=[start_month, end_month]),
+            ),
+            completed_month=Count(
+                "id",
+                filter=Q(
+                    status__in=COMPLETED_WORK_STATUSES,
+                    scheduled_date__date__range=[start_month, end_month],
+                ),
+            ),
+            monthly_total=Count("id", filter=Q(planned_month=today.month)),
+            monthly_done=Count(
+                "id",
+                filter=Q(
+                    planned_month=today.month,
+                    status__in=COMPLETED_WORK_STATUSES,
+                ),
+            ),
+            quarterly_total=Count("id", filter=Q(quarter=current_quarter)),
+            quarterly_done=Count(
+                "id",
+                filter=Q(
+                    quarter=current_quarter,
+                    status__in=COMPLETED_WORK_STATUSES,
+                ),
+            ),
+            fy_total=Count("id"),
+            fy_done=Count("id", filter=Q(status__in=COMPLETED_WORK_STATUSES)),
+            evidence_pending=Count(
+                "id",
+                filter=Q(
+                    status__in=COMPLETED_WORK_STATUSES,
+                    evidence__isnull=True,
+                ),
+                distinct=True,
+            ),
+            schools_impacted=Count(
+                "school_id",
+                filter=Q(
+                    status__in=COMPLETED_WORK_STATUSES,
+                    school_id__isnull=False,
+                ),
+                distinct=True,
+            ),
+        )
+        activities_this_week = activity_summary["week"]
+        activities_this_month = activity_summary["month"]
 
         partner_pending_count = (
             schools_qs.filter(planning_readiness="ready_for_support_planning")
@@ -95,19 +164,34 @@ class DashboardMetricsService:
         )
 
         # Fund requests pending
-        fund_requests_pending = WeeklyFundRequest.objects.filter(
-            status__in=["submitted_to_pl", "submitted_to_cd"]
-        ).count()
+        fund_summary = WeeklyFundRequest.objects.aggregate(
+            pending=Count(
+                "id", filter=Q(status__in=["submitted_to_pl", "submitted_to_cd"])
+            ),
+            fy_pending=Count("id", filter=Q(fy=fy, status__startswith="submitted")),
+            payments_due=Sum(
+                "total_amount", filter=Q(fy=fy, status="confirmed_for_advance")
+            ),
+            country_approved=Sum(
+                "total_amount",
+                filter=Q(
+                    fy=fy,
+                    status__in=["confirmed_for_advance", "disbursed", "accounted"],
+                ),
+            ),
+            country_disbursed=Sum(
+                "disbursed_amount",
+                filter=Q(fy=fy, status__in=["disbursed", "accounted"]),
+            ),
+        )
+        fund_requests_pending = fund_summary["pending"]
 
         # The local ["completed", "ia_verified"] pair silently excluded `closed`
         # and `accountant_confirmed`. Both sets happen to agree on today's data,
         # so no number moves -- but the moment work reaches those two statuses
         # the old filter would have stopped counting finished work, which is the
         # regression apps/core/activity_types.py exists to prevent.
-        completed_this_month = activities_qs.filter(
-            status__in=COMPLETED_WORK_STATUSES,
-            scheduled_date__date__range=[start_month, end_month],
-        ).count()
+        completed_this_month = activity_summary["completed_month"]
         # No fabricated fallback: nothing planned this month is an honest 0%,
         # never an invented number.
         target_achievement = (
@@ -117,12 +201,8 @@ class DashboardMetricsService:
         )
 
         # 2. Signal Strips
-        needs_attention = schools_qs.filter(
-            planning_readiness__in=["requires_cluster", "data_cleanup_required"]
-        ).count()
-        ready_for_action = schools_qs.exclude(
-            planning_readiness__in=["requires_cluster", "data_cleanup_required"]
-        ).count()
+        needs_attention = total_schools - ready_count
+        ready_for_action = ready_count
         # Real composite, not a fabricated constant: school planning readiness
         # and this-month activity delivery are the two workstream health
         # signals already computed above -- simple average of the two.
@@ -224,11 +304,7 @@ class DashboardMetricsService:
         weakest_interventions = list(reversed(weakest_interventions[-3:]))
 
         # 6. Team Target Progress — real completion rate per horizon.
-        def _target_row(name, qs):
-            total = qs.count()
-            # Canonical set: the local triple here omitted `accountant_confirmed`,
-            # so work that reached the accountant stopped counting as done.
-            done = qs.filter(status__in=COMPLETED_WORK_STATUSES).count()
+        def _target_row(name, total, done):
             pct = round(done * 100 / total) if total else 0
             if pct >= 60:
                 status, cls, color = "On track", "s-green", "var(--green)"
@@ -244,15 +320,20 @@ class DashboardMetricsService:
                 "color": color,
             }
 
-        current_quarter = get_quarter_for_date(today)
         team_targets = [
             _target_row(
-                "Monthly Target", activities_qs.filter(planned_month=today.month)
+                "Monthly Target",
+                activity_summary["monthly_total"],
+                activity_summary["monthly_done"],
             ),
             _target_row(
-                "Quarterly Target", activities_qs.filter(quarter=current_quarter)
+                "Quarterly Target",
+                activity_summary["quarterly_total"],
+                activity_summary["quarterly_done"],
             ),
-            _target_row("FY Target", activities_qs),
+            _target_row(
+                "FY Target", activity_summary["fy_total"], activity_summary["fy_done"]
+            ),
         ]
 
         # 7. Priority Schools Table
@@ -407,16 +488,8 @@ class DashboardMetricsService:
                 deleted_at__isnull=True, active_status=True
             ).count(),
             "planned_visits": activities_this_month,
-            "evidence_pending": activities_qs.filter(
-                status__in=COMPLETED_WORK_STATUSES, evidence__isnull=True
-            ).count(),
-            "payments_due": _ugx_compact_top(
-                WeeklyFundRequest.objects.filter(
-                    fy=fy,
-                    status="confirmed_for_advance",
-                ).aggregate(s=Sum("total_amount"))["s"]
-                or 0
-            ),
+            "evidence_pending": activity_summary["evidence_pending"],
+            "payments_due": _ugx_compact_top(fund_summary["payments_due"] or 0),
         }
 
         # 10. Budget snapshot — real scheduled-budget sums from cost lines.
@@ -425,34 +498,29 @@ class DashboardMetricsService:
         _lines = ActivityScheduleCostLine.objects.filter(
             fiscal_year=fy, activity__deleted_at__isnull=True
         ).exclude(activity__status="cancelled")
-        budget_snapshot = {
-            "week": _ugx_compact_top(
-                _lines.filter(
+        line_summary = _lines.aggregate(
+            week=Sum(
+                "amount",
+                filter=Q(
                     planned_date__gte=start_week,
                     planned_date__lte=start_week + timedelta(days=6),
-                ).aggregate(s=Sum("amount"))["s"]
-                or 0
+                ),
             ),
-            "month": _ugx_compact_top(
-                _lines.filter(month=today.month).aggregate(s=Sum("amount"))["s"] or 0
-            ),
-            "quarter": _ugx_compact_top(
-                _lines.filter(quarter=get_quarter_for_date(today)).aggregate(
-                    s=Sum("amount")
-                )["s"]
-                or 0
-            ),
-            "fy": _ugx_compact_top(_lines.aggregate(s=Sum("amount"))["s"] or 0),
+            month=Sum("amount", filter=Q(month=today.month)),
+            quarter=Sum("amount", filter=Q(quarter=current_quarter)),
+            fy=Sum("amount"),
+        )
+        budget_snapshot = {
+            horizon: _ugx_compact_top(line_summary[horizon] or 0)
+            for horizon in ("week", "month", "quarter", "fy")
         }
 
         # 11. Execution Summary — real counts per horizon (previously month×3/×12).
         execution_summary = {
             "week": activities_this_week,
             "month": activities_this_month,
-            "quarter": activities_qs.filter(
-                quarter=get_quarter_for_date(today)
-            ).count(),
-            "fy": activities_qs.count(),
+            "quarter": activity_summary["quarterly_total"],
+            "fy": activity_summary["fy_total"],
         }
 
         # 11b. Attention Needed — real counts only; empty list when clean.
@@ -467,9 +535,7 @@ class DashboardMetricsService:
                     "href": "/ssa",
                 }
             )
-        _fund_pending = WeeklyFundRequest.objects.filter(
-            fy=fy, status__startswith="submitted"
-        ).count()
+        _fund_pending = fund_summary["fy_pending"]
         if _fund_pending:
             attention_items.append(
                 {
@@ -480,9 +546,7 @@ class DashboardMetricsService:
                     "href": "/fund-requests/weekly",
                 }
             )
-        _evidence_pending = activities_qs.filter(
-            status__in=COMPLETED_WORK_STATUSES, evidence__isnull=True
-        ).count()
+        _evidence_pending = activity_summary["evidence_pending"]
         if _evidence_pending:
             attention_items.append(
                 {
@@ -647,19 +711,8 @@ class DashboardMetricsService:
             # Real country-wide disbursed/approved utilization for the FY
             # (same disbursed/approved ratio as PLAnalyticsService._budget_utilization,
             # applied without a per-PL user filter since this KPI is country-scoped).
-            country_fy_requests = WeeklyFundRequest.objects.filter(fy=fy)
-            country_approved = (
-                country_fy_requests.filter(
-                    status__in=["confirmed_for_advance", "disbursed", "accounted"]
-                ).aggregate(Sum("total_amount"))["total_amount__sum"]
-                or 0
-            )
-            country_disbursed = (
-                country_fy_requests.filter(
-                    status__in=["disbursed", "accounted"]
-                ).aggregate(Sum("disbursed_amount"))["disbursed_amount__sum"]
-                or 0
-            )
+            country_approved = fund_summary["country_approved"] or 0
+            country_disbursed = fund_summary["country_disbursed"] or 0
             budget_utilization_pct = (
                 round(country_disbursed / country_approved * 100)
                 if country_approved
@@ -672,13 +725,7 @@ class DashboardMetricsService:
             # AnalyticsDashboardService already publishes this metric as
             # distinct reached schools; this now means the same thing, so the
             # two pages stop disagreeing under one label.
-            schools_impacted = (
-                activities_qs.filter(status__in=COMPLETED_WORK_STATUSES)
-                .exclude(school_id__isnull=True)
-                .values("school_id")
-                .distinct()
-                .count()
-            )
+            schools_impacted = activity_summary["schools_impacted"]
             kpi_items = [
                 render_precomputed_metric_item(
                     "command_center_dashboard_service_country_activities_completed_this_month",
