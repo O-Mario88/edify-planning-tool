@@ -301,6 +301,22 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.STRATEGIC_RESERVE_MANAGE,
         Permission.STRATEGIC_RESERVE_APPROVE,
         Permission.COST_AMENDMENT_APPROVE,
+        # Master Priority source figures are a governed business value: the
+        # number, the Core/Client split and the allocation method feed target
+        # distribution, planning, achievement and performance. `milestones
+        # .define` is what `_assert_master_editor` actually reads, and Admin
+        # held it by default — so the super-role could adjust a country target
+        # figure. Three sources agree it must not: the audit mandate ("RVP and
+        # Admin remain read-only for business values"), the guard's own refusal
+        # text ("set by the Country Director and Impact Assessment"), and the
+        # doctrine already applied two exclusions above, where AUD-007 took the
+        # country money chain off this role for the same reason.
+        #
+        # This is the Admin half only. The RVP also holds it, and there the
+        # sources genuinely disagree — `priority_cascade` has the RVP authoring
+        # strategy — so that one is recorded as CONFLICT-003 for the product
+        # owner rather than decided here.
+        Permission.MILESTONES_DEFINE,
         # A technical super-role has no implicit governed lending authority,
         # including record-level reads.
         Permission.BUSINESS_TRANSFORMATION_VIEW,
