@@ -7,7 +7,8 @@
 | Release candidate audited | `b5b1741c1d8193a326aed079568cb6c2f08bd8f7` (= `origin/main` at audit start) |
 | Audit branch | `claude/edify-production-readiness-audit-xgl7jx` |
 | Environment | PostgreSQL 16, Redis 7, Python 3.13, live checkout |
-| Final suite | 6,228 tests, `OK`, at `68ed46c25a379edc9f5dc7c7241bb6c8390e8e65` |
+| Final local suite | 6,228 tests, `OK`, at `68ed46c25a379edc9f5dc7c7241bb6c8390e8e65` |
+| CI on the audit head | all six checks green at `2248cdf5` — see §5a |
 
 Every claim below is either a command whose output is quoted, or is marked
 **Not Tested**. Not Tested is not Green. Where a prior audit's finding is
@@ -200,17 +201,46 @@ database: `duplicatePartnerPayments`, `partnerPaidWithoutPayment`,
 
 | Gate | Why |
 | --- | --- |
-| Container build, non-root check, runtime import, Trivy scan | No Docker daemon here. **CVE-2026-14456** (OpenSSL QUIC DoS, HIGH), raised by the prior audit as A-1, therefore still has no evidence of remediation. |
 | Production smoke test | No production access. |
 | Restore from a production backup | No managed database. Never performed (prior audit A-3). |
 | Rollback and deployment rehearsal | No deploy target. |
 | Monitoring, alert delivery, named incident owner | Organisational. |
 | 50,000-school scale | The repo's own gate measures 15,000; full scale needs production-equivalent hardware. |
-| Physical device / browser / orientation matrix | No devices. |
+| Physical device matrix | No devices. CI covers *emulated* Chromium, Firefox and WebKit desktop plus android-360, iphone-390 and tablet-768; a real handset on a real network is a different test, and the mandate asks for that one. |
 | Real integration sandboxes | None exist to point at — see B-3. |
-| Browser journeys (Playwright) | Environment prepared; not run in this pass. |
 
-Nine of the mandate's §40 gates sit in this table. None can be called Green.
+Seven of the mandate's §40 gates sit in this table. None can be called Green.
+
+**Two gates moved out of this table after the audit closed** — see §5a. They were
+listed here because this environment has no Docker daemon and no browser run was
+performed locally; CI on the audit head ran both.
+
+### 5a. Closed by CI on the audit head
+
+CI ran the two gates this environment could not, on head `2248cdf5`, and both
+passed. All six checks are green.
+
+| Gate | Job | Result |
+| --- | --- | --- |
+| Container build, non-root check, runtime import, **Trivy CRITICAL/HIGH scan** | Security Scans | **PASS** (2m49s) |
+| Browser journeys and the authenticated role route audit | Browser Journeys & Role Route Audit | **PASS** (14m36s) |
+| Full suite, lint, format, migration check, CSS clean diff | Django Lint & Test Suite | **PASS** (21m49s) |
+| Static analysis | CodeQL, Analyze python, Analyze javascript-typescript | **PASS** |
+
+Two caveats, so neither result is read as more than it is:
+
+- The Trivy step is configured `ignore-unfixed: true`. What its pass proves is that
+  **no *fixable* CRITICAL or HIGH vulnerability remains in the runtime image** — which
+  is the repo's own gate, and is sufficient to stop treating **CVE-2026-14456**
+  (OpenSSL QUIC DoS, HIGH, prior audit A-1) as an open blocker. It is not proof that
+  the CVE is absent, only that nothing fixable is outstanding.
+- The browser suite is 120 tests over four files and six projects — Chromium,
+  Firefox and WebKit desktop, android-360, iphone-390, tablet-768 — and covers an
+  authenticated route audit for fourteen roles, three freeze-regression checks, a
+  public smoke (login accessibility, and health endpoints distinguishing process
+  from dependency state) and a 50-navigation soak. It opens **argument-free pages
+  only**. It does not exercise forms, workflow-state-specific actions or exports, so
+  it does not close the mandate's journey gates.
 
 ---
 
@@ -225,11 +255,11 @@ which the mandate says must never be read as Green.
 | Automated quality pipeline | **Green** | every runnable gate passes |
 | Deployment configuration | **Green** | prod `check --deploy` clean; boot guard verified; clean migration run |
 | Data integrity (money/verification) | **Green** | §31 families return zero on seeded data |
-| Authentication and access | **Amber** | SEC-A1 fixed and pinned; `has_permission` / `can_view_page` fail closed for anonymous; OBS-2 leaves the matrix unable to distinguish guarded from unguarded |
+| Authentication and access | **Amber** | SEC-A1 fixed and pinned; `has_permission` / `can_view_page` fail closed for anonymous; fourteen roles open every permitted argument-free page in CI; OBS-2 leaves the matrix unable to distinguish guarded from unguarded |
 | Priorities and targets | **Amber** | SEC-A4 fixed; CONFLICT-003 and OBS-1 open |
 | Integrations | **Red** | no transport exists (B-3) |
 | Mobile and offline | **Red** | capability absent (B-4) |
-| Container supply chain | **Not Tested** | no Docker daemon |
+| Container supply chain | **Green** | image builds, runs non-root, imports, and carries no fixable CRITICAL/HIGH (CI, head `2248cdf5`) |
 | Backup / restore / rollback | **Not Tested** | no production access |
 | Performance and scale at 50k | **Not Tested** | not runnable here |
 | All remaining domains | **Not Tested** | not reached in this pass |
@@ -243,8 +273,11 @@ which the mandate says must never be read as Green.
    writing — manual Salesforce reconciliation stated plainly in the release notes,
    offline field operation deferred with "field staff need connectivity" said out
    loud — and they become disclosed limitations rather than blockers.
-3. The rest is ops: build and scan the image to clear CVE-2026-14456, restore from a
-   production backup once, rehearse the rollback, name an incident owner.
+3. The rest is ops, and one item is now closed: CI built and scanned the image on the
+   audit head and it carries no fixable CRITICAL or HIGH, so **CVE-2026-14456 is no
+   longer an open blocker**. What remains is to restore from a production backup
+   once, rehearse the rollback, run the production smoke, and name an incident owner.
 
-None of that needs more code review. None of it has been done. A deadline arriving
-is not evidence, and the one P0 in this report was live on `main` this morning.
+None of that needs more code review. Four of the five items have not been done at
+all. A deadline arriving is not evidence, and the one P0 in this report was live on
+`main` this morning.
