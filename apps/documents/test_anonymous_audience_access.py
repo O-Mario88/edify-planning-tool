@@ -20,8 +20,9 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.files.base import ContentFile
 from django.test import Client, TestCase
 from django.utils import timezone
+from uuid import uuid4
 
-from apps.core.private_storage import save_file
+from apps.core.private_storage import best_effort_delete, save_file
 from apps.documents.models import (
     DocumentAsset,
     DocumentAudienceRule,
@@ -83,12 +84,17 @@ class AnonymousIsNeverInAnAudienceTest(TestCase):
 
     def test_anonymous_cannot_download_the_file_body(self):
         """The regression that mattered: the bytes came back over HTTP 200."""
+        # Object storage is not covered by the test transaction, so the name
+        # is unique per run and removed afterwards. A fixture that survives
+        # its own test fails the second time it is run.
+        stored_name = f"probe-download-{uuid4().hex}.pdf"
         save_file(
             DOCUMENT_NAMESPACE,
-            "probe-download.pdf",
+            stored_name,
             ContentFile(b"CONFIDENTIAL-DOCUMENT-BODY"),
         )
-        document = _published_document("probe-download", uri="probe-download.pdf")
+        self.addCleanup(best_effort_delete, DOCUMENT_NAMESPACE, stored_name)
+        document = _published_document("probe-download", uri=stored_name)
         response = Client().get(f"/documents/{document.slug}/download")
         self.assertEqual(response.status_code, 404)
         body = (
@@ -114,3 +120,28 @@ class AnonymousIsNeverInAnAudienceTest(TestCase):
             is_active=True,
         )
         self.assertTrue(audience_matches(document, user))
+
+
+class StaleDeepLinksAndSignedOutLandingTest(TestCase):
+    """SEC-A2/A3 — a dead acknowledgement link and the restricted landing page.
+
+    `AcknowledgementService.respond` and `attest_offline` fetch by id with no
+    guard. A superseded or withdrawn acknowledgement leaves live deep links
+    behind it — in the reminder mail, in a To-Do, in a bookmark — and following
+    one answered 500 rather than saying what happened. `restricted_view`
+    answered 200 to a signed-out caller, where the Agreement Center beside it
+    redirects to the login form.
+    """
+
+    def test_unknown_acknowledgement_does_not_500(self):
+        for path in (
+            "/api/documents/acknowledge/does-not-exist",
+            "/api/documents/attest/does-not-exist",
+        ):
+            response = Client().post(path)
+            self.assertNotEqual(response.status_code, 500, path)
+
+    def test_restricted_landing_sends_a_signed_out_reader_to_login(self):
+        response = Client().get("/policy-agreement/restricted")
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.headers["Location"], "/login")
