@@ -75,6 +75,10 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
                     Permission.STRATEGIC_RESERVE_MANAGE,
                     Permission.STRATEGIC_RESERVE_APPROVE,
                     Permission.COST_AMENDMENT_APPROVE,
+                    Permission.STRATEGIC_PRIORITIES_CREATE,
+                    Permission.STRATEGIC_PRIORITIES_EDIT,
+                    Permission.STRATEGIC_PRIORITIES_APPROVE,
+                    Permission.STRATEGIC_PRIORITIES_ALLOCATE,
                     # Added 2026-08-29 by the release-readiness audit, on the
                     # mandate's own words: "RVP and Admin remain read-only for
                     # business values" (§18.1). `milestones.define` is what
@@ -86,11 +90,8 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
                     # figure, Core/Client split and allocation method feed
                     # distribution, planning, achievement and performance.
                     #
-                    # The RVP holds it too and is deliberately NOT changed:
-                    # apps/hr/priority_cascade.py has the RVP authoring
-                    # strategy, so that half is CONFLICT-003 for the product
-                    # owner rather than an audit's decision to take.
                     Permission.MILESTONES_DEFINE,
+                    Permission.MILESTONES_ALLOCATE,
                     Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
                     Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
                     Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,

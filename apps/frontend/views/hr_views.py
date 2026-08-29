@@ -2490,8 +2490,8 @@ def performance_acknowledge_view(request, review_id):
 # write an individual's milestones. Without a page, `StrategicPriority` is a
 # table only a shell can reach, and the cascade starts from nothing.
 
-_STRATEGY_AUTHORS = ("RegionalVicePresident", "CountryDirector", "Admin")
-_STRATEGY_VIEWERS = _STRATEGY_AUTHORS + ("HumanResources",)
+_STRATEGY_AUTHORS = ("RegionalVicePresident", "CountryDirector")
+_STRATEGY_VIEWERS = _STRATEGY_AUTHORS + ("HumanResources", "Admin")
 
 # A plausible financial year. Bounds rather than "any four digits" so a
 # nonsense year cannot become a filter that quietly matches nothing.
@@ -2558,9 +2558,9 @@ def strategic_priorities_view(request):
     # would produce a draft — or a Publish button — that can only ever be
     # refused, which reads as a broken page rather than a boundary.
     authorable = []
-    if role in ("RegionalVicePresident", "Admin"):
+    if role == "RegionalVicePresident":
         authorable.append(StrategicPriorityLevel.REGIONAL)
-    if role in ("CountryDirector", "Admin"):
+    if role == "CountryDirector":
         authorable.append(StrategicPriorityLevel.COUNTRY)
 
     rows = []

@@ -14,12 +14,9 @@ that doctrine to this role once, when AUD-007 took the country money chain off
 Admin because approving a budget and then verifying the work it paid for is
 one actor holding both ends.
 
-The RegionalVicePresident also holds it. That one is NOT decided here:
-`apps/hr/priority_cascade.py` has the RVP authoring strategy, which is a real
-source pointing the other way, so it is recorded as CONFLICT-003 for the
-product owner. This test pins what is settled and deliberately leaves the
-RVP's grant as it is, so that resolving the conflict is a decision somebody
-makes rather than a side effect of this file.
+Regional strategy authorship is a different authority from changing a country
+Master Priority source figure. The RVP keeps the former and not the latter;
+Admin keeps read-only support visibility and no strategy write capability.
 """
 
 from __future__ import annotations
@@ -42,10 +39,38 @@ class MasterPriorityEditorAuthorityTest(SimpleTestCase):
         ):
             self.assertTrue(_holds(role, Permission.MILESTONES_DEFINE), role)
 
-    def test_admin_may_not_edit_a_master_priority_source_figure(self):
+    def test_admin_is_read_only_for_strategic_business_values(self):
+        for permission in (
+            Permission.STRATEGIC_PRIORITIES_CREATE,
+            Permission.STRATEGIC_PRIORITIES_EDIT,
+            Permission.STRATEGIC_PRIORITIES_APPROVE,
+            Permission.STRATEGIC_PRIORITIES_ALLOCATE,
+            Permission.MILESTONES_DEFINE,
+            Permission.MILESTONES_ALLOCATE,
+        ):
+            self.assertFalse(
+                _holds(EdifyRole.ADMIN.value, permission),
+                f"the technical super-role must not hold {permission.value}",
+            )
+
+    def test_rvp_authors_regional_strategy_but_not_country_source_figures(self):
+        self.assertTrue(
+            _holds(
+                EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+                Permission.STRATEGIC_PRIORITIES_EDIT,
+            )
+        )
         self.assertFalse(
-            _holds(EdifyRole.ADMIN.value, Permission.MILESTONES_DEFINE),
-            "the technical super-role must not hold a governed business value",
+            _holds(
+                EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+                Permission.MILESTONES_DEFINE,
+            )
+        )
+        self.assertFalse(
+            _holds(
+                EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+                Permission.MILESTONES_ALLOCATE,
+            )
         )
 
     def test_delivery_roles_may_not_edit(self):
