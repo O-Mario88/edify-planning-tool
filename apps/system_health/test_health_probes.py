@@ -70,6 +70,34 @@ class ReadinessTest(TestCase):
         self.assertEqual(self.client.get("/api/health").status_code, 200)
 
 
+class PooledReadinessTest(TestCase):
+    @mock.patch.object(settings, "DB_USE_PGBOUNCER", True, create=True)
+    def test_it_rejects_a_runtime_role_with_disabled_timeouts(self):
+        cursor = mock.MagicMock()
+        cursor.__enter__.return_value = cursor
+        cursor.fetchone.side_effect = [(1,), ("0", "10s", "1min")]
+        with mock.patch(
+            "django.db.backends.base.base.BaseDatabaseWrapper.cursor",
+            return_value=cursor,
+        ):
+            response = self.client.get("/api/health/ready")
+        self.assertEqual(response.status_code, 503)
+        self.assertEqual(response.json()["db"], "misconfigured")
+
+    @mock.patch.object(settings, "DB_USE_PGBOUNCER", True, create=True)
+    def test_it_accepts_a_runtime_role_with_all_timeout_ceilings(self):
+        cursor = mock.MagicMock()
+        cursor.__enter__.return_value = cursor
+        cursor.fetchone.side_effect = [(1,), ("30s", "10s", "1min")]
+        with mock.patch(
+            "django.db.backends.base.base.BaseDatabaseWrapper.cursor",
+            return_value=cursor,
+        ):
+            response = self.client.get("/api/health/ready")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["db"], "up")
+
+
 class ReadinessNamesADegradedCacheTest(TestCase):
     """It used to answer 200 {"status": "ok"} with Redis genuinely down.
 

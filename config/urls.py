@@ -130,12 +130,25 @@ def _readiness(request: HttpRequest) -> JsonResponse:
     orchestrator is right to ignore.
     """
     from django.db import connections
-    from django.db.utils import OperationalError
+    from django.db.utils import DatabaseError
 
     db = "up"
     try:
-        connections["default"].cursor().execute("SELECT 1").fetchone()
-    except OperationalError:
+        with connections["default"].cursor() as cursor:
+            cursor.execute("SELECT 1")
+            cursor.fetchone()
+            if getattr(settings, "DB_USE_PGBOUNCER", False):
+                cursor.execute(
+                    "SELECT current_setting('statement_timeout'), "
+                    "current_setting('lock_timeout'), "
+                    "current_setting('idle_in_transaction_session_timeout')"
+                )
+                timeout_values = cursor.fetchone()
+                if len(timeout_values) != 3 or any(
+                    _postgres_timeout_is_zero(value) for value in timeout_values
+                ):
+                    db = "misconfigured"
+    except DatabaseError:
         db = "down"
 
     cache_state = _cache_state()
@@ -155,6 +168,11 @@ def _readiness(request: HttpRequest) -> JsonResponse:
         },
         status=200 if db == "up" else 503,
     )
+
+
+def _postgres_timeout_is_zero(value: object) -> bool:
+    """Postgres renders disabled timeouts as either ``0`` or ``0ms``."""
+    return str(value).strip().lower() in {"0", "0ms", "0s", "0min"}
 
 
 def api(prefix: str, url_module: str) -> list:

@@ -96,6 +96,22 @@ class AppPlatformSpecTests(SimpleTestCase):
 
 
 class StagingAppPlatformSpecTests(SimpleTestCase):
+    def test_staging_runtime_is_pooled_but_migrations_are_direct(self):
+        spec = _staging_app_platform_spec()
+        migration = spec["jobs"][0]
+        web = spec["services"][0]
+        scheduler = spec["workers"][0]
+
+        self.assertEqual(_envs(migration)["DATABASE_URL"], "${edifydb.DATABASE_URL}")
+        self.assertEqual(_envs(migration)["DB_USE_PGBOUNCER"], "false")
+        for component in (web, scheduler):
+            with self.subTest(component=component["name"]):
+                self.assertEqual(
+                    _envs(component)["DATABASE_URL"],
+                    "${edifydb.edify-web.DATABASE_URL}",
+                )
+                self.assertEqual(_envs(component)["DB_USE_PGBOUNCER"], "true")
+
     def test_staging_uses_isolated_managed_postgres_and_valkey(self):
         databases = {
             database["name"]: database
