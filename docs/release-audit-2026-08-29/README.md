@@ -73,7 +73,7 @@ ia@edify.org          sees: ['edify-safeguarding-policy', 'edify-apostles-creed'
 AUTHENTICATED GET /documents/edify-safeguarding-policy/ -> 200
 ```
 
-Five regression tests, each proven to fail without the fix.
+Five regression tests for SEC-A1 itself, each proven to fail without the fix (two more in the same file cover SEC-A2 and SEC-A3).
 
 ### B-2 · The full suite was red on `main` · P1 · fixed here
 
@@ -127,7 +127,7 @@ app close, and sync without duplicates. **Journey 20 cannot pass**, and §40's g
 
 | ID | Sev | Finding | Fix layer | Test |
 | --- | --- | --- | --- | --- |
-| SEC-A1 | P0 | Unauthenticated read, and file download, of any organisation-wide document | `audience_matches()` — the canonical audience authority | `apps/documents/test_anonymous_audience_access.py` (5) |
+| SEC-A1 | P0 | Unauthenticated read, and file download, of any organisation-wide document | `audience_matches()` — the canonical audience authority | `apps/documents/test_anonymous_audience_access.py` (7, covering SEC-A1/A2/A3) |
 | SEC-A4 | P1 | Admin held `milestones.define`: the technical super-role could edit a country target's figure, Core/Client split, participants guidance and allocation method | `ADMIN_EXCLUDED_PERMISSIONS` | `apps/hr/test_master_priority_editor_authority.py` (4) |
 | TGT-02 | P1 | Suite red on the 29th–31st of every month | test fixture window | property test over 5 months incl. leap day |
 | SEC-A2 | P2 | Superseded acknowledgement deep link answered 500 | `submit_acknowledgement_view` / `attest_offline_view` | `StaleDeepLinksAndSignedOutLandingTest` |
