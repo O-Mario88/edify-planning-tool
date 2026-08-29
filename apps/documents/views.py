@@ -15,6 +15,7 @@ from apps.core.permissions import require_page_permission
 from apps.documents.gate import PolicyGateService
 from apps.documents.models import (
     AcknowledgementState,
+    DocumentAcknowledgement,
     DocumentAsset,
     DocumentType,
     DocumentVersion,
@@ -497,6 +498,12 @@ def _next_blocking_destination(user) -> str:
 
 def restricted_view(request):
     """Where a person who disagreed lands until HR resolves it."""
+    # As `agreement_center_view` does. Without it this answered 200 to an
+    # anonymous caller — an empty page rather than a leak, but a signed-out
+    # reader landing here saw "no outstanding policies" instead of the login
+    # form, which reads as the gate having let them through.
+    if not getattr(request.user, "is_authenticated", False):
+        return redirect("/login")
     declined = PolicyGateService.disagreements(request.user)
     return render(
         request,
@@ -518,6 +525,16 @@ def submit_acknowledgement_view(request, acknowledgement_id):
             request.POST.get("comment", ""),
             request.POST.get("typed_full_name", ""),
         )
+    except DocumentAcknowledgement.DoesNotExist:
+        # A superseded or withdrawn acknowledgement leaves live deep links
+        # behind it — in the reminder mail, in a To-Do, in a bookmark. The
+        # service fetches by id with no guard, so following one answered 500.
+        messages.error(
+            request,
+            "That acknowledgement is no longer open — it may have been "
+            "replaced by a newer version of the document.",
+        )
+        return redirect("/policy-agreement")
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
         return redirect("/policy-agreement")
@@ -540,6 +557,12 @@ def attest_offline_view(request, acknowledgement_id):
             request.user, acknowledgement_id, request.POST.get("note", "")
         )
         messages.success(request, "Recorded that you reviewed this outside the viewer.")
+    except DocumentAcknowledgement.DoesNotExist:
+        messages.error(
+            request,
+            "That acknowledgement is no longer open — it may have been "
+            "replaced by a newer version of the document.",
+        )
     except (BadRequest, Forbidden) as exc:
         messages.error(request, str(exc))
     return redirect("/policy-agreement")
