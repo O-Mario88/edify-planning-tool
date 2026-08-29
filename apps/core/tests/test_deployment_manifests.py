@@ -108,7 +108,7 @@ class StagingAppPlatformSpecTests(SimpleTestCase):
             with self.subTest(component=component["name"]):
                 self.assertEqual(
                     _envs(component)["DATABASE_URL"],
-                    "${edifydb.edify-web.DATABASE_URL}",
+                    "${edifyruntime.edify-web.DATABASE_URL}",
                 )
                 self.assertEqual(_envs(component)["DB_USE_PGBOUNCER"], "true")
 
@@ -118,6 +118,11 @@ class StagingAppPlatformSpecTests(SimpleTestCase):
             for database in _staging_app_platform_spec()["databases"]
         }
         self.assertEqual(databases["edifydb"]["cluster_name"], "edify-staging-pg-fra")
+        self.assertEqual(databases["edifydb"]["db_user"], "doadmin")
+        self.assertEqual(
+            databases["edifyruntime"]["cluster_name"], "edify-staging-pg-fra"
+        )
+        self.assertEqual(databases["edifyruntime"]["db_user"], "edify_runtime")
         self.assertEqual(
             databases["edifycache"]["cluster_name"], "edify-staging-cache-fra"
         )
