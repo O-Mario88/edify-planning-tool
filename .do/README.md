@@ -84,6 +84,36 @@ is recorded in `docs/release-validation-2026-08-28/`.
   action; the scheduler's persistent pre-resize connection required a
   component-only restart and then completed its next job successfully. This
   behavior is part of the recovery evidence and runbook.
+- **External uptime monitoring is active.** Four regions probe
+  `/api/health/ready`; global-down, sustained-latency, and TLS-expiry policies
+  route to the existing operations recipient. Reconcile the provider state with
+  `EDIFY_ALERT_EMAILS=... scripts/configure_uptime_monitoring.sh`; never commit
+  the recipient list into the script.
 - Domains still have `www` PRIMARY and the apex ALIAS. The application-level
   `CANONICAL_HOST` redirect makes the apex canonical to users regardless, so
   this is cosmetic in App Platform's own routing.
+
+## Authenticated production smoke
+
+The authenticated route crawl is GET-only after login, but login itself updates
+session/account metadata. It must use approved isolated synthetic accounts; do
+not point demo accounts or real staff credentials at it.
+
+1. Copy `docs/production-smoke-accounts.example.json` outside the repository
+   and replace each placeholder email with its approved synthetic account.
+2. Export each password through the environment-variable name referenced by
+   that account. Do not add passwords to the JSON file or command line.
+3. Run the deliberately verbose approval gate:
+
+   ```bash
+   EDIFY_E2E_BASE_URL=https://edifyplanning.app \
+   EDIFY_PRODUCTION_SMOKE_MODE=read-only-authenticated \
+   EDIFY_E2E_ACCOUNTS_FILE=/absolute/path/to/approved-production-smoke-accounts.json \
+   npm run test:e2e:production-auth
+   ```
+
+The runner refuses partial role matrices, unknown role mappings, passwords in
+the manifest, missing password variables, and accounts blocked on a required
+agreement. It never accepts an agreement in production. Passing proves that
+every permitted argument-free page opened for all 14 roles; it does not prove
+mutation workflows or isolated third-party side effects.

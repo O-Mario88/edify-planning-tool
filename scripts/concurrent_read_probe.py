@@ -37,6 +37,16 @@ DEFAULT_PATHS = (
     "/system-health",
 )
 
+# Match the transport behavior of every supported browser. Without an
+# Accept-Encoding header Django correctly sends the full HTML body, so the
+# probe spends most of its pressure window transferring 200-550 KiB responses
+# that a real browser receives compressed. That measures a synthetic
+# no-compression client rather than the production journey this script names.
+BROWSER_HEADERS = {
+    "Accept-Encoding": "gzip",
+    "User-Agent": "edify-staging-probe/1",
+}
+
 
 class NoRedirect(urllib.request.HTTPRedirectHandler):
     """Expose redirects as non-200 results instead of timing the destination."""
@@ -137,6 +147,8 @@ def main() -> int:
     path_lock = threading.Lock()
     latencies: dict[str, list[float]] = defaultdict(list)
     statuses: Counter[int | str] = Counter()
+    encodings: Counter[str] = Counter()
+    transferred_bytes = 0
     result_lock = threading.Lock()
     opener = urllib.request.build_opener(NoRedirect)
     parsed_base = urllib.parse.urlsplit(args.base_url)
@@ -157,7 +169,7 @@ def main() -> int:
     for path in args.paths:
         request = urllib.request.Request(
             f"{args.base_url.rstrip('/')}{path}",
-            headers={"Cookie": cookie, "User-Agent": "edify-staging-probe/1"},
+            headers={"Cookie": cookie, **BROWSER_HEADERS},
         )
         try:
             with opener.open(request, timeout=max(args.timeout, 30)) as response:
@@ -172,7 +184,7 @@ def main() -> int:
     deadline = time.monotonic() + args.duration
 
     def worker() -> None:
-        nonlocal next_path
+        nonlocal next_path, transferred_bytes
         connection = connection_type(
             parsed_base.hostname,
             port=parsed_base.port,
@@ -190,17 +202,20 @@ def main() -> int:
                     f"{base_path}{path}",
                     headers={
                         "Cookie": cookie,
-                        "User-Agent": "edify-staging-probe/1",
+                        **BROWSER_HEADERS,
                     },
                 )
                 response = connection.getresponse()
                 try:
-                    response.read()
+                    body = response.read()
                     status = response.status
+                    encoding = response.getheader("Content-Encoding") or "identity"
                 finally:
                     response.close()
             except Exception as exc:  # noqa: BLE001 - every transport failure is evidence
                 status = type(exc).__name__
+                body = b""
+                encoding = "transport-error"
                 connection.close()
                 connection = connection_type(
                     parsed_base.hostname,
@@ -210,6 +225,8 @@ def main() -> int:
             elapsed_ms = (time.perf_counter() - started) * 1000
             with result_lock:
                 statuses[status] += 1
+                encodings[encoding] += 1
+                transferred_bytes += len(body)
                 latencies[path].append(elapsed_ms)
         connection.close()
 
@@ -235,6 +252,11 @@ def main() -> int:
     print(
         f"success={successes} errors={errors} error_rate={error_rate:.3%} "
         f"statuses={dict(statuses)}"
+    )
+    print(
+        f"transfer={transferred_bytes / (1024 * 1024):.2f}MiB "
+        f"mean={transferred_bytes / max(total, 1) / 1024:.1f}KiB "
+        f"encodings={dict(encodings)}"
     )
     print(f"{'path':<22}{'n':>7}{'p50':>10}{'p95':>10}{'p99':>10}{'max':>10}")
     for path in args.paths:

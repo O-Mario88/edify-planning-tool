@@ -42,6 +42,12 @@
         "iphone-390",
         "tablet-768"
       ]
+    },
+    "authenticatedProductionSmoke": {
+      "executed": false,
+      "failClosedRunnerReady": true,
+      "requiredRoles": 14,
+      "blocker": "No approved isolated production accounts or authenticated browser session"
     }
   },
   "roleCoverage": [
@@ -98,6 +104,16 @@
     "db": "up",
     "cache": "up"
   },
+  "productionMonitoring": {
+    "uptimeCheckId": "e0084876-47de-467c-bcb8-324a128744ef",
+    "target": "https://edifyplanning.app/api/health/ready",
+    "regions": ["eu_west", "us_east", "us_west", "se_asia"],
+    "globalDownAlertId": "9228ce39-80d6-430b-b6ec-1318fa85c5af",
+    "latencyAlertId": "2c40dfaa-133f-41aa-9cb3-aa14ba8a1e7a",
+    "tlsExpiryAlertId": "49eda02e-81c2-4200-aabd-2bfa38b918c9",
+    "alertDeliveryTested": false,
+    "namedIncidentOwner": false
+  },
   "infrastructureClosure": {
     "productionPostgresNodes": 2,
     "productionPostgresNodeSize": "db-s-1vcpu-2gb",
@@ -115,6 +131,6 @@
     "No exhaustive real-browser mutation/state/control coverage",
     "No real external integration sandbox credentials",
     "No complete native/physical device and Edge matrix",
-    "No production alert-delivery verification"
+    "No production alert-delivery verification or formally named incident owner"
   ]
 }

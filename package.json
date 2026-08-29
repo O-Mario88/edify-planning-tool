@@ -6,7 +6,8 @@
     "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css && tailwindcss -i assets/css/tokens.source.css -o static/css/tokens.css",
     "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch",
     "test:e2e": "playwright test",
-    "test:e2e:list": "playwright test --list"
+    "test:e2e:list": "playwright test --list",
+    "test:e2e:production-auth": "playwright test e2e/authenticated-route-audit.spec.js --project chromium-desktop"
   },
   "devDependencies": {
     "@playwright/test": "^1.62.1",
