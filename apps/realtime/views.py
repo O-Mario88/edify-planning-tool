@@ -64,8 +64,9 @@ def stream(request):
         """Async generator — required, not stylistic.
 
         This was a *synchronous* infinite generator. Under ASGI (production
-        runs Daphne) Django cannot `async for` a sync iterator, so it falls back
-        to `await sync_to_async(list)(streaming_content)` — it tries to
+        runs Gunicorn with Uvicorn workers) Django cannot `async for` a sync
+        iterator, so it falls back to
+        `await sync_to_async(list)(streaming_content)` — it tries to
         materialise an endless stream into a list before sending a single byte.
         The client received the 200 and its headers and then nothing, forever.
 

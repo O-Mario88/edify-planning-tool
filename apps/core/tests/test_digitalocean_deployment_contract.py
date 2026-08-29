@@ -70,11 +70,11 @@ class DigitalOceanDeploymentContractTest(SimpleTestCase):
         self.assertIn("uvicorn.workers.UvicornWorker", procfile)
         self.assertIn("config.asgi:application", procfile)
 
-    def test_container_runs_two_supervised_asgi_workers_by_default(self):
+    def test_container_runs_three_supervised_asgi_workers_by_default(self):
         dockerfile = _read("Dockerfile")
         self.assertIn("exec gunicorn", dockerfile)
         self.assertIn("--worker-class uvicorn.workers.UvicornWorker", dockerfile)
-        self.assertIn('--workers \\"${WEB_CONCURRENCY:-2}\\"', dockerfile)
+        self.assertIn('--workers \\"${WEB_CONCURRENCY:-3}\\"', dockerfile)
         self.assertIn("--worker-tmp-dir /dev/shm", dockerfile)
         self.assertIn("config.asgi:application", dockerfile)
 

@@ -10,7 +10,7 @@ class RealtimeConfig(AppConfig):
     def ready(self) -> None:
         # IMPORTANT: the scheduler must NEVER start here. AppConfig.ready()
         # runs once per Django process -- including every web worker (each
-        # Gunicorn/Daphne process, each horizontally-scaled replica). If the
+        # Gunicorn/Uvicorn process, each horizontally-scaled replica). If the
         # scheduler were started here, N web workers would each run their
         # own copy of every job, firing weekly fund requests, digests, and
         # target-ledger rebuilds N times over. This used to be exactly that

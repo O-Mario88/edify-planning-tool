@@ -139,8 +139,11 @@ USER edify
 ENV PORT=4000
 EXPOSE 4000
 # Apply migrations, optionally seed, then start the ASGI server. Gunicorn owns
-# two Uvicorn ASGI workers by default: one process was the measured staging
-# throughput ceiling, while ASGI and the shared realtime bus preserve SSE.
+# three Uvicorn ASGI workers by default: one process was the measured staging
+# throughput ceiling, and two still left the one-vCPU service waiting on
+# database round trips under the 12-concurrent-request release gate. Three is
+# the measured in-place ceiling for the 2 GiB web instances; each warm worker
+# uses roughly 470-490 MiB RSS. ASGI and the shared realtime bus preserve SSE.
 # Health probe hits GET /api/health.
 # Liveness, not readiness. Docker marks the container unhealthy on failure and
 # orchestrators restart it — so pointing this at a probe that checks the
@@ -153,5 +156,5 @@ ENTRYPOINT ["./docker-entrypoint.sh"]
 # Keep runtime expansion while making Gunicorn PID 1, so rolling-deploy signals
 # reach the supervisor directly. WEB_CONCURRENCY remains an explicit escape
 # hatch for a differently sized instance; the production-equivalent default is
-# the two-process shape verified by the release load gate.
-CMD ["sh", "-c", "exec gunicorn --worker-tmp-dir /dev/shm --bind \"0.0.0.0:${PORT:-4000}\" --worker-class uvicorn.workers.UvicornWorker --workers \"${WEB_CONCURRENCY:-2}\" --timeout \"${WEB_TIMEOUT_SECONDS:-60}\" --graceful-timeout \"${WEB_GRACEFUL_TIMEOUT_SECONDS:-30}\" --access-logfile - --error-logfile - config.asgi:application"]
+# the three-process shape verified by the release load gate.
+CMD ["sh", "-c", "exec gunicorn --worker-tmp-dir /dev/shm --bind \"0.0.0.0:${PORT:-4000}\" --worker-class uvicorn.workers.UvicornWorker --workers \"${WEB_CONCURRENCY:-3}\" --timeout \"${WEB_TIMEOUT_SECONDS:-60}\" --graceful-timeout \"${WEB_GRACEFUL_TIMEOUT_SECONDS:-30}\" --access-logfile - --error-logfile - config.asgi:application"]
