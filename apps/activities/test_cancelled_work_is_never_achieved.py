@@ -12,7 +12,8 @@ school visit kept counting toward a CCEO's verified achievement for ever.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from calendar import monthrange
+from datetime import date
 
 from django.test import TestCase
 from django.utils import timezone
@@ -156,7 +157,13 @@ class CancelledWorkLosesItsMilestoneCreditTest(TestCase):
             employee=profile,
             period_type="month",
             period_start=today.replace(day=1),
-            period_end=today.replace(day=1) + timedelta(days=27),
+            # The real last day of the month, not first-of-month + 27 days.
+            # That arithmetic ends the window on the 28th, so an activity
+            # dated `today` fell outside its own period on the 29th, 30th and
+            # 31st — the credit engine correctly declined to count it, and
+            # `_assert_credited` failed on roughly three days in every month.
+            # The suite was red on 2026-08-29 for this and nothing else.
+            period_end=today.replace(day=monthrange(today.year, today.month)[1]),
             planned_value=1,
             actual_value=0,
         )
@@ -242,3 +249,36 @@ class CancelledWorkLosesItsMilestoneCreditTest(TestCase):
         activity.refresh_from_db()
         self.assertEqual(activity.status, "deferred")
         self._assert_reversed(activity, period, "deferred")
+
+
+class FixturePeriodWindowIsDateIndependentTest(TestCase):
+    """The fixture window must contain the activity date on every day.
+
+    `_verified_activity_with_credit` dates the activity `today` and gives its
+    `MilestonePeriodTarget` a window starting on the 1st. That window used to
+    end at first-of-month + 27 days — the 28th — so on the 29th, 30th and 31st
+    the activity fell outside its own period, the credit engine correctly
+    declined to count it, and `_assert_credited` failed. The suite was red on
+    2026-08-29 for exactly this, and would have gone green again on the 1st
+    without anybody finding out why.
+
+    A test whose result depends on the day it runs is not a regression test, so
+    this pins the property rather than the symptom.
+    """
+
+    def test_every_day_of_every_month_falls_inside_the_window(self):
+        for year, month, last in (
+            (2026, 1, 31),
+            (2026, 2, 28),
+            (2028, 2, 29),  # leap year
+            (2026, 4, 30),
+            (2026, 8, 31),
+        ):
+            for day in range(1, last + 1):
+                today = date(year, month, day)
+                period_start = today.replace(day=1)
+                period_end = today.replace(day=monthrange(today.year, today.month)[1])
+                self.assertTrue(
+                    period_start <= today <= period_end,
+                    f"{today} falls outside {period_start}..{period_end}",
+                )
