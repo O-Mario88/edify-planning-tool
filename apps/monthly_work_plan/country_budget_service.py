@@ -281,56 +281,36 @@ def _program_source(fy, month_num):
 def _envelope_from_source(source) -> dict:
     """Calculate the two governed funding layers for one calendar month.
 
-    A snapshot stores a whole activity's dual cost, while a multi-day activity
-    may have payable lines split across months.  The reference amount is
-    therefore phased in the same proportion as the operational lines instead
-    of charging the whole reference cost to every month it touches.
+    Staff schedule lines carry the Minimum Viable Cost. Each line also stamps
+    the exact catalogue version that supplied it, so the matching Country
+    Operational Cost can be reconstructed without changing what staff saw or
+    retroactively applying today's rate to an older plan. The full country
+    amount is submitted to the RVP; the difference remains controlled country
+    capacity rather than staff spending authority.
     """
-    from apps.budget.models import ActivityCostSnapshot
-
-    operational_by_activity: dict[str, int] = {}
-    for line in source["lines"]:
-        if _validate_line(line) == "Excluded":
-            continue
-        operational_by_activity[line.activity_id] = operational_by_activity.get(
-            line.activity_id, 0
-        ) + int(line.amount or 0)
-
-    snapshots = {
-        row["activity_id"]: row
-        for row in ActivityCostSnapshot.objects.filter(
-            activity_id__in=operational_by_activity,
-            is_current=True,
-        ).values("activity_id", "reference_cost", "operational_cost")
-    }
-    reference_ceiling = 0
-    missing = 0
-    for activity_id, monthly_operational in operational_by_activity.items():
-        snapshot = snapshots.get(activity_id)
-        if snapshot is None or snapshot["reference_cost"] is None:
-            missing += 1
-            continue
-        whole_operational = int(snapshot["operational_cost"] or 0)
-        whole_reference = int(snapshot["reference_cost"] or 0)
-        if whole_operational <= 0:
-            reference_ceiling += whole_reference if monthly_operational == 0 else 0
-            if monthly_operational > 0:
-                missing += 1
-            continue
-        reference_ceiling += round(
-            whole_reference * monthly_operational / whole_operational
-        )
-
-    operational_requirement = int(source["program_total"] or 0)
+    country_by_line = _reference_amounts_for_lines(source["lines"])
+    included_lines = [
+        line for line in source["lines"] if _validate_line(line) != "Excluded"
+    ]
+    missing = sum(1 for line in included_lines if country_by_line.get(line.id) is None)
+    country_operational_total = sum(
+        int(country_by_line.get(line.id) or 0) for line in included_lines
+    )
+    minimum_viable_total = int(source["program_total"] or 0)
     reserve_capacity = (
-        0 if missing else max(0, reference_ceiling - operational_requirement)
+        0 if missing else max(0, country_operational_total - minimum_viable_total)
     )
     shortfall = (
-        max(0, operational_requirement - reference_ceiling) if not missing else 0
+        max(0, minimum_viable_total - country_operational_total) if not missing else 0
     )
     return {
-        "regionalStandardCeiling": reference_ceiling,
-        "operationalActivityRequirement": operational_requirement,
+        # Legacy keys remain while stored model/JSON field names are migrated
+        # separately. Their values now carry the explicitly named two-layer
+        # country policy below.
+        "regionalStandardCeiling": country_operational_total,
+        "operationalActivityRequirement": minimum_viable_total,
+        "countryOperationalTotal": country_operational_total,
+        "minimumViableTotal": minimum_viable_total,
         "maximumReserveCapacity": reserve_capacity,
         "countryFundingShortfall": shortfall,
         "referenceConfigurationMissingCount": missing,
@@ -338,95 +318,71 @@ def _envelope_from_source(source) -> dict:
 
 
 def _reference_amounts_for_lines(lines) -> dict:
-    """Project every operational schedule line through the regional card.
+    """Convert Minimum Viable schedule lines to Country Operational amounts.
 
-    The costing engine stores both complete component breakdowns on the
-    activity snapshot, while the payable schedule ledger intentionally stores
-    only Country Operational lines. This function reconstructs the matching
-    Regional Standard amount for management views using the same component
-    key and the same phased plan quantity. A per-activity residual correction
-    keeps the component rows equal to the governed activity ceiling exactly.
+    The conversion uses the immutable catalogue id/key stamped on each line.
+    Proportional conversion preserves month-split and largest-remainder amounts
+    exactly; it does not reprice an old plan from the newest catalogue.
     """
-    from apps.budget.models import ActivityCostSnapshot
+    from apps.budget.models import ActivityCostSnapshot, CostSetting
 
-    lines_by_activity: dict[str, list] = {}
-    for line in lines:
-        if _validate_line(line) != "Excluded":
-            lines_by_activity.setdefault(line.activity_id, []).append(line)
-    snapshots = {
-        row["activity_id"]: row
-        for row in ActivityCostSnapshot.objects.filter(
-            activity_id__in=lines_by_activity,
-            is_current=True,
-        ).values(
-            "activity_id",
-            "reference_cost",
-            "operational_cost",
-            "reference_breakdown",
-            "operational_breakdown",
+    included = [line for line in lines if _validate_line(line) != "Excluded"]
+    catalogue_ids = {line.catalogue_id for line in included if line.catalogue_id}
+    country_rates = {
+        (row["catalogue_id"], row["key"]): int(row["unit_cost"])
+        for row in CostSetting.objects.filter(catalogue_id__in=catalogue_ids).values(
+            "catalogue_id", "key", "unit_cost"
         )
     }
+    legacy_snapshots = {
+        row["activity_id"]: row
+        for row in ActivityCostSnapshot.objects.filter(
+            activity_id__in={line.activity_id for line in included},
+            is_current=True,
+        ).values("activity_id", "reference_cost", "operational_cost")
+    }
     result = {}
-    for activity_id, activity_lines in lines_by_activity.items():
-        snapshot = snapshots.get(activity_id)
-        if snapshot is None or snapshot["reference_cost"] is None:
-            result.update({line.id: None for line in activity_lines})
+    for line in included:
+        if not line.catalogue_id:
+            result[line.id] = None
             continue
-
-        operational_total = int(snapshot["operational_cost"] or 0)
-        selected_operational = sum(int(line.amount or 0) for line in activity_lines)
-        if operational_total <= 0:
-            result.update({line.id: 0 for line in activity_lines})
-            continue
-
-        target_reference = round(
-            int(snapshot["reference_cost"]) * selected_operational / operational_total
-        )
-        reference_by_key = {
-            item.get("key"): int(item.get("amount") or 0)
-            for item in (snapshot["reference_breakdown"] or [])
-            if item.get("key")
-        }
-        operational_by_key = {
-            item.get("key"): int(item.get("amount") or 0)
-            for item in (snapshot["operational_breakdown"] or [])
-            if item.get("key")
-        }
-        for line in activity_lines:
-            key = line.cost_setting_key
-            component_operational = operational_by_key.get(key, 0)
-            if key in reference_by_key and component_operational > 0:
-                amount = round(
-                    reference_by_key[key]
-                    * int(line.amount or 0)
-                    / component_operational
+        base_key = (line.cost_setting_key or "").split("#", 1)[0]
+        country_rate = country_rates.get((line.catalogue_id, base_key))
+        if country_rate is None:
+            # Backward compatibility for old/imported lines whose catalogue
+            # id was stamped but whose historical component row is no longer
+            # present. A legacy dual snapshot is preferable to inventing a
+            # current rate; otherwise preserve the already-approved line.
+            snapshot = legacy_snapshots.get(line.activity_id)
+            if (
+                snapshot
+                and snapshot["reference_cost"] is not None
+                and int(snapshot["operational_cost"] or 0) > 0
+            ):
+                result[line.id] = round(
+                    int(line.amount or 0)
+                    * int(snapshot["reference_cost"])
+                    / int(snapshot["operational_cost"])
                 )
             else:
-                amount = (
-                    round(
-                        target_reference * int(line.amount or 0) / selected_operational
-                    )
-                    if selected_operational
-                    else 0
-                )
-            result[line.id] = amount
-
-        residual = target_reference - sum(
-            int(result[line.id] or 0) for line in activity_lines
-        )
-        if residual and activity_lines:
-            largest = max(activity_lines, key=lambda line: int(line.amount or 0))
-            result[largest.id] = int(result[largest.id] or 0) + residual
+                result[line.id] = int(line.amount or 0)
+            continue
+        minimum_rate = int(line.unit_cost or 0)
+        minimum_amount = int(line.amount or 0)
+        if minimum_rate > 0:
+            result[line.id] = round(minimum_amount * country_rate / minimum_rate)
+        else:
+            result[line.id] = country_rate * int(line.quantity or 0)
     return result
 
 
 def _apply_live_envelope(budget, source) -> dict:
-    """Refresh the governed full-ceiling country request.
+    """Refresh the governed full Country Operational Cost request.
 
-    Staff implementation authority remains the operational requirement.  The
-    CD submits the complete Regional Standard Funding Ceiling to the RVP, so
-    every positive difference is explicitly classified as undisbursed
-    strategic reserve rather than being omitted or presented as activity need.
+    Staff implementation authority remains the Minimum Viable Cost. The CD
+    submits the complete Country Operational Cost to the RVP, so every positive
+    difference is explicitly classified as undisbursed strategic reserve rather
+    than being omitted or presented as staff activity need.
     """
     envelope = _envelope_from_source(source)
     # The active admin lines are the source of truth. Some imports and repair
@@ -733,6 +689,8 @@ def get_country_monthly_budget(principal, filters=None):
     country_envelope = {
         "regionalStandardCeiling": int(budget.regional_standard_ceiling),
         "operationalActivityRequirement": int(budget.operational_activity_requirement),
+        "countryOperationalTotal": int(budget.regional_standard_ceiling),
+        "minimumViableTotal": int(budget.operational_activity_requirement),
         "maximumReserveCapacity": reserve_capacity,
         "strategicReserveRequested": int(budget.strategic_reserve_requested),
         "deferredAmount": int(budget.deferred_amount),
@@ -1374,7 +1332,7 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
     checks.extend(
         [
             {
-                "label": "Regional Standard Funding Cost configured for scheduled activities",
+                "label": "Country Operational Cost configured for scheduled activities",
                 "status": (
                     "warning"
                     if budget.reference_configuration_missing_count
@@ -1382,8 +1340,8 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 ),
                 "detail": (
                     f"{budget.reference_configuration_missing_count} activity(ies) "
-                    "do not yet have a regional-standard cost snapshot. Reserve "
-                    "capacity is provisional until regional finance completes the card."
+                    "do not yet have a Country Operational Cost source. Reserve "
+                    "capacity is unavailable until the CD completes the catalogue."
                     if budget.reference_configuration_missing_count
                     else ""
                 ),
@@ -1399,7 +1357,7 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 ),
             },
             {
-                "label": "Country envelope allocation balances to the regional ceiling",
+                "label": "Country envelope balances to Country Operational Cost",
                 # Missing reference configuration cannot balance truthfully; it
                 # remains a management warning, not fabricated benchmark money.
                 "status": (
@@ -1409,7 +1367,7 @@ def _integrity_checks(lines, admin_lines, budget, source=None):
                 ),
                 "detail": (
                     "Operational allocation, reserve and deferred amount must "
-                    "equal the Regional Standard Funding Ceiling."
+                    "equal the Country Operational Cost submitted to the RVP."
                     if not allocation_balances
                     else ""
                 ),
@@ -1615,6 +1573,10 @@ def get_submission_detail(principal, budget_id):
             "operationalActivityRequirement": int(
                 financial_record.operational_activity_requirement
             ),
+            "countryOperationalTotal": int(financial_record.regional_standard_ceiling),
+            "minimumViableTotal": int(
+                financial_record.operational_activity_requirement
+            ),
             "maximumReserveCapacity": reserve_capacity,
             "strategicReserveRequested": int(
                 financial_record.strategic_reserve_requested
@@ -1656,6 +1618,7 @@ def get_plan_sources(principal, filters=None):
     lines_by_activity: dict[str, list] = {}
     for line in lines:
         lines_by_activity.setdefault(line.activity_id, []).append(line)
+    country_by_line = _reference_amounts_for_lines(lines)
     budget = _get_or_create_budget(fy, month_num)
     rows = []
     for activity_id, activity_lines in lines_by_activity.items():
@@ -1663,20 +1626,18 @@ def get_plan_sources(principal, filters=None):
         a = li.activity
         operational = sum(int(line.amount or 0) for line in activity_lines)
         snapshot = snapshots.get(activity_id)
-        reference = None
-        if snapshot and snapshot.reference_cost is not None:
-            whole_operational = int(snapshot.operational_cost or 0)
-            reference = (
-                round(int(snapshot.reference_cost) * operational / whole_operational)
-                if whole_operational > 0
-                else int(snapshot.reference_cost)
-            )
+        country_amounts = [country_by_line.get(line.id) for line in activity_lines]
+        reference = (
+            None
+            if any(amount is None for amount in country_amounts)
+            else sum(int(amount or 0) for amount in country_amounts)
+        )
         difference = max(0, int(reference or 0) - operational)
-        if snapshot is None or snapshot.reference_cost is None:
-            viability = "Regional rate required"
-        elif snapshot.missing_configuration:
+        if reference is None:
+            viability = "Country operational cost required"
+        elif snapshot is not None and snapshot.missing_configuration:
             viability = "Cost review required"
-        elif snapshot.warnings:
+        elif snapshot is not None and snapshot.warnings:
             viability = "Review recommended"
         else:
             viability = "Viable"
@@ -1695,6 +1656,12 @@ def get_plan_sources(principal, filters=None):
                 "operational_cost_fmt": _ugx(operational),
                 "reference_cost": reference,
                 "reference_cost_fmt": _ugx(reference) if reference is not None else "—",
+                "minimum_viable_cost": operational,
+                "minimum_viable_cost_fmt": _ugx(operational),
+                "country_operational_cost": reference,
+                "country_operational_cost_fmt": (
+                    _ugx(reference) if reference is not None else "—"
+                ),
                 "difference": difference,
                 "difference_fmt": _ugx(difference),
                 "reserve_eligible": reference is not None and difference > 0,
@@ -1720,9 +1687,9 @@ def get_plan_sources(principal, filters=None):
 def set_envelope_allocation(principal, budget_id, reserve_amount):
     """Compatibility guard for the former editable reserve allocation.
 
-    The country now requests the full regional ceiling. Existing clients may
+    The country now requests the full Country Operational Cost. Existing clients may
     still post this action, but they cannot lower the amount presented to the
-    RVP or turn regional benchmark funding into staff operating authority.
+    RVP or turn the country-controlled difference into staff spending authority.
     """
     from django.db import transaction
 
@@ -1762,8 +1729,8 @@ def set_envelope_allocation(principal, budget_id, reserve_amount):
         )
         if requested != capacity:
             raise BadRequest(
-                "The country request must include the full Regional Standard "
-                f"Funding Ceiling. Strategic reserve is automatically {_ugx(capacity)}."
+                "The country request must include the full Country Operational "
+                f"Cost. Strategic reserve is automatically {_ugx(capacity)}."
             )
         previous = int(budget.strategic_reserve_requested or 0)
         budget.strategic_reserve_requested = requested
@@ -1968,6 +1935,8 @@ def _create_snapshot(principal, budget, source):
                 "unit_cost": _ugx(round(c["total"] / qty)) if qty else "—",
                 "total": _ugx(c["total"]),
                 "reference_total": _ugx(c["reference_total"]),
+                "minimum_viable_total": _ugx(c["total"]),
+                "country_operational_total": _ugx(c["reference_total"]),
             }
             row_total += c["total"]
             row_reference_total += c["reference_total"]
@@ -1982,6 +1951,14 @@ def _create_snapshot(principal, budget, source):
                     None if row["reference_missing"] else row_reference_total
                 ),
                 "reference_total_fmt": (
+                    "—" if row["reference_missing"] else _ugx(row_reference_total)
+                ),
+                "minimum_viable_total": row_total,
+                "minimum_viable_total_fmt": _ugx(row_total),
+                "country_operational_total": (
+                    None if row["reference_missing"] else row_reference_total
+                ),
+                "country_operational_total_fmt": (
                     "—" if row["reference_missing"] else _ugx(row_reference_total)
                 ),
                 "activity_count": len(row["activity_ids"]),
@@ -2013,6 +1990,12 @@ def _create_snapshot(principal, budget, source):
                 "operational_amount_fmt": _ugx(operational_amount),
                 "reference_amount": reference_amount,
                 "reference_amount_fmt": (
+                    _ugx(reference_amount) if reference_amount is not None else "—"
+                ),
+                "minimum_viable_amount": operational_amount,
+                "minimum_viable_amount_fmt": _ugx(operational_amount),
+                "country_operational_amount": reference_amount,
+                "country_operational_amount_fmt": (
                     _ugx(reference_amount) if reference_amount is not None else "—"
                 ),
                 "difference": (

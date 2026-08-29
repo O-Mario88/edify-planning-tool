@@ -1354,12 +1354,17 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(
             response, "partials/cost_settings/cost_setting_row.html"
         )
-        self.assertContains(response, 'name="unit_cost"')
+        self.assertContains(response, 'name="country_operational_cost"')
+        self.assertContains(response, 'name="minimum_viable_cost"')
 
         # 3. Post cost update
         response = self.client.post(
             f"/cost-settings/row/{breakfast_setting.key}",
-            {"unit_cost": "9,500", "reason": "Inflation adjustment"},
+            {
+                "country_operational_cost": "12,000",
+                "minimum_viable_cost": "9,500",
+                "reason": "Inflation adjustment",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
@@ -1368,7 +1373,8 @@ class FrontendViewsTestCase(TestCase):
 
         # Verify DB updated
         breakfast_setting.refresh_from_db()
-        self.assertEqual(breakfast_setting.unit_cost, 9500)
+        self.assertEqual(breakfast_setting.unit_cost, 12000)
+        self.assertEqual(breakfast_setting.approved_minimum, 9500)
         self.assertEqual(breakfast_setting.version, 2)
 
     def test_partner_assignment_and_scheduling_flow(self):

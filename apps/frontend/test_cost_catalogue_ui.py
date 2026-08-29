@@ -7,15 +7,13 @@ returns it. None of that reached the interface.
 
 Two consequences, both about the audit trail being real rather than nominal:
 
-* The edit drawer had no reason input, and the view falls back to the literal
-  string `"Updated via CD Dashboard"`. So every rate change ever made recorded
-  who and when but not **why** — the only part anyone asks about later.
+* The edit drawer requires the reason for changing the paired Country
+  Operational Cost and Minimum Viable Cost values.
 * The history was never rendered, so "what was this rate before, and who moved
   it" had no answer anywhere in the product.
 
-This rate is the input to every activity budget in the country, which is why
-the reason is required rather than optional. The fallback stays for API
-callers that post without one.
+The minimum viable rate is the input to every activity budget in the country,
+which is why the reason is required rather than optional.
 """
 
 from __future__ import annotations
@@ -25,6 +23,7 @@ from django.contrib.sessions.middleware import SessionMiddleware
 from django.http import Http404
 from django.test import RequestFactory, TestCase
 
+from apps.budget.costing_service import active_catalogue
 from apps.budget.models import CostSetting, CostSettingHistory
 from apps.budget.reference import CANONICAL_RATE_KEYS
 from apps.frontend.views.finance_views import cost_setting_row_view
@@ -43,10 +42,12 @@ class CostCatalogueRowUiTest(TestCase):
             active_role="CountryDirector",
             is_active=True,
         )
-        # post_migrate seeds the canonical register, so take the row that is
-        # already there rather than creating a second one — `key` is unique.
+        # post_migrate seeds the operational register; the CD adds the minimum
+        # viable value beside the full country cost through the row editor.
         cls.key = sorted(CANONICAL_RATE_KEYS)[0]
+        operational = active_catalogue()
         cls.setting, _ = CostSetting.objects.update_or_create(
+            catalogue=operational,
             key=cls.key,
             defaults={"label": "CC Rate", "unit_cost": 100_000, "version": 1},
         )
@@ -71,6 +72,13 @@ class CostCatalogueRowUiTest(TestCase):
         body = self._call(query="?mode=edit").content.decode()
         self.assertIn('name="reason"', body)
 
+    def test_the_cd_editor_exposes_both_governed_cost_columns(self):
+        body = self._call(query="?mode=edit").content.decode()
+        self.assertIn('name="country_operational_cost"', body)
+        self.assertIn('name="minimum_viable_cost"', body)
+        self.assertIn("Country Operational Cost", body)
+        self.assertIn("Minimal Viable Cost", body)
+
     def test_the_reason_is_required_not_optional(self):
         """A rate feeds every activity budget in the country."""
         body = self._call(query="?mode=edit").content.decode()
@@ -79,7 +87,12 @@ class CostCatalogueRowUiTest(TestCase):
 
     def test_a_supplied_reason_reaches_the_history_row(self):
         self._call(
-            "POST", data={"unit_cost": "120000", "reason": "Fuel price revision"}
+            "POST",
+            data={
+                "country_operational_cost": "160000",
+                "minimum_viable_cost": "120000",
+                "reason": "Fuel price revision",
+            },
         )
         row = CostSettingHistory.objects.filter(key=self.key).latest("changed_at")
         self.assertEqual(row.reason, "Fuel price revision")
@@ -89,11 +102,22 @@ class CostCatalogueRowUiTest(TestCase):
             "the boilerplate fallback must not win over a real reason",
         )
 
-    def test_the_change_itself_is_recorded_with_both_values(self):
-        self._call("POST", data={"unit_cost": "120000", "reason": "Fuel price"})
+    def test_the_change_records_country_cost_and_persists_minimum_viable(self):
+        self._call(
+            "POST",
+            data={
+                "country_operational_cost": "160000",
+                "minimum_viable_cost": "120000",
+                "reason": "Fuel price",
+            },
+        )
         row = CostSettingHistory.objects.filter(key=self.key).latest("changed_at")
         self.assertEqual(row.old_unit_cost, 100_000)
-        self.assertEqual(row.new_unit_cost, 120_000)
+        self.assertEqual(row.new_unit_cost, 160_000)
+        self.assertIsNone(row.old_approved_minimum)
+        self.assertEqual(row.new_approved_minimum, 120_000)
+        current = CostSetting.objects.get(catalogue=active_catalogue(), key=self.key)
+        self.assertEqual(current.approved_minimum, 120_000)
 
     # ── The history panel ────────────────────────────────────────────────────
 
@@ -103,14 +127,26 @@ class CostCatalogueRowUiTest(TestCase):
 
     def test_a_past_change_and_its_reason_are_visible(self):
         self._call(
-            "POST", data={"unit_cost": "120000", "reason": "Fuel price revision"}
+            "POST",
+            data={
+                "country_operational_cost": "160000",
+                "minimum_viable_cost": "120000",
+                "reason": "Fuel price revision",
+            },
         )
         body = self._call(query="?mode=edit").content.decode()
         self.assertIn("Fuel price revision", body)
 
     def test_the_actor_is_named_not_shown_as_an_id(self):
         """A user id in an audit table is not an answer to "who changed this"."""
-        self._call("POST", data={"unit_cost": "120000", "reason": "Fuel price"})
+        self._call(
+            "POST",
+            data={
+                "country_operational_cost": "160000",
+                "minimum_viable_cost": "120000",
+                "reason": "Fuel price",
+            },
+        )
         body = self._call(query="?mode=edit").content.decode()
         self.assertIn("CC Director", body)
         self.assertNotIn("cc-cd", body)

@@ -65,6 +65,7 @@ def list_cost_settings(principal, query: dict) -> dict:
             "key": c.key,
             "label": c.label,
             "unitCost": c.unit_cost,
+            "approvedMinimum": c.approved_minimum,
             "fy": c.fy,
             "version": c.version,
         }
@@ -105,6 +106,17 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         raise BadRequest("unitCost must be a whole UGX value.") from None
     if new_cost < 0:
         raise BadRequest("unitCost cannot be negative.")
+    minimum_supplied = "approvedMinimum" in data
+    new_minimum = data.get("approvedMinimum")
+    if minimum_supplied:
+        if new_minimum in (None, ""):
+            raise BadRequest("approvedMinimum is required.")
+        try:
+            new_minimum = int(str(new_minimum).replace(",", ""))
+        except (TypeError, ValueError):
+            raise BadRequest("approvedMinimum must be a whole UGX value.") from None
+        if new_minimum < 0:
+            raise BadRequest("approvedMinimum cannot be negative.")
     reason = str(data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("An adjustment reason is required for every rate change.")
@@ -122,17 +134,19 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     with transaction.atomic():
         catalogue = CostCatalogue.objects.select_for_update().get(id=catalogue.id)
         existing = CostSetting.objects.filter(key=key, catalogue=catalogue).first()
-        if (
-            existing is not None
-            and existing.approved_minimum is not None
-            and new_cost < int(existing.approved_minimum)
-        ):
+        effective_minimum = (
+            new_minimum
+            if minimum_supplied
+            else (existing.approved_minimum if existing is not None else None)
+        )
+        if effective_minimum is not None and new_cost < int(effective_minimum):
             raise BadRequest(
                 "The country operational rate is below the approved minimum "
                 "viable cost. Revise the activity scope, delivery method, or "
                 "rate before publishing."
             )
         old_cost = existing.unit_cost if existing else None
+        old_minimum = existing.approved_minimum if existing else None
         now = timezone.now()
         next_version = (
             CostCatalogue.objects.filter(
@@ -186,7 +200,9 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                     fy=next_catalogue.fy,
                     version=rate.version + 1 if is_target else rate.version,
                     unit=rate.unit,
-                    approved_minimum=rate.approved_minimum,
+                    approved_minimum=(
+                        effective_minimum if is_target else rate.approved_minimum
+                    ),
                     geographic_scope=rate.geographic_scope,
                     costing_profile_scope=rate.costing_profile_scope,
                     created_by=principal.user_id,
@@ -201,6 +217,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                     unit_cost=new_cost,
                     fy=next_catalogue.fy,
                     version=1,
+                    approved_minimum=effective_minimum,
                     created_by=principal.user_id,
                 )
             )
@@ -220,6 +237,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             existing.catalogue = next_catalogue
             existing.label = label
             existing.unit_cost = new_cost
+            existing.approved_minimum = effective_minimum
             existing.fy = next_catalogue.fy
             existing.version += 1
             existing.created_by = principal.user_id
@@ -237,6 +255,8 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             label=label,
             old_unit_cost=old_cost,
             new_unit_cost=new_cost,
+            old_approved_minimum=old_minimum,
+            new_approved_minimum=effective_minimum,
             version=setting.version,
             fy=next_catalogue.fy,
             changed_by_user_id=principal.user_id,
@@ -256,6 +276,8 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                 "changedKey": key,
                 "oldUnitCost": old_cost,
                 "newUnitCost": new_cost,
+                "oldApprovedMinimum": old_minimum,
+                "newApprovedMinimum": effective_minimum,
             },
             required=True,
         )
@@ -264,8 +286,78 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         "key": setting.key,
         "label": setting.label,
         "unitCost": setting.unit_cost,
+        "approvedMinimum": setting.approved_minimum,
         "fy": setting.fy,
         "version": setting.version,
+    }
+
+
+def upsert_cd_cost_catalogue_pair(data: dict, principal) -> dict:
+    """Publish the CD's two governed values for one catalogue component.
+
+    ``countryOperationalCost`` is the CD's full internal implementation cost.
+    ``minimumViableCost`` is the controlled in-country amount that the costing
+    engine exposes to staff and writes into activity budget lines. Both values
+    live on one versioned operational rate-card row, so they publish together.
+    """
+    if getattr(principal, "active_role", None) != "CountryDirector":
+        raise Forbidden("Only the Country Director may edit these cost values.")
+
+    key = data.get("key")
+    if not key:
+        raise BadRequest("key is required.")
+    if key not in CANONICAL_RATE_KEYS:
+        raise BadRequest(
+            "Unknown cost item. Cost settings must be registered in the "
+            "canonical Cost Catalogue before they can be edited."
+        )
+
+    def _whole_ugx(field: str, label: str) -> int:
+        raw = data.get(field)
+        if raw in (None, ""):
+            raise BadRequest(f"{label} is required.")
+        try:
+            amount = int(str(raw).replace(",", ""))
+        except (TypeError, ValueError):
+            raise BadRequest(f"{label} must be a whole UGX value.") from None
+        if amount < 0:
+            raise BadRequest(f"{label} cannot be negative.")
+        return amount
+
+    country_operational = _whole_ugx(
+        "countryOperationalCost", "Country Operational Cost"
+    )
+    minimum_viable = _whole_ugx("minimumViableCost", "Minimal Viable Cost")
+    if minimum_viable > country_operational:
+        raise BadRequest(
+            "Minimal Viable Cost cannot exceed the Country Operational Cost."
+        )
+
+    reason = str(data.get("reason") or "").strip()
+    if len(reason) < 5:
+        raise BadRequest(
+            "A reason of at least 5 characters is required for every cost change."
+        )
+
+    fy = str(data.get("fy") or get_operational_fy())
+    label = data.get("label") or key.replace("_", " ").title()
+
+    operational = upsert_cost_setting(
+        {
+            "key": key,
+            "label": label,
+            "unitCost": country_operational,
+            "approvedMinimum": minimum_viable,
+            "reason": reason,
+            "fy": fy,
+        },
+        principal,
+    )
+
+    return {
+        **operational,
+        "countryOperationalCost": country_operational,
+        "minimumViableCost": minimum_viable,
     }
 
 
@@ -277,6 +369,8 @@ def cost_setting_history(key: str, principal) -> list[dict]:
             "label": h.label,
             "oldUnitCost": h.old_unit_cost,
             "newUnitCost": h.new_unit_cost,
+            "oldApprovedMinimum": h.old_approved_minimum,
+            "newApprovedMinimum": h.new_approved_minimum,
             "version": h.version,
             "fy": h.fy,
             "changedByUserId": h.changed_by_user_id,

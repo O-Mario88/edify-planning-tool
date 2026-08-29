@@ -6,24 +6,40 @@
 {{ c.label }}
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
-<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle">
-{% if c.reference_unit_cost is not None %}UGX {{ c.reference_unit_cost|currency }}{% else %}—{% endif %}
-</td>
 <td class="px-4 py-3 align-middle" colspan="3">
 <form hx-post="/cost-settings/row/{{ c.key }}" hx-target="#cost-setting-row-{{ c.key }}" hx-swap="outerHTML" class="m-0 space-y-2">
 {% csrf_token %}
-<div class="flex flex-wrap items-center gap-2">
-<div class="relative rounded-surface shadow-sm max-w-[155px]">
-<div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
-<span class="edify-text-caption font-bold text-slate-400">UGX</span>
-</div>
-<input aria-label="Unit cost"
+<div class="grid gap-2 sm:grid-cols-2">
+<label class="block">
+<span class="mb-1 block edify-text-caption font-bold text-slate-600">Country Operational Cost</span>
+<span class="relative block rounded-surface shadow-sm">
+<span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none edify-text-caption font-bold text-slate-400">UGX</span>
+<input aria-label="Country Operational Cost"
 type="text"
-name="unit_cost"
+inputmode="numeric"
+name="country_operational_cost"
 value="{{ c.unit_cost }}"
 required
-class="block w-full h-8 pl-9 pr-2 rounded-control border edify-primary-border text-[12px] font-semibold edify-primary-text focus:outline-none focus:ring-1 edify-primary-focus edify-primary-focus"
+class="block w-full h-9 pl-9 pr-2 rounded-control border edify-primary-border text-[12px] font-semibold text-slate-700 focus:outline-none focus:ring-1 edify-primary-focus"
 >
+</span>
+<span class="mt-1 block text-[10px] leading-4 text-slate-500">Full internal country cost retained for CD financial control.</span>
+</label>
+<label class="block">
+<span class="mb-1 block edify-text-caption font-bold text-slate-600">Minimal Viable Cost</span>
+<span class="relative block rounded-surface shadow-sm">
+<span class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none edify-text-caption font-bold text-slate-400">UGX</span>
+<input aria-label="Minimal Viable Cost"
+type="text"
+inputmode="numeric"
+name="minimum_viable_cost"
+value="{% if c.approved_minimum is not None %}{{ c.approved_minimum }}{% endif %}"
+required
+class="block w-full h-9 pl-9 pr-2 rounded-control border edify-primary-border text-[12px] font-semibold edify-primary-text focus:outline-none focus:ring-1 edify-primary-focus"
+>
+</span>
+<span class="mt-1 block text-[10px] leading-4 text-slate-500">Staff-visible rate used automatically in plans, budgets and fund requests.</span>
+</label>
 </div>
 {% comment %}
 Required, and deliberately so. This rate is an input to every activity budget
@@ -31,6 +47,7 @@ in the country; the history row already captured who and when, and without
 this it recorded the reason as the literal string "Updated via CD Dashboard"
 for every change ever made.
 {% endcomment %}
+<div class="flex flex-wrap items-center gap-2">
 <input aria-label="Reason for this rate change"
 type="text"
 name="reason"
@@ -62,7 +79,7 @@ it before and why did it move", had no answer in the interface.
 {% endcomment %}
 <details class="rounded-control border border-slate-200 bg-slate-50/60" {% if history %}open{% endif %}>
 <summary class="cursor-pointer px-2.5 py-1.5 edify-text-caption font-bold text-slate-600">
-Change history{% if history %} · {{ history|length }}{% endif %}
+Change history · Country operational{% if history %} · {{ history|length }}{% endif %}
 </summary>
 {% if history %}
 <div class="max-h-48 overflow-y-auto px-2.5 pb-2">
@@ -70,7 +87,8 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 <thead>
 <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 text-left">
 <th class="py-1 pr-2 font-bold">When</th>
-<th class="py-1 pr-2 font-bold">Change</th>
+<th class="py-1 pr-2 font-bold">Country operational change</th>
+<th class="py-1 pr-2 font-bold">Minimum viable change</th>
 <th class="py-1 pr-2 font-bold">By</th>
 <th class="py-1 font-bold">Reason</th>
 </tr>
@@ -82,6 +100,10 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 <td class="py-1 pr-2 tabular-nums font-semibold text-slate-700 whitespace-nowrap">
 {% if h.oldUnitCost is not None %}{{ h.oldUnitCost|currency }} →{% endif %} {{ h.newUnitCost|currency }}
 <span class="text-slate-400 font-medium">v{{ h.version }}</span>
+</td>
+<td class="py-1 pr-2 tabular-nums font-semibold text-slate-700 whitespace-nowrap">
+{% if h.oldApprovedMinimum is not None %}{{ h.oldApprovedMinimum|currency }} →{% endif %}
+{% if h.newApprovedMinimum is not None %}{{ h.newApprovedMinimum|currency }}{% else %}Not set{% endif %}
 </td>
 <td class="py-1 pr-2 text-slate-500">{{ h.changedByName|default:"—" }}</td>
 <td class="py-1 font-medium text-slate-600">{{ h.reason|default:"—" }}</td>
@@ -107,14 +129,11 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 The rate is the reason this page exists and it was the column that fell off a
 phone screen — labelled explicitly so it can never read as a bare number.
 {% endcomment %}
-<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle" data-label="Regional standard">
-{% if c.reference_unit_cost is not None %}UGX {{ c.reference_unit_cost|currency }}{% else %}—{% endif %}
-</td>
-<td class="px-4 py-3 text-right font-semibold edify-primary-text align-middle" data-label="Country operational">
+<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle" data-label="Country operational cost">
 UGX {{ c.unit_cost|currency }}
 </td>
-<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle" data-label="Minimum viable">
-{% if c.approved_minimum is not None %}UGX {{ c.approved_minimum|currency }}{% else %}<span title="No approved minimum; management warning rules apply">Not set</span>{% endif %}
+<td class="px-4 py-3 text-right font-semibold edify-primary-text align-middle" data-label="Minimum viable cost">
+{% if c.approved_minimum is not None %}UGX {{ c.approved_minimum|currency }}{% else %}<span title="The CD must configure this value before the controlled rate can take effect">Not set</span>{% endif %}
 </td>
 <td class="px-4 py-3 text-right align-middle" data-record-action>
 {% if can_manage_rates %}

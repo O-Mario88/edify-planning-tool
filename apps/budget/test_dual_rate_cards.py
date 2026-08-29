@@ -18,7 +18,7 @@ from apps.budget.models import (
     StrategicReserveStatus,
 )
 from apps.core.fy import get_operational_fy
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.rbac import EdifyRole, permissions_for_role
 
 
@@ -227,6 +227,101 @@ class DualRateCardSecurityTest(APITestCase):
         self.assertNotEqual(new_card.id, old_card.id)
         self.assertGreater(new_card.version, old_card.version)
         self.assertEqual(result["unitCost"], old_amount + 500)
+
+    def test_cd_can_publish_country_and_minimum_viable_values_together(self):
+        key = "primary_lunch_per_day"
+        principal = SimpleNamespace(
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            user_id=self.cd.id,
+        )
+
+        result = services.upsert_cd_cost_catalogue_pair(
+            {
+                "key": key,
+                "label": "Primary district daily lunch pool",
+                "countryOperationalCost": 22_000,
+                "minimumViableCost": 12_000,
+                "fy": self.fy,
+                "reason": "Country implementation review",
+            },
+            principal,
+        )
+
+        card = active_catalogue(self.fy)
+        line = CostSetting.objects.get(catalogue=card, key=key)
+        self.assertEqual(line.unit_cost, 22_000)
+        self.assertEqual(line.approved_minimum, 12_000)
+        self.assertEqual(result["countryOperationalCost"], 22_000)
+        self.assertEqual(result["minimumViableCost"], 12_000)
+
+    def test_staff_planning_preview_uses_only_the_minimum_viable_value(self):
+        principal = SimpleNamespace(
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            user_id=self.cd.id,
+        )
+        services.upsert_cd_cost_catalogue_pair(
+            {
+                "key": "primary_lunch_per_day",
+                "label": "Primary district daily lunch pool",
+                "countryOperationalCost": 22_000,
+                "minimumViableCost": 12_000,
+                "fy": self.fy,
+                "reason": "Country implementation review",
+            },
+            principal,
+        )
+
+        preview = services.cost_preview(
+            {"activityType": "school_visit", "districtType": "primary"},
+            self.cceo,
+        )
+        lunch = next(
+            line for line in preview["lines"] if line["key"] == "primary_lunch_per_day"
+        )
+        self.assertEqual(lunch["amount"], 12_000)
+        self.assertNotIn("referenceCost", preview)
+
+    def test_minimum_viable_cost_cannot_exceed_country_operational_cost(self):
+        principal = SimpleNamespace(
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            user_id=self.cd.id,
+        )
+        operational_id = active_catalogue(self.fy).id
+        card_count = CostCatalogue.objects.count()
+
+        with self.assertRaisesMessage(
+            BadRequest, "cannot exceed the Country Operational Cost"
+        ):
+            services.upsert_cd_cost_catalogue_pair(
+                {
+                    "key": "primary_lunch_per_day",
+                    "countryOperationalCost": 10_000,
+                    "minimumViableCost": 12_000,
+                    "fy": self.fy,
+                    "reason": "Invalid country review",
+                },
+                principal,
+            )
+
+        self.assertEqual(active_catalogue(self.fy).id, operational_id)
+        self.assertEqual(CostCatalogue.objects.count(), card_count)
+
+    def test_field_staff_cannot_edit_the_two_management_cost_values(self):
+        principal = SimpleNamespace(
+            active_role=EdifyRole.CCEO.value,
+            user_id=self.cceo.id,
+        )
+        with self.assertRaises(Forbidden):
+            services.upsert_cd_cost_catalogue_pair(
+                {
+                    "key": "primary_lunch_per_day",
+                    "countryOperationalCost": 22_000,
+                    "minimumViableCost": 12_000,
+                    "fy": self.fy,
+                    "reason": "Unauthorized field change",
+                },
+                principal,
+            )
 
     def test_cd_dashboard_rate_edit_respects_approved_minimum(self):
         card = active_catalogue(self.fy)

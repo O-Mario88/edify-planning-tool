@@ -84,7 +84,15 @@ def _rate_card(
             key__in=CANONICAL_RATE_KEYS,
         )
     }
-    rates = {key: s.unit_cost for key, s in settings.items()}
+    # The CD records the full Country Operational Cost and the lower approved
+    # Minimum Viable Cost on the same governed row. Staff planning, executable
+    # budgets and fund requests use the minimum viable value; older rows that
+    # predate this control safely fall back to their operational cost until the
+    # CD configures a minimum.
+    rates = {
+        key: (s.approved_minimum if s.approved_minimum is not None else s.unit_cost)
+        for key, s in settings.items()
+    }
     return rates, settings
 
 

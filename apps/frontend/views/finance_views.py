@@ -608,20 +608,6 @@ def cost_settings_view(request):
                 key__in=CANONICAL_RATE_KEYS,
             ).order_by("label")
         )
-        reference_by_key = {}
-        if reference_catalogue:
-            reference_by_key = {
-                line.key: line
-                for line in CostSetting.objects.filter(
-                    catalogue=reference_catalogue,
-                    key__in=CANONICAL_RATE_KEYS,
-                )
-            }
-        for item in cost_items:
-            reference_line = reference_by_key.get(item.key)
-            item.reference_unit_cost = (
-                reference_line.unit_cost if reference_line is not None else None
-            )
 
     governed_activities = list(
         effective_items()
@@ -1008,10 +994,11 @@ def export_drawer_view(request):
 def cost_setting_row_view(request, key):
     from django.shortcuts import get_object_or_404
     from django.http import HttpResponse
-    from apps.budget.models import CostSetting, RateCardKind
+    from apps.budget.models import CostSetting
     from apps.budget import services as budget_services
     from apps.budget.costing_service import active_catalogue
     from apps.budget.reference import CANONICAL_RATE_KEYS
+    from apps.core.exceptions import BadRequest
 
     if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
@@ -1030,19 +1017,16 @@ def cost_setting_row_view(request, key):
     mode = request.GET.get("mode", "view")
 
     if request.method == "POST":
-        new_cost_str = request.POST.get("unit_cost", "").strip()
-        # The drawer had no reason input, so every rate change in the audit
-        # trail read "Updated via CD Dashboard" — a history row that records
-        # who and when but not why, which is the only part anyone asks about
-        # six months later. The fallback stays for API callers that omit it.
-        reason = request.POST.get("reason", "").strip() or "Updated via CD Dashboard"
+        country_operational = request.POST.get("country_operational_cost", "").strip()
+        minimum_viable = request.POST.get("minimum_viable_cost", "").strip()
+        reason = request.POST.get("reason", "").strip()
         try:
-            new_cost = int(new_cost_str.replace(",", ""))
-            budget_services.upsert_cost_setting(
+            budget_services.upsert_cd_cost_catalogue_pair(
                 {
                     "key": setting.key,
                     "label": setting.label,
-                    "unitCost": new_cost,
+                    "countryOperationalCost": country_operational,
+                    "minimumViableCost": minimum_viable,
                     "reason": reason,
                     "fy": setting.fy,
                 },
@@ -1051,8 +1035,8 @@ def cost_setting_row_view(request, key):
             catalogue = active_catalogue()
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
-        except ValueError:
-            return HttpResponse("Invalid cost value", status=400)
+        except (ValueError, BadRequest) as exc:
+            return HttpResponse(str(exc), status=400)
 
     # `cost_setting_history` has existed since the register was built and was
     # never surfaced anywhere. A rate is the input to every activity budget in
@@ -1071,15 +1055,6 @@ def cost_setting_row_view(request, key):
             )
             for row in history:
                 row["changedByName"] = names.get(row.get("changedByUserId"))
-
-    reference_catalogue = active_catalogue(setting.fy, kind=RateCardKind.REFERENCE)
-    setting.reference_unit_cost = None
-    if reference_catalogue is not None:
-        setting.reference_unit_cost = (
-            CostSetting.objects.filter(catalogue=reference_catalogue, key=key)
-            .values_list("unit_cost", flat=True)
-            .first()
-        )
 
     context = {
         "c": setting,

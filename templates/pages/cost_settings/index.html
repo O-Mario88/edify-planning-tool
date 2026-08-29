@@ -11,7 +11,7 @@
 <div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Finance</p>
 <h1 class="edify-page-title edify-page-header__title">Cost Catalogue</h1>
-<p class="edify-page-header__description">FY{{ fy }} approved cost items for activity budgeting</p>
+<p class="edify-page-header__description">FY{{ fy }} country operational and minimal viable costs governed by the Country Director</p>
 </div>
 </div>
 
@@ -24,7 +24,7 @@
       <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Rate Card · v{{ reference_catalogue.version }}</p>
       {% else %}
       <p class="mt-2 text-[14px] font-extrabold text-amber-800">Configuration Required</p>
-      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Rate Card has not been configured. No values were copied from country operational rates.</p>
+      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Rate Card has not been configured. No values were copied from country costs.</p>
       {% endif %}
     {% else %}
       <p class="mt-2 text-[14px] font-extrabold text-[var(--edify-text)]">Restricted management layer</p>
@@ -33,9 +33,9 @@
   </article>
 
   <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-    <p class="edify-page-eyebrow">Country operational costing</p>
+    <p class="edify-page-eyebrow">Country cost control</p>
     <p class="mt-2 text-[20px] font-extrabold text-[var(--edify-text)]">{% if active_catalogue %}v{{ active_catalogue.version }}{% else %}Not configured{% endif %}</p>
-    <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Authoritative source for activity lines, executable budgets and fund requests.</p>
+    <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Minimal Viable Cost drives staff plans; Country Operational Cost is retained for the RVP approval request.</p>
   </article>
 
   <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
@@ -65,7 +65,7 @@
   <h2 id="cost-comparison-title" class="text-[16px] font-extrabold text-[var(--edify-text)]">Cost comparison intelligence</h2>
   <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
     <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Cost</p><p class="font-extrabold">UGX {{ reference_total|currency }}</p></div>
-    <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Country Operational Cost</p><p class="font-extrabold">UGX {{ operational_total|currency }}</p></div>
+    <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Minimal Viable Cost</p><p class="font-extrabold">UGX {{ operational_total|currency }}</p></div>
     <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Country-Controlled Difference</p><p class="font-extrabold">UGX {{ potential_cost_avoidance|currency }}</p><p class="edify-text-caption text-amber-700">Reserve capacity, not staff entitlement</p></div>
     <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Operational premium</p><p class="font-extrabold">UGX {{ operational_premium|currency }}</p></div>
   </div>
@@ -101,7 +101,7 @@
 <div class="bg-emerald-50 border border-emerald-200 rounded-surface p-4 flex items-center gap-3">
 <span class="text-[20px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg></span>
 <div>
-<p class="text-[14px] font-semibold text-emerald-800">Published Country Operational Rate Card: {{ active_catalogue }}</p>
+<p class="text-[14px] font-semibold text-emerald-800">Published Country Cost Catalogue: {{ active_catalogue }}</p>
 <p class="edify-text-caption text-emerald-600">Version {{ active_catalogue.version }} · {{ cost_items|length }} reusable rates · {{ governed_activity_count }} governed activities covered</p>
 </div>
 </div>
@@ -114,9 +114,8 @@
 <thead>
 <tr>
 <th>Item</th>
-<th class="text-right">Regional standard (UGX)</th>
-<th class="text-right">Country operational (UGX)</th>
-<th class="text-right">Minimum viable (UGX)</th>
+<th class="text-right">Country Operational Cost</th>
+<th class="text-right">Minimal Viable Cost</th>
 <th></th>
 </tr>
 </thead>

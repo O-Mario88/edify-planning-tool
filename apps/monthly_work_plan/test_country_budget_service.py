@@ -14,7 +14,14 @@ from django.utils import timezone
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.audit.models import AuditLog
-from apps.budget.models import ActivityCostSnapshot, CountryStrategicActivityReserve
+from apps.budget.models import (
+    ActivityCostSnapshot,
+    CostCatalogue,
+    CostSetting,
+    CountryStrategicActivityReserve,
+    RateCardKind,
+    RateCardStatus,
+)
 from apps.command_center.todo_service import get_todos
 from apps.core.enums import ActivityType
 from apps.core.exceptions import BadRequest, Forbidden
@@ -135,13 +142,15 @@ class CountryMonthlyBudgetTest(TestCase):
         month=MONTH,
         catalogue_id="cat-v1",
         responsible_user=None,
+        quantity=1,
+        unit_cost=None,
     ):
         return ActivityScheduleCostLine.objects.create(
             activity=activity,
             cost_setting_key="transport_allowance",
             label="Transport",
-            unit_cost=amount,
-            quantity=1,
+            unit_cost=amount if unit_cost is None else unit_cost,
+            quantity=quantity,
             amount=amount,
             month=month,
             fiscal_year=FY,
@@ -329,7 +338,9 @@ class CountryMonthlyBudgetTest(TestCase):
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         self.assertTrue(ctx["can_send_to_rvp"])
 
-    def test_full_reference_ceiling_is_submitted_with_difference_as_reserve(self):
+    def test_full_country_operational_cost_is_submitted_with_difference_as_reserve(
+        self,
+    ):
         ActivityCostSnapshot.objects.create(
             activity=self.act1,
             operational_cost=100_000,
@@ -343,6 +354,9 @@ class CountryMonthlyBudgetTest(TestCase):
             calculated_at=timezone.now(),
         )
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
+        self.assertEqual(ctx["country_envelope"]["countryOperationalTotal"], 400_000)
+        self.assertEqual(ctx["country_envelope"]["minimumViableTotal"], 300_000)
+        # Legacy storage aliases remain stable during the field-name migration.
         self.assertEqual(ctx["country_envelope"]["regionalStandardCeiling"], 400_000)
         self.assertEqual(
             ctx["country_envelope"]["operationalActivityRequirement"], 300_000
@@ -369,7 +383,7 @@ class CountryMonthlyBudgetTest(TestCase):
         self.assertEqual(reserve.available_balance, 100_000)
         self.assertEqual(reserve.status, "approved")
 
-    def test_cd_cannot_reduce_the_automatic_full_ceiling_request(self):
+    def test_cd_cannot_reduce_the_automatic_country_operational_request(self):
         ActivityCostSnapshot.objects.create(
             activity=self.act1,
             operational_cost=100_000,
@@ -383,7 +397,7 @@ class CountryMonthlyBudgetTest(TestCase):
             calculated_at=timezone.now(),
         )
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
-        with self.assertRaisesMessage(BadRequest, "full Regional Standard"):
+        with self.assertRaisesMessage(BadRequest, "full Country Operational"):
             svc.set_envelope_allocation(self.cd_p, ctx["budget_id"], 40_000)
 
     def test_training_uses_12000_for_staff_but_submits_22000_to_rvp(self):
@@ -401,12 +415,37 @@ class CountryMonthlyBudgetTest(TestCase):
         )
         training = self._activity(self.cceo.id, ActivityType.TRAINING, "staff")
         participant_count = 10
-        self._cost_line(training, 12_000 * participant_count)
-        ActivityCostSnapshot.objects.create(
-            activity=training,
-            operational_cost=12_000 * participant_count,
-            reference_cost=22_000 * participant_count,
-            calculated_at=timezone.now(),
+        catalogue = CostCatalogue.objects.filter(
+            country="Uganda",
+            fy=FY,
+            kind=RateCardKind.OPERATIONAL,
+            is_active=True,
+        ).first()
+        if catalogue is None:
+            catalogue = CostCatalogue.objects.create(
+                country="Uganda",
+                fy=FY,
+                kind=RateCardKind.OPERATIONAL,
+                status=RateCardStatus.PUBLISHED,
+                is_active=True,
+                version=1,
+            )
+        CostSetting.objects.update_or_create(
+            catalogue=catalogue,
+            key="transport_allowance",
+            defaults={
+                "label": "Training participant allowance",
+                "unit_cost": 22_000,
+                "approved_minimum": 12_000,
+                "fy": FY,
+            },
+        )
+        self._cost_line(
+            training,
+            12_000 * participant_count,
+            catalogue_id=catalogue.id,
+            quantity=participant_count,
+            unit_cost=12_000,
         )
 
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
@@ -417,8 +456,10 @@ class CountryMonthlyBudgetTest(TestCase):
             ]
             if row["activity_id"] == training.id
         )
-        self.assertEqual(training_row["operational_cost"], 120_000)
-        self.assertEqual(training_row["reference_cost"], 220_000)
+        self.assertEqual(training_row["minimum_viable_cost"], 120_000)
+        self.assertEqual(training_row["country_operational_cost"], 220_000)
+        self.assertEqual(ctx["country_envelope"]["minimumViableTotal"], 420_000)
+        self.assertEqual(ctx["country_envelope"]["countryOperationalTotal"], 520_000)
         self.assertEqual(ctx["country_envelope"]["strategicReserveRequested"], 100_000)
         self.assertEqual(ctx["country_envelope"]["totalCountryRequest"], 520_000)
 
@@ -430,6 +471,9 @@ class CountryMonthlyBudgetTest(TestCase):
         training_line = next(
             item for item in snapshot.line_items if item["activity_id"] == training.id
         )
+        self.assertEqual(training_line["minimum_viable_amount"], 120_000)
+        self.assertEqual(training_line["country_operational_amount"], 220_000)
+        # Compatibility keys are retained for previously stored submissions.
         self.assertEqual(training_line["operational_amount"], 120_000)
         self.assertEqual(training_line["reference_amount"], 220_000)
         self.assertEqual(training_line["difference"], 100_000)

@@ -28,16 +28,16 @@
   <section class="rounded-surface border border-slate-200 edify-surface shadow-sm" aria-labelledby="submitted-envelope-heading">
     <div class="border-b border-slate-100 px-4 py-3">
       <h2 id="submitted-envelope-heading" class="text-[15px] font-bold text-slate-800">Approved country envelope breakdown</h2>
-      <p class="mt-0.5 text-[12px] font-medium text-slate-500">Frozen with submission version {{ version }}. The full regional ceiling is submitted; only the operational allocation is staff spending authority.</p>
+      <p class="mt-0.5 text-[12px] font-medium text-slate-500">Frozen with submission version {{ version }}. The RVP approves the full Country Operational Cost; Minimal Viable Cost remains the staff planning authority.</p>
     </div>
     <div class="overflow-x-auto">
       <table class="w-full min-w-[620px] border-collapse text-left text-[12px]">
         <caption class="sr-only">Frozen country envelope funding layers</caption>
         <thead class="bg-slate-50/70"><tr><th scope="col" class="px-4 py-2.5 font-bold text-slate-500">Funding layer</th><th scope="col" class="px-4 py-2.5 text-right font-bold text-slate-500">Amount</th></tr></thead>
         <tbody class="divide-y divide-slate-100">
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Regional Standard Funding Ceiling</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.regionalStandardCeiling|ugx }}</td></tr>
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Operational Activity Allocation</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.operationalActivityRequirement|ugx }}</td></tr>
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Automatic Strategic Reserve</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.strategicReserveRequested|ugx }}</td></tr>
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Country Operational Cost</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.countryOperationalTotal|ugx }}</td></tr>
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Minimal Viable Cost</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.minimumViableTotal|ugx }}</td></tr>
+          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Country-Controlled Difference</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.strategicReserveRequested|ugx }}</td></tr>
           <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Unrequested / Deferred Amount</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.deferredAmount|ugx }}</td></tr>
           {% if country_envelope.approvedFixedCommitments %}<tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Administrative Fixed Commitments</th><td class="px-4 py-2.5 text-right font-bold tabular-nums">{{ country_envelope.approvedFixedCommitments|ugx }}</td></tr>{% endif %}
           {% if country_envelope.countryFundingShortfall %}<tr class="bg-rose-50"><th scope="row" class="px-4 py-2.5 font-semibold text-rose-800">Country Funding Shortfall</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-rose-800">{{ country_envelope.countryFundingShortfall|ugx }}</td></tr>{% endif %}
@@ -66,15 +66,15 @@
   {% if staff_rows %}
   <section class="rounded-surface border border-slate-200 edify-surface p-4 shadow-sm">
     <h2 class="text-[15px] font-bold text-slate-800">Planned activity breakdown (snapshot)</h2>
-    <p class="mt-0.5 text-[12px] font-medium text-slate-500">Regional Standard Funding leads the RVP request; Country Operational is the amount payable for implementation.</p>
+    <p class="mt-0.5 text-[12px] font-medium text-slate-500">Country Operational Cost leads the RVP request; Minimal Viable Cost is the amount staff saw when planning.</p>
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
       <table class="min-w-[760px] w-full border-collapse text-left text-[12px]">
         <thead>
           <tr class="font-bold">
             <th class="px-4 py-3 edify-primary-solid edify-primary-on-solid">Staff</th>
             <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">Activities</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Regional Standard Funding</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Country Operational</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Country Operational Cost</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Minimal Viable Cost</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
@@ -82,8 +82,8 @@
           <tr>
             <td class="px-4 py-3 font-semibold text-slate-800">{{ row.name }}</td>
             <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{{ row.activity_count }}</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.reference_total_fmt }}</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{{ row.total_fmt }}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{% firstof row.country_operational_total_fmt row.reference_total_fmt "—" %}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{% firstof row.minimum_viable_total_fmt row.total_fmt "—" %}</td>
           </tr>
           {% endfor %}
         </tbody>
@@ -95,7 +95,7 @@
   {% if line_items %}
   <section class="rounded-surface border border-slate-200 edify-surface p-4 shadow-sm">
     <h2 class="text-[15px] font-bold text-slate-800">Line items (snapshot)</h2>
-    <p class="mt-0.5 text-[12px] font-medium text-slate-500">The same governed plan inputs costed through both rate cards.</p>
+    <p class="mt-0.5 text-[12px] font-medium text-slate-500">The same governed plan inputs converted from Minimal Viable Cost to Country Operational Cost.</p>
     <div class="mt-3 overflow-x-auto rounded-control border border-slate-200">
       <table class="min-w-[820px] w-full border-collapse text-left text-[12px]">
         <thead>
@@ -105,9 +105,9 @@
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Staff</th>
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">School</th>
             <th class="px-3 py-3 edify-primary-solid edify-primary-on-solid">Planned date</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Regional Standard Funding</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Country Operational</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Reserve Difference</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Country Operational Cost</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Minimal Viable Cost</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Country-Controlled Difference</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-slate-200">
@@ -118,8 +118,8 @@
             <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.school|default:"—" }}</td>
             <td class="px-3 py-3 text-slate-500">{{ item.planned_date|date:"j M Y" }}</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.reference_amount_fmt }}</td>
-            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{{ item.operational_amount_fmt }}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{% firstof item.country_operational_amount_fmt item.reference_amount_fmt "—" %}</td>
+            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{% firstof item.minimum_viable_amount_fmt item.operational_amount_fmt "—" %}</td>
             <td class="px-4 py-3 text-right font-bold tabular-nums text-amber-700">{{ item.difference_fmt }}</td>
           </tr>
           {% endfor %}

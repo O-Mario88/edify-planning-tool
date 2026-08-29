@@ -21,13 +21,13 @@
       <div class="overflow-x-auto">
       {% paginate rows "rows_page" as rows_pager %}
 <table class="min-w-[940px] w-full text-left border-collapse">
-        <caption class="sr-only">Regional standard and country operational cost comparison for scheduled activities</caption>
+        <caption class="sr-only">Country operational and minimum viable cost comparison for scheduled activities</caption>
         <thead class="sticky top-0 bg-slate-50/95 backdrop-blur">
           <tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100">
             <th class="px-4 py-2.5">Activity</th>
             <th class="px-3 py-2.5">Staff</th>
-            <th class="px-3 py-2.5 text-right">Regional Standard Funding Cost</th>
             <th class="px-3 py-2.5 text-right">Country Operational Cost</th>
+            <th class="px-3 py-2.5 text-right">Minimal Viable Cost</th>
             <th class="px-3 py-2.5 text-right">Country-Controlled Difference</th>
             <th class="px-3 py-2.5">Funding status</th>
             <th class="px-3 py-2.5">Operational viability</th>
@@ -41,8 +41,8 @@
               <p class="edify-text-caption font-semibold text-slate-400">{{ r.school }} · {{ r.planned_date|date:"M j, Y"|default:"—" }} · {{ r.delivery_type|title }}</p>
             </td>
             <td class="px-3 py-2.5 font-semibold text-slate-600">{{ r.staff }}</td>
-            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.reference_cost_fmt }}</td>
-            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.operational_cost_fmt }}</td>
+            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.country_operational_cost_fmt }}</td>
+            <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.minimum_viable_cost_fmt }}</td>
             <td class="px-3 py-2.5 text-right font-bold tabular-nums {% if r.reserve_eligible %}text-amber-700{% else %}text-slate-500{% endif %}">{{ r.difference_fmt }}<span class="mt-0.5 block edify-text-caption font-semibold">{% if r.reserve_eligible %}Reserve eligible{% else %}No capacity{% endif %}</span></td>
             <td class="px-3 py-2.5 font-semibold text-slate-600">{{ r.funding_status }}</td>
             <td class="px-3 py-2.5"><span class="inline-flex rounded-pill px-2 py-1 edify-text-caption font-bold {% if r.viability == 'Viable' %}bg-emerald-50 text-emerald-700{% else %}bg-amber-50 text-amber-800{% endif %}">{{ r.viability }}</span></td>
