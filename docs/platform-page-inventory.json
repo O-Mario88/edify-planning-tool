@@ -28242,7 +28242,7 @@
       "evidence": [
         "template:pages/documents/canonical_document.html",
         "template:pages/documents/viewer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:unmapped"
       ],
       "filters": "none",
@@ -28305,7 +28305,7 @@
         "pages/documents/canonical_document.html",
         "pages/documents/viewer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -76900,7 +76900,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 378,
-    "test_referenced": 530,
+    "test_referenced": 531,
     "theme_contract_pass": 378
   }
 }

@@ -15,7 +15,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Full pages: **203**
 - Partials and drawers: **172**
 - Permission-gated surfaces: **565**
-- Referenced by automated tests: **530**
+- Referenced by automated tests: **531**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -244,7 +244,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-66250CABB0 | /disbursements/drawer | Disbursements Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3E7346BCB9 | /districts | Districts | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A6FCE7EB16 | /districts/<str:district_id> | District | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-B49AB1186E | /documents/<slug:slug>/ | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-B49AB1186E | /documents/<slug:slug>/ | Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6A16EB2B5D | /documents/<slug:slug>/<str:action> | Document Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E27995BCBE | /documents/<slug:slug>/manage | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-80298B85DB | /documents/<slug:slug>/versions/new | New Document Version | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

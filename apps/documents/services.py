@@ -103,7 +103,28 @@ def audience_matches(document: DocumentAsset, user) -> bool:
 
     Rules union: matching any one rule is enough. Within a rule, every field
     that is set must match — a rule saying "CCEO in Uganda" means both.
+
+    An unauthenticated caller is never in an audience. "Everyone" is written
+    as a present rule with no field set, and every one of the per-field checks
+    below is a `continue` on mismatch — so a rule constraining nothing fell
+    through to `return True` for whoever asked, including `AnonymousUser`.
+    The document routes are audience-gated rather than role-gated by design
+    and carry no `@require_page_permission`, and no middleware requires a
+    session, so that made every published document with an organisation-wide
+    audience readable and downloadable off the open internet. The seed
+    migration for the first-login agreements creates exactly that rule
+    (`DocumentAudienceRule.objects.create(document=document)`), and skips
+    under `IS_TESTING` — which is why no fixture ever had the shape that
+    would have shown it.
+
+    This is the canonical audience authority: `_readable_or_404`, the
+    engagement heartbeat, `readable_documents`, `targeted_users`, the Upload
+    Center and the policy gate all ask it. Requiring authentication here
+    closes them together, rather than in six places that can drift apart.
     """
+    if not getattr(user, "is_authenticated", False):
+        return False
+
     rules = list(document.audience_rules.all())
     if not rules:
         return False  # no audience means nobody, never everybody
