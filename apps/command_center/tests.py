@@ -14,7 +14,7 @@ fabricated numbers (no-mock-data rule). Covers:
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from apps.accounts.models import StaffProfile
 from apps.command_center.dashboard_service import DashboardMetricsService
@@ -26,6 +26,29 @@ User = get_user_model()
 
 def _kpi(items, label):
     return next((i for i in items if i["label"] == label), None)
+
+
+@override_settings(IS_TESTING=False)
+class DashboardSnapshotCacheTest(SimpleTestCase):
+    def test_a_cached_snapshot_is_private_to_the_user_role_fy_and_period(self):
+        user = type(
+            "Principal",
+            (),
+            {"id": "cache-user", "active_role": "Admin"},
+        )()
+        snapshot = {"kpis": {"ready": 7}}
+        with patch(
+            "apps.command_center.dashboard_service.cache.get",
+            return_value=snapshot,
+        ) as get:
+            self.assertIs(
+                DashboardMetricsService.get_dashboard_metrics(user, "month"),
+                snapshot,
+            )
+
+        key = get.call_args.args[0]
+        self.assertIn(":cache-user:Admin:", key)
+        self.assertTrue(key.endswith(":month"), key)
 
 
 class HonestFallbacksTest(TestCase):

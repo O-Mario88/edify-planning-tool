@@ -3,6 +3,8 @@ from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from collections import defaultdict
 from datetime import date, timedelta
 
+from django.conf import settings
+from django.core.cache import cache
 from django.db.models import Avg, Count, Q, Sum
 from django.utils import timezone
 
@@ -40,6 +42,17 @@ class DashboardMetricsService:
         fy = get_operational_fy()
         today = date.today()
         progress_period = normalise_period(progress_period)
+        cache_key = (
+            f"edify:dashboard-metrics:v1:{user.id}:"
+            f"{getattr(user, 'active_role', '')}:{fy}:{progress_period}"
+        )
+        if not getattr(settings, "IS_TESTING", False):
+            try:
+                cached = cache.get(cache_key)
+            except Exception:  # dashboard remains available during cache failure
+                cached = None
+            if isinstance(cached, dict):
+                return cached
 
         # Resolve scoping
         from apps.analytics.services import _scoped_schools
@@ -867,7 +880,7 @@ class DashboardMetricsService:
                 ),
             ]
 
-        return {
+        result = {
             "kpi_strip_items": kpi_items,
             "kpis": {
                 "ready": ready_count,
@@ -902,3 +915,9 @@ class DashboardMetricsService:
             "execution_summary": execution_summary,
             "upcoming_today": upcoming_today,
         }
+        if not getattr(settings, "IS_TESTING", False):
+            try:
+                cache.set(cache_key, result, timeout=5)
+            except Exception:  # database-backed result is still authoritative
+                pass
+        return result
