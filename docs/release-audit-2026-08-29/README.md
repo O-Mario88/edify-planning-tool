@@ -133,6 +133,7 @@ app close, and sync without duplicates. **Journey 20 cannot pass**, and §40's g
 | TGT-02 | P1 | Suite red on the 29th–31st of every month | test fixture window | property test over 5 months incl. leap day |
 | SEC-A2 | P2 | Superseded acknowledgement deep link answered 500 | `submit_acknowledgement_view` / `attest_offline_view` | `StaleDeepLinksAndSignedOutLandingTest` |
 | SEC-A3 | P3 | `/policy-agreement/restricted` answered 200 to signed-out callers | `restricted_view` | same |
+| SEC-A5 | coverage | Cross-MFI loan isolation was correct but unpinned — no test built a second tenant | test only, no behaviour change | `apps/business_transformation/test_mfi_tenancy_isolation.py` (3) |
 
 SEC-A4 was proven against the guard rather than inferred:
 
@@ -151,6 +152,7 @@ SEC-A4 was proven against the guard rather than inferred:
 | --- | --- | --- |
 | CONFLICT-003 | RVP also holds `milestones.define`. Mandate §18.1 says "RVP and Admin remain read-only for business values"; `apps/hr/priority_cascade.py` has the RVP authoring strategy. Two sources genuinely disagree. | §3 requires a conflict be registered and decided by the product owner, not resolved silently inside an audit fix. The Admin half had three sources agreeing and was fixed. |
 | OBS-1 | `Permission.STRATEGIC_PRIORITIES_EDIT` is granted to four roles and checked nowhere — it appears only in `rbac.py`. The real gate is `milestones.define`. | Gates nothing today. Latent: adding one decorator would hand RVP and Admin an authority nobody re-reviewed. Removing it deletes the scaffold for an approved extension (§4). Needs a decision, not a patch. |
+| OBS-3 | The mandate requires dashboard cards to equal their drill-down totals (§28). Target percentages are pinned hard — `test_target_formula_unification.py` reconciles the CD and PL surfaces with 1,000-case property tests — but `/analytics/drilldown` is covered for *rendering* correctness, not for numeric agreement with the card that links to it. | A general card↔drill-down reconciliation harness is a piece of work, not a patch: it needs a card-to-query mapping that does not exist yet. Recorded rather than half-built. |
 | OBS-2 | `permission_matrix` recognises only `page_permission` / `required_permissions`, so it reports 21 routes as "unguarded" that are in fact guarded by `_permission`, `_catalogue_permission`, `_require_permission`, `_manual_activity_permission` and `_require_export`. | **This is how SEC-A1 hid** — four genuinely open routes sat undistinguished among 184 false positives. The fix is small (have those five decorators also set `required_permissions`, the contract the matrix already reads) but it changes four checked-in artifacts, so under the §5 scope freeze it is recommended as the first post-release change rather than folded in here. |
 
 ---
@@ -242,6 +244,28 @@ Two caveats, so neither result is read as more than it is:
   only**. It does not exercise forms, workflow-state-specific actions or exports, so
   it does not close the mandate's journey gates.
 
+### 5b. Second pass — 2026-08-30
+
+Four domains the first pass left as Not Tested were probed against a live
+database, with real HTTP requests rather than by reading the scoping code.
+
+| Probe | Result |
+| --- | --- |
+| Cross-MFI loan isolation | **PASS.** Two tenants built: MFI A's admin sees only A's book, MFI B's only B's. A loan officer sees the records they registered, not the tenant portfolio. CCEO, Program Lead and **Admin** all 403; Country Director reads programme-wide. |
+| Cross-partner isolation | **PASS.** With `PARTNER_ROLE_BRIDGE` off (the production shape), two linked partners each resolve to their own organisation and `/partner/schools` shows only their own school. |
+| `PARTNER_ROLE_BRIDGE` fallback | **Defended.** The unlinked-user fallback pins to "the first active partner", which would be a cross-tenant grant — but it defaults off, `prod.py` both raises on a truthy value and hard-sets `False`, the DO manifests pin it, and `test_partner_bridge_fails_closed.py` pins the direction. Its docstring records that the default was once `True` and was corrected. |
+| Money moving exactly once | **PASS, already covered.** `test_concurrent_money_movement.py` releases genuine threads against PostgreSQL on a barrier and asserts one disbursement, one reimbursement, one partner payment, one audit row, and the settlement identity after the full loop. |
+
+One coverage gap was found and closed (**SEC-A5**): the loan API's role list was
+well tested, but no test built a *second* MFI, so nothing would have failed if
+`scoped_loans` stopped filtering by membership. Behaviour was correct; the
+invariant was simply unpinned. Now pinned, and verified by mutation — dropping
+the tenant filter fails two of the three new tests.
+
+Cross-partner isolation was deliberately **not** given a new test:
+`apps/frontend/tests.py` already builds a second partner with same-shape
+records and asserts non-visibility across two surfaces.
+
 ---
 
 ## 6. Domain board
@@ -257,6 +281,9 @@ which the mandate says must never be read as Green.
 | Data integrity (money/verification) | **Green** | §31 families return zero on seeded data |
 | Authentication and access | **Amber** | SEC-A1 fixed and pinned; `has_permission` / `can_view_page` fail closed for anonymous; fourteen roles open every permitted argument-free page in CI; OBS-2 leaves the matrix unable to distinguish guarded from unguarded |
 | Priorities and targets | **Amber** | SEC-A4 fixed; CONFLICT-003 and OBS-1 open |
+| Loans and MFI | **Green** | cross-tenant isolation proven over HTTP and now regression-pinned (SEC-A5); confidential loan fields withheld from CCEO, PL and Admin |
+| Partners | **Green** | cross-partner isolation proven over HTTP; already pinned in `apps/frontend/tests.py` |
+| Budget and fund workflow | **Green** | exactly-once disbursement, reimbursement and partner payment proven by concurrent tests against real PostgreSQL, passing in the suite run here |
 | Integrations | **Red** | no transport exists (B-3) |
 | Mobile and offline | **Red** | capability absent (B-4) |
 | Container supply chain | **Green** | image builds, runs non-root, imports, and carries no fixable CRITICAL/HIGH (CI, head `2248cdf5`) |
