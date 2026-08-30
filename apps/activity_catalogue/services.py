@@ -9,8 +9,6 @@ from django.utils import timezone
 from apps.core.enums import (
     ActivityStatus,
     DeliveryType,
-    ExecutorType,
-    PARTNER_EXECUTOR_TYPES,
     SsaIntervention,
 )
 from apps.core.exceptions import BadRequest, Forbidden
@@ -19,7 +17,6 @@ from apps.core.fy import get_operational_fy
 from .models import (
     ActivityCatalogueItem,
     ActivityCatalogueVersion,
-    ActivityProjectMapping,
     CatalogueActivityType,
     CatalogueStatus,
     MappingMode,
@@ -259,28 +256,13 @@ def validate_context(
 
     ``non_school=True`` is the Work Plan's central-planning context: a
     Group-delivered camp or conference is being planned as one dated
-    programme activity at a venue rather than school by school. The item must
-    still be approved for it (``non_school_allowed``); the per-school
-    requirements below then do not apply, because there is no school to which
-    they could refer.
-
-    A Project is required ONLY where ``item.requires_project`` says so (§2).
-    There is no rule anywhere in this function that a selected intervention
-    must belong to a Project, and there must never be one: an intervention
-    may inform a Project, but a Project does not own it.
+    programme activity at a venue rather than school by school.
     """
-    executor_type = executor_type or DeliveryType.STAFF
-    is_partner_delivery = executor_type in PARTNER_EXECUTOR_TYPES
-    if executor_type == ExecutorType.CERTIFIED_PARTNER_AGENCY:
-        if not item.certified_agency_delivery_allowed:
-            raise Forbidden(
-                "This Catalogue Activity is not approved for Certified "
-                "Partner Agency delivery."
-            )
-        if not item.partner_delivery_allowed:
-            raise Forbidden(
-                "This Catalogue Activity is not approved for Partner delivery."
-            )
+    # Planning restrictions removed: delivery-approval flags, eligibility
+    # rules, new-school-only, and Project approved-activity mappings no longer
+    # block scheduling. Only the structural target requirements remain — an
+    # item that is defined per-School (or per-Cluster) still needs that target
+    # to exist, or the Activity row cannot be created at all.
     if non_school:
         if not item.non_school_allowed:
             raise BadRequest(
@@ -288,95 +270,11 @@ def validate_context(
                 "Cluster planning and cannot be planned as a standalone "
                 "programme activity."
             )
-        if is_partner_delivery and not item.partner_delivery_allowed:
-            raise Forbidden(
-                "This Catalogue Activity is not approved for Partner delivery."
-            )
-        if executor_type == DeliveryType.STAFF and not item.staff_delivery_allowed:
-            raise Forbidden(
-                "This Catalogue Activity is not approved for Staff delivery."
-            )
-        if item.requires_project and project is None:
-            raise BadRequest("This Catalogue Activity requires a Special Project.")
         return
     if item.requires_school and school is None:
         raise BadRequest("This Catalogue Activity requires a School.")
     if item.requires_cluster and cluster is None:
         raise BadRequest("This Catalogue Activity requires a Cluster.")
-    if item.requires_project and project is None:
-        raise BadRequest("This Catalogue Activity requires a Special Project.")
-    if school and cluster is None and not item.individual_school_allowed:
-        raise BadRequest(
-            "This Catalogue Activity is not approved for individual Schools."
-        )
-    if cluster and not item.cluster_delivery_allowed:
-        raise BadRequest(
-            "This Catalogue Activity is not approved for Cluster delivery."
-        )
-    if is_partner_delivery and not item.partner_delivery_allowed:
-        raise Forbidden("This Catalogue Activity is not approved for Partner delivery.")
-    if executor_type == DeliveryType.STAFF and not item.staff_delivery_allowed:
-        raise Forbidden("This Catalogue Activity is not approved for Staff delivery.")
-
-    rule = getattr(item, "eligibility_rule", None)
-    if school and rule:
-        school_type = getattr(school, "school_type", None)
-        school_level = getattr(school, "school_level", None)
-        if rule.eligible_school_categories and school_type not in set(
-            rule.eligible_school_categories
-        ):
-            raise BadRequest(
-                "This Catalogue Activity is not eligible for this School type."
-            )
-        if rule.eligible_school_levels and school_level not in set(
-            rule.eligible_school_levels
-        ):
-            raise BadRequest(
-                "This Catalogue Activity is not eligible for this School level."
-            )
-        if rule.core_school_only and school_type != "core":
-            raise BadRequest("This Catalogue Activity is restricted to Core Schools.")
-        if rule.client_school_only and school_type != "client":
-            raise BadRequest("This Catalogue Activity is restricted to Client Schools.")
-        if rule.requires_cluster_membership and not getattr(school, "cluster_id", None):
-            raise BadRequest("This Catalogue Activity requires Cluster membership.")
-    if item.new_school_only and school:
-        fy = get_operational_fy()
-        created_fy = (
-            get_operational_fy(school.created_at) if school.created_at else None
-        )
-        if created_fy != fy:
-            raise BadRequest("New School Orientation is available only to new Schools.")
-
-    if project:
-        mapping = ActivityProjectMapping.objects.filter(
-            project=project,
-            catalogue_item=item,
-            active=True,
-        ).first()
-        # The approved-activity list governs which of the programme's NAMED
-        # curriculum titles a Project funds — EdTech Foundations belongs to
-        # the EdTech project and not to Literacy, and that is a real rule.
-        #
-        # It says nothing useful about ordinary support. A Literacy project
-        # running a cluster training is running a cluster training; requiring
-        # someone to first map "Cluster Training" into all five projects adds
-        # a setup step whose only outcome is that scheduling fails until it
-        # is done. Here the Project is attribution, not a menu.
-        if not mapping and not item.standard_support:
-            raise BadRequest(
-                "This Activity is not approved in the selected Special Project."
-            )
-        if not mapping:
-            return
-        if is_partner_delivery and not mapping.partner_delivery_allowed:
-            raise Forbidden(
-                "The Project does not allow Partner delivery for this Activity."
-            )
-        if executor_type == DeliveryType.STAFF and not mapping.staff_delivery_allowed:
-            raise Forbidden(
-                "The Project does not allow Staff delivery for this Activity."
-            )
 
 
 def validate_frequency(
@@ -387,41 +285,9 @@ def validate_frequency(
     fy=None,
     on_date=None,
 ):
-    rule = getattr(item, "eligibility_rule", None)
-    if not rule or item.core_slot_type:
-        return
-    from apps.activities.models import Activity
-
-    target = Q(school=school) if school is not None else Q(cluster=cluster)
-    live = Activity.objects.filter(
-        target,
-        catalogue_item=item,
-        deleted_at__isnull=True,
-    ).exclude(status__in=["cancelled", "rejected", "deferred"])
-    if fy:
-        live = live.filter(fy=fy)
-    if (
-        rule.maximum_frequency_per_fy is not None
-        and live.count() >= rule.maximum_frequency_per_fy
-    ):
-        raise BadRequest(
-            "This Catalogue Activity has reached its approved frequency for "
-            "the target in this financial year."
-        )
-    if rule.cooldown_days:
-        latest = (
-            live.filter(status__in=COMPLETED_SUPPORT_STATUSES)
-            .exclude(planned_date__isnull=True)
-            .order_by("-planned_date")
-            .values_list("planned_date", flat=True)
-            .first()
-        )
-        if latest and (on_date or timezone.localdate()) < latest + timedelta(
-            days=rule.cooldown_days
-        ):
-            raise BadRequest(
-                "This Catalogue Activity is still inside its approved cooldown period."
-            )
+    # Planning restrictions removed: per-FY frequency caps and cooldown
+    # periods no longer block scheduling.
+    return
 
 
 @transaction.atomic

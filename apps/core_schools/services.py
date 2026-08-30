@@ -10,7 +10,6 @@ from apps.core.enums import SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
-from apps.core.calendar_policy import SchedulingPolicyService, resolve_scheduling_user
 from apps.schools.models import School
 
 from .models import (
@@ -345,14 +344,6 @@ def _apply_slot_action(slot: CoreActivitySlot, action: str, data: dict) -> dict:
         slot.status = "Assigned"
     elif action == "schedule":
         scheduled_for = data.get("scheduledFor")
-        if scheduled_for:
-            # REG-02 — same calendar gate every other scheduling surface
-            # applies; a core slot must never land on a date Planning/My
-            # Plan would have blocked.
-            resp_user = resolve_scheduling_user(slot.assigned_staff_id)
-            avail = SchedulingPolicyService.check(resp_user, scheduled_for)
-            if avail["status"] == "blocked":
-                raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
         slot.scheduled_month = data.get("scheduledMonth")
         slot.scheduled_week = data.get("scheduledWeek")
         slot.scheduled_for = scheduled_for
@@ -456,12 +447,6 @@ def schedule_follow_up(plan_id: str, data: dict, principal) -> dict:
         raise NotFoundError("Plan not found.")
     scheduled_for = data.get("scheduledFor")
     assignee = data.get("assignee")
-    if scheduled_for:
-        # REG-02 — same calendar gate every other scheduling surface applies.
-        resp_user = resolve_scheduling_user(assignee)
-        avail = SchedulingPolicyService.check(resp_user, scheduled_for)
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
     plan.follow_up_scheduled_for = scheduled_for
     plan.follow_up_assignee = assignee
     plan.save(update_fields=["follow_up_scheduled_for", "follow_up_assignee"])
