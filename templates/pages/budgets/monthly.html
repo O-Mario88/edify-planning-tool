@@ -31,7 +31,14 @@
     {% endif %}
   </div>
 
-  {% if country_workflow %}
+  <nav class="budget-horizon-tabs" aria-label="Budget period">
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Month</a>
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarter</a>
+    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual</a>
+  </nav>
+  <p class="text-xs text-slate-500">Calculated from the costed activities in weekly plans. Month, quarter and annual budgets roll up those planned costs.</p>
+
+  {% if country_workflow and selected_period == "month" %}
   <section class="rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm" aria-labelledby="country-budget-approval-heading">
     <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div>

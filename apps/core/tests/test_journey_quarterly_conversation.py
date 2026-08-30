@@ -303,7 +303,7 @@ class QuarterlyConversationJourneyTest(TestCase):
             {"method": "Bank", "reference": f"QT-{self._sf_seq}"},
             self.accountant,
         )
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
 
         start_completion(activity.id, {}, self.cceo)
         EvidenceRecord.objects.create(

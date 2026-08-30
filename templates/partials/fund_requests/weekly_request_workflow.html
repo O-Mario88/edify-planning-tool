@@ -14,15 +14,7 @@
   itself now; this section is the table and the actions.
 {% endcomment %}
 
-{% comment %}
-  The week's money, in the canonical budget format — the same group tables,
-  subtotals and grand total every other horizon shows, fed by the same
-  budget_workspace groups. This replaced a bespoke line-items table (Activity
-  Source / Cost Item / Qty / status chips) that showed the same amounts in a
-  third layout of its own; the per-activity view it offered lives in the
-  Source Activities panel beside this card, which links each activity to
-  My Plan.
-{% endcomment %}
+{# The submitted snapshot keeps review and disbursement amounts stable when a plan changes. #}
 {% if period_budgets.groups %}
 <div class="overflow-x-auto rounded-control border border-slate-200">
   {% include "partials/budgets/budget_group_tables.html" with groups=period_budgets.groups all_groups=period_budgets.groups staff_total=period_budgets.staff_total total=period_budgets.total selected=period_budgets.selected workspace_title=period_budgets.workspace_title budget_scope=period_budgets.budget_scope %}
@@ -37,6 +29,12 @@
 band inside budget_group_tables.html — so a second trailing total here would
 just restate it.{% endcomment %}
 
+{% if active_wfr.return_reason and active_wfr.status == 'returned_by_pl' or active_wfr.return_reason and active_wfr.status == 'returned_by_cd' or active_wfr.return_reason and active_wfr.status == 'returned_by_accountant' %}
+<div role="note" class="rounded-control border border-amber-200 bg-amber-50 p-4 text-sm">
+  <strong>Returned for correction</strong><p class="mt-1 whitespace-pre-wrap">{{ active_wfr.return_reason }}</p>
+  {% if viewer_is_wfr_owner %}<a href="/my-plan" class="underline font-semibold">Correct your weekly plan</a>, then resubmit this request.{% endif %}
+</div>
+{% endif %}
 <!-- Action Buttons -->
 <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
 {% if viewer_can_approve_wfr %}
@@ -48,15 +46,11 @@ just restate it.{% endcomment %}
 Approve &amp; Send to Accountant
 </button>
 </form>
-<form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/return?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-flex items-center gap-2">
-{% csrf_token %}
-<input type="text" name="reason" required placeholder="Return reason (required)"
-class="h-9 px-3 rounded-control border border-slate-200 text-[12px] w-56 focus:outline-none focus:ring-2 focus:ring-rose-500/20">
-<button type="submit" class="flex items-center gap-1.5 h-9 px-3.5 edify-surface border border-rose-200 text-rose-600 text-[12px] font-bold rounded-control hover:bg-rose-50 focus:outline-none transition-all shadow-sm">
-Return for Correction
-</button>
-</form>
-{% elif active_wfr.status == 'pending_responsible_confirmation' or active_wfr.status == 'not_requested' or active_wfr.status == 'returned_by_pl' or active_wfr.status == 'returned_by_cd' or active_wfr.status == 'returned_by_accountant' %}
+<button type="button" hx-get="/fund-requests/weekly/{{ active_wfr.id }}/return-drawer?{{ weekly_action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary">Return for Correction</button>
+{% elif viewer_can_disburse_wfr %}
+<button type="button" hx-get="/finance/actions/drawer?action=disburse_advance&request_id={{ active_wfr.id }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary">Disburse advance</button>
+<button type="button" hx-get="/fund-requests/weekly/{{ active_wfr.id }}/return-drawer?{{ weekly_action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary">Return for Correction</button>
+{% elif viewer_is_wfr_owner and active_wfr.status == 'pending_responsible_confirmation' or viewer_is_wfr_owner and active_wfr.status == 'not_requested' or viewer_is_wfr_owner and active_wfr.status == 'returned_by_pl' or viewer_is_wfr_owner and active_wfr.status == 'returned_by_cd' or viewer_is_wfr_owner and active_wfr.status == 'returned_by_accountant' %}
 <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/confirm?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
 {% csrf_token %}
 {% comment %}The Tailwind "!" prefix only resolves for Tailwind-generated
@@ -65,7 +59,7 @@ button white-on-white (1.05:1). Plain component classes restore the primary
 look.{% endcomment %}
 <button type="submit" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-Confirm Advance Request
+Submit Advance Request
 </button>
 </form>
 
@@ -76,25 +70,33 @@ Confirm Advance Request
 Mark as Self-Funded
 </button>
 </form>
+{% elif active_wfr.status == 'returned_by_pl' or active_wfr.status == 'returned_by_cd' or active_wfr.status == 'returned_by_accountant' %}
+<p class="text-sm text-slate-500">Awaiting the requester's corrected weekly plan and resubmission.</p>
 {% elif active_wfr.status == 'submitted_to_pl' or active_wfr.status == 'submitted_to_cd' %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 Submitted — awaiting {% if active_wfr.status == 'submitted_to_pl' %}Program Lead{% else %}Country Director{% endif %} approval.
 </div>
 {% elif active_wfr.status == 'disbursed' and not active_wfr.receipt_confirmed_at %}
 {% if active_wfr.responsible_user == user.user_id %}
-<form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/confirm-receipt?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
+<form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/confirm-receipt?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="space-y-3" x-data="{ bankReceived: false }">
 {% csrf_token %}
-<button type="submit" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
+<label class="flex items-start gap-2 text-sm">
+  <input type="checkbox" name="bank_message_received" value="yes" required x-model="bankReceived" class="mt-1">
+  <span>I have received the bank message and verified the funds are in my account.</span>
+</label>
+<button type="submit" :disabled="!bankReceived" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-Confirm Funds Received
+Confirmed
 </button>
 </form>
-<div class="text-[12px] font-semibold text-slate-500">Funds were disbursed — confirm they arrived to open accountability.</div>
+<div class="text-[12px] font-semibold text-slate-500">Only click Confirmed after receiving the bank message and verifying the funds arrived.</div>
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 Disbursed — awaiting the owner's confirmation that the funds arrived.
 </div>
 {% endif %}
+{% elif active_wfr.status == 'disbursed' and active_wfr.receipt_confirmed_at %}
+<p class="text-sm text-emerald-700">Receipt confirmed by the requester. Accountability is now available.</p>
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 &check; Action completed. Status of this weekly request is locked to

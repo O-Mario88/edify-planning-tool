@@ -1,29 +1,12 @@
 {% load frontend_filters %}
-{% comment %}
-  My Budget at the four horizons a person plans against, in the canonical
-  budget format — the same group tables, subtotals and grand total the budget
-  pages render, fed by the same service (budget_workspace), so this card
-  cannot disagree with the page it summarises.
-
-  Real links rather than an ARIA tablist: each one navigates and the server
-  renders the panel, so there is no tabpanel widget to promise a screen
-  reader. aria-current marks the one in view.
-
-  Only the week carries a submit control. Money is disbursed weekly, so the
-  week is the request; the month, quarter and year are the plan around it.
-{% endcomment %}
+{# Planned horizons and the submitted weekly snapshot share the same ledger format. #}
 <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-3.5"
          aria-labelledby="period-budget-title">
-  {% comment %}
-    One header row, per the owner: the money on the far left -- the figure a
-    person opens this card for -- and the card's name with the request's
-    status chip at the right end. The period switch lives in the page-level
-    tab bar above the card.
-  {% endcomment %}
+
   <div class="flex flex-wrap items-start justify-between gap-3">
     <div>
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned budget</p>
-      <p class="text-[22px] font-extrabold text-slate-800 tabular-nums leading-none mt-1">{{ period_budgets.total|ugx }}</p>
+      <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">{% if period_budgets.active == "week" %}Weekly advance request{% else %}Activity cost plan{% endif %}</h3>
+      <p class="text-xs text-slate-500">Costs come directly from planned activities, grouped by activity and item.</p>
       {% if period_budgets.active == "week" and active_wfr %}
       <p class="edify-text-caption font-semibold text-slate-400 mt-1">
         Fund request · {{ selected_week_label }} · Owner:
@@ -53,7 +36,7 @@
         {% if period_budgets.active == "week" and active_wfr %}
         {% include "partials/fund_requests/_wfr_status_chip.html" %}
         {% endif %}
-        <h3 id="period-budget-title" class="text-[15px] font-semibold text-slate-800">My Budget</h3>
+
       </div>
       <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ period_budgets.selected.title }}</p>
       {% if card_scope_switch %}

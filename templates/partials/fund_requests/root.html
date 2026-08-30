@@ -43,7 +43,7 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
 <h1 class="edify-page-header__title edify-page-title">Fund Requests</h1>
-<p class="edify-page-header__description">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
+<p class="edify-page-header__description">Review planned costs, submit weekly advances, and track approval and receipt.</p>
 </div>
 
 <!-- Action buttons -->
@@ -107,13 +107,13 @@ hx-push-url="true"
 class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm flex flex-wrap items-center gap-3 text-[12px] font-bold text-slate-700"
 >
 
+<input type="hidden" name="period_tab" value="{{ period_budgets.active }}">
 <!-- Fiscal Year -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <svg class="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
 <span class="edify-filter-label">Fiscal year</span>
 <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
-<option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+{% for year in fy_options %}<option value="{{ year }}" {% if selected_fy == year %}selected{% endif %}>FY {{ year }}</option>{% endfor %}
 </select>
 </div>
 
@@ -175,7 +175,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="">All staff</option>
 {% for p in staff_profiles %}
-<option value="{{ p.id }}" {% if selected_staff == p.id %}selected{% endif %}>{{ p.user.name }}</option>
+<option value="{{ p.user_id }}" {% if selected_staff == p.user_id %}selected{% endif %}>{{ p.user.name }}</option>
 {% endfor %}
 </select>
 </div>
@@ -220,10 +220,12 @@ Clear Filters
 </button>
 </form>
 
-<!-- KPIs -->
+<details class="rounded-control border border-slate-200 p-3">
+<summary class="text-sm font-semibold cursor-pointer">Request totals and approval status</summary>
 <div id="fund-requests-kpis">
 {% include "partials/fund_requests/kpis.html" %}
 </div>
+</details>
 
 {% if team_tabs %}
 <!-- Manager team tabs: who the page is reviewing. The viewer's own requests
@@ -260,7 +262,7 @@ Clear Filters
       {% if t.key == period_budgets.active %}aria-current="page"{% endif %}
       class="px-5 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap {% if t.key == period_budgets.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
     >
-      {% if t.key == "week" %}Week{% elif t.key == "month" %}Month{% elif t.key == "quarter" %}Quarter{% else %}FY{% endif %}
+      {% if t.key == "week" %}Week{% elif t.key == "month" %}Month{% elif t.key == "quarter" %}Quarter{% else %}Annual{% endif %}
     </a>
     {% endfor %}
   </nav>
@@ -270,14 +272,10 @@ Clear Filters
      instead of a banner here AND a caption under the workflow strip both
      saying the same thing. -->
 
-<!-- Main Canvas split: the budget/request work takes 70%, the reference
-     panels take 30%. A ten-column grid rather than a fixed-width sidebar, so
-     the ratio holds as the viewport grows instead of the sidebar staying
-     384px while the canvas absorbs everything. Below lg the columns stack,
-     work first. -->
+<!-- Keep the six-column budget full-width; supporting detail follows it. -->
 <div class="grid grid-cols-1 lg:grid-cols-10 gap-5 items-start">
-<!-- Left panel (70%) -->
-<div class="lg:col-span-7 space-y-5 min-w-0">
+<!-- Budget and request workflow -->
+<div class="lg:col-span-10 space-y-5 min-w-0">
 
 <!-- Weekly Request Card -->
 <div id="weekly-request-card-container">
@@ -286,8 +284,8 @@ Clear Filters
 
 </div>
 
-<!-- Right panel (30%) -->
-<div class="lg:col-span-3 space-y-5 min-w-0">
+<!-- Supporting plan information -->
+<div class="lg:col-span-10 space-y-5 min-w-0">
 
 <!-- Source Activities Card -->
 <div id="fund-requests-source-activities">

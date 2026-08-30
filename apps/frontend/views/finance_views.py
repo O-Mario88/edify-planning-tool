@@ -1158,6 +1158,7 @@ def country_budget_view(request):
             "date": anchor_raw,
             "period": request.GET.get("period") or "month",
             "budget_scope": "country",
+            "plan_only": True,
             "q": request.GET.get("q", ""),
             "district": request.GET.get("district", ""),
         },

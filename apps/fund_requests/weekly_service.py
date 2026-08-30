@@ -303,9 +303,7 @@ def request_advance(request_id: str, principal) -> dict:
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
-        ):
+        if wfr.responsible_user != principal.user_id:
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status not in (
             "pending_responsible_confirmation",
@@ -415,16 +413,35 @@ def return_weekly_request(request_id: str, data: dict, principal) -> dict:
     reason = (data.get("reason") or "").strip()
     if not reason:
         raise BadRequest("A return reason is required.")
+    if len(reason) > 500:
+        raise BadRequest("Keep the return reason within 500 characters.")
     with transaction.atomic():
         wfr = (
             WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
+        if wfr.status == "confirmed_for_advance":
+            from .disbursement_dashboard_service import (
+                return_weekly_request as accountant_return,
+            )
+
+            return _serialize_request(accountant_return(principal, wfr, reason))
         stage = _require_weekly_approver(wfr, principal)
 
         wfr.status = "returned_by_pl" if stage == "pl" else "returned_by_cd"
-        wfr.save(update_fields=["status", "updated_at"])
+        wfr.return_reason = reason
+        wfr.returned_at = timezone.now()
+        wfr.returned_by_user_id = principal.user_id
+        wfr.save(
+            update_fields=[
+                "status",
+                "return_reason",
+                "returned_at",
+                "returned_by_user_id",
+                "updated_at",
+            ]
+        )
         _sync_advances(wfr, "pending_responsible_confirmation", "advance")
 
     # The freeze just lifted — repair any batch pool left over-allocated by a
@@ -562,9 +579,7 @@ def self_funded(request_id: str, principal) -> dict:
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
-        ):
+        if wfr.responsible_user != principal.user_id:
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status in ("disbursed", "accounted"):
             raise BadRequest("Cannot change a disbursed request to self-funded.")
@@ -600,9 +615,7 @@ def not_requested(request_id: str, principal) -> dict:
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
-        ):
+        if wfr.responsible_user != principal.user_id:
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status in ("disbursed", "accounted"):
             raise BadRequest("Cannot cancel a disbursed request.")
@@ -760,12 +773,12 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         f"UGX {wfr.disbursed_amount:,} for your week of "
         f"{wfr.week_start_date:%d %b} was disbursed"
         + (f" via {wfr.disburse_method}" if wfr.disburse_method else "")
-        + ". Confirm the funds arrived to open accountability.",
+        + ". Only click Confirmed after receiving the bank message and verifying the funds arrived.",
     )
     return _serialize_request(wfr)
 
 
-def confirm_receipt(request_id: str, principal) -> dict:
+def confirm_receipt(request_id: str, principal, *, bank_message_received=False) -> dict:
     """The OWNER confirms the disbursed week's funds actually arrived.
 
     Disbursed and received are different facts — the Accountant records the
@@ -780,17 +793,24 @@ def confirm_receipt(request_id: str, principal) -> dict:
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
-        ):
+        if wfr.responsible_user != principal.user_id:
             raise Forbidden("Only the owner can confirm receipt of these funds.")
         if wfr.status != "disbursed":
             raise BadRequest("These funds are not marked as disbursed.")
         if wfr.receipt_confirmed_at:
             return _serialize_request(wfr)  # idempotent — already confirmed
+        if bank_message_received is not True:
+            raise BadRequest(
+                "Confirm only after receiving the bank message and verifying the funds arrived."
+            )
         wfr.receipt_confirmed_at = timezone.now()
         wfr.save(update_fields=["receipt_confirmed_at", "updated_at"])
-    _audit_weekly(principal, "weekly_fund_request.receipt_confirmed", wfr, {})
+    _audit_weekly(
+        principal,
+        "weekly_fund_request.receipt_confirmed",
+        wfr,
+        {"bank_message_received": True},
+    )
     return _serialize_request(wfr)
 
 
@@ -845,6 +865,8 @@ def _serialize_request(wfr: WeeklyFundRequest, include_lines: bool = False) -> d
         if wfr.receipt_confirmed_at
         else None,
         "confirmedAt": wfr.confirmed_at.isoformat() if wfr.confirmed_at else None,
+        "returnReason": wfr.return_reason,
+        "returnedAt": wfr.returned_at.isoformat() if wfr.returned_at else None,
     }
 
     if include_lines:

@@ -539,10 +539,8 @@ class TwoColumnLayoutTest(TestCase):
                 cls = dict(attrs).get("class", "") or ""
                 if "lg:grid-cols-10" in cls:
                     self.grid_depth = self.depth
-                elif self.grid_depth is not None and (
-                    "lg:col-span-7" in cls or "lg:col-span-3" in cls
-                ):
-                    span = "7" if "lg:col-span-7" in cls else "3"
+                elif self.grid_depth is not None and ("lg:col-span-10" in cls):
+                    span = "10"
                     self.events.append((span, self.depth - self.grid_depth))
 
             def handle_endtag(self, tag):
@@ -556,7 +554,7 @@ class TwoColumnLayoutTest(TestCase):
         walker.feed(body)
         self.assertEqual(
             walker.events,
-            [("7", 1), ("3", 1)],
+            [("10", 1), ("10", 1)],
             "both panels must sit at grid+1; anything else means an unbalanced "
             f"div has re-flattened the layout (saw {walker.events})",
         )

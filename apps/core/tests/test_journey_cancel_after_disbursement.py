@@ -167,7 +167,7 @@ class CancelAfterDisbursementJourneyTest(TestCase):
         request_advance(wfr.id, self.cceo)
         approve_weekly_request(wfr.id, self.pl)
         disburse(wfr.id, {"method": "Bank", "reference": "CN-1"}, self.accountant)
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
 
         advances = list(
             AdvanceRequest.objects.filter(

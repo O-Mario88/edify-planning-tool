@@ -211,7 +211,7 @@ class SchoolVisitSpineJourneyTest(TestCase):
         # for before the person says it reached them.
         from apps.fund_requests.weekly_service import confirm_receipt
 
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
         wfr.refresh_from_db()
         self.assertIsNotNone(wfr.receipt_confirmed_at)
 
@@ -402,7 +402,11 @@ class SchoolVisitSpineJourneyTest(TestCase):
             f"{wfr.status}",
         )
 
-        post(f"/fund-requests/weekly/{wfr.id}/confirm-receipt", who=self.cceo)
+        post(
+            f"/fund-requests/weekly/{wfr.id}/confirm-receipt",
+            {"bank_message_received": "yes"},
+            who=self.cceo,
+        )
         wfr.refresh_from_db()
         self.assertIsNotNone(
             wfr.receipt_confirmed_at,

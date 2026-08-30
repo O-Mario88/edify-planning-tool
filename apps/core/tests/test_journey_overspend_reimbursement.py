@@ -173,7 +173,7 @@ class OverspendReimbursementJourneyTest(TestCase):
         request_advance(wfr.id, self.cceo)
         approve_weekly_request(wfr.id, self.pl)
         disburse(wfr.id, {"method": "Bank", "reference": "OV-1"}, self.accountant)
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
 
         start_completion(activity.id, {}, self.cceo)
         EvidenceRecord.objects.create(

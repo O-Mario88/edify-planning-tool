@@ -429,6 +429,10 @@ class WeeklyFundRequest(TimeStampedModel):
     # the reimbursement leg already record them separately).
     receipt_confirmed_at = models.DateTimeField(null=True, blank=True)
 
+    return_reason = models.TextField(blank=True, default="")
+    returned_at = models.DateTimeField(null=True, blank=True)
+    returned_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+
     # Accountability (advance path, after disbursement)
     accounted_amount = models.BigIntegerField(null=True, blank=True)
     returned_amount = models.BigIntegerField(null=True, blank=True)

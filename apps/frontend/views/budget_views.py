@@ -1,7 +1,7 @@
 from apps.core.metrics import render_precomputed_metric_item
 from django.utils import timezone
 from django.shortcuts import render, redirect
-from apps.core.exceptions import BadRequest
+from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.metrics import format_ugx_compact
 from apps.core.redirects import local_redirect
 from apps.core.permissions import require_page_permission
@@ -137,7 +137,7 @@ def _scoped_base_querysets(request, fy):
     staff_id = request.GET.get("staff", "").strip()
     status_filter = request.GET.get("status", "").strip()
 
-    wfr_qs = WeeklyFundRequest.objects.all().order_by("-week_start_date")
+    wfr_qs = WeeklyFundRequest.objects.filter(fy=fy).order_by("-week_start_date")
     activities_qs = Activity.objects.filter(deleted_at__isnull=True)
     budget_qs = ActivityScheduleCostLine.objects.filter(fiscal_year=fy)
 
@@ -184,6 +184,14 @@ def _scoped_base_querysets(request, fy):
             q_act_scope |= Q(responsible_staff_id__in=scope.supervised_staff_ids)
         activities_qs = activities_qs.filter(q_act_scope)
 
+    if scope.country_scope:
+        supervised_user_ids = list(
+            wfr_qs.exclude(responsible_user=user.user_id)
+            .order_by()
+            .values_list("responsible_user", flat=True)
+            .distinct()
+        )
+
     # A supervising manager reviews one member at a time — the team tabs make
     # each member an explicit selection, with the manager's own requests as
     # the opening tab. An unselected page therefore pins to the viewer rather
@@ -203,7 +211,14 @@ def _scoped_base_querysets(request, fy):
     if staff_id:
         wfr_qs = wfr_qs.filter(responsible_user=staff_id)
         budget_qs = budget_qs.filter(responsible_user=staff_id)
-        activities_qs = activities_qs.filter(responsible_staff_id=staff_id)
+        activities_qs = activities_qs.filter(
+            responsible_staff_id__in=[
+                staff_id,
+                *StaffProfile.objects.filter(user_id=staff_id).values_list(
+                    "id", flat=True
+                ),
+            ]
+        )
     if status_filter:
         wfr_qs = wfr_qs.filter(status=status_filter)
 
@@ -304,7 +319,7 @@ def _build_fund_requests_context(request):
     )
 
     # 1. Filters & Defaults
-    fy = request.GET.get("fy", "2026").strip()
+    fy = request.GET.get("fy", get_operational_fy()).strip()
     quarter = request.GET.get("quarter", "").strip()
     month_name = request.GET.get("month", "").strip()
     # (2026-08-20 tab audit: the page's old `tab` state was vestigial — no
@@ -313,10 +328,8 @@ def _build_fund_requests_context(request):
     # Which budget horizon the period card is showing. The week is the default
     # because it is the one that moves money.
     _role = getattr(request.user, "active_role", "")
-    # A Country Director's own plan is the monthly admin plan -- admin lines
-    # are planned by month and never estimated into a week -- so their card
-    # opens on the month. Field staff open on the week, which moves the money.
-    _default_tab = "month" if _role in ("CountryDirector", "Admin") else "week"
+    # Every reviewer opens on the weekly advance and selects an owner by name.
+    _default_tab = "week"
     period_tab = request.GET.get("period_tab", _default_tab).strip().lower()
     if period_tab not in ("week", "month", "quarter", "fy"):
         period_tab = _default_tab
@@ -330,7 +343,7 @@ def _build_fund_requests_context(request):
     if _role == "Program Lead":
         _default_scope = "team"
     elif _role in ("CountryDirector", "Admin"):
-        _default_scope = "admin"
+        _default_scope = "country"
     else:
         _default_scope = ""
     card_budget_scope = request.GET.get("budget_scope", _default_scope).strip().lower()
@@ -447,8 +460,9 @@ def _build_fund_requests_context(request):
     previous_month_end = selected_month_anchor - timedelta(days=1)
     previous_month_anchor = previous_month_end.replace(day=1)
     previous_month_fy = get_operational_fy(previous_month_anchor)
+    previous_wfr_qs = _scoped_base_querysets(request, previous_month_fy)["wfr_qs"]
     requested_last_month = (
-        wfr_qs.filter(
+        previous_wfr_qs.filter(
             fy=previous_month_fy,
             week_start_date__year=previous_month_anchor.year,
             week_start_date__month=previous_month_anchor.month,
@@ -587,21 +601,13 @@ def _build_fund_requests_context(request):
     wfr_status = "No Request"
     viewer_can_approve_wfr = False
     if active_wfr:
-        # The viewer may act as approver when the request awaits their stage:
-        # a PL on a supervised CCEO's submitted_to_pl request, a CD/Admin on
-        # submitted_to_cd (or standing in on submitted_to_pl). Never on their
-        # own request. The service re-validates all of this server-side.
-        if (
-            active_wfr.status in ("submitted_to_pl", "submitted_to_cd")
-            and active_wfr.responsible_user != user.user_id
-        ):
-            role = user.active_role
-            if role in ("CountryDirector", "Admin"):
-                viewer_can_approve_wfr = True
-            elif role == "Program Lead" and active_wfr.status == "submitted_to_pl":
-                viewer_can_approve_wfr = active_wfr.responsible_user in (
-                    supervised_user_ids or []
-                )
+        from apps.fund_requests.weekly_service import _require_weekly_approver
+
+        try:
+            _require_weekly_approver(active_wfr, user)
+            viewer_can_approve_wfr = True
+        except (BadRequest, Forbidden):
+            pass
     if active_wfr:
         owner_profile = (
             StaffProfile.objects.filter(user_id=active_wfr.responsible_user)
@@ -900,6 +906,7 @@ def _build_fund_requests_context(request):
             # paid directly to the partner (MOU 50% advance + clearance) and
             # never appears in a staff fund request on any horizon here.
             "exclude_partner": True,
+            "plan_only": True,
             # A CCEO sees only what is disbursed to them personally — never
             # the transport rate or a vendor-booked hotel amount. Approver
             # roles keep the full mission view.
@@ -940,9 +947,14 @@ def _build_fund_requests_context(request):
             {"key": "week", "label": "Week", "submits": True},
             {"key": "month", "label": "Month", "submits": False},
             {"key": "quarter", "label": "Quarter", "submits": False},
-            {"key": "fy", "label": "FY", "submits": False},
+            {"key": "fy", "label": "Annual", "submits": False},
         ],
     }
+
+    if period_tab == "week" and active_wfr:
+        from apps.budget.services import weekly_request_budget
+
+        period_budgets.update(weekly_request_budget(active_wfr))
 
     # Monthly Request Status — driven by the REAL monthly FundRequest (the
     # same model/state apps.fund_requests.pl_approval_service and
@@ -1066,14 +1078,19 @@ def _build_fund_requests_context(request):
     # service layer) — the "generate" action_type only ever covers the
     # latter, as a recovery path.
     if active_wfr:
-        if active_wfr.status == "pending_responsible_confirmation":
-            recommended_action = "Confirm this week's request"
-            recommended_desc = "Verify lines and confirm advance disbursement requests."
+        if active_wfr.responsible_user == user.user_id and active_wfr.status in (
+            "pending_responsible_confirmation",
+            "returned_by_pl",
+            "returned_by_cd",
+            "returned_by_accountant",
+        ):
+            recommended_action = "Submit this week's advance request"
+            recommended_desc = "Check the weekly plan and any correction notes, then submit for supervisor approval."
             can_take_action = True
             action_type = "confirm"
         else:
             recommended_action = "No immediate action pending"
-            recommended_desc = "All weekly requests have been finalized and routed."
+            recommended_desc = "The current workflow status and available actions are shown on the weekly request."
             can_take_action = False
             action_type = "none"
     else:
@@ -1119,7 +1136,7 @@ def _build_fund_requests_context(request):
         ([start, end)) — comparing with lte counted a request starting exactly
         on the next period's first day in BOTH periods. The single-week call
         passes the same Monday twice and needs the inclusive comparison."""
-        qs = WeeklyFundRequest.objects.filter(fy=fy)
+        qs = wfr_qs
         if start_d:
             qs = qs.filter(week_start_date__gte=start_d)
         if end_d:
@@ -1127,13 +1144,6 @@ def _build_fund_requests_context(request):
                 qs = qs.filter(week_start_date__lte=end_d)
             else:
                 qs = qs.filter(week_start_date__lt=end_d)
-        # Narrow unconditionally for non-country roles — see the note on
-        # `_scoped_base_querysets`; gating on a truthy staff_ids failed open.
-        if not scope.country_scope:
-            q_scope = Q(responsible_user=user.user_id or "__none__")
-            if scope.supervised_staff_ids:
-                q_scope |= Q(responsible_user__in=supervised_user_ids)
-            qs = qs.filter(q_scope)
         res = qs.aggregate(total=Sum("total_amount"), count=Count("id"))
         return {
             "total": res["total"] or 0,
@@ -1164,6 +1174,11 @@ def _build_fund_requests_context(request):
         .order_by("user__name")
     )
 
+    if not scope.country_scope:
+        staff_profiles = staff_profiles.filter(
+            user_id__in=[user.user_id, *supervised_user_ids]
+        )
+
     # Generate list of weeks in selected month for dropdown filter
     dropdown_weeks = []
     for wk in weeks_in_month:
@@ -1182,33 +1197,34 @@ def _build_fund_requests_context(request):
     # you" marker.
     team_tabs = []
     if supervised_user_ids:
-        _member_profiles = list(
-            StaffProfile.objects.filter(user_id__in=supervised_user_ids)
-            .select_related("user")
-            .order_by("user__name")
-        )
-        _week_statuses = dict(
-            WeeklyFundRequest.objects.filter(
-                week_start_date=selected_week_start,
-                responsible_user__in=[user.user_id, *supervised_user_ids],
-            ).values_list("responsible_user", "status")
-        )
+        from apps.accounts.models import User
 
-        def _team_tab(uid, label):
-            return {
-                "user_id": uid,
-                "label": label,
-                "active": uid == staff_id,
-                "awaiting_review": _week_statuses.get(uid) == "submitted_to_pl",
-            }
-
-        team_tabs.append(_team_tab(user.user_id, "My Requests"))
-        for _profile in _member_profiles:
+        members = User.objects.filter(
+            id__in=[user.user_id, *supervised_user_ids]
+        ).order_by("name")
+        week_requests = WeeklyFundRequest.objects.filter(
+            fy=fy,
+            week_start_date=selected_week_start,
+            responsible_user__in=[user.user_id, *supervised_user_ids],
+        )
+        week_statuses = dict(week_requests.values_list("responsible_user", "status"))
+        for member in members:
+            stage = week_statuses.get(member.id)
+            awaiting = (
+                stage == "confirmed_for_advance"
+                and _has_permission(user, _Permission.PAYMENT_ACT.value)
+                or stage == "submitted_to_pl"
+                and _role in ("Program Lead", "CountryDirector")
+                or stage == "submitted_to_cd"
+                and _role == "CountryDirector"
+            )
             team_tabs.append(
-                _team_tab(
-                    _profile.user_id,
-                    (_profile.user.name if _profile.user else _profile.user_id),
-                )
+                {
+                    "user_id": member.id,
+                    "label": member.name,
+                    "active": member.id == staff_id,
+                    "awaiting_review": bool(awaiting) and member.id != user.user_id,
+                }
             )
 
     _team_tab_query = urlencode(
@@ -1263,6 +1279,22 @@ def _build_fund_requests_context(request):
         # describe a request differently from the pages that act on it.
         "active_wfr_status_label": _weekly_status_label(active_wfr),
         "period_tab_query": _period_tab_query,
+        "viewer_is_wfr_owner": bool(
+            active_wfr and active_wfr.responsible_user == user.user_id
+        ),
+        "viewer_can_disburse_wfr": bool(
+            active_wfr
+            and active_wfr.status == "confirmed_for_advance"
+            and _has_permission(user, _Permission.PAYMENT_ACT.value)
+        ),
+        "weekly_action_query": urlencode(
+            {
+                "fy": fy,
+                "week": selected_week_start.isoformat(),
+                "staff": staff_id,
+                "period_tab": "week",
+            }
+        ),
         # Manager team tabs: the viewer's own requests first, then one tab per
         # supervised member. Each tab drives the same `staff` filter the
         # dropdown uses; the amber dot marks a request sitting at the
@@ -1272,14 +1304,7 @@ def _build_fund_requests_context(request):
         # The CD's two hats: their own admin plan, and monitoring the country's
         # field budget. Rendered as a switch on the card only when the role
         # actually holds both scopes.
-        "card_scope_switch": (
-            [
-                {"key": "admin", "label": "Admin plan"},
-                {"key": "country", "label": "Country (monitoring)"},
-            ]
-            if _role in ("CountryDirector", "Admin")
-            else []
-        ),
+        "card_scope_switch": [],
         "card_budget_scope": period_workspace["budget_scope"],
         "mission_status": _mission_status_for_cceo(user, selected_week_start),
         "monthly_stepper": monthly_stepper,
@@ -1292,6 +1317,9 @@ def _build_fund_requests_context(request):
         "receipt_pending_plans": receipt_pending_plans,
         # Selected states
         "selected_fy": fy,
+        "fy_options": sorted(
+            {fy, get_operational_fy(), str(int(fy) - 1)}, reverse=True
+        ),
         "selected_quarter": quarter,
         "selected_month": month_name,
         "selected_week": selected_week_start.isoformat(),
@@ -1305,7 +1333,7 @@ def _build_fund_requests_context(request):
 
 @require_page_permission("fund_requests")
 def weekly_fund_requests_view(request):
-    fy = request.GET.get("fy", "2026").strip()
+    fy = request.GET.get("fy", get_operational_fy()).strip()
 
     # CSV export of the currently filtered requests (same pattern as /clusters).
     if request.GET.get("export", "").strip() == "csv":
@@ -1330,10 +1358,19 @@ def weekly_fund_requests_view(request):
 @require_page_permission("fund_requests")
 def weekly_fund_request_detail_view(request, request_id):
     req = get_weekly_request(request_id, request.user)
-    context = {
-        "req": req,
-    }
-    return render(request, "pages/fund_requests/detail.html", context)
+    from urllib.parse import urlencode
+
+    return redirect(
+        "/fund-requests/weekly?"
+        + urlencode(
+            {
+                "fy": req["fy"],
+                "week": req["weekStartDate"],
+                "staff": req["responsibleUser"],
+                "period_tab": "week",
+            }
+        )
+    )
 
 
 @require_page_permission("fund_requests")
@@ -1345,7 +1382,7 @@ def weekly_fund_request_confirm_action(request, request_id):
     if request.method == "POST":
         try:
             request_advance(request_id, request.user)
-            action_ok = "Weekly fund request confirmed for advance."
+            action_ok = "Weekly advance request submitted for supervisor approval."
         except Exception as e:
             action_error = str(e)
 
@@ -1422,7 +1459,12 @@ def weekly_fund_request_receipt_action(request, request_id):
     action_error = action_ok = None
     if request.method == "POST":
         try:
-            confirm_receipt(request_id, request.user)
+            confirm_receipt(
+                request_id,
+                request.user,
+                bank_message_received=request.POST.get("bank_message_received")
+                == "yes",
+            )
             action_ok = "Receipt confirmed — you can now account for this week's spend."
         except Exception as e:
             action_error = str(e)
@@ -1493,34 +1535,59 @@ def weekly_fund_request_approve_action(request, request_id):
     return render(request, "pages/fund_requests/weekly.html", context)
 
 
+def _weekly_return_drawer(request, request_id, error=None):
+    from django.shortcuts import get_object_or_404
+    from apps.core.permissions import has_permission
+    from apps.core.rbac import Permission
+    from apps.fund_requests.weekly_service import _require_weekly_approver
+
+    wfr = get_object_or_404(WeeklyFundRequest, id=request_id)
+    if wfr.status == "confirmed_for_advance":
+        if not has_permission(request.user, Permission.PAYMENT_ACT.value):
+            raise Forbidden("Only the Accountant can return an approved request.")
+    else:
+        _require_weekly_approver(wfr, request.user)
+    return render(
+        request,
+        "partials/fund_requests/return_drawer.html",
+        {
+            "wfr": wfr,
+            "drawer_size": "sm",
+            "return_error": error,
+            "return_reason": request.POST.get("reason", ""),
+            "action_query": request.GET.urlencode(),
+        },
+    )
+
+
+@require_page_permission("fund_requests")
+def weekly_fund_request_return_drawer(request, request_id):
+    return _weekly_return_drawer(request, request_id)
+
+
 @require_page_permission("fund_requests")
 def weekly_fund_request_return_action(request, request_id):
-    """Approver returns the request for correction (reason required)."""
-    action_error = action_ok = None
-    if request.method == "POST":
-        try:
-            return_weekly_request(
-                request_id, {"reason": request.POST.get("reason", "")}, request.user
-            )
-            action_ok = "Weekly fund request returned to the owner for correction."
-        except Exception as e:
-            action_error = str(e)
+    if request.method != "POST":
+        from django.http import HttpResponseNotAllowed
 
+        return HttpResponseNotAllowed(["POST"])
+    try:
+        return_weekly_request(
+            request_id, {"reason": request.POST.get("reason", "")}, request.user
+        )
+    except BadRequest as exc:
+        return _weekly_return_drawer(request, request_id, str(exc))
+    if request.headers.get("HX-Request") != "true":
+        return redirect(f"/fund-requests/weekly/{request_id}")
     context = _build_fund_requests_context(request)
-    context["action_error"] = action_error
-    context["action_ok"] = action_ok
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/fund_requests/root.html", context)
-    context["topbar_search"] = {
-        "placeholder": "Search schools, clusters, activities…",
-        "name": "q",
-        "value": request.GET.get("q", ""),
-        "hx_get": "/fund-requests/weekly",
-        "hx_target": "#fund-requests-page-root",
-        "hx_trigger": "keyup changed delay:250ms, search",
-        "hx_include": "#filters-form",
-    }
-    return render(request, "pages/fund_requests/weekly.html", context)
+    context["action_ok"] = (
+        "Weekly advance request returned to its owner for correction."
+    )
+    response = render(request, "partials/fund_requests/root.html", context)
+    response["HX-Retarget"] = "#fund-requests-page-root"
+    response["HX-Reswap"] = "innerHTML"
+    response["HX-Trigger"] = "close-drawer"
+    return response
 
 
 @require_page_permission("fund_requests")

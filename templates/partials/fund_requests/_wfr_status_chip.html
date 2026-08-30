@@ -17,7 +17,7 @@
 {% elif active_wfr.status == 'self_funded' %}
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-purple-50 text-purple-600 border border-purple-100">Self-funded</span>
 {% elif active_wfr.status == 'disbursed' %}
-<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">Disbursed</span>
+<span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-100">{% if active_wfr.receipt_confirmed_at %}Receipt confirmed{% else %}Disbursed — awaiting receipt{% endif %}</span>
 {% else %}
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-bold tracking-wider bg-slate-100 text-slate-500 border border-slate-200">{{ active_wfr.status|replace_underscore|title }}</span>
 {% endif %}
