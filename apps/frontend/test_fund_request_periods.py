@@ -485,16 +485,8 @@ class FundRequestPeriodIntegrityTest(TestCase):
         self.assertEqual(upcoming["due_timing_label"], "5 days remaining")
 
 
-class TwoColumnLayoutTest(TestCase):
-    """The 70/30 canvas split must hold structurally, not just textually.
-
-    The layout shipped broken while every string check passed: the grid class,
-    both column classes and the right panel were all present in the page, but
-    an orphaned </div> (left behind when the old period strip was removed from
-    the monthly preview) closed the grid early, so the right panel rendered
-    OUTSIDE it, full-width below. Classes in the page prove nothing about
-    where the tree puts them -- this parses the tree.
-    """
+class WeeklyRequestLayoutTest(TestCase):
+    """Weekly requests use one full-width planned-activity cost format."""
 
     @classmethod
     def setUpTestData(cls):
@@ -510,65 +502,26 @@ class TwoColumnLayoutTest(TestCase):
         )
         StaffProfile.objects.create(id="layout-sp", user=cls.user, title="CCEO")
 
-    def test_both_columns_are_direct_children_of_the_grid(self):
-        from html.parser import HTMLParser
-
+    def test_the_retired_split_layout_does_not_return(self):
         from django.test import Client
 
         client = Client()
         client.force_login(self.user)
         body = client.get("/fund-requests/weekly").content.decode()
+        self.assertNotIn("lg:grid-cols-10", body)
+        self.assertNotIn("lg:col-span-7", body)
+        self.assertNotIn("lg:col-span-3", body)
+        self.assertIn("Weekly Advance Request", body)
 
-        class Walk(HTMLParser):
-            def __init__(self):
-                super().__init__()
-                self.depth = 0
-                self.grid_depth = None
-                self.events = []
-
-            def handle_starttag(self, tag, attrs):
-                if tag != "div":
-                    return
-                self.depth += 1
-                cls = dict(attrs).get("class", "") or ""
-                if "lg:grid-cols-10" in cls:
-                    self.grid_depth = self.depth
-                elif self.grid_depth is not None and (
-                    "lg:col-span-7" in cls or "lg:col-span-3" in cls
-                ):
-                    span = "7" if "lg:col-span-7" in cls else "3"
-                    self.events.append((span, self.depth - self.grid_depth))
-
-            def handle_endtag(self, tag):
-                if tag != "div":
-                    return
-                if self.grid_depth is not None and self.depth == self.grid_depth:
-                    self.grid_depth = None
-                self.depth -= 1
-
-        walker = Walk()
-        walker.feed(body)
-        self.assertEqual(
-            walker.events,
-            [("7", 1), ("3", 1)],
-            "both panels must sit at grid+1; anything else means an unbalanced "
-            f"div has re-flattened the layout (saw {walker.events})",
-        )
-
-    def test_the_monthly_summary_does_not_create_a_second_kpi_tray(self):
-        """Month detail belongs to My Budget and the period breakdown.
-
-        A second five-card summary underneath the six-card headline made this
-        one page render eleven KPIs, bypassing the page-level professional
-        maximum even though each individual tray passed its own limit.
-        """
+    def test_weekly_request_does_not_add_monthly_kpis(self):
+        """Monthly KPIs belong to Budget, not the weekly advance request."""
         from django.test import Client
 
         client = Client()
         client.force_login(self.user)
         body = client.get("/fund-requests/weekly").content.decode()
         self.assertNotIn('id="fund-requests-monthly-preview"', body)
-        self.assertEqual(body.count('data-component="kpi-card"'), 6)
+        self.assertEqual(body.count('data-component="kpi-card"'), 0)
 
     def test_the_retired_monthly_preview_cannot_regrow_kpi_markup(self):
         """Keep the retired partial inert if an old include is reintroduced."""

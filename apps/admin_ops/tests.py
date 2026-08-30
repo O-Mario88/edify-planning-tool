@@ -797,7 +797,8 @@ class AdminWorkspacePageTests(TestCase):
         self.assertIn("Admin My Plan", labels)
         self.assertIn("Team Plans", labels)
         self.assertIn("Planning", labels)
-        self.assertIn("Fund Approvals", labels)
+        self.assertIn("Budget", labels)
+        self.assertIn("Weekly Advance Request", labels)
         self.assertIn("Disbursement Dashboard", labels)
 
 

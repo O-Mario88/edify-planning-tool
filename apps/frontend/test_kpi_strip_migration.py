@@ -198,10 +198,11 @@ class KpiStripMigrationTests(SimpleTestCase):
                 f"{template} must not duplicate KPI DOM for mobile and desktop",
             )
 
-    def test_fund_requests_have_one_headline_kpi_tray(self):
+    def test_weekly_fund_requests_have_no_monthly_kpi_tray(self):
         root = _read("templates/partials/fund_requests/root.html")
         monthly = _read("templates/partials/fund_requests/monthly_preview.html")
-        self.assertIn("partials/fund_requests/kpis.html", root)
+        self.assertNotIn("partials/fund_requests/kpis.html", root)
+        self.assertNotIn("components/kpi_strip.html", root)
         self.assertNotIn("partials/fund_requests/monthly_preview.html", root)
         self.assertNotIn("components/kpi_strip.html", monthly)
 

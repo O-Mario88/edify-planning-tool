@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 621,
-  "templates": 220,
-  "distinct_titles": 591,
+  "titled_cards": 623,
+  "templates": 221,
+  "distinct_titles": 593,
   "with_card_key": 13,
-  "untitled_surfaces": 1022,
-  "untitled_chrome": 237,
-  "untitled_nested": 392,
-  "untitled_headless": 393,
+  "untitled_surfaces": 1016,
+  "untitled_chrome": 236,
+  "untitled_nested": 391,
+  "untitled_headless": 389,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -782,57 +782,11 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 35,
+   "line": 39,
    "title": "Monthly Budget Approval",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm",
-   "branch_path": [
-    [
-     4,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 84,
-   "title": "Country Monthly Envelope",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] edify-surface shadow-sm",
-   "branch_path": [
-    [
-     4,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 126,
-   "title": "Disbursement and Accountability",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
-   "branch_path": [
-    [
-     4,
-     0
-    ],
-    [
-     10,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 150,
-   "title": "Add administrative budget item",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
      12,
@@ -842,21 +796,67 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 189,
-   "title": "Team cost summary",
+   "line": 88,
+   "title": "Country Monthly Budget",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "classes": "rounded-surface border border-[var(--border-card)] edify-surface shadow-sm",
    "branch_path": [
     [
-     13,
+     12,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 209,
+   "line": 130,
+   "title": "Disbursement and Accountability",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
+   "branch_path": [
+    [
+     12,
+     0
+    ],
+    [
+     18,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 154,
+   "title": "Add administrative budget item",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "branch_path": [
+    [
+     20,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 193,
+   "title": "Team cost summary",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "branch_path": [
+    [
+     21,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 213,
    "title": "Administrative cost planActivity cost plan",
    "heading_level": 2,
    "has_card_key": false,
@@ -1243,7 +1243,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 144,
+   "line": 143,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -5376,6 +5376,15 @@
   {
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 139,
+   "title": "Country Operational Cost Request",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/finance/country_budget/root.html",
+   "line": 158,
    "title": "Monthly Executable Budget",
    "heading_level": 2,
    "has_card_key": false,
@@ -5384,7 +5393,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 253,
+   "line": 268,
    "title": "Approval Status",
    "heading_level": 3,
    "has_card_key": false,
@@ -5393,7 +5402,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 260,
+   "line": 275,
    "title": "Monthly Approval Progress",
    "heading_level": 3,
    "has_card_key": false,
@@ -5402,7 +5411,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 276,
+   "line": 291,
    "title": "Budget Integrity Checks",
    "heading_level": 3,
    "has_card_key": false,
@@ -5411,7 +5420,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 289,
+   "line": 304,
    "title": "Month Summary",
    "heading_level": 3,
    "has_card_key": false,
@@ -5420,7 +5429,7 @@
   },
   {
    "template": "templates/partials/finance/country_budget/root.html",
-   "line": 299,
+   "line": 314,
    "title": "Plan Source Summary",
    "heading_level": 3,
    "has_card_key": false,
@@ -5521,6 +5530,15 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-5 text-slate-700",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/fund_requests/root.html",
+   "line": 13,
+   "title": "Weekly Advance Request",
+   "heading_level": 1,
+   "has_card_key": false,
+   "classes": "p-3.5 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700",
    "branch_path": []
   },
   {

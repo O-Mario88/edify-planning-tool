@@ -6680,14 +6680,17 @@
    "view": "apps.frontend.views.budget_views.monthly_budget_view"
   },
   {
-   "page_permission": "consolidated_fund_allocation",
+   "page_permission": "my_budget",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
+    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
     "Accountant",
+    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/budgets/overview",
@@ -14025,7 +14028,7 @@
   "Accountant": 285,
   "Admin": 765,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 470,
+  "CCEO": 471,
   "CountryDirector": 541,
   "HumanResources": 264,
   "ImpactAssessment": 401,
@@ -14033,12 +14036,12 @@
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
-  "Program Lead": 544,
-  "ProjectCoordinator": 400,
+  "Program Lead": 545,
+  "ProjectCoordinator": 401,
   "RegionalVicePresident": 300
  },
  "summary": {
-  "page_keys_declared": 148,
+  "page_keys_declared": 149,
   "page_keys_in_navigation": 165,
   "routes_guarded": 859,
   "routes_total": 1043,

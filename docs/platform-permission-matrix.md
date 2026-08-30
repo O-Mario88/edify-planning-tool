@@ -13,14 +13,14 @@ hand-maintained copy of an authority is how SEC-01 happened.
 
 | Role | Guarded surfaces reachable |
 | --- | --- |
-| CCEO | 470 |
-| Program Lead | 544 |
+| CCEO | 471 |
+| Program Lead | 545 |
 | CountryDirector | 541 |
 | RegionalVicePresident | 300 |
 | ImpactAssessment | 401 |
 | Accountant | 285 |
 | HumanResources | 264 |
-| ProjectCoordinator | 400 |
+| ProjectCoordinator | 401 |
 | PartnerAdmin | 201 |
 | PartnerFieldOfficer | 201 |
 | BusinessTransformationOfficer | 212 |
@@ -448,7 +448,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/api/uploads(?:/|)<str:batch_id>/<str:action>` | school.upload |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/api/uploads(?:/|)<str:batch_id>/rows` | school.upload |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/budgets/monthly` | monthly_budget | Y | Y | Y |  | Y | Y |  |  |  |  |  |  |  | Y |
-| `/budgets/overview` | consolidated_fund_allocation |  |  | Y | Y | Y | Y |  |  |  |  |  |  |  | Y |
+| `/budgets/overview` | my_budget | Y | Y | Y | Y | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/business-transformation` | business_transformation | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |  |  | Y |
 | `/business-transformation/business-accounting-finance` | business_transformation_finance |  |  |  |  |  |  |  |  |  |  | Y |  |  |  |
 | `/business-transformation/cases/<str:case_id>/triage` | business_transformation | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |  |  | Y |
