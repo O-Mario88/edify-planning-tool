@@ -9,9 +9,9 @@
   <div class="edify-page-header edify-page-hero">
     <div class="edify-page-hero__row">
       <div class="edify-page-header__lead">
-        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">{{ scope_label }} funding workspace</p>
+        <p class="edify-text-caption font-bold uppercase tracking-[0.16em] edify-primary-on-solid">{{ scope_label }} planned-activity budget</p>
         <p class="edify-page-eyebrow">Finance</p>
-        <h1 class="edify-page-title edify-page-header__title">{{ workspace_title }}</h1>
+        <h1 class="edify-page-title edify-page-header__title">Budget</h1>
         <p class="edify-page-header__description">{{ selected.title }} · FY {{ fy }} · {{ role }}</p>
       </div>
       <div class="edify-page-hero__summary">
@@ -22,11 +22,15 @@
         {% endif %}
       </div>
     </div>
+    <nav class="mt-5" data-edify-tablist aria-label="Budget period">
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}" data-edify-tab class="{% if selected_period == 'month' %}edify-selected-surface{% endif %}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Monthly Budget</a>
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}" data-edify-tab class="{% if selected_period == 'quarter' %}edify-selected-surface{% endif %}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarterly Budget</a>
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}" data-edify-tab class="{% if selected_period == 'fy' %}edify-selected-surface{% endif %}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual Budget</a>
+    </nav>
     {% if is_program_lead %}
-    {# Selected tab uses the shared edify-selected-surface, not a hand-rolled pill: one selected state across period cards, tabs and workflow stages. #}
-    <nav class="mt-5" data-edify-tablist aria-label="Budget view">
-      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my" data-edify-tab {% if budget_scope == 'my' %}aria-current="page"{% endif %}>My Budget</a>
-      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team" data-edify-tab {% if budget_scope == 'team' %}aria-current="page"{% endif %}>Team Budget</a>
+    <nav class="mt-3" data-edify-tablist aria-label="Budget scope">
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=my" data-edify-tab class="{% if budget_scope == 'my' %}edify-selected-surface{% endif %}" {% if budget_scope == 'my' %}aria-current="page"{% endif %}>My Budget</a>
+      <a href="{{ workspace_base_url }}?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period={{ selected_period }}&budget_scope=team" data-edify-tab class="{% if budget_scope == 'team' %}edify-selected-surface{% endif %}" {% if budget_scope == 'team' %}aria-current="page"{% endif %}>Team Budget</a>
     </nav>
     {% endif %}
   </div>
@@ -85,7 +89,7 @@
     <div class="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
         <p class="edify-page-eyebrow">Governed funding allocation</p>
-        <h2 id="country-envelope-heading" class="text-[15px] font-bold text-slate-800">Country Monthly Envelope</h2>
+        <h2 id="country-envelope-heading" class="text-[15px] font-bold text-slate-800">Country Monthly Budget</h2>
         <p class="mt-0.5 text-[12px] font-medium text-slate-500">Staff plans use Minimal Viable Cost. The matching Country Operational Cost is submitted to the RVP.</p>
       </div>
       <p class="text-left sm:text-right"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total country request</span><span class="text-[20px] font-extrabold tabular-nums text-[var(--edify-accent)]">{{ country_workflow.country_envelope.totalCountryRequest|ugx }}</span></p>

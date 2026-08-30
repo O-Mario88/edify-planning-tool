@@ -524,48 +524,85 @@ def finance_return_action(request):
     return response
 
 
-@require_page_permission("consolidated_fund_allocation")
+@require_page_permission("my_budget")
 def budget_overview_view(request):
-    """Budget overview — CD/Accountant view."""
-    from apps.budget.services import fy_budget, monthly_budget
+    """One planned-activity budget page with Month, Quarter and Annual tabs."""
+    from datetime import date
 
-    fy = get_operational_fy()
+    from apps.budget.services import budget_workspace
+    from apps.geography.models import District
 
-    fy_data = fy_budget({"fy": fy})
+    role = getattr(request.user, "active_role", "")
+    period = request.GET.get("period", "month").strip().lower()
+    if period not in ("month", "quarter", "fy"):
+        period = "month"
 
-    monthly_data = []
-    for m in range(1, 13):
-        m_data = monthly_budget({"fy": fy, "month": m})
-        if m_data["plannedBudget"] > 0 or m_data["requestedBudget"] > 0:
-            # Add helper display name for the month-of-fy (1=October, 2=November, ...)
-            months_names = {
-                1: "October",
-                2: "November",
-                3: "December",
-                4: "January",
-                5: "February",
-                6: "March",
-                7: "April",
-                8: "May",
-                9: "June",
-                10: "July",
-                11: "August",
-                12: "September",
-            }
-            m_data["display_name"] = months_names.get(m, f"Month {m}")
-            monthly_data.append(m_data)
+    fy = request.GET.get("fy") or get_operational_fy()
+    anchor_raw = request.GET.get("date")
+    if not anchor_raw:
+        month = int(request.GET.get("month") or timezone.localdate().month)
+        calendar_year = int(fy) - 1 if month >= 10 else int(fy)
+        anchor_raw = date(calendar_year, month, 1).isoformat()
 
-    pending_approvals = WeeklyFundRequest.objects.filter(
-        status__in=["submitted_to_pl", "submitted_to_cd"]
-    ).count()
+    if role == "Program Lead":
+        default_scope = "team"
+    elif role in (
+        "CountryDirector",
+        "RegionalVicePresident",
+        "Accountant",
+        "ImpactAssessment",
+        "Admin",
+    ):
+        default_scope = "country"
+    else:
+        default_scope = "my"
 
-    context = {
-        "monthly_data": monthly_data,
-        "fy_data": fy_data,
-        "pending_approvals": pending_approvals,
-        "fy": fy,
+    ctx = budget_workspace(
+        request.user,
+        {
+            "fy": fy,
+            "date": anchor_raw,
+            "period": period,
+            "budget_scope": request.GET.get("budget_scope") or default_scope,
+            "q": request.GET.get("q", ""),
+            "district": request.GET.get("district", ""),
+        },
+    )
+    ctx.update(
+        {
+            "districts": District.objects.all().order_by("name"),
+            "selected_district": request.GET.get("district", "").strip(),
+            "workspace_base_url": "/budgets/overview",
+            "page_title": "Budget",
+        }
+    )
+
+    # Country approval is a monthly governance action. The quarterly and
+    # annual tabs remain read-only consolidations of the same planned lines.
+    if ctx["budget_scope"] == "country" and period == "month":
+        from apps.monthly_work_plan.country_budget_service import (
+            get_country_monthly_budget,
+        )
+
+        ctx["country_workflow"] = get_country_monthly_budget(
+            request.user,
+            {"fy": fy, "month": ctx["anchor"].month},
+        )
+
+    ctx["topbar_search"] = {
+        "placeholder": "Search planned activities…",
+        "label": "Search planned activities by item or responsible staff",
+        "name": "q",
+        "value": request.GET.get("q", ""),
+        "action": "/budgets/overview",
+        "hidden": [
+            {"name": "fy", "value": fy},
+            {"name": "date", "value": ctx["anchor"].isoformat()},
+            {"name": "period", "value": period},
+            {"name": "budget_scope", "value": ctx["budget_scope"]},
+        ],
     }
-    return render(request, "pages/budget/index.html", context)
+    return render(request, "pages/budgets/monthly.html", ctx)
 
 
 @require_page_permission("cost_settings")
@@ -1036,7 +1073,7 @@ def cost_setting_row_view(request, key):
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
         except (ValueError, BadRequest) as exc:
-            return HttpResponse(str(exc), status=400)
+            return error_fragment(exc, action="Could not update the cost", status=400)
 
     # `cost_setting_history` has existed since the register was built and was
     # never surfaced anywhere. A rate is the input to every activity budget in
@@ -1111,63 +1148,13 @@ def _country_budget_title(user) -> str:
 
 @require_page_permission("country_budget")
 def country_budget_view(request):
-    """Monthly Fund Request in the shared planned-activity budget workspace."""
-    from datetime import date
+    """Keep old country-budget bookmarks working on the unified Budget page."""
+    from urllib.parse import urlencode
 
-    from apps.budget.services import budget_workspace
-    from apps.monthly_work_plan.country_budget_service import (
-        get_country_monthly_budget,
-    )
-
-    fy = request.GET.get("fy") or get_operational_fy()
-    month = int(request.GET.get("month") or timezone.localdate().month)
-    anchor_raw = request.GET.get("date")
-    if not anchor_raw:
-        calendar_year = int(fy) - 1 if month >= 10 else int(fy)
-        anchor_raw = date(calendar_year, month, 1).isoformat()
-
-    ctx = budget_workspace(
-        request.user,
-        {
-            "fy": fy,
-            "date": anchor_raw,
-            "period": request.GET.get("period") or "month",
-            "budget_scope": "country",
-            "q": request.GET.get("q", ""),
-            "district": request.GET.get("district", ""),
-        },
-    )
-    workspace_title = _country_budget_title(request.user)
-    from apps.geography.models import District
-
-    ctx["districts"] = District.objects.all().order_by("name")
-    ctx["selected_district"] = request.GET.get("district", "").strip()
-    ctx.update(
-        {
-            "workspace_title": workspace_title,
-            "workspace_kind": "country",
-            "workspace_base_url": "/country-budget/",
-            "page_title": workspace_title,
-            "country_workflow": get_country_monthly_budget(
-                request.user,
-                {"fy": fy, "month": ctx["anchor"].month},
-            ),
-        }
-    )
-    # Was a bare placeholder, so the shell defaulted to action="/search" and the
-    # box left the budget rather than filtering it.
-    ctx["topbar_search"] = {
-        "placeholder": "Search planned activities…",
-        "label": "Search planned activities by item or responsible staff",
-        "name": "q",
-        "value": request.GET.get("q", ""),
-        "action": "/country-budget/",
-        "hidden": [
-            {"name": "fy", "value": fy},
-            {"name": "month", "value": month},
-        ],
-    }
-    return render(request, "pages/budgets/monthly.html", ctx)
+    query = request.GET.copy()
+    query["period"] = "month"
+    query["budget_scope"] = "country"
+    return redirect(f"/budgets/overview?{urlencode(query, doseq=True)}")
 
 
 @require_page_permission("country_budget")
@@ -1370,9 +1357,9 @@ def country_budget_action_view(request):
         if action == "send_to_rvp" and ok and not error:
             month = _next_month_in_fy(month)
         year = int(fy) - 1 if month >= 10 else int(fy)
-        destination = "/country-budget/"
+        destination = "/budgets/overview"
         return local_redirect(
-            f"{destination}?fy={fy}&date={year}-{month:02d}-01&period=month"
+            f"{destination}?fy={fy}&date={year}-{month:02d}-01&period=month&budget_scope=country"
         )
 
     ctx = svc.get_country_monthly_budget(

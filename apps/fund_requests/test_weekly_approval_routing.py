@@ -17,12 +17,13 @@ from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.rbac import EdifyRole
-from apps.fund_requests.models import WeeklyFundRequest
+from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequest
 from apps.fund_requests.weekly_service import (
     approve_weekly_request,
     generate_weekly_fund_request,
     request_advance,
     return_weekly_request,
+    self_funded,
 )
 from apps.geography.models import District, Region
 from apps.schools.models import School
@@ -200,6 +201,25 @@ class WeeklyApprovalRoutingTest(TestCase):
         approve_weekly_request(wfr.id, self.pl)
         adv.refresh_from_db()
         self.assertEqual(adv.status, "confirmed_for_advance")
+
+    def test_self_fund_preserves_amount_and_still_routes_through_approval(self):
+        from apps.fund_requests.advance_service import sync_for_activity
+
+        act = self._costed_activity(self.cceo)
+        sync_for_activity(act, responsible_user_id=self.cceo.id)
+        wfr = generate_weekly_fund_request(self.cceo.id, self.week_start.isoformat())
+
+        result = self_funded(wfr.id, self.cceo)
+        self.assertEqual(result["status"], "submitted_to_pl")
+        advance = AdvanceRequest.objects.get(activity=act)
+        self.assertEqual(advance.amount, wfr.total_amount)
+        self.assertEqual(advance.advance_type, "self_funded")
+        self.assertEqual(advance.status, "pending_responsible_confirmation")
+
+        approve_weekly_request(wfr.id, self.pl)
+        advance.refresh_from_db()
+        self.assertEqual(advance.advance_type, "self_funded")
+        self.assertEqual(advance.status, "confirmed_for_advance")
 
     # ── Per-line disbursement requires line MEMBERSHIP in an approved request ─
     def test_per_line_disbursement_requires_membership_in_approved_request(self):

@@ -21,7 +21,7 @@ from apps.core.navigation import build_sidebar_for_user
 from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 
 
-def _sidebar_items(user, path="/country-budget/"):
+def _sidebar_items(user, path="/budgets/overview"):
     return [
         item
         for section in build_sidebar_for_user(user, path)
@@ -50,9 +50,9 @@ class RvpCountryBudgetNamingTest(TestCase):
         )
 
     # ── Sidebar ──────────────────────────────────────────────────────────────
-    def test_rvp_sidebar_calls_it_country_budget(self):
+    def test_rvp_sidebar_calls_it_budget(self):
         labels = [i["label"] for i in _sidebar_items(self.rvp)]
-        self.assertIn("Country Budget", labels)
+        self.assertIn("Budget", labels)
         self.assertNotIn("Monthly Fund Request", labels)
 
     def test_rvp_sidebar_offers_one_route_to_that_page(self):
@@ -61,11 +61,12 @@ class RvpCountryBudgetNamingTest(TestCase):
         to_budget = [
             i
             for i in items
-            if i["url"] in ("/country-budget/", "/accounts/monthly-request/")
+            if i["url"]
+            in ("/budgets/overview", "/country-budget/", "/accounts/monthly-request/")
         ]
         self.assertEqual(
             [i["url"] for i in to_budget],
-            ["/country-budget/"],
+            ["/budgets/overview"],
             f"expected one country-budget link, got {[(i['label'], i['url']) for i in to_budget]}",
         )
 
@@ -73,33 +74,36 @@ class RvpCountryBudgetNamingTest(TestCase):
         urls = [i["url"] for i in _sidebar_items(self.rvp)]
         self.assertNotIn("/accounts/monthly-request/", urls)
 
-    def test_the_country_director_keeps_the_submission_wording(self):
+    def test_the_country_director_uses_the_same_budget_page(self):
         labels = [i["label"] for i in _sidebar_items(self.cd)]
-        self.assertIn("Monthly Fund Request", labels)
+        self.assertIn("Budget", labels)
         self.assertNotIn("Country Budget", labels)
 
     # ── Page titles ──────────────────────────────────────────────────────────
     def test_the_page_titles_itself_for_the_rvp(self):
         self.client.force_login(self.rvp)
-        response = self.client.get("/country-budget/?fy=2026&month=7")
+        response = self.client.get("/budgets/overview?fy=2026&month=7")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["workspace_title"], "Country Budget")
+        self.assertEqual(response.context["workspace_title"], "General Budget")
+        self.assertContains(response, "Monthly Budget")
+        self.assertContains(response, "Quarterly Budget")
+        self.assertContains(response, "Annual Budget")
 
     def test_the_page_keeps_its_cd_title(self):
         self.client.force_login(self.cd)
-        response = self.client.get("/country-budget/?fy=2026&month=7")
+        response = self.client.get("/budgets/overview?fy=2026&month=7")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["workspace_title"], "Monthly Fund Request")
+        self.assertEqual(response.context["workspace_title"], "General Budget")
 
     def test_the_legacy_monthly_request_deep_link_still_works_for_the_rvp(self):
         """The route stays authorized -- only the sidebar entry was removed."""
         self.client.force_login(self.rvp)
         response = self.client.get("/accounts/monthly-request/?fy=2026&month=7")
 
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["workspace_title"], "Country Budget")
+        self.assertEqual(response.status_code, 302)
+        self.assertIn("/budgets/overview", response.url)
 
     def test_submitted_budget_history_is_titled_for_the_reader(self):
         self.client.force_login(self.rvp)
@@ -191,7 +195,7 @@ class RvpCountryBudgetDataTest(TestCase):
     def test_the_rvp_sees_the_whole_country_not_only_their_own_work(self):
         self.client.force_login(self.rvp)
         response = self.client.get(
-            "/country-budget/?fy=2026&date=2026-04-01&period=month"
+            "/budgets/overview?fy=2026&date=2026-04-01&period=month"
         )
 
         self.assertEqual(response.status_code, 200)
@@ -201,7 +205,7 @@ class RvpCountryBudgetDataTest(TestCase):
     def test_cancelled_work_is_not_in_the_envelope(self):
         self.client.force_login(self.rvp)
         response = self.client.get(
-            "/country-budget/?fy=2026&date=2026-04-01&period=month"
+            "/budgets/overview?fy=2026&date=2026-04-01&period=month"
         )
 
         self.assertNotContains(response, "Cancelled transport")

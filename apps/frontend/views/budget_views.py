@@ -64,17 +64,8 @@ def get_weeks_of_month(year, month):
 
 @require_page_permission("monthly_budget")
 def monthly_budget_view(request):
-    """Redirect retired monthly-budget bookmarks to the canonical workflow."""
-    if request.user.active_role in (
-        "CountryDirector",
-        "ImpactAssessment",
-        "Accountant",
-        "Admin",
-    ):
-        return redirect("/country-budget/")
-    if request.user.active_role == "Program Lead":
-        return redirect("/accounts/monthly-request/")
-    return redirect("/fund-requests/weekly")
+    """Redirect retired monthly-budget bookmarks to the unified Budget page."""
+    return redirect("/budgets/overview?period=month")
 
 
 def _mission_status_for_cceo(user, week_start):
@@ -310,27 +301,24 @@ def _build_fund_requests_context(request):
     # (2026-08-20 tab audit: the page's old `tab` state was vestigial — no
     # control ever set it and nothing filtered on it; the real rails are
     # ?staff= and ?period_tab=.)
-    # Which budget horizon the period card is showing. The week is the default
-    # because it is the one that moves money.
+    # This page is exclusively the weekly advance request. Month, quarter and
+    # annual consolidations live together under /budgets/overview.
     _role = getattr(request.user, "active_role", "")
-    # A Country Director's own plan is the monthly admin plan -- admin lines
-    # are planned by month and never estimated into a week -- so their card
-    # opens on the month. Field staff open on the week, which moves the money.
-    _default_tab = "month" if _role in ("CountryDirector", "Admin") else "week"
-    period_tab = request.GET.get("period_tab", _default_tab).strip().lower()
-    if period_tab not in ("week", "month", "quarter", "fy"):
-        period_tab = _default_tab
+    period_tab = "week"
 
-    # Which slice of the budget the card reads. PLs read their team (the plan
-    # they approve). CDs read their admin plan by default -- "CD majorly has
-    # admin and monitoring plans" (the owner) -- with a one-click switch to
-    # the country field view for the monitoring half. budget_workspace itself
-    # validates who may hold which scope, so an unauthorised value in the URL
-    # falls back to "my" there rather than being trusted here.
+    # Which slice the weekly request reads. Supervisors and finance roles see
+    # the selected owner's planned activities in the same format as staff.
+    # Monthly administrative costs belong on the consolidated Budget page,
+    # never inside a weekly advance request.
     if _role == "Program Lead":
         _default_scope = "team"
-    elif _role in ("CountryDirector", "Admin"):
-        _default_scope = "admin"
+    elif _role in (
+        "CountryDirector",
+        "Accountant",
+        "ImpactAssessment",
+        "Admin",
+    ):
+        _default_scope = "country"
     else:
         _default_scope = ""
     card_budget_scope = request.GET.get("budget_scope", _default_scope).strip().lower()
@@ -586,7 +574,12 @@ def _build_fund_requests_context(request):
     weekly_total = 0
     wfr_status = "No Request"
     viewer_can_approve_wfr = False
+    viewer_can_disburse_wfr = False
     if active_wfr:
+        viewer_can_disburse_wfr = (
+            active_wfr.status == "confirmed_for_advance"
+            and _has_permission(user, _Permission.PAYMENT_ACT.value)
+        )
         # The viewer may act as approver when the request awaits their stage:
         # a PL on a supervised CCEO's submitted_to_pl request, a CD/Admin on
         # submitted_to_cd (or standing in on submitted_to_pl). Never on their
@@ -890,6 +883,7 @@ def _build_fund_requests_context(request):
         # month filter rather than silently resetting to today.
         _budget_anchor = date(year_num, month_num, 1)
 
+    _budget_owner_id = staff_id or (active_wfr.responsible_user if active_wfr else "")
     period_workspace = budget_workspace(
         user,
         {
@@ -909,7 +903,7 @@ def _build_fund_requests_context(request):
                 else {}
             ),
             **({"budget_scope": card_budget_scope} if card_budget_scope else {}),
-            **({"staff": staff_id} if staff_id else {}),
+            **({"staff": _budget_owner_id} if _budget_owner_id else {}),
             **({"district": district_id} if district_id else {}),
         },
     )
@@ -938,9 +932,6 @@ def _build_fund_requests_context(request):
         "empty_help": period_workspace["empty_help"],
         "tabs": [
             {"key": "week", "label": "Week", "submits": True},
-            {"key": "month", "label": "Month", "submits": False},
-            {"key": "quarter", "label": "Quarter", "submits": False},
-            {"key": "fy", "label": "FY", "submits": False},
         ],
     }
 
@@ -1234,7 +1225,23 @@ def _build_fund_requests_context(request):
         "kpis": kpis,
         "kpi_strip_items": kpi_strip_items,
         "active_wfr": active_wfr,
+        "viewer_is_wfr_owner": bool(
+            active_wfr and active_wfr.responsible_user == user.user_id
+        ),
+        "viewer_can_submit_wfr": bool(
+            active_wfr
+            and active_wfr.responsible_user == user.user_id
+            and active_wfr.status
+            in (
+                "pending_responsible_confirmation",
+                "not_requested",
+                "returned_by_pl",
+                "returned_by_cd",
+                "returned_by_accountant",
+            )
+        ),
         "viewer_can_approve_wfr": viewer_can_approve_wfr,
+        "viewer_can_disburse_wfr": viewer_can_disburse_wfr,
         "pl_pending_accountability": pl_pending_accountability,
         "viewer_can_approve_accountability": viewer_can_approve_accountability,
         "wfr_status": wfr_status,
@@ -1269,17 +1276,7 @@ def _build_fund_requests_context(request):
         # manager's approval stage for the selected week.
         "team_tabs": team_tabs,
         "team_tab_query": _team_tab_query,
-        # The CD's two hats: their own admin plan, and monitoring the country's
-        # field budget. Rendered as a switch on the card only when the role
-        # actually holds both scopes.
-        "card_scope_switch": (
-            [
-                {"key": "admin", "label": "Admin plan"},
-                {"key": "country", "label": "Country (monitoring)"},
-            ]
-            if _role in ("CountryDirector", "Admin")
-            else []
-        ),
+        "card_scope_switch": [],
         "card_budget_scope": period_workspace["budget_scope"],
         "mission_status": _mission_status_for_cceo(user, selected_week_start),
         "monthly_stepper": monthly_stepper,
@@ -1345,7 +1342,7 @@ def weekly_fund_request_confirm_action(request, request_id):
     if request.method == "POST":
         try:
             request_advance(request_id, request.user)
-            action_ok = "Weekly fund request confirmed for advance."
+            action_ok = "Weekly advance request sent for approval."
         except Exception as e:
             action_error = str(e)
 
@@ -1423,7 +1420,7 @@ def weekly_fund_request_receipt_action(request, request_id):
     if request.method == "POST":
         try:
             confirm_receipt(request_id, request.user)
-            action_ok = "Receipt confirmed — you can now account for this week's spend."
+            action_ok = "Fund received — accountability is now open."
         except Exception as e:
             action_error = str(e)
 
@@ -1437,13 +1434,12 @@ def weekly_fund_request_receipt_action(request, request_id):
 
 @require_page_permission("fund_requests")
 def weekly_fund_request_self_funded_action(request, request_id):
-    """Elect self-funded reimbursement. Re-renders in place — see confirm
-    action above for why (keeps KPIs/insights/monthly preview accurate)."""
+    """Submit the same weekly amount with self-fund as its funding choice."""
     action_error = action_ok = None
     if request.method == "POST":
         try:
             self_funded(request_id, request.user)
-            action_ok = "Weekly fund request marked as self-funded."
+            action_ok = "Self-funded weekly advance request sent for approval."
         except Exception as e:
             action_error = str(e)
 
@@ -1560,12 +1556,12 @@ def weekly_fund_request_disburse_action(request, request_id):
     from apps.core.rbac import Permission
 
     if not has_permission(request.user, Permission.PAYMENT_ACT.value):
-        messages.error(
-            request, "Only the Program Accountant can disburse fund requests."
-        )
-        return local_redirect(f"/fund-requests/weekly/{request_id}")
+        action_error = "Only the Program Accountant can disburse fund requests."
+    else:
+        action_error = None
+    action_ok = None
 
-    if request.method == "POST":
+    if request.method == "POST" and not action_error:
         amount = request.POST.get("amount", "")
         method = request.POST.get("method", "mobile_money")
         reference = request.POST.get("reference", "").strip()
@@ -1579,8 +1575,13 @@ def weekly_fund_request_disburse_action(request, request_id):
 
         try:
             disburse_weekly(request_id, payload, request.user)
-            messages.success(request, "Weekly fund request disbursed successfully.")
+            action_ok = "Weekly advance request disbursed. The owner has been alerted."
         except Exception as e:
-            messages.error(request, f"Error disbursing funds: {e}")
+            action_error = str(e)
 
-    return local_redirect(f"/fund-requests/weekly/{request_id}")
+    context = _build_fund_requests_context(request)
+    context["action_error"] = action_error
+    context["action_ok"] = action_ok
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/fund_requests/root.html", context)
+    return render(request, "pages/fund_requests/weekly.html", context)

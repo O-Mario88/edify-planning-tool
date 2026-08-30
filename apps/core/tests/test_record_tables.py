@@ -82,3 +82,31 @@ class RecordTableMarkupContractTests(SimpleTestCase):
             with self.subTest(label=label):
                 self.assertIn(f'data-label="{label}"', src)
         self.assertIn("data-record-title", src)
+
+    def test_budget_horizons_share_one_tabbed_page_and_table_format(self):
+        page = (TEMPLATES / "pages" / "budgets" / "monthly.html").read_text()
+        table = (
+            TEMPLATES / "partials" / "budgets" / "budget_group_tables.html"
+        ).read_text()
+        for label in ("Monthly Budget", "Quarterly Budget", "Annual Budget"):
+            with self.subTest(label=label):
+                self.assertIn(label, page)
+        for column in ("Staff cost (UGX)", "Activity (UGX)", "Grand total"):
+            with self.subTest(column=column):
+                self.assertIn(column, table)
+
+    def test_weekly_advance_actions_use_the_role_specific_contract(self):
+        workflow = (
+            TEMPLATES / "partials" / "fund_requests" / "weekly_request_workflow.html"
+        ).read_text()
+        for label in (
+            "Send for Approval",
+            "Self Fund",
+            "Approve",
+            "Return",
+            "Disburse",
+            "Fund Received",
+        ):
+            with self.subTest(label=label):
+                self.assertIn(label, workflow)
+        self.assertIn("Correct the underlying activities in My Plan", workflow)

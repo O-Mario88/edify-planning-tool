@@ -8,12 +8,10 @@
   drifts. Both feed it from apps.budget.services.budget_workspace, so the
   numbers cannot disagree either.
 
-  Format contract (owner, 2026-08-18): the grand total sits ABOVE the table,
-  large, bold and blue, and never wraps; currency lives in the column
-  headers ("(UGX)") rather than repeating on every figure; and there is one
-  money column — the activity total — with the partner-delivered share
-  annotated on the rows it applies to instead of a second, mostly duplicate
-  "Staff cost" column.
+  Format contract (owner, 2026-08-30): every budget horizon and the weekly
+  advance request use this same activity-cost-plan table. It shows both the
+  amount payable through the staff channel and the complete activity cost,
+  with group subtotals and a grand total.
 
   Context: groups (the page slice), all_groups (for the footer guard),
   staff_total, total, selected, workspace_title, budget_scope.
@@ -25,17 +23,14 @@
 <div class="budget-grand-total sticky left-0">
   <span class="budget-grand-total__label">Grand Total</span>
   <span class="budget-grand-total__value">{{ total|ugx }}</span>
-  {% if staff_total != total %}
-  <span class="budget-grand-total__meta">Staff advance {{ staff_total|ugx_amount }} · Partner-delivered {{ total|sub:staff_total|ugx_amount }}</span>
-  {% endif %}
 </div>
 {% endif %}
-<table class="min-w-[680px] w-full border-collapse text-left text-[12px]">
+<table class="min-w-[900px] w-full border-collapse text-left text-[12px]">
         <caption class="sr-only">{{ workspace_title }} cost breakdown for {{ selected.title }}</caption>
         <tbody class="divide-y divide-slate-200">
           {% for group in groups %}
           <tr>
-            <td colspan="5" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
+            <td colspan="6" class="px-4 py-2.5 edify-primary-solid edify-primary-on-solid">
               <div class="flex items-center gap-2">
                 <span class="budget-category-name">{{ group.label }}</span>
                 <span class="edify-text-caption font-semibold opacity-80">{% if group.is_admin %}monthly plan{% else %}{{ group.activity_count }} {% if group.activity_count == 1 %}activity{% else %}activities{% endif %}{% endif %}</span>
@@ -47,7 +42,8 @@
             <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' %}Meetings{% elif group.table_kind == 'training' %}Training sessions{% elif group.table_kind == 'admin' %}Quantity{% else %}No. of Days{% endif %}</th>
             <th class="px-3 py-3 text-center edify-primary-solid edify-primary-on-solid">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}Participants{% elif group.table_kind == 'admin' %}—{% else %}No. of Persons{% endif %}</th>
             <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Rate / Unit (UGX)</th>
-            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Total (UGX)</th>
+            <th class="px-3 py-3 text-right edify-primary-solid edify-primary-on-solid">Staff cost (UGX)</th>
+            <th class="px-4 py-3 text-right edify-primary-solid edify-primary-on-solid">Activity (UGX)</th>
           </tr>
           {% for row in group.rows %}
           <tr class="edify-primary-soft-hover">
@@ -55,9 +51,7 @@
               <div class="flex min-w-0 items-center gap-3">
                 <div class="min-w-0">
                   <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
-                  {% if row.vendor_total %}
-                  <p class="edify-text-caption font-medium text-slate-400">Partner-delivered{% if row.staff_total %} · staff share {{ row.staff_total|ugx_amount }}{% endif %}</p>
-                  {% endif %}
+                  {% if row.vendor_total %}<p class="edify-text-caption font-medium text-slate-400">Partner-delivered cost included in activity total</p>{% endif %}
                 </div>
                 {% if budget_scope == 'team' %}
                 <span class="ml-auto max-w-[46%] truncate rounded-pill edify-primary-soft px-2 py-0.5 edify-text-caption font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
@@ -67,14 +61,23 @@
             <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{% if group.table_kind == 'meeting' or group.table_kind == 'training' %}{{ row.activity_count }}{% else %}{{ row.days }}{% endif %}</td>
             <td class="px-3 py-3 text-center font-semibold tabular-nums text-slate-700">{{ row.people }}</td>
             <td class="px-3 py-3 text-right font-semibold tabular-nums text-slate-700">{% if row.mixed_rate %}Mixed{% else %}{{ row.rate|ugx_amount }}{% endif %}</td>
+            <td class="px-3 py-3 text-right font-bold tabular-nums text-slate-800">{% if row.staff_total %}{{ row.staff_total|ugx_amount }}{% else %}—{% endif %}</td>
             <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ row.total|ugx_amount }}</td>
           </tr>
           {% endfor %}
           <tr class="budget-subtotal-row">
-            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal{% if group.staff_total != group.total %} · staff {{ group.staff_total|ugx_amount }}{% endif %}</td>
+            <td colspan="4" class="px-4 py-2.5 edify-primary-soft edify-text">{{ group.label }} subtotal</td>
+            <td class="px-3 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.staff_total|ugx_amount }}</td>
             <td class="px-4 py-2.5 text-right tabular-nums edify-primary-soft edify-text">{{ group.total|ugx_amount }}</td>
           </tr>
           {% endfor %}
+          {% if all_groups %}
+          <tr class="edify-primary-solid edify-primary-on-solid font-bold">
+            <th colspan="4" scope="row" class="px-4 py-3">Grand total</th>
+            <td class="px-3 py-3 text-right tabular-nums">{{ staff_total|ugx_amount }}</td>
+            <td class="px-4 py-3 text-right tabular-nums">{{ total|ugx_amount }}</td>
+          </tr>
+          {% endif %}
         </tbody>
 </table>
 {% comment %}

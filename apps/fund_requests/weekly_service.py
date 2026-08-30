@@ -290,6 +290,15 @@ def _sync_advances(wfr: WeeklyFundRequest, status: str, advance_type: str) -> No
             )
 
 
+def _funding_choice(wfr: WeeklyFundRequest) -> str:
+    """Preserve the owner's choice while an approver acts on the request."""
+    for line in wfr.lines.select_related("activity_budget_line"):
+        adv = line.activity_budget_line.advance_requests.first()
+        if adv and adv.advance_type == "self_funded":
+            return "self_funded"
+    return "advance"
+
+
 def request_advance(request_id: str, principal) -> dict:
     """The responsible user submits the weekly request for approval.
 
@@ -303,9 +312,7 @@ def request_advance(request_id: str, principal) -> dict:
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
-        ):
+        if wfr.responsible_user != principal.user_id:
             raise Forbidden("Only the owner can confirm this request.")
         if wfr.status not in (
             "pending_responsible_confirmation",
@@ -393,7 +400,7 @@ def approve_weekly_request(request_id: str, principal) -> dict:
 
         wfr.status = "confirmed_for_advance"
         wfr.save(update_fields=["status", "updated_at"])
-        _sync_advances(wfr, "confirmed_for_advance", "advance")
+        _sync_advances(wfr, "confirmed_for_advance", _funding_choice(wfr))
 
     _audit_weekly(principal, "weekly_fund_request.approve", wfr, {"stage": stage})
     _notify_weekly_owner(
@@ -425,7 +432,7 @@ def return_weekly_request(request_id: str, data: dict, principal) -> dict:
 
         wfr.status = "returned_by_pl" if stage == "pl" else "returned_by_cd"
         wfr.save(update_fields=["status", "updated_at"])
-        _sync_advances(wfr, "pending_responsible_confirmation", "advance")
+        _sync_advances(wfr, "pending_responsible_confirmation", _funding_choice(wfr))
 
     # The freeze just lifted — repair any batch pool left over-allocated by a
     # cancellation that happened while the week was locked (audit L-7), so
@@ -555,40 +562,53 @@ def _notify_weekly_accountants(wfr: WeeklyFundRequest):
 
 
 def self_funded(request_id: str, principal) -> dict:
-    """Elect self-funded reimbursement -> status self_funded."""
+    """Submit the weekly amount with self-fund as the funding choice.
+
+    Self Fund follows the same supervisor approval and Accountant
+    disbursement path as Send for Approval. It does not create a separate or
+    editable amount; the planned-activity total remains authoritative.
+    """
     with transaction.atomic():
         wfr = (
             WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
+        if wfr.responsible_user != principal.user_id:
+            raise Forbidden("Only the owner can self fund this request.")
+        if wfr.status not in (
+            "pending_responsible_confirmation",
+            "not_requested",
+            "returned_by_pl",
+            "returned_by_cd",
+            "returned_by_accountant",
         ):
-            raise Forbidden("Only the owner can confirm this request.")
-        if wfr.status in ("disbursed", "accounted"):
-            raise BadRequest("Cannot change a disbursed request to self-funded.")
+            raise BadRequest(f"Cannot self fund in status '{wfr.status}'.")
 
-        wfr.status = "self_funded"
+        owner_role = _owner_role(wfr)
+        wfr.status = _submission_status_for(owner_role)
+        wfr.responsible_role = owner_role
         wfr.confirmed_at = timezone.now()
-        wfr.save(update_fields=["status", "confirmed_at", "updated_at"])
+        wfr.save(
+            update_fields=["status", "responsible_role", "confirmed_at", "updated_at"]
+        )
+        child_status = (
+            "confirmed_for_advance"
+            if wfr.status == "confirmed_for_advance"
+            else "pending_responsible_confirmation"
+        )
+        _sync_advances(wfr, child_status, "self_funded")
 
-        # Also update linked AdvanceRequests status
-        for line in wfr.lines.select_related("activity_budget_line"):
-            adv = line.activity_budget_line.advance_requests.first()
-            if adv:
-                adv.status = "self_funded_pending_reimbursement"
-                adv.advance_type = "self_funded"
-                adv.confirmed_at = timezone.now()
-                adv.save(
-                    update_fields=[
-                        "status",
-                        "advance_type",
-                        "confirmed_at",
-                        "updated_at",
-                    ]
-                )
-
+    _audit_weekly(
+        principal,
+        "weekly_fund_request.self_fund_submit",
+        wfr,
+        {"routed": wfr.status},
+    )
+    if wfr.status == "confirmed_for_advance":
+        _notify_weekly_accountants(wfr)
+    else:
+        _notify_weekly_approver(wfr)
     return _serialize_request(wfr)
 
 
@@ -773,16 +793,14 @@ def confirm_receipt(request_id: str, principal) -> dict:
     second. Accountability on this week's advances opens only after this
     confirmation (advance_service.submit_accountability enforces it), which
     is what starts the accountability workflow the moment the staff member
-    clicks Confirm."""
+    clicks Fund Received."""
     with transaction.atomic():
         wfr = (
             WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
         )
         if not wfr:
             raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id and not getattr(
-            principal, "country_scope", False
-        ):
+        if wfr.responsible_user != principal.user_id:
             raise Forbidden("Only the owner can confirm receipt of these funds.")
         if wfr.status != "disbursed":
             raise BadRequest("These funds are not marked as disbursed.")

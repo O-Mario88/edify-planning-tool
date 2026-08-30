@@ -1,4 +1,4 @@
-{% comment %}Fund Requests page root — re-rendered by HTMX on filter/action.
+{% comment %}Weekly Advance Request root — re-rendered by HTMX on filter/action.
 Staff schedule activities; the system generates the budget and fund request
 automatically. There is no manual "enter an amount" step anywhere here.{% endcomment %}
 <div
@@ -15,35 +15,11 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 <div class="p-3.5 rounded-surface bg-emerald-50 border border-emerald-200 text-[12px] font-bold text-emerald-700">{{ action_ok }}</div>
 {% endif %}
 
-{% if receipt_pending_plans %}
-<div class="space-y-2">
-  {% for p in receipt_pending_plans %}
-  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-4 rounded-surface bg-emerald-50 border border-emerald-200">
-    <div class="flex items-center gap-3 min-w-0">
-      <span class="h-9 w-9 rounded-pill bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
-        <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1"/></svg>
-      </span>
-      <div class="min-w-0">
-        <p class="text-[13px] font-bold text-emerald-900">Funds disbursed for your {{ p.period_key }} fund plan{% if p.disburse_method %} via {{ p.disburse_method }}{% endif %}{% if p.disburse_reference %} (Ref {{ p.disburse_reference }}){% endif %}.</p>
-        <p class="edify-text-caption font-semibold text-emerald-700">Check your account and confirm receipt — execution and accountability follow.</p>
-      </div>
-    </div>
-    <form method="post" action="/fund-requests/receipt-confirm" class="shrink-0">
-      {% csrf_token %}
-      <input type="hidden" name="fund_request_id" value="{{ p.id }}">
-      <input type="hidden" name="next" value="/fund-requests/weekly">
-      <button type="submit" class="h-10 px-5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">Confirm Receipt</button>
-    </form>
-  </div>
-  {% endfor %}
-</div>
-{% endif %}
-
 <!-- Page Header Row -->
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
-<h1 class="edify-page-header__title edify-page-title">Fund Requests</h1>
-<p class="edify-page-header__description">Generate and track weekly and monthly fund requests from scheduled activities in My Plan.</p>
+<h1 class="edify-page-header__title edify-page-title">Weekly Advance Request</h1>
+<p class="edify-page-header__description">Automatically consolidated from the planned activities for the selected week.</p>
 </div>
 
 <!-- Action buttons -->
@@ -114,17 +90,6 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer">
 <option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
 <option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
-</select>
-</div>
-
-<!-- Quarter -->
-<div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
-<span class="edify-filter-label">Quarter</span>
-<select aria-label="Quarter" name="quarter" class="bg-transparent focus:outline-none cursor-pointer">
-<option value="Q1" {% if selected_quarter == 'Q1' %}selected{% endif %}>Q1</option>
-<option value="Q2" {% if selected_quarter == 'Q2' %}selected{% endif %}>Q2</option>
-<option value="Q3" {% if selected_quarter == 'Q3' %}selected{% endif %}>Q3</option>
-<option value="Q4" {% if selected_quarter == 'Q4' %}selected{% endif %}>Q4</option>
 </select>
 </div>
 
@@ -220,11 +185,6 @@ Clear Filters
 </button>
 </form>
 
-<!-- KPIs -->
-<div id="fund-requests-kpis">
-{% include "partials/fund_requests/kpis.html" %}
-</div>
-
 {% if team_tabs %}
 <!-- Manager team tabs: who the page is reviewing. The viewer's own requests
      first, then each supervised member — the tab drives the same `staff`
@@ -246,38 +206,12 @@ Clear Filters
 </nav>
 {% endif %}
 
-<!-- Budget period tabs. These replaced three links to OTHER pages (Weekly
-     Fund Request / Monthly Request / General Budget) at the owner's request:
-     one set of tabs, on this page, showing this person's budget at the four
-     horizons. Monthly Request and the country budget remain reachable from
-     the sidebar. Real links, not an ARIA tablist -- each navigates and the
-     server renders the panel. -->
-<div class="flex border-b border-slate-100 pb-3">
-  <nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Budget period">
-    {% for t in period_budgets.tabs %}
-    <a
-      href="?{{ period_tab_query }}period_tab={{ t.key }}"
-      {% if t.key == period_budgets.active %}aria-current="page"{% endif %}
-      class="px-5 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap {% if t.key == period_budgets.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
-    >
-      {% if t.key == "week" %}Week{% elif t.key == "month" %}Month{% elif t.key == "quarter" %}Quarter{% else %}FY{% endif %}
-    </a>
-    {% endfor %}
-  </nav>
-</div>
-
 <!-- The auto-generation note lives once now, as the budget card's footer,
      instead of a banner here AND a caption under the workflow strip both
      saying the same thing. -->
 
-<!-- Main Canvas split: the budget/request work takes 70%, the reference
-     panels take 30%. A ten-column grid rather than a fixed-width sidebar, so
-     the ratio holds as the viewport grows instead of the sidebar staying
-     384px while the canvas absorbs everything. Below lg the columns stack,
-     work first. -->
-<div class="grid grid-cols-1 lg:grid-cols-10 gap-5 items-start">
-<!-- Left panel (70%) -->
-<div class="lg:col-span-7 space-y-5 min-w-0">
+<div class="space-y-5">
+<div class="space-y-5 min-w-0">
 
 <!-- Weekly Request Card -->
 <div id="weekly-request-card-container">
@@ -286,25 +220,14 @@ Clear Filters
 
 </div>
 
-<!-- Right panel (30%) -->
-<div class="lg:col-span-3 space-y-5 min-w-0">
+<div class="space-y-5 min-w-0">
 
 <!-- Source Activities Card -->
 <div id="fund-requests-source-activities">
 {% include "partials/fund_requests/source_activities.html" %}
 </div>
 
-<!-- Insights Panel -->
-<div id="fund-requests-insights">
-{% include "partials/fund_requests/insights_panel.html" %}
 </div>
-
-</div>
-</div>
-
-<!-- Breakdown Strip -->
-<div id="fund-requests-breakdown">
-{% include "partials/fund_requests/breakdown_by_period.html" %}
 </div>
 
 </div>

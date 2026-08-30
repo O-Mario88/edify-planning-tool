@@ -438,18 +438,18 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         self.assertEqual(wfr.status, "accounted")
         self.assertEqual(wfr.accounted_amount, wfr.total_amount)
 
-    def test_self_funded_week_reimburses_through_pl_ia_and_accountant(self):
-        """The self-funded workflow as mandated: staff used their own money →
-        at accountability they enter the amount used + NetSuite ID, which
-        triggers the reimbursement claim → the PL confirms the money is
-        accounted for → the Accountant reimburses only after IA confirms the
-        work was done → the staff confirms the money arrived → week closes."""
-        from apps.core.exceptions import BadRequest, Forbidden
-        from apps.fund_requests import advance_service
-        from apps.fund_requests.disbursement_dashboard_service import (
-            roll_up_accountability,
+    def test_self_funded_week_uses_the_same_approval_and_disbursement_amount(self):
+        """Self Fund is a funding choice, not a second editable request.
+
+        It carries the generated weekly amount through supervisor approval,
+        Accountant disbursement and owner receipt confirmation.
+        """
+        from apps.fund_requests.weekly_service import (
+            approve_weekly_request,
+            confirm_receipt,
+            disburse,
+            self_funded,
         )
-        from apps.fund_requests.weekly_service import self_funded
         from apps.planning.services import schedule_school_visit
 
         item = resolve_item_for_workflow_kind("school_visit")
@@ -465,64 +465,35 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
             )
         wfr = WeeklyFundRequest.objects.get(responsible_user=self.cceo.id)
 
-        # The owner elects to use their own money for the week.
+        # The owner chooses Self Fund; the same generated amount still routes
+        # to the supervisor instead of bypassing approval as reimbursement.
         self_funded(wfr.id, self.cceo)
+        wfr.refresh_from_db()
+        self.assertEqual(wfr.status, "submitted_to_pl")
         advances = list(
             AdvanceRequest.objects.filter(
                 budget_line__weekly_request_lines__weekly_fund_request=wfr
             ).select_related("activity")
         )
         self.assertTrue(advances)
+        self.assertEqual({a.advance_type for a in advances}, {"self_funded"})
         self.assertEqual(
-            {a.status for a in advances}, {"self_funded_pending_reimbursement"}
+            {a.status for a in advances}, {"pending_responsible_confirmation"}
         )
 
-        # 1. At accountability, the amount used + NetSuite ID trigger the
-        #    reimbursement claim — which goes to the PL, not the Accountant.
-        for index, adv in enumerate(advances):
-            advance_service.submit_reimbursement(
-                adv.id,
-                {"amountSpent": adv.amount, "netsuiteId": f"NS-SF-{index}"},
-                self.cceo,
-            )
-            adv.refresh_from_db()
-            self.assertEqual(adv.status, "reimbursement_pl_pending")
-
-        # 2. The Accountant cannot pay an unapproved claim; the owner cannot
-        #    approve their own; the PL's approval routes it to the Accountant.
-        with self.assertRaisesMessage(BadRequest, "submitted reimbursement claim"):
-            advance_service.reimburse(advances[0].id, {}, self.accountant)
-        with self.assertRaises(Forbidden):
-            advance_service.pl_approve_accountability(advances[0].id, self.cceo)
+        approve_weekly_request(wfr.id, self.pl)
         for adv in advances:
-            advance_service.pl_approve_accountability(adv.id, self.pl)
             adv.refresh_from_db()
-            self.assertEqual(adv.status, "reimbursement_submitted")
+            self.assertEqual(adv.status, "confirmed_for_advance")
+            self.assertEqual(adv.advance_type, "self_funded")
 
-        # 3. Even approved, money moves only after IA confirms the work.
-        with self.assertRaisesMessage(BadRequest, "IA has not verified"):
-            advance_service.reimburse(advances[0].id, {}, self.accountant)
-        for adv in advances:
-            adv.activity.ia_verification_status = "confirmed"
-            adv.activity.save(update_fields=["ia_verification_status", "updated_at"])
-
-        # 4. The Accountant reimburses; the staff member confirms the money
-        #    actually arrived — only that receipt makes it financially cleared.
-        for adv in advances:
-            advance_service.reimburse(
-                adv.id, {"method": "Bank", "reference": "RB-1"}, self.accountant
-            )
-            adv.refresh_from_db()
-            self.assertEqual(adv.status, "reimbursement_disbursed")
-            self.assertEqual(adv.reimbursed_amount, adv.accounted_amount)
-            advance_service.confirm_reimbursement_receipt(adv.id, {}, self.cceo)
-            adv.refresh_from_db()
-            self.assertEqual(adv.status, "reimbursed")
-
-        # 5. With every claim settled, the week itself closes.
-        self.assertTrue(roll_up_accountability(wfr, advances))
+        disburse(wfr.id, {"method": "Bank", "reference": "WK-SF"}, self.accountant)
         wfr.refresh_from_db()
-        self.assertEqual(wfr.status, "accounted")
+        self.assertEqual(wfr.status, "disbursed")
+        self.assertEqual(wfr.disbursed_amount, wfr.total_amount)
+        confirm_receipt(wfr.id, self.cceo)
+        wfr.refresh_from_db()
+        self.assertIsNotNone(wfr.receipt_confirmed_at)
 
     def test_pl_sees_and_approves_accountability_on_the_weekly_page(self):
         """Rendered-DOM contract: when a supervised CCEO's disbursed week has

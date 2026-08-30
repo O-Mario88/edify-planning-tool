@@ -1,4 +1,4 @@
-"""The fund-request page's four budget horizons, and who may submit which.
+"""The weekly advance request and its canonical planned-activity budget.
 
 Reported: the page named April in July, showed no monthly, quarterly or annual
 budget, and did not fetch costs for the period.
@@ -106,15 +106,8 @@ class ScopeSeesBothIdentitySpacesTest(TestCase):
         self.assertEqual(self._visible_activity_count(), 0)
 
 
-class FourPeriodBudgetTest(TestCase):
-    """Week, month, quarter and FY, all from the canonical budget builder.
-
-    The card first computed its own sums from budget_qs. Those could disagree
-    with the My Budget page over quarter boundaries and scope -- a PL's
-    hand-computed FY read the whole team while the budget page read their own
-    plan. Everything now comes from budget_workspace, so the card and the page
-    it summarises cannot argue.
-    """
+class WeeklyAdvanceBudgetTest(TestCase):
+    """The separate request page is weekly only and uses the budget builder."""
 
     @classmethod
     def setUpTestData(cls):
@@ -169,22 +162,14 @@ class FourPeriodBudgetTest(TestCase):
         request.user = self.user
         return _build_fund_requests_context(request)["period_budgets"]
 
-    def test_all_four_horizons_are_offered(self):
+    def test_only_the_weekly_horizon_is_offered(self):
         budgets = self._budgets()
-        self.assertEqual(
-            [t["key"] for t in budgets["tabs"]], ["week", "month", "quarter", "fy"]
-        )
-        self.assertEqual(
-            budgets["active"], "week", "the week moves the money, so it leads"
-        )
+        self.assertEqual([t["key"] for t in budgets["tabs"]], ["week"])
+        self.assertEqual(budgets["active"], "week")
 
-    def test_only_the_week_carries_a_submit_control(self):
-        """Money is disbursed weekly. Approving a quarter would mean nothing."""
+    def test_the_week_carries_the_submit_control(self):
         tabs = {t["key"]: t for t in self._budgets()["tabs"]}
         self.assertTrue(tabs["week"]["submits"])
-        for key in ("month", "quarter", "fy"):
-            with self.subTest(key):
-                self.assertFalse(tabs[key]["submits"])
 
     def test_the_totals_come_from_the_canonical_builder(self):
         """The card must agree with the budget page, so it asks the same
@@ -198,19 +183,11 @@ class FourPeriodBudgetTest(TestCase):
         )
         self.assertEqual(card["total"], page["total"])
 
-    def test_the_fy_carries_what_the_week_does_not(self):
-        """The reported symptom: a zero week with a non-zero year behind it.
-
-        The week is pinned explicitly. With no week chosen the page anchors on
-        the newest scheduled activity -- so with only the 12-week-old activity
-        in the fixture it would (correctly) open on that old week and show its
-        money, which is the page working, not the symptom.
-        """
+    def test_period_tab_cannot_turn_the_request_page_into_an_annual_budget(self):
         self._costed(_monday(-12), 75_000)
         week = self._budgets(f"?week={_monday(0).isoformat()}")
-        fy = self._budgets("?period_tab=fy")
         self.assertEqual(week["total"], 0)
-        self.assertEqual(fy["total"], 75_000)
+        self.assertEqual(self._budgets("?period_tab=fy")["active"], "week")
 
     def test_with_no_week_chosen_the_page_opens_where_the_work_is(self):
         """The anchoring rule itself -- and the regression this whole page had:
@@ -237,7 +214,7 @@ class FourPeriodBudgetTest(TestCase):
         self.assertEqual(budgets["groups"], [])
         self.assertTrue(budgets["empty_title"])
 
-    def test_switching_horizon_keeps_the_other_filters(self):
+    def test_legacy_horizon_query_is_removed_from_preserved_filters(self):
         from django.test import RequestFactory
 
         from apps.frontend.views.budget_views import _build_fund_requests_context

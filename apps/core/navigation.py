@@ -311,7 +311,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "fund_approvals": {PL, ADMIN},
     "fund_requests": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
     "monthly_request": {CD, PL, RVP, ACCOUNTANT, IA, PROJECT_COORDINATOR, ADMIN},
-    "my_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
+    "my_budget": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, RVP, ADMIN},
     "monthly_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
     "country_budget": {CD, ACCOUNTANT, IA, RVP, ADMIN},
     "consolidated_fund_allocation": {CD, ACCOUNTANT, IA, RVP, ADMIN},
@@ -1476,38 +1476,14 @@ SIDEBAR_ITEMS = [
                 "page_key": "work_plan",
             },
             {
-                "label": "Weekly Fund Request",
+                "label": "Weekly Advance Request",
                 "url": "/fund-requests/weekly",
                 "page_key": "weekly_fund_request",
             },
             {
-                "label": "Fund Approvals",
-                "url": "/fund-approvals",
-                "page_key": "fund_approvals",
-            },
-            {
-                "label": "Monthly Request",
-                "url": "/accounts/monthly-request/",
-                "page_key": "monthly_request",
-                # `monthly_request_view` hands CD/RVP/Admin straight to
-                # `country_budget_view`, so for those three this entry opened
-                # the very same page as the one below it -- two sidebar links,
-                # two different names, one destination. The route stays
-                # authorized (PAGE_PERMISSIONS is unchanged, so deep links and
-                # the CD's own redirects still work); it just stops being
-                # advertised twice.
-                "visible_to": {PL, ACCOUNTANT, IA, PROJECT_COORDINATOR},
-            },
-            {
-                # The CD *submits* a Monthly Fund Request; the RVP *reviews the
-                # country budget* it asks for. Same workspace, two vantage
-                # points, so the label follows the reader rather than the
-                # writer. CD naming is pinned by
-                # apps/frontend/test_cd_budget_workspaces.py.
-                "label": "Monthly Fund Request",
-                "role_labels": {RVP: "Country Budget"},
-                "url": "/country-budget/",
-                "page_key": "country_budget",
+                "label": "Budget",
+                "url": "/budgets/overview",
+                "page_key": "my_budget",
             },
             {
                 "label": "Cost Settings",
@@ -2185,8 +2161,8 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
     # People work: the directory and the approvals that block others.
     HR: ("dashboard", "staff", "leave_approvals", "messages"),
     # Leadership decides on budget and reads the evidence.
-    CD: ("dashboard", "country_budget", "analytics", "messages"),
-    RVP: ("dashboard", "country_budget", "analytics", "messages"),
+    CD: ("dashboard", "my_budget", "analytics", "messages"),
+    RVP: ("dashboard", "my_budget", "analytics", "messages"),
     # Platform operations: the incoming queue and the health of the system.
     ADMIN: ("dashboard", "admin_support_queue", "system_health", "messages"),
 }

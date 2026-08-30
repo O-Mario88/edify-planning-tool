@@ -1553,7 +1553,7 @@ def budget_workspace(principal, query: dict) -> dict:
         "budget_scope": budget_scope,
         "workspace_title": workspace_title,
         "workspace_kind": budget_scope,
-        "workspace_base_url": "/budgets/monthly",
+        "workspace_base_url": "/budgets/overview",
         "source_description": source_description,
         "empty_title": empty_title,
         "empty_help": empty_help,
