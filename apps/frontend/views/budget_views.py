@@ -191,6 +191,9 @@ def _scoped_base_querysets(request, fy):
         wfr_qs = wfr_qs.filter(responsible_user__in=staff_in_district)
         budget_qs = budget_qs.filter(school__district_id=district_id)
         activities_qs = activities_qs.filter(school__district_id=district_id)
+    # Preserve the role/district-scoped weekly requests before one staff tab
+    # narrows the active page. This is the source for the staff-name tabs.
+    staff_tabs_wfr_qs = wfr_qs
     if staff_id:
         wfr_qs = wfr_qs.filter(responsible_user=staff_id)
         budget_qs = budget_qs.filter(responsible_user=staff_id)
@@ -206,6 +209,7 @@ def _scoped_base_querysets(request, fy):
         "district_id": district_id,
         "staff_id": staff_id,
         "status_filter": status_filter,
+        "staff_tabs_wfr_qs": staff_tabs_wfr_qs,
         "supervised_user_ids": supervised_user_ids,
         # Only roles with team/country reach need the District/Staff filters —
         # a plain CCEO only ever has one person's data (their own).
@@ -1193,7 +1197,7 @@ def _build_fund_requests_context(request):
                 "awaiting_review": _week_statuses.get(uid) == "submitted_to_pl",
             }
 
-        team_tabs.append(_team_tab(user.user_id, "My Requests"))
+        team_tabs.append(_team_tab(user.user_id, user.name or "My Requests"))
         for _profile in _member_profiles:
             team_tabs.append(
                 _team_tab(
@@ -1201,6 +1205,48 @@ def _build_fund_requests_context(request):
                     (_profile.user.name if _profile.user else _profile.user_id),
                 )
             )
+    elif scope.country_scope:
+        # Country roles can have many staff in scope, so show only people who
+        # have a generated request for the selected week. Their names are the
+        # navigation; the cost table itself stays identical for every role.
+        from apps.accounts.models import User
+
+        _country_week_rows = list(
+            base["staff_tabs_wfr_qs"]
+            .filter(week_start_date=selected_week_start)
+            .values_list("responsible_user", "status")
+        )
+        _country_user_ids = [uid for uid, _status in _country_week_rows]
+        _country_names = dict(
+            User.objects.filter(id__in=_country_user_ids).values_list("id", "name")
+        )
+        _active_owner = staff_id or getattr(active_wfr, "responsible_user", "")
+        for uid, request_status in _country_week_rows:
+            team_tabs.append(
+                {
+                    "user_id": uid,
+                    "label": _country_names.get(uid) or uid,
+                    "active": uid == _active_owner,
+                    "awaiting_review": (
+                        request_status == "confirmed_for_advance"
+                        if _role == "Accountant"
+                        else request_status in ("submitted_to_pl", "submitted_to_cd")
+                    ),
+                }
+            )
+        team_tabs.sort(key=lambda tab: tab["label"].casefold())
+    elif user.user_id:
+        # Keep the request surface visually consistent for an individual
+        # staff member too: their own name occupies the same tab position
+        # used by PLs and Accountants, even though they only have one tab.
+        team_tabs.append(
+            {
+                "user_id": user.user_id,
+                "label": user.name or "My Request",
+                "active": True,
+                "awaiting_review": False,
+            }
+        )
 
     _team_tab_query = urlencode(
         {key: value for key, value in request.GET.items() if value and key != "staff"}

@@ -134,7 +134,8 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 </select>
 </div>
 
-<!-- Staff -->
+{% if not team_tabs %}
+<!-- Staff fallback: names move to tabs whenever this week has requests. -->
 <div class="flex items-center gap-1 bg-slate-50 px-2 py-1.5 rounded-surface border border-slate-100">
 <span class="edify-filter-label">Staff</span>
 <select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer">
@@ -144,6 +145,7 @@ class="edify-surface p-3.5 rounded-surface border border-slate-100 shadow-sm fle
 {% endfor %}
 </select>
 </div>
+{% endif %}
 {% endif %}
 
 <!-- Request Type -->
@@ -186,13 +188,10 @@ Clear Filters
 </form>
 
 {% if team_tabs %}
-<!-- Manager team tabs: who the page is reviewing. The viewer's own requests
-     first, then each supervised member — the tab drives the same `staff`
-     filter the dropdown uses, so every panel below (KPIs, budget card,
-     workflow) follows the selected member. The amber dot marks a request
-     awaiting this manager's approval for the selected week. Real links; the
-     server renders the page for the chosen member. -->
-<nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Team member requests">
+<!-- Staff-name tabs keep the table identical for owners, supervisors, and
+     Accountants. The tab drives the same `staff` filter used by every panel
+     below; an amber dot marks a request awaiting the viewer's action. -->
+<nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Staff weekly advance requests">
   {% for t in team_tabs %}
   <a
     href="?{{ team_tab_query }}staff={{ t.user_id }}"
@@ -200,7 +199,7 @@ Clear Filters
     class="px-4 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap inline-flex items-center gap-1.5 {% if t.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
   >
     {{ t.label }}
-    {% if t.awaiting_review %}<span class="h-1.5 w-1.5 rounded-pill bg-amber-500" title="Awaiting your approval" aria-label="Awaiting your approval"></span>{% endif %}
+    {% if t.awaiting_review %}<span class="h-1.5 w-1.5 rounded-pill bg-amber-500" title="Awaiting your action" aria-label="Awaiting your action"></span>{% endif %}
   </a>
   {% endfor %}
 </nav>

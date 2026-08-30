@@ -154,13 +154,30 @@ class WeeklyAdvanceBudgetTest(TestCase):
         )
 
     def _budgets(self, query=""):
+        return self._context(query)["period_budgets"]
+
+    def _context(self, query=""):
         from django.test import RequestFactory
 
         from apps.frontend.views.budget_views import _build_fund_requests_context
 
         request = RequestFactory().get("/fund-requests/weekly" + query)
         request.user = self.user
-        return _build_fund_requests_context(request)["period_budgets"]
+        return _build_fund_requests_context(request)
+
+    def test_staff_name_uses_the_same_tab_position_as_approver_views(self):
+        tabs = self._context()["team_tabs"]
+        self.assertEqual(
+            tabs,
+            [
+                {
+                    "user_id": self.user.id,
+                    "label": "FR2 CCEO",
+                    "active": True,
+                    "awaiting_review": False,
+                }
+            ],
+        )
 
     def test_only_the_weekly_horizon_is_offered(self):
         budgets = self._budgets()

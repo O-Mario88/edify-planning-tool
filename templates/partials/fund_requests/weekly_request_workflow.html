@@ -25,7 +25,7 @@
 {% endcomment %}
 {% if period_budgets.groups %}
 <div class="overflow-x-auto rounded-control border border-slate-200">
-  {% include "partials/budgets/budget_group_tables.html" with groups=period_budgets.groups all_groups=period_budgets.groups staff_total=period_budgets.staff_total total=period_budgets.total selected=period_budgets.selected workspace_title=period_budgets.workspace_title budget_scope=period_budgets.budget_scope %}
+  {% include "partials/budgets/budget_group_tables.html" with groups=period_budgets.groups all_groups=period_budgets.groups staff_total=period_budgets.staff_total total=period_budgets.total selected=period_budgets.selected workspace_title=period_budgets.workspace_title budget_scope=period_budgets.budget_scope hide_row_owners=True %}
 </div>
 {% else %}
 <div class="rounded-surface border border-dashed border-slate-200 p-6 text-center">

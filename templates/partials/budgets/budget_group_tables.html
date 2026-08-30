@@ -53,7 +53,7 @@
                   <p class="min-w-0 font-semibold text-slate-800">{{ row.item }}</p>
                   {% if row.vendor_total %}<p class="edify-text-caption font-medium text-slate-400">Partner-delivered cost included in activity total</p>{% endif %}
                 </div>
-                {% if budget_scope == 'team' %}
+                {% if budget_scope == 'team' and not hide_row_owners %}
                 <span class="ml-auto max-w-[46%] truncate rounded-pill edify-primary-soft px-2 py-0.5 edify-text-caption font-bold text-[var(--edify-accent)]" title="Responsible staff: {{ row.owners }}">{{ row.owners }}</span>
                 {% endif %}
               </div>

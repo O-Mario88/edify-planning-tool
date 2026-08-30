@@ -110,3 +110,7 @@ class RecordTableMarkupContractTests(SimpleTestCase):
             with self.subTest(label=label):
                 self.assertIn(label, workflow)
         self.assertIn("Correct the underlying activities in My Plan", workflow)
+        self.assertIn("hide_row_owners=True", workflow)
+
+        root = (TEMPLATES / "partials" / "fund_requests" / "root.html").read_text()
+        self.assertIn('aria-label="Staff weekly advance requests"', root)
