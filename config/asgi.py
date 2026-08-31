@@ -1,8 +1,9 @@
 """
 ASGI config for the Edify API.
 
-ASGI is required for the realtime SSE stream (streaming responses) and the
-in-process background scheduler. Served in production via uvicorn/gunicorn.
+ASGI is required for the realtime SSE stream (streaming responses). The
+background scheduler runs in its own deployment process, never in web workers.
+Production serves this application through Gunicorn with Uvicorn workers.
 """
 
 import os

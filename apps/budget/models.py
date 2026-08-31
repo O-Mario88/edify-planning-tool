@@ -109,8 +109,10 @@ class CostCatalogue(TimeStampedModel):
 class CostSetting(TimeStampedModel):
     """The CD-owned Country Cost Register rate card. key = stable string.
 
-    unit_cost is stored as integer UGX (whole shillings); all money math is
-    integer-based to avoid float rounding. 1 unit = 1 UGX."""
+    ``unit_cost`` is the full Country Operational Cost. ``approved_minimum``
+    is the CD-controlled Minimum Viable Cost shown during staff planning.
+    Budgets and approvals use operational rates; unconfigured minimum rates
+    are flagged instead of substituted. Both are integer UGX."""
 
     id = CuidField()
     key = models.CharField(max_length=128)
@@ -436,6 +438,8 @@ class CostSettingHistory(TimeStampedModel):
         null=True, blank=True
     )  # UGX; null on first create
     new_unit_cost = models.BigIntegerField()  # UGX
+    old_approved_minimum = models.BigIntegerField(null=True, blank=True)
+    new_approved_minimum = models.BigIntegerField(null=True, blank=True)
     version = models.IntegerField()  # the new version after this change
     fy = models.CharField(max_length=16, null=True, blank=True)
     changed_by_user_id = models.CharField(max_length=30)
@@ -461,6 +465,16 @@ class CostSettingHistory(TimeStampedModel):
                 condition=models.Q(old_unit_cost__isnull=True)
                 | models.Q(old_unit_cost__gte=0),
                 name="cost_setting_history_old_unit_cost_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(new_approved_minimum__isnull=True)
+                | models.Q(new_approved_minimum__gte=0),
+                name="cost_history_new_minimum_non_negative",
+            ),
+            models.CheckConstraint(
+                condition=models.Q(old_approved_minimum__isnull=True)
+                | models.Q(old_approved_minimum__gte=0),
+                name="cost_history_old_minimum_non_negative",
             ),
         ]
 

@@ -1834,7 +1834,7 @@
    "audit_id": "KPI-SOURCE-094",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 427,
+   "line": 431,
    "label": null,
    "keys": [
     "amount",
@@ -1854,7 +1854,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 619,
+   "line": 623,
    "label": "Week of {\u2026}",
    "keys": [
     "amount",
@@ -1876,7 +1876,7 @@
    "audit_id": "KPI-SOURCE-096",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1845,
+   "line": 1849,
    "label": null,
    "keys": [
     "amount",
@@ -1897,7 +1897,7 @@
    "audit_id": "KPI-SOURCE-097",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 319,
+   "line": 323,
    "label": null,
    "keys": [
     "amount",
@@ -1918,7 +1918,7 @@
    "audit_id": "KPI-SOURCE-098",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 578,
+   "line": 582,
    "label": null,
    "keys": [
     "amount",
@@ -1939,7 +1939,7 @@
    "audit_id": "KPI-SOURCE-099",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 767,
+   "line": 771,
    "label": null,
    "keys": [
     "amount",
@@ -1957,7 +1957,7 @@
    "audit_id": "KPI-SOURCE-100",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 779,
+   "line": 783,
    "label": null,
    "keys": [
     "amount",
@@ -1976,7 +1976,7 @@
    "audit_id": "KPI-SOURCE-101",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1056,
+   "line": 1060,
    "label": null,
    "keys": [
     "activity_ids",
@@ -1998,7 +1998,7 @@
    "audit_id": "KPI-SOURCE-102",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1172,
+   "line": 1176,
    "label": null,
    "keys": [
     "activity_count",
@@ -2021,7 +2021,7 @@
    "audit_id": "KPI-SOURCE-103",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1114,
+   "line": 1118,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -2235,7 +2235,7 @@
    "audit_id": "KPI-SOURCE-112",
    "kind": "other",
    "module": "apps/documents/views.py",
-   "line": 68,
+   "line": 69,
    "label": "Search uploads by title, context or uploader",
    "keys": [
     "label",
@@ -2586,7 +2586,7 @@
    "audit_id": "KPI-SOURCE-130",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1202,
+   "line": 1208,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -3102,7 +3102,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 712,
+   "line": 731,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -4905,7 +4905,7 @@
    "audit_id": "KPI-SOURCE-253",
    "kind": "breakdown-row",
    "module": "apps/system_health/page_inventory.py",
-   "line": 1298,
+   "line": 1307,
    "label": null,
    "keys": [
     "label",
@@ -26249,7 +26249,7 @@
   {
    "audit_id": "KPI-PAYLOAD-004",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 564,
+   "line": 654,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26275,7 +26275,7 @@
   {
    "audit_id": "KPI-PAYLOAD-005",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 612,
+   "line": 702,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26299,7 +26299,7 @@
   {
    "audit_id": "KPI-PAYLOAD-006",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 682,
+   "line": 755,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26323,7 +26323,7 @@
   {
    "audit_id": "KPI-PAYLOAD-007",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 753,
+   "line": 826,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26349,7 +26349,7 @@
   {
    "audit_id": "KPI-PAYLOAD-008",
    "module": "apps/command_center/dashboard_service.py",
-   "line": 788,
+   "line": 861,
    "function": "get_dashboard_metrics",
    "target": "kpi_items",
    "source_item_count": 4,
@@ -26649,7 +26649,7 @@
   {
    "audit_id": "KPI-PAYLOAD-019",
    "module": "apps/frontend/views/school_views.py",
-   "line": 510,
+   "line": 529,
    "function": "school_directory_view",
    "target": "kpi_strip_items",
    "source_item_count": 8,

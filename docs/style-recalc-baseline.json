@@ -1,0 +1,12 @@
+{
+  "_comment": "FREEZE-01. Cost in milliseconds of appending ONE element inside <main> and reading its geometry, which flushes pending style. A RATCHET: these may go down and never up. Budget is 16ms, one frame \u2014 a page over it freezes for (steps x cost) whenever a component mutates in a loop. Regenerate with STYLE_WRITE_BASELINE=1 scripts/style_recalc_audit.py only after making a page faster, never to absorb a page that got slower.",
+  "budget_ms": 16.0,
+  "pages": {
+    "/analytics": 87.9,
+    "/dashboard": 0.5,
+    "/my-plan": 0.6,
+    "/schools": 39.9,
+    "/system-health": 39.4,
+    "/todos": 7.1
+  }
+}

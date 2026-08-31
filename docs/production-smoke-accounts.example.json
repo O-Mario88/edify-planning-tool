@@ -1,0 +1,16 @@
+[
+  {"accountRole":"CCEO","inventoryRole":"CCEO","email":"replace-cceo@synthetic.invalid","passwordEnv":"EDIFY_E2E_CCEO_PASSWORD"},
+  {"accountRole":"PL","inventoryRole":"PL","email":"replace-pl@synthetic.invalid","passwordEnv":"EDIFY_E2E_PL_PASSWORD"},
+  {"accountRole":"CD","inventoryRole":"CD","email":"replace-cd@synthetic.invalid","passwordEnv":"EDIFY_E2E_CD_PASSWORD"},
+  {"accountRole":"RVP","inventoryRole":"RVP","email":"replace-rvp@synthetic.invalid","passwordEnv":"EDIFY_E2E_RVP_PASSWORD"},
+  {"accountRole":"IA","inventoryRole":"IA","email":"replace-ia@synthetic.invalid","passwordEnv":"EDIFY_E2E_IA_PASSWORD"},
+  {"accountRole":"ACCOUNTANT","inventoryRole":"ACCOUNTANT","email":"replace-accountant@synthetic.invalid","passwordEnv":"EDIFY_E2E_ACCOUNTANT_PASSWORD"},
+  {"accountRole":"HR","inventoryRole":"HR","email":"replace-hr@synthetic.invalid","passwordEnv":"EDIFY_E2E_HR_PASSWORD"},
+  {"accountRole":"PROJECT_COORDINATOR","inventoryRole":"PROJECT_COORDINATOR","email":"replace-coordinator@synthetic.invalid","passwordEnv":"EDIFY_E2E_PROJECT_COORDINATOR_PASSWORD"},
+  {"accountRole":"PARTNER_ADMIN","inventoryRole":"PARTNER","email":"replace-partner-admin@synthetic.invalid","passwordEnv":"EDIFY_E2E_PARTNER_ADMIN_PASSWORD"},
+  {"accountRole":"PARTNER","inventoryRole":"PARTNER","email":"replace-partner@synthetic.invalid","passwordEnv":"EDIFY_E2E_PARTNER_PASSWORD"},
+  {"accountRole":"BUSINESS_TRANSFORMATION","inventoryRole":"BUSINESS_TRANSFORMATION","email":"replace-business-transformation@synthetic.invalid","passwordEnv":"EDIFY_E2E_BUSINESS_TRANSFORMATION_PASSWORD"},
+  {"accountRole":"MFI_ADMIN","inventoryRole":"MFI_ADMIN","email":"replace-mfi-admin@synthetic.invalid","passwordEnv":"EDIFY_E2E_MFI_ADMIN_PASSWORD"},
+  {"accountRole":"MFI_OFFICER","inventoryRole":"MFI_OFFICER","email":"replace-mfi-officer@synthetic.invalid","passwordEnv":"EDIFY_E2E_MFI_OFFICER_PASSWORD"},
+  {"accountRole":"ADMIN","inventoryRole":"ADMIN","email":"replace-admin@synthetic.invalid","passwordEnv":"EDIFY_E2E_ADMIN_PASSWORD"}
+]

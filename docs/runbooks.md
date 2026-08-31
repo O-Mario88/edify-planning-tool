@@ -98,6 +98,26 @@ WHERE state = 'active' AND now() - query_start > interval '30 seconds';
 inside a transaction (see runbook 4) and an unbounded query on a page that got
 popular.
 
+Production web and scheduler traffic uses the managed `edify-web` PgBouncer
+pool in transaction mode. Migrations deliberately bypass it because
+`migrate_locked` owns a session advisory lock. The pooled binding must set
+`DB_USE_PGBOUNCER=true`; `/api/health/ready` then refuses traffic unless the
+dedicated `edify_runtime` role supplies non-zero `statement_timeout`,
+`lock_timeout`, and `idle_in_transaction_session_timeout` defaults.
+
+Provision or repair that role only with
+`scripts/configure_runtime_database_role.sql`. Connect the administrative URI
+to the named application database, not DigitalOcean's `defaultdb`; the script
+fails closed when `expected_database` does not match. Afterward, connect through
+the pool and verify the effective identity and settings:
+
+```sql
+SELECT current_user, current_database(),
+       current_setting('statement_timeout'),
+       current_setting('lock_timeout'),
+       current_setting('idle_in_transaction_session_timeout');
+```
+
 **Data integrity** Cancelled statements roll back. Confirm no partial workflow
 rows: an `Activity` with cost lines but no schedule, a `FundRequest` with lines
 but no header.
@@ -237,8 +257,12 @@ timestamps and audit rows in it.
 **Confirm** Establish what it opens and how long it has been exposed. Assume
 the whole exposure window, not the time since discovery.
 
-**Contain** **Revoke first, investigate second.** A rotated key cannot be used
-while you work out whether it was.
+**Contain** Revoke immediately when doing so does not invalidate a credential
+currently used by live instances. Database credentials are the important
+exception: an in-place `doadmin` password reset invalidates existing app
+containers before App Platform can replace them and causes an outage. Create a
+new dedicated login first, grant it least privilege, deploy the new binding,
+prove every old instance has drained, and only then revoke the old login.
 
 **Recover** Rotate in every environment. If it was `JWT_SECRET`, every session
 and refresh token is invalidated — expect everyone to be signed out, and say so
@@ -253,6 +277,8 @@ trusting it.
 and must not be reported as such.
 
 **After** Add the pattern to secret scanning. Understand how it got committed.
+For database rotation, record the overlap window and the deployment that moved
+traffic; never use an in-place reset as the rotation mechanism.
 
 ---
 

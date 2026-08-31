@@ -221,7 +221,7 @@ class RoleGatingPermissionTest(APITestCase):
         # Should be able to access personal-time-off, team-targets, country-budget
         self.assertEqual(self.client.get("/personal-time-off/").status_code, 200)
         self.assertEqual(self.client.get("/team-targets/").status_code, 200)
-        self.assertEqual(self.client.get("/country-budget/").status_code, 200)
+        self.assertRedirects(self.client.get("/country-budget/"), "/budget")
         # Should be blocked from system-health
         self.assertEqual(self.client.get("/system-health").status_code, 302)
 
@@ -238,7 +238,7 @@ class RoleGatingPermissionTest(APITestCase):
         # Should be able to access ALL pages including system-health
         self.assertEqual(self.client.get("/personal-time-off/").status_code, 200)
         self.assertEqual(self.client.get("/team-targets/").status_code, 200)
-        self.assertEqual(self.client.get("/country-budget/").status_code, 200)
+        self.assertRedirects(self.client.get("/country-budget/"), "/budget")
         self.assertEqual(self.client.get("/system-health").status_code, 200)
 
     def test_legacy_removed_links_not_in_sidebar(self):

@@ -24,7 +24,7 @@ async function completeRequiredAgreements(page) {
   throw new Error(`Required agreement loop did not clear: ${page.url()}`);
 }
 
-async function signIn(page, email, password) {
+async function signIn(page, email, password, { acceptRequiredAgreements = true } = {}) {
   await page.goto('/login');
   await page.getByLabel('Email address').fill(email);
   await page.locator('#current-password').fill(password);
@@ -32,7 +32,18 @@ async function signIn(page, email, password) {
     page.waitForURL(url => !url.pathname.endsWith('/login') && url.pathname !== '/'),
     page.getByRole('button', { name: 'Access workspace' }).click(),
   ]);
-  await completeRequiredAgreements(page);
+  if (acceptRequiredAgreements) {
+    await completeRequiredAgreements(page);
+    return;
+  }
+
+  const pathname = new URL(page.url()).pathname;
+  if (pathname.startsWith('/documents/') || pathname.startsWith('/policy-agreement')) {
+    throw new Error(
+      `Account requires a state-changing agreement at ${pathname}; ` +
+      'production read-only smoke refuses to accept it.'
+    );
+  }
 }
 
 module.exports = { signIn };

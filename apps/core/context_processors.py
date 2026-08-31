@@ -1,5 +1,8 @@
 from datetime import date
 
+from django.conf import settings
+from django.core.cache import cache
+
 from apps.notifications.models import Notification
 from apps.core.navigation import (
     build_analytics_sections,
@@ -20,6 +23,18 @@ def sidebar_counts(request):
         }
 
     today = date.today()
+    cache_key = f"edify:sidebar-counts:v1:{request.user.id}"
+    if not getattr(settings, "IS_TESTING", False):
+        try:
+            cached = cache.get(cache_key)
+        except Exception:  # cache degradation must not block page navigation
+            cached = None
+        if isinstance(cached, dict):
+            return {
+                **cached,
+                "today": today,
+                "current_week_number": today.isocalendar()[1],
+            }
     try:
         # The badge must count what the drawer shows. A resolved notification
         # is history — leaving it in the badge made the number climb forever
@@ -46,10 +61,19 @@ def sidebar_counts(request):
     except Exception:
         pd_count = 0
 
-    return {
+    counts = {
         "unread_notifications_count": notifications_count,
         "unread_messages_count": messages_count,
         "pd_action_required_count": pd_count,
+    }
+    if not getattr(settings, "IS_TESTING", False):
+        try:
+            cache.set(cache_key, counts, timeout=5)
+        except Exception:  # page remains correct through the database fallback
+            pass
+
+    return {
+        **counts,
         "today": today,
         "current_week_number": today.isocalendar()[1],
     }

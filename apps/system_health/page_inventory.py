@@ -1149,7 +1149,16 @@ def build_page_inventory() -> dict:
                 per_page_css=linked_css,
                 htmx_endpoints=list(dict.fromkeys(htmx)),
                 api_endpoints=list(dict.fromkeys(_API_RE.findall(source))),
-                charts=bool(re.search(r"ApexCharts|FullCalendar|<canvas\b", source)),
+                # `renderDetached` is how charts are built since FREEZE-01;
+                # a page that uses it has a chart just as much as one naming
+                # ApexCharts directly. Without it this reads four chart-bearing
+                # pages as chart-free — a detector quietly losing its signal
+                # because the thing it watched for was renamed.
+                charts=bool(
+                    re.search(
+                        r"ApexCharts|renderDetached|FullCalendar|<canvas\b", source
+                    )
+                ),
                 tables="<table" in source.lower(),
                 forms="<form" in source.lower(),
                 drawers="drawer" in source.lower() or "drawer" in route_name.lower(),

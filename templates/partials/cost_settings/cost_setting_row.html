@@ -82,6 +82,7 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 <td class="py-1 pr-2 tabular-nums font-semibold text-slate-700 whitespace-nowrap">
 {% if h.oldUnitCost is not None %}{{ h.oldUnitCost|currency }} →{% endif %} {{ h.newUnitCost|currency }}
 <span class="text-slate-400 font-medium">v{{ h.version }}</span>
+<span class="block text-slate-500 font-medium">Minimum: {% if h.oldApprovedMinimum is not None %}{{ h.oldApprovedMinimum|currency }}{% else %}Not set{% endif %} → {% if h.newApprovedMinimum is not None %}{{ h.newApprovedMinimum|currency }}{% else %}Not set{% endif %}</span>
 </td>
 <td class="py-1 pr-2 text-slate-500">{{ h.changedByName|default:"—" }}</td>
 <td class="py-1 font-medium text-slate-600">{{ h.reason|default:"—" }}</td>

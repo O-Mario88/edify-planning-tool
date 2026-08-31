@@ -44,7 +44,7 @@ def _permission(permission):
 def priority_configuration_page(request):
     # Contract carried over from the page this view replaced
     # (hr_views.strategic_priorities_view, see test_priority_cascade):
-    # strategy pages are for the RVP/CD/Admin authors plus HR validation —
+    # strategy pages are for the RVP/CD authors plus Admin/HR validation —
     # broad STRATEGIC_PRIORITIES_VIEW alone must not open it to every role —
     # and the requested FY is validated/rebuilt, never echoed into filters.
     from apps.core.permissions import render_access_denied
@@ -149,8 +149,8 @@ def priority_configuration_page(request):
         {
             "cycle": cycle,
             "fy": fy,
-            # Same meaning as the page this replaced: RVP/CD/Admin author
-            # strategy; HR reaches the page to validate coverage only.
+            # Same meaning as the page this replaced: RVP/CD author strategy;
+            # Admin/HR reach the page to validate coverage only.
             "can_author": role in _STRATEGY_AUTHORS,
             "priorities": priorities,
             "group_rows": group_rows,

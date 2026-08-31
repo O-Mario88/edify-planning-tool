@@ -865,12 +865,12 @@ class FrontendViewsTestCase(TestCase):
         self.assertIsNotNone(response.context["selected_school"])
         self.assertEqual(response.context["selected_school"].id, self.school.id)
 
-    def test_retired_monthly_budget_redirects_field_roles_to_weekly_request(self):
+    def test_retired_monthly_budget_redirects_field_roles_to_unified_budget(self):
         self.client.force_login(self.cceo_user)
         response = self.client.get("/budgets/monthly")
         self.assertRedirects(
             response,
-            "/fund-requests/weekly",
+            "/budget?period=month",
             fetch_redirect_response=False,
         )
 

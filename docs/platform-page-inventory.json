@@ -986,7 +986,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2808,
+      "bytes": 2802,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1094,7 +1094,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2942,
+      "bytes": 2936,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1380,7 +1380,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2233,
+      "bytes": 2236,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",
@@ -1565,7 +1565,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2976,
+      "bytes": 2970,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1739,7 +1739,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1640,
+      "bytes": 1634,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1760,7 +1760,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2470,
+      "bytes": 2464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -3114,7 +3114,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6225,
+      "bytes": 6502,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
@@ -3206,7 +3206,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 30723,
+      "bytes": 30713,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3231,7 +3231,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 25860,
+      "bytes": 25935,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -3304,7 +3304,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 13050,
+      "bytes": 13096,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3445,7 +3445,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2006,
+      "bytes": 2000,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3649,7 +3649,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 12605,
+      "bytes": 12575,
       "deprecated_alternatives": [],
       "example_pages": [
         "/debriefs"
@@ -4511,7 +4511,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13848,
+      "bytes": 13952,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4795,7 +4795,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24833,
+      "bytes": 24813,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cpd-learning"
@@ -7974,7 +7974,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 23277,
+      "bytes": 23267,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -28499,7 +28499,7 @@
       "evidence": [
         "template:pages/documents/canonical_document.html",
         "template:pages/documents/viewer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:unmapped"
       ],
       "filters": "none",
@@ -28562,7 +28562,7 @@
         "pages/documents/canonical_document.html",
         "pages/documents/viewer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -77260,7 +77260,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 377,
-    "test_referenced": 533,
+    "test_referenced": 534,
     "theme_contract_pass": 377
   }
 }

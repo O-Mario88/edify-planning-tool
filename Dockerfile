@@ -138,8 +138,13 @@ USER edify
 # App Platform injects $PORT at runtime. Default to 4000 for local/docker-compose.
 ENV PORT=4000
 EXPOSE 4000
-# Apply migrations, optionally seed, then start the ASGI server (daphne for
-# realtime SSE + the scheduler). Health probe hits GET /api/health.
+# Apply migrations, optionally seed, then start the ASGI server. Gunicorn owns
+# three Uvicorn ASGI workers by default: one process was the measured staging
+# throughput ceiling, and two still left the one-vCPU service waiting on
+# database round trips under the 12-concurrent-request release gate. Three is
+# the measured in-place ceiling for the 2 GiB web instances; each warm worker
+# uses roughly 470-490 MiB RSS. ASGI and the shared realtime bus preserve SSE.
+# Health probe hits GET /api/health.
 # Liveness, not readiness. Docker marks the container unhealthy on failure and
 # orchestrators restart it — so pointing this at a probe that checks the
 # database means a database blip restarts every instance, which fixes nothing
@@ -148,6 +153,8 @@ EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=5 \
   CMD curl -fsS "http://localhost:${PORT:-4000}/api/health/live" || exit 1
 ENTRYPOINT ["./docker-entrypoint.sh"]
-# Keep runtime PORT expansion while making the final process Daphne itself, so
-# SIGTERM/SIGINT reach it directly during rolling deploys and shutdowns.
-CMD ["sh", "-c", "exec daphne -b 0.0.0.0 -p \"${PORT:-4000}\" config.asgi:application"]
+# Keep runtime expansion while making Gunicorn PID 1, so rolling-deploy signals
+# reach the supervisor directly. WEB_CONCURRENCY remains an explicit escape
+# hatch for a differently sized instance; the production-equivalent default is
+# the three-process shape verified by the release load gate.
+CMD ["sh", "-c", "exec gunicorn --worker-tmp-dir /dev/shm --bind \"0.0.0.0:${PORT:-4000}\" --worker-class uvicorn.workers.UvicornWorker --workers \"${WEB_CONCURRENCY:-3}\" --timeout \"${WEB_TIMEOUT_SECONDS:-60}\" --graceful-timeout \"${WEB_GRACEFUL_TIMEOUT_SECONDS:-30}\" --access-logfile - --error-logfile - config.asgi:application"]

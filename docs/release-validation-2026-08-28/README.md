@@ -57,4 +57,5 @@ The costing engine now applies the two governed layers to all canonical cost com
 - [Acceptance gates](09-acceptance-gates.md)
 - [Production backup and isolated restore rehearsal](10-production-backup-restore-rehearsal.md)
 - [Rollout infrastructure closure](11-rollout-infrastructure-closure.md)
+- [Nine-gate progress correction](12-gate-progress-2026-08-29.md)
 - [Machine-readable evidence](evidence-summary.json)

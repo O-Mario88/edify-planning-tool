@@ -11,7 +11,11 @@ from apps.accounts.models import User
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.budget.costing_service import active_catalogue, apply_to_activity, preview
 from apps.budget.models import CostSetting, ActivityCostSnapshot
-from apps.budget.services import upsert_cost_setting, budget_workspace
+from apps.budget.services import (
+    upsert_cost_setting,
+    budget_workspace,
+    cost_setting_history,
+)
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.fund_requests.weekly_service import (
     self_funded,
@@ -155,6 +159,9 @@ class BudgetSpecificationTest(TestCase):
         )
         rate = CostSetting.objects.get(catalogue=active_catalogue("2026"), key=key)
         self.assertEqual((rate.unit_cost, rate.approved_minimum), (14000, 4000))
+        history = cost_setting_history(key, self.cd)[0]
+        self.assertEqual(history["oldApprovedMinimum"], 3000)
+        self.assertEqual(history["newApprovedMinimum"], 4000)
         self.assertEqual(preview(payload, minimum=True)["amount"], 55000)
         with self.assertRaises(BadRequest):
             upsert_cost_setting(

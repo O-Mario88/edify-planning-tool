@@ -25,6 +25,7 @@ would drop these silently.
 from __future__ import annotations
 
 import os
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -58,6 +59,62 @@ class AsgiConnectionLifecycleTest(SimpleTestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), "0")
+
+    def test_pooled_runtime_omits_unsupported_startup_options(self):
+        env = os.environ.copy()
+        env.update(
+            {
+                "DJANGO_SETTINGS_MODULE": "config.settings.base",
+                "DATABASE_URL": "postgresql://runtime:secret@db.example:25061/edify?sslmode=require",
+                "DB_USE_PGBOUNCER": "true",
+            }
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import json; from django.conf import settings; "
+                "d=settings.DATABASES['default']; "
+                "print(json.dumps({'options': d['OPTIONS'], "
+                "'conn_max_age': d['CONN_MAX_AGE']}))",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        database = json.loads(result.stdout)
+        self.assertNotIn("options", database["options"])
+        self.assertEqual(database["options"]["connect_timeout"], 5)
+        self.assertEqual(database["conn_max_age"], 0)
+
+    def test_pooled_runtime_fails_closed_if_startup_options_would_be_lost(self):
+        env = os.environ.copy()
+        env.update(
+            {
+                "DJANGO_SETTINGS_MODULE": "config.settings.base",
+                "DATABASE_URL": "postgresql://runtime:secret@db.example:25061/edify?schema=tenant",
+                "DB_USE_PGBOUNCER": "true",
+            }
+        )
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "from django.conf import settings; print(settings.DATABASES)",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("cannot be combined", result.stderr)
 
 
 def _setting(name: str) -> str:

@@ -34,8 +34,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              cfg.xaxis.labels.rotate = -45;
              cfg.yaxis.labels.formatter = v => Math.round(v);
              cfg.legend.position = 'top';
-             this.chart = new ApexCharts(el, cfg);
-             this.chart.render();
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
            }
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Debrief Trend Over Time</h2>
@@ -53,8 +52,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              cfg.series = {{ activity_donut.counts|escape }};
              cfg.labels = [{% for l in activity_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
              cfg.chart.height = 260;
-             this.chart = new ApexCharts(el, cfg);
-             this.chart.render();
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
            }
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Debriefs by Activity Type</h2>
@@ -165,8 +163,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
              cfg.labels = [{% for l in risk_donut.labels %}'{{ l|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
              cfg.chart.height = 220;
              cfg.colors = ['var(--edify-text-muted)', 'var(--edify-chart-blue)', 'var(--edify-chart-purple)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
-             this.chart = new ApexCharts(el, cfg);
-             this.chart.render();
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
            }
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Debriefs by Risk Level</h2>

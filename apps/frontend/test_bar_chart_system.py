@@ -159,9 +159,19 @@ class SharedChartFormTest(SimpleTestCase):
         preset = re.compile(
             r"EdifyChartSystem\.(formBase|areaTrend|rankedBar|comparisonBar|donut|mixedTrend)"
         )
+        # Since FREEZE-01 charts are built through EdifyChartSystem.renderDetached
+        # rather than constructed inline, so `new ApexCharts` alone no longer
+        # finds them — it would find nothing, and this gate would pass by
+        # measuring an empty set. Both spellings count as making a chart.
+        makes_a_chart = re.compile(r"new ApexCharts|EdifyChartSystem\.renderDetached")
         for path in ROOT.joinpath("templates").rglob("*.html"):
+            # base.html DEFINES the presets and the render helper; the helper
+            # necessarily constructs an ApexCharts, and the presets it feeds it
+            # are the shared forms rather than a hand-rolled config.
+            if path.name == "base.html":
+                continue
             source = path.read_text(encoding="utf-8")
-            if "new ApexCharts" not in source:
+            if not makes_a_chart.search(source):
                 continue
             if not preset.search(source):
                 offenders.append(str(path.relative_to(ROOT)))

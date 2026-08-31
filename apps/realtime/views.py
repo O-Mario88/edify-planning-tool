@@ -64,8 +64,9 @@ def stream(request):
         """Async generator — required, not stylistic.
 
         This was a *synchronous* infinite generator. Under ASGI (production
-        runs Daphne) Django cannot `async for` a sync iterator, so it falls back
-        to `await sync_to_async(list)(streaming_content)` — it tries to
+        runs Gunicorn with Uvicorn workers) Django cannot `async for` a sync
+        iterator, so it falls back to
+        `await sync_to_async(list)(streaming_content)` — it tries to
         materialise an endless stream into a list before sending a single byte.
         The client received the 200 and its headers and then nothing, forever.
 
@@ -78,7 +79,17 @@ def stream(request):
         Subscribing before the first yield closes a smaller race — an event
         published between "connected" and `subscribe()` used to be dropped.
         """
-        q = bus.subscribe(user_id)
+        # The shared transport performs bounded Redis socket operations.
+        # Keep those off the ASGI event loop, including connection setup and
+        # cleanup. Shield setup so a disconnect cannot strand a subscription
+        # created by a worker thread after its caller has been cancelled.
+        subscription = asyncio.create_task(asyncio.to_thread(bus.subscribe, user_id))
+        try:
+            q = await asyncio.shield(subscription)
+        except asyncio.CancelledError:
+            q = await subscription
+            await asyncio.to_thread(bus.unsubscribe, user_id, q)
+            raise
         try:
             yield _sse({"type": "connected", "at": _now_iso()})
             last_beat = time.monotonic()
@@ -86,7 +97,7 @@ def stream(request):
                 drained = False
                 while True:
                     try:
-                        event = q.get_nowait()
+                        event = await asyncio.to_thread(q.get_nowait)
                     except queue.Empty:
                         break
                     drained = True
@@ -103,7 +114,7 @@ def stream(request):
                 # keeps cancellation working.
                 await asyncio.sleep(_POLL_SECONDS)
         finally:
-            bus.unsubscribe(user_id, q)
+            await asyncio.to_thread(bus.unsubscribe, user_id, q)
 
     response = StreamingHttpResponse(event_stream(), content_type="text/event-stream")
     response["Cache-Control"] = "no-cache"
