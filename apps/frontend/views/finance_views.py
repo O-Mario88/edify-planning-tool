@@ -1032,10 +1032,8 @@ def cost_setting_row_view(request, key):
 
     if request.method == "POST":
         new_cost_str = request.POST.get("unit_cost", "").strip()
-        # The drawer had no reason input, so every rate change in the audit
-        # trail read "Updated via CD Dashboard" — a history row that records
-        # who and when but not why, which is the only part anyone asks about
-        # six months later. The fallback stays for API callers that omit it.
+        # Require the CD's explanation so the rate-change audit records why
+        # the approved prices changed.
         reason = request.POST.get("reason", "").strip()
         try:
             new_cost = int(new_cost_str.replace(",", ""))
@@ -1055,8 +1053,16 @@ def cost_setting_row_view(request, key):
             catalogue = active_catalogue()
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
-        except (ValueError, BadRequest) as exc:
-            return HttpResponse(str(exc), status=400)
+        except ValueError:
+            return HttpResponse(
+                "Enter a valid whole-number cost.",
+                status=400,
+                content_type="text/plain; charset=utf-8",
+            )
+        except BadRequest as exc:
+            return HttpResponse(
+                str(exc.detail), status=400, content_type="text/plain; charset=utf-8"
+            )
 
     # `cost_setting_history` has existed since the register was built and was
     # never surfaced anywhere. A rate is the input to every activity budget in

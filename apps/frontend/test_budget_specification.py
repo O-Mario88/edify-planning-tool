@@ -204,6 +204,21 @@ class BudgetSpecificationTest(TestCase):
             },
         )
         self.assertEqual(response.status_code, 400)
+        self.assertEqual(response["Content-Type"], "text/plain; charset=utf-8")
+
+        invalid_cost = "<script>alert('private input')</script>"
+        response = self.client.post(
+            f"/cost-settings/row/{key}",
+            {
+                "unit_cost": invalid_cost,
+                "approved_minimum": "3500",
+                "reason": "Invalid number",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.content.decode(), "Enter a valid whole-number cost.")
+        self.assertEqual(response["Content-Type"], "text/plain; charset=utf-8")
+        self.assertNotIn(invalid_cost, response.content.decode())
 
     def test_self_fund_follows_approval_disbursement_and_bank_confirmation(self):
         self.cost()
