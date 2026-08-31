@@ -243,6 +243,25 @@ class TransportProviderPaymentTest(TestCase):
             },
             daily_pool_amount=310_000,
         )
+        region = Region.objects.create(name="Transport test region")
+        district = District.objects.create(
+            name="Transport test district", region=region
+        )
+        school = School.objects.create(
+            school_id="TRANSPORT-DAY",
+            name="Transport school",
+            region=region,
+            district=district,
+        )
+        Activity.objects.create(
+            school=school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="scheduled",
+            planned_date=self.batch.visit_date,
+            responsible_staff_id=self.batch.responsible_user,
+            daily_visit_batch=self.batch,
+        )
 
     def _pay(self, principal, **overrides):
         from apps.fund_requests.vendor_channel import (
@@ -287,7 +306,8 @@ class TransportProviderPaymentTest(TestCase):
 
         self._pay(_P(self.acct))
         self.batch.rate_snapshot["primary_transport_per_day"] = 999_000
-        ensure_transport_obligation(self.batch)
+        with self.assertRaisesMessage(BadRequest, "already been paid"):
+            ensure_transport_obligation(self.batch)
         self.assertEqual(TransportPayment.objects.get(batch=self.batch).amount, 280_000)
 
     def test_reference_is_required_netsuite_is_not(self):

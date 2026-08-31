@@ -23,14 +23,17 @@ DAILY_BATCH_ELIGIBLE_TYPES = {
     "social_visit",
     "training_follow_up_visit",
     "in_school_coaching_visit",
+    "school_visit_ssa_collection",
+    "core_assessment_visit",
+    "partner_ssa_collection",
 }
 
 # The staff member's day carries ONE mission cost — transport and personal
 # per-diems accrue per DAY, never per activity (owner rule, 2026-08-19). So
 # trainings, cluster sessions and single-day field events join the same day
-# pool as visits. In-school training is a visit-equivalent school mission and
-# has no venue/group-training recipe on top; its automatically paired School
-# Visit is an evidence/Salesforce twin, not another funded journey. Multi-day
+# pool as visits. Training adds participant meals and venue costs; cluster training also adds
+# facilitation. An automatically paired School Visit is an evidence/Salesforce
+# twin, not another funded journey. Multi-day
 # field events stay on their standalone per-day recipe — they own their whole
 # away-days by definition.
 DAY_POOL_EXTRA_TYPES = {
@@ -47,10 +50,7 @@ DAY_POOL_EXTRA_TYPES = {
 # Members whose activity-specific recipe is written ON TOP of the pool share
 # (a field event has no activity-specific components — its whole cost is the
 # per-diem pool share).
-POOL_PLUS_RECIPE_TYPES = DAY_POOL_EXTRA_TYPES - {
-    "field_event",
-    "in_school_training",
-}
+POOL_PLUS_RECIPE_TYPES = DAY_POOL_EXTRA_TYPES - {"field_event"}
 
 REQUIRED_KEYS = {
     "primary": ["primary_transport_per_day", "primary_lunch_per_day"],

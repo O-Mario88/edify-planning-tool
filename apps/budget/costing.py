@@ -30,6 +30,8 @@ class CostLine:
     qty: int
     amount: int  # integer UGX (0 when the rate is missing)
     missing: bool
+    allocation_count: int | None = None
+    allocation_index: int | None = None
 
 
 @dataclass
@@ -41,7 +43,6 @@ class ActivityCost:
 
 
 DEFAULT_TRAINING_PARTICIPANTS = 25
-DEFAULT_CLUSTER_MEETING_PARTICIPANTS = 10
 
 
 # A cluster session has a deliberately small, predictable cost recipe.  These
@@ -84,9 +85,8 @@ def _participants_of(a: dict, default_n: int) -> int:
     silently converted a planned estimate into an actuals-based figure.
     Actuals are used only when no plan was ever captured, ahead of the
     hardcoded default."""
-    expected = _nonnegative_count(a.get("expectedParticipants"))
-    if expected > 0:
-        return expected
+    if a.get("expectedParticipants") is not None:
+        return _nonnegative_count(a["expectedParticipants"])
     counted = sum(
         _nonnegative_count(a.get(key))
         for key in (
@@ -134,14 +134,28 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             )
         )
 
+    def add_staff_day(days: int = 1) -> None:
+        if is_partner:
+            return
+        from apps.daily_visit_batches.pricing import (
+            KEY_LABELS,
+            OPTIONAL_KEYS,
+            REQUIRED_KEYS,
+        )
+
+        profile = "secondary" if is_secondary else "primary"
+        for key in REQUIRED_KEYS[profile]:
+            add(KEY_LABELS[key].replace("shared, ", ""), key, days)
+        for key in OPTIONAL_KEYS[profile]:
+            if key in rates:
+                add(KEY_LABELS[key].replace("shared, ", ""), key, days)
+
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
-    # An in-school training is delivered during the same school mission as a
-    # school visit. Its Salesforce Training record describes the programme
-    # result, not a second journey or a venue-based group training. Price it
-    # from the visit recipe for both staff and partner delivery so Planning,
-    # partner payments and the CD Cost Catalogue all tell the same story.
+    # Partner-delivered in-school training retains its agreed mission rate.
+    # Staff training uses planned per-head meals and a venue; only cluster
+    # training includes the facilitation fee.
     is_in_school_training = activity_type == "in_school_training"
 
     # Non-school programme events (conferences, camps, exhibitions, launches)
@@ -191,11 +205,14 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     # a partner delivers the session.  The programme budget needs the same
     # transparent snack/meal/facilitation/venue breakdown in every workflow.
     elif activity_type in CLUSTER_MEETING_TYPES:
-        n = _participants_of(a, DEFAULT_CLUSTER_MEETING_PARTICIPANTS)
-        add("Participant snacks", CLUSTER_MEETING_SNACK_RATE_KEY, n)
+        n = _participants_of(a, 0)
+        days = _days_of(a)
+        add("Participant snacks", CLUSTER_MEETING_SNACK_RATE_KEY, n * days)
+        add("Venue fee", "group_training_venue_cost", days)
+        add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
-        n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
+        n = _participants_of(a, 0)
         days = _days_of(a)
         add(
             "Participant meals",
@@ -204,10 +221,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
         add("Facilitation fee", "group_training_facilitation_fee", days)
         add("Venue fee", "group_training_venue_cost", days)
-        # Staff transport and personal per-diems are NOT priced here: they
-        # accrue once per DAY on the owner's day-mission pool
-        # (apps.daily_visit_batches), which this session joins — one
-        # transport per day irrespective of how many activities fill it.
+        add_staff_day(days)
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not
@@ -242,7 +256,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     elif activity_type == "core_training":
         add("Core School Training", "core_school_training")
 
-    elif activity_type in VISIT_TYPES or is_in_school_training:
+    elif activity_type in VISIT_TYPES:
         if is_secondary:
             add("Transport (secondary)", "secondary_transport_per_day")
             add("Breakfast", "secondary_breakfast_per_day")
@@ -265,19 +279,15 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             add("Transport (primary)", "primary_transport_per_day")
             add("Lunch", "primary_lunch_per_day")
     elif activity_type in TRAINING_TYPES:
-        n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
+        n = _participants_of(a, 0)
         days = _days_of(a)
         add(
             "Participant meals",
             "group_training_participant_meal_cost_per_head",
             n * days,
         )
-        add("Facilitation fee", "group_training_facilitation_fee", days)
         add("Venue fee", "group_training_venue_cost", days)
-        # Staff transport and personal per-diems are NOT priced here: they
-        # accrue once per DAY on the owner's day-mission pool
-        # (apps.daily_visit_batches), which this session joins — one
-        # transport per day irrespective of how many activities fill it.
+        add_staff_day(days)
     elif activity_type in ("partner_activity", "project_activity"):
         project_key = "project_partner_lump_sum" if a.get("projectId") else None
         key = project_key or "partner_visit_lump_sum"
@@ -290,6 +300,17 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     cost_missing = any(line.missing for line in lines)
     amount = sum(line.amount for line in lines)
     missing_items = [line.key for line in lines if line.missing]
+    if any(
+        line.qty == 0
+        and line.key
+        in {
+            "group_training_participant_meal_cost_per_head",
+            CLUSTER_MEETING_SNACK_RATE_KEY,
+        }
+        for line in lines
+    ):
+        missing_items.append("expectedParticipants")
+        cost_missing = True
     return ActivityCost(
         amount=amount,
         lines=lines,

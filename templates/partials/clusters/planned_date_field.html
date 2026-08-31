@@ -52,6 +52,7 @@ let monthStr = String(this.currentMonth + 1).padStart(2, '0');
 let dayStr = String(day).padStart(2, '0');
 this.selectedDate = `${this.currentYear}-${monthStr}-${dayStr}`;
 this.open = false;
+this.$nextTick(() => this.$refs.costDate.dispatchEvent(new Event('change', { bubbles: true })));
 },
 formatDate(dateStr) {
 if (!dateStr) return 'Select Date';
@@ -90,7 +91,9 @@ aria-controls="cluster-planned-date-calendar"
 </svg>
 </button>
 
-<input type="hidden" name="scheduled_date" :value="selectedDate" required>
+<input type="hidden" name="scheduled_date" :value="selectedDate" required x-ref="costDate"
+hx-get="/clusters/cost-preview" hx-trigger="change" hx-target="#planner-cost-preview-container"
+hx-include="#action-planner-form">
 
 <div
 id="cluster-planned-date-calendar"

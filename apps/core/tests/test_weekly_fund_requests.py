@@ -206,8 +206,13 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         cm_lines = ActivityScheduleCostLine.objects.filter(activity_id=cm["id"])
-        self.assertEqual(cm_lines.count(), 1)
-        self.assertEqual(cm_lines[0].amount, 80000)  # 10 * 8,000
+        self.assertEqual(cm_lines.count(), 4)
+        self.assertEqual(
+            cm_lines.get(
+                cost_setting_key="cluster_meeting_participant_meal_cost_per_head"
+            ).amount,
+            80000,
+        )  # 10 * 8,000
 
         # 3. Schedule a Group Training (15 participants: meals=15*12000=180000, venue=200000, facilitation=150000)
         # Total = 530,000
@@ -227,7 +232,7 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         gt_lines = ActivityScheduleCostLine.objects.filter(activity_id=gt["id"])
-        self.assertEqual(sum(l.amount for l in gt_lines), 530000)
+        self.assertEqual(sum(l.amount for l in gt_lines), 592000)
         self.assertEqual(
             Activity.objects.get(id=gt["id"]).expected_participants,
             15,
@@ -238,6 +243,8 @@ class WeeklyFundRequestsTest(APITestCase):
                 "group_training_participant_meal_cost_per_head",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
+                "primary_transport_per_day",
+                "primary_lunch_per_day",
             },
         )
 
@@ -252,7 +259,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 622000)
+        self.assertEqual(wfr_data["totalAmount"], 946000)
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail
@@ -261,9 +268,9 @@ class WeeklyFundRequestsTest(APITestCase):
 
         detail_res = self._get(f"/api/fund-requests/weekly/{wfr_data['id']}")
         self.assertEqual(
-            len(detail_res["lines"]), 5
+            len(detail_res["lines"]), 10
         )  # 1 visit component (lunch — transport is vendor-direct),
-        #    1 cluster meeting, 3 group-training components
+        #    4 cluster meeting and 5 cluster-training components (including travel).
         descriptions = {line["description"] for line in detail_res["lines"]}
         self.assertTrue(
             {

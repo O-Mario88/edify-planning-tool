@@ -304,11 +304,7 @@ def minimum_cost(input: dict, catalogue: CostCatalogue | None) -> ActivityCost:
     _, settings = _rate_card(catalogue)
     return cost_for_activity(
         _profiled_input(input),
-        {
-            key: row.approved_minimum
-            for key, row in settings.items()
-            if row.approved_minimum is not None
-        },
+        {key: row.approved_minimum for key, row in settings.items()},
     )
 
 
@@ -328,7 +324,7 @@ def planned_minimum_amounts(activities) -> dict:
         )
     )
     rates = {
-        (row.catalogue_id, row.key): row.approved_minimum
+        (row.catalogue_id, row.key): row
         for row in CostSetting.objects.filter(
             catalogue_id__in={s.operational_rate_card_id for s in snapshots},
         )
@@ -336,16 +332,34 @@ def planned_minimum_amounts(activities) -> dict:
     amounts = {}
     for snapshot in snapshots:
         total = 0
-        missing = not snapshot.operational_rate_card_id or (
-            not snapshot.operational_breakdown and snapshot.operational_cost != 0
+        missing = (
+            not snapshot.operational_rate_card_id
+            or (not snapshot.operational_breakdown and snapshot.operational_cost != 0)
+            or bool(snapshot.missing_configuration)
         )
         for line in snapshot.operational_breakdown:
-            rate = rates.get((snapshot.operational_rate_card_id, line.get("key")))
+            setting = rates.get((snapshot.operational_rate_card_id, line.get("key")))
+            rate = setting.approved_minimum if setting else None
             unit = line.get("unit")
             if rate is None or unit is None or line.get("missing"):
                 missing = True
                 break
-            if unit:
+            allocation = line.get("dailyAllocation")
+            if allocation:
+                from apps.daily_visit_batches.pricing import allocate_component
+
+                total += allocate_component(rate, allocation["count"])[
+                    allocation["index"]
+                ]
+            elif unit:
+                # Older snapshots stored the allocated share as their unit.
+                # Use the catalogue's daily rate to preserve that historical
+                # fraction; new snapshots store exact allocation provenance.
+                if "(shared," in line.get("label", ""):
+                    unit = setting.unit_cost
+                if not unit:
+                    missing = missing or rate != 0
+                    continue
                 total += int(
                     (Decimal(line["amount"]) * Decimal(rate) / Decimal(unit)).quantize(
                         Decimal("1"), rounding=ROUND_HALF_UP
@@ -357,21 +371,138 @@ def planned_minimum_amounts(activities) -> dict:
     return amounts
 
 
-def preview(input: dict, *, minimum: bool = False) -> dict:
+def planning_preview_owner(principal, staff_id: str | None = None) -> str:
+    """Resolve a staff member's day only within the planner's existing scope."""
+    if not staff_id:
+        return principal.user_id
+    from apps.accounts.models import StaffProfile
+    from apps.core.exceptions import Forbidden
+    from apps.core.scoping import resolve_user_scope
+
+    scope = resolve_user_scope(principal)
+    allowed = set(
+        scope.staff_ids + scope.supervised_staff_ids + scope.managed_staff_ids
+    )
+    if not scope.country_scope and staff_id not in allowed:
+        raise Forbidden("That staff member is outside your planning scope.")
+    owner = (
+        StaffProfile.objects.filter(pk=staff_id)
+        .values_list("user_id", flat=True)
+        .first()
+    )
+    if not owner:
+        raise BadRequest("Choose a valid responsible staff member.")
+    return owner
+
+
+def _planning_day_context(
+    input: dict, responsible_user_id: str | None
+) -> tuple[dict, int]:
+    """Resolve the proposed day's actual members; never trust a client count/owner."""
+    from datetime import date
+    from django.db.models import Q
+    from apps.core.fy import get_operational_fy
+    from apps.daily_visit_batches.models import DailyVisitBatch
+    from apps.daily_visit_batches.pricing import (
+        DAILY_BATCH_ELIGIBLE_TYPES,
+        DAY_POOL_EXTRA_TYPES,
+    )
+
+    input = dict(_profiled_input(input))
+    raw_date = input.get("plannedDate") or input.get("date")
+    if not raw_date or not responsible_user_id:
+        return input, 1
+    try:
+        from django.utils.dateparse import parse_datetime
+
+        timestamp = parse_datetime(str(raw_date)) if "T" in str(raw_date) else None
+        day = (
+            timezone.localtime(timestamp).date()
+            if timestamp is not None and timezone.is_aware(timestamp)
+            else date.fromisoformat(str(raw_date)[:10])
+        )
+    except (ValueError, TypeError):
+        raise BadRequest("Choose a valid planned date.") from None
+    input.update(plannedDate=day, fy=get_operational_fy(day))
+    if input.get("schoolId"):
+        from apps.schools.models import School
+
+        district_type = (
+            School.objects.filter(
+                Q(id=input["schoolId"]) | Q(school_id=input["schoolId"])
+            )
+            .values_list("district__district_type", flat=True)
+            .first()
+        )
+        if district_type:
+            input["districtType"] = district_type
+    elif input.get("clusterId"):
+        from apps.clusters.models import Cluster
+
+        district_type = (
+            Cluster.objects.filter(pk=input["clusterId"])
+            .values_list("district__district_type", flat=True)
+            .first()
+        )
+        if district_type:
+            input["districtType"] = district_type
+    from apps.budget.costing import _days_of
+
+    if (
+        input.get("deliveryType", "staff") != "staff"
+        or input.get("activityType")
+        not in DAILY_BATCH_ELIGIBLE_TYPES | DAY_POOL_EXTRA_TYPES
+        or _days_of(input) > 1
+    ):
+        return input, 1
+    batch = DailyVisitBatch.objects.filter(
+        responsible_user=responsible_user_id,
+        visit_date=day,
+    ).first()
+    if not batch:
+        return input, 1
+    if batch.district_type != (input.get("districtType") or "primary"):
+        raise BadRequest(
+            "Choose a separate day for primary and secondary district activities."
+        )
+    return input, 1 + batch.activities.filter(deleted_at__isnull=True).exclude(
+        status__in=["cancelled", "deferred", "rejected"]
+    ).count()
+
+
+def preview(
+    input: dict, *, minimum: bool = False, responsible_user_id: str | None = None
+) -> dict:
     """Compute an itemized cost preview from the active catalogue. No writes.
 
     Returns: {catalogueId, catalogueVersion, currency, amount, lines[],
               costMissing, missingItems[], blockers[], canSchedule}.
     A blocker is raised-candidate text naming the exact missing cost item so the
     UI can show e.g. "Group training participant meal cost is not set."."""
+    input, member_count = _planning_day_context(input, responsible_user_id)
     result = calculate_dual(input)
     catalogue = result["operationalCard"]
     cost = (
         minimum_cost(result["inputs"], catalogue) if minimum else result["operational"]
     )
+    if member_count > 1:
+        from apps.daily_visit_batches.pricing import KEY_LABELS, allocate_component
+
+        for line in cost.lines:
+            if line.key in KEY_LABELS:
+                line.amount = allocate_component(line.amount, member_count)[0]
+                line.unit = None if line.missing else line.amount
+                line.allocation_count = member_count
+                line.allocation_index = 0
+                line.label = KEY_LABELS[line.key]
+        cost.amount = sum(line.amount for line in cost.lines)
     missing = cost.missing_items
     blockers = [
-        f"{_missing_label(k)}{' minimum viable cost' if minimum else ''} is not set in the active CD Cost Catalogue."
+        (
+            "Enter the planned participant count in the activity drawer."
+            if k == "expectedParticipants"
+            else f"{_missing_label(k)}{' minimum viable cost' if minimum else ''} is not set in the active CD Cost Catalogue."
+        )
         for k in missing
     ]
     if catalogue is None:
@@ -389,6 +520,13 @@ def preview(input: dict, *, minimum: bool = False) -> dict:
         "missingItems": missing,
         "blockers": blockers,
         "canSchedule": result["canSchedule"],
+        "dailyActivityCount": member_count,
+        "allocationNote": (
+            f"Daily staff costs are shared across {member_count} planned activities, including this one. "
+            "Saving recalculates every share; rounding may change a share by one shilling per item."
+            if member_count > 1
+            else "Daily staff costs are shared automatically when more activities are planned for the same day."
+        ),
     }
 
 
@@ -454,7 +592,7 @@ def activity_cost_coverage(items, catalogue: CostCatalogue | None = None) -> lis
 
 
 def _serialize_line(line: CostLine) -> dict:
-    return {
+    result = {
         "label": line.label,
         "key": line.key,
         "unit": line.unit,
@@ -463,6 +601,12 @@ def _serialize_line(line: CostLine) -> dict:
         "missing": line.missing,
         "lineItemType": _line_item_type(line.key),
     }
+    if line.allocation_count is not None:
+        result["dailyAllocation"] = {
+            "count": line.allocation_count,
+            "index": line.allocation_index,
+        }
+    return result
 
 
 def _line_item_type(key: str) -> str:
@@ -956,7 +1100,7 @@ def apply_to_activity(
             ),
             operational_breakdown=[_serialize_line(line) for line in cost.lines],
             warnings=dual["warnings"],
-            missing_configuration=dual["missingConfiguration"],
+            missing_configuration=cost.missing_items,
             calculated_at=timezone.now(),
             calculated_by=responsible_user_id or activity.responsible_staff_id,
             recalculation_reason=input.get("recalculationReason"),

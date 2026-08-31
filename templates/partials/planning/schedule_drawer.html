@@ -497,18 +497,14 @@ x-text="day"
   and the backend clears them again on arrival. A visit's cost has no
   participant component and no API client can give it one.
 
-  There is no Teachers / School leaders / Other breakdown on this form. Who is
-  in the room is a CLUSTER planning question — a cluster activity invites
-  people from many schools and has to know which people — while school-level
-  support goes to one school and is planned by its purpose, not its audience.
-  Asking for the split here also collided with completion: the three inputs
-  wrote to the same columns attendance is later recorded in, so a plan and a
-  verified headcount became indistinguishable.
+  School training asks for a planned total to price participant meals.
+  Cluster planning derives its total from invited schools and their counts.
+  The planned total is separate from attendance recorded at completion.
 {% endcomment %}
 <template x-if="showParticipants">
 <div>
   <label for="expected_participants" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Planned Participants</label>
-  <input type="number" min="1" name="expected_participants" id="expected_participants" x-model="plannedParticipants"
+  <input type="number" min="1" required name="expected_participants" id="expected_participants" x-model="plannedParticipants"
     class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus">
 </div>
 </template>

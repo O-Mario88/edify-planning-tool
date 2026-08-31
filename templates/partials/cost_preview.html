@@ -12,6 +12,7 @@
 </div>
 
 <!-- cost lines -->
+{% if preview.allocationNote %}<p>{{ preview.allocationNote }}</p>{% endif %}
 {% if preview.lines %}
 {% for line in preview.lines %}
 <div class="flex justify-between items-center font-semibold">

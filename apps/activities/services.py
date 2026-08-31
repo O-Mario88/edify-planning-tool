@@ -787,6 +787,7 @@ def _funding_owner_id(activity: Activity, principal=None) -> str | None:
     return getattr(principal, "user_id", None) if principal else None
 
 
+@transaction.atomic
 def _apply_schedule_cost_snapshot(
     activity: Activity, data: dict, principal=None
 ) -> None:
@@ -812,9 +813,41 @@ def _apply_schedule_cost_snapshot(
         )
     )
     responsible = _funding_owner_id(activity, principal)
-    apply_to_activity(
-        activity, _costing_input(activity, data), responsible_user_id=responsible
+    if (
+        data.get("expectedParticipants") is not None
+        and data["expectedParticipants"] != activity.expected_participants
+    ):
+        activity.expected_participants = data["expectedParticipants"]
+        activity.save(update_fields=["expected_participants", "updated_at"])
+    from apps.daily_visit_batches.services import (
+        attach_activity_to_batch,
+        batch_poolable,
+        remove_school,
     )
+
+    pooled = (
+        bool(responsible)
+        and activity.delivery_type == "staff"
+        and batch_poolable(activity)
+    )
+    if activity.daily_visit_batch_id:
+        batch = activity.daily_visit_batch
+        if (
+            not pooled
+            or batch.responsible_user != responsible
+            or batch.visit_date != activity.planned_date
+        ):
+            remove_school(activity_id=activity.id)
+            activity.refresh_from_db(fields=["daily_visit_batch"])
+    if not pooled or not attach_activity_to_batch(
+        activity, responsible_user_id=responsible, reason=data.get("reason")
+    ):
+        apply_to_activity(
+            activity, _costing_input(activity, data), responsible_user_id=responsible
+        )
+    else:
+        # Batch writes load their own instances, so serialize the saved total.
+        activity.refresh_from_db(fields=["est_cost_cents", "cost_missing"])
     sync_weekly_requests_for_activity(activity, prior_buckets=prior_buckets)
     sync_monthly_drafts_for_activity(activity, prior_buckets=prior_buckets)
 
@@ -2008,6 +2041,10 @@ def create(
             }
         )
         if _check["blockers"]:
+            if "expectedParticipants" in _check["missingItems"]:
+                raise BadRequest(
+                    "Enter the planned participant count in the activity drawer before scheduling."
+                )
             raise BadRequest(
                 "Cannot schedule — "
                 + " · ".join(_check["blockers"])
@@ -2244,35 +2281,7 @@ def create(
         # (2026-08-12 audit M-4). Pricing happens when the activity is dated
         # (reschedule sets scheduled_date and re-prices).
         if not skip_cost_snapshot and activity.scheduled_date:
-            # Staff school visits are pool-priced: the whole day's transport/
-            # meal pool is split across that day's schools. The UI scheduling
-            # paths used to price each visit alone here — billing every school
-            # the FULL day pool (5 schools on one day = 5× the real daily
-            # cost) while a later reschedule re-priced the same visit at the
-            # pooled 1/N share. Attach the new visit to its day batch so
-            # creation and reschedule price identically; anything that cannot
-            # be pooled (unclassified district, mixed district types) falls
-            # back to solo pricing and is surfaced by the
-            # scheduled_visits_missing_batch health check.
-            pooled = False
-            if activity.scheduled_date and activity.delivery_type == "staff":
-                from apps.daily_visit_batches.services import (
-                    attach_activity_to_batch,
-                    batch_poolable,
-                )
-
-                # One mission cost per day: visits, trainings, cluster
-                # sessions and single-day field events all share the owner's
-                # day pool (owner rule, 2026-08-19). Multi-day field events
-                # price their own away-days standalone.
-                if batch_poolable(activity):
-                    pooled = attach_activity_to_batch(
-                        activity,
-                        responsible_user_id=_funding_owner_id(activity, principal),
-                        reason=data.get("reason"),
-                    )
-            if not pooled:
-                _apply_schedule_cost_snapshot(activity, data, principal=principal)
+            _apply_schedule_cost_snapshot(activity, data, principal=principal)
     # Planning and scheduling must both be on the tamper-evident audit chain.
     # An undated draft is a real planning authorization but it is not yet
     # money-bearing work, so do not mislabel it as scheduled.
@@ -3415,7 +3424,7 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
 
             reschedule_within_batch(
                 activity=a,
-                new_date=new_date.date(),
+                new_date=a.planned_date,
                 reason=data.get("reason"),
                 principal=principal,
             )
@@ -3916,11 +3925,15 @@ def _detach_from_daily_visit_batch(a: Activity) -> None:
     reschedule/cancel escape hatch, not silent batch recompute."""
     if not a.daily_visit_batch_id:
         return
-    from apps.daily_visit_batches.services import remove_school
+    from apps.daily_visit_batches.services import remove_school, _is_locked
 
     try:
         remove_school(activity_id=a.id)
     except BadRequest:
+        if not _is_locked(
+            a.daily_visit_batch.responsible_user, a.daily_visit_batch.visit_date
+        ):
+            raise
         # Batch is locked (left draft) — leave its remaining lines frozen.
         pass
 
@@ -4229,7 +4242,6 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
             if (
                 cost_drivers_changed
                 and a.scheduled_date
-                and not a.daily_visit_batch_id
                 and a.status not in ("cancelled", "rejected", "deferred")
             ):
                 _apply_schedule_cost_snapshot(a, {}, principal=principal)
