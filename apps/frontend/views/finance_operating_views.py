@@ -914,6 +914,30 @@ def audit_log_view(request):
     return render(request, "pages/accounts/audit_log.html", context)
 
 
+def _add_plan_budget(context, principal, period="month"):
+    """All displayed horizons aggregate the same costed weekly plans."""
+    if not context.get("fy"):
+        return context
+    from datetime import date
+    from apps.budget.services import budget_workspace
+
+    fy, month = str(context["fy"]), int(context["month"])
+    year = int(fy) - 1 if month >= 10 else int(fy)
+    period = period if period in ("month", "quarter", "fy") else "month"
+    context["plan_budget"] = budget_workspace(
+        principal,
+        {
+            "fy": fy,
+            "date": date(year, month, 1).isoformat(),
+            "period": period,
+            "budget_scope": "team",
+            "plan_only": True,
+        },
+    )
+    context["selected_period"] = period
+    return context
+
+
 @require_page_permission("monthly_request")
 def monthly_request_view(request):
     """Program Lead, CD, and RVP monthly request workspace."""
@@ -941,6 +965,7 @@ def monthly_request_view(request):
         )
     except (BadRequest, Forbidden) as exc:
         context = {"action_error": str(exc)}
+    _add_plan_budget(context, request.user, request.GET.get("period", "month"))
     if request.headers.get("HX-Target") == "monthly-request-root":
         return render(request, "partials/finance/monthly_request/root.html", context)
     return render(request, "pages/accounts/monthly_request.html", context)
@@ -983,6 +1008,7 @@ def monthly_request_action_view(request):
         context = {"action_error": str(exc)}
     context["action_error"] = error or context.get("action_error")
     context["action_ok"] = ok
+    _add_plan_budget(context, request.user)
     return render(request, "partials/finance/monthly_request/root.html", context)
 
 

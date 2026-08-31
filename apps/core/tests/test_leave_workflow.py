@@ -303,8 +303,8 @@ class LeaveWorkflowIntegrationTest(APITestCase):
         self.assertIsNotNone(entry)
         self.assertEqual(entry.subject_id, cov.id)
 
-    def test_prevent_activity_during_leave(self):
-        """Verify scheduling/rescheduling activity during approved leave is blocked."""
+    def test_activity_can_be_scheduled_during_leave(self):
+        """Approved leave remains recorded without blocking activity planning."""
         # Create approved leave for CCEO-2 on Oct 8 to Oct 12
         Leave.objects.create(
             staff=self.cceo2_profile,
@@ -321,41 +321,26 @@ class LeaveWorkflowIntegrationTest(APITestCase):
 
         CostCatalogue.objects.all().delete()
         catalogue = CostCatalogue.objects.create(
-            label="Default Catalog", fy="2026", is_active=True
+            label="Default Catalog", fy="2027", is_active=True
         )
-        CostSetting.objects.create(
-            catalogue=catalogue,
-            key="school_visit_cost_per_school_primary",
-            label="primary",
-            unit_cost=100,
-        )
-        CostSetting.objects.create(
-            catalogue=catalogue,
-            key="school_visit_cost_per_school_secondary",
-            label="secondary",
-            unit_cost=100,
-        )
-        CostSetting.objects.create(
-            catalogue=catalogue,
-            key="school_visit_cost_per_school",
-            label="general",
-            unit_cost=100,
-        )
-
-        # Create activity scheduled on Oct 9 (during leave) -> should fail
-        from apps.core.exceptions import BadRequest
-
-        with self.assertRaises(BadRequest) as ctx:
-            create(
-                data={
-                    "activityType": "school_visit",
-                    "schoolId": self.school2.school_id,
-                    "scheduledDate": "2026-10-09",
-                    "responsibleStaffId": self.cceo2_user.id,
-                },
-                principal=self.cceo2_user,
+        for key in ("primary_transport_per_day", "primary_lunch_per_day"):
+            CostSetting.objects.create(
+                catalogue=catalogue, fy="2027", key=key, label=key, unit_cost=100
             )
-        self.assertIn("approved leave", str(ctx.exception))
+
+        result = create(
+            data={
+                "activityType": "school_visit",
+                "schoolId": self.school2.school_id,
+                "scheduledDate": "2026-10-09",
+                "responsibleStaffId": self.cceo2_user.id,
+            },
+            principal=self.cceo2_user,
+        )
+        self.assertEqual(result["status"], "scheduled")
+        self.assertTrue(
+            Leave.objects.filter(staff=self.cceo2_profile, status="approved").exists()
+        )
 
     def test_audit_log_coverage_injection(self):
         """Verify audit logs capture coverage context when acting as cover."""

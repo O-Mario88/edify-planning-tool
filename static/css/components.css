@@ -4074,3 +4074,29 @@ search:has(.edify-search-submit) input[type="search"] {
 .edify-performance-table :is(td, th):nth-child(n + 5) {
   padding-inline: 0.4rem;
 }
+
+/* The plan and advance ledger share the reference's six-column format. */
+.budget-ledger { --edify-accent: #145b9a; --edify-on-accent: #fff; color: var(--edify-text, #1e293b); }
+.budget-ledger-summary { display: flex; justify-content: flex-end; padding: 0 6px 16px; }
+.budget-ledger-total { border: 1px solid #d9e3e9; border-radius: 4px; padding: 8px 12px; text-align: right; white-space: nowrap; }
+.budget-ledger-total span { display: block; font-size: var(--edify-text-micro-size); color: #145b9a; font-weight: 600; }
+.budget-ledger-total strong { display: block; font-size: 20px; line-height: 1.2; font-variant-numeric: tabular-nums; }
+.budget-ledger-table { width: 100%; min-width: 760px; border-collapse: collapse; font-size: var(--edify-text-body-size); line-height: 1.5; }
+.budget-ledger-table th, .budget-ledger-table td { padding: 5px 9px; border: 0; font-variant-numeric: tabular-nums; }
+.budget-ledger-table th { font-weight: 600; text-align: left; }
+.budget-ledger-table th:first-child { width: 38%; }
+.budget-ledger-table tr:not(.budget-ledger-subtotal) > :nth-child(2), .budget-ledger-table tr:not(.budget-ledger-subtotal) > :nth-child(3) { text-align: center; }
+.budget-ledger-table tr > :nth-child(n+4), .budget-ledger-table .budget-ledger-subtotal td, .budget-ledger-table tfoot td { text-align: right; white-space: nowrap; }
+.budget-ledger-table .budget-ledger-band > * { background: #145b9a; color: #fff; }
+.budget-ledger-band span { font-size: var(--edify-text-micro-size); font-weight: 400; margin-left: 4px; }
+.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa; color: #1e293b; font-weight: 700; }
+.budget-ledger-table tfoot td { font-weight: 700; text-align: right !important; }
+.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal):hover { background: var(--edify-surface-hover, #f4f8fb); }
+
+/* Override global neutral table bands only inside budget ledgers. */
+main .budget-ledger table.budget-ledger-table { border-collapse: collapse; font-size: var(--edify-text-body-size) !important; }
+main .budget-ledger table.budget-ledger-table :is(th, td) { padding: 5px 9px !important; border: 0 !important; font-size: var(--edify-text-body-size) !important; }
+main .budget-ledger table.budget-ledger-table th[scope="row"] { white-space: normal; text-wrap: wrap; }
+main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: #fff !important; }
+main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa !important; color: #1e293b !important; font-weight: 700 !important; }
+main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, #fff) !important; }

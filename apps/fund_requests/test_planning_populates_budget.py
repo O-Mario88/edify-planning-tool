@@ -388,7 +388,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         # 2. The owner confirms the funds arrived — accountability opens, and
         #    each submission routes to the PL first (never straight to the
         #    Accountant).
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
         wfr.refresh_from_db()
         self.assertIsNotNone(wfr.receipt_confirmed_at)
         for index, adv in enumerate(advances):
@@ -552,7 +552,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         request_advance(wfr.id, self.cceo)
         approve_weekly_request(wfr.id, self.pl)
         disburse(wfr.id, {"method": "Bank", "reference": "WK-UI"}, self.accountant)
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
         advances = list(
             AdvanceRequest.objects.filter(
                 budget_line__weekly_request_lines__weekly_fund_request=wfr

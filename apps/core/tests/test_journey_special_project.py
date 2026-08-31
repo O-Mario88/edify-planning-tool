@@ -314,7 +314,7 @@ class SpecialProjectJourneyTest(TestCase):
         request_advance(wfr.id, self.cceo)
         approve_weekly_request(wfr.id, self.pl)
         disburse(wfr.id, {"method": "Bank", "reference": "SPP-1"}, self.accountant)
-        confirm_receipt(wfr.id, self.cceo)
+        confirm_receipt(wfr.id, self.cceo, bank_message_received=True)
         self.assertTrue(
             activity.schedule_cost_lines.exists(),
             "a project activity must carry the cost lines it was funded on",

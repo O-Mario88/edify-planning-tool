@@ -1993,17 +1993,17 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 5663,
+      "bytes": 2498,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/accounts/monthly-request",
+        "/accounts/monthly-request/",
+        "/accounts/monthly-request/action",
         "/country-budget",
         "/country-budget/",
         "/finance/fund-allocation",
         "/finance/fund-allocation/",
-        "/fund-requests/advances/<str:advance_id>/pl-approve",
-        "/fund-requests/advances/<str:advance_id>/pl-return",
-        "/fund-requests/weekly",
-        "/fund-requests/weekly/<str:request_id>/approve"
+        "/fund-requests/advances/<str:advance_id>/pl-approve"
       ],
       "findings": [],
       "forms": 0,
@@ -2013,7 +2013,8 @@
       "purpose": "Reusable budget group tables interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "empty"
       ],
       "tables": 1,
       "template": "partials/budgets/budget_group_tables.html",
@@ -4211,7 +4212,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15273,
+      "bytes": 13228,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts/monthly-request",
@@ -4229,7 +4230,7 @@
         "default",
         "error"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/finance/monthly_request/root.html",
       "variants": []
     },
@@ -4319,7 +4320,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2226,
+      "bytes": 2325,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4454,7 +4455,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6242,
+      "bytes": 5369,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4485,9 +4486,32 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 1271,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Return Drawer",
+      "purpose": "Reusable return drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/fund_requests/return_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15493,
+      "bytes": 15470,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4543,9 +4567,10 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 11372,
+      "bytes": 12319,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4558,22 +4583,25 @@
         "/fund-requests/weekly/<str:request_id>/self-funded"
       ],
       "findings": [],
-      "forms": 7,
-      "htmx_controls": 8,
+      "forms": 6,
+      "htmx_controls": 10,
       "kind": "application-partial",
       "name": "Weekly Request Workflow",
       "purpose": "Reusable weekly request workflow interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default"
+        "default",
+        "disabled"
       ],
       "tables": 0,
       "template": "partials/fund_requests/weekly_request_workflow.html",
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 6840,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 542,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4591,7 +4619,7 @@
       "kind": "application-partial",
       "name": "Workflow Strip",
       "purpose": "Reusable workflow strip interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],
@@ -8592,6 +8620,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -8678,6 +8707,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -8766,6 +8796,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -8854,6 +8885,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -8942,6 +8974,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9031,6 +9064,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9117,6 +9151,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9196,6 +9231,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9375,6 +9411,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9463,6 +9500,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9549,6 +9587,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9634,6 +9673,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9719,6 +9759,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9804,6 +9845,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9889,6 +9931,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -9974,6 +10017,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10059,6 +10103,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10144,6 +10189,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10231,6 +10277,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10315,6 +10362,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10395,6 +10443,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10480,6 +10529,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10574,6 +10624,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10589,12 +10640,12 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 4,
+        "type": "segmented-control"
       },
       "templates": [
         "partials/finance/monthly_request/root.html",
@@ -10607,7 +10658,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
         "text-[15px]",
         "text-[18px]",
         "text-[20px]"
@@ -10673,6 +10723,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10688,12 +10739,12 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 4,
+        "type": "segmented-control"
       },
       "templates": [
         "partials/finance/monthly_request/root.html",
@@ -10706,7 +10757,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
         "text-[15px]",
         "text-[18px]",
         "text-[20px]"
@@ -10771,6 +10821,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10786,12 +10837,12 @@
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 4,
+        "type": "segmented-control"
       },
       "templates": [
         "partials/finance/monthly_request/root.html"
@@ -10803,7 +10854,6 @@
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
         "text-[15px]",
         "text-[18px]",
         "text-[20px]"
@@ -10859,6 +10909,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -10938,6 +10989,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11022,6 +11074,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11112,6 +11165,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11197,6 +11251,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11276,6 +11331,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11355,6 +11411,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11434,6 +11491,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11514,6 +11572,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11599,6 +11658,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11683,6 +11743,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11763,6 +11824,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11848,6 +11910,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11933,6 +11996,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12018,6 +12082,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
+        "apps.budget.services",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -24198,7 +24263,7 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
+        "count": 7,
         "type": "segmented-control"
       },
       "templates": [
@@ -24298,7 +24363,7 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 3,
+        "count": 7,
         "type": "segmented-control"
       },
       "templates": [
@@ -31515,7 +31580,7 @@
       "permission_key": "fund_requests",
       "primary_action": "Add Non-School Activity",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Generate and track weekly and monthly fund requests from scheduled activities in My Plan.",
+      "purpose": "Review planned costs, submit weekly advances, and track approval and receipt.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -31572,7 +31637,7 @@
       ]
     },
     {
-      "accessibility_status": "pass-automated-contract",
+      "accessibility_status": "not-applicable-nonvisual",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
@@ -31583,33 +31648,32 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "template:pages/fund_requests/detail.html",
         "test:referenced-by-automated-test",
         "permission:fund_requests"
       ],
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "pass-automated-contract",
+      "mobile_status": "not-applicable-nonvisual",
       "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-BA500F51A1",
-      "page_title": "Weekly Request details - Edify Command Center",
-      "page_type": "record-detail",
+      "page_title": "Weekly Fund Request Detail",
+      "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_requests",
-      "primary_action": "Review record",
-      "primary_user_decision": "What is the correct next action for this record?",
-      "purpose": "Week: to &bull; Owner:",
+      "primary_action": "Weekly Fund Request Detail",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate weekly fund request detail within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "manual-review-required",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -31622,10 +31686,7 @@
       "route": "/fund-requests/weekly/<str:request_id>",
       "route_name": "weekly_fund_request_detail",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/fund-requests/weekly/{{ req.id }}/confirm",
-        "/fund-requests/weekly/{{ req.id }}/disburse"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -31635,7 +31696,7 @@
         "apps.geography.models"
       ],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -31643,26 +31704,20 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
-      "tablet_status": "pass-automated-contract",
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [
-        "pages/fund_requests/detail.html"
-      ],
+      "templates": [],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "token-driven",
-      "theme_status": "pass-automated-contract",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]",
-        "text-[24px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -32043,7 +32098,6 @@
       "drawers": true,
       "evidence": [
         "template:partials/fund_requests/root.html",
-        "template:pages/fund_requests/weekly.html",
         "test:referenced-by-automated-test",
         "permission:fund_requests"
       ],
@@ -32070,9 +32124,9 @@
       "permission_key": "fund_requests",
       "primary_action": "Add Non-School Activity",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Approver returns the request for correction (reason required).",
+      "purpose": "Review planned costs, submit weekly advances, and track approval and receipt.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "shared-shell-contract",
+      "responsive_state": "detected",
       "role_access": [
         "ACCOUNTANT",
         "ADMIN",
@@ -32097,7 +32151,7 @@
         "apps.geography.models"
       ],
       "shared_layout": [
-        "layouts/shell.html"
+        "standalone-document-or-fragment"
       ],
       "state_coverage": {
         "disabled": false,
@@ -32114,8 +32168,7 @@
         "type": "none"
       },
       "templates": [
-        "partials/fund_requests/root.html",
-        "pages/fund_requests/weekly.html"
+        "partials/fund_requests/root.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
@@ -32125,6 +32178,89 @@
         "text-[12px]",
         "text-[13px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.budget_views",
+      "backend_view": "apps.frontend.views.budget_views.weekly_fund_request_return_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:fund_requests"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-41CB76A0D0",
+      "page_title": "Weekly Fund Request Return Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "fund_requests",
+      "primary_action": "Weekly Fund Request Return Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate weekly fund request return drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/fund-requests/weekly/<str:request_id>/return-drawer",
+      "route_name": "weekly_fund_request_return_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.budget.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.geography.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -72351,7 +72487,7 @@
     },
     {
       "callback": "apps.frontend.views.budget_views.weekly_fund_request_detail_view",
-      "kind": "page",
+      "kind": "action",
       "methods": [
         "GET"
       ],
@@ -72359,9 +72495,7 @@
       "required_permissions": [],
       "route": "/fund-requests/weekly/<str:request_id>",
       "route_name": "weekly_fund_request_detail",
-      "templates": [
-        "pages/fund_requests/detail.html"
-      ]
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.budget_views.weekly_fund_request_approve_action",
@@ -72428,17 +72562,27 @@
       "callback": "apps.frontend.views.budget_views.weekly_fund_request_return_action",
       "kind": "partial",
       "methods": [
-        "GET",
-        "POST"
+        "GET"
       ],
       "page_permission": "fund_requests",
       "required_permissions": [],
       "route": "/fund-requests/weekly/<str:request_id>/return",
       "route_name": "weekly_fund_request_return",
       "templates": [
-        "partials/fund_requests/root.html",
-        "pages/fund_requests/weekly.html"
+        "partials/fund_requests/root.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.budget_views.weekly_fund_request_return_drawer",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "fund_requests",
+      "required_permissions": [],
+      "route": "/fund-requests/weekly/<str:request_id>/return-drawer",
+      "route_name": "weekly_fund_request_return_drawer",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.budget_views.weekly_fund_request_self_funded_action",
@@ -76868,30 +77012,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 378,
+    "accessibility_contract_pass": 377,
     "activity_states": 23,
-    "all_routes": 1043,
+    "all_routes": 1044,
     "api_routes": 359,
-    "component_templates": 344,
-    "full_pages": 203,
-    "mobile_contract_pass": 378,
-    "nonvisual_actions": 179,
+    "component_templates": 345,
+    "full_pages": 202,
+    "mobile_contract_pass": 377,
+    "nonvisual_actions": 181,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 351,
+      "interaction-fragment": 353,
       "operational-queue": 121,
       "planning-or-creation": 6,
-      "record-detail": 25,
+      "record-detail": 24,
       "report": 25
     },
     "partials_and_drawers": 172,
-    "permission_gated": 565,
+    "permission_gated": 566,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 575,
+    "routed_surfaces": 576,
     "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
@@ -76899,8 +77043,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 378,
-    "test_referenced": 530,
-    "theme_contract_pass": 378
+    "tablet_contract_pass": 377,
+    "test_referenced": 531,
+    "theme_contract_pass": 377
   }
 }

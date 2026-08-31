@@ -1,0 +1,16 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% block drawer_title %}Return for correction{% endblock %}
+{% block drawer_subtitle %}Explain what needs to change in the weekly plan before this advance can proceed.{% endblock %}
+{% block drawer_body %}
+<form hx-post="/fund-requests/weekly/{{ wfr.id }}/return?{{ action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="space-y-4">
+  {% csrf_token %}
+  {% if return_error %}<p role="alert" class="text-rose-700">{{ return_error }}</p>{% endif %}
+  <label for="weekly-return-reason" class="block text-sm font-semibold">Reason for return <span aria-hidden="true">*</span></label>
+  <textarea id="weekly-return-reason" name="reason" required maxlength="500" rows="5" class="w-full rounded-control border border-slate-300 p-3 text-sm" placeholder="Describe the correction needed…">{{ return_reason }}</textarea>
+  <p class="text-xs text-slate-500">The requester will see this note, correct their weekly plan, and resubmit for approval.</p>
+  <div class="flex justify-end gap-2">
+    <button type="button" @click="requestClose()" class="edify-action-button secondary">Cancel</button>
+    <button type="submit" class="edify-action-button primary">Return request</button>
+  </div>
+</form>
+{% endblock %}

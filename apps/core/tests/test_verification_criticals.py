@@ -169,7 +169,7 @@ class UnverifiedSsaTests(Fixture):
 
 
 class ClientEntitlementTests(Fixture):
-    """C3 — one visit and one training per client school per FY."""
+    """Repeated support is allowed, but identical live activities are not."""
 
     def _payload(self, activity_type):
         return {
@@ -179,19 +179,20 @@ class ClientEntitlementTests(Fixture):
             "deliveryType": "staff",
         }
 
-    def test_a_second_visit_in_the_same_fy_is_refused(self):
+    def test_an_identical_visit_on_the_same_date_is_refused(self):
         from apps.activities.services import create
 
         create(self._payload("school_visit"), self.cceo)
         with self.assertRaises(BadRequest):
             create(self._payload("school_visit"), self.cceo)
 
-    def test_a_second_training_in_the_same_fy_is_refused(self):
+    def test_additional_training_in_the_same_fy_is_allowed(self):
         from apps.activities.services import create
 
-        create(self._payload("training"), self.cceo)
-        with self.assertRaises(BadRequest):
-            create(self._payload("in_school_training"), self.cceo)
+        first = create(self._payload("training"), self.cceo)
+        second = create(self._payload("in_school_training"), self.cceo)
+        self.assertNotEqual(first["id"], second["id"])
+        self.assertEqual(second["status"], "scheduled")
 
     def test_a_visit_does_not_consume_the_training_entitlement(self):
         from apps.activities.services import create

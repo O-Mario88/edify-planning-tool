@@ -607,29 +607,18 @@ class EntitlementGateTest(TestCase):
             self.cceo,
         )
 
-    def test_client_second_visit_is_refused_until_the_first_is_released(self):
-        """UPDATED BY MANDATE. This test previously pinned the permissive
-        behaviour ("multiple visits without entitlement block") — the
-        post-remediation verification brief §11 mandates one visit and one
-        training per client school per FY, and the audit measured three
-        schools already in breach. The old assertion documented the defect.
-        """
-        from apps.core.exceptions import BadRequest
-
+    def test_additional_client_visits_keep_distinct_planned_activities(self):
         first = self._schedule_visit(5)
-        with self.assertRaises(BadRequest):
-            self._schedule_visit(12)
-        # Cancelling releases the entitlement.
-        Activity.objects.filter(id=first["id"]).update(status="cancelled")
-        third = self._schedule_visit(12)
-        self.assertNotEqual(first["id"], third["id"])
+        second = self._schedule_visit(12)
+        self.assertNotEqual(first["id"], second["id"])
+        self.assertEqual(second["status"], "scheduled")
+        self.assertEqual(Activity.objects.get(id=first["id"]).status, "scheduled")
 
-    def test_client_second_training_is_refused(self):
-        from apps.core.exceptions import BadRequest
-
-        self._schedule_training(5)
-        with self.assertRaises(BadRequest):
-            self._schedule_training(12)
+    def test_additional_client_training_is_allowed(self):
+        first = self._schedule_training(5)
+        second = self._schedule_training(12)
+        self.assertNotEqual(first["id"], second["id"])
+        self.assertEqual(second["status"], "scheduled")
 
     def test_client_slots_are_scoped_to_the_scheduled_activity_fy(self):
         self._schedule_visit(5)

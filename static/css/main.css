@@ -1300,9 +1300,6 @@
   .max-w-\[45\%\] {
     max-width: 45%;
   }
-  .max-w-\[46\%\] {
-    max-width: 46%;
-  }
   .max-w-\[80px\] {
     max-width: 80px;
   }
@@ -3841,6 +3838,9 @@
   .whitespace-pre-line {
     white-space: pre-line;
   }
+  .whitespace-pre-wrap {
+    white-space: pre-wrap;
+  }
   .\!text-\[var\(--agreement-navy\)\] {
     color: var(--agreement-navy) !important;
   }
@@ -4205,9 +4205,6 @@
   }
   .opacity-75 {
     opacity: 75%;
-  }
-  .opacity-80 {
-    opacity: 80%;
   }
   .opacity-90 {
     opacity: 90%;
@@ -5501,6 +5498,9 @@
     }
     .lg\:col-span-9 {
       grid-column: span 9 / span 9;
+    }
+    .lg\:col-span-10 {
+      grid-column: span 10 / span 10;
     }
     .lg\:col-span-12 {
       grid-column: span 12 / span 12;

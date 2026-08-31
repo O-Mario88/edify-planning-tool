@@ -70,28 +70,6 @@ class RouteValidationService:
     def validate(schools, *, visit_date=None, responsible_user=None) -> list[dict]:
         issues: list[dict] = []
 
-        # REG-02 — a route can never be scored feasible/Excellent for a date
-        # Planning/My Plan would block (Sunday, public holiday, blackout, or
-        # the responsible staff member's approved leave).
-        if visit_date is not None:
-            from apps.core.calendar_policy import (
-                SchedulingPolicyService,
-                resolve_scheduling_user,
-            )
-
-            resp_user = (
-                resolve_scheduling_user(responsible_user) if responsible_user else None
-            )
-            avail = SchedulingPolicyService.check(resp_user, visit_date)
-            if avail["status"] == "blocked":
-                issues.append(
-                    {
-                        "code": "calendar_blocked",
-                        "severity": "blocking",
-                        "message": "This date is blocked by calendar policy: "
-                        + " · ".join(avail["blockers"]),
-                    }
-                )
         unclassified = sorted(
             {
                 s.district.name

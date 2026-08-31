@@ -946,207 +946,16 @@ def _calendar_periods(fy: str, anchor: date) -> dict[str, dict]:
     }
 
 
-def budget_workspace(principal, query: dict) -> dict:
-    """Return a role-scoped budget ledger backed by authoritative cost rows.
-
-    Canonical schedule cost lines supply every amount.  Weekly and monthly
-    fund requests are snapshots of those lines, so their counts are surfaced
-    for traceability but their totals are never added again. This keeps the
-    page mathematically correct while still showing that scheduled work has
-    reached the funding workflow.
-    """
-    from apps.accounts.models import User
-    from apps.activities.models import ActivityScheduleCostLine
-    from apps.fund_requests.models import (
-        FundRequest,
-        FundRequestPeriod,
-        WeeklyFundRequest,
-    )
-    from apps.monthly_work_plan.models import AdminBudgetLine
-
-    scope = resolve_user_scope(principal)
-    try:
-        anchor = (
-            date.fromisoformat(str(query.get("date"))[:10])
-            if query.get("date")
-            else None
-        )
-    except ValueError:
-        anchor = None
-    anchor = anchor or timezone.localdate()
-    fy = query.get("fy") or get_operational_fy(anchor)
-    periods = _calendar_periods(fy, anchor)
-    selected_period = query.get("period") if query.get("period") in periods else "week"
-    selected = periods[selected_period]
-    is_program_lead = scope.active_role == "Program Lead"
-    requested_scope = query.get("budget_scope")
-    # The Consolidated Fund Allocation page asks for the whole-country roll-up.
-    # Honour it only for roles authorised to see national finance data, so a
-    # personal My Budget page cannot be widened by a query parameter.
-    country_allowed = scope.country_scope or getattr(principal, "active_role", "") in (
-        "CountryDirector",
-        "Admin",
-        "RegionalVicePresident",
-        "Accountant",
-    )
-    admin_allowed = getattr(principal, "active_role", "") in (
-        "CountryDirector",
-        "Admin",
-    )
-    if requested_scope == "admin" and admin_allowed:
-        budget_scope = "admin"
-    elif requested_scope == "country" and country_allowed:
-        budget_scope = "country"
-    elif is_program_lead and requested_scope == "team":
-        budget_scope = "team"
-    else:
-        budget_scope = "my"
-
-    if budget_scope == "country":
-        # No owner filter → every scheduled, costed activity nationally.
-        # The CD's administrative plan is included as its own "Country Admin
-        # Plan" category so the Monthly Fund Request shows the full monthly
-        # envelope the RVP is approving.
-        owner_ids = None
-        include_admin = True
-    elif budget_scope == "admin":
-        # The CD's operating budget is a separate ledger.  It is deliberately
-        # empty of activity cost lines so "Admin Budget" cannot quietly become
-        # another country-programme total.
-        owner_ids = []
-        include_admin = True
-    else:
-        owner_ids = _workspace_owner_ids(
-            principal, scope, include_team=budget_scope == "team"
-        )
-        include_admin = False
-
-    # A manager reviewing one member at a time: `staff` narrows the ledger to
-    # that owner. Validated here, never trusted from the URL — outside country
-    # scope only the viewer themselves or someone they supervise is honoured,
-    # so a query parameter cannot widen a personal budget.
-    requested_staff = str(query.get("staff") or "").strip()
-    if requested_staff and budget_scope != "admin":
-        if country_allowed:
-            staff_ok = True
-        else:
-            team_ids = _workspace_owner_ids(principal, scope, include_team=True) or []
-            staff_ok = requested_staff in team_ids
-        if staff_ok:
-            owner_ids = [requested_staff]
-
-    base_lines = (
-        ActivityScheduleCostLine.objects.filter(
-            fiscal_year=fy,
-            activity__deleted_at__isnull=True,
-            activity__scheduled_date__isnull=False,
-        )
-        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-        .select_related("activity", "partner")
-    )
-    if owner_ids is not None:
-        base_lines = base_lines.filter(responsible_user__in=owner_ids)
-
-    # Staff-funds surfaces (the Fund Requests workspace) exclude partner-
-    # delivered work entirely: partners are paid directly through the MOU
-    # partner-payment channel (50% advance + verified clearance), never
-    # through a staff advance. Budget ROLL-UPS (country/monthly views) keep
-    # partner costs — they are real money the organisation pays.
-    if query.get("exclude_partner"):
-        base_lines = base_lines.exclude(activity__delivery_type="partner").filter(
-            partner_id__isnull=True
-        )
-
-    # CCEO viewers see only the money they personally receive: vendor-direct
-    # mission costs (school-visit transport, Finance-booked accommodation)
-    # are hidden — they see arrangement status instead of vendor rates.
-    if query.get("staff_channel_only"):
-        from apps.fund_requests.fundable import vendor_direct_filter
-
-        base_lines = base_lines.exclude(vendor_direct_filter())
-
-    # Budgets are submitted to districts, so every horizon of this ledger can
-    # be narrowed to one district. Cost lines carry the school directly; an
-    # unknown district id simply yields an empty (honest) ledger. The country
-    # admin plan has no district, so a district submission excludes it rather
-    # than inventing an allocation.
-    requested_district = str(query.get("district") or "").strip()
-    if requested_district:
-        base_lines = base_lines.filter(school__district_id=requested_district)
-        include_admin = False
-
-    admin_lines = []
-    if include_admin:
-        admin_lines = list(
-            AdminBudgetLine.objects.filter(
-                monthly_budget__fy=fy, status="active"
-            ).select_related("monthly_budget")
-        )
-
-    def admin_total(period):
-        # Admin plans are monthly costs. A weekly split would be invented, so
-        # show them exactly in the Month, Quarter, and FY where they are planned.
-        if not include_admin or period["key"] == "week":
-            return 0
-        return sum(
-            int(line.total_cost or 0)
-            for line in admin_lines
-            if (planned := _month_start_for_key(line.monthly_budget.month_key))
-            and period["start"] <= planned <= period["end"]
-        )
-
-    def operational_total(period):
-        return int(
-            base_lines.filter(
-                planned_date__range=(period["start"], period["end"])
-            ).aggregate(total=Sum("amount"))["total"]
-            or 0
-        )
-
-    comparison = []
-    for key in ("week", "month", "quarter", "fy"):
-        period = periods[key]
-        program_total = operational_total(period)
-        admin_amount = admin_total(period)
-        comparison.append(
-            {
-                **period,
-                "program_total": program_total,
-                "admin_total": admin_amount,
-                "total": program_total + admin_amount,
-                "selected": key == selected_period,
-            }
-        )
-
-    selected_lines = list(
-        base_lines.filter(planned_date__range=(selected["start"], selected["end"]))
-    )
-    user_names = dict(
-        User.objects.filter(
-            id__in={
-                line.responsible_user
-                for line in selected_lines
-                if line.responsible_user
-            }
-        ).values_list("id", "name")
-    )
-    # A supervisor needs a quick view of each person's total without having to
-    # scan staff names repeated beneath every cost item.  Keep this separate
-    # from the activity/item ledger so the detail table stays easy to read.
-    team_summary_by_owner: dict[str, dict] = {}
-    if budget_scope == "team":
-        for line in selected_lines:
-            owner_id = line.responsible_user or "unassigned"
-            summary = team_summary_by_owner.setdefault(
-                owner_id,
-                {
-                    "name": user_names.get(owner_id, "Unassigned work"),
-                    "activity_ids": set(),
-                    "total": 0,
-                },
-            )
-            summary["activity_ids"].add(line.activity_id)
-            summary["total"] += int(line.amount or 0)
+def budget_groups(
+    selected_lines,
+    user_names,
+    *,
+    admin_lines=(),
+    selected=None,
+    include_admin=False,
+    selected_period="week",
+):
+    """One activity/item ledger for planned budgets and submitted snapshots."""
     # A training or meeting is funded by the headcount confirmed at scheduling
     # time.  Actual attendance takes precedence after completion; historical
     # cost lines remain a fallback for pre-headcount records created before the
@@ -1353,6 +1162,242 @@ def budget_workspace(principal, query: dict) -> dict:
             }
         )
     formatted_groups.sort(key=lambda item: (-item["total"], item["label"]))
+
+    return formatted_groups
+
+
+def weekly_request_budget(wfr):
+    """Render the submitted cost-line snapshot, never reprice an approved request."""
+    from copy import copy
+
+    lines = []
+    for snapshot in wfr.lines.select_related("activity_budget_line__activity"):
+        line = copy(snapshot.activity_budget_line)
+        line.label = snapshot.description
+        line.quantity = snapshot.quantity
+        line.unit_cost = snapshot.unit_cost
+        line.amount = snapshot.total_cost
+        line.line_item_type = snapshot.line_item_type
+        lines.append(line)
+    groups = budget_groups(lines, {})
+    return {
+        "groups": groups,
+        "total": sum(g["total"] for g in groups),
+        "staff_total": sum(g["staff_total"] for g in groups),
+    }
+
+
+def budget_workspace(principal, query: dict) -> dict:
+    """Return a role-scoped budget ledger backed by authoritative cost rows.
+
+    Canonical schedule cost lines supply every amount.  Weekly and monthly
+    fund requests are snapshots of those lines, so their counts are surfaced
+    for traceability but their totals are never added again. This keeps the
+    page mathematically correct while still showing that scheduled work has
+    reached the funding workflow.
+    """
+    from apps.accounts.models import User
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.fund_requests.models import (
+        FundRequest,
+        FundRequestPeriod,
+        WeeklyFundRequest,
+    )
+    from apps.monthly_work_plan.models import AdminBudgetLine
+
+    scope = resolve_user_scope(principal)
+    try:
+        anchor = (
+            date.fromisoformat(str(query.get("date"))[:10])
+            if query.get("date")
+            else None
+        )
+    except ValueError:
+        anchor = None
+    anchor = anchor or timezone.localdate()
+    fy = query.get("fy") or get_operational_fy(anchor)
+    periods = _calendar_periods(fy, anchor)
+    selected_period = query.get("period") if query.get("period") in periods else "week"
+    selected = periods[selected_period]
+    is_program_lead = scope.active_role == "Program Lead"
+    requested_scope = query.get("budget_scope")
+    # The Consolidated Fund Allocation page asks for the whole-country roll-up.
+    # Honour it only for roles authorised to see national finance data, so a
+    # personal My Budget page cannot be widened by a query parameter.
+    country_allowed = scope.country_scope or getattr(principal, "active_role", "") in (
+        "CountryDirector",
+        "Admin",
+        "RegionalVicePresident",
+        "Accountant",
+    )
+    admin_allowed = getattr(principal, "active_role", "") in (
+        "CountryDirector",
+        "Admin",
+    )
+    if requested_scope == "admin" and admin_allowed:
+        budget_scope = "admin"
+    elif requested_scope == "country" and country_allowed:
+        budget_scope = "country"
+    elif is_program_lead and requested_scope == "team":
+        budget_scope = "team"
+    else:
+        budget_scope = "my"
+
+    if budget_scope == "country":
+        # No owner filter → every scheduled, costed activity nationally.
+        # The CD's administrative plan is included as its own "Country Admin
+        # Plan" category so the Monthly Fund Request shows the full monthly
+        # envelope the RVP is approving.
+        owner_ids = None
+        include_admin = True
+    elif budget_scope == "admin":
+        # The CD's operating budget is a separate ledger.  It is deliberately
+        # empty of activity cost lines so "Admin Budget" cannot quietly become
+        # another country-programme total.
+        owner_ids = []
+        include_admin = True
+    else:
+        owner_ids = _workspace_owner_ids(
+            principal, scope, include_team=budget_scope == "team"
+        )
+        include_admin = False
+
+    # A manager reviewing one member at a time: `staff` narrows the ledger to
+    # that owner. Validated here, never trusted from the URL — outside country
+    # scope only the viewer themselves or someone they supervise is honoured,
+    # so a query parameter cannot widen a personal budget.
+    requested_staff = str(query.get("staff") or "").strip()
+    if requested_staff and budget_scope != "admin":
+        if country_allowed:
+            staff_ok = True
+        else:
+            team_ids = _workspace_owner_ids(principal, scope, include_team=True) or []
+            staff_ok = requested_staff in team_ids
+        if staff_ok:
+            owner_ids = [requested_staff]
+
+    base_lines = (
+        ActivityScheduleCostLine.objects.filter(
+            fiscal_year=fy,
+            activity__deleted_at__isnull=True,
+            activity__scheduled_date__isnull=False,
+        )
+        .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
+        .select_related("activity", "partner")
+    )
+    if owner_ids is not None:
+        base_lines = base_lines.filter(responsible_user__in=owner_ids)
+
+    # Staff-funds surfaces (the Fund Requests workspace) exclude partner-
+    # delivered work entirely: partners are paid directly through the MOU
+    # partner-payment channel (50% advance + verified clearance), never
+    # through a staff advance. Budget ROLL-UPS (country/monthly views) keep
+    # partner costs — they are real money the organisation pays.
+    if query.get("exclude_partner"):
+        base_lines = base_lines.exclude(activity__delivery_type="partner").filter(
+            partner_id__isnull=True
+        )
+
+    # CCEO viewers see only the money they personally receive: vendor-direct
+    # mission costs (school-visit transport, Finance-booked accommodation)
+    # are hidden — they see arrangement status instead of vendor rates.
+    if query.get("staff_channel_only"):
+        from apps.fund_requests.fundable import vendor_direct_filter
+
+        base_lines = base_lines.exclude(vendor_direct_filter())
+
+    # Budgets are submitted to districts, so every horizon of this ledger can
+    # be narrowed to one district. Cost lines carry the school directly; an
+    # unknown district id simply yields an empty (honest) ledger. The country
+    # admin plan has no district, so a district submission excludes it rather
+    # than inventing an allocation.
+    requested_district = str(query.get("district") or "").strip()
+    if requested_district:
+        base_lines = base_lines.filter(school__district_id=requested_district)
+        include_admin = False
+
+    if query.get("plan_only"):
+        include_admin = False
+    admin_lines = []
+    if include_admin:
+        admin_lines = list(
+            AdminBudgetLine.objects.filter(
+                monthly_budget__fy=fy, status="active"
+            ).select_related("monthly_budget")
+        )
+
+    def admin_total(period):
+        # Admin plans are monthly costs. A weekly split would be invented, so
+        # show them exactly in the Month, Quarter, and FY where they are planned.
+        if not include_admin or period["key"] == "week":
+            return 0
+        return sum(
+            int(line.total_cost or 0)
+            for line in admin_lines
+            if (planned := _month_start_for_key(line.monthly_budget.month_key))
+            and period["start"] <= planned <= period["end"]
+        )
+
+    def operational_total(period):
+        return int(
+            base_lines.filter(
+                planned_date__range=(period["start"], period["end"])
+            ).aggregate(total=Sum("amount"))["total"]
+            or 0
+        )
+
+    comparison = []
+    for key in ("week", "month", "quarter", "fy"):
+        period = periods[key]
+        program_total = operational_total(period)
+        admin_amount = admin_total(period)
+        comparison.append(
+            {
+                **period,
+                "program_total": program_total,
+                "admin_total": admin_amount,
+                "total": program_total + admin_amount,
+                "selected": key == selected_period,
+            }
+        )
+
+    selected_lines = list(
+        base_lines.filter(planned_date__range=(selected["start"], selected["end"]))
+    )
+    user_names = dict(
+        User.objects.filter(
+            id__in={
+                line.responsible_user
+                for line in selected_lines
+                if line.responsible_user
+            }
+        ).values_list("id", "name")
+    )
+    # A supervisor needs a quick view of each person's total without having to
+    # scan staff names repeated beneath every cost item.  Keep this separate
+    # from the activity/item ledger so the detail table stays easy to read.
+    team_summary_by_owner: dict[str, dict] = {}
+    if budget_scope == "team":
+        for line in selected_lines:
+            owner_id = line.responsible_user or "unassigned"
+            summary = team_summary_by_owner.setdefault(
+                owner_id,
+                {
+                    "name": user_names.get(owner_id, "Unassigned work"),
+                    "activity_ids": set(),
+                    "total": 0,
+                },
+            )
+            summary["activity_ids"].add(line.activity_id)
+            summary["total"] += int(line.amount or 0)
+    formatted_groups = budget_groups(
+        selected_lines,
+        user_names,
+        admin_lines=admin_lines,
+        selected=selected,
+        include_admin=include_admin,
+        selected_period=selected_period,
+    )
 
     weekly_requests = WeeklyFundRequest.objects.filter(
         fy=fy,

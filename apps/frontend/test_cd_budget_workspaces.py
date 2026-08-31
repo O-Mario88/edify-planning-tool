@@ -94,15 +94,15 @@ class CountryDirectorBudgetWorkspaceTest(TestCase):
         self.assertEqual(response.context["workspace_title"], "Monthly Fund Request")
         self.assertEqual(response.context["budget_scope"], "country")
         self.assertEqual(response.context["program_total"], 60_000)
-        # The CD's administrative plan now rolls into the Monthly Fund Request
-        # as its own "Country Admin Plan" category.
-        self.assertEqual(response.context["admin_total"], 25_000)
-        self.assertEqual(response.context["total"], 85_000)
+        # Budget horizons derive only from costed weekly plans; monthly admin
+        # envelopes remain in their separate approval workflow.
+        self.assertEqual(response.context["admin_total"], 0)
+        self.assertEqual(response.context["total"], 60_000)
         self.assertContains(response, "Monthly Fund Request")
         self.assertNotContains(response, "General Budget")
         self.assertNotContains(response, "Country Budget")
         self.assertContains(response, "Primary transport")
-        self.assertContains(response, "Office internet")
+        self.assertFalse(any(g["is_admin"] for g in response.context["groups"]))
 
     def test_cd_can_add_an_item_from_the_admin_budget_workspace(self):
         monthly_budget = MonthlyWorkPlanBudget.objects.get(

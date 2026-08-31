@@ -1,15 +1,8 @@
-"""No double planning, no double funding, and money in the week the work is.
+"""Flexible activity planning with strict duplicate funding safeguards.
 
-A data audit of the dev estate raised three questions this pins answers to:
-
-* 12 client schools hold more than one `school_visit` in FY2026 — one of them
-  202. Every one is `source=manual_upload`, i.e. seeded before the entitlement
-  guard was restored, not scheduled through the platform. So the question is
-  not "is the data clean" but "does the guard hold now".
-* No budget line appeared in two weekly fund requests and no owner had two live
-  requests for one week, so the funding chain was clean. Worth keeping that way.
-* Five cost lines sat one week earlier than their activity, all from the same
-  upload. See ScheduleCostLandsInTheRightWeekTest.
+Annual client entitlements are advisory under the relaxed scheduling policy.
+Core activities still require reserved package slots, each cost line belongs
+in only one weekly request, and scheduled costs follow the activity's week.
 """
 
 from __future__ import annotations
@@ -33,7 +26,7 @@ def _next_monday(weeks: int = 1) -> date:
 
 
 class ClientEntitlementHoldsTest(TestCase):
-    """One visit and one training per client school per financial year."""
+    """Client annual entitlements do not block additional planned work."""
 
     @classmethod
     def setUpTestData(cls):
@@ -77,10 +70,9 @@ class ClientEntitlementHoldsTest(TestCase):
             "school_visit", self.school, get_operational_fy(_next_monday()), {}
         )
 
-    def test_a_second_visit_in_the_same_year_is_refused(self):
+    def test_additional_client_visits_are_not_blocked_by_annual_entitlements(self):
         self._existing_visit()
-        with self.assertRaises(BadRequest):
-            self._schedule_another()
+        self._schedule_another()
 
     def test_the_first_visit_is_allowed(self):
         self._schedule_another()  # must not raise
@@ -124,16 +116,10 @@ class ClientEntitlementHoldsTest(TestCase):
 
 
 class CatalogueEntitlementOwnershipTest(TestCase):
-    """The Activity Catalogue owns what consumes a client entitlement.
+    """Catalogue entitlement metadata remains available for reporting.
 
-    The catalogue migration retired the generic ``school_visit`` in favour of
-    ``follow_up_visit`` (CLIENT_SCHOOL_FOLLOWUP_VISIT), but the guard's family
-    map still keyed on ``school_visit`` only — so the one-visit/FY cap no
-    longer bound catalogue follow-up visits at all. And
-    ``counts_toward_entitlement`` was written by seeding but read nowhere.
-    Both are wired here: the item flags pick the pool, the eligibility rule is
-    the governance exemption switch, and the legacy type map remains only as
-    the fallback for catalogue-less rows.
+    Legacy and catalogue visits may both be scheduled repeatedly; the
+    existing health detector can still report multiple activities.
     """
 
     @classmethod
@@ -185,22 +171,18 @@ class CatalogueEntitlementOwnershipTest(TestCase):
             catalogue_item=catalogue_item,
         )
 
-    def test_a_follow_up_visit_consumes_the_visit_entitlement(self):
-        """The reported gap: follow_up_visit bypassed the one-visit/FY cap."""
+    def test_additional_follow_up_visits_are_allowed(self):
         self._activity("follow_up_visit")
-        with self.assertRaises(BadRequest):
-            self._assert("follow_up_visit")
+        self._assert("follow_up_visit")
 
-    def test_visit_and_follow_up_visit_share_one_pool(self):
+    def test_follow_up_after_a_visit_is_allowed(self):
         self._activity("school_visit")
-        with self.assertRaises(BadRequest):
-            self._assert("follow_up_visit")
+        self._assert("follow_up_visit")
 
-    def test_catalogue_follow_up_visit_is_capped_by_the_item_flag(self):
+    def test_catalogue_entitlement_flag_does_not_block_follow_up(self):
         item = self._item("CLIENT_SCHOOL_FOLLOWUP_VISIT")
         self._activity("follow_up_visit", catalogue_item=item)
-        with self.assertRaises(BadRequest):
-            self._assert(item.workflow_kind, catalogue_item=item)
+        self._assert(item.workflow_kind, catalogue_item=item)
 
     def test_flagless_catalogue_training_neither_blocks_nor_consumes(self):
         """Student camps carry workflow_kind ``training`` with both client
@@ -226,7 +208,7 @@ class CatalogueEntitlementOwnershipTest(TestCase):
         self._assert(item.workflow_kind, catalogue_item=item)  # must not raise
 
     def test_health_detector_sees_follow_up_visit_duplicates(self):
-        """Prevention and detection must share one definition of 'counts'."""
+        """Relaxed planning does not erase the existing monitoring signal."""
         from apps.system_health.services import _workflow_issues
 
         self._activity("school_visit")

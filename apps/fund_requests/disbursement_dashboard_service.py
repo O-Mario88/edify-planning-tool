@@ -1736,6 +1736,12 @@ def return_weekly_request(principal, weekly_request, reason: str):
     _require_accountant_action(principal)
     if not (reason or "").strip():
         raise BadRequest("A return reason is required.")
+    reason = reason.strip()
+    if len(reason) > 500:
+        raise BadRequest("Keep the return reason within 500 characters.")
+    weekly_request = (
+        type(weekly_request).objects.select_for_update().get(pk=weekly_request.pk)
+    )
     if weekly_request.status != "confirmed_for_advance":
         # WeeklyFundRequest.status is a plain CharField with no `choices`, so
         # Django generates no get_status_display and calling it raised
@@ -1754,7 +1760,19 @@ def return_weekly_request(principal, weekly_request, reason: str):
 
     weekly_request.status = "returned_by_accountant"
     weekly_request.confirmed_at = None
-    weekly_request.save(update_fields=["status", "confirmed_at", "updated_at"])
+    weekly_request.return_reason = reason
+    weekly_request.returned_at = timezone.now()
+    weekly_request.returned_by_user_id = principal.user_id
+    weekly_request.save(
+        update_fields=[
+            "status",
+            "confirmed_at",
+            "return_reason",
+            "returned_at",
+            "returned_by_user_id",
+            "updated_at",
+        ]
+    )
 
     # Only advances still awaiting disbursement move with it. One already
     # disbursed or accounted on a sibling line must never be silently reopened.
@@ -1794,6 +1812,14 @@ def return_weekly_request(principal, weekly_request, reason: str):
             "total_amount": weekly_request.total_amount,
             "advances_returned": moved,
         },
+    )
+    from .weekly_service import _notify_weekly_owner
+
+    _notify_weekly_owner(
+        weekly_request,
+        "weekly_fund_request_returned",
+        "Weekly fund request returned",
+        f"The Accountant returned your weekly request for correction. Reason: {reason}",
     )
     return weekly_request
 

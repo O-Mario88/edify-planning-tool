@@ -1876,7 +1876,7 @@
    "audit_id": "KPI-SOURCE-096",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1731,
+   "line": 1776,
    "label": null,
    "keys": [
     "amount",
@@ -1976,7 +1976,7 @@
    "audit_id": "KPI-SOURCE-101",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1228,
+   "line": 1037,
    "label": null,
    "keys": [
     "activity_ids",
@@ -1998,7 +1998,7 @@
    "audit_id": "KPI-SOURCE-102",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1344,
+   "line": 1153,
    "label": null,
    "keys": [
     "activity_count",
@@ -2021,7 +2021,7 @@
    "audit_id": "KPI-SOURCE-103",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1286,
+   "line": 1095,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -2277,7 +2277,7 @@
    "audit_id": "KPI-SOURCE-114",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 814,
+   "line": 820,
    "label": null,
    "keys": [
     "label",
@@ -2586,7 +2586,7 @@
    "audit_id": "KPI-SOURCE-130",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1184,
+   "line": 1185,
    "label": "Search planned activities by item or responsible staff",
    "keys": [
     "action",
@@ -2607,7 +2607,7 @@
    "audit_id": "KPI-SOURCE-131",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1251,
+   "line": 1252,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -26397,7 +26397,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 537,
+   "line": 551,
    "function": "_build_fund_requests_context",
    "target": "kpi_strip_items",
    "source_item_count": 6,

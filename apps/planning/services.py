@@ -825,11 +825,6 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
             }
         )
     )
-    if item.requires_current_ssa and source_ssa is None and not prerequisite_or_admin:
-        raise BadRequest(
-            "Complete the School SSA first. Intervention-specific Partner "
-            "support cannot be assigned without an applicable SSA."
-        )
     recommendation_reason = ""
     if not prerequisite_or_admin:
         recommendations = recommend_activities(
@@ -846,30 +841,6 @@ def assign_school_visit_to_partner(data: dict, principal) -> dict:
             (row for row in rows if row["catalogueItemId"] == item.id),
             None,
         )
-        primary_ids = {row["catalogueItemId"] for row in recommendations["primary"]}
-        is_dynamic_followup = MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
-        override_reason = (data.get("overrideReason") or "").strip()
-        if (
-            item.id not in primary_ids
-            and not is_dynamic_followup
-            and not override_reason
-        ):
-            raise BadRequest(
-                "This is not a primary SSA recommendation. Record the "
-                "authorized alternative-selection reason before assigning it."
-            )
-        if (
-            is_dynamic_followup
-            and source_activity is None
-            and match
-            and data.get("focusIntervention") != match["targetIntervention"]
-            and not override_reason
-        ):
-            raise BadRequest(
-                "Without a source Training, this dynamic Partner Activity must "
-                "use the current unresolved SSA recommendation or record an "
-                "authorized override reason."
-            )
         recommendation_reason = (
             match["recommendationReason"]
             if match

@@ -32,18 +32,9 @@ from apps.core.scoping import (
 )
 from apps.schools.models import School
 
-# REG-02 calendar policy. This module must run the gate, not merely borrow the
-# identity helper: the same policy is enforced at six call sites in four other
-# modules (core_schools, routes/engine, daily_visit_batches,
-# budget/amendment_service), and apps/core/calendar_policy.py exists precisely
-# so that "one surface must never block a date another surface allows".
-#
-# The import and all four call sites below were deleted from THIS module by
-# b4fc9570, leaving scheduling free to place field work on Sundays, public
-# holidays, blackout dates and on top of an assignee's approved leave, while
-# every other surface still refused. Restored.
+# Calendar-policy identity helpers. The REG-02 date gate itself no longer
+# blocks scheduling anywhere: planning may place work on any date.
 from apps.core.calendar_policy import (
-    SchedulingPolicyService as _SchedulingPolicyService,
     canonical_staff_identity as _canonical_staff_identity,
     resolve_scheduling_user as _user_for_staff_identity,
 )
@@ -868,24 +859,11 @@ def _assert_schedule_entitlement(
     core_slot_verified: bool = False,
     catalogue_item=None,
 ):
-    """The annual entitlement gates that scheduling must enforce.
-
-    Verification-audit findings C3 and the core-bypass HIGH:
-    * A CLIENT school's package is one visit and one training per fiscal
-      year. The guard had been removed outright — only a system-health
-      detector remained, whose comment claimed prevention that no longer
-      existed, and three schools had already breached it in dev data.
-    * CORE work was schedulable by POSTing activity_type=core_visit straight
-      to the generic endpoint, skipping CorePackageSchedulingService — no
-      slot, no quarter window, no staff cap. Core types must arrive through
-      the slot machinery, which sets coreSlotVerified after locking a slot.
-
-    When a catalogue item is given, its governed flags decide the pool: the
-    ``counts_toward_client_visit``/``counts_toward_client_training`` flags pick
-    visit or training, and the eligibility rule's ``counts_toward_entitlement``
-    is the governance switch that can exempt an item outright. Student camps
-    and conferences carry workflow_kind ``training`` with both flags off — they
-    must neither consume nor be blocked by the school's training entitlement.
+    """Core work must still arrive through the slot machinery, which sets
+    coreSlotVerified after locking a slot — otherwise POSTing
+    activity_type=core_visit to the generic endpoint would create a core
+    activity with no slot behind it. The client one-visit/one-training annual
+    entitlement no longer blocks scheduling.
     """
     if not school:
         return
@@ -896,40 +874,9 @@ def _assert_schedule_entitlement(
                 "which reserves one of the package's slots."
             )
         return
-    if getattr(school, "school_type", None) != "client":
-        return
-    if catalogue_item is not None:
-        rule = getattr(catalogue_item, "eligibility_rule", None)
-        if rule is not None and not rule.counts_toward_entitlement:
-            return
-        if catalogue_item.counts_toward_client_visit:
-            pool = "visit"
-        elif catalogue_item.counts_toward_client_training:
-            pool = "training"
-        else:
-            return
-    elif activity_type in CLIENT_VISIT_LEGACY_TYPES:
-        pool = "visit"
-    elif activity_type in CLIENT_TRAINING_LEGACY_TYPES:
-        pool = "training"
-    else:
-        return
-    live = (
-        Activity.objects.filter(
-            client_entitlement_consumers_q(pool),
-            school=school,
-            fy=fy,
-            deleted_at__isnull=True,
-        )
-        .exclude(status__in=("cancelled", "rejected", "deferred"))
-        .count()
-    )
-    if live >= 1:
-        raise BadRequest(
-            f"This client school's {pool} entitlement for FY{fy} is already "
-            "used. Reschedule the existing activity instead of creating a "
-            "second one."
-        )
+    # Planning restriction removed: the one-visit/one-training annual
+    # entitlement no longer blocks scheduling additional client-school work.
+    return
 
 
 def _sync_cluster_attendance(activity, school_ids, actor_id="") -> None:
@@ -1727,28 +1674,6 @@ def create(
     # branch of My Plan filters by monitored_by_staff_id).
     monitored_by_staff_id = principal_owner_id if is_partner else None
 
-    # REG-02 gate. The responsible-or-monitor fallback matters: partner-delivered
-    # activities carry responsible_staff_id=None, and without it the partner path
-    # skips the leave check entirely.
-    if scheduled_date:
-        check_staff_id = responsible_staff_id or monitored_by_staff_id
-        resp_user = _user_for_staff_identity(check_staff_id) if check_staff_id else None
-        avail = _SchedulingPolicyService.check(resp_user, scheduled_date)
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
-        if end_date and end_date != scheduled_date.date():
-            from datetime import datetime as _dt
-
-            end_check = _SchedulingPolicyService.check(
-                resp_user,
-                timezone.make_aware(_dt.combine(end_date, _dt.min.time())),
-            )
-            if end_check["status"] == "blocked":
-                raise BadRequest(
-                    "Scheduling blocked on the end date: "
-                    + " · ".join(end_check["blockers"])
-                )
-
     # A paused or closed Special Project must stop absorbing new commitments —
     # that is what the RVP's pause/close decision means. Gating only the
     # school-assignment paths left this funnel open, so a closed project could
@@ -1894,22 +1819,6 @@ def create(
                 "mapping_mode", flat=True
             )
         )
-        requires_current_ssa = (
-            training_course.requires_current_ssa
-            if training_course is not None
-            else catalogue_item.requires_current_ssa
-        )
-        if (
-            school is not None
-            and requires_current_ssa
-            and source_ssa is None
-            and MappingMode.ADMINISTRATIVE not in mapping_modes
-            and MappingMode.SSA_COMPLETION_PREREQUISITE not in mapping_modes
-        ):
-            raise BadRequest(
-                "Complete the School SSA first. Intervention-specific support "
-                "cannot be recommended or scheduled without an applicable SSA."
-            )
         validate_context(
             catalogue_item,
             school=school,
@@ -1974,33 +1883,6 @@ def create(
             primary_ids = {
                 row["catalogueItemId"] for row in recommendation_result["primary"]
             }
-            override_reason = (data.get("overrideReason") or "").strip()
-            is_dynamic_followup = (
-                MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
-            )
-            if (
-                catalogue_item.id not in primary_ids
-                and not is_dynamic_followup
-                and not override_reason
-            ):
-                raise BadRequest(
-                    "This is not a primary recommendation in the current "
-                    "School context. Record the authorized alternative-selection "
-                    "reason before scheduling."
-                )
-            if (
-                is_dynamic_followup
-                and source_activity is None
-                and matching
-                and (focus or data.get("purposeIntervention"))
-                != matching["targetIntervention"]
-                and not override_reason
-            ):
-                raise BadRequest(
-                    "Without a source Training, this dynamic Activity must use "
-                    "the current unresolved SSA recommendation or record an "
-                    "authorized override reason."
-                )
             governed_recommendation_reason = (
                 matching["recommendationReason"]
                 if matching
@@ -2037,14 +1919,6 @@ def create(
                 executor_type="partner" if is_partner else "staff",
                 limit=3,
             )
-            if (
-                catalogue_item.requires_current_ssa
-                and not recommendation_result["hasApplicableSsa"]
-            ):
-                raise BadRequest(
-                    "Complete verified SSA records for Cluster member Schools "
-                    "before scheduling intervention support."
-                )
             all_rows = [
                 *recommendation_result["primary"],
                 *recommendation_result["otherEligible"],
@@ -2060,17 +1934,6 @@ def create(
             primary_ids = {
                 row["catalogueItemId"] for row in recommendation_result["primary"]
             }
-            dynamic = MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in mapping_modes
-            override_reason = (data.get("overrideReason") or "").strip()
-            if (
-                catalogue_item.id not in primary_ids
-                and not dynamic
-                and not override_reason
-            ):
-                raise BadRequest(
-                    "This is not a primary Cluster recommendation. Record the "
-                    "authorized alternative-selection reason before scheduling."
-                )
             governed_recommendation_reason = (
                 matching["recommendationReason"]
                 if matching
@@ -2201,15 +2064,6 @@ def create(
             StaffProfile.objects.select_for_update().filter(
                 pk=responsible_staff_id
             ).first()
-        # §F partner allowance: one non-core partner activity per school per
-        # FY unless the CD granted more. Checked inside the row lock so two
-        # concurrent partner assignments cannot both pass.
-        if is_partner and school is not None:
-            from apps.partners.services import assert_partner_activity_allowance
-
-            assert_partner_activity_allowance(
-                data.get("assignedPartnerId"), school.pk, activity_type, fy
-            )
         # Double-click / double-submit guard: an identical live activity
         # (same target, type, day, and owner/partner) is a duplicate, not a
         # second piece of work. The row lock above serialises this check.
@@ -3473,16 +3327,6 @@ def reschedule(activity_id: str, data: dict, principal) -> dict:
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
 
-    # REG-02 gate (restored; deleted from this module by b4fc9570). Without it
-    # a blocked date could be reached by rescheduling even when create() refused
-    # it, which is the asymmetry calendar_policy.py exists to prevent.
-    _staff = a.responsible_staff_id or a.monitored_by_staff_id
-    _avail = _SchedulingPolicyService.check(
-        _user_for_staff_identity(_staff) if _staff else None, new_date
-    )
-    if _avail["status"] == "blocked":
-        raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
-
     new_fy = get_operational_fy(new_date)
     new_quarter = get_quarter_for_date(new_date)
     planned_date, planned_month, planned_week = _schedule_period(new_date, data)
@@ -3780,15 +3624,6 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
             raise BadRequest("Enter the name of the person visiting the School.")
         if len(delivery_contact_name) > 255:
             raise BadRequest("Visitor name must be 255 characters or fewer.")
-        avail = _SchedulingPolicyService.check(
-            _user_for_staff_identity(pa.assigning_staff_id)
-            if pa.assigning_staff_id
-            else None,
-            scheduled_date,
-        )
-        if avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(avail["blockers"]))
-
         catalogue_item = pa.catalogue_item
         selected_catalogue_id = data.get("catalogueItemId")
         if selected_catalogue_id:
@@ -4007,14 +3842,6 @@ def partner_schedule(activity_id: str, data: dict, principal) -> dict:
         a = _get_in_scope(activity_id, principal)
         _assert_may_schedule(a, principal)
         new_date = _parse_date(data["scheduledDate"])
-
-        # REG-02 gate (restored; deleted from this module by b4fc9570).
-        _staff = a.responsible_staff_id or a.monitored_by_staff_id
-        _avail = _SchedulingPolicyService.check(
-            _user_for_staff_identity(_staff) if _staff else None, new_date
-        )
-        if _avail["status"] == "blocked":
-            raise BadRequest("Scheduling blocked: " + " · ".join(_avail["blockers"]))
 
         a.scheduled_date = new_date
         a.fy = get_operational_fy(new_date)

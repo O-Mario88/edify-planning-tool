@@ -307,4 +307,10 @@ class WeeklyRequestConfirmReceiptView(APIView):
     def post(self, request: Request, request_id: str) -> Response:
         from .weekly_service import confirm_receipt
 
-        return Response(confirm_receipt(request_id, request.user))
+        return Response(
+            confirm_receipt(
+                request_id,
+                request.user,
+                bank_message_received=request.data.get("bankMessageReceived") is True,
+            )
+        )

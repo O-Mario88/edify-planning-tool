@@ -635,6 +635,11 @@ urlpatterns = [
         name="weekly_fund_request_approve",
     ),
     path(
+        "fund-requests/weekly/<str:request_id>/return-drawer",
+        budget_views.weekly_fund_request_return_drawer,
+        name="weekly_fund_request_return_drawer",
+    ),
+    path(
         "fund-requests/weekly/<str:request_id>/return",
         budget_views.weekly_fund_request_return_action,
         name="weekly_fund_request_return",
