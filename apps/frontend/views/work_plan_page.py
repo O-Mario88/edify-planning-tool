@@ -196,6 +196,40 @@ def _date_label(start, end) -> str:
     return f"{start.day} {start.strftime('%B %Y')}"
 
 
+SCHOOL_GROUP_LABEL = "School Activities"
+NON_SCHOOL_GROUP_LABEL = "Non-School Activities"
+
+
+def _activity_group(a) -> tuple[str, str]:
+    """("school"|"non_school", display label) for one Activity row.
+
+    School activities are everything delivered to a School or a Cluster of
+    schools (visits, in-school trainings, group/cluster trainings, cluster
+    meetings). Non-school activities are the programme work planned without
+    one — conferences, boot camps, district meetings and the like.
+    """
+    if a.school_id or a.cluster_id:
+        return "school", SCHOOL_GROUP_LABEL
+    return "non_school", NON_SCHOOL_GROUP_LABEL
+
+
+def _summary_bucket_label(a) -> str:
+    """One summary line per (executor, activity type) — "Staff School Visit",
+    "Partner School Visit", "Staff Cluster Meeting", … The canonical type
+    display keeps named curricula from fragmenting the summary into
+    per-course rows."""
+    executor = "Partner" if a.delivery_type == "partner" else "Staff"
+    return f"{executor} {a.get_activity_type_display()}"
+
+
+def _finish_summary_rows(bucket: dict[str, dict]) -> list[dict]:
+    rows = sorted(bucket.values(), key=lambda r: (-r["cost"], r["label"]))
+    for row in rows:
+        # Derived, never invented: the average of the persisted cost lines.
+        row["unit_cost"] = round(row["cost"] / row["count"]) if row["count"] else 0
+    return rows
+
+
 def _query_string(base: dict, **overrides) -> str:
     merged = {key: value for key, value in base.items() if value not in (None, "")}
     for key, value in overrides.items():
@@ -377,6 +411,9 @@ def build_work_plan_context(user, params) -> dict:
     cost_missing_count = 0
     at_risk_count = 0
     completed_count = 0
+    # Activity Plan Summary accumulators — counted over every scoped activity
+    # in the window (flag drill-downs narrow the table, never the summary).
+    summary_buckets: dict[str, dict[str, dict]] = {"school": {}, "non_school": {}}
 
     for a in activities:
         anchor = a.planned_date or (
@@ -440,6 +477,14 @@ def build_work_plan_context(user, params) -> dict:
         if a.cost_missing:
             cost_missing_count += 1
 
+        group_key, group_label = _activity_group(a)
+        bucket_label = _summary_bucket_label(a)
+        summary_row = summary_buckets[group_key].setdefault(
+            bucket_label, {"label": bucket_label, "count": 0, "cost": 0}
+        )
+        summary_row["count"] += 1
+        summary_row["cost"] += a.lines_total or 0
+
         if flag == "pending_approval" and not is_pending_approval:
             continue
         if flag == "cost_missing" and not a.cost_missing:
@@ -497,6 +542,8 @@ def build_work_plan_context(user, params) -> dict:
                 "id": a.id,
                 "date_label": _date_label(anchor, a.end_date),
                 "band_month": band_month,
+                "group": group_key,
+                "group_label": group_label,
                 "name": a.activity_name_snapshot or a.get_activity_type_display(),
                 "meta": meta,
                 "responsible": (
@@ -542,6 +589,33 @@ def build_work_plan_context(user, params) -> dict:
                 "evidence_status": a.get_evidence_status_display(),
             }
         )
+
+    # Detailed rows keep their chronological order inside each group; School
+    # Activities lead, Non-School Activities follow (stable sort).
+    rows.sort(key=lambda r: 0 if r["group"] == "school" else 1)
+
+    school_summary_rows = _finish_summary_rows(summary_buckets["school"])
+    non_school_summary_rows = _finish_summary_rows(summary_buckets["non_school"])
+    school_totals = {
+        "count": sum(r["count"] for r in school_summary_rows),
+        "cost": sum(r["cost"] for r in school_summary_rows),
+    }
+    non_school_totals = {
+        "count": sum(r["count"] for r in non_school_summary_rows),
+        "cost": sum(r["cost"] for r in non_school_summary_rows),
+    }
+    plan_summary = {
+        "school": {"label": SCHOOL_GROUP_LABEL, "rows": school_summary_rows, **school_totals},
+        "non_school": {
+            "label": NON_SCHOOL_GROUP_LABEL,
+            "rows": non_school_summary_rows,
+            **non_school_totals,
+        },
+        "total": {
+            "count": school_totals["count"] + non_school_totals["count"],
+            "cost": school_totals["cost"] + non_school_totals["cost"],
+        },
+    }
 
     groups = list(bands.values())
     if undated_band["count"]:
@@ -703,6 +777,8 @@ def build_work_plan_context(user, params) -> dict:
         ),
         "filters_active": filters_active,
         "kpi_strip_items": kpi_strip_items,
+        "plan_summary": plan_summary,
+        "plan_summary_sections": [plan_summary["school"], plan_summary["non_school"]],
         "groups": groups,
         "fy_totals": fy_totals,
         "rows": rows,

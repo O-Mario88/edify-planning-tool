@@ -452,6 +452,7 @@ def work_plan_export(request):
     sheet = workbook.active
     sheet.title = "Work Plan"
     headers = [
+        "Group",
         "Activity Date",
         "Activity Title",
         "Activity Type",
@@ -469,6 +470,7 @@ def work_plan_export(request):
     for row in context["rows"]:
         sheet.append(
             [
+                row["group_label"],
                 row["date_label"],
                 row["name"],
                 row["programme_activity_type"],
@@ -501,13 +503,58 @@ def work_plan_export(request):
             cell.fill = fill
             cell.border = Border(bottom=border)
             cell.alignment = Alignment(vertical="top", wrap_text=True)
-        sheet.cell(row_index, 11).number_format = "#,##0"
-    widths = [20, 38, 28, 26, 18, 21, 28, 14, 28, 18, 18, 20]
+        sheet.cell(row_index, 12).number_format = "#,##0"
+    widths = [22, 20, 38, 28, 26, 18, 21, 28, 14, 28, 18, 18, 20]
     for index, width in enumerate(widths, start=1):
         sheet.column_dimensions[get_column_letter(index)].width = width
     sheet.freeze_panes = "A2"
     sheet.auto_filter.ref = sheet.dimensions
     sheet.sheet_view.showGridLines = False
+
+    # Summary sheet — the CD/RVP roll-up: one line per (executor, activity
+    # type), grouped School vs Non-School. Same aggregates the page renders.
+    summary_sheet = workbook.create_sheet("Plan Summary")
+    summary_sheet.append(
+        ["Activity", "Number of Activities", "Unit Cost (UGX)", "Total Cost (UGX)"]
+    )
+    for cell in summary_sheet[1]:
+        cell.fill = PatternFill("solid", fgColor=navy)
+        cell.font = Font(color="FFFFFF", bold=True, size=10)
+        cell.alignment = Alignment(vertical="center")
+        cell.border = Border(bottom=Side(style="medium", color=accent))
+    summary_sheet.row_dimensions[1].height = 28
+    for section in context["plan_summary_sections"]:
+        header_row = summary_sheet.max_row + 1
+        summary_sheet.append([section["label"], "", "", ""])
+        summary_sheet.cell(header_row, 1).font = Font(bold=True, size=10)
+        for row in section["rows"]:
+            summary_sheet.append(
+                [row["label"], row["count"], row["unit_cost"], row["cost"]]
+            )
+        subtotal_row = summary_sheet.max_row + 1
+        summary_sheet.append(
+            [f"{section['label']} subtotal", section["count"], "", section["cost"]]
+        )
+        for column in (1, 2, 4):
+            summary_sheet.cell(subtotal_row, column).font = Font(bold=True, size=10)
+    grand_row = summary_sheet.max_row + 1
+    summary_sheet.append(
+        [
+            "Grand total",
+            context["plan_summary"]["total"]["count"],
+            "",
+            context["plan_summary"]["total"]["cost"],
+        ]
+    )
+    for column in (1, 2, 4):
+        summary_sheet.cell(grand_row, column).font = Font(bold=True, size=10)
+    for row_index in range(2, summary_sheet.max_row + 1):
+        for column in (2, 3, 4):
+            summary_sheet.cell(row_index, column).number_format = "#,##0"
+    for index, width in enumerate((36, 22, 20, 22), start=1):
+        summary_sheet.column_dimensions[get_column_letter(index)].width = width
+    summary_sheet.freeze_panes = "A2"
+    summary_sheet.sheet_view.showGridLines = False
 
     response = HttpResponse(
         content_type=(

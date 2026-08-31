@@ -1,0 +1,62 @@
+{% load frontend_filters %}
+{% comment %}
+Activity Plan Summary — the CD/RVP roll-up of the scoped plan. Every figure
+is aggregated from the same Activity rows and persisted cost lines the table
+below renders: count = number of planned activities, total = sum of their
+cost lines, unit cost = total ÷ count (an average, never a typed-in rate).
+Scoping upstream makes the same section serve every role: CD/Admin see the
+country, the RVP their region, a PL themselves plus their team, a CCEO their
+own plan.
+{% endcomment %}
+<section aria-labelledby="plan-summary-title" class="card p-4 space-y-4">
+<div class="flex flex-wrap items-center justify-between gap-2">
+<h2 id="plan-summary-title" class="text-[13px] font-extrabold text-slate-800">Activity Plan Summary — {{ period_label }}</h2>
+<p class="edify-text-caption font-semibold text-slate-500">Aggregated from the planned activities and their persisted cost lines. Unit cost is the average cost per activity.</p>
+</div>
+
+{% for section in plan_summary_sections %}
+<div>
+<h3 class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-500 mb-2">{{ section.label }}</h3>
+{% if section.rows %}
+<div class="overflow-x-auto">
+<table class="edify-record-table edify-data-table w-full text-[12px]">
+<thead>
+<tr>
+<th class="text-left">Activity</th>
+<th class="text-right whitespace-nowrap">Number of Activities</th>
+<th class="text-right whitespace-nowrap">Unit Cost (UGX)</th>
+<th class="text-right whitespace-nowrap">Total Cost (UGX)</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-[var(--edify-border)]">
+{% for row in section.rows %}
+<tr class="edify-data-row">
+<td class="font-semibold text-slate-700">{{ row.label }}</td>
+<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.count|intcomma }}</td>
+<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost|intcomma }}</td>
+<td class="text-right tabular-nums font-bold text-slate-800">{{ row.cost|intcomma }}</td>
+</tr>
+{% endfor %}
+<tr class="bg-slate-50/70">
+<td class="font-extrabold text-slate-800">{{ section.label }} subtotal</td>
+<td class="text-right tabular-nums font-extrabold text-slate-800">{{ section.count|intcomma }}</td>
+<td class="text-right"></td>
+<td class="text-right tabular-nums font-extrabold text-slate-800">{{ section.cost|intcomma }}</td>
+</tr>
+</tbody>
+</table>
+</div>
+{% else %}
+<p class="edify-text-caption font-semibold text-slate-400">No {{ section.label|lower }} planned in this period.</p>
+{% endif %}
+</div>
+{% endfor %}
+
+<div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-[var(--edify-border)]">
+<p class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-500">Grand total</p>
+<div class="flex flex-wrap items-center gap-4 text-[13px] font-bold">
+<span class="tabular-nums">{{ plan_summary.total.count|intcomma }} activities</span>
+<span class="tabular-nums">UGX {{ plan_summary.total.cost|intcomma }}</span>
+</div>
+</div>
+</section>

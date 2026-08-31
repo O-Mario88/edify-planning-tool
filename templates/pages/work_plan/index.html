@@ -199,6 +199,9 @@ moment either one moves.
 <!-- KPI strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Work plan context" %}
 
+<!-- Activity Plan Summary: school vs non-school roll-up for CD / RVP review -->
+{% include "partials/work_plan/plan_summary.html" %}
+
 <!-- Period summary bands -->
 <section aria-label="Period summary by month" class="space-y-3">
 <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
@@ -251,6 +254,11 @@ moment either one moves.
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
 {% for r in pager.rows %}
+{% ifchanged r.group_label %}
+<tr>
+<th colspan="8" scope="colgroup" class="text-left bg-slate-50/80 px-3 py-2 edify-text-caption font-extrabold uppercase tracking-wider text-slate-500">{{ r.group_label }}</th>
+</tr>
+{% endifchanged %}
 <tr class="edify-data-row align-top">
 <td class="whitespace-nowrap font-semibold text-slate-700" data-record-title>{{ r.date_label }}</td>
 <td class="min-w-[250px]" data-label="Activity">
