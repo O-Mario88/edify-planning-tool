@@ -566,18 +566,18 @@ class ClarificationAndRecommendationTests(FieldDebriefTestBase):
         activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         self.assertEqual(activity.responsible_staff_id, self.cceo_sp.id)
 
-    def test_accept_recommendation_enforces_existing_visit_entitlement(self):
+    def test_accept_recommendation_allows_follow_up_after_existing_visits(self):
         d = self._submit(
             self.cceo,
             recommended_next_activity_type="follow_up_visit",
             school_ids=[self.school.id],
             follow_up_owner_id=self.cceo_sp.id,
         )
-        with self.assertRaisesMessage(BadRequest, "entitlement"):
-            FieldDebriefService.accept_recommendation(self.pl, d.id)
+        activity = FieldDebriefService.accept_recommendation(self.pl, d.id)
         d.refresh_from_db()
-        self.assertEqual(d.recommendation_status, RecommendationStatus.PROPOSED)
-        self.assertEqual(Activity.objects.filter(school=self.school).count(), 2)
+        self.assertEqual(d.recommendation_status, RecommendationStatus.ACCEPTED)
+        self.assertEqual(d.recommendation_accepted_activity_id, activity.id)
+        self.assertEqual(Activity.objects.filter(school=self.school).count(), 3)
 
     def test_accept_recommendation_is_audited_as_planning_not_scheduling(self):
         self._release_visit_entitlement()

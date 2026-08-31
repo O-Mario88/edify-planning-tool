@@ -393,18 +393,18 @@ class StandardSupportIsSchedulableWithoutAProjectTest(StandardSupportBase):
         self.assertIsNone(activity.project_id)
         self.assertEqual(activity.status, "scheduled")
 
-    def test_a_project_required_activity_still_refuses_without_one(self):
-        """Relaxing the default must not remove the real rule."""
+    def test_catalogue_project_flag_does_not_block_scheduling(self):
         item = self.item("STANDARD_IN_SCHOOL_TRAINING")
         ActivityCatalogueItem.objects.filter(id=item.id).update(requires_project=True)
-        with self.assertRaises(BadRequest) as caught:
-            self.schedule(
-                schoolId=self.school.school_id,
-                catalogueItemId=item.id,
-                focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
-                teachersAttended=6,
-            )
-        self.assertIn("Special Project", str(caught.exception))
+        result = self.schedule(
+            schoolId=self.school.school_id,
+            catalogueItemId=item.id,
+            focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
+            teachersAttended=6,
+        )
+        activity = Activity.objects.get(id=result["id"])
+        self.assertEqual(activity.status, "scheduled")
+        self.assertIsNone(activity.project_id)
 
     def test_activity_type_is_still_required(self):
         from apps.activities.services import create

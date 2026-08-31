@@ -1578,7 +1578,7 @@ def weekly_fund_request_return_action(request, request_id):
     except BadRequest as exc:
         return _weekly_return_drawer(request, request_id, str(exc))
     if request.headers.get("HX-Request") != "true":
-        return redirect(f"/fund-requests/weekly/{request_id}")
+        return redirect("frontend:weekly_fund_request_detail", request_id=request_id)
     context = _build_fund_requests_context(request)
     context["action_ok"] = (
         "Weekly advance request returned to its owner for correction."

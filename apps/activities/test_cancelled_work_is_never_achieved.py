@@ -12,7 +12,8 @@ school visit kept counting toward a CCEO's verified achievement for ever.
 
 from __future__ import annotations
 
-from datetime import date, timedelta
+from calendar import monthrange
+from datetime import date
 
 from django.test import TestCase
 from django.utils import timezone
@@ -156,7 +157,7 @@ class CancelledWorkLosesItsMilestoneCreditTest(TestCase):
             employee=profile,
             period_type="month",
             period_start=today.replace(day=1),
-            period_end=today.replace(day=1) + timedelta(days=27),
+            period_end=today.replace(day=monthrange(today.year, today.month)[1]),
             planned_value=1,
             actual_value=0,
         )

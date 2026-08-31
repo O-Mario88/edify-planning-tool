@@ -31,10 +31,10 @@
     {% endif %}
   </div>
 
-  <nav class="budget-horizon-tabs" aria-label="Budget period">
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Month</a>
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarter</a>
-    <a href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual</a>
+  <nav data-edify-tablist aria-label="Budget period">
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Month</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarter</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual</a>
   </nav>
   <p class="text-xs text-slate-500">Calculated from the costed activities in weekly plans. Month, quarter and annual budgets roll up those planned costs.</p>
 

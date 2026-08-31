@@ -237,6 +237,21 @@ class BudgetAdvanceWorkflowTest(TestCase):
         self.assertContains(self.page(self.owner, wfr), "Use the planned attendance.")
         self.assertNotContains(self.page(self.pl, wfr), "Submit Advance Request")
 
+    def test_return_regular_form_redirects_to_the_internal_request(self):
+        self.cost()
+        wfr = self.request()
+        request_advance(wfr.id, self.owner)
+        self.client.force_login(self.pl)
+        response = self.client.post(
+            f"/fund-requests/weekly/{wfr.id}/return?next=https://example.org/",
+            {"reason": "Correct the attendance."},
+        )
+        self.assertRedirects(
+            response, f"/fund-requests/weekly/{wfr.id}", fetch_redirect_response=False
+        )
+        wfr.refresh_from_db()
+        self.assertEqual(wfr.return_reason, "Correct the attendance.")
+
     def test_receipt_http_requires_checkbox_and_only_owner_sees_control(self):
         self.cost()
         wfr = self.request()

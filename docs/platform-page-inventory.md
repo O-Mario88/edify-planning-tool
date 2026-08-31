@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **575**
-- All registered routes: **1043**
+- Routed product surfaces: **576**
+- All registered routes: **1044**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **23**
 - Activity states: **23**
-- Shared component templates: **344**
-- Full pages: **203**
+- Shared component templates: **345**
+- Full pages: **202**
 - Partials and drawers: **172**
-- Permission-gated surfaces: **565**
-- Referenced by automated tests: **530**
+- Permission-gated surfaces: **566**
+- Referenced by automated tests: **531**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -281,12 +281,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-69D5E8ADAD | /fund-requests/generate-request | Generate Request Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6085EBC380 | /fund-requests/receipt-confirm | Fund Receipt Confirm | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-DCD56713A1 | /fund-requests/weekly | Weekly Fund Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-BA500F51A1 | /fund-requests/weekly/<str:request_id> | Weekly Request details - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-BA500F51A1 | /fund-requests/weekly/<str:request_id> | Weekly Fund Request Detail | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E7DBE89831 | /fund-requests/weekly/<str:request_id>/approve | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-31F49EF531 | /fund-requests/weekly/<str:request_id>/confirm | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3BCE4448DD | /fund-requests/weekly/<str:request_id>/confirm-receipt | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-28C1ED349E | /fund-requests/weekly/<str:request_id>/disburse | Weekly Fund Request Disburse | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-15785CF711 | /fund-requests/weekly/<str:request_id>/return | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-41CB76A0D0 | /fund-requests/weekly/<str:request_id>/return-drawer | Weekly Fund Request Return Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-CF59C113B1 | /fund-requests/weekly/<str:request_id>/self-funded | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9E1520AF65 | /fy | Fiscal Year Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-61030068A3 | /help | Knowledge Center · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

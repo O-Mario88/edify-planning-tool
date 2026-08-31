@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 621,
-  "templates": 220,
-  "distinct_titles": 591,
+  "titled_cards": 623,
+  "templates": 221,
+  "distinct_titles": 592,
   "with_card_key": 13,
-  "untitled_surfaces": 1022,
-  "untitled_chrome": 237,
-  "untitled_nested": 392,
-  "untitled_headless": 393,
+  "untitled_surfaces": 1011,
+  "untitled_chrome": 229,
+  "untitled_nested": 391,
+  "untitled_headless": 391,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -782,72 +782,44 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 35,
+   "line": 42,
    "title": "Monthly Budget Approval",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm",
    "branch_path": [
     [
-     4,
+     7,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 84,
+   "line": 91,
    "title": "Country Monthly Envelope",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-[var(--border-card)] edify-surface shadow-sm",
    "branch_path": [
     [
-     4,
+     7,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 126,
+   "line": 133,
    "title": "Disbursement and Accountability",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
    "branch_path": [
     [
-     4,
+     7,
      0
     ],
-    [
-     10,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 150,
-   "title": "Add administrative budget item",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
-   "branch_path": [
-    [
-     12,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 189,
-   "title": "Team cost summary",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
-   "branch_path": [
     [
      13,
      0
@@ -856,7 +828,35 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 209,
+   "line": 157,
+   "title": "Add administrative budget item",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "branch_path": [
+    [
+     15,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 196,
+   "title": "Team cost summary",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "branch_path": [
+    [
+     16,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 216,
    "title": "Administrative cost planActivity cost plan",
    "heading_level": 2,
    "has_card_key": false,
@@ -5429,7 +5429,25 @@
   },
   {
    "template": "templates/partials/finance/monthly_request/root.html",
-   "line": 64,
+   "line": 47,
+   "title": "Activity cost plan \u00b7",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-4",
+   "branch_path": [
+    [
+     2,
+     0
+    ],
+    [
+     19,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/finance/monthly_request/root.html",
+   "line": 79,
    "title": "Team cost summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -5440,14 +5458,18 @@
      0
     ],
     [
-     26,
+     19,
+     1
+    ],
+    [
+     30,
      0
     ]
    ]
   },
   {
    "template": "templates/partials/finance/monthly_request/root.html",
-   "line": 84,
+   "line": 99,
    "title": "Activity cost plan",
    "heading_level": 2,
    "has_card_key": false,
@@ -5456,6 +5478,10 @@
     [
      2,
      0
+    ],
+    [
+     19,
+     1
     ]
    ]
   },
@@ -5521,6 +5547,15 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-5 text-slate-700",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/fund_requests/period_budget_tabs.html",
+   "line": 3,
+   "title": "Weekly advance requestActivity cost plan",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-4 space-y-3.5",
    "branch_path": []
   },
   {

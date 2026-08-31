@@ -22,10 +22,10 @@
     </div>
   </section>
 
-  <nav class="budget-horizon-tabs" aria-label="Budget period">
-    <a href="?fy={{ fy }}&month={{ month }}&period=month" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Month</a>
-    <a href="?fy={{ fy }}&month={{ month }}&period=quarter" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarter</a>
-    <a href="?fy={{ fy }}&month={{ month }}&period=fy" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual</a>
+  <nav data-edify-tablist aria-label="Budget period">
+    <a data-edify-tab href="?fy={{ fy }}&month={{ month }}&period=month" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Month</a>
+    <a data-edify-tab href="?fy={{ fy }}&month={{ month }}&period=quarter" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarter</a>
+    <a data-edify-tab href="?fy={{ fy }}&month={{ month }}&period=fy" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual</a>
   </nav>
       <form hx-get="/accounts/monthly-request/" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-trigger="change" class="edify-filter-bar" aria-label="Monthly budget request filters">
         <input type="hidden" name="period" value="{{ selected_period }}">
