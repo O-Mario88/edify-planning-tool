@@ -41,7 +41,6 @@ class InSchoolTrainingPairTest(StandardSupportBase):
             "executorType": "staff",
             "requireCatalogue": True,
             "activityPurposeText": "Deliver the selected in-school course",
-            "expectedParticipants": 10,
         }
 
     def test_in_school_picker_contains_all_21_courses_with_ssa_metadata(self):
@@ -133,7 +132,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertIsNone(training.focus_intervention)
         self.assertIsNone(visit.focus_intervention)
 
-    def test_pair_carries_daily_cost_and_training_components_only_once(self):
+    def test_pair_carries_one_visit_equivalent_cost_on_the_training(self):
         self.cost_snapshot.side_effect = apply_real_cost_snapshot
         result = schedule_in_school_training_pair(self.payload(), self.user)
         training = Activity.objects.get(id=result["id"])
@@ -145,12 +144,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertTrue(training_lines)
         self.assertEqual(
             {line.cost_setting_key for line in training_lines},
-            {
-                "primary_transport_per_day",
-                "primary_lunch_per_day",
-                "group_training_participant_meal_cost_per_head",
-                "group_training_venue_cost",
-            },
+            {"primary_transport_per_day", "primary_lunch_per_day"},
         )
         self.assertFalse(
             ActivityScheduleCostLine.objects.filter(activity=visit).exists()

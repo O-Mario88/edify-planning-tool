@@ -176,13 +176,13 @@ class AvailableActivityTypeServiceTest(TestCase):
         }
         self.assertEqual(rows["school_visit"]["participantMode"], ParticipantMode.NONE)
         self.assertFalse(rows["school_visit"]["requiresParticipants"])
-        # School training needs a planned total for per-head meals, without
-        # mixing it into the category attendance recorded at completion.
+        # School-level training is costed as a school visit, with no
+        # participant-meal quantity in the planning drawer.
         self.assertEqual(
-            rows["in_school_training"]["participantMode"], ParticipantMode.DIRECT_TOTAL
+            rows["in_school_training"]["participantMode"], ParticipantMode.NONE
         )
         self.assertFalse(rows["in_school_training"]["participantCategories"])
-        self.assertTrue(rows["in_school_training"]["requiresParticipants"])
+        self.assertFalse(rows["in_school_training"]["requiresParticipants"])
 
 
 class ScheduleDrawerFieldsTest(TestCase):

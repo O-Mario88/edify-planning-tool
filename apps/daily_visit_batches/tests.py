@@ -537,23 +537,14 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
 
         from apps.budget.costing import GROUP_TRAINING_RATE_KEYS
 
-        # Participant meals and venue belong to this training; the training
-        # fee belongs only to cluster training, never an in-school session.
+        # In-school training is costed as a school visit, with no participant
+        # meal, venue or facilitation line.
         training_keys = set(
             training.schedule_cost_lines.values_list("cost_setting_key", flat=True)
         )
         self.assertEqual(
             training_keys & set(GROUP_TRAINING_RATE_KEYS),
-            {
-                "group_training_participant_meal_cost_per_head",
-                "group_training_venue_cost",
-            },
-        )
-        self.assertEqual(
-            training.schedule_cost_lines.get(
-                cost_setting_key="group_training_participant_meal_cost_per_head"
-            ).quantity,
-            10,
+            set(),
         )
 
     def _session(self, kind, day, participants=12):

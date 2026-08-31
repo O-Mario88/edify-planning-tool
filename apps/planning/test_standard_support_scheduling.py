@@ -162,7 +162,6 @@ class StandardSupportBase(TestCase):
         base = {
             "scheduledDate": _at(_schedulable_date()).isoformat(),
             "requireCatalogue": True,
-            "expectedParticipants": 10,
         }
         return create({**base, **payload}, self.user)
 
@@ -478,16 +477,19 @@ class ParticipantModeTest(StandardSupportBase):
             self.assertIsNone(payload.get("expectedParticipants"))
             self.assertIsNone(payload.get("teachersAttended"))
 
-    def test_school_level_training_keeps_its_explicit_planned_headcount(self):
-        """Meal quantities come from the plan, independently of attendance."""
+    def test_school_level_training_plans_no_participant_quantity(self):
+        """In-school training is planned and costed as a school visit."""
         result = self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,
             focusIntervention=SsaIntervention.FINANCIAL_HEALTH,
-            expectedParticipants=17,
+            teachersAttended="12",
+            leadersAttended="3",
+            otherParticipants="2",
+            expectedParticipants="99",
         )
         activity = Activity.objects.get(id=result["id"])
-        self.assertEqual(activity.expected_participants, 17)
+        self.assertIsNone(activity.expected_participants)
         self.assertIsNone(activity.teachers_attended)
         self.assertIsNone(activity.leaders_attended)
         self.assertIsNone(activity.other_participants)

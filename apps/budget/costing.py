@@ -153,9 +153,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
-    # Partner-delivered in-school training retains its agreed mission rate.
-    # Staff training uses planned per-head meals and a venue; only cluster
-    # training includes the facilitation fee.
+    # An in-school training is delivered during the same school mission as a
+    # school visit. Its Training record describes the programme result, not a
+    # second journey or a venue-based group training. Price it from the visit
+    # recipe for both staff and partner delivery.
     is_in_school_training = activity_type == "in_school_training"
 
     # Non-school programme events (conferences, camps, exhibitions, launches)
@@ -256,7 +257,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     elif activity_type == "core_training":
         add("Core School Training", "core_school_training")
 
-    elif activity_type in VISIT_TYPES:
+    elif activity_type in VISIT_TYPES or is_in_school_training:
         if is_secondary:
             add("Transport (secondary)", "secondary_transport_per_day")
             add("Breakfast", "secondary_breakfast_per_day")

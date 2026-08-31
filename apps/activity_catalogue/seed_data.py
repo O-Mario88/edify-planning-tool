@@ -801,9 +801,10 @@ STANDARD_SUPPORT_ITEMS = [
         evidence_profile="TRAINING_ATTENDANCE",
         salesforce_record_type="TRAINING",
         salesforce_expected_prefix="TS-",
-        # Participant meals use the planned headcount, kept separately from
-        # the attendance recorded at completion.
-        participant_mode=ParticipantMode.DIRECT_TOTAL,
+        # Standard in-school training is planned for one school, by purpose,
+        # not by audience: the drawer asks no participant question at all.
+        # It is costed as a school visit, so it has no participant-meal line.
+        participant_mode=ParticipantMode.NONE,
         certified_agency=True,
         description=(
             "Training delivered at one school against a target intervention, "

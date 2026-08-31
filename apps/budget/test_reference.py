@@ -223,7 +223,7 @@ class CostReferenceTest(TestCase):
         )
         self.assertEqual(result.amount, 86000)
 
-    def test_staff_training_adds_planned_meals_and_venue_to_daily_staff_costs(self):
+    def test_staff_in_school_training_has_the_same_recipe_as_a_school_visit(self):
         from apps.budget.costing import cost_for_activity
 
         rates = {
@@ -236,23 +236,14 @@ class CostReferenceTest(TestCase):
         common = {"districtType": "primary", "deliveryType": "staff"}
 
         training = cost_for_activity(
-            {
-                **common,
-                "activityType": "in_school_training",
-                "expectedParticipants": 10,
-            },
-            rates,
+            {**common, "activityType": "in_school_training"}, rates
         )
         visit = cost_for_activity({**common, "activityType": "school_visit"}, rates)
 
-        self.assertEqual(training.amount, visit.amount + 10 * 9000 + 70000)
+        self.assertEqual(training.amount, visit.amount)
         self.assertEqual(
-            {line.key for line in training.lines},
-            {line.key for line in visit.lines}
-            | {
-                "group_training_participant_meal_cost_per_head",
-                "group_training_venue_cost",
-            },
+            [line.key for line in training.lines],
+            [line.key for line in visit.lines],
         )
 
     def test_partner_in_school_training_uses_the_partner_visit_rate(self):
@@ -265,12 +256,7 @@ class CostReferenceTest(TestCase):
         common = {"deliveryType": "partner"}
 
         training = cost_for_activity(
-            {
-                **common,
-                "activityType": "in_school_training",
-                "expectedParticipants": 10,
-            },
-            rates,
+            {**common, "activityType": "in_school_training"}, rates
         )
         visit = cost_for_activity({**common, "activityType": "school_visit"}, rates)
 
