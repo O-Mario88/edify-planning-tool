@@ -22,8 +22,7 @@
          cfg.plotOptions.bar.dataLabels = { position: 'top' };
          cfg.grid = { show: false };
          cfg.legend.horizontalAlign = 'right';
-         this.chart = new ApexCharts(el, cfg);
-         this.chart.render();
+         this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
        }
      }" x-init="$nextTick(() => initChart())">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">I. Staff &amp; Partner Performance</h3>

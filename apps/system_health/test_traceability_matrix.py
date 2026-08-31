@@ -23,6 +23,7 @@ The zero that matters is pinned separately, in ``TheJourneysNeverKnockTest``.
 
 from __future__ import annotations
 
+import hashlib
 import json
 import unittest
 from pathlib import Path
@@ -36,6 +37,7 @@ from apps.system_health.traceability import (
     Recording,
     TestPointerError,
     _metrics_for,
+    fingerprint_sources,
     normalise_route,
     split_service_path,
     trace_test,
@@ -425,6 +427,115 @@ JOURNEYS_THAT_KNOCK = {
     "journey-19",
     "journey-22",
 }
+
+
+class ArtefactIsStillFreshTest(unittest.TestCase):
+    """The gate that was missing, and why it had to be built differently.
+
+    This matrix went stale on `main` with all 34 of its tests green. The tests
+    checked it against the journey manifest — so a renamed test or an added
+    journey turned it red — but nothing tied the artefact to the CODE it
+    describes. Regenerating it added twenty lines naming `apps/budget/signals.py`,
+    `budget.ActivityCostSnapshot` and `activity.cost.calculated`: real paths
+    the journeys had started executing, that the committed file did not know
+    about. A traceability matrix that understates what runs is the same
+    evidence problem the matrix exists to solve, one level up.
+
+    The obvious fix — regenerate and compare, the way `test_kpi_inventory` and
+    `test_page_inventory` do — is not available here. Those two SCAN source.
+    This one EXECUTES the journey tests under instrumentation, needs a test
+    database, takes minutes, and re-execs itself as `manage.py test`; a test
+    that called it would recurse. That is precisely why the link was never
+    made, and why the gap survived four audits.
+
+    So the artefact carries a fingerprint instead, and this recomputes it in a
+    fraction of a second. Two separate things can go wrong and each has its own
+    digest:
+
+    * `payload` — the matrix's own content. Catches an artefact edited by
+      hand, which is how a record of what ran turns back into an assertion
+      about what should have run.
+    * `sources` — every file the matrix NAMES as a service path, plus the
+      modules holding the journey tests it traced. Catches the code moving
+      under it.
+
+    THE LIMIT, stated plainly because an overstated gate is worse than none: a
+    fingerprint over the files the matrix already names cannot see a newly
+    reached file whose own content never changed. It is a lower bound on
+    freshness, not a proof of it. On the drift that prompted this it is
+    sufficient — of the 139 files the stale matrix named, 13 had changed since
+    it was written, so this would have gone red the day it drifted.
+    """
+
+    def setUp(self):
+        self.matrix = load_matrix()
+
+    def test_the_artefact_carries_a_fingerprint_at_all(self):
+        """Without this the three tests below pass vacuously on a missing key."""
+        self.assertIn(
+            "fingerprint",
+            self.matrix,
+            "the matrix has no fingerprint block, so nothing connects it to "
+            "the code it describes. Regenerate with "
+            "python manage.py build_traceability_matrix.",
+        )
+        for key in ("payload", "sources", "sourceCount"):
+            self.assertIn(key, self.matrix["fingerprint"])
+
+    def test_it_fingerprinted_a_plausible_number_of_files(self):
+        """A digest over nothing is a digest that always matches.
+
+        `sources` would be a stable, meaningless constant if the matrix named
+        no files, or if every path it named had been renamed away — and it
+        would sit there green for good.
+        """
+        counted, _ = fingerprint_sources(self.matrix)
+        recorded = self.matrix["fingerprint"]["sourceCount"]
+        self.assertEqual(
+            len(counted),
+            recorded,
+            f"the matrix fingerprinted {recorded} files when it was written "
+            f"and {len(counted)} exist now, so some named path has been "
+            f"renamed or deleted. Regenerate with "
+            f"python manage.py build_traceability_matrix.",
+        )
+        self.assertGreater(
+            recorded,
+            100,
+            f"only {recorded} files behind this fingerprint. The traced "
+            f"journeys touch well over a hundred; a number this low means the "
+            f"matrix stopped naming its own inputs and the digest is no "
+            f"longer evidence of anything.",
+        )
+
+    def test_the_artefact_was_not_edited_by_hand(self):
+        payload = {
+            key: value for key, value in self.matrix.items() if key != "fingerprint"
+        }
+        self.assertEqual(
+            hashlib.sha256(
+                json.dumps(payload, indent=2, sort_keys=False).encode("utf-8")
+            ).hexdigest(),
+            self.matrix["fingerprint"]["payload"],
+            "the matrix does not match its own fingerprint, so it was changed "
+            "by something other than its generator. Every cell is a record of "
+            "what ran; typing into it turns evidence back into assertion. "
+            "Regenerate with python manage.py build_traceability_matrix.",
+        )
+
+    def test_the_code_has_not_moved_under_it(self):
+        _, digest = fingerprint_sources(self.matrix)
+        self.assertEqual(
+            digest,
+            self.matrix["fingerprint"]["sources"],
+            "a file this matrix names as a traced service path — or a module "
+            "holding one of the journey tests it traced — has changed since "
+            "the matrix was generated, so its record of what those journeys "
+            "touch may no longer be true. Regenerate with "
+            "python manage.py build_traceability_matrix (it needs a test "
+            "database and takes several minutes). Do NOT edit the fingerprint "
+            "to make this pass: that only makes a stale matrix look fresh.",
+        )
 
 
 class WhichJourneysReachTheDoorTest(unittest.TestCase):

@@ -228,16 +228,28 @@ def _valid_lines_qs(fy, month_num):
     (planned_date set), not merely assigned."""
     from apps.activities.models import ActivityScheduleCostLine
 
-    return (
+    from datetime import date
+    import calendar
+
+    year = int(fy) - 1 if int(month_num) >= 10 else int(fy)
+    start = date(year, int(month_num), 1)
+    end = date(year, int(month_num), calendar.monthrange(year, int(month_num))[1])
+    from django.db.models import Q
+    from apps.budget.services import planned_lines_for_period
+
+    lines = (
         ActivityScheduleCostLine.objects.filter(
             activity__deleted_at__isnull=True,
-            activity__fy=fy,
-            month=month_num,
+            fiscal_year=fy,
+        )
+        .filter(
+            Q(activity__scheduled_date__isnull=False)
+            | Q(activity__planned_date__isnull=False)
         )
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
-        .exclude(activity__delivery_type="partner", activity__planned_date__isnull=True)
         .select_related("activity", "activity__school")
     )
+    return planned_lines_for_period(lines, start, end)
 
 
 def _team_monthly_requests(fy, month_num):
@@ -421,25 +433,16 @@ def _reference_amounts_for_lines(lines) -> dict:
 
 
 def _apply_live_envelope(budget, source) -> dict:
-    """Refresh the governed full-ceiling country request.
+    """Price new country submissions from planned operational costs only.
 
-    Staff implementation authority remains the operational requirement.  The
-    CD submits the complete Regional Standard Funding Ceiling to the RVP, so
-    every positive difference is explicitly classified as undisbursed
-    strategic reserve rather than being omitted or presented as activity need.
+    Regional references stay historical metadata; no reserve or manually entered
+    admin amount is added to the activity request. Locked submissions are never
+    recalculated by this path.
     """
     envelope = _envelope_from_source(source)
-    # The active admin lines are the source of truth. Some imports and repair
-    # paths create them directly, so never trust a stale cached parent total.
-    budget.admin_total = sum(
-        int(total or 0)
-        for total in budget.admin_lines.filter(status="active").values_list(
-            "total_cost", flat=True
-        )
-    )
-    capacity = envelope["maximumReserveCapacity"]
-    reserve_requested = capacity
-    deferred = 0
+    budget.admin_total = 0
+    reserve_requested = 0
+    deferred = envelope["maximumReserveCapacity"]
 
     budget.regional_standard_ceiling = envelope["regionalStandardCeiling"]
     budget.operational_activity_requirement = envelope["operationalActivityRequirement"]
@@ -449,14 +452,8 @@ def _apply_live_envelope(budget, source) -> dict:
     budget.reference_configuration_missing_count = envelope[
         "referenceConfigurationMissingCount"
     ]
-    # Administrative commitments remain an explicit, non-activity exception.
-    # They are requested in addition to the governed activity allocation and
-    # are never disguised as regional-standard activity need.
-    budget.total_amount = (
-        int(budget.operational_activity_requirement)
-        + int(budget.admin_total or 0)
-        + reserve_requested
-    )
+    # Match the plan-derived Budget ledger exactly. Other ledgers are separate.
+    budget.total_amount = int(budget.operational_activity_requirement)
     budget.save(
         update_fields=[
             "regional_standard_ceiling",
@@ -476,7 +473,7 @@ def _apply_live_envelope(budget, source) -> dict:
         "deferredAmount": deferred,
         "approvedFixedCommitments": int(budget.admin_total or 0),
         "totalCountryRequest": int(budget.total_amount),
-        "reserveSelectionValid": reserve_requested == capacity,
+        "reserveSelectionValid": reserve_requested == 0,
     }
 
 
@@ -500,20 +497,9 @@ def _recompute_if_live(budget, source=None):
         source = source or _program_source(
             budget.fy, int(budget.month_key.split("-")[1])
         )
-        if source["uses_pl_request_workflow"]:
-            budget.program_total = int(source["program_total"])
-            budget.activity_count = int(source["activity_count"])
-            budget.total_amount = budget.program_total + int(budget.admin_total or 0)
-            budget.save(
-                update_fields=[
-                    "program_total",
-                    "activity_count",
-                    "total_amount",
-                    "updated_at",
-                ]
-            )
-        else:
-            mwp.recompute_program_total(budget)
+        budget.program_total = int(source["program_total"])
+        budget.activity_count = int(source["activity_count"])
+        budget.save(update_fields=["program_total", "activity_count", "updated_at"])
         _apply_live_envelope(budget, source)
     return budget
 
@@ -1720,9 +1706,8 @@ def get_plan_sources(principal, filters=None):
 def set_envelope_allocation(principal, budget_id, reserve_amount):
     """Compatibility guard for the former editable reserve allocation.
 
-    The country now requests the full regional ceiling. Existing clients may
-    still post this action, but they cannot lower the amount presented to the
-    RVP or turn regional benchmark funding into staff operating authority.
+    Existing clients may still post this action, but cannot add regional
+    benchmark funding to the planned operational amount presented to the RVP.
     """
     from django.db import transaction
 
@@ -1760,10 +1745,10 @@ def set_envelope_allocation(principal, budget_id, reserve_amount):
                 - int(budget.operational_activity_requirement),
             )
         )
-        if requested != capacity:
+        if requested != 0:
             raise BadRequest(
-                "The country request must include the full Regional Standard "
-                f"Funding Ceiling. Strategic reserve is automatically {_ugx(capacity)}."
+                "Budget submissions contain only planned country operational costs; "
+                "regional reserve cannot be added."
             )
         previous = int(budget.strategic_reserve_requested or 0)
         budget.strategic_reserve_requested = requested
@@ -2034,17 +2019,8 @@ def _create_snapshot(principal, budget, source):
             }
         )
 
-    admin_lines = [
-        {
-            "description": line.description,
-            "category": line.cost_category,
-            "quantity": str(line.quantity),
-            "unit_cost": line.unit_cost,
-            "total_cost": line.total_cost,
-            "total_cost_fmt": _ugx(line.total_cost),
-        }
-        for line in budget.admin_lines.filter(status="active")
-    ]
+    # Administrative records remain in their own ledger, not this activity submission.
+    admin_lines = []
 
     version = budget.submission_version + 1
     snapshot = MonthlyBudgetSubmissionSnapshot.objects.create(

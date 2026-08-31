@@ -27,7 +27,7 @@ Legend: `[x]` proven by available evidence; `[ ]` not proven or blocked.
 - [ ] Real integration sandboxes prove outages cannot freeze workflows.
 - [ ] Capacity meets the aspirational 1,500 ms p95 target on production-equivalent staging (528/528 requests succeeded with zero errors, but p95 was 2,570 ms).
 - [x] Liveness/readiness behavior passes automated tests and public production smoke.
-- [ ] Production dashboards and alerts are active and alert delivery tested.
+- [ ] Production dashboards and alerts are active; alert delivery and named incident ownership remain untested/unassigned (uptime and resource alert provisioning is evidenced in `07-production-monitoring.md`).
 - [x] Local security/scope test groups pass.
 - [x] No unresolved Critical/High defect found within the executed local scope.
 - [x] Production-safe public smoke passes.

@@ -482,4 +482,4 @@ class CountryBudgetPageExecutionTests(TestCase):
         self.assertIn("can_close_month", ctx)
 
     def test_page_renders(self):
-        self.assertEqual(self.client.get("/country-budget/").status_code, 200)
+        self.assertRedirects(self.client.get("/country-budget/"), "/budget")

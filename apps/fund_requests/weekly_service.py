@@ -290,13 +290,15 @@ def _sync_advances(wfr: WeeklyFundRequest, status: str, advance_type: str) -> No
             )
 
 
-def request_advance(request_id: str, principal) -> dict:
+def request_advance(request_id: str, principal, *, funding_source="advance") -> dict:
     """The responsible user submits the weekly request for approval.
 
     Routing (owner's role, not the caller's): CCEO -> submitted_to_pl,
     PL/PC/IA/Accountant -> submitted_to_cd, CD/Admin -> straight to
     confirmed_for_advance. Only an APPROVED request reaches the accountant
     queue — submission alone never does."""
+    if funding_source not in ("advance", "self_fund"):
+        raise BadRequest("Unknown funding source.")
     with transaction.atomic():
         wfr = (
             WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
@@ -317,11 +319,18 @@ def request_advance(request_id: str, principal) -> dict:
             raise BadRequest(f"Cannot request advance in status '{wfr.status}'.")
 
         owner_role = _owner_role(wfr)
+        wfr.funding_source = funding_source
         wfr.status = _submission_status_for(owner_role)
         wfr.responsible_role = owner_role
         wfr.confirmed_at = timezone.now()
         wfr.save(
-            update_fields=["status", "responsible_role", "confirmed_at", "updated_at"]
+            update_fields=[
+                "status",
+                "responsible_role",
+                "funding_source",
+                "confirmed_at",
+                "updated_at",
+            ]
         )
 
         if wfr.status == "confirmed_for_advance":
@@ -332,7 +341,12 @@ def request_advance(request_id: str, principal) -> dict:
             # before the approval lands.
             _sync_advances(wfr, "pending_responsible_confirmation", "advance")
 
-    _audit_weekly(principal, "weekly_fund_request.submit", wfr, {"routed": wfr.status})
+    _audit_weekly(
+        principal,
+        "weekly_fund_request.submit",
+        wfr,
+        {"routed": wfr.status, "funding_source": funding_source},
+    )
     _notify_weekly_approver(wfr)
     return _serialize_request(wfr)
 
@@ -572,39 +586,13 @@ def _notify_weekly_accountants(wfr: WeeklyFundRequest):
 
 
 def self_funded(request_id: str, principal) -> dict:
-    """Elect self-funded reimbursement -> status self_funded."""
-    with transaction.atomic():
-        wfr = (
-            WeeklyFundRequest.objects.select_for_update().filter(id=request_id).first()
-        )
-        if not wfr:
-            raise NotFoundError("Weekly fund request not found.")
-        if wfr.responsible_user != principal.user_id:
-            raise Forbidden("Only the owner can confirm this request.")
-        if wfr.status in ("disbursed", "accounted"):
-            raise BadRequest("Cannot change a disbursed request to self-funded.")
+    """Submit the same plan amount through approval, recording use of own funds.
 
-        wfr.status = "self_funded"
-        wfr.confirmed_at = timezone.now()
-        wfr.save(update_fields=["status", "confirmed_at", "updated_at"])
-
-        # Also update linked AdvanceRequests status
-        for line in wfr.lines.select_related("activity_budget_line"):
-            adv = line.activity_budget_line.advance_requests.first()
-            if adv:
-                adv.status = "self_funded_pending_reimbursement"
-                adv.advance_type = "self_funded"
-                adv.confirmed_at = timezone.now()
-                adv.save(
-                    update_fields=[
-                        "status",
-                        "advance_type",
-                        "confirmed_at",
-                        "updated_at",
-                    ]
-                )
-
-    return _serialize_request(wfr)
+    This is still a weekly payout request, not an unapproved reimbursement
+    claim. Linked advances follow the normal disbursement/receipt/accountability
+    chain so this choice cannot bypass approval or cause a second payment.
+    """
+    return request_advance(request_id, principal, funding_source="self_fund")
 
 
 def not_requested(request_id: str, principal) -> dict:
@@ -773,7 +761,7 @@ def disburse(request_id: str, data: dict, principal) -> dict:
         f"UGX {wfr.disbursed_amount:,} for your week of "
         f"{wfr.week_start_date:%d %b} was disbursed"
         + (f" via {wfr.disburse_method}" if wfr.disburse_method else "")
-        + ". Only click Confirmed after receiving the bank message and verifying the funds arrived.",
+        + ". Only click Fund Received after receiving the bank message and verifying the funds arrived.",
     )
     return _serialize_request(wfr)
 
@@ -859,6 +847,7 @@ def _serialize_request(wfr: WeeklyFundRequest, include_lines: bool = False) -> d
         "responsibleRole": wfr.responsible_role,
         "totalAmount": wfr.total_amount,
         "status": wfr.status,
+        "fundingSource": wfr.funding_source,
         "disbursedAmount": wfr.disbursed_amount,
         "disbursedAt": wfr.disbursed_at.isoformat() if wfr.disbursed_at else None,
         "receiptConfirmedAt": wfr.receipt_confirmed_at.isoformat()

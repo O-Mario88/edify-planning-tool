@@ -289,6 +289,13 @@ DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 # external pool (for example PgBouncer) at the infrastructure layer instead.
 DATABASES["default"]["CONN_MAX_AGE"] = 0
 
+# Managed PgBouncer rejects libpq's generic ``options`` startup parameter.
+# Pooled runtime roles therefore carry the same timeout policy as ALTER ROLE
+# defaults in Postgres, and readiness verifies those defaults reached the live
+# session before an instance is allowed to serve traffic.  Migrations stay on
+# a direct connection and retain the per-connection options below.
+DB_USE_PGBOUNCER = _truthy(os.environ.get("DB_USE_PGBOUNCER"), fallback=False)
+
 # ── Database timeouts ────────────────────────────────────────────────────────
 # Postgres defaults all three of these to "wait forever", which is the wrong
 # answer for every one of them:
@@ -335,9 +342,18 @@ _existing_options = DATABASES["default"].setdefault("OPTIONS", {}).get("options"
 # Appended, never assigned: a DATABASE_URL carrying ?schema= already put a
 # search_path in here, and overwriting it would silently point the whole
 # application at the wrong schema.
-DATABASES["default"]["OPTIONS"]["options"] = " ".join(
-    filter(None, [_existing_options, *_pg_options])
-)
+if DB_USE_PGBOUNCER:
+    if _existing_options:
+        raise RuntimeError(
+            "DB_USE_PGBOUNCER cannot be combined with DATABASE_URL startup "
+            "options; configure search_path and timeout defaults on the "
+            "dedicated Postgres runtime role instead."
+        )
+    DATABASES["default"]["OPTIONS"].pop("options", None)
+else:
+    DATABASES["default"]["OPTIONS"]["options"] = " ".join(
+        filter(None, [_existing_options, *_pg_options])
+    )
 
 # How long to wait for the TCP connect and startup handshake. Without it libpq
 # waits indefinitely, so a database host that accepts the connection but never

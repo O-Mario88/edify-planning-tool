@@ -1409,6 +1409,30 @@ class MasterGovernanceTests(DistributionFixture):
 
 
 class WorkspacePageTests(DistributionFixture):
+    def test_admin_can_observe_team_distribution_but_cannot_allocate(self):
+        milestone = self._milestone("ADMIN_OBSERVE", target="40")
+        team = self._team_allocation(milestone, self.pl_sp, 40)
+        approve_allocation(team, principal=self.ia)
+        admin, _ = _user("Admin", "observer@ug.test", "Platform Observer")
+        self.client.force_login(admin)
+        response = self.client.get("/target-distribution/team", {"fy": FY})
+        self.assertContains(response, "Test milestone ADMIN_OBSERVE")
+        self.assertContains(response, "Read-only oversight")
+        self.assertFalse(response.context["can_allocate"])
+        self.assertNotContains(response, "data-team-allocation-open=")
+        self.assertNotContains(response, 'action="/target-distribution/team/action"')
+        response = self.client.post(
+            "/target-distribution/team/action",
+            {
+                "action": "save_member_allocations",
+                "fy": FY,
+                "allocation": team.id,
+                f"target__{self.cceo_a_sp.id}": "40",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(team.children.exists())
+
     def _publish_master(self):
         flagged = PriorityMilestone.objects.filter(
             priority__level="country",

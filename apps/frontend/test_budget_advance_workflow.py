@@ -210,11 +210,12 @@ class BudgetAdvanceWorkflowTest(TestCase):
             self.assertContains(response, "Alice Requester")
             self.assertContains(response, "Staff cost")
             self.assertContains(response, "UGX 600,000")
-            self.assertContains(response, "Annual")
-        self.assertContains(self.page(self.pl, wfr), "Approve &amp; Send to Accountant")
+            self.assertContains(response, 'href="/budget"')
+        self.assertNotContains(response, 'aria-label="Budget period"')
+        self.assertContains(self.page(self.pl, wfr), "Approve")
         self.assertNotContains(self.page(self.outsider, wfr), "UGX 600,000")
         self.assertNotContains(
-            self.page(self.outsider, wfr), "Approve &amp; Send to Accountant"
+            self.page(self.outsider, wfr), f"/weekly/{wfr.id}/approve?"
         )
 
     def test_return_drawer_and_reason_remain_visible_to_owner(self):
@@ -235,7 +236,7 @@ class BudgetAdvanceWorkflowTest(TestCase):
         )
         self.assertEqual(response["HX-Trigger"], "close-drawer")
         self.assertContains(self.page(self.owner, wfr), "Use the planned attendance.")
-        self.assertNotContains(self.page(self.pl, wfr), "Submit Advance Request")
+        self.assertNotContains(self.page(self.pl, wfr), "Send for Approval")
 
     def test_return_regular_form_redirects_to_the_internal_request(self):
         self.cost()
@@ -275,13 +276,13 @@ class BudgetAdvanceWorkflowTest(TestCase):
         self.client.force_login(self.pl)
         for period in ("month", "quarter", "fy"):
             response = self.client.get(
-                "/accounts/monthly-request/",
+                "/budget",
                 {"fy": "2026", "month": 7, "period": period},
             )
             self.assertContains(response, 'aria-label="Budget period"')
             self.assertContains(response, "Staff cost")
             self.assertContains(response, "UGX 600,000")
-            self.assertContains(response, "Annual")
+            self.assertContains(response, "Annual Budget")
 
     def test_api_receipt_rejects_missing_or_string_acknowledgement(self):
         from rest_framework.test import APIClient

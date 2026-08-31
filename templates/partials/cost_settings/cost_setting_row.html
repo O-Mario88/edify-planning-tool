@@ -6,9 +6,6 @@
 {{ c.label }}
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
-<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle">
-{% if c.reference_unit_cost is not None %}UGX {{ c.reference_unit_cost|currency }}{% else %}—{% endif %}
-</td>
 <td class="px-4 py-3 align-middle" colspan="3">
 <form hx-post="/cost-settings/row/{{ c.key }}" hx-target="#cost-setting-row-{{ c.key }}" hx-swap="outerHTML" class="m-0 space-y-2">
 {% csrf_token %}
@@ -17,7 +14,7 @@
 <div class="absolute inset-y-0 left-0 pl-2.5 flex items-center pointer-events-none">
 <span class="edify-text-caption font-bold text-slate-400">UGX</span>
 </div>
-<input aria-label="Unit cost"
+<input aria-label="Country operational cost"
 type="text"
 name="unit_cost"
 value="{{ c.unit_cost }}"
@@ -25,6 +22,9 @@ required
 class="block w-full h-8 pl-9 pr-2 rounded-control border edify-primary-border text-[12px] font-semibold edify-primary-text focus:outline-none focus:ring-1 edify-primary-focus edify-primary-focus"
 >
 </div>
+<label class="text-xs font-semibold text-slate-600">Minimum viable cost (UGX)
+<input aria-label="Minimum viable cost" type="number" min="0" step="1" name="approved_minimum" value="{{ c.approved_minimum|default_if_none:'' }}" placeholder="Not set" class="block h-8 w-40 px-2 rounded-control border border-slate-200">
+</label>
 {% comment %}
 Required, and deliberately so. This rate is an input to every activity budget
 in the country; the history row already captured who and when, and without
@@ -82,6 +82,7 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 <td class="py-1 pr-2 tabular-nums font-semibold text-slate-700 whitespace-nowrap">
 {% if h.oldUnitCost is not None %}{{ h.oldUnitCost|currency }} →{% endif %} {{ h.newUnitCost|currency }}
 <span class="text-slate-400 font-medium">v{{ h.version }}</span>
+<span class="block text-slate-500 font-medium">Minimum: {% if h.oldApprovedMinimum is not None %}{{ h.oldApprovedMinimum|currency }}{% else %}Not set{% endif %} → {% if h.newApprovedMinimum is not None %}{{ h.newApprovedMinimum|currency }}{% else %}Not set{% endif %}</span>
 </td>
 <td class="py-1 pr-2 text-slate-500">{{ h.changedByName|default:"—" }}</td>
 <td class="py-1 font-medium text-slate-600">{{ h.reason|default:"—" }}</td>
@@ -107,9 +108,6 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 The rate is the reason this page exists and it was the column that fell off a
 phone screen — labelled explicitly so it can never read as a bare number.
 {% endcomment %}
-<td class="px-4 py-3 text-right font-semibold text-slate-600 align-middle" data-label="Regional standard">
-{% if c.reference_unit_cost is not None %}UGX {{ c.reference_unit_cost|currency }}{% else %}—{% endif %}
-</td>
 <td class="px-4 py-3 text-right font-semibold edify-primary-text align-middle" data-label="Country operational">
 UGX {{ c.unit_cost|currency }}
 </td>

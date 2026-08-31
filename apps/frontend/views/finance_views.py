@@ -14,6 +14,7 @@ from apps.core.permissions import (
     require_page_permission,
 )
 from apps.core.rbac import Permission
+from apps.core.exceptions import BadRequest
 from django.contrib import messages
 from django.utils import timezone
 from django.http import HttpResponse
@@ -1031,11 +1032,9 @@ def cost_setting_row_view(request, key):
 
     if request.method == "POST":
         new_cost_str = request.POST.get("unit_cost", "").strip()
-        # The drawer had no reason input, so every rate change in the audit
-        # trail read "Updated via CD Dashboard" — a history row that records
-        # who and when but not why, which is the only part anyone asks about
-        # six months later. The fallback stays for API callers that omit it.
-        reason = request.POST.get("reason", "").strip() or "Updated via CD Dashboard"
+        # Require the CD's explanation so the rate-change audit records why
+        # the approved prices changed.
+        reason = request.POST.get("reason", "").strip()
         try:
             new_cost = int(new_cost_str.replace(",", ""))
             budget_services.upsert_cost_setting(
@@ -1043,6 +1042,9 @@ def cost_setting_row_view(request, key):
                     "key": setting.key,
                     "label": setting.label,
                     "unitCost": new_cost,
+                    "approvedMinimum": request.POST.get(
+                        "approved_minimum", setting.approved_minimum
+                    ),
                     "reason": reason,
                     "fy": setting.fy,
                 },
@@ -1052,7 +1054,15 @@ def cost_setting_row_view(request, key):
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
         except ValueError:
-            return HttpResponse("Invalid cost value", status=400)
+            return HttpResponse(
+                "Enter a valid whole-number cost.",
+                status=400,
+                content_type="text/plain; charset=utf-8",
+            )
+        except BadRequest as exc:
+            return HttpResponse(
+                str(exc.detail), status=400, content_type="text/plain; charset=utf-8"
+            )
 
     # `cost_setting_history` has existed since the register was built and was
     # never surfaced anywhere. A rate is the input to every activity budget in
@@ -1136,64 +1146,10 @@ def _country_budget_title(user) -> str:
 
 @require_page_permission("country_budget")
 def country_budget_view(request):
-    """Monthly Fund Request in the shared planned-activity budget workspace."""
-    from datetime import date
+    """Compatibility route for the unified Budget page."""
+    from .budget_views import _budget_redirect
 
-    from apps.budget.services import budget_workspace
-    from apps.monthly_work_plan.country_budget_service import (
-        get_country_monthly_budget,
-    )
-
-    fy = request.GET.get("fy") or get_operational_fy()
-    month = int(request.GET.get("month") or timezone.localdate().month)
-    anchor_raw = request.GET.get("date")
-    if not anchor_raw:
-        calendar_year = int(fy) - 1 if month >= 10 else int(fy)
-        anchor_raw = date(calendar_year, month, 1).isoformat()
-
-    ctx = budget_workspace(
-        request.user,
-        {
-            "fy": fy,
-            "date": anchor_raw,
-            "period": request.GET.get("period") or "month",
-            "budget_scope": "country",
-            "plan_only": True,
-            "q": request.GET.get("q", ""),
-            "district": request.GET.get("district", ""),
-        },
-    )
-    workspace_title = _country_budget_title(request.user)
-    from apps.geography.models import District
-
-    ctx["districts"] = District.objects.all().order_by("name")
-    ctx["selected_district"] = request.GET.get("district", "").strip()
-    ctx.update(
-        {
-            "workspace_title": workspace_title,
-            "workspace_kind": "country",
-            "workspace_base_url": "/country-budget/",
-            "page_title": workspace_title,
-            "country_workflow": get_country_monthly_budget(
-                request.user,
-                {"fy": fy, "month": ctx["anchor"].month},
-            ),
-        }
-    )
-    # Was a bare placeholder, so the shell defaulted to action="/search" and the
-    # box left the budget rather than filtering it.
-    ctx["topbar_search"] = {
-        "placeholder": "Search planned activities…",
-        "label": "Search planned activities by item or responsible staff",
-        "name": "q",
-        "value": request.GET.get("q", ""),
-        "action": "/country-budget/",
-        "hidden": [
-            {"name": "fy", "value": fy},
-            {"name": "month", "value": month},
-        ],
-    }
-    return render(request, "pages/budgets/monthly.html", ctx)
+    return _budget_redirect(request)
 
 
 @require_page_permission("country_budget")

@@ -414,6 +414,11 @@ class WeeklyFundRequest(TimeStampedModel):
     week_end_date = models.DateField()
     responsible_user = models.CharField(max_length=30)  # responsible user id
     responsible_role = models.CharField(max_length=64, null=True, blank=True)
+    funding_source = models.CharField(
+        max_length=16,
+        default="advance",
+        choices=[("advance", "Advance"), ("self_fund", "Self Fund")],
+    )
     total_amount = models.BigIntegerField(default=0)  # UGX
     status = models.CharField(max_length=40, default="pending_responsible_confirmation")
 

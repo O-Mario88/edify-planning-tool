@@ -378,16 +378,47 @@ def school_directory_view(request):
                 project_assignments__isnull=False
             ).distinct()
 
-    # Compute Tab Counts on the filtered list (before active tab filtering)
-    all_count = filtered_qs.count()
-    unclustered_count = filtered_qs.filter(cluster_status="unclustered").count()
-    clustered_count = filtered_qs.filter(cluster_status="clustered").count()
-    not_assigned_count = (
-        filtered_qs.exclude(project_assignments__isnull=False).distinct().count()
+    # One conditional aggregate describes the population behind the tabs and
+    # KPI strip. These used to be fourteen near-identical COUNT round trips;
+    # at country scale the SQL itself was cheap but their serial network waits
+    # consumed most of the directory's service time under concurrency.
+    summary = filtered_qs.aggregate(
+        all=Count("id", distinct=True),
+        unclustered=Count("id", filter=Q(cluster_status="unclustered"), distinct=True),
+        clustered=Count("id", filter=Q(cluster_status="clustered"), distinct=True),
+        not_assigned=Count(
+            "id", filter=Q(project_assignments__isnull=True), distinct=True
+        ),
+        assigned=Count(
+            "id", filter=Q(project_assignments__isnull=False), distinct=True
+        ),
+        client=Count("id", filter=Q(school_type="client"), distinct=True),
+        core=Count("id", filter=Q(school_type="core"), distinct=True),
+        no_ssa=Count("id", filter=Q(current_fy_ssa_status="not_done"), distinct=True),
+        staff_setup=Count(
+            "id",
+            filter=(
+                Q(account_owner_id__isnull=True)
+                | Q(account_owner_id="")
+                | Q(account_owner_status="pending")
+            ),
+            distinct=True,
+        ),
+        planning_ready=Count(
+            "id",
+            filter=Q(planning_readiness__in=PlanningReadiness.planning_ready_values()),
+            distinct=True,
+        ),
+        duplicates=Count("id", filter=Q(duplicate_status="duplicate"), distinct=True),
+        districts=Count(
+            "district_id", filter=Q(district_id__isnull=False), distinct=True
+        ),
     )
-    assigned_count = (
-        filtered_qs.filter(project_assignments__isnull=False).distinct().count()
-    )
+    all_count = summary["all"]
+    unclustered_count = summary["unclustered"]
+    clustered_count = summary["clustered"]
+    not_assigned_count = summary["not_assigned"]
+    assigned_count = summary["assigned"]
 
     # Apply Tab Filter
     schools_qs = filtered_qs
@@ -480,27 +511,15 @@ def school_directory_view(request):
     # under a "Total Schools 1,043" headline — three different populations on
     # one screen. `filtered_qs` is pre-tab, which is the same population the
     # tab counts already use.
-    kpi_qs = filtered_qs
-    total_schools = kpi_qs.count()
-    client_schools = kpi_qs.filter(school_type="client").count()
-    core_schools = kpi_qs.filter(school_type="core").count()
-    unclustered_schools = kpi_qs.filter(cluster_status="unclustered").count()
-    no_ssa_schools = kpi_qs.filter(current_fy_ssa_status="not_done").count()
-    staff_setup_schools = kpi_qs.filter(
-        Q(account_owner_id__isnull=True)
-        | Q(account_owner_id="")
-        | Q(account_owner_status="pending")
-    ).count()
-    planning_ready_schools = kpi_qs.filter(
-        planning_readiness__in=PlanningReadiness.planning_ready_values()
-    ).count()
-    duplicate_schools = kpi_qs.filter(duplicate_status="duplicate").count()
-    district_count = (
-        kpi_qs.exclude(district_id__isnull=True)
-        .values("district_id")
-        .distinct()
-        .count()
-    )
+    total_schools = summary["all"]
+    client_schools = summary["client"]
+    core_schools = summary["core"]
+    unclustered_schools = summary["unclustered"]
+    no_ssa_schools = summary["no_ssa"]
+    staff_setup_schools = summary["staff_setup"]
+    planning_ready_schools = summary["planning_ready"]
+    duplicate_schools = summary["duplicates"]
+    district_count = summary["districts"]
 
     needs_setup = staff_setup_schools
     needs_ssa = no_ssa_schools

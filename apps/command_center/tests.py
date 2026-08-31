@@ -14,7 +14,7 @@ fabricated numbers (no-mock-data rule). Covers:
 from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase, override_settings
 
 from apps.accounts.models import StaffProfile
 from apps.command_center.dashboard_service import DashboardMetricsService
@@ -26,6 +26,29 @@ User = get_user_model()
 
 def _kpi(items, label):
     return next((i for i in items if i["label"] == label), None)
+
+
+@override_settings(IS_TESTING=False)
+class DashboardSnapshotCacheTest(SimpleTestCase):
+    def test_a_cached_snapshot_is_private_to_the_user_role_fy_and_period(self):
+        user = type(
+            "Principal",
+            (),
+            {"id": "cache-user", "active_role": "Admin"},
+        )()
+        snapshot = {"kpis": {"ready": 7}}
+        with patch(
+            "apps.command_center.dashboard_service.cache.get",
+            return_value=snapshot,
+        ) as get:
+            self.assertIs(
+                DashboardMetricsService.get_dashboard_metrics(user, "month"),
+                snapshot,
+            )
+
+        key = get.call_args.args[0]
+        self.assertIn(":cache-user:Admin:", key)
+        self.assertTrue(key.endswith(":month"), key)
 
 
 class HonestFallbacksTest(TestCase):
@@ -57,6 +80,36 @@ class HonestFallbacksTest(TestCase):
         card = _kpi(metrics["kpi_strip_items"], "My Target Achievement")
         self.assertIsNotNone(card)
         self.assertNotIn("trend", card)
+
+    def test_multiple_evidence_uploads_do_not_multiply_activity_counts(self):
+        from django.utils import timezone
+        from apps.activities.models import Activity
+        from apps.core.fy import get_quarter_for_date
+        from apps.evidence.models import EvidenceRecord
+
+        now = timezone.now()
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="ia_verified",
+            fy=get_operational_fy(),
+            quarter=get_quarter_for_date(now.date()),
+            planned_month=now.month,
+            scheduled_date=now,
+            responsible_staff_id=self.user.staff_profile.id,
+        )
+        for number in range(2):
+            EvidenceRecord.objects.create(
+                activity=activity,
+                kind="photo",
+                uri=f"dashboard-count-{number}.jpg",
+                uploaded_by=self.user.id,
+            )
+        metrics = DashboardMetricsService.get_dashboard_metrics(self.user)
+        self.assertEqual(
+            metrics["execution_summary"], {"week": 1, "month": 1, "quarter": 1, "fy": 1}
+        )
+        self.assertEqual(metrics["kpis"]["target_achievement"], 100)
 
 
 class ProgramLeadKpiTest(TestCase):

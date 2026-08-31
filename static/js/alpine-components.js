@@ -648,8 +648,8 @@ document.addEventListener('alpine:init', () => {
       }
       if (!opts || !this.$refs.el || typeof ApexCharts === 'undefined') return;
       if (this.chart) this.chart.destroy();
-      this.chart = new ApexCharts(this.$refs.el, opts);
-      this.chart.render();
+      this.$refs.el.replaceChildren();
+      this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, opts);
     },
   }));
 });

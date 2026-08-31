@@ -55,7 +55,14 @@ def _seed_rates(**rates: int) -> None:
         )
     for key, unit_cost in rates.items():
         CostSetting.objects.update_or_create(
-            key=key, defaults={"label": key, "unit_cost": unit_cost}
+            key=key,
+            defaults={
+                "label": key,
+                "unit_cost": unit_cost,
+                # Recipe tests configure both prices explicitly. Missing
+                # minima must never fall back to operational rates in the UI.
+                "approved_minimum": unit_cost,
+            },
         )
 
 

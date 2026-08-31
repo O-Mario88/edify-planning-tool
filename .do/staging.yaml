@@ -64,6 +64,16 @@ databases:
     cluster_name: edify-staging-pg-fra
     db_name: edify_staging
     db_user: doadmin
+  # Pool bindables are exposed for the identity attached to the database
+  # component. Keep a second attachment for least-privilege runtime traffic;
+  # the migration job continues to use edifydb's direct administrative URL.
+  - name: edifyruntime
+    engine: PG
+    version: "17"
+    production: true
+    cluster_name: edify-staging-pg-fra
+    db_name: edify_staging
+    db_user: edify_runtime
   - name: edifycache
     engine: VALKEY
     version: "8"
@@ -79,6 +89,9 @@ envs:
   - key: DATABASE_URL
     scope: RUN_AND_BUILD_TIME
     value: ${edifydb.DATABASE_URL}
+  - key: DB_USE_PGBOUNCER
+    scope: RUN_AND_BUILD_TIME
+    value: "false"
   - key: REDIS_URL
     scope: RUN_TIME
     value: ${edifycache.DATABASE_URL}
@@ -194,6 +207,9 @@ jobs:
       - key: DATABASE_URL
         scope: RUN_TIME
         value: ${edifydb.DATABASE_URL}
+      - key: DB_USE_PGBOUNCER
+        scope: RUN_AND_BUILD_TIME
+        value: "false"
 
 services:
   - name: edify-planning-tool
@@ -241,7 +257,10 @@ services:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${edifydb.DATABASE_URL}
+        value: ${edifyruntime.edify-web.DATABASE_URL}
+      - key: DB_USE_PGBOUNCER
+        scope: RUN_AND_BUILD_TIME
+        value: "true"
       - key: GIT_COMMIT
         scope: RUN_TIME
         value: ${_self.COMMIT_HASH}
@@ -290,7 +309,10 @@ workers:
     envs:
       - key: DATABASE_URL
         scope: RUN_TIME
-        value: ${edifydb.DATABASE_URL}
+        value: ${edifyruntime.edify-web.DATABASE_URL}
+      - key: DB_USE_PGBOUNCER
+        scope: RUN_AND_BUILD_TIME
+        value: "true"
       - key: ENABLE_BACKGROUND_JOBS
         scope: RUN_AND_BUILD_TIME
         value: "true"

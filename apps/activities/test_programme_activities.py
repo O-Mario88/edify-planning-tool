@@ -486,6 +486,7 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         self.assertEqual(
             headers,
             [
+                "Group",
                 "Activity Date",
                 "Activity Title",
                 "Activity Type",
@@ -501,11 +502,23 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
             ],
         )
         data = [cell.value for cell in next(sheet.iter_rows(min_row=2, max_row=2))]
-        self.assertEqual(data[1], "Student Conference/Camps - Student camps")
-        self.assertEqual(data[2], "Student Activities")
-        self.assertEqual(data[4], 12)
-        self.assertEqual(data[5], 40)
-        self.assertEqual(data[9], "Group")
+        self.assertEqual(data[0], "Non-School Activities")
+        self.assertEqual(data[2], "Student Conference/Camps - Student camps")
+        self.assertEqual(data[3], "Student Activities")
+        self.assertEqual(data[5], 12)
+        self.assertEqual(data[6], 40)
+        self.assertEqual(data[10], "Group")
+        summary = workbook["Plan Summary"]
+        summary_headers = [cell.value for cell in next(summary.iter_rows(max_row=1))]
+        self.assertEqual(
+            summary_headers,
+            [
+                "Activity",
+                "Number of Activities",
+                "Unit Cost (UGX)",
+                "Total Cost (UGX)",
+            ],
+        )
 
     def test_work_plan_renders_the_premium_matching_columns(self):
         from django.test import Client

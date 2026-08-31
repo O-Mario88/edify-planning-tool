@@ -25,8 +25,7 @@ options.yaxis = [
     title: { text: 'Achievement %', style: { color: 'var(--edify-chart-green)', fontSize: '12px', fontWeight: '600' } },
     labels: { formatter: v => Math.round(v) + '%', style: { colors: 'var(--edify-text-subtle)', fontSize: '12px' } } }
 ];
-this.chart = new ApexCharts(document.querySelector('#performanceChart'), options);
-this.chart.render();
+this.chart = window.EdifyChartSystem.renderDetached(document.querySelector('#performanceChart'), options);
 }
 }"
 x-init="initChart()"

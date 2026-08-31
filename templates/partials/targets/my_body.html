@@ -194,8 +194,7 @@
              cfg.annotations = { xaxis: [{ x: '{{ trend.current_label|escapejs }}', borderColor: 'var(--edify-chart-blue)',
                label: { text: 'now', style: { color: 'var(--edify-surface-raised)', background: 'var(--edify-chart-blue)', fontSize: '12px' } } }] };
              cfg.legend.position = 'top';
-             this.chart = new ApexCharts(el, cfg);
-             this.chart.render();
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
            }
          }" x-init="$nextTick(() => initChart())">
       <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Progress Trend <span class="text-slate-400 font-medium edify-text-caption">(Cumulative, FY {{ fy }})</span></h2>

@@ -35,6 +35,7 @@ just restate it.{% endcomment %}
   {% if viewer_is_wfr_owner %}<a href="/my-plan" class="underline font-semibold">Correct your weekly plan</a>, then resubmit this request.{% endif %}
 </div>
 {% endif %}
+{% if active_wfr.funding_source == 'self_fund' %}<p class="text-sm font-semibold text-slate-600">Self Fund · The same planned amount follows supervisor approval, disbursement and receipt confirmation.</p>{% endif %}
 <!-- Action Buttons -->
 <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-slate-100">
 {% if viewer_can_approve_wfr %}
@@ -43,13 +44,13 @@ just restate it.{% endcomment %}
 {% csrf_token %}
 <button type="submit" class="flex items-center gap-1.5 h-9 px-4 !bg-emerald-700 !text-white text-[12px] font-bold rounded-control hover:bg-opacity-95 shadow-sm focus:outline-none transition-all">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-Approve &amp; Send to Accountant
+Approve
 </button>
 </form>
-<button type="button" hx-get="/fund-requests/weekly/{{ active_wfr.id }}/return-drawer?{{ weekly_action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary">Return for Correction</button>
+<button type="button" hx-get="/fund-requests/weekly/{{ active_wfr.id }}/return-drawer?{{ weekly_action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary">Return</button>
 {% elif viewer_can_disburse_wfr %}
-<button type="button" hx-get="/finance/actions/drawer?action=disburse_advance&request_id={{ active_wfr.id }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary">Disburse advance</button>
-<button type="button" hx-get="/fund-requests/weekly/{{ active_wfr.id }}/return-drawer?{{ weekly_action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary">Return for Correction</button>
+<button type="button" hx-get="/finance/actions/drawer?action=disburse_advance&request_id={{ active_wfr.id }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button primary">Disburse</button>
+<button type="button" hx-get="/fund-requests/weekly/{{ active_wfr.id }}/return-drawer?{{ weekly_action_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="edify-action-button secondary">Return</button>
 {% elif viewer_is_wfr_owner and active_wfr.status == 'pending_responsible_confirmation' or viewer_is_wfr_owner and active_wfr.status == 'not_requested' or viewer_is_wfr_owner and active_wfr.status == 'returned_by_pl' or viewer_is_wfr_owner and active_wfr.status == 'returned_by_cd' or viewer_is_wfr_owner and active_wfr.status == 'returned_by_accountant' %}
 <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/confirm?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
 {% csrf_token %}
@@ -59,7 +60,7 @@ button white-on-white (1.05:1). Plain component classes restore the primary
 look.{% endcomment %}
 <button type="submit" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-Submit Advance Request
+Send for Approval
 </button>
 </form>
 
@@ -67,7 +68,7 @@ Submit Advance Request
 {% csrf_token %}
 <button type="submit" class="flex items-center gap-1.5 h-9 px-3.5 edify-surface border border-slate-200 text-[var(--edify-accent-text)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-Mark as Self-Funded
+Self Fund
 </button>
 </form>
 {% elif active_wfr.status == 'returned_by_pl' or active_wfr.status == 'returned_by_cd' or active_wfr.status == 'returned_by_accountant' %}
@@ -86,10 +87,10 @@ Submitted — awaiting {% if active_wfr.status == 'submitted_to_pl' %}Program Le
 </label>
 <button type="submit" :disabled="!bankReceived" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-Confirmed
+Fund Received
 </button>
 </form>
-<div class="text-[12px] font-semibold text-slate-500">Only click Confirmed after receiving the bank message and verifying the funds arrived.</div>
+<div class="text-[12px] font-semibold text-slate-500">Only click Fund Received after receiving the bank message and verifying the funds arrived.</div>
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 Disbursed — awaiting the owner's confirmation that the funds arrived.
@@ -97,6 +98,7 @@ Disbursed — awaiting the owner's confirmation that the funds arrived.
 {% endif %}
 {% elif active_wfr.status == 'disbursed' and active_wfr.receipt_confirmed_at %}
 <p class="text-sm text-emerald-700">Receipt confirmed by the requester. Accountability is now available.</p>
+{% if viewer_is_wfr_owner %}<a href="/my-plan?week={{ selected_week }}" class="edify-action-button primary">Start Accountability</a>{% endif %}
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
 &check; Action completed. Status of this weekly request is locked to
@@ -126,15 +128,7 @@ class="h-8 px-2.5 rounded-control border border-slate-200 text-[12px] w-44 focus
 </div>
 {% endif %}
 
-<button
-hx-get="/fund-requests/weekly?week={{ selected_week }}"
-hx-target="#fund-requests-page-root"
-hx-swap="innerHTML"
-class="flex items-center gap-1.5 h-9 px-3.5 edify-surface border border-slate-200 text-slate-600 text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm ml-auto"
->
-<svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
-View Source Activities
-</button>
+<a href="/my-plan?week={{ selected_week }}" class="edify-action-button secondary ml-auto">View Source Activities</a>
 </div>
 
 {% else %}

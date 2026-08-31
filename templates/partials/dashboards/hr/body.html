@@ -354,7 +354,7 @@ numbered headings still read 1, 2, 3 … down and across.
     woOptions.colors = ['var(--edify-chart-green)', 'var(--edify-chart-blue)', 'var(--edify-chart-orange)'];
     woOptions.xaxis.categories = {{ workforce_overview.months|safe }};
     woOptions.legend.position = 'bottom';
-    new ApexCharts(document.querySelector("#chart-workforce-overview"), woOptions).render();
+    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-workforce-overview"), woOptions);
 
     // 2. Department Headcount Donut Chart
     var dhOptions = window.EdifyChartSystem.donut('Staff');
@@ -364,7 +364,7 @@ numbered headings still read 1, 2, 3 … down and across.
     /* Quarter-width card: the legend keeps the reference's value-and-share
        text but sits below the ring, where six department names fit. */
     dhOptions.legend.position = 'bottom';
-    new ApexCharts(document.querySelector("#chart-department-headcount"), dhOptions).render();
+    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-department-headcount"), dhOptions);
 
     // 3. Leave Overview Donut
     var loOptions = window.EdifyChartSystem.donut('On leave');
@@ -372,7 +372,7 @@ numbered headings still read 1, 2, 3 … down and across.
     loOptions.labels = hrLeaveLabels;
     loOptions.chart.height = 220;
     loOptions.legend.position = 'bottom';
-    new ApexCharts(document.querySelector("#chart-leave-overview"), loOptions).render();
+    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-leave-overview"), loOptions);
 
     // 4. Performance Overview stacked columns
     var poOptions = window.EdifyChartSystem.formBase({});
@@ -393,7 +393,7 @@ numbered headings still read 1, 2, 3 … down and across.
     poOptions.colors = ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
     poOptions.legend.show = false;
     poOptions.grid = { show: false };
-    new ApexCharts(document.querySelector("#chart-performance-overview"), poOptions).render();
+    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-performance-overview"), poOptions);
 
     // 5. Recruitment Funnel horizontal bar chart
     var rfOptions = window.EdifyChartSystem.rankedBar({});
@@ -402,6 +402,6 @@ numbered headings still read 1, 2, 3 … down and across.
     rfOptions.xaxis.categories = [{% for stage in recruitment_funnel %}'{{ stage.stage }}', {% endfor %}];
     rfOptions.xaxis.labels = { show: false };
     rfOptions.tooltip.y = { formatter: function (val) { return val + ' candidates'; } };
-    new ApexCharts(document.querySelector("#chart-recruitment-funnel"), rfOptions).render();
+    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-recruitment-funnel"), rfOptions);
   })();
 </script>

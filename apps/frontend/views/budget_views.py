@@ -62,19 +62,81 @@ def get_weeks_of_month(year, month):
     return weeks
 
 
+def _budget_redirect(request, **overrides):
+    query = request.GET.copy()
+    for key, value in overrides.items():
+        query[key] = value
+    return redirect("/budget" + ("?" + query.urlencode() if query else ""))
+
+
 @require_page_permission("monthly_budget")
 def monthly_budget_view(request):
-    """Redirect retired monthly-budget bookmarks to the canonical workflow."""
-    if request.user.active_role in (
+    """Keep old bookmarks, with all periods now in Budget."""
+    return _budget_redirect(request, period=request.GET.get("period", "month"))
+
+
+@require_page_permission("monthly_budget")
+def budget_view(request):
+    """One plan-derived ledger for monthly, quarterly and annual budgets."""
+    from apps.budget.services import budget_workspace
+    from apps.monthly_work_plan.country_budget_service import get_country_monthly_budget
+
+    fy = request.GET.get("fy") or get_operational_fy()
+    try:
+        month_value = request.GET.get("month") or timezone.localdate().month
+        month = (
+            list(calendar.month_name).index(month_value)
+            if month_value in calendar.month_name
+            else int(month_value)
+        )
+        anchor = (
+            date.fromisoformat(request.GET.get("date") or request.GET["week"])
+            if request.GET.get("date")
+            or (request.GET.get("week") and not request.GET.get("month"))
+            else date(int(fy) - 1 if month >= 10 else int(fy), month, 1)
+        )
+    except (ValueError, TypeError):
+        from django.http import HttpResponseBadRequest
+
+        return HttpResponseBadRequest("Choose a valid fiscal year and month.")
+    role = request.user.active_role
+    is_country = role in (
         "CountryDirector",
-        "ImpactAssessment",
-        "Accountant",
         "Admin",
-    ):
-        return redirect("/country-budget/")
-    if request.user.active_role == "Program Lead":
-        return redirect("/accounts/monthly-request/")
-    return redirect("/fund-requests/weekly")
+        "Accountant",
+        "ImpactAssessment",
+        "RegionalVicePresident",
+    )
+    period = request.GET.get("period", "month")
+    if period not in ("month", "quarter", "fy"):
+        period = "month"
+    scope = (
+        "country"
+        if is_country
+        else request.GET.get("budget_scope", "team" if role == "Program Lead" else "my")
+    )
+    query = {
+        **request.GET.dict(),
+        "fy": fy,
+        "date": anchor.isoformat(),
+        "period": period,
+        "budget_scope": scope,
+        "plan_only": True,
+    }
+    ctx = budget_workspace(request.user, query)
+    ctx.update(
+        workspace_title="Budget",
+        page_title="Budget",
+        workspace_kind="planned",
+        workspace_base_url="/budget",
+        selected_district=request.GET.get("district", ""),
+    )
+    if is_country:
+        ctx["districts"] = District.objects.order_by("name")
+        ctx["country_workflow"] = get_country_monthly_budget(
+            request.user, {"fy": fy, "month": anchor.month}
+        )
+    return render(request, "pages/budgets/monthly.html", ctx)
 
 
 def _mission_status_for_cceo(user, week_start):
@@ -1333,6 +1395,8 @@ def _build_fund_requests_context(request):
 
 @require_page_permission("fund_requests")
 def weekly_fund_requests_view(request):
+    if request.GET.get("period_tab") in ("month", "quarter", "fy"):
+        return _budget_redirect(request, period=request.GET["period_tab"])
     fy = request.GET.get("fy", get_operational_fy()).strip()
 
     # CSV export of the currently filtered requests (same pattern as /clusters).
@@ -1485,7 +1549,7 @@ def weekly_fund_request_self_funded_action(request, request_id):
     if request.method == "POST":
         try:
             self_funded(request_id, request.user)
-            action_ok = "Weekly fund request marked as self-funded."
+            action_ok = "Self Fund request sent for approval."
         except Exception as e:
             action_error = str(e)
 

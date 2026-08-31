@@ -75,6 +75,23 @@ class AdminSuperRoleMatrixTests(SimpleTestCase):
                     Permission.STRATEGIC_RESERVE_MANAGE,
                     Permission.STRATEGIC_RESERVE_APPROVE,
                     Permission.COST_AMENDMENT_APPROVE,
+                    Permission.STRATEGIC_PRIORITIES_CREATE,
+                    Permission.STRATEGIC_PRIORITIES_EDIT,
+                    Permission.STRATEGIC_PRIORITIES_APPROVE,
+                    Permission.STRATEGIC_PRIORITIES_ALLOCATE,
+                    # Added 2026-08-29 by the release-readiness audit, on the
+                    # mandate's own words: "RVP and Admin remain read-only for
+                    # business values" (§18.1). `milestones.define` is what
+                    # `_assert_master_editor` actually reads, and its refusal
+                    # text already named the rule — "Master Priority figures
+                    # are set by the Country Director and Impact Assessment" —
+                    # while Admin held the permission by default and was
+                    # ADMITTED by that guard when tested. A country target's
+                    # figure, Core/Client split and allocation method feed
+                    # distribution, planning, achievement and performance.
+                    #
+                    Permission.MILESTONES_DEFINE,
+                    Permission.MILESTONES_ALLOCATE,
                     Permission.BUSINESS_TRANSFORMATION_LOAN_WRITE,
                     Permission.BUSINESS_TRANSFORMATION_REPAYMENT_WRITE,
                     Permission.BUSINESS_TRANSFORMATION_PORTFOLIO_CERTIFY,

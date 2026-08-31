@@ -46,8 +46,8 @@ from apps.core.exceptions import BadRequest, Forbidden
 
 # Who may author at each level. Kept here rather than inline so the answer to
 # "who sets strategy" is one list, not a condition repeated at every call site.
-REGIONAL_AUTHOR_ROLES = ("RegionalVicePresident", "Admin")
-COUNTRY_AUTHOR_ROLES = ("CountryDirector", "Admin")
+REGIONAL_AUTHOR_ROLES = ("RegionalVicePresident",)
+COUNTRY_AUTHOR_ROLES = ("CountryDirector",)
 
 # Spec §3 — who holds the priority-setting conversation with whom. The cascade
 # decides WHAT is discussed; this decides WITH WHOM, and the two are separate

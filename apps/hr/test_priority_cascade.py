@@ -625,6 +625,7 @@ class StrategicPriorityPageTest(CascadeTestCase):
     def setUp(self):
         super().setUp()
         self.hr = _user("hr@cascade.test", "HumanResources")
+        self.admin = _user("admin@cascade.test", "Admin")
 
     def _login(self, user):
         self.client.force_login(user)
@@ -640,6 +641,27 @@ class StrategicPriorityPageTest(CascadeTestCase):
         response = self.client.get("/strategic-priorities")
         self.assertEqual(response.status_code, 200)
         self.assertFalse(response.context["can_author"])
+
+    def test_admin_can_inspect_but_not_author(self):
+        self._login(self.admin)
+        response = self.client.get("/strategic-priorities")
+        self.assertEqual(response.status_code, 200)
+        self.assertFalse(response.context["can_author"])
+
+        response = self.client.post(
+            "/strategic-priorities/action",
+            {
+                "action": "create_priority",
+                "fy": FY,
+                "level": StrategicPriorityLevel.REGIONAL,
+                "title": "Admin-authored strategy",
+                "strategic_purpose": "This must be refused.",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+        self.assertFalse(
+            StrategicPriority.objects.filter(title="Admin-authored strategy").exists()
+        )
 
     def test_an_employee_cannot_reach_it_at_all(self):
         self._login(self.cceo)

@@ -944,15 +944,13 @@ def monthly_request_view(request):
     from apps.core.exceptions import BadRequest, Forbidden
     from apps.fund_requests.monthly_request_service import get_monthly_request
 
-    role = getattr(request.user, "active_role", None) or ""
     if (
-        role
-        in ("CountryDirector", "Admin", "RegionalVicePresident", "CD", "ADMIN", "RVP")
+        request.method == "GET"
         and request.headers.get("HX-Target") != "monthly-request-root"
     ):
-        from apps.frontend.views.finance_views import country_budget_view
+        from .budget_views import _budget_redirect
 
-        return country_budget_view(request)
+        return _budget_redirect(request, period=request.GET.get("period", "month"))
 
     try:
         context = get_monthly_request(

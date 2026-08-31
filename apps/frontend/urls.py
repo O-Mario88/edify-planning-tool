@@ -593,6 +593,8 @@ urlpatterns = [
         name="cost_preview",
     ),
     # Budgets & Fund Requests
+    path("budget", budget_views.budget_view, name="budget"),
+    path("budget/", budget_views.budget_view),
     path("budgets/monthly", budget_views.monthly_budget_view, name="monthly_budget"),
     path(
         "fund-requests/weekly",

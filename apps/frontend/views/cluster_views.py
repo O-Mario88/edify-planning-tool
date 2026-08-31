@@ -83,7 +83,8 @@ def _get_cost_preview_data(activity_type, participants, cluster_id):
             "activityType": act_type,
             "expectedParticipants": participants,
             "clusterId": cluster_id,
-        }
+        },
+        minimum=True,
     )
 
     cost_lines = []
@@ -107,7 +108,8 @@ def _get_cost_preview_data(activity_type, participants, cluster_id):
         "catalogue_version": result["catalogueVersion"] or "None active",
         "lines": cost_lines,
         "amount": result["amount"],
-        "can_schedule": result["canSchedule"],
+        "can_schedule": not result["costMissing"],
+        "costMissing": result["costMissing"],
         "blockers": result["blockers"],
     }
 

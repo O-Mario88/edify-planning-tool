@@ -2,7 +2,7 @@
 
 The unified Work Plan reads the SAME operational ledger every other surface
 uses (apps.activities.Activity + its ActivityScheduleCostLine budget rows) and
-adds nothing of its own: scoping reuses the Calendar audience helper, the
+adds nothing of its own: scoping follows ownership and reporting lines, the
 next-action column reuses My Plan's canonical derivation, and every cost figure
 is a sum of persisted cost lines — never an invented rate.
 
@@ -16,20 +16,26 @@ Role scoping (§18):
   • RegionalVicePresident — region-scoped, read-only rows plus aggregate month
     bands so the submitted plan can be inspected before approval.
   • ProjectCoordinator — activities belonging to their scoped projects.
-  • Program Lead / CCEO / everyone else — the Calendar audience: their own
-    work (both StaffProfile and User id spaces) plus, for a PL, supervised
-    CCEOs; partner-delivered work is reachable through monitored_by_staff_id.
+  • Program Lead — own work or own work plus directly supervised staff.
+  • CCEO / everyone else — their own work in both StaffProfile and User id
+    spaces; partner work is reachable through monitored_by_staff_id.
 """
 
 from __future__ import annotations
 
 import calendar
+from decimal import Decimal, ROUND_HALF_UP
 from urllib.parse import urlencode
 
-from django.db.models import Q, Sum
+from django.db.models import Q
 
 from apps.activities.models import Activity
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import (
+    CLUSTER_MEETING_TYPES,
+    COMPLETED_WORK_STATUSES,
+    TRAINING_TYPES,
+    VISIT_TYPES,
+)
 from apps.core.clock import ClockService
 from apps.core.enums import ActivityStatus, ActivityType, DeliveryType, SupportRationale
 from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
@@ -127,7 +133,25 @@ def _window_q(start, end) -> Q:
     )
 
 
-def _scoped_activities(user, fy: str):
+def _plan_owner_ids(user, plan_scope: str) -> set[str]:
+    """Keep personal plans personal; PL consolidation follows reporting lines."""
+    ids = {value for value in (user.id, user.staff_profile_id) if value}
+    if (
+        user.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        and plan_scope == "team"
+        and user.staff_profile_id
+    ):
+        from apps.accounts.models import StaffSupervisorAssignment
+
+        for staff_id, user_id in StaffSupervisorAssignment.objects.filter(
+            supervisor_id=user.staff_profile_id,
+            supervisee__deleted_at__isnull=True,
+        ).values_list("supervisee_id", "supervisee__user_id"):
+            ids.update(value for value in (staff_id, user_id) if value)
+    return ids
+
+
+def _scoped_activities(user, fy: str, plan_scope: str = "team"):
     """(queryset, rows_visible) — §18 scoping over the FY ledger."""
     qs = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
     role = user.active_role
@@ -160,14 +184,9 @@ def _scoped_activities(user, fy: str):
         project_ids = list(scoped_projects(user).values_list("id", flat=True))
         return qs.filter(project_id__in=project_ids), True
 
-    # PL / CCEO / IA / everyone else: the Calendar audience. Imported lazily —
-    # extended_views imports this module's caller, so a top-level import here
-    # would be circular.
-    from apps.frontend.views.extended_views import _calendar_staff_audience
-
-    owner_ids, _ = _calendar_staff_audience(user)
-    if owner_ids is None:
-        return qs, True
+    # Calendar intentionally shows personal work only. A PL's work plan also
+    # needs their direct team's activities, including both legacy ID spaces.
+    owner_ids = _plan_owner_ids(user, plan_scope)
     return (
         qs.filter(
             Q(responsible_staff_id__in=owner_ids)
@@ -196,6 +215,63 @@ def _date_label(start, end) -> str:
     return f"{start.day} {start.strftime('%B %Y')}"
 
 
+SCHOOL_GROUP_LABEL = "School Activities"
+NON_SCHOOL_GROUP_LABEL = "Non-School Activities"
+
+
+def _activity_group(a) -> tuple[str, str]:
+    """("school"|"non_school", display label) for one Activity row.
+
+    Preserve explicitly non-school planning even when its catalogue uses a
+    training workflow. Otherwise school/cluster links and canonical school
+    activity types identify visits, training and cluster meetings.
+    """
+    if a.planning_source == "manual_work_plan" or a.activity_type in (
+        ActivityType.PROGRAMME_EVENT,
+        ActivityType.FIELD_EVENT,
+    ):
+        return "non_school", NON_SCHOOL_GROUP_LABEL
+    if (
+        a.school_id
+        or a.cluster_id
+        or a.activity_type in (*VISIT_TYPES, *TRAINING_TYPES, *CLUSTER_MEETING_TYPES)
+    ):
+        return "school", SCHOOL_GROUP_LABEL
+    return "non_school", NON_SCHOOL_GROUP_LABEL
+
+
+def _summary_bucket_label(a) -> str:
+    """One summary line per (executor, activity type) — "Staff School Visit",
+    "Partner School Visit", "Staff Cluster Meeting", … The canonical type
+    display keeps named curricula from fragmenting the summary into
+    per-course rows."""
+    executor = "Partner" if a.delivery_type == "partner" else "Staff"
+    label = a.get_activity_type_display()
+    if _activity_group(a)[0] == "non_school":
+        # Conferences, boot camps and district meetings share generic workflow
+        # types. Preserve their planned names instead of merging them all.
+        label = a.activity_name_snapshot or (
+            a.catalogue_item.display_name if a.catalogue_item_id else label
+        )
+    return f"{executor} {label}"
+
+
+def _finish_summary_rows(bucket: dict[str, dict]) -> list[dict]:
+    rows = sorted(bucket.values(), key=lambda r: (-r["cost"], r["label"]))
+    for row in rows:
+        # Derived, never invented: the average of the persisted cost lines.
+        unit_cost = (Decimal(row["cost"]) / row["count"]).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
+        row["unit_cost"] = None if row["cost_missing_count"] else unit_cost
+        row["unit_cost_display"] = (
+            "Cost setup required"
+            if row["cost_missing_count"]
+            else format(unit_cost, ",.0f" if unit_cost == int(unit_cost) else ",.2f")
+        )
+    return rows
+
+
 def _query_string(base: dict, **overrides) -> str:
     merged = {key: value for key, value in base.items() if value not in (None, "")}
     for key, value in overrides.items():
@@ -208,8 +284,6 @@ def _query_string(base: dict, **overrides) -> str:
 
 
 def build_work_plan_context(user, params) -> dict:
-    from apps.monthly_work_plan.schedule_plan import monthly_work_plan
-
     today = ClockService.today()
     operational_fy = get_operational_fy(today)
 
@@ -247,7 +321,9 @@ def build_work_plan_context(user, params) -> dict:
     if flag not in ("pending_approval", "cost_missing", "at_risk"):
         flag = ""
 
-    base_qs, rows_visible = _scoped_activities(user, fy)
+    is_pl = user.active_role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    plan_scope = "own" if params.get("scope") == "own" or not is_pl else "team"
+    base_qs, rows_visible = _scoped_activities(user, fy, plan_scope)
 
     # Terminal statuses leave the plan unless explicitly asked for.
     valid_statuses = set(ActivityStatus.values)
@@ -272,8 +348,9 @@ def build_work_plan_context(user, params) -> dict:
     period_qs = base_qs.filter(_window_q(window_start, window_end))
 
     activities = list(
-        period_qs.select_related("school", "cluster", "event_district")
-        .annotate(lines_total=Sum("schedule_cost_lines__amount"))
+        period_qs.select_related(
+            "school", "cluster", "event_district", "catalogue_item"
+        )
         .prefetch_related(
             "schedule_cost_lines",
             "schedule_cost_lines__weekly_request_lines__weekly_fund_request",
@@ -349,6 +426,7 @@ def build_work_plan_context(user, params) -> dict:
         "activity_type": activity_type,
         "executor": executor,
         "flag": flag,
+        "scope": plan_scope if is_pl else "",
     }
     for m in window_months:
         bands[m] = {
@@ -377,6 +455,9 @@ def build_work_plan_context(user, params) -> dict:
     cost_missing_count = 0
     at_risk_count = 0
     completed_count = 0
+    # Activity Plan Summary accumulators — counted over every scoped activity
+    # in the visible detail table, including its drill-down filters.
+    summary_buckets: dict[str, dict[str, dict]] = {"school": {}, "non_school": {}}
 
     for a in activities:
         anchor = a.planned_date or (
@@ -399,7 +480,22 @@ def build_work_plan_context(user, params) -> dict:
             band = undated_band
             band_month = None
 
-        cost_lines = list(a.schedule_cost_lines.all())
+        all_cost_lines = list(a.schedule_cost_lines.all())
+        cost_lines = []
+        for line in all_cost_lines:
+            if line.planned_date:
+                in_period = window_start <= line.planned_date <= window_end
+            elif line.month:
+                in_period = line.month in window_month_set and (
+                    not line.fiscal_year or str(line.fiscal_year) == fy
+                )
+            else:
+                # Undated legacy costs belong to the activity's anchor month;
+                # never repeat them in every month of a multi-day activity.
+                in_period = bool(anchor and window_start <= anchor <= window_end)
+            if in_period:
+                cost_lines.append(line)
+        missing_cost = a.cost_missing or not all_cost_lines
 
         # Cost lines land in the band of their own service month (multi-day
         # allocations), falling back to the parent activity's band, so each
@@ -437,15 +533,25 @@ def build_work_plan_context(user, params) -> dict:
             at_risk_count += 1
         if is_pending_approval:
             pending_approval_count += 1
-        if a.cost_missing:
+        if missing_cost:
             cost_missing_count += 1
 
         if flag == "pending_approval" and not is_pending_approval:
             continue
-        if flag == "cost_missing" and not a.cost_missing:
+        if flag == "cost_missing" and not missing_cost:
             continue
         if flag == "at_risk" and not is_at_risk:
             continue
+
+        group_key, group_label = _activity_group(a)
+        bucket_label = _summary_bucket_label(a)
+        summary_row = summary_buckets[group_key].setdefault(
+            bucket_label,
+            {"label": bucket_label, "count": 0, "cost": 0, "cost_missing_count": 0},
+        )
+        summary_row["count"] += 1
+        summary_row["cost"] += activity_period_cost
+        summary_row["cost_missing_count"] += int(missing_cost)
 
         status_label, status_class = get_activity_status_label_and_class(a, today)
         owned = a.responsible_staff_id in viewer_ids or (
@@ -486,17 +592,15 @@ def build_work_plan_context(user, params) -> dict:
             if wfr_status:
                 break
 
-        participants = (
-            (a.teachers_attended or 0)
-            + (a.leaders_attended or 0)
-            + (a.other_participants or 0)
-        ) or a.expected_participants
+        participants = a.expected_participants
 
         rows.append(
             {
                 "id": a.id,
                 "date_label": _date_label(anchor, a.end_date),
                 "band_month": band_month,
+                "group": group_key,
+                "group_label": group_label,
                 "name": a.activity_name_snapshot or a.get_activity_type_display(),
                 "meta": meta,
                 "responsible": (
@@ -512,8 +616,8 @@ def build_work_plan_context(user, params) -> dict:
                 "status_label": status_label,
                 "status_class": status_class,
                 "status_tone": status_tone(status_class),
-                "cost": a.lines_total or 0,
-                "cost_missing": a.cost_missing,
+                "cost": activity_period_cost,
+                "cost_missing": missing_cost,
                 "action": action,
                 # Expanded detail (server-rendered, no extra endpoint).
                 "purpose": a.activity_purpose_text or "",
@@ -542,6 +646,41 @@ def build_work_plan_context(user, params) -> dict:
                 "evidence_status": a.get_evidence_status_display(),
             }
         )
+
+    # Detailed rows keep their chronological order inside each group; School
+    # Activities lead, Non-School Activities follow (stable sort).
+    rows.sort(key=lambda r: 0 if r["group"] == "school" else 1)
+
+    school_summary_rows = _finish_summary_rows(summary_buckets["school"])
+    non_school_summary_rows = _finish_summary_rows(summary_buckets["non_school"])
+    school_totals = {
+        "count": sum(r["count"] for r in school_summary_rows),
+        "cost": sum(r["cost"] for r in school_summary_rows),
+    }
+    non_school_totals = {
+        "count": sum(r["count"] for r in non_school_summary_rows),
+        "cost": sum(r["cost"] for r in non_school_summary_rows),
+    }
+    plan_summary = {
+        "school": {
+            "label": SCHOOL_GROUP_LABEL,
+            "rows": school_summary_rows,
+            **school_totals,
+        },
+        "non_school": {
+            "label": NON_SCHOOL_GROUP_LABEL,
+            "rows": non_school_summary_rows,
+            **non_school_totals,
+        },
+        "total": {
+            "count": school_totals["count"] + non_school_totals["count"],
+            "cost": school_totals["cost"] + non_school_totals["cost"],
+            "cost_missing_count": sum(
+                r["cost_missing_count"]
+                for r in school_summary_rows + non_school_summary_rows
+            ),
+        },
+    }
 
     groups = list(bands.values())
     if undated_band["count"]:
@@ -676,7 +815,35 @@ def build_work_plan_context(user, params) -> dict:
 
     from apps.planning.work_plan_approval import approval_context
 
+    scope_tabs = (
+        [
+            {
+                "label": label,
+                "url": _query_string(query_state, scope=key, responsible=None),
+                "active": plan_scope == key,
+            }
+            for key, label in (("own", "My Activity Plan"), ("team", "My Plan + Team"))
+        ]
+        if is_pl
+        else []
+    )
+    scope_label = {
+        EdifyRole.COUNTRY_DIRECTOR.value: "Country activity plan",
+        EdifyRole.ADMIN.value: "Country activity plan",
+        EdifyRole.PROGRAM_ACCOUNTANT.value: "Country activity plan",
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value: "Regional activity plan",
+        EdifyRole.PROJECT_COORDINATOR.value: "Project activity plan",
+    }.get(
+        user.active_role,
+        "My plan and team consolidated"
+        if is_pl and plan_scope == "team"
+        else "My activity plan",
+    )
+
     return {
+        "plan_scope": plan_scope,
+        "scope_tabs": scope_tabs,
+        "scope_label": scope_label,
         "fy": fy,
         "fy_options": options,
         "view": view,
@@ -699,10 +866,17 @@ def build_work_plan_context(user, params) -> dict:
         "flag_label": flag_labels.get(flag, ""),
         "clear_flag_url": _query_string(query_state, flag=None),
         "clear_filters_url": _query_string(
-            {"fy": fy, "view": view, "period": str(period)}
+            {
+                "fy": fy,
+                "view": view,
+                "period": str(period),
+                "scope": plan_scope if is_pl else "",
+            }
         ),
         "filters_active": filters_active,
         "kpi_strip_items": kpi_strip_items,
+        "plan_summary": plan_summary,
+        "plan_summary_sections": [plan_summary["school"], plan_summary["non_school"]],
         "groups": groups,
         "fy_totals": fy_totals,
         "rows": rows,
@@ -714,31 +888,4 @@ def build_work_plan_context(user, params) -> dict:
         ),
         "can_export": has_permission(user, Permission.EXPORT.value),
         "work_plan_approval": approval_context(user, fy),
-        # §18: the schedule-derived monthly plan. Computed by the canonical
-        # service so the page never re-derives a target contribution or a cost
-        # of its own — the two places would drift the first time either
-        # changed.
-        "monthly_plan": monthly_work_plan(staff_ids=_work_plan_staff_ids(user), fy=fy),
     }
-
-
-def _work_plan_staff_ids(user) -> list[str]:
-    """Whose scheduled work this Work Plan covers.
-
-    A staff member sees their own; a manager sees themselves and the people
-    they supervise, because a Work Plan that stops at the viewer cannot show a
-    Program Lead what their team has committed the month to.
-    """
-    from apps.accounts.models import StaffSupervisorAssignment
-
-    own = getattr(user, "staff_profile_id", None)
-    if not own:
-        return []
-    ids = [str(own)]
-    ids.extend(
-        str(supervisee_id)
-        for supervisee_id in StaffSupervisorAssignment.objects.filter(
-            supervisor_id=own
-        ).values_list("supervisee_id", flat=True)
-    )
-    return ids

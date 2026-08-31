@@ -78,7 +78,8 @@ class RecordTableMarkupContractTests(SimpleTestCase):
         src = (
             TEMPLATES / "partials" / "cost_settings" / "cost_setting_row.html"
         ).read_text()
-        for label in ("Regional standard", "Country operational", "Minimum viable"):
+        for label in ("Country operational", "Minimum viable"):
             with self.subTest(label=label):
                 self.assertIn(f'data-label="{label}"', src)
+        self.assertNotIn('data-label="Regional standard"', src)
         self.assertIn("data-record-title", src)

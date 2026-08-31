@@ -62,7 +62,7 @@ class CostingPreviewView(APIView):
     def post(self, request: Request) -> Response:
         from .costing_service import preview
 
-        return Response(preview(request.data))
+        return Response(preview(request.data, minimum=True))
 
 
 class ManagementCostingPreviewView(APIView):

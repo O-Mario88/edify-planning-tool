@@ -301,6 +301,27 @@ ADMIN_EXCLUDED_PERMISSIONS: frozenset[Permission] = frozenset(
         Permission.STRATEGIC_RESERVE_MANAGE,
         Permission.STRATEGIC_RESERVE_APPROVE,
         Permission.COST_AMENDMENT_APPROVE,
+        # Admin may inspect strategy for platform support, but it does not
+        # author, approve or allocate governed business values. Keeping VIEW
+        # while excluding every write capability makes that boundary durable
+        # even when a new endpoint uses RBAC without the view's role guard.
+        Permission.STRATEGIC_PRIORITIES_CREATE,
+        Permission.STRATEGIC_PRIORITIES_EDIT,
+        Permission.STRATEGIC_PRIORITIES_APPROVE,
+        Permission.STRATEGIC_PRIORITIES_ALLOCATE,
+        # Master Priority source figures are a governed business value: the
+        # number, the Core/Client split and the allocation method feed target
+        # distribution, planning, achievement and performance. `milestones
+        # .define` is what `_assert_master_editor` actually reads, and Admin
+        # held it by default — so the super-role could adjust a country target
+        # figure. Three sources agree it must not: the audit mandate ("RVP and
+        # Admin remain read-only for business values"), the guard's own refusal
+        # text ("set by the Country Director and Impact Assessment"), and the
+        # doctrine already applied two exclusions above, where AUD-007 took the
+        # country money chain off this role for the same reason.
+        #
+        Permission.MILESTONES_DEFINE,
+        Permission.MILESTONES_ALLOCATE,
         # A technical super-role has no implicit governed lending authority,
         # including record-level reads.
         Permission.BUSINESS_TRANSFORMATION_VIEW,
@@ -473,8 +494,6 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.STRATEGIC_PRIORITIES_EDIT,
         P.STRATEGIC_PRIORITIES_APPROVE,
         P.STRATEGIC_PRIORITIES_ALLOCATE,
-        P.MILESTONES_DEFINE,
-        P.MILESTONES_ALLOCATE,
         P.MILESTONES_VIEW_PROGRESS,
         P.BUSINESS_TRANSFORMATION_VIEW,
         P.BUSINESS_TRANSFORMATION_PORTFOLIO_VIEW,
