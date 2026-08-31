@@ -325,7 +325,7 @@ def target_distribution_form(request):
 
 
 @require_page_permission("team_target_distribution")
-@_permission(Permission.MILESTONES_ALLOCATE.value)
+@_permission(Permission.STRATEGIC_PRIORITIES_VIEW.value)
 def team_distribution_page(request):
     from apps.hr.models import StrategicPriorityCycle
     from apps.hr.target_distribution import team_distribution_workspace
@@ -357,6 +357,9 @@ def team_distribution_page(request):
             "cycle_years": cycle_years,
             "today": timezone.localdate().isoformat(),
             "next_team_distribution": next_team_distribution,
+            "can_allocate": has_permission(
+                request.user, Permission.MILESTONES_ALLOCATE.value
+            ),
         },
     )
 

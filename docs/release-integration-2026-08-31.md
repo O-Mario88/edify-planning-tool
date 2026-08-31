@@ -23,6 +23,7 @@ dated evidence, not a claim that every platform acceptance gate has passed.
 - Repair the weekly-request grid's closing tags, keeping the request and supporting plan information inside the same full-width layout.
 - Update retired-route and cost-column checks to the unified Budget page and two configured prices. Cost-recipe test fixtures configure minimum rates explicitly.
 - Regenerate inventories and the executed journey traceability matrix from the combined source.
+- Keep Admin team-target oversight readable while hiding allocation controls and rejecting allocation POSTs. The release check exposed a read route that incorrectly required the newly reserved write permission.
 
 ## Deployment boundaries
 

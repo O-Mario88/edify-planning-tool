@@ -57998,7 +57998,7 @@
       "permission_key": "team_target_distribution",
       "primary_action": "Approve spread",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Every figure below is exactly what Impact Assessment approved for your team. Allocate it across yourself and your supervised CCEOs, then monitor quarterly spread and delivery without changing the received target.",
+      "purpose": "Every figure below is exactly what Impact Assessment approved for your team. Allocate it across yourself and your supervised CCEOs, then monitor quarterly spread and delivery without changing the received target. Inspect approved team targets and delivery. Only the responsible Program Lead can allocate targets or approve quarterly spreads.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
