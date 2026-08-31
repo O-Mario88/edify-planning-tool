@@ -82,7 +82,7 @@ class MonthlyRequestPageRendersTest(TestCase):
             is_active=True,
         )
 
-    def test_the_page_renders_for_the_current_month(self):
+    def test_the_legacy_page_redirects_to_the_unified_budget(self):
         from django.test import RequestFactory
         from django.contrib.sessions.middleware import SessionMiddleware
 
@@ -93,7 +93,8 @@ class MonthlyRequestPageRendersTest(TestCase):
         request.user = self.pl
 
         response = monthly_request_view(request)
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(response.url, "/budget?fy=2026&month=8&period=month")
 
     def test_the_paginate_tag_can_still_read_the_page_parameter(self):
         """The tag reads `context["request"].GET`; this is what broke.

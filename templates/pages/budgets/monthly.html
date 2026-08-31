@@ -31,121 +31,21 @@
     {% endif %}
   </div>
 
+  <form method="get" action="/budget" class="flex flex-wrap items-end gap-3">
+    <input type="hidden" name="period" value="{{ selected_period }}">
+    <input type="hidden" name="budget_scope" value="{{ budget_scope }}">
+    <label class="text-sm font-semibold">Fiscal year<input aria-label="Fiscal year" type="number" name="fy" value="{{ fy }}" required class="block h-9 rounded-control border border-slate-200 px-3"></label>
+    <label class="text-sm font-semibold">Period date<input aria-label="Period date" type="date" name="date" value="{{ anchor|date:'Y-m-d' }}" required class="block h-9 rounded-control border border-slate-200 px-3"></label>
+    <button type="submit" class="edify-action-button primary">View Budget</button>
+    <a href="/fund-requests/weekly" class="edify-action-button secondary">Weekly Advance Request</a>
+  </form>
+
   <nav data-edify-tablist aria-label="Budget period">
-    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Month</a>
-    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarter</a>
-    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=month&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'month' %}aria-current="page"{% endif %}>Monthly Budget</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=quarter&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'quarter' %}aria-current="page"{% endif %}>Quarterly Budget</a>
+    <a data-edify-tab href="?fy={{ fy }}&date={{ anchor|date:'Y-m-d' }}&period=fy&budget_scope={{ budget_scope }}&district={{ selected_district|urlencode }}" {% if selected_period == 'fy' %}aria-current="page"{% endif %}>Annual Budget</a>
   </nav>
   <p class="text-xs text-slate-500">Calculated from the costed activities in weekly plans. Month, quarter and annual budgets roll up those planned costs.</p>
-
-  {% if country_workflow and selected_period == "month" %}
-  <section class="rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm" aria-labelledby="country-budget-approval-heading">
-    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-      <div>
-        <h2 id="country-budget-approval-heading" class="text-[14px] font-bold text-slate-800">Monthly Budget Approval</h2>
-        <p class="mt-0.5 text-[12px] font-medium text-slate-500">Status: {{ country_workflow.approval_status }} · {{ country_workflow.month_label }} FY {{ country_workflow.fy }}</p>
-      </div>
-      <div class="flex flex-wrap items-center gap-2">
-        <button type="button"
-           hx-get="/country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
-           hx-target="#drawer-container" hx-swap="innerHTML"
-           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
-          View plan sources
-        </button>
-        <a href="/country-budget/history?fy={{ country_workflow.fy }}"
-           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
-          Submitted budgets
-        </a>
-        {% if country_workflow.is_cd %}
-        <form method="post" action="/country-budget/action" class="m-0">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="send_to_rvp">
-          <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
-          <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
-          <input type="hidden" name="month" value="{{ country_workflow.month }}">
-          <button type="submit" {% if not country_workflow.can_send_to_rvp %}disabled{% endif %}
-                  class="h-9 rounded-control px-4 text-[12px] font-bold text-white {% if country_workflow.can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}cursor-not-allowed bg-slate-300{% endif %}">
-            Submit {{ country_workflow.month_label }} budget to RVP
-          </button>
-        </form>
-        {% elif country_workflow.is_rvp and country_workflow.can_approve_or_return %}
-        <form method="post" action="/country-budget/action" class="m-0">
-          {% csrf_token %}
-          <input type="hidden" name="action" value="approve">
-          <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
-          <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
-          <input type="hidden" name="month" value="{{ country_workflow.month }}">
-          <button type="submit" class="h-9 rounded-control bg-emerald-600 px-4 text-[12px] font-bold text-white hover:bg-emerald-700">Approve</button>
-        </form>
-        <button type="button"
-                hx-get="/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
-                hx-target="#drawer-container" hx-swap="innerHTML"
-                class="h-9 rounded-control border border-rose-200 px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50">
-          Return
-        </button>
-        {% endif %}
-      </div>
-    </div>
-  </section>
-
-  <section class="rounded-surface border border-[var(--border-card)] edify-surface shadow-sm" aria-labelledby="country-envelope-heading">
-    <div class="flex flex-col gap-2 border-b border-slate-100 px-4 py-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <p class="edify-page-eyebrow">Governed funding allocation</p>
-        <h2 id="country-envelope-heading" class="text-[15px] font-bold text-slate-800">Country Monthly Envelope</h2>
-        <p class="mt-0.5 text-[12px] font-medium text-slate-500">The regional rate sets the activity ceiling. Country operational rates set what teams may request and spend.</p>
-      </div>
-      <p class="text-left sm:text-right"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total country request</span><span class="text-[20px] font-extrabold tabular-nums text-[var(--edify-accent)]">{{ country_workflow.country_envelope.totalCountryRequest|ugx }}</span></p>
-    </div>
-
-    <div class="overflow-x-auto">
-      <table class="w-full min-w-[680px] border-collapse text-left text-[12px]">
-        <caption class="sr-only">Country envelope allocation for {{ country_workflow.month_label }} FY {{ country_workflow.fy }}</caption>
-        <thead class="bg-slate-50/70 text-slate-500">
-          <tr>
-            <th scope="col" class="px-4 py-2.5 font-bold">Funding layer</th>
-            <th scope="col" class="px-4 py-2.5 text-right font-bold">Amount</th>
-            <th scope="col" class="px-4 py-2.5 font-bold">Purpose</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-100">
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Regional Standard Funding Ceiling</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.regionalStandardCeiling|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Regional benchmark for scheduled activities</td></tr>
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Operational Activity Allocation</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.operationalActivityRequirement|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Country Operational Cost visible to teams</td></tr>
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Strategic Reserve</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.strategicReserveRequested|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Regional-to-operational difference; approved but undisbursed</td></tr>
-          <tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Unrequested / Deferred Amount</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.deferredAmount|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Zero when the complete regional ceiling is submitted</td></tr>
-          {% if country_workflow.country_envelope.approvedFixedCommitments %}<tr><th scope="row" class="px-4 py-2.5 font-semibold text-slate-800">Administrative Fixed Commitments</th><td class="px-4 py-2.5 text-right font-bold tabular-nums text-slate-800">{{ country_workflow.country_envelope.approvedFixedCommitments|ugx }}</td><td class="px-4 py-2.5 text-slate-500">Separate CD admin-plan exception; not presented as activity need</td></tr>{% endif %}
-        </tbody>
-      </table>
-    </div>
-
-    {% if country_workflow.country_envelope.countryFundingShortfall %}
-    <div class="border-t border-rose-100 bg-rose-50 px-4 py-2.5 text-[12px] font-semibold text-rose-800" role="status">Country Funding Shortfall: {{ country_workflow.country_envelope.countryFundingShortfall|ugx }}. Operational activity need exceeds the regional ceiling.</div>
-    {% elif country_workflow.country_envelope.referenceConfigurationMissingCount %}
-    <div class="border-t border-amber-100 bg-amber-50 px-4 py-2.5 text-[12px] font-semibold text-amber-800" role="status">{{ country_workflow.country_envelope.referenceConfigurationMissingCount }} scheduled activit{{ country_workflow.country_envelope.referenceConfigurationMissingCount|pluralize:'y,ies' }} lack a Regional Standard Funding Cost. Reserve capacity remains unavailable until regional finance completes the reference card.</div>
-    {% endif %}
-
-    <p class="border-t border-slate-100 px-4 py-3 text-[12px] font-semibold text-slate-600">
-      The RVP receives the full Regional Standard Funding Ceiling. Only the Operational Activity Allocation becomes staff spending authority; the remaining difference stays in the country strategic reserve.
-    </p>
-  </section>
-
-  {% if country_workflow.reconciliation %}
-  <section class="rounded-surface border border-slate-200 edify-surface shadow-sm" aria-labelledby="actual-spending-heading">
-    <div class="border-b border-slate-100 px-4 py-3">
-      <p class="edify-page-eyebrow">Actual spending</p>
-      <h2 id="actual-spending-heading" class="text-[15px] font-bold text-slate-800">Disbursement and Accountability</h2>
-    </div>
-    <dl class="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Approved Operating Limits</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.approved_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Committed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.committed_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Amount Disbursed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.disbursed_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Actual Accounted Spend</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.accounted_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Returned Balance</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.returned_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Reimbursements</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.reimbursed_fmt }}</dd></div>
-    </dl>
-  </section>
-  {% endif %}
-  {% endif %}
 
   {% if country_workflow.prior_month_pending %}
   <div class="rounded-control border border-amber-200 bg-amber-50 px-4 py-2.5 text-[12px] font-semibold text-amber-800">
@@ -255,5 +155,76 @@
     <p class="mt-1 text-[12px] font-semibold text-slate-500">{{ empty_help }}</p>
   </div>
   {% endif %}
+  {% if country_workflow and selected_period == "month" %}
+  <section class="rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm" aria-labelledby="country-budget-approval-heading">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div>
+        <h2 id="country-budget-approval-heading" class="text-[14px] font-bold text-slate-800">Monthly Budget Approval</h2>
+        <p class="mt-0.5 text-[12px] font-medium text-slate-500">Status: {{ country_workflow.approval_status }} · {{ country_workflow.month_label }} FY {{ country_workflow.fy }}</p>
+      </div>
+      <div class="flex flex-wrap items-center gap-2">
+        <button type="button"
+           hx-get="/country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
+           hx-target="#drawer-container" hx-swap="innerHTML"
+           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+          View plan sources
+        </button>
+        <a href="/country-budget/history?fy={{ country_workflow.fy }}"
+           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+          Submitted budgets
+        </a>
+        {% if country_workflow.is_cd %}
+        <form method="post" action="/country-budget/action" class="m-0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="send_to_rvp">
+          <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
+          <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
+          <input type="hidden" name="month" value="{{ country_workflow.month }}">
+          <button type="submit" {% if not country_workflow.can_send_to_rvp %}disabled{% endif %}
+                  class="h-9 rounded-control px-4 text-[12px] font-bold text-white {% if country_workflow.can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}cursor-not-allowed bg-slate-300{% endif %}">
+            Submit {{ country_workflow.month_label }} budget to RVP
+          </button>
+        </form>
+        {% elif country_workflow.is_rvp and country_workflow.can_approve_or_return %}
+        <form method="post" action="/country-budget/action" class="m-0">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="approve">
+          <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
+          <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
+          <input type="hidden" name="month" value="{{ country_workflow.month }}">
+          <button type="submit" class="h-9 rounded-control bg-emerald-600 px-4 text-[12px] font-bold text-white hover:bg-emerald-700">Approve</button>
+        </form>
+        <button type="button"
+                hx-get="/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
+                hx-target="#drawer-container" hx-swap="innerHTML"
+                class="h-9 rounded-control border border-rose-200 px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50">
+          Return
+        </button>
+        {% endif %}
+      </div>
+    </div>
+  </section>
+
+  <p class="text-sm text-slate-600">Country operational request: <strong>{{ country_workflow.country_envelope.totalCountryRequest|ugx }}</strong>. New submissions contain only costs from planned activities. Previously submitted amounts remain in Submitted budgets.</p>
+
+
+  {% if country_workflow.reconciliation %}
+  <section class="rounded-surface border border-slate-200 edify-surface shadow-sm" aria-labelledby="actual-spending-heading">
+    <div class="border-b border-slate-100 px-4 py-3">
+      <p class="edify-page-eyebrow">Actual spending</p>
+      <h2 id="actual-spending-heading" class="text-[15px] font-bold text-slate-800">Disbursement and Accountability</h2>
+    </div>
+    <dl class="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Approved Operating Limits</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.approved_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Committed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.committed_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Amount Disbursed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.disbursed_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Actual Accounted Spend</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.accounted_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Returned Balance</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.returned_fmt }}</dd></div>
+      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Reimbursements</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.reimbursed_fmt }}</dd></div>
+    </dl>
+  </section>
+  {% endif %}
+  {% endif %}
+
 </div>
 {% endblock %}

@@ -35,6 +35,14 @@ Add Non-School Activity
 </div>
 </header>
 
+{% if scope_tabs %}
+<nav aria-label="Activity plan audience" data-edify-tablist>
+{% for tab in scope_tabs %}
+<a href="{{ tab.url }}" data-edify-tab {% if tab.active %}aria-current="page"{% endif %}>{{ tab.label }}</a>
+{% endfor %}
+</nav>
+{% endif %}
+
 <!-- CD → RVP annual Work Plan approval -->
 <section class="work-plan-approval" aria-labelledby="work-plan-approval-title">
 <div class="min-w-0">
@@ -105,6 +113,7 @@ Submit completed plan to RVP
 
 <form method="get" action="/work-plan" data-component="filter-toolbar" class="relative flex flex-wrap items-end gap-2.5">
 <input type="hidden" name="view" value="{{ view }}">
+{% if scope_tabs %}<input type="hidden" name="scope" value="{{ plan_scope }}">{% endif %}
 {% if flag %}<input type="hidden" name="flag" value="{{ flag }}">{% endif %}
 
 <label class="flex flex-col min-w-[110px] edify-text-caption font-bold text-slate-500">Fiscal year
@@ -188,19 +197,11 @@ Showing: {{ flag_label }}
 </div>
 {% endif %}
 
-{% comment %}
-§18: the Work Plan is the schedule, aggregated — Activity, Target, Cost, by
-month. There is no way to type a row here, because a Work Plan anyone can edit
-by hand is a second plan, and a second plan disagrees with the schedule the
-moment either one moves.
-{% endcomment %}
-{% include "partials/work_plan/monthly_plan.html" %}
+<!-- Summary and detail share the same filtered Activity records and costs. -->
+{% include "partials/work_plan/plan_summary.html" %}
 
 <!-- KPI strip -->
 {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Work plan context" %}
-
-<!-- Activity Plan Summary: school vs non-school roll-up for CD / RVP review -->
-{% include "partials/work_plan/plan_summary.html" %}
 
 <!-- Period summary bands -->
 <section aria-label="Period summary by month" class="space-y-3">
@@ -235,7 +236,11 @@ moment either one moves.
 
 {% if rows_visible %}
 <!-- Activity table -->
-<div id="work-plan-detail" class="work-plan-table-shell">
+<section id="work-plan-detail" aria-labelledby="work-plan-detail-title" tabindex="-1" class="work-plan-table-shell scroll-mt-24">
+<div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+<h2 id="work-plan-detail-title" class="text-[13px] font-extrabold text-slate-800">Detailed Activity Plan — {{ period_label }}</h2>
+<a href="#work-plan-summary" class="btn btn-secondary h-9">Back to Summary</a>
+</div>
 {% if rows %}
 <div class="overflow-x-auto">
 {% paginate rows "wp_page" as pager %}
@@ -256,7 +261,7 @@ moment either one moves.
 {% for r in pager.rows %}
 {% ifchanged r.group_label %}
 <tr>
-<th colspan="8" scope="colgroup" class="text-left bg-slate-50/80 px-3 py-2 edify-text-caption font-extrabold uppercase tracking-wider text-slate-500">{{ r.group_label }}</th>
+<th colspan="8" class="text-left bg-slate-50/80 px-3 py-2 edify-text-caption font-extrabold uppercase tracking-wider text-slate-500">{{ r.group_label }}</th>
 </tr>
 {% endifchanged %}
 <tr class="edify-data-row align-top">
@@ -336,7 +341,7 @@ moment either one moves.
 {% else %}
 {% include "components/empty_state.html" with title="No activities in this period" message="Nothing is planned for the selected period and filters. Activities scheduled through Planning appear here automatically." %}
 {% endif %}
-</div>
+</section>
 {% else %}
 <div class="card p-5">
 <p class="text-[13px] font-bold text-slate-700">Regional summary view</p>

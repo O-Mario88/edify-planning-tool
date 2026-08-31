@@ -509,9 +509,7 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         self.assertEqual(data[6], 40)
         self.assertEqual(data[10], "Group")
         summary = workbook["Plan Summary"]
-        summary_headers = [
-            cell.value for cell in next(summary.iter_rows(max_row=1))
-        ]
+        summary_headers = [cell.value for cell in next(summary.iter_rows(max_row=1))]
         self.assertEqual(
             summary_headers,
             [

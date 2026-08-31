@@ -193,10 +193,16 @@ def get(principal, query: dict) -> dict:
         if q_val:
             qs = qs.filter(quarter=q_val)
 
+    from apps.budget.costing_service import planned_minimum_amounts
+
+    activities = list(
+        qs.select_related("school", "school__district", "cluster").order_by(
+            "planned_month", "planned_week"
+        )
+    )
+    minimum_amounts = planned_minimum_amounts(activities)
     items = []
-    for a in qs.select_related("school", "school__district", "cluster").order_by(
-        "planned_month", "planned_week"
-    ):
+    for a in activities:
         items.append(
             {
                 "id": a.id,
@@ -233,13 +239,17 @@ def get(principal, query: dict) -> dict:
                 "salesforceActivityId": a.salesforce_activity_id,
                 "rescheduleCount": a.reschedule_count,
                 "lastReason": a.last_reason,
-                "estCostCents": a.est_cost_cents,
-                "costCents": a.est_cost_cents,
-                "costMissing": a.cost_missing,
+                "estCostCents": minimum_amounts.get(a.id),
+                "costCents": minimum_amounts.get(a.id),
+                "costMissing": minimum_amounts.get(a.id) is None,
             }
         )
 
-    total_cost = sum(i["estCostCents"] for i in items)
+    total_cost = (
+        None
+        if any(i["costMissing"] for i in items)
+        else sum(i["estCostCents"] for i in items)
+    )
     partner_planned = qs.filter(delivery_type="partner").count()
 
     return {
@@ -873,6 +883,10 @@ def get_frontend_context(principal, query: dict) -> dict:
         .order_by("planned_date", "created_at")
     )
 
+    from apps.budget.costing_service import planned_minimum_amounts
+
+    minimum_amounts = planned_minimum_amounts(activities)
+
     # Core-school sequence numbers (V1..V8 / T1..T8) and the "n/8 Completed"
     # progress used to be three per-row COUNT queries inside the loop below.
     # That made /my-plan O(number of core activities): the scaling gate
@@ -1062,15 +1076,9 @@ def get_frontend_context(principal, query: dict) -> dict:
             else:
                 returned_by = "Project Leader"
 
-        # Budget Total — always the real scheduled budget, never invented rates.
-        # The canonical figure is the sum of the persisted schedule cost lines;
-        # est_cost_cents (whole UGX despite the name — the costing engine
-        # writes cost.amount straight into it, so no /100) is only a fallback
-        # for activities that have no lines. Preferring the estimate first let
-        # a stale est_cost_cents mask the authoritative line total.
-        budget_total = sum(
-            line.amount or 0 for line in a.schedule_cost_lines.all()
-        ) or (a.est_cost_cents or 0)
+        # Staff planning displays the minimum estimate; payment ledgers retain
+        # country operational costs and are never rewritten for presentation.
+        budget_total = minimum_amounts.get(a.id)
 
         # Construct final dict
         activity_data = {

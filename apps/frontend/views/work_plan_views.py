@@ -271,7 +271,7 @@ def non_school_activity_preview(request):
                 )
             else:
                 travel_profile = "Home district — transport and lunch per day"
-        result = cost_preview(payload)
+        result = cost_preview(payload, minimum=True)
     except Exception as exc:  # noqa: BLE001 — preview must degrade, not 500
         return error_fragment(exc, action="Could not preview the cost", status=400)
     return render(
@@ -529,7 +529,14 @@ def work_plan_export(request):
         summary_sheet.cell(header_row, 1).font = Font(bold=True, size=10)
         for row in section["rows"]:
             summary_sheet.append(
-                [row["label"], row["count"], row["unit_cost"], row["cost"]]
+                [
+                    row["label"],
+                    row["count"],
+                    row["unit_cost"]
+                    if row["unit_cost"] is not None
+                    else "Cost setup required",
+                    row["cost"],
+                ]
             )
         subtotal_row = summary_sheet.max_row + 1
         summary_sheet.append(
@@ -550,7 +557,23 @@ def work_plan_export(request):
         summary_sheet.cell(grand_row, column).font = Font(bold=True, size=10)
     for row_index in range(2, summary_sheet.max_row + 1):
         for column in (2, 3, 4):
-            summary_sheet.cell(row_index, column).number_format = "#,##0"
+            summary_sheet.cell(row_index, column).number_format = (
+                "#,##0.##" if column == 3 else "#,##0"
+            )
+    summary_sheet.append([])
+    summary_sheet.append(["Scope", context["scope_label"]])
+    summary_sheet.append(["Period", context["period_label"]])
+    summary_sheet.append(
+        ["Unit cost", "Average recorded cost per activity; rounded where needed."]
+    )
+    if context["plan_summary"]["total"]["cost_missing_count"]:
+        summary_sheet.append(
+            [
+                "Cost setup required",
+                context["plan_summary"]["total"]["cost_missing_count"],
+                "Totals include recorded costs only; no rates estimated.",
+            ]
+        )
     for index, width in enumerate((36, 22, 20, 22), start=1):
         summary_sheet.column_dimensions[get_column_letter(index)].width = width
     summary_sheet.freeze_panes = "A2"

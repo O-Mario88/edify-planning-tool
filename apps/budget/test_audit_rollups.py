@@ -299,7 +299,7 @@ class MyPlanBudgetTotalTests(_BaseData):
         super().setUpTestData()
         cls.cceo = _user("aud-myplan@t.org", "Aud MyPlan", EdifyRole.CCEO.value)
 
-    def test_budget_total_prefers_line_sum_over_est_cost_cents(self):
+    def test_planning_minimum_never_falls_back_to_operational_estimates(self):
         from apps.my_plan.services import get_frontend_context
 
         with_lines = self._activity(
@@ -318,8 +318,14 @@ class MyPlanBudgetTotalTests(_BaseData):
 
         ctx = get_frontend_context(self.cceo, {"period": "fy", "fy": FY})
         by_id = {row["id"]: row for row in ctx["school_visits_all"]}
-        self.assertEqual(by_id[with_lines.id]["budget_total"], 50_000)
-        self.assertEqual(by_id[no_lines.id]["budget_total"], 70_000)
+        self.assertIsNone(by_id[with_lines.id]["budget_total"])
+        self.assertIsNone(by_id[no_lines.id]["budget_total"])
+        from apps.budget.services import budget_workspace
+
+        budget = budget_workspace(
+            self.cceo, {"fy": FY, "date": "2025-10-08", "period": "fy"}
+        )
+        self.assertEqual(budget["total"], 50_000)
 
 
 class BoardFiscalPeriodTests(_BaseData):

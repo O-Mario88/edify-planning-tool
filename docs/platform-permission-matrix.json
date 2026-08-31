@@ -6671,8 +6671,46 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "RegionalVicePresident",
     "ImpactAssessment",
     "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/budget",
+   "route_name": "budget",
+   "view": "apps.frontend.views.budget_views.budget_view"
+  },
+  {
+   "page_permission": "monthly_budget",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/budget/",
+   "route_name": "",
+   "view": "apps.frontend.views.budget_views.budget_view"
+  },
+  {
+   "page_permission": "monthly_budget",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/budgets/monthly",
@@ -14039,26 +14077,26 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 286,
-  "Admin": 766,
+  "Accountant": 288,
+  "Admin": 768,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 471,
-  "CountryDirector": 542,
+  "CCEO": 473,
+  "CountryDirector": 544,
   "HumanResources": 264,
-  "ImpactAssessment": 402,
+  "ImpactAssessment": 404,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
-  "Program Lead": 545,
-  "ProjectCoordinator": 401,
-  "RegionalVicePresident": 300
+  "Program Lead": 547,
+  "ProjectCoordinator": 404,
+  "RegionalVicePresident": 303
  },
  "summary": {
   "page_keys_declared": 148,
   "page_keys_in_navigation": 165,
-  "routes_guarded": 860,
-  "routes_total": 1044,
+  "routes_guarded": 862,
+  "routes_total": 1046,
   "routes_unguarded": 184,
   "surfaces_no_role_can_reach": 0
  },

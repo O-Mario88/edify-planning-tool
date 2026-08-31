@@ -438,7 +438,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         self.assertEqual(wfr.status, "accounted")
         self.assertEqual(wfr.accounted_amount, wfr.total_amount)
 
-    def test_self_funded_week_reimburses_through_pl_ia_and_accountant(self):
+    def test_legacy_self_funded_week_reimburses_through_pl_ia_and_accountant(self):
         """The self-funded workflow as mandated: staff used their own money →
         at accountability they enter the amount used + NetSuite ID, which
         triggers the reimbursement claim → the PL confirms the money is
@@ -449,7 +449,6 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         from apps.fund_requests.disbursement_dashboard_service import (
             roll_up_accountability,
         )
-        from apps.fund_requests.weekly_service import self_funded
         from apps.planning.services import schedule_school_visit
 
         item = resolve_item_for_workflow_kind("school_visit")
@@ -465,8 +464,14 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
             )
         wfr = WeeklyFundRequest.objects.get(responsible_user=self.cceo.id)
 
-        # The owner elects to use their own money for the week.
-        self_funded(wfr.id, self.cceo)
+        # Preserve the settlement route for records created before Self Fund
+        # started following weekly supervisor approval and disbursement.
+        wfr.status = "self_funded"
+        wfr.save(update_fields=["status"])
+        for advance in AdvanceRequest.objects.filter(
+            budget_line__weekly_request_lines__weekly_fund_request=wfr
+        ):
+            advance_service.self_funded(advance.id, self.cceo)
         advances = list(
             AdvanceRequest.objects.filter(
                 budget_line__weekly_request_lines__weekly_fund_request=wfr

@@ -42,7 +42,7 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 <!-- Page Header Row -->
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
-<h1 class="edify-page-header__title edify-page-title">Fund Requests</h1>
+<h1 class="edify-page-header__title edify-page-title">Weekly Advance Request</h1>
 <p class="edify-page-header__description">Review planned costs, submit weekly advances, and track approval and receipt.</p>
 </div>
 
@@ -68,6 +68,7 @@ class="btn btn-ghost h-9 shadow-sm"
 Export
 </a>
 
+<a href="/budget" class="btn btn-ghost h-9">Budget</a>
 <!-- Open My Plan -->
 <a
 href="/my-plan"
@@ -234,10 +235,10 @@ Clear Filters
      workflow) follows the selected member. The amber dot marks a request
      awaiting this manager's approval for the selected week. Real links; the
      server renders the page for the chosen member. -->
-<nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Team member requests">
+<nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" data-edify-tablist aria-label="Team member requests">
   {% for t in team_tabs %}
   <a
-    href="?{{ team_tab_query }}staff={{ t.user_id }}"
+    data-edify-tab href="?{{ team_tab_query }}staff={{ t.user_id }}"
     {% if t.active %}aria-current="page"{% endif %}
     class="px-4 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap inline-flex items-center gap-1.5 {% if t.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
   >
@@ -248,37 +249,6 @@ Clear Filters
 </nav>
 {% endif %}
 
-<!-- Budget period tabs. These replaced three links to OTHER pages (Weekly
-     Fund Request / Monthly Request / General Budget) at the owner's request:
-     one set of tabs, on this page, showing this person's budget at the four
-     horizons. Monthly Request and the country budget remain reachable from
-     the sidebar. Real links, not an ARIA tablist -- each navigates and the
-     server renders the panel. -->
-<div class="flex border-b border-slate-100 pb-3">
-  <nav class="bg-slate-100/80 p-1.5 rounded-surface flex gap-1.5 border border-slate-200/50 overflow-x-auto" aria-label="Budget period">
-    {% for t in period_budgets.tabs %}
-    <a
-      href="?{{ period_tab_query }}period_tab={{ t.key }}"
-      {% if t.key == period_budgets.active %}aria-current="page"{% endif %}
-      class="px-5 py-2 text-[12px] font-bold rounded-control transition-all whitespace-nowrap {% if t.key == period_budgets.active %}edify-surface text-slate-800 shadow-sm border border-slate-200/40{% else %}text-slate-500 hover:text-slate-700 edify-hover-surface{% endif %}"
-    >
-      {% if t.key == "week" %}Week{% elif t.key == "month" %}Month{% elif t.key == "quarter" %}Quarter{% else %}Annual{% endif %}
-    </a>
-    {% endfor %}
-  </nav>
-</div>
-
-<!-- The auto-generation note lives once now, as the budget card's footer,
-     instead of a banner here AND a caption under the workflow strip both
-     saying the same thing. -->
-
-<!-- Keep the six-column budget full-width; supporting detail follows it. -->
-<div class="grid grid-cols-1 lg:grid-cols-10 gap-5 items-start">
-<!-- Budget and request workflow -->
-<div class="lg:col-span-10 space-y-5 min-w-0">
-
-<!-- Weekly Request Card -->
-<div id="weekly-request-card-container">
 {% include "partials/fund_requests/period_budget_tabs.html" %}
 </div>
 

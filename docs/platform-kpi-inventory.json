@@ -7,7 +7,7 @@
   "with_metric_key": 0,
   "with_drilldown": 0,
   "labels_in_several_modules": 0,
-  "breakdown_rows": 176,
+  "breakdown_rows": 177,
   "registered_metrics": 417,
   "rendered_summaries": 65,
   "context_summaries": 0,
@@ -1790,7 +1790,7 @@
    "audit_id": "KPI-SOURCE-092",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 392,
+   "line": 457,
    "label": null,
    "keys": [
     "amount",
@@ -1834,7 +1834,7 @@
    "audit_id": "KPI-SOURCE-094",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 413,
+   "line": 427,
    "label": null,
    "keys": [
     "amount",
@@ -1854,7 +1854,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 605,
+   "line": 619,
    "label": "Week of {\u2026}",
    "keys": [
     "amount",
@@ -1876,7 +1876,7 @@
    "audit_id": "KPI-SOURCE-096",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1776,
+   "line": 1845,
    "label": null,
    "keys": [
     "amount",
@@ -1897,7 +1897,7 @@
    "audit_id": "KPI-SOURCE-097",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 305,
+   "line": 319,
    "label": null,
    "keys": [
     "amount",
@@ -1918,7 +1918,7 @@
    "audit_id": "KPI-SOURCE-098",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 564,
+   "line": 578,
    "label": null,
    "keys": [
     "amount",
@@ -1939,7 +1939,7 @@
    "audit_id": "KPI-SOURCE-099",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 753,
+   "line": 767,
    "label": null,
    "keys": [
     "amount",
@@ -1957,7 +1957,7 @@
    "audit_id": "KPI-SOURCE-100",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 765,
+   "line": 779,
    "label": null,
    "keys": [
     "amount",
@@ -1976,7 +1976,7 @@
    "audit_id": "KPI-SOURCE-101",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1037,
+   "line": 1056,
    "label": null,
    "keys": [
     "activity_ids",
@@ -1998,7 +1998,7 @@
    "audit_id": "KPI-SOURCE-102",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1153,
+   "line": 1172,
    "label": null,
    "keys": [
     "activity_count",
@@ -2021,7 +2021,7 @@
    "audit_id": "KPI-SOURCE-103",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1095,
+   "line": 1114,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -2277,7 +2277,7 @@
    "audit_id": "KPI-SOURCE-114",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 820,
+   "line": 882,
    "label": null,
    "keys": [
     "label",
@@ -2295,7 +2295,7 @@
    "audit_id": "KPI-SOURCE-115",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 828,
+   "line": 830,
    "label": null,
    "keys": [
     "label",
@@ -2312,7 +2312,7 @@
    "audit_id": "KPI-SOURCE-116",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 98,
+   "line": 99,
    "label": null,
    "keys": [
     "amount",
@@ -2331,7 +2331,7 @@
    "audit_id": "KPI-SOURCE-117",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 473,
+   "line": 475,
    "label": null,
    "keys": [
     "label",
@@ -2586,28 +2586,7 @@
    "audit_id": "KPI-SOURCE-130",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1185,
-   "label": "Search planned activities by item or responsible staff",
-   "keys": [
-    "action",
-    "hidden",
-    "label",
-    "name",
-    "placeholder",
-    "value"
-   ],
-   "has_metric_key": false,
-   "has_drilldown": false,
-   "recommendation": "retain-as-breakdown",
-   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
-   "priority": "low",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SOURCE-131",
-   "kind": "other",
-   "module": "apps/frontend/views/finance_views.py",
-   "line": 1252,
+   "line": 1202,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -2625,7 +2604,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-132",
+   "audit_id": "KPI-SOURCE-131",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/hr_today_views.py",
    "line": 43,
@@ -2644,7 +2623,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-133",
+   "audit_id": "KPI-SOURCE-132",
    "kind": "other",
    "module": "apps/frontend/views/hr_views.py",
    "line": 82,
@@ -2664,7 +2643,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-134",
+   "audit_id": "KPI-SOURCE-133",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 394,
@@ -2687,7 +2666,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-135",
+   "audit_id": "KPI-SOURCE-134",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1009,
@@ -2704,7 +2683,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-136",
+   "audit_id": "KPI-SOURCE-135",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1013,
@@ -2721,7 +2700,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-137",
+   "audit_id": "KPI-SOURCE-136",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1017,
@@ -2738,7 +2717,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-138",
+   "audit_id": "KPI-SOURCE-137",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1021,
@@ -2755,7 +2734,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-139",
+   "audit_id": "KPI-SOURCE-138",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1077,
@@ -2774,7 +2753,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-140",
+   "audit_id": "KPI-SOURCE-139",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1083,
@@ -2793,7 +2772,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-141",
+   "audit_id": "KPI-SOURCE-140",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1089,
@@ -2812,7 +2791,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-142",
+   "audit_id": "KPI-SOURCE-141",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1115,
@@ -2831,7 +2810,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-143",
+   "audit_id": "KPI-SOURCE-142",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1121,
@@ -2850,7 +2829,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-144",
+   "audit_id": "KPI-SOURCE-143",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1127,
@@ -2869,7 +2848,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-145",
+   "audit_id": "KPI-SOURCE-144",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 487,
@@ -2886,7 +2865,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-146",
+   "audit_id": "KPI-SOURCE-145",
    "kind": "other",
    "module": "apps/frontend/views/leave_views.py",
    "line": 1091,
@@ -2906,7 +2885,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-147",
+   "audit_id": "KPI-SOURCE-146",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 130,
@@ -2929,7 +2908,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-148",
+   "audit_id": "KPI-SOURCE-147",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 291,
@@ -2948,10 +2927,10 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-149",
+   "audit_id": "KPI-SOURCE-148",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2059,
+   "line": 2061,
    "label": null,
    "keys": [
     "count",
@@ -2966,10 +2945,10 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-150",
+   "audit_id": "KPI-SOURCE-149",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2170,
+   "line": 2172,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -2989,7 +2968,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-151",
+   "audit_id": "KPI-SOURCE-150",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 298,
@@ -3008,11 +2987,11 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-152",
+   "audit_id": "KPI-SOURCE-151",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 305,
-   "label": "Estimated Operational Cost",
+   "line": 308,
+   "label": "Minimum Viable Cost",
    "keys": [
     "amount",
     "amount_disbursed",
@@ -3027,7 +3006,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-153",
+   "audit_id": "KPI-SOURCE-152",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 243,
@@ -3046,7 +3025,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-154",
+   "audit_id": "KPI-SOURCE-153",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 280,
@@ -3065,7 +3044,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-155",
+   "audit_id": "KPI-SOURCE-154",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 253,
@@ -3084,7 +3063,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-156",
+   "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 902,
@@ -3102,7 +3081,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-157",
+   "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 908,
@@ -3120,7 +3099,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-158",
+   "audit_id": "KPI-SOURCE-157",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
    "line": 712,
@@ -3143,7 +3122,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-159",
+   "audit_id": "KPI-SOURCE-158",
    "kind": "other",
    "module": "apps/frontend/views/staff_views.py",
    "line": 615,
@@ -3164,7 +3143,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-160",
+   "audit_id": "KPI-SOURCE-159",
    "kind": "other",
    "module": "apps/frontend/views/target_distribution_views.py",
    "line": 190,
@@ -3185,11 +3164,33 @@
    "implementation_status": "completed"
   },
   {
+   "audit_id": "KPI-SOURCE-160",
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/work_plan_page.py",
+   "line": 441,
+   "label": "Undated",
+   "keys": [
+    "at_risk",
+    "completed",
+    "cost",
+    "count",
+    "label",
+    "month",
+    "url"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": true,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
    "audit_id": "KPI-SOURCE-161",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 363,
-   "label": "Undated",
+   "line": 432,
+   "label": "{\u2026} {\u2026}",
    "keys": [
     "at_risk",
     "completed",
@@ -3210,19 +3211,16 @@
    "audit_id": "KPI-SOURCE-162",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 354,
-   "label": "{\u2026} {\u2026}",
+   "line": 550,
+   "label": null,
    "keys": [
-    "at_risk",
-    "completed",
     "cost",
+    "cost_missing_count",
     "count",
-    "label",
-    "month",
-    "url"
+    "label"
    ],
    "has_metric_key": false,
-   "has_drilldown": true,
+   "has_drilldown": false,
    "recommendation": "retain-as-breakdown",
    "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
    "priority": "low",
@@ -3232,7 +3230,7 @@
    "audit_id": "KPI-SOURCE-163",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 538,
+   "line": 642,
    "label": null,
    "keys": [
     "amount",
@@ -4169,7 +4167,7 @@
    "audit_id": "KPI-SOURCE-213",
    "kind": "breakdown-row",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 2000,
+   "line": 1985,
    "label": null,
    "keys": [
     "activity_id",
@@ -6487,7 +6485,7 @@
   {
    "audit_id": "KPI-SURFACE-035",
    "template": "templates/pages/work_plan/index.html",
-   "line": 200,
+   "line": 204,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "executive",
@@ -26397,7 +26395,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 551,
+   "line": 613,
    "function": "_build_fund_requests_context",
    "target": "kpi_strip_items",
    "source_item_count": 6,
@@ -26796,7 +26794,7 @@
   {
    "audit_id": "KPI-PAYLOAD-024",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 791,
+   "line": 777,
    "function": "get_country_monthly_budget",
    "target": "kpis",
    "source_item_count": 2,
@@ -26818,7 +26816,7 @@
   {
    "audit_id": "KPI-PAYLOAD-025",
    "module": "apps/monthly_work_plan/country_budget_service.py",
-   "line": 908,
+   "line": 894,
    "function": "get_country_monthly_budget",
    "target": "plan_source_summary",
    "source_item_count": 7,

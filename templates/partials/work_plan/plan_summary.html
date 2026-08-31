@@ -8,11 +8,12 @@ Scoping upstream makes the same section serve every role: CD/Admin see the
 country, the RVP their region, a PL themselves plus their team, a CCEO their
 own plan.
 {% endcomment %}
-<section aria-labelledby="plan-summary-title" class="card p-4 space-y-4">
+<section id="work-plan-summary" aria-labelledby="plan-summary-title" tabindex="-1" class="card p-4 space-y-4 scroll-mt-24">
 <div class="flex flex-wrap items-center justify-between gap-2">
 <div class="min-w-0">
 <h2 id="plan-summary-title" class="text-[13px] font-extrabold text-slate-800">Activity Plan Summary — {{ period_label }}</h2>
-<p class="edify-text-caption font-semibold text-slate-500 mt-0.5">Aggregated from the planned activities and their persisted cost lines. Unit cost is the average cost per activity.</p>
+<p class="edify-text-caption font-bold text-slate-700 mt-0.5">{{ scope_label }}</p>
+<p class="edify-text-caption font-semibold text-slate-500 mt-0.5">Activity counts and costs come from the selected planned activities. Unit cost is total recorded cost divided by the number of activities, rounded where needed.</p>
 </div>
 <a href="#work-plan-detail" class="btn btn-secondary h-9 shrink-0">
 See Details
@@ -20,26 +21,31 @@ See Details
 </a>
 </div>
 
+{% if plan_summary.total.cost_missing_count %}
+<p class="edify-text-caption font-semibold text-amber-700">{{ plan_summary.total.cost_missing_count }} activit{{ plan_summary.total.cost_missing_count|pluralize:"y,ies" }} need cost setup. Totals include recorded costs only; no missing rates are estimated.</p>
+{% endif %}
+
 {% for section in plan_summary_sections %}
 <div>
 <h3 class="edify-text-caption font-extrabold uppercase tracking-wider text-slate-500 mb-2">{{ section.label }}</h3>
 {% if section.rows %}
 <div class="overflow-x-auto">
 <table class="edify-record-table edify-data-table w-full text-[12px]">
+<caption class="sr-only">{{ section.label }} summary — {{ period_label }}</caption>
 <thead>
 <tr>
-<th class="text-left">Activity</th>
-<th class="text-right whitespace-nowrap">Number of Activities</th>
-<th class="text-right whitespace-nowrap">Unit Cost (UGX)</th>
-<th class="text-right whitespace-nowrap">Total Cost (UGX)</th>
+<th scope="col" class="text-left">Activity</th>
+<th scope="col" class="text-right whitespace-nowrap">Number of Activities</th>
+<th scope="col" class="text-right whitespace-nowrap">Unit Cost (UGX)</th>
+<th scope="col" class="text-right whitespace-nowrap">Total Cost (UGX)</th>
 </tr>
 </thead>
 <tbody class="divide-y divide-[var(--edify-border)]">
 {% for row in section.rows %}
 <tr class="edify-data-row">
-<td class="font-semibold text-slate-700">{{ row.label }}</td>
+<th scope="row" class="text-left font-semibold text-slate-700">{{ row.label }}</th>
 <td class="text-right tabular-nums font-semibold text-slate-700">{{ row.count|intcomma }}</td>
-<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost|intcomma }}</td>
+<td class="text-right tabular-nums font-semibold text-slate-700">{{ row.unit_cost_display }}</td>
 <td class="text-right tabular-nums font-bold text-slate-800">{{ row.cost|intcomma }}</td>
 </tr>
 {% endfor %}

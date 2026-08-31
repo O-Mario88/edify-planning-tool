@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 623,
-  "templates": 221,
-  "distinct_titles": 592,
+  "titled_cards": 624,
+  "templates": 222,
+  "distinct_titles": 593,
   "with_card_key": 13,
-  "untitled_surfaces": 1011,
+  "untitled_surfaces": 1007,
   "untitled_chrome": 229,
-  "untitled_nested": 391,
+  "untitled_nested": 387,
   "untitled_headless": 391,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
@@ -782,71 +782,48 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 42,
-   "title": "Monthly Budget Approval",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface px-4 py-3 shadow-sm",
-   "branch_path": [
-    [
-     7,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 91,
-   "title": "Country Monthly Envelope",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-[var(--border-card)] edify-surface shadow-sm",
-   "branch_path": [
-    [
-     7,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 133,
-   "title": "Disbursement and Accountability",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
-   "branch_path": [
-    [
-     7,
-     0
-    ],
-    [
-     13,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/budgets/monthly.html",
-   "line": 157,
+   "line": 57,
    "title": "Add administrative budget item",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     15,
+     8,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 196,
+   "line": 96,
    "title": "Team cost summary",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
+   "branch_path": [
+    [
+     9,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 116,
+   "title": "Administrative cost planActivity cost plan",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/budgets/monthly.html",
+   "line": 152,
+   "title": "Monthly Budget Approval",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center",
    "branch_path": [
     [
      16,
@@ -856,12 +833,21 @@
   },
   {
    "template": "templates/pages/budgets/monthly.html",
-   "line": 216,
-   "title": "Administrative cost planActivity cost plan",
+   "line": 212,
+   "title": "Disbursement and Accountability",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "rounded-surface border border-slate-200 edify-surface p-3 shadow-sm sm:p-4",
-   "branch_path": []
+   "classes": "rounded-surface border border-slate-200 edify-surface shadow-sm",
+   "branch_path": [
+    [
+     16,
+     0
+    ],
+    [
+     20,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/business_transformation/financial_health.html",
@@ -1215,35 +1201,39 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 64,
-   "title": "Cost comparison intelligence",
+   "line": 19,
+   "title": "Country operational cost",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm",
-   "branch_path": [
-    [
-     5,
-     0
-    ]
-   ]
+   "branch_path": []
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 76,
+   "line": 23,
+   "title": "Minimum viable cost",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/cost_settings/index.html",
+   "line": 30,
    "title": "Cost review requests",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     6,
+     0,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 144,
+   "line": 97,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -1907,7 +1897,7 @@
    "classes": "rounded-control border border-slate-200 edify-surface px-4 py-3",
    "branch_path": [
     [
-     2,
+     5,
      0
     ]
    ]
@@ -1921,7 +1911,7 @@
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     3,
+     8,
      0
     ]
    ]
@@ -1935,7 +1925,7 @@
    "classes": "rounded-surface border border-slate-200 edify-surface p-4 shadow-sm",
    "branch_path": [
     [
-     4,
+     13,
      0
     ]
    ]
@@ -6834,6 +6824,15 @@
      1
     ]
    ]
+  },
+  {
+   "template": "templates/partials/work_plan/plan_summary.html",
+   "line": 11,
+   "title": "Activity Plan Summary \u2014",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-4 space-y-4 scroll-mt-24",
+   "branch_path": []
   }
  ]
 }

@@ -26,8 +26,8 @@
 
 <div class="border-t border-slate-100 my-1"></div>
 <div class="flex justify-between items-center text-[14px]">
-<span class="font-semibold text-slate-600">Estimated Operational Cost</span>
-<span class="font-semibold text-[var(--edify-accent-text)]">{% if preview.can_schedule %}{{ preview.amount|ugx }}{% else %}&mdash;{% endif %}</span>
+<span class="font-semibold text-slate-600">Minimum Viable Cost</span>
+<span class="font-semibold text-[var(--edify-accent-text)]">{% if not preview.costMissing %}{{ preview.amount|ugx }}{% else %}&mdash;{% endif %}</span>
 </div>
 
 {% if preview.blockers %}

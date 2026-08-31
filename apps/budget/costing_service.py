@@ -295,7 +295,69 @@ def management_preview(input: dict) -> dict:
     }
 
 
-def preview(input: dict) -> dict:
+def minimum_cost(input: dict, catalogue: CostCatalogue | None) -> ActivityCost:
+    """Price the same planned quantities with the CD's minimum viable rates.
+
+    No operational-rate fallback: an unset minimum remains visibly missing.
+    The catalogue may be a frozen snapshot's card, preserving its rate version.
+    """
+    _, settings = _rate_card(catalogue)
+    return cost_for_activity(
+        _profiled_input(input),
+        {
+            key: row.approved_minimum
+            for key, row in settings.items()
+            if row.approved_minimum is not None
+        },
+    )
+
+
+def planned_minimum_amounts(activities) -> dict:
+    """Staff estimates from frozen cost components, including shared-day splits.
+
+    Re-price each stored component's actual share instead of re-running a whole
+    visit-day recipe for every school. Two bulk reads avoid per-activity queries.
+    Missing minimum rates or provenance never fall back to operational amounts.
+    """
+    from decimal import Decimal, ROUND_HALF_UP
+
+    snapshots = list(
+        ActivityCostSnapshot.objects.filter(
+            activity_id__in=[a.id for a in activities],
+            is_current=True,
+        )
+    )
+    rates = {
+        (row.catalogue_id, row.key): row.approved_minimum
+        for row in CostSetting.objects.filter(
+            catalogue_id__in={s.operational_rate_card_id for s in snapshots},
+        )
+    }
+    amounts = {}
+    for snapshot in snapshots:
+        total = 0
+        missing = not snapshot.operational_rate_card_id or (
+            not snapshot.operational_breakdown and snapshot.operational_cost != 0
+        )
+        for line in snapshot.operational_breakdown:
+            rate = rates.get((snapshot.operational_rate_card_id, line.get("key")))
+            unit = line.get("unit")
+            if rate is None or unit is None or line.get("missing"):
+                missing = True
+                break
+            if unit:
+                total += int(
+                    (Decimal(line["amount"]) * Decimal(rate) / Decimal(unit)).quantize(
+                        Decimal("1"), rounding=ROUND_HALF_UP
+                    )
+                )
+            elif rate != 0:
+                missing = True
+        amounts[snapshot.activity_id] = None if missing else total
+    return amounts
+
+
+def preview(input: dict, *, minimum: bool = False) -> dict:
     """Compute an itemized cost preview from the active catalogue. No writes.
 
     Returns: {catalogueId, catalogueVersion, currency, amount, lines[],
@@ -304,10 +366,12 @@ def preview(input: dict) -> dict:
     UI can show e.g. "Group training participant meal cost is not set."."""
     result = calculate_dual(input)
     catalogue = result["operationalCard"]
-    cost = result["operational"]
+    cost = (
+        minimum_cost(result["inputs"], catalogue) if minimum else result["operational"]
+    )
     missing = cost.missing_items
     blockers = [
-        f"{_missing_label(k)} is not set in the active CD Cost Catalogue."
+        f"{_missing_label(k)}{' minimum viable cost' if minimum else ''} is not set in the active CD Cost Catalogue."
         for k in missing
     ]
     if catalogue is None:
@@ -318,6 +382,7 @@ def preview(input: dict) -> dict:
         "catalogueId": catalogue.id if catalogue else None,
         "catalogueVersion": catalogue.version if catalogue else None,
         "currency": "UGX",
+        "costBasis": "minimum_viable" if minimum else "country_operational",
         "amount": int(cost.amount),
         "lines": [_serialize_line(line) for line in cost.lines],
         "costMissing": cost.cost_missing or catalogue is None,

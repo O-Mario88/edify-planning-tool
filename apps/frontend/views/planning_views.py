@@ -2282,7 +2282,7 @@ def cost_preview_partial(request):
         payload["assignedPartnerId"] = partner_id
 
     try:
-        preview_data = cost_preview(payload)
+        preview_data = cost_preview(payload, minimum=True)
         context = {
             "preview": preview_data,
             "success": True,

@@ -58,7 +58,7 @@ class CountryDirectorBudgetWorkspaceTest(TestCase):
         )
         self.client.force_login(self.cd)
 
-    def test_cd_navigation_uses_one_monthly_fund_request_label(self):
+    def test_cd_navigation_uses_one_budget_label(self):
         items = [
             item
             for section in build_sidebar_for_user(self.cd, "/budgets/monthly")
@@ -66,7 +66,7 @@ class CountryDirectorBudgetWorkspaceTest(TestCase):
         ]
         labels = [item["label"] for item in items]
         urls = [item["url"] for item in items]
-        self.assertIn("Monthly Fund Request", labels)
+        self.assertIn("Budget", labels)
         self.assertNotIn("General Budget", labels)
         self.assertNotIn("Admin Budget", labels)
         self.assertNotIn("Country Budget", labels)
@@ -80,25 +80,25 @@ class CountryDirectorBudgetWorkspaceTest(TestCase):
 
         self.assertRedirects(
             response,
-            "/country-budget/",
+            "/budget?fy=2026&date=2026-04-01&period=month",
             fetch_redirect_response=False,
         )
 
     def test_country_budget_inherits_workspace_and_uses_planned_activities(self):
         response = self.client.get(
-            "/country-budget/?fy=2026&date=2026-04-01&period=month"
+            "/country-budget/?fy=2026&date=2026-04-01&period=month", follow=True
         )
 
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/budgets/monthly.html")
-        self.assertEqual(response.context["workspace_title"], "Monthly Fund Request")
+        self.assertEqual(response.context["workspace_title"], "Budget")
         self.assertEqual(response.context["budget_scope"], "country")
         self.assertEqual(response.context["program_total"], 60_000)
         # Budget horizons derive only from costed weekly plans; monthly admin
         # envelopes remain in their separate approval workflow.
         self.assertEqual(response.context["admin_total"], 0)
         self.assertEqual(response.context["total"], 60_000)
-        self.assertContains(response, "Monthly Fund Request")
+        self.assertContains(response, "Monthly Budget")
         self.assertNotContains(response, "General Budget")
         self.assertNotContains(response, "Country Budget")
         self.assertContains(response, "Primary transport")
@@ -188,7 +188,7 @@ class CountryDirectorBudgetWorkspaceTest(TestCase):
 
     def test_active_workspace_links_to_submitted_budgets_history(self):
         response = self.client.get(
-            "/country-budget/?fy=2026&date=2026-04-01&period=month"
+            "/country-budget/?fy=2026&date=2026-04-01&period=month", follow=True
         )
         self.assertContains(response, "/country-budget/history?fy=2026")
         self.assertContains(response, "Submitted budgets")

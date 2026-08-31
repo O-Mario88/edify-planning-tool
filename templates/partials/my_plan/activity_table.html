@@ -7,7 +7,7 @@
 <tr class="bg-slate-50/50 edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b ">
 <th class="px-3 py-2.5">Activity</th>
 <th class="px-3 py-2.5">Planned</th>
-<th class="px-3 py-2.5">Budget</th>
+<th class="px-3 py-2.5">Minimum viable cost</th>
 <th class="px-3 py-2.5">Status</th>
 <th class="px-3 py-2.5 text-right">Next action</th>
 <th class="px-3 py-2.5 text-right">Actions</th>
@@ -86,7 +86,7 @@ Role: <span class="text-slate-600">{{ act.execution_role }}</span>
 <td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-700" data-label="Planned">{{ act.planned_date|date:"j M"|default:"Unscheduled" }}</td>
 
 <!-- Column 3: Budget -->
-<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-800" data-label="Budget">{{ act.budget_total|ugx }}</td>
+<td class="px-3 py-2.5 whitespace-nowrap font-semibold text-slate-800" data-label="Minimum viable cost">{% if act.budget_total is None %}Not configured{% else %}{{ act.budget_total|ugx }}{% endif %}</td>
 
 {% comment %}Status badges on ONE line. Stacked, they gave a four-badge row
 three times the height of a two-badge row and made the table impossible to

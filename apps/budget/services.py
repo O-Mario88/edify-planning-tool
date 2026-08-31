@@ -11,7 +11,7 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.db import transaction
-from django.db.models import Max, Sum
+from django.db.models import Max, Sum, Q
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
@@ -65,6 +65,7 @@ def list_cost_settings(principal, query: dict) -> dict:
             "key": c.key,
             "label": c.label,
             "unitCost": c.unit_cost,
+            "approvedMinimum": c.approved_minimum,
             "fy": c.fy,
             "version": c.version,
         }
@@ -122,11 +123,20 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     with transaction.atomic():
         catalogue = CostCatalogue.objects.select_for_update().get(id=catalogue.id)
         existing = CostSetting.objects.filter(key=key, catalogue=catalogue).first()
-        if (
-            existing is not None
-            and existing.approved_minimum is not None
-            and new_cost < int(existing.approved_minimum)
-        ):
+        old_minimum = existing.approved_minimum if existing else None
+        new_minimum = data.get("approvedMinimum", old_minimum)
+        if new_minimum in (None, ""):
+            new_minimum = None
+        else:
+            try:
+                new_minimum = int(str(new_minimum).replace(",", ""))
+            except (TypeError, ValueError):
+                raise BadRequest(
+                    "Minimum viable cost must be a whole UGX value."
+                ) from None
+            if new_minimum < 0:
+                raise BadRequest("Minimum viable cost cannot be negative.")
+        if new_minimum is not None and new_cost < new_minimum:
             raise BadRequest(
                 "The country operational rate is below the approved minimum "
                 "viable cost. Revise the activity scope, delivery method, or "
@@ -201,6 +211,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                     unit_cost=new_cost,
                     fy=next_catalogue.fy,
                     version=1,
+                    approved_minimum=new_minimum,
                     created_by=principal.user_id,
                 )
             )
@@ -220,6 +231,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             existing.catalogue = next_catalogue
             existing.label = label
             existing.unit_cost = new_cost
+            existing.approved_minimum = new_minimum
             existing.fy = next_catalogue.fy
             existing.version += 1
             existing.created_by = principal.user_id
@@ -256,6 +268,8 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                 "changedKey": key,
                 "oldUnitCost": old_cost,
                 "newUnitCost": new_cost,
+                "oldApprovedMinimum": old_minimum,
+                "newApprovedMinimum": new_minimum,
             },
             required=True,
         )
@@ -870,14 +884,19 @@ def _workspace_owner_ids(principal, scope, *, include_team: bool) -> list[str] |
     if scope.country_scope:
         return None
 
-    owner_ids = {getattr(principal, "user_id", None) or getattr(principal, "id", None)}
+    from apps.accounts.models import StaffProfile
+
+    user_id = getattr(principal, "user_id", None) or getattr(principal, "id", None)
+    owner_ids = {user_id}
+    owner_ids.update(
+        StaffProfile.objects.filter(user_id=user_id).values_list("id", flat=True)
+    )
     if (
         include_team
         and scope.active_role == "Program Lead"
         and scope.supervised_staff_ids
     ):
-        from apps.accounts.models import StaffProfile
-
+        owner_ids.update(scope.supervised_staff_ids)
         owner_ids.update(
             StaffProfile.objects.filter(id__in=scope.supervised_staff_ids).values_list(
                 "user_id", flat=True
@@ -1187,6 +1206,27 @@ def weekly_request_budget(wfr):
     }
 
 
+def planned_lines_for_period(lines, start, end):
+    """Use actual cost dates; legacy month-only rows belong to whole months.
+
+    A legacy monthly amount cannot be assigned to an invented week. Such rows
+    remain in monthly/quarterly/annual totals, with their recorded fiscal year.
+    """
+    import calendar
+
+    months = []
+    cursor = start.replace(day=1)
+    while cursor <= end:
+        last = cursor.replace(day=calendar.monthrange(cursor.year, cursor.month)[1])
+        if start <= cursor and last <= end:
+            months.append(cursor.month)
+        cursor = last + timedelta(days=1)
+    return lines.filter(
+        Q(planned_date__range=(start, end))
+        | Q(planned_date__isnull=True, month__in=months)
+    )
+
+
 def budget_workspace(principal, query: dict) -> dict:
     """Return a role-scoped budget ledger backed by authoritative cost rows.
 
@@ -1274,19 +1314,43 @@ def budget_workspace(principal, query: dict) -> dict:
             team_ids = _workspace_owner_ids(principal, scope, include_team=True) or []
             staff_ok = requested_staff in team_ids
         if staff_ok:
-            owner_ids = [requested_staff]
+            from apps.accounts.models import StaffProfile
+
+            owner_ids = [
+                requested_staff,
+                *StaffProfile.objects.filter(user_id=requested_staff).values_list(
+                    "id", flat=True
+                ),
+            ]
 
     base_lines = (
         ActivityScheduleCostLine.objects.filter(
             fiscal_year=fy,
             activity__deleted_at__isnull=True,
-            activity__scheduled_date__isnull=False,
+        )
+        .filter(
+            Q(activity__scheduled_date__isnull=False)
+            | Q(activity__planned_date__isnull=False)
         )
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .select_related("activity", "partner")
     )
     if owner_ids is not None:
-        base_lines = base_lines.filter(responsible_user__in=owner_ids)
+        base_lines = base_lines.filter(
+            Q(responsible_user__in=owner_ids)
+            | Q(
+                activity__delivery_type="partner",
+                activity__monitored_by_staff_id__in=owner_ids,
+            )
+            | (Q(responsible_user__isnull=True) | Q(responsible_user=""))
+            & (
+                Q(activity__responsible_staff_id__in=owner_ids)
+                | Q(
+                    activity__delivery_type="partner",
+                    activity__monitored_by_staff_id__in=owner_ids,
+                )
+            )
+        )
 
     # Staff-funds surfaces (the Fund Requests workspace) exclude partner-
     # delivered work entirely: partners are paid directly through the MOU
@@ -1313,7 +1377,12 @@ def budget_workspace(principal, query: dict) -> dict:
     # than inventing an allocation.
     requested_district = str(query.get("district") or "").strip()
     if requested_district:
-        base_lines = base_lines.filter(school__district_id=requested_district)
+        base_lines = base_lines.filter(
+            Q(school__district_id=requested_district)
+            | Q(activity__school__district_id=requested_district)
+            | Q(activity__cluster__district_id=requested_district)
+            | Q(activity__event_district_id=requested_district)
+        )
         include_admin = False
 
     if query.get("plan_only"):
@@ -1340,8 +1409,8 @@ def budget_workspace(principal, query: dict) -> dict:
 
     def operational_total(period):
         return int(
-            base_lines.filter(
-                planned_date__range=(period["start"], period["end"])
+            planned_lines_for_period(
+                base_lines, period["start"], period["end"]
             ).aggregate(total=Sum("amount"))["total"]
             or 0
         )
@@ -1362,7 +1431,7 @@ def budget_workspace(principal, query: dict) -> dict:
         )
 
     selected_lines = list(
-        base_lines.filter(planned_date__range=(selected["start"], selected["end"]))
+        planned_lines_for_period(base_lines, selected["start"], selected["end"])
     )
     user_names = dict(
         User.objects.filter(

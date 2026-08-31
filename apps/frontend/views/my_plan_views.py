@@ -302,14 +302,16 @@ def activity_detail_view(request, activity_id):
             "amount_disbursed": int(cost_snapshot.amount_disbursed),
         }
     else:
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        minimum_amount = planned_minimum_amounts([a]).get(a.id)
         activity_cost = {
-            "label": "Estimated Operational Cost",
-            "amount": int(
-                cost_snapshot.operational_cost if cost_snapshot else a.est_cost_cents
-            ),
+            "label": "Minimum Viable Cost",
+            "amount": minimum_amount,
             "note": (
-                "Calculated using the current Uganda operational rates. "
-                "Final funding is subject to approval."
+                "Staff planning estimate. Funding is calculated at country operational rates."
+                if minimum_amount is not None
+                else "Minimum viable cost not configured. Ask the Country Director to set the missing rates."
             ),
             "amount_disbursed": 0,
         }

@@ -15,62 +15,16 @@
 </div>
 </div>
 
-<section class="grid gap-3 lg:grid-cols-4" aria-label="Cost governance layers">
+<section class="grid gap-3 lg:grid-cols-2" aria-label="Cost governance layers">
   <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-    <p class="edify-page-eyebrow">Regional funding benchmark</p>
-    {% if can_view_reference %}
-      {% if reference_catalogue %}
-      <p class="mt-2 text-[20px] font-extrabold text-[var(--edify-text)]">UGX {{ reference_total|currency }}</p>
-      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Rate Card · v{{ reference_catalogue.version }}</p>
-      {% else %}
-      <p class="mt-2 text-[14px] font-extrabold text-amber-800">Configuration Required</p>
-      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Rate Card has not been configured. No values were copied from country operational rates.</p>
-      {% endif %}
-    {% else %}
-      <p class="mt-2 text-[14px] font-extrabold text-[var(--edify-text)]">Restricted management layer</p>
-      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Reference benchmarks are not available for this role.</p>
-    {% endif %}
+    <h2 class="font-bold">Country operational cost</h2>
+    <p class="text-sm text-slate-600">Prices the planned activities in budgets and weekly requests. This is the cost submitted to the RVP for approval.</p>
   </article>
-
   <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-    <p class="edify-page-eyebrow">Country operational costing</p>
-    <p class="mt-2 text-[20px] font-extrabold text-[var(--edify-text)]">{% if active_catalogue %}v{{ active_catalogue.version }}{% else %}Not configured{% endif %}</p>
-    <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Authoritative source for activity lines, executable budgets and fund requests.</p>
-  </article>
-
-  <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-    <p class="edify-page-eyebrow">Executable budget</p>
-    <p class="mt-2 text-[14px] font-extrabold text-[var(--edify-text)]">Scheduled operational need</p>
-    <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Excludes partner-payment work, funded lines, unresolved cost errors and required amendments.</p>
-  </article>
-
-  <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
-    <p class="edify-page-eyebrow">Strategic reserve</p>
-    {% if can_view_reserve %}
-      {% if strategic_reserves %}
-      <p class="mt-2 text-[20px] font-extrabold text-[var(--edify-text)]">UGX {{ strategic_reserves.0.available_balance|currency }}</p>
-      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Available through governed activation only.</p>
-      {% else %}
-      <p class="mt-2 text-[14px] font-extrabold text-[var(--edify-text)]">No approved reserve</p>
-      {% endif %}
-    {% else %}
-      <p class="mt-2 text-[14px] font-extrabold text-[var(--edify-text)]">Restricted</p>
-      <p class="mt-1 edify-text-caption text-[var(--edify-text-muted)]">Reserve balances are not exposed to this role.</p>
-    {% endif %}
+    <h2 class="font-bold">Minimum viable cost</h2>
+    <p class="text-sm text-slate-600">Shown to staff while planning. The same planned quantities are automatically priced at country operational rates for funding. Unset minimum rates are flagged, never assumed.</p>
   </article>
 </section>
-
-{% if can_view_reference and reference_catalogue %}
-<section class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm" aria-labelledby="cost-comparison-title">
-  <h2 id="cost-comparison-title" class="text-[16px] font-extrabold text-[var(--edify-text)]">Cost comparison intelligence</h2>
-  <div class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-    <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Regional Standard Funding Cost</p><p class="font-extrabold">UGX {{ reference_total|currency }}</p></div>
-    <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Country Operational Cost</p><p class="font-extrabold">UGX {{ operational_total|currency }}</p></div>
-    <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Country-Controlled Difference</p><p class="font-extrabold">UGX {{ potential_cost_avoidance|currency }}</p><p class="edify-text-caption text-amber-700">Reserve capacity, not staff entitlement</p></div>
-    <div><p class="edify-text-caption text-[var(--edify-text-muted)]">Operational premium</p><p class="font-extrabold">UGX {{ operational_premium|currency }}</p></div>
-  </div>
-</section>
-{% endif %}
 
 {% if can_view_reference and cost_review_queue %}
 <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="cost-review-title">
@@ -114,7 +68,6 @@
 <thead>
 <tr>
 <th>Item</th>
-<th class="text-right">Regional standard (UGX)</th>
 <th class="text-right">Country operational (UGX)</th>
 <th class="text-right">Minimum viable (UGX)</th>
 <th></th>

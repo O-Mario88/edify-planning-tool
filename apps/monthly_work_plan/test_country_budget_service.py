@@ -329,7 +329,7 @@ class CountryMonthlyBudgetTest(TestCase):
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         self.assertTrue(ctx["can_send_to_rvp"])
 
-    def test_full_reference_ceiling_is_submitted_with_difference_as_reserve(self):
+    def test_operational_cost_is_submitted_without_regional_reserve(self):
         ActivityCostSnapshot.objects.create(
             activity=self.act1,
             operational_cost=100_000,
@@ -350,26 +350,25 @@ class CountryMonthlyBudgetTest(TestCase):
         self.assertEqual(ctx["country_envelope"]["maximumReserveCapacity"], 100_000)
 
         budget = MonthlyWorkPlanBudget.objects.get(id=ctx["budget_id"])
-        self.assertEqual(budget.strategic_reserve_requested, 100_000)
-        self.assertEqual(budget.deferred_amount, 0)
-        self.assertEqual(budget.total_amount, 400_000)
+        self.assertEqual(budget.strategic_reserve_requested, 0)
+        self.assertEqual(budget.deferred_amount, 100_000)
+        self.assertEqual(budget.total_amount, 300_000)
 
         submitted = svc.send_to_rvp(self.cd_p, budget.id)
         snapshot = submitted.snapshots.get(version=submitted.submission_version)
         self.assertEqual(snapshot.regional_standard_ceiling, 400_000)
         self.assertEqual(snapshot.operational_activity_requirement, 300_000)
-        self.assertEqual(snapshot.strategic_reserve_requested, 100_000)
-        self.assertEqual(snapshot.deferred_amount, 0)
-        self.assertEqual(snapshot.total_amount, 400_000)
+        self.assertEqual(snapshot.strategic_reserve_requested, 0)
+        self.assertEqual(snapshot.deferred_amount, 100_000)
+        self.assertEqual(snapshot.total_amount, 300_000)
         svc.approve(self.rvp_p, submitted.id)
-        reserve = CountryStrategicActivityReserve.objects.get(
-            country="Uganda", fy=FY, period_key=submitted.month_key
+        self.assertFalse(
+            CountryStrategicActivityReserve.objects.filter(
+                country="Uganda", fy=FY, period_key=submitted.month_key
+            ).exists()
         )
-        self.assertEqual(reserve.opening_reserve, 100_000)
-        self.assertEqual(reserve.available_balance, 100_000)
-        self.assertEqual(reserve.status, "approved")
 
-    def test_cd_cannot_reduce_the_automatic_full_ceiling_request(self):
+    def test_cd_cannot_add_regional_reserve_to_activity_request(self):
         ActivityCostSnapshot.objects.create(
             activity=self.act1,
             operational_cost=100_000,
@@ -383,10 +382,10 @@ class CountryMonthlyBudgetTest(TestCase):
             calculated_at=timezone.now(),
         )
         ctx = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
-        with self.assertRaisesMessage(BadRequest, "full Regional Standard"):
+        with self.assertRaisesMessage(BadRequest, "regional reserve cannot be added"):
             svc.set_envelope_allocation(self.cd_p, ctx["budget_id"], 40_000)
 
-    def test_training_uses_12000_for_staff_but_submits_22000_to_rvp(self):
+    def test_training_submits_operational_cost_not_regional_benchmark(self):
         ActivityCostSnapshot.objects.create(
             activity=self.act1,
             operational_cost=100_000,
@@ -419,11 +418,11 @@ class CountryMonthlyBudgetTest(TestCase):
         )
         self.assertEqual(training_row["operational_cost"], 120_000)
         self.assertEqual(training_row["reference_cost"], 220_000)
-        self.assertEqual(ctx["country_envelope"]["strategicReserveRequested"], 100_000)
-        self.assertEqual(ctx["country_envelope"]["totalCountryRequest"], 520_000)
+        self.assertEqual(ctx["country_envelope"]["strategicReserveRequested"], 0)
+        self.assertEqual(ctx["country_envelope"]["totalCountryRequest"], 420_000)
 
         submitted = svc.send_to_rvp(self.cd_p, ctx["budget_id"])
-        self.assertEqual(submitted.total_amount, 520_000)
+        self.assertEqual(submitted.total_amount, 420_000)
         self.assertEqual(submitted.operational_activity_requirement, 420_000)
         self.assertEqual(submitted.regional_standard_ceiling, 520_000)
         snapshot = submitted.snapshots.get(version=submitted.submission_version)
@@ -470,7 +469,7 @@ class CountryMonthlyBudgetTest(TestCase):
             self.cd_p,
         )
         ready = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
-        self.assertEqual(ready["total_monthly"], 500_000)
+        self.assertEqual(ready["total_monthly"], 450_000)
         country_budget = svc.send_to_rvp(self.cd_p, ready["budget_id"])
         self.assertEqual(country_budget.status, "submitted_to_rvp")
         self.assertEqual(
@@ -499,7 +498,7 @@ class CountryMonthlyBudgetTest(TestCase):
         ctx2 = svc.get_country_monthly_budget(self.cd_p, {"fy": FY, "month": MONTH})
         by_label = {k["label"]: k["value"] for k in ctx2["kpis"]}
         self.assertEqual(by_label["Admin Budget"], svc._ugx(500_000))
-        self.assertEqual(by_label["General Budget Total"], svc._ugx(800_000))
+        self.assertEqual(by_label["General Budget Total"], svc._ugx(300_000))
         self.assertEqual(ctx2["admin_row"]["status"], "Admin Plan")
 
     # ── mandate finance laws (named per spec §23) ─────────────────────────
@@ -578,8 +577,8 @@ class CountryMonthlyBudgetTest(TestCase):
         by_label2 = {k["label"]: k["value"] for k in ctx2["kpis"]}
         self.assertEqual(by_label2["Admin Budget"], svc._ugx(250_000))
         self.assertEqual(
-            by_label2["General Budget Total"], svc._ugx(550_000)
-        )  # program 300k + admin 250k, nothing else
+            by_label2["General Budget Total"], svc._ugx(300_000)
+        )  # Only the planned activity costs enter this request.
 
     # ── submit / approve / return workflow ────────────────────────────────
     def test_send_to_rvp_creates_audit_and_notifies_rvp(self):

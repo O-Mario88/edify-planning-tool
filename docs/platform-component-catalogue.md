@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **345**
+Components and application partials: **346**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -88,7 +88,7 @@ Components and application partials: **345**
 | `partials/analytics/staff_partner_performance.html` | application-partial | Reusable staff partner performance interface primitive | canonical; default | inherits containing page contract | accessible name and label | /analytics<br>/analytics/ | 0 |
 | `partials/analytics/target_by_district.html` | application-partial | Reusable target by district interface primitive | canonical; default, empty, open | inherits containing page contract | accessible name and label | /analytics<br>/analytics/ | 0 |
 | `partials/analytics/visit_effectiveness_workspace.html` | application-partial | Reusable visit effectiveness workspace interface primitive | danger, executive, info, neutral, success; default, empty | explicit responsive contract | inherits semantic parent contract | /analytics/visit-effectiveness | 0 |
-| `partials/budgets/budget_group_tables.html` | application-partial | Reusable budget group tables interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /accounts/monthly-request<br>/accounts/monthly-request/<br>/accounts/monthly-request/action<br>/country-budget<br>/country-budget/<br>/finance/fund-allocation<br>/finance/fund-allocation/<br>/fund-requests/advances/<str:advance_id>/pl-approve | 0 |
+| `partials/budgets/budget_group_tables.html` | application-partial | Reusable budget group tables interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /accounts/monthly-request<br>/accounts/monthly-request/<br>/accounts/monthly-request/action<br>/budget<br>/budget/<br>/finance/fund-allocation<br>/finance/fund-allocation/<br>/fund-requests/advances/<str:advance_id>/pl-approve | 0 |
 | `partials/business_transformation/loan_drawer.html` | application-partial | Reusable loan drawer interface primitive | danger, neutral, success, warning; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /loans/<str:loan_id>/drawer | 0 |
 | `partials/business_transformation/portfolio.html` | application-partial | Reusable portfolio interface primitive | info, neutral; default, empty | inherits containing page contract | accessible name and label | /business-transformation/portfolio | 0 |
 | `partials/business_transformation/school_portfolio_filters.html` | application-partial | Reusable school portfolio filters interface primitive | lg, primary; default | inherits containing page contract | accessible name and label | /business-transformation/business-accounting-finance<br>/business-transformation/government-requirements | 0 |
@@ -348,8 +348,9 @@ Components and application partials: **345**
 | `partials/upload_result.html` | application-partial | Reusable upload result interface primitive | canonical; default, error | explicit responsive contract | inherits semantic parent contract | /schools/upload | 0 |
 | `partials/vendor/apexcharts.html` | application-partial | Reusable apexcharts interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /analytics<br>/analytics/<br>/analytics/country-director<br>/analytics/program-lead<br>/cpd-learning<br>/dashboard<br>/debriefs<br>/my-targets | 0 |
 | `partials/vendor/fullcalendar.html` | application-partial | Reusable fullcalendar interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /leave/calendar<br>/leave/calendar/<br>/planning | 0 |
-| `partials/work_plan/monthly_plan.html` | application-partial | Reusable monthly plan interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /work-plan<br>/work-plan/ | 0 |
+| `partials/work_plan/monthly_plan.html` | application-partial | Reusable monthly plan interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/work_plan/non_school_activity_drawer.html` | application-partial | Reusable non school activity drawer interface primitive | canonical; default, disabled, open | explicit responsive contract | accessible name and label, announced dynamic state | /work-plan/add | 0 |
 | `partials/work_plan/non_school_cost_preview.html` | application-partial | Reusable non school cost preview interface primitive | canonical; default | inherits containing page contract | announced dynamic state | /work-plan/add<br>/work-plan/add/preview | 0 |
+| `partials/work_plan/plan_summary.html` | application-partial | Reusable plan summary interface primitive | canonical; default | inherits containing page contract | accessible name and label, keyboard focus visibility | /work-plan<br>/work-plan/ | 0 |
 
 Deprecated alternatives are empty because the source-wide scanner rejects legacy KPI families, template-private style blocks, raw template colours, fixed-width overflow, and non-canonical geometry before this catalogue is generated.
