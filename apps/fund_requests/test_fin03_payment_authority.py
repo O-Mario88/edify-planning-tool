@@ -120,6 +120,15 @@ class PaymentAuthorityTest(TestCase):
             },
             daily_pool_amount=310_000,
         )
+        Activity.objects.create(
+            school=self.school,
+            activity_type="school_visit",
+            delivery_type="staff",
+            status="scheduled",
+            planned_date=self.batch.visit_date,
+            responsible_staff_id=self.batch.responsible_user,
+            daily_visit_batch=self.batch,
+        )
 
     # ── fixture helpers ──────────────────────────────────────────────────────
     def _post_partner_pay(self, user):

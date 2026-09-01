@@ -60,9 +60,17 @@ class CostingPreviewView(APIView):
     required_permissions = VIEW
 
     def post(self, request: Request) -> Response:
-        from .costing_service import preview
+        from .costing_service import preview, planning_preview_owner
 
-        return Response(preview(request.data, minimum=True))
+        return Response(
+            preview(
+                request.data,
+                minimum=True,
+                responsible_user_id=planning_preview_owner(
+                    request.user, request.data.get("responsibleStaffId")
+                ),
+            )
+        )
 
 
 class ManagementCostingPreviewView(APIView):

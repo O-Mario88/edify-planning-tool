@@ -898,13 +898,10 @@ CLUSTER_ACTIVITY_KINDS = {"cluster_training", "cluster_meeting"}
 def schedule_cluster_activity(data: dict, principal) -> dict:
     """Schedule a cluster activity (Group Training OR Cluster Meeting).
 
-    The selected kind drives the cost computation:
-      • cluster_training (group training) → venue + facilitation + group-training
-        participant meals (+ mobilisation if configured).
-      • cluster_meeting → cluster-meeting participant meals ONLY (no venue, no
-        facilitation, never the group-training meal rate).
-    A cluster is the only target requirement. Participant counts improve the
-    estimate but are optional, and the activity is always costed after saving."""
+    Both kinds include their venue and share the staff member's daily travel
+    and personal expenses with other planned activities. Training adds its
+    facilitation fee; meetings do not. Per-head meals/snacks use the stated
+    planned participant count, which is required for funded scheduling."""
     from apps.activities.services import create as create_activity
     from apps.core.exceptions import BadRequest
 

@@ -478,14 +478,7 @@ class ParticipantModeTest(StandardSupportBase):
             self.assertIsNone(payload.get("teachersAttended"))
 
     def test_school_level_training_plans_no_participant_quantity(self):
-        """The drawer asks no participant question for a single-school
-        training, and the API half of that rule is enforced here.
-
-        The three categories used to be planned into the same columns that
-        completion records attendance in, so a plan and a verified headcount
-        were indistinguishable. Who is in the room is a cluster question now,
-        planned per member school.
-        """
+        """In-school training is planned and costed as a school visit."""
         result = self.schedule(
             schoolId=self.school.school_id,
             catalogueItemId=self.item("STANDARD_IN_SCHOOL_TRAINING").id,

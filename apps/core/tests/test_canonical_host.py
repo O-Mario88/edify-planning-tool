@@ -10,7 +10,7 @@ later by reordering MIDDLEWARE, so it is asserted end-to-end through the real
 stack rather than by calling the middleware directly.
 """
 
-from django.test import SimpleTestCase, override_settings
+from django.test import SimpleTestCase, TestCase, override_settings
 from django.urls import resolve
 
 CANONICAL = "edifyplanning.app"
@@ -21,7 +21,7 @@ HOSTS = [CANONICAL, ALTERNATE, "testserver", "localhost"]
 @override_settings(
     CANONICAL_HOST="", ALLOWED_HOSTS=HOSTS, SECURE_SSL_REDIRECT=False, DEBUG=False
 )
-class CanonicalHostDisabledTests(SimpleTestCase):
+class CanonicalHostDisabledTests(TestCase):
     """Unset CANONICAL_HOST must change nothing.
 
     This is what makes the change safe to deploy BEFORE the apex resolves.
@@ -44,7 +44,7 @@ class CanonicalHostDisabledTests(SimpleTestCase):
     SECURE_SSL_REDIRECT=False,
     DEBUG=False,
 )
-class CanonicalHostEnabledTests(SimpleTestCase):
+class CanonicalHostEnabledTests(TestCase):
     def test_alternate_host_redirects_permanently_to_canonical(self):
         response = self.client.get("/", HTTP_HOST=ALTERNATE)
         self.assertEqual(response.status_code, 301)
@@ -98,7 +98,7 @@ class CanonicalHostEnabledTests(SimpleTestCase):
     SECURE_SSL_REDIRECT=True,
     DEBUG=False,
 )
-class SingleHopTests(SimpleTestCase):
+class SingleHopTests(TestCase):
     """The requirement: http://www reaches https://apex in ONE redirect.
 
     Two hops is what happens when CanonicalHostMiddleware sits behind

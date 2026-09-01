@@ -351,6 +351,7 @@ class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font
 {% if request.user.active_role == 'Program Lead' or request.user.active_role == 'Admin' %}
 <select aria-label="Responsible staff ID"
 name="responsible_staff_id"
+hx-get="/clusters/cost-preview" hx-trigger="change" hx-target="#planner-cost-preview-container" hx-include="#action-planner-form"
 class="w-full h-10 px-3 rounded-control border border-slate-200 text-[12px] font-bold edify-surface focus:outline-none text-slate-700 cursor-pointer"
 >
 <option value="">-- Choose Staff --</option>
@@ -380,7 +381,8 @@ value="{% if selected_cluster.responsible_staff_id %}{{ selected_cluster.respons
 </div>
 
 <!-- Dynamic Cost Preview target (matching mockup structure) -->
-<div id="planner-cost-preview-container" class="border-t border-slate-100 pt-4">
+<div id="planner-cost-preview-container" class="border-t border-slate-100 pt-4"
+hx-get="/clusters/cost-preview" hx-trigger="load delay:100ms" hx-include="#action-planner-form">
 {% if cost_preview %}
 {% if not cost_preview.can_schedule %}
 <div class="p-3 bg-rose-50 border border-rose-100 rounded-surface text-rose-800 edify-text-caption font-semibold mb-2 space-y-0.5">

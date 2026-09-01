@@ -4,7 +4,7 @@ Proves the finance-accuracy rules from the spec through the authenticated API:
   • Staff primary visit: transport×schools + lunch×days (no breakfast/dinner/accom).
   • Staff secondary visit: secondary transport + meals×days + accommodation×nights.
   • Group training: participants×group-meal + venue + facilitation.
-  • Cluster meeting: participants×cluster-meal ONLY (no venue/facilitation; never
+  • Cluster meeting: participants×cluster-meal + venue + shared staff travel (no facilitation; never
     the group-training meal rate).
   • Partner visit: rate × schools.
   • Advance auto-created on schedule; Accountant CANNOT disburse before the
@@ -253,6 +253,8 @@ class CentralizedCostingTest(APITestCase):
             group_training_participant_meal_cost_per_head=6000,
             # Historic keys must not sneak an extra line into a new training.
             mobilisation_per_participant=2000,
+            primary_transport_per_day=15000,
+            primary_lunch_per_day=8000,
         )
         prev = self._preview(
             {
@@ -262,8 +264,8 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # Exactly three items: meals + facilitation + venue.
-        expected = 60000 + 30000 + (6000 * 20)
+        # Session components plus one day of staff transport and lunch.
+        expected = 60000 + 30000 + (6000 * 20) + 15000 + 8000
         self.assertEqual(prev["amount"], expected)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
@@ -271,11 +273,19 @@ class CentralizedCostingTest(APITestCase):
                 "group_training_participant_meal_cost_per_head",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
+                "primary_transport_per_day",
+                "primary_lunch_per_day",
             },
         )
         self.assertEqual(
             {line["label"] for line in prev["lines"]},
-            {"Participant meals", "Facilitation fee", "Venue fee"},
+            {
+                "Participant meals",
+                "Facilitation fee",
+                "Venue fee",
+                "Transport (primary district)",
+                "Lunch (primary district)",
+            },
         )
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertIn("venue", labels)
@@ -283,12 +293,15 @@ class CentralizedCostingTest(APITestCase):
         self.assertIn("participant_meals", labels)
 
     # ── D. Cluster meeting ───────────────────────────────────────────────────
-    def test_cluster_meeting_excludes_venue_facilitation_and_uses_cluster_meal_rate(
+    def test_cluster_meeting_includes_venue_and_travel_but_excludes_facilitation(
         self,
     ):
-        """Meetings use Participant snacks only — never training costs."""
+        """Meetings include their venue and staff travel, but no training fee."""
         _seed_rates(
             cluster_meeting_participant_meal_cost_per_head=5000,
+            group_training_venue_cost=30000,
+            primary_transport_per_day=15000,
+            primary_lunch_per_day=8000,
             meals_per_participant=6000,
             venue=30000,
             training_session_fee=60000,
@@ -301,16 +314,22 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         self.assertTrue(prev["canSchedule"], prev)
-        # 12 × Participant snacks(5000) = 60000 — NOTHING else.
-        self.assertEqual(prev["amount"], 12 * 5000)
+        self.assertEqual(prev["amount"], 12 * 5000 + 30000 + 15000 + 8000)
         self.assertEqual(
             {line["key"] for line in prev["lines"]},
-            {"cluster_meeting_participant_meal_cost_per_head"},
+            {
+                "cluster_meeting_participant_meal_cost_per_head",
+                "group_training_venue_cost",
+                "primary_transport_per_day",
+                "primary_lunch_per_day",
+            },
         )
         self.assertEqual(prev["lines"][0]["label"], "Participant snacks")
         labels = {l["lineItemType"] for l in prev["lines"]}
-        self.assertEqual(labels, {"cluster_meeting_participant_meals"})
-        self.assertNotIn("venue", labels)
+        self.assertEqual(
+            labels, {"cluster_meeting_participant_meals", "venue", "transport", "lunch"}
+        )
+        self.assertIn("venue", labels)
         self.assertNotIn("facilitation", labels)
         self.assertNotIn(
             "participant_meals", labels
@@ -318,9 +337,7 @@ class CentralizedCostingTest(APITestCase):
 
     def test_cluster_meeting_requires_participants(self):
         _seed_rates(cluster_meeting_participant_meal_cost_per_head=5000)
-        # Scheduling stays permissive. When no headcount was entered, the safe
-        # cluster-meeting planning default (10) is priced instead of blocking
-        # the field team with an unrelated scheduling rule.
+        # Missing headcounts must not invent ten participants or enter a fund request.
         self.school.cluster_id = self.cluster.id
         self.school.cluster_status = "clustered"
         self.school.save(update_fields=["cluster_id", "cluster_status"])
@@ -338,8 +355,8 @@ class CentralizedCostingTest(APITestCase):
             },
             format="json",
         )
-        self.assertEqual(r.status_code, 201, r.content)
-        self.assertEqual(r.json()["estCostCents"], 10 * 5000)
+        self.assertEqual(r.status_code, 400, r.content)
+        self.assertIn("planned participant count", r.json()["message"])
 
     def test_cluster_training_never_falls_back_to_retired_rate_keys(self):
         """Legacy rates may remain for audit, but cannot price new work."""
@@ -349,6 +366,8 @@ class CentralizedCostingTest(APITestCase):
             venue=30000,
             meals_per_participant=6000,
             mobilisation_per_participant=2000,
+            primary_transport_per_day=15000,
+            primary_lunch_per_day=8000,
         )
         prev = self._preview(
             {
@@ -364,6 +383,8 @@ class CentralizedCostingTest(APITestCase):
                 "group_training_participant_meal_cost_per_head",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
+                "primary_transport_per_day",
+                "primary_lunch_per_day",
             },
         )
 

@@ -12,6 +12,7 @@ from apps.activities.models import (
     ActivityScheduleCostLine,
 )
 from apps.activities.services import (
+    _apply_schedule_cost_snapshot as apply_real_cost_snapshot,
     complete_in_school_training_pair,
     start_in_school_training_pair,
 )
@@ -132,6 +133,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertIsNone(visit.focus_intervention)
 
     def test_pair_carries_one_visit_equivalent_cost_on_the_training(self):
+        self.cost_snapshot.side_effect = apply_real_cost_snapshot
         result = schedule_in_school_training_pair(self.payload(), self.user)
         training = Activity.objects.get(id=result["id"])
         visit = Activity.objects.get(id=result["pairedSchoolVisitId"])

@@ -537,75 +537,401 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
 
         from apps.budget.costing import GROUP_TRAINING_RATE_KEYS
 
-        # The training carries NO session components of its own.
-        #
-        # This asserted the opposite — participant meals, a facilitation fee
-        # and a venue fee on top of the day pool. That was the rule until the
-        # costing engine was deliberately changed to price an in-school
-        # training from the visit recipe, with the reason stated in
-        # `cost_for_activity`: it "is delivered during the same school mission
-        # as a school visit ... not a second journey or a venue-based group
-        # training", so Planning, partner payments and the CD Cost Catalogue
-        # all tell the same story.
-        #
-        # Mechanically it is an elif order: `is_in_school_training` now matches
-        # the VISIT_TYPES branch, which sits above the TRAINING_TYPES branch,
-        # so an in-school training can only ever take the visit recipe. The two
-        # cannot both apply, and the old expectation is the superseded one.
-        #
-        # What this test still protects is the part that did not change: the
-        # training joins the day pool, and transport and lunch are counted once
-        # across the day rather than once per activity — asserted above.
+        # In-school training is costed as a school visit, with no participant
+        # meal, venue or facilitation line.
         training_keys = set(
             training.schedule_cost_lines.values_list("cost_setting_key", flat=True)
         )
         self.assertEqual(
             training_keys & set(GROUP_TRAINING_RATE_KEYS),
             set(),
-            "an in-school training priced venue or facilitation as if it were "
-            "a group training held somewhere other than the school",
         )
-        # And it is not costless: it still carries the visit recipe's own keys
-        # through the shared day pool, so "no session components" cannot pass
-        # by the training having no cost lines at all.
-        self.assertTrue(training_keys, "the training carries no cost lines")
 
-        # Assert the rule where the rule actually lives, too.
-        #
-        # The assertions above are on PERSISTED lines, and reverting the one
-        # line in `cost_for_activity` that implements this rule does not make
-        # them fail — the scheduling path that writes those lines reaches the
-        # same answer by another route. So they record the outcome without
-        # pinning the rule, and a test that cannot fail when the rule is
-        # removed is not holding it.
-        #
-        # This one does. Measured both ways: as written the recipe is
-        # transport + lunch at 86,000; with `or is_in_school_training` removed
-        # from the VISIT_TYPES branch the activity falls through to
-        # TRAINING_TYPES and the recipe becomes participant meals plus
-        # facilitation plus venue at 210,000 — a different recipe, not an
-        # addition to this one.
-        from apps.budget.costing import cost_for_activity
+    def _session(self, kind, day, participants=12):
+        from datetime import datetime
+        from django.utils import timezone
+        from apps.activities.services import _apply_schedule_cost_snapshot
+        from django.db import transaction
 
-        recipe = cost_for_activity(
-            {
-                "activityType": "in_school_training",
-                "deliveryType": "staff",
-                "districtType": "primary",
-                "expectedParticipants": 10,
+        for key, rate in [
+            ("group_training_participant_meal_cost_per_head", 5000),
+            ("cluster_meeting_participant_meal_cost_per_head", 3000),
+            ("group_training_venue_cost", 70000),
+            ("group_training_facilitation_fee", 60000),
+        ]:
+            CostSetting.objects.update_or_create(
+                key=key,
+                defaults={
+                    "label": key,
+                    "unit_cost": rate,
+                    "approved_minimum": rate // 2,
+                    "catalogue": self.catalogue,
+                    "fy": "2026",
+                    "version": 1,
+                },
+            )
+        from apps.clusters.models import Cluster
+
+        cluster, _ = Cluster.objects.get_or_create(
+            name="Daily session cluster",
+            defaults={
+                "district": self.primary_district,
+                "region": self.region,
+                "sub_county": self.sub_county,
+                "responsible_staff_id": self.staff_profile.id,
             },
-            {
-                "primary_transport_per_day": 56000,
-                "primary_lunch_per_day": 30000,
-                "group_training_participant_meal_cost_per_head": 9000,
-                "group_training_facilitation_fee": 50000,
-                "group_training_venue_cost": 70000,
-            },
+        )
+        a = Activity.objects.create(
+            activity_type=kind,
+            delivery_type="staff",
+            status="scheduled",
+            cluster=cluster,
+            responsible_staff_id=self.staff_profile.id,
+            scheduled_date=timezone.make_aware(
+                datetime.combine(day, datetime.min.time())
+            ),
+            planned_date=day,
+            fy="2026",
+            quarter="Q4",
+            expected_participants=participants,
+        )
+        with transaction.atomic():
+            _apply_schedule_cost_snapshot(a, {}, self.principal)
+        return a
+
+    def test_three_visits_split_operational_and_minimum_without_losing_rounding(self):
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        CostSetting.objects.filter(key="primary_transport_per_day").update(
+            approved_minimum=100001
+        )
+        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+            approved_minimum=10001
+        )
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3"], date(2026, 8, 10)
+        )
+        activities = list(
+            Activity.objects.filter(daily_visit_batch_id=result["batchId"])
+        )
+        self.assertEqual(sum(a.est_cost_cents for a in activities), 310000)
+        minimums = planned_minimum_amounts(activities)
+        self.assertEqual(sum(minimums.values()), 110002)
+        self.assertTrue(all(36665 <= value <= 36669 for value in minimums.values()))
+
+    def test_visit_training_and_two_meetings_share_daily_transport_and_lunch(self):
+        from django.db.models import Sum
+        from apps.fund_requests.models import WeeklyFundRequest
+
+        day = date(2026, 8, 10)
+        result = self._schedule(["BATCH-P-1"], day, reason="Sessions later")
+        training = self._session("cluster_training", day, participants=12)
+        meeting = self._session("cluster_meeting", day, participants=8)
+        self._session("cluster_meeting", day, participants=4)
+        activities = Activity.objects.filter(daily_visit_batch_id=result["batchId"])
+        self.assertEqual(activities.count(), 4)
+        lines = ActivityScheduleCostLine.objects.filter(activity__in=activities)
+        for key, amount in PRIMARY_RATES:
+            self.assertEqual(
+                lines.filter(cost_setting_key=key).aggregate(total=Sum("amount"))[
+                    "total"
+                ],
+                amount,
+            )
+        self.assertEqual(
+            lines.filter(cost_setting_key="group_training_venue_cost").aggregate(
+                total=Sum("amount")
+            )["total"],
+            210000,
         )
         self.assertEqual(
-            [line.key for line in recipe.lines],
-            ["primary_transport_per_day", "primary_lunch_per_day"],
-            "an in-school training is priced from the visit recipe, not the "
-            "venue-based group-training one",
+            lines.filter(cost_setting_key="group_training_facilitation_fee").aggregate(
+                total=Sum("amount")
+            )["total"],
+            60000,
         )
-        self.assertEqual(recipe.amount, 86000)
+        self.assertFalse(
+            meeting.schedule_cost_lines.filter(
+                cost_setting_key="group_training_facilitation_fee"
+            ).exists()
+        )
+        self.assertEqual(
+            training.schedule_cost_lines.get(
+                cost_setting_key="group_training_participant_meal_cost_per_head"
+            ).amount,
+            60000,
+        )
+        self.assertEqual(
+            sum(activities.values_list("est_cost_cents", flat=True)), 676000
+        )
+        # Transport may be paid directly to a vendor: request only staff-payable lines.
+        from apps.fund_requests.fundable import vendor_direct_filter
+        from apps.fund_requests.finance_models import TransportPayment
+
+        payable = lines.exclude(vendor_direct_filter()).aggregate(total=Sum("amount"))[
+            "total"
+        ]
+        request = WeeklyFundRequest.objects.get(
+            responsible_user=self.staff_user.id, week_start_date=day
+        )
+        self.assertEqual(request.total_amount, payable)
+        self.assertEqual(
+            TransportPayment.objects.get(batch_id=result["batchId"]).amount + payable,
+            676000,
+        )
+
+    def test_participant_edit_reprices_session_but_does_not_duplicate_daily_pool(self):
+        from apps.activities.services import patch_activity
+        from django.db.models import Sum
+
+        day = date(2026, 8, 10)
+        self._schedule(["BATCH-P-1"], day, reason="Training later")
+        training = self._session("cluster_training", day, participants=12)
+        result = patch_activity(
+            training.id, {"expectedParticipants": 20}, self.principal
+        )
+        self.assertEqual(result["estCostCents"], 155000 + 100000 + 60000 + 70000)
+        self.assertEqual(
+            training.schedule_cost_lines.get(
+                cost_setting_key="group_training_participant_meal_cost_per_head"
+            ).amount,
+            100000,
+        )
+        self.assertEqual(
+            ActivityScheduleCostLine.objects.filter(
+                activity__daily_visit_batch=training.daily_visit_batch,
+                cost_setting_key="primary_transport_per_day",
+            ).aggregate(total=Sum("amount"))["total"],
+            280000,
+        )
+
+    def test_rescheduling_training_rebalances_both_days(self):
+        from apps.activities.services import reschedule
+
+        first = self._schedule(
+            ["BATCH-P-1"], date(2026, 8, 10), reason="Training later"
+        )
+        training = self._session("cluster_training", date(2026, 8, 10))
+        second = self._schedule(
+            ["BATCH-P-2"], date(2026, 8, 11), reason="Training later"
+        )
+        reschedule(
+            training.id,
+            {"scheduledDate": "2026-08-11T10:00:00+03:00", "reason": "Move session"},
+            self.principal,
+        )
+        training.refresh_from_db()
+        self.assertEqual(training.daily_visit_batch_id, second["batchId"])
+        self.assertEqual(
+            Activity.objects.get(id=first["activities"][0]["id"]).est_cost_cents, 310000
+        )
+        self.assertEqual(
+            training.schedule_cost_lines.get(
+                cost_setting_key="primary_transport_per_day"
+            ).amount,
+            140000,
+        )
+        self.assertEqual(
+            Activity.objects.get(id=second["activities"][0]["id"]).est_cost_cents,
+            155000,
+        )
+
+    def test_preview_uses_actual_owner_day_count_and_minimum_rates(self):
+        from apps.budget.costing_service import preview
+
+        CostSetting.objects.filter(key="primary_transport_per_day").update(
+            approved_minimum=100000
+        )
+        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+            approved_minimum=20000
+        )
+        self._schedule(
+            ["BATCH-P-1", "BATCH-P-2"], date(2026, 8, 10), reason="Two visits"
+        )
+        result = preview(
+            {
+                "activityType": "school_visit",
+                "plannedDate": "2026-08-10",
+                "schoolId": "BATCH-P-3",
+            },
+            minimum=True,
+            responsible_user_id=self.staff_user.id,
+        )
+        self.assertEqual(result["dailyActivityCount"], 3)
+        self.assertEqual(result["amount"], 40001)
+        self.assertFalse(result["costMissing"])
+        other = preview(
+            {"activityType": "school_visit", "plannedDate": "2026-08-11"},
+            minimum=True,
+            responsible_user_id=self.staff_user.id,
+        )
+        self.assertEqual(other["amount"], 120000)
+
+    def test_secondary_daily_components_are_charged_once_across_schools(self):
+        from django.db.models import Sum
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        CostSetting.objects.filter(key="secondary_incidentals_per_day").delete()
+
+        CostSetting.objects.update_or_create(
+            key="secondary_breakfast_per_day",
+            defaults={
+                "label": "Breakfast",
+                "unit_cost": 15001,
+                "approved_minimum": 7001,
+                "catalogue": self.catalogue,
+                "fy": "2026",
+            },
+        )
+        for key, rate in SECONDARY_RATES:
+            CostSetting.objects.filter(key=key).update(approved_minimum=rate // 2)
+        self.sec_school_b.district = self.secondary_district_a
+        self.sec_school_b.save(update_fields=["district"])
+        result = self._schedule(
+            ["BATCH-SEC-A", "BATCH-SEC-B"], date(2026, 8, 10), reason="Two schools"
+        )
+        members = list(Activity.objects.filter(daily_visit_batch_id=result["batchId"]))
+        for key, rate in SECONDARY_RATES + [("secondary_breakfast_per_day", 15001)]:
+            self.assertEqual(
+                ActivityScheduleCostLine.objects.filter(
+                    activity__in=members, cost_setting_key=key
+                ).aggregate(total=Sum("amount"))["total"],
+                rate,
+            )
+        self.assertEqual(sum(planned_minimum_amounts(members).values()), 287001)
+
+    def test_refresh_command_preserves_frozen_requests_and_only_applies_explicitly(
+        self,
+    ):
+        from io import StringIO
+        from django.core.management import call_command
+        from apps.budget.models import ActivityCostSnapshot
+        from apps.fund_requests.models import WeeklyFundRequest
+
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-P-2"], date(2026, 8, 10), reason="Two schools"
+        )
+        ids = [a["id"] for a in result["activities"]]
+        for snapshot in ActivityCostSnapshot.objects.filter(
+            activity_id__in=ids, is_current=True
+        ):
+            for line in snapshot.operational_breakdown:
+                line.pop("dailyAllocation", None)
+            snapshot.save(update_fields=["operational_breakdown"])
+        before = ActivityCostSnapshot.objects.count()
+        output = StringIO()
+        call_command("refresh_daily_cost_allocations", stdout=output)
+        self.assertIn("outdated=1", output.getvalue())
+        self.assertEqual(ActivityCostSnapshot.objects.count(), before)
+        WeeklyFundRequest.objects.filter(responsible_user=self.staff_user.id).update(
+            status="submitted_to_pl"
+        )
+        call_command("refresh_daily_cost_allocations", apply=True, stdout=StringIO())
+        self.assertEqual(ActivityCostSnapshot.objects.count(), before)
+        WeeklyFundRequest.objects.filter(responsible_user=self.staff_user.id).update(
+            status="pending_responsible_confirmation"
+        )
+        call_command("refresh_daily_cost_allocations", apply=True, stdout=StringIO())
+        self.assertEqual(ActivityCostSnapshot.objects.count(), before + 2)
+        current = ActivityCostSnapshot.objects.filter(
+            activity_id__in=ids, is_current=True
+        )
+        self.assertTrue(
+            all(
+                line.get("dailyAllocation", {}).get("count") == 2
+                for snapshot in current
+                for line in snapshot.operational_breakdown
+            )
+        )
+
+    def test_zero_operational_rate_still_splits_a_configured_minimum_exactly(self):
+        from apps.budget.costing_service import planned_minimum_amounts
+
+        CostSetting.objects.filter(key="primary_transport_per_day").update(
+            unit_cost=0, approved_minimum=5
+        )
+        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+            unit_cost=0, approved_minimum=2
+        )
+        result = self._schedule(
+            ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3"], date(2026, 8, 10)
+        )
+        members = list(Activity.objects.filter(daily_visit_batch_id=result["batchId"]))
+        self.assertEqual(sum(a.est_cost_cents for a in members), 0)
+        self.assertEqual(sorted(planned_minimum_amounts(members).values()), [1, 3, 3])
+
+    def test_preview_cannot_use_an_unrelated_staff_members_day(self):
+        from apps.budget.costing_service import planning_preview_owner
+        from apps.core.exceptions import Forbidden
+
+        self.assertEqual(
+            planning_preview_owner(self.staff_user, self.staff_profile.id),
+            self.staff_user.id,
+        )
+        with self.assertRaises(Forbidden):
+            planning_preview_owner(self.staff_user, "another-staff-profile")
+
+    def test_cluster_drawer_preview_uses_the_selected_day_and_planned_headcount(self):
+        CostSetting.objects.filter(key="primary_transport_per_day").update(
+            approved_minimum=100000
+        )
+        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+            approved_minimum=20000
+        )
+        self._schedule(
+            ["BATCH-P-1", "BATCH-P-2"], date(2026, 8, 10), reason="Two visits"
+        )
+        session = self._session("cluster_training", date(2026, 8, 11))
+        self.client.force_login(self.staff_user)
+        response = self.client.get(
+            "/clusters/cost-preview",
+            {
+                "activity_type": "training",
+                "cluster_id": session.cluster_id,
+                "scheduled_date": "2026-08-10",
+                "expected_participants": "12",
+                "responsible_staff_id": self.staff_profile.id,
+            },
+            HTTP_HX_REQUEST="true",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(response.context["success"])
+        self.assertEqual(response.context["preview"]["amount"], 135001)
+        self.assertContains(response, "3 planned activities")
+        self.assertNotContains(response, "280,000")
+
+    def test_paid_transport_prevents_redistribution_into_a_staff_request(self):
+        from apps.fund_requests.finance_models import TransportPayment
+
+        day = date(2026, 8, 10)
+        result = self._schedule(["BATCH-P-1"], day, reason="One visit")
+        TransportPayment.objects.filter(batch_id=result["batchId"]).update(
+            status="paid"
+        )
+        with self.assertRaisesMessage(BadRequest, "already been paid"):
+            self._session("cluster_training", day)
+        payment = TransportPayment.objects.get(batch_id=result["batchId"])
+        self.assertEqual(payment.amount, 280000)
+        self.assertEqual(payment.status, "paid")
+
+    def test_returned_day_redistributes_the_share_of_deferred_work(self):
+        from apps.daily_visit_batches.services import resync_stale_batches
+        from apps.fund_requests.models import WeeklyFundRequest
+
+        day = date(2026, 8, 10)
+        result = self._schedule(["BATCH-P-1", "BATCH-P-2"], day, reason="Two schools")
+        first, second = [item["id"] for item in result["activities"]]
+        # A change made while finance was locked can leave the old batch link.
+        Activity.objects.filter(id=first).update(status="deferred")
+        self.assertEqual(
+            resync_stale_batches(self.staff_user.id, day, date(2026, 8, 16)), 1
+        )
+        remaining = Activity.objects.get(id=second)
+        self.assertEqual(remaining.est_cost_cents, 310000)
+        self.assertEqual(remaining.daily_visit_batch.school_count, 1)
+        self.assertEqual(
+            WeeklyFundRequest.objects.get(
+                responsible_user=self.staff_user.id, week_start_date=day
+            ).total_amount,
+            30000,
+        )

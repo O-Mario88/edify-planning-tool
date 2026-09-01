@@ -71,7 +71,14 @@ def get_cluster_risk(cluster, planning_info, avg_ssa) -> str:
     return "healthy"
 
 
-def _get_cost_preview_data(activity_type, participants, cluster_id):
+def _get_cost_preview_data(
+    activity_type,
+    participants,
+    cluster_id,
+    *,
+    planned_date=None,
+    responsible_user_id=None,
+):
     """Cost preview via the central CostingService — no fallback/fabricated rates.
 
     Missing rates surface as blockers instead of fake prices."""
@@ -83,8 +90,10 @@ def _get_cost_preview_data(activity_type, participants, cluster_id):
             "activityType": act_type,
             "expectedParticipants": participants,
             "clusterId": cluster_id,
+            "plannedDate": planned_date,
         },
         minimum=True,
+        responsible_user_id=responsible_user_id,
     )
 
     cost_lines = []
@@ -111,6 +120,7 @@ def _get_cost_preview_data(activity_type, participants, cluster_id):
         "can_schedule": not result["costMissing"],
         "costMissing": result["costMissing"],
         "blockers": result["blockers"],
+        "allocationNote": result["allocationNote"],
     }
 
 
@@ -137,8 +147,8 @@ def _cost_preview_participants(request, activity_type):
     event behind when HTMX serializes the form.
     """
 
-    raw_total = request.GET.get("expected_participants", "50").strip()
-    fallback = int(raw_total) if raw_total.isdigit() else 50
+    raw_total = request.GET.get("expected_participants", "").strip()
+    fallback = int(raw_total) if raw_total.isdigit() else 0
 
     per_school = _per_school_from_categories(request.GET)
     if per_school < 1:
@@ -342,7 +352,17 @@ def cluster_cost_preview_partial(request):
     cluster_id = request.GET.get("cluster_id", "").strip()
 
     try:
-        preview = _get_cost_preview_data(activity_type, participants, cluster_id)
+        from apps.budget.costing_service import planning_preview_owner
+
+        preview = _get_cost_preview_data(
+            activity_type,
+            participants,
+            cluster_id,
+            planned_date=request.GET.get("scheduled_date") or request.GET.get("date"),
+            responsible_user_id=planning_preview_owner(
+                request.user, request.GET.get("responsible_staff_id")
+            ),
+        )
         context = {
             "success": True,
             "preview": preview,

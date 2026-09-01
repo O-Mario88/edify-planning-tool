@@ -125,6 +125,8 @@ class DualRateCardSecurityTest(APITestCase):
             "group_training_participant_meal_cost_per_head": (12_000, 22_000),
             "group_training_facilitation_fee": (30_000, 50_000),
             "group_training_venue_cost": (40_000, 70_000),
+            "primary_transport_per_day": (20_000, 35_000),
+            "primary_lunch_per_day": (8_000, 12_000),
         }
         for key, (operational_rate, reference_rate) in component_rates.items():
             CostSetting.objects.filter(catalogue=operational, key=key).update(
@@ -138,7 +140,7 @@ class DualRateCardSecurityTest(APITestCase):
         response = self.client.post(
             "/api/budget/costing/management-preview",
             {
-                "activityType": "training",
+                "activityType": "cluster_training",
                 "deliveryType": "staff",
                 "expectedParticipants": 10,
                 "days": 1,
@@ -161,8 +163,8 @@ class DualRateCardSecurityTest(APITestCase):
             reference_lines["group_training_participant_meal_cost_per_head"]["amount"],
             220_000,
         )
-        self.assertEqual(payload["operationalCost"], 190_000)
-        self.assertEqual(payload["referenceCost"], 340_000)
+        self.assertEqual(payload["operationalCost"], 218_000)
+        self.assertEqual(payload["referenceCost"], 387_000)
 
     def test_management_preview_is_forbidden_to_field_staff(self):
         self._as(self.cceo)

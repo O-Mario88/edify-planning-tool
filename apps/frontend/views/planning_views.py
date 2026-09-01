@@ -2282,7 +2282,15 @@ def cost_preview_partial(request):
         payload["assignedPartnerId"] = partner_id
 
     try:
-        preview_data = cost_preview(payload, minimum=True)
+        from apps.budget.costing_service import planning_preview_owner
+
+        preview_data = cost_preview(
+            payload,
+            minimum=True,
+            responsible_user_id=planning_preview_owner(
+                request.user, request.POST.get("responsible_staff_id")
+            ),
+        )
         context = {
             "preview": preview_data,
             "success": True,

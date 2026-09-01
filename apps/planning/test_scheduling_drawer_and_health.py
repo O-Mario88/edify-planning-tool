@@ -176,13 +176,13 @@ class AvailableActivityTypeServiceTest(TestCase):
         }
         self.assertEqual(rows["school_visit"]["participantMode"], ParticipantMode.NONE)
         self.assertFalse(rows["school_visit"]["requiresParticipants"])
-        # School-level support is planned by purpose, not by audience: the
-        # participant question moved to cluster work, where a room is filled
-        # from many schools and the composition has to be stated.
+        # School-level training is costed as a school visit, with no
+        # participant-meal quantity in the planning drawer.
         self.assertEqual(
             rows["in_school_training"]["participantMode"], ParticipantMode.NONE
         )
         self.assertFalse(rows["in_school_training"]["participantCategories"])
+        self.assertFalse(rows["in_school_training"]["requiresParticipants"])
 
 
 class ScheduleDrawerFieldsTest(TestCase):
@@ -592,7 +592,13 @@ class ClusterDrawerDeliveryTest(TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        preview.assert_called_once_with("training", 36, self.cluster.id)
+        preview.assert_called_once_with(
+            "training",
+            36,
+            self.cluster.id,
+            planned_date=None,
+            responsible_user_id=self.user.id,
+        )
 
     def test_cost_preview_adds_the_per_school_categories_up_itself(self):
         """The drawer asks who comes from each school and never asks for the
@@ -625,7 +631,13 @@ class ClusterDrawerDeliveryTest(TestCase):
             )
 
         self.assertEqual(response.status_code, 200)
-        preview.assert_called_once_with("training", 9, self.cluster.id)
+        preview.assert_called_once_with(
+            "training",
+            9,
+            self.cluster.id,
+            planned_date=None,
+            responsible_user_id=self.user.id,
+        )
 
     def _cluster_card_drawer(self) -> str:
         client = Client()

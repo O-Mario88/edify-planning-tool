@@ -19,7 +19,9 @@ jobs:
   django-tests:
     name: Django Lint & Test Suite
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # The full suite now contains more than 6,300 tests and exceeded 60 minutes
+    # on GitHub's shared runner. Keep the gate intact and allow it to finish.
+    timeout-minutes: 90
 
     services:
       postgres:
@@ -83,7 +85,12 @@ jobs:
 
       - name: Run Tests
         if: ${{ !cancelled() }}
-        run: python manage.py test --parallel 4
+        run: |
+          # Functional tests benefit from four workers. The scale gate measures
+          # strict wall-clock budgets at 15,000 schools, so run it separately
+          # without competing test workers distorting the measurement.
+          python manage.py test --parallel 4 --exclude-tag=scale
+          python manage.py test apps.system_health.test_load_scale --tag=scale
 
       # The rendered CSS bundle is committed, so it can silently fall behind
       # the templates that generate it: a class added to a template renders as

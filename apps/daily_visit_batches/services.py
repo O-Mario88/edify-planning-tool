@@ -18,6 +18,7 @@ from django.db import transaction
 from django.db.models import Count, Q
 
 from apps.core.exceptions import BadRequest, NotFoundError
+from apps.core.activity_types import NON_FUNDABLE_ACTIVITY_STATUSES
 
 from .exceptions import ReasonRequiredError
 from .models import DailyVisitBatch
@@ -33,7 +34,7 @@ def _catalogue_for_batch_date(visit_date: date):
     from apps.budget.costing_service import active_catalogue
     from apps.core.fy import get_operational_fy
 
-    return active_catalogue(get_operational_fy(visit_date))
+    return active_catalogue(get_operational_fy(visit_date), on_date=visit_date)
 
 
 def _is_locked(responsible_user: str, visit_date: date) -> bool:
@@ -57,6 +58,26 @@ def _is_locked(responsible_user: str, visit_date: date) -> bool:
     )
 
 
+def batch_needs_repricing(batch) -> bool:
+    """Detect old splits without rewriting immutable, approved snapshots."""
+    from apps.budget.models import ActivityCostSnapshot
+
+    members = batch.activities.filter(deleted_at__isnull=True).exclude(
+        status__in=NON_FUNDABLE_ACTIVITY_STATUSES
+    )
+    if members.count() != batch.school_count:
+        return True
+    snapshots = list(
+        ActivityCostSnapshot.objects.filter(activity__in=members, is_current=True)
+    )
+    return len(snapshots) != batch.school_count or any(
+        not line.get("dailyAllocation")
+        for snapshot in snapshots
+        for line in snapshot.operational_breakdown
+        if line.get("key") in KEY_LABELS
+    )
+
+
 def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
     """Recompute this owner's unlocked week batches whose live member count no
     longer matches the priced split.
@@ -74,12 +95,7 @@ def resync_stale_batches(responsible_user: str, week_start, week_end) -> int:
     ):
         if _is_locked(batch.responsible_user, batch.visit_date):
             continue
-        live = (
-            batch.activities.filter(deleted_at__isnull=True)
-            .exclude(status="cancelled")
-            .count()
-        )
-        if live != batch.school_count:
+        if batch_needs_repricing(batch):
             with transaction.atomic():
                 _recalculate_and_write_lines(batch, None, batch.responsible_user)
             repaired += 1
@@ -181,7 +197,7 @@ def schedule_visits(
         existing_activities = (
             list(
                 batch.activities.filter(deleted_at__isnull=True)
-                .exclude(status="cancelled")
+                .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
                 .select_related("school")
             )
             if batch
@@ -264,6 +280,18 @@ def schedule_visits(
 
         _recalculate_and_write_lines(batch, catalogue, responsible_user_id)
 
+        # create() deliberately skipped costing. Return the saved allocations,
+        # not the zero estimates from those pre-costing serialized objects.
+        saved_costs = {
+            a.id: a
+            for a in Activity.objects.filter(id__in=[a["id"] for a in new_activities])
+        }
+        for item in new_activities:
+            saved = saved_costs[item["id"]]
+            item.update(
+                estCostCents=saved.est_cost_cents, costMissing=saved.cost_missing
+            )
+
         return {"batchId": batch.id, "activities": new_activities}
 
 
@@ -311,10 +339,9 @@ def attach_activity_to_batch(
     requirement), but the FINANCIAL treatment must still be the pooled 1/N
     share — otherwise each visit bills the entire day's transport/meal pool.
 
-    Returns True when the activity was pooled. Returns False (caller falls
-    back to solo pricing) when pooling is impossible: unclassified district,
-    a same-day batch of the other district type, an unapproved secondary
-    district mix, a locked (post-draft) day, or missing pool rates.
+    Returns False only when the first day's pool rates are unavailable; the
+    caller then records the missing-rate recipe. Conflicting districts and
+    locked requests raise rather than silently bill another full daily pool.
     Must be called inside the caller's transaction.
     """
     district = member_district(activity)
@@ -323,7 +350,14 @@ def attach_activity_to_batch(
         # station) prices on the primary profile.
         district_type = "primary"
     else:
-        district_type = district.district_type
+        # The standalone recipe already uses primary rates when no secondary
+        # classification exists. Keep that pricing profile, but still share
+        # its daily amount instead of charging it again for each activity.
+        district_type = district.district_type or "primary"
+    if activity.activity_type == "field_event":
+        from apps.activities.services import _field_event_district_type
+
+        district_type = _field_event_district_type(activity)
     if district_type not in ("primary", "secondary"):
         return False
 
@@ -336,14 +370,20 @@ def attach_activity_to_batch(
         .first()
     )
     if batch and batch.district_type != district_type:
-        return False
+        raise BadRequest(
+            "You cannot mix primary and secondary district activities on the same day. "
+            "Choose another date so daily staff costs are only charged once."
+        )
     if _is_locked(responsible_user_id, activity.planned_date):
-        return False
+        raise BadRequest(
+            "This week's request has already been sent for approval. "
+            "Have it returned before changing the planned activities and daily cost shares."
+        )
 
     existing_activities = (
         list(
             batch.activities.filter(deleted_at__isnull=True)
-            .exclude(status="cancelled")
+            .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
             .select_related("school")
         )
         if batch
@@ -356,7 +396,7 @@ def attach_activity_to_batch(
         all_district_ids.add(district.id)
     if district_type == "secondary" and len(all_district_ids) > 1:
         if _resolve_group(all_district_ids) is None:
-            return False
+            _assert_common_approved_group(all_district_ids)
 
     catalogue = _catalogue_for_batch_date(activity.planned_date)
     from apps.budget.costing_service import _rate_card
@@ -365,6 +405,8 @@ def attach_activity_to_batch(
     try:
         compute_daily_pool(rates, district_type)
     except BadRequest:
+        if batch:
+            raise
         return False
 
     if not batch:
@@ -432,7 +474,9 @@ def reschedule_within_batch(
             f"— ask the CD/Admin to classify it first."
         )
 
-    responsible_user_id = principal.user_id
+    from apps.activities.services import _funding_owner_id
+
+    responsible_user_id = _funding_owner_id(activity, principal)
     with transaction.atomic():
         batch = (
             DailyVisitBatch.objects.select_for_update()
@@ -452,7 +496,7 @@ def reschedule_within_batch(
         existing_activities = (
             list(
                 batch.activities.filter(deleted_at__isnull=True)
-                .exclude(status="cancelled")
+                .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
                 .select_related("school")
             )
             if batch
@@ -523,7 +567,7 @@ def _recalculate_and_write_lines(
 
     activities = list(
         batch.activities.filter(deleted_at__isnull=True)
-        .exclude(status="cancelled")
+        .exclude(status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .order_by("id")
     )
     n = len(activities)
@@ -565,7 +609,15 @@ def _recalculate_and_write_lines(
         return
 
     allocations = allocate_pool(pool, n)
-    for activity, alloc in zip(activities, allocations):
+    for index, (activity, alloc) in enumerate(zip(activities, allocations)):
+        from apps.activities.services import _costing_input
+        from apps.budget.costing_service import _profiled_input
+
+        costing_input = {
+            **_costing_input(activity, {}),
+            "plannedDate": batch.visit_date,
+            "districtType": batch.district_type,
+        }
         lines = [
             CostLine(
                 label=KEY_LABELS.get(key, key.replace("_", " ").title()),
@@ -574,6 +626,8 @@ def _recalculate_and_write_lines(
                 qty=1,
                 amount=amount,
                 missing=False,
+                allocation_count=n,
+                allocation_index=index,
             )
             for key, amount in alloc.items()
         ]
@@ -587,19 +641,11 @@ def _recalculate_and_write_lines(
         if activity.activity_type in POOL_PLUS_RECIPE_TYPES:
             from apps.budget.costing import cost_for_activity
 
-            own = cost_for_activity(
-                {
-                    "activityType": activity.activity_type,
-                    "deliveryType": "staff",
-                    "districtType": batch.district_type,
-                    "expectedParticipants": activity.expected_participants,
-                    "days": 1,
-                    "fy": activity.fy,
-                },
-                rates,
-            )
-            lines.extend(own.lines)
-            recipe_missing = own.missing_items
+            own = cost_for_activity(_profiled_input(costing_input), rates)
+            # The pure recipe also serves standalone previews. Replace its
+            # daily staff lines with the shared amounts, keeping session costs.
+            lines.extend(line for line in own.lines if line.key not in KEY_LABELS)
+            recipe_missing = [key for key in own.missing_items if key not in KEY_LABELS]
         cost = ActivityCost(
             amount=sum(line.amount for line in lines),
             lines=lines,
@@ -608,7 +654,7 @@ def _recalculate_and_write_lines(
         )
         apply_to_activity(
             activity,
-            {"fy": activity.fy},
+            costing_input,
             responsible_user_id=responsible_user_id,
             precomputed_cost=cost,
         )
