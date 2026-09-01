@@ -3,7 +3,7 @@
 
 # Test runner.
 pytest==9.1.1
-pytest-django==4.12.0
+pytest-django==4.14.0
 pytest-cov==7.1.0
 factory-boy==3.3.3
 # Frozen-clock test mechanism (REG-02) — pins "today"/"now" for
@@ -19,7 +19,7 @@ tblib==3.2.2
 # not touch (958 RUF012, 552 I001, 185 DTZ011, ...). Upgrading the linter is
 # its own piece of work — a sweep, or an explicit [lint] select — not a
 # dependency bump that happens to red the gate for everything else.
-ruff==0.8.4
+ruff==0.16.4
 
 # Offline compilation and topology validation of district-sized UBOS map
 # assets. This is deliberately a development dependency: request handling
