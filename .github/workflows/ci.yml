@@ -19,9 +19,9 @@ jobs:
   django-tests:
     name: Django Lint & Test Suite
     runs-on: ubuntu-latest
-    # The full suite now contains more than 6,300 tests and exceeds 30 minutes
+    # The full suite now contains more than 6,300 tests and exceeded 60 minutes
     # on GitHub's shared runner. Keep the gate intact and allow it to finish.
-    timeout-minutes: 60
+    timeout-minutes: 90
 
     services:
       postgres:
