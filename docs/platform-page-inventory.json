@@ -2258,7 +2258,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22357,
+      "bytes": 22583,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2266,7 +2266,7 @@
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 11,
+      "htmx_controls": 13,
       "kind": "application-partial",
       "name": "Cluster Action Planner Drawer",
       "purpose": "Reusable cluster action planner drawer interface primitive",
@@ -2578,7 +2578,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5396,
+      "bytes": 5640,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2586,7 +2586,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Planned Date Field",
       "purpose": "Reusable planned date field interface primitive",
@@ -3088,7 +3088,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1757,
+      "bytes": 1835,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/cost-preview",
@@ -6646,7 +6646,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31766,
+      "bytes": 31415,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",

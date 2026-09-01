@@ -172,12 +172,15 @@ class ClientEntitlementTests(Fixture):
     """Repeated support is allowed, but identical live activities are not."""
 
     def _payload(self, activity_type):
-        return {
+        payload = {
             "schoolId": self.school.school_id,
             "activityType": activity_type,
             "scheduledDate": _schedulable_date().isoformat(),
             "deliveryType": "staff",
         }
+        if activity_type == "training":
+            payload["expectedParticipants"] = 10
+        return payload
 
     def test_an_identical_visit_on_the_same_date_is_refused(self):
         from apps.activities.services import create

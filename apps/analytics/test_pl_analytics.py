@@ -232,7 +232,15 @@ class PLAnalyticsTest(TestCase):
         self.assertContains(response, "Performance by Sub-Region")
         self.assertContains(response, "Country-wide system data")
 
-    @override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=60)
+    @override_settings(
+        ANALYTICS_DASHBOARD_CACHE_SECONDS=60,
+        CACHES={
+            "default": {
+                "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+                "LOCATION": "pl-analytics-snapshot-test",
+            }
+        },
+    )
     def test_pl_analytics_reuses_the_same_short_lived_snapshot(self):
         cache.clear()
         self.client.force_login(self.pl_a)

@@ -54,7 +54,7 @@ import time
 
 from django.contrib.auth import get_user_model
 from django.db import connection, reset_queries
-from django.test import TestCase, override_settings
+from django.test import TestCase, override_settings, tag
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -111,6 +111,7 @@ ABSURD_QUERY_COUNT = 10_000
 CATASTROPHIC_SECONDS = 30.0
 
 
+@tag("scale")
 class ScaleGateTest(TestCase):
     """Asserts the whole-population pages cost the same as the estate grows."""
 
@@ -759,6 +760,7 @@ BASE_ACTIVITIES = _env_int("EDIFY_SCALE_ACTIVITIES", 12_000)
 GROWTH_ACTIVITIES = _env_int("EDIFY_SCALE_ACTIVITY_GROWTH", 8_000)
 
 
+@tag("scale")
 class TransactionalVolumeScaleTest(TestCase):
     """Pages must cost the same as the WORK grows, not just the estate."""
 
