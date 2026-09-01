@@ -377,7 +377,29 @@ class VolumeReconciliationTests(Fixture):
         from apps.fund_requests.models import WeeklyFundRequest
         from apps.schools.models import School
 
+        owners = [(self.cceo, self.sp)]
+        for owner_number in range(1, 4):
+            owner = _user(f"vc-volume-{owner_number}@t.org", EdifyRole.CCEO.value)
+            owners.append(
+                (
+                    owner,
+                    StaffProfile.objects.create(user=owner, country="Uganda"),
+                )
+            )
+
+        first_monday = date.today() + timedelta(
+            days=(7 - date.today().weekday()) % 7 or 7
+        )
         for i in range(300):
+            # Four staff each plan five visits per workday across three
+            # workweeks. This keeps the 300-activity reconciliation volume
+            # while avoiding an impossible 60 visits for one staff member on
+            # one day, which turns incremental daily repricing quadratic.
+            workday = i // 20
+            owner, staff = owners[(i % 20) // 5]
+            scheduled_date = first_monday + timedelta(
+                days=(workday // 5) * 7 + (workday % 5)
+            )
             school = School.objects.create(
                 name=f"Vol {i}",
                 school_id=f"VOL-{i}",
@@ -385,21 +407,15 @@ class VolumeReconciliationTests(Fixture):
                 district_id=self.district.id,
                 school_type="client",
             )
-            StaffSchoolAssignment.objects.create(staff=self.sp, school_id=school.id)
+            StaffSchoolAssignment.objects.create(staff=staff, school_id=school.id)
             create(
                 {
                     "schoolId": school.school_id,
                     "activityType": "school_visit",
-                    # Weekdays only — the calendar policy (rightly) blocks
-                    # Sunday scheduling.
-                    "scheduledDate": (
-                        date.today()
-                        + timedelta(days=(7 - date.today().weekday()) % 7 or 7)
-                        + timedelta(days=i % 5)
-                    ).isoformat(),
+                    "scheduledDate": scheduled_date.isoformat(),
                     "deliveryType": "staff",
                 },
-                self.cceo,
+                owner,
             )
         # The weekly seam reconciles against the STAFF-PAYABLE share:
         # school-visit transport is vendor-direct and never enters the
