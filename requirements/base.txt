@@ -6,7 +6,7 @@ Django==5.2.17
 # require 0.6.0. Pin it explicitly so a reused environment cannot retain the
 # vulnerable transitive version.
 sqlparse==0.6.0
-djangorestframework==3.17.1
+djangorestframework==3.17.2
 django-filter==26.1
 django-cors-headers==4.9.0
 django-environ==0.14.0
