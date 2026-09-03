@@ -3137,12 +3137,14 @@ main table tbody > tr:only-child > td[colspan] > :is(
 
   /* A cell that carries the row's action: 24px control in a 4px cell. */
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody td:is([data-record-action], .edify-table__actions, .edify-cell-action) {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td:is([data-record-action], .edify-table__actions, .edify-cell-action, .ia-queue-row__action) {
     padding-block: 0.21875rem !important;
   }
 
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody td :is(a, button):is(.rounded-control, .btn) {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td :is(a, button, summary):is(.rounded-control, .btn),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td.ia-queue-row__action > a {
     block-size: 1.5rem !important;
     min-block-size: 1.5rem !important;
     padding-block: 0 !important;
@@ -3265,10 +3267,15 @@ main table tbody > tr:only-child > td[colspan] > :is(
 
 /* Marked by micro-ux.js: `.block` lines and control rows inside a cell. */
 @media (min-width: 768px) {
-  :is(main, .drawer-body) table tbody td > .edify-cell-line {
+  :is(main, .drawer-body) table tbody td > .edify-cell-line,
+  :is(main, .drawer-body) table tbody td > .edify-cell-wrap > .edify-cell-line {
     display: inline !important;
     margin-block: 0 !important;
   }
+  :is(main, .drawer-body) table tbody td > .edify-cell-wrap > .edify-cell-line + .edify-cell-line {
+    margin-inline-start: 0.375rem;
+  }
+  :is(main, .drawer-body) table tbody td > .edify-cell-follows,
   :is(main, .drawer-body) table tbody td > .edify-cell-line + .edify-cell-line,
   :is(main, .drawer-body) table tbody td > :not(.edify-cell-line) + .edify-cell-line {
     margin-inline-start: 0.375rem;
@@ -3287,5 +3294,33 @@ main table tbody > tr:only-child > td[colspan] > :is(
     min-block-size: 0 !important;
     padding-block: 0 !important;
     line-height: 1 !important;
+  }
+}
+
+/* One line per row: a cell that is not the action cell never wraps; long
+   text is cut with an ellipsis and the table scrolls sideways instead.
+   The IA dashboard's own queue pills join the 18px pill rhythm. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table:not(.sr-only):not(.edify-visually-hidden) tbody td:not(.edify-cell-action):not([data-record-action]) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 24rem;
+  }
+  :is(main, .drawer-body) table tbody td .ia-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody td > .edify-cell-follows::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
   }
 }

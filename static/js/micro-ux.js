@@ -123,10 +123,41 @@
       });
       /* A `.block` line directly in a cell, and a flex row of controls beside
          cell text, both sit on the one line. */
+      var lines = Array.from(cell.children).filter(function (child) {
+        return child.matches('a, span, p, small, div, time, strong') &&
+          !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge');
+      });
       Array.from(cell.children).forEach(function (child) {
-        if (child.matches('span.block, small.block')) child.classList.add('edify-cell-line');
+        if (child.matches('span.block, small.block') || (lines.length > 1 && lines.indexOf(child) !== -1)) {
+          child.classList.add('edify-cell-line');
+        }
         if (child.matches('.flex') && cell.children.length > 1) child.classList.add('edify-cell-inline-row');
       });
+      /* Bare text followed by a paragraph or block span: the block sits inline
+         after the text, with a separator. */
+      var hasText = Array.from(cell.childNodes).some(function (node) {
+        return node.nodeType === 3 && node.textContent.trim() !== '';
+      });
+      if (hasText) {
+        Array.from(cell.children).forEach(function (child) {
+          if (child.matches('p, div, span.block, small') &&
+              !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn')) {
+            child.classList.add('edify-cell-line', 'edify-cell-follows');
+          }
+        });
+      }
+      /* A single wrapper holding two or more lines: its lines sit inline too. */
+      if (cell.children.length === 1 && cell.firstElementChild.matches('div, p') &&
+          !cell.firstElementChild.matches('.flex, .grid, .inline-flex, form')) {
+        var inner = Array.from(cell.firstElementChild.children).filter(function (child) {
+          return child.matches('a, span, p, small, div, time, strong') &&
+            !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge');
+        });
+        if (inner.length > 1) {
+          cell.firstElementChild.classList.add('edify-cell-wrap');
+          inner.forEach(function (child) { child.classList.add('edify-cell-line'); });
+        }
+      }
       /* A cell that carries a control closes at 32px around a 24px control. */
       cell.classList.toggle(
         'edify-cell-action',
