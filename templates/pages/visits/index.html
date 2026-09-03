@@ -13,7 +13,7 @@
 <h1 class="edify-page-title edify-page-header__title">School Visits</h1>
 <p class="edify-page-header__description">{{ total }} visits · {{ completed }} completed · {{ pending }} pending</p>
 </div>
-<a href="/planning/schedule?action=visit" class="h-10 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center gap-2 transition-all">
+<a href="/planning/schedule?action=visit" class="h-8 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-semibold flex items-center gap-2 transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
 Schedule
 </a>
@@ -30,7 +30,7 @@ Schedule
 <option value="started" {% if status_filter == 'started' %}selected{% endif %}>In Progress</option>
 <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
 </select>
-<button type="submit" class="h-9 px-4 bg-[var(--edify-accent)] text-white rounded-control text-[12px] font-bold hover:bg-[var(--edify-accent-hover)] transition-all">Filter</button>
+<button type="submit" class="h-8 px-4 bg-[var(--edify-accent)] text-white rounded-control text-[12px] font-bold hover:bg-[var(--edify-accent-hover)] transition-all">Filter</button>
 </form>
 
 <!-- Visits List -->

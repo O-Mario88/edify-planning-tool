@@ -138,7 +138,8 @@ class IAVerificationWorkspaceContractTest(SimpleTestCase):
         ):
             with self.subTest(label=label):
                 self.assertIn(label, self.table)
-        self.assertIn('class="btn btn-primary h-9">Review</a>', self.table)
+        # Action buttons are 32px platform-wide since 2026-09-03.
+        self.assertIn('class="btn btn-primary h-8">Review</a>', self.table)
         self.assertIn("edify-row-overflow__menu", self.table)
         self.assertNotIn("Review Action", self.table)
 

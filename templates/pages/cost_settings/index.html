@@ -22,7 +22,7 @@
 {% for option in fy_options %}<option value="{{ option }}" {% if option|stringformat:"s" == selected_fy|stringformat:"s" %}selected{% endif %}>FY{{ option }}</option>{% endfor %}
     </select>
   </label>
-  <button type="submit" class="self-end h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show year</button>
+  <button type="submit" class="self-end h-8 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show year</button>
 </form>
 
 <section class="grid gap-3 lg:grid-cols-2" aria-label="Cost governance layers">
@@ -97,7 +97,7 @@
 {% if can_initialize %}
 <form method="post" action="/cost-settings/initialize-default" class="mt-4">
 {% csrf_token %}
-<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold">Initialize Default Catalogue</button>
+<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold">Initialize Default Catalogue</button>
 </form>
 {% endif %}
 </div>

@@ -40,8 +40,8 @@
     </div>
 
     <div class="flex flex-wrap items-center gap-2">
-      <a href="/documents/{{ ack.document.slug }}/" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold inline-flex items-center">Read this document</a>
-      {% if ack.document.download_allowed %}<a href="/documents/{{ ack.document.slug }}/download" class="h-9 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">Download</a>{% endif %}
+      <a href="/documents/{{ ack.document.slug }}/" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold inline-flex items-center">Read this document</a>
+      {% if ack.document.download_allowed %}<a href="/documents/{{ ack.document.slug }}/download" class="h-8 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600 inline-flex items-center">Download</a>{% endif %}
     </div>
 
     <p class="edify-text-caption font-semibold text-slate-400">
@@ -83,7 +83,7 @@
         <input name="typed_full_name" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
       </label>
 
-      <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Submit response</button>
+      <button type="submit" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Submit response</button>
     </form>
 
     <form method="post" action="/api/documents/attest/{{ ack.id }}" class="pt-2 border-t border-slate-50 flex flex-col sm:flex-row sm:items-center gap-2">
@@ -98,7 +98,7 @@
   <div class="card p-16 text-center">
     <p class="text-[15px] font-semibold text-slate-600">Nothing is waiting for you</p>
     <p class="text-[12px] font-medium text-slate-400 mt-1.5">You have responded to every policy required of you.</p>
-    <a href="/dashboard" class="inline-flex h-9 px-4 mt-3 rounded-control edify-primary-solid text-white text-[13px] font-bold items-center">Go to Edify</a>
+    <a href="/dashboard" class="inline-flex h-8 px-4 mt-3 rounded-control edify-primary-solid text-white text-[13px] font-bold items-center">Go to Edify</a>
   </div>
   {% endfor %}
 

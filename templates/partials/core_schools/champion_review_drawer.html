@@ -185,7 +185,7 @@ decision is theirs. You can review the score here and raise it with them.
 {% csrf_token %}
 <button
 type="submit"
-class="w-full h-10 border border-slate-200 hover:bg-slate-100 edify-surface rounded-control text-slate-700 edify-text-caption font-semibold uppercase tracking-wider transition-colors shadow-sm"
+class="w-full h-8 border border-slate-200 hover:bg-slate-100 edify-surface rounded-control text-slate-700 edify-text-caption font-semibold uppercase tracking-wider transition-colors shadow-sm"
 >
 Reject Candidacy
 </button>
@@ -196,7 +196,7 @@ Reject Candidacy
 <button
 type="submit"
 {% if not metrics.eligible %}disabled{% endif %}
-class="w-full h-10 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center
+class="w-full h-8 text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider transition-colors shadow-sm flex items-center justify-center
 {% if metrics.eligible %}bg-emerald-600 hover:bg-emerald-700{% else %}bg-slate-200 text-slate-400 cursor-not-allowed{% endif %}"
 >
 Approve & Graduate

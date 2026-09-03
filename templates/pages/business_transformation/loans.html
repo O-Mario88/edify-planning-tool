@@ -12,7 +12,7 @@
     <p class="text-sm text-[var(--edify-text-muted)]">Access follows your active platform role.</p>
     <div class="flex flex-wrap items-center justify-end gap-2">
       {% if can_export_loans %}
-      <a href="/loans/export.csv{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-10">Export loan records</a>
+      <a href="/loans/export.csv{% if filter_query %}?{{ filter_query }}{% endif %}" class="btn btn-secondary inline-flex items-center gap-1.5 h-8">Export loan records</a>
       {% endif %}
       {% if can_write_loans and can_execute_loans %}
         {% include "components/badge.html" with tone="success" label=access_label size="md" dot="true" %}

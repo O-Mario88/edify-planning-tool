@@ -82,7 +82,7 @@
         <input id="admin-unit-cost" required min="1" name="unit_cost" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-300 px-3 text-[12px] focus:outline-none focus:ring-2 edify-primary-focus" placeholder="0">
       </label>
       <div class="flex items-end">
-        <button type="submit" class="h-9 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add item</button>
+        <button type="submit" class="h-8 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add item</button>
       </div>
       <label class="md:col-span-6" for="admin-justification">
         <span class="edify-text-caption font-bold uppercase text-slate-500">Justification <span class="normal-case text-slate-400">(optional)</span></span>
@@ -166,11 +166,11 @@
         <button type="button"
            hx-get="/country-budget/plan-sources?fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
            hx-target="#drawer-container" hx-swap="innerHTML"
-           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+           class="inline-flex h-8 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
           View plan sources
         </button>
         <a href="/country-budget/history?fy={{ country_workflow.fy }}"
-           class="inline-flex h-9 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
+           class="inline-flex h-8 items-center rounded-control border border-slate-200 px-3 text-[12px] font-bold text-slate-600 hover:bg-slate-50">
           Submitted budgets
         </a>
         {% if country_workflow.is_cd %}
@@ -181,7 +181,7 @@
           <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
           <input type="hidden" name="month" value="{{ country_workflow.month }}">
           <button type="submit" {% if not country_workflow.can_send_to_rvp %}disabled{% endif %}
-                  class="h-9 rounded-control px-4 text-[12px] font-bold text-white {% if country_workflow.can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}cursor-not-allowed bg-slate-300{% endif %}">
+                  class="h-8 rounded-control px-4 text-[12px] font-bold text-white {% if country_workflow.can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}cursor-not-allowed bg-slate-300{% endif %}">
             Submit {{ country_workflow.month_label }} budget to RVP
           </button>
         </form>
@@ -192,12 +192,12 @@
           <input type="hidden" name="budget_id" value="{{ country_workflow.budget_id }}">
           <input type="hidden" name="fy" value="{{ country_workflow.fy }}">
           <input type="hidden" name="month" value="{{ country_workflow.month }}">
-          <button type="submit" class="h-9 rounded-control bg-emerald-600 px-4 text-[12px] font-bold text-white hover:bg-emerald-700">Approve</button>
+          <button type="submit" class="h-8 rounded-control bg-emerald-600 px-4 text-[12px] font-bold text-white hover:bg-emerald-700">Approve</button>
         </form>
         <button type="button"
                 hx-get="/country-budget/return?budget_id={{ country_workflow.budget_id }}&fy={{ country_workflow.fy }}&month={{ country_workflow.month }}"
                 hx-target="#drawer-container" hx-swap="innerHTML"
-                class="h-9 rounded-control border border-rose-200 px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50">
+                class="h-8 rounded-control border border-rose-200 px-4 text-[12px] font-bold text-rose-600 hover:bg-rose-50">
           Return
         </button>
         {% endif %}

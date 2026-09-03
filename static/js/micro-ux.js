@@ -101,6 +101,33 @@
       });
     });
 
+    /* A cell whose direct children are two or more stacked blocks (a name
+       over an id, a value over a caption) is marked so consistency.css can
+       lay them on one 32px line. Flex and grid wrappers keep their layout. */
+    elementsWithin(root, 'main table tbody td, .drawer-body table tbody td').forEach(function (cell) {
+      var blocks = Array.from(cell.children).filter(function (child) {
+        return child.matches('div, p, span.block, small.block') && !child.matches('.flex, .grid, .inline-flex, form');
+      });
+      cell.classList.toggle('edify-cell-stack', blocks.length > 1);
+      /* A flex row in a cell (avatar beside a name) and the pills inside a
+         cell get markers too, so the row rhythm never has to reach for a
+         utility class in a selector. */
+      Array.from(cell.children).forEach(function (child) {
+        if (!child.classList.contains('flex')) return;
+        child.classList.add('edify-cell-row');
+        var first = child.firstElementChild;
+        if (first && first.classList.contains('rounded-pill')) first.classList.add('edify-cell-mark');
+      });
+      cell.querySelectorAll('span.rounded-pill, a.rounded-pill').forEach(function (pill) {
+        pill.classList.add('edify-cell-pill');
+      });
+      /* A cell that carries a control closes at 32px around a 24px control. */
+      cell.classList.toggle(
+        'edify-cell-action',
+        Boolean(cell.querySelector(':scope a.rounded-control, :scope button.rounded-control, :scope .btn'))
+      );
+    });
+
     elementsWithin(root, 'main .grid').forEach(function (grid) {
       var directTiles = Array.from(grid.children).filter(function (child) {
         return child.matches(tileSelector);

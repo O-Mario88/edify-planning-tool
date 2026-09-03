@@ -43,7 +43,7 @@
         {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
-    <div class="flex items-end gap-2"><button class="btn btn-primary h-10" type="submit">Apply filters</button><a class="btn h-10" href="/settings/activity-catalogue/">Reset</a></div>
+    <div class="flex items-end gap-2"><button class="btn btn-primary h-8" type="submit">Apply filters</button><a class="btn h-8" href="/settings/activity-catalogue/">Reset</a></div>
   </form>
 
   {% if can_manage %}

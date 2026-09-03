@@ -164,7 +164,7 @@ Save
 hx-get="/schools/{{ intelligence.school.id }}/add-to-cluster"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="w-full h-9 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold flex items-center justify-center transition-colors"
+class="w-full h-8 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold flex items-center justify-center transition-colors"
 >
 {{ intelligence.next_step_button }}
 </button>
@@ -173,21 +173,21 @@ class="w-full h-9 rounded-control edify-primary-solid edify-primary-hover text-w
 hx-get="/schools/{{ intelligence.school.id }}/assign-to-project"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
-class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-bold flex items-center justify-center transition-colors"
+class="w-full h-8 rounded-control bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-bold flex items-center justify-center transition-colors"
 >
 {{ intelligence.next_step_button }}
 </button>
 {% elif intelligence.next_step_action == 'view_core_planning' %}
 <a
 href="/core-schools"
-class="w-full h-9 rounded-control bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors shadow-sm"
+class="w-full h-8 rounded-control bg-purple-600 hover:bg-purple-700 text-white text-[12px] font-bold flex items-center justify-center transition-colors shadow-sm"
 >
 {{ intelligence.next_step_button }}
 </a>
 {% else %}
 <button
 disabled
-class="w-full h-9 rounded-control bg-slate-100 border border-slate-200 text-slate-400 text-[12px] font-bold flex items-center justify-center cursor-not-allowed opacity-60"
+class="w-full h-8 rounded-control bg-slate-100 border border-slate-200 text-slate-400 text-[12px] font-bold flex items-center justify-center cursor-not-allowed opacity-60"
 >
 {{ intelligence.next_step_button }}
 </button>

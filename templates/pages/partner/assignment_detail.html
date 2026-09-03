@@ -63,12 +63,12 @@
   <div class="flex flex-wrap items-center justify-end gap-2.5">
     <button type="button"
             hx-get="/partner/assignments/{{ a.id }}/return-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex h-11 items-center rounded-control border border-rose-200 edify-surface px-5 text-[13px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">
+            class="inline-flex h-8 items-center rounded-control border border-rose-200 edify-surface px-4 text-[13px] font-bold text-rose-600 hover:bg-rose-50 transition-colors">
       Return
     </button>
     <button type="button"
             hx-get="/partner/assignments/{{ a.id }}/schedule-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex h-11 items-center rounded-control edify-primary-solid edify-primary-hover px-6 text-[13px] font-bold text-white transition-colors">
+            class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[13px] font-bold text-white transition-colors">
       Schedule
     </button>
   </div>

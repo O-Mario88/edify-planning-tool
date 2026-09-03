@@ -2060,6 +2060,8 @@ def ia_attribution_view(request):
         else "warning"
         if share >= 50
         else "danger",
+        "improving": sum(1 for r in data["rows"] if (r["movement"] or 0) > 0),
+        "improving_helper": f"of {len(data['rows'])} interventions moved up",
         "fy_options": choices,
         "selected_district": district_id or "",
         "districts_options": District.objects.order_by("name").values("id", "name"),

@@ -51,7 +51,7 @@
         </div>
       </div>
       <div class="flex flex-wrap items-center gap-2">
-        <a href="/ia/verification/" class="btn btn-primary h-10">
+        <a href="/ia/verification/" class="btn btn-primary h-8">
           Review verification queue{% if kpis.waiting %} ({{ kpis.waiting }}){% endif %}
         </a>
       </div>
@@ -398,7 +398,7 @@
             <small>{% if avg_resolution_days is not None %}Average resolution {{ avg_resolution_days }} days{% else %}No completed correction cycle yet{% endif %}</small>
           </span>
         </div>
-        <a href="/ia/returned/" class="btn h-10">Review returned records <span aria-hidden="true">→</span></a>
+        <a href="/ia/returned/" class="btn h-8">Review returned records <span aria-hidden="true">→</span></a>
       </article>
     </div>
   </section>

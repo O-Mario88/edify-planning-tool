@@ -42,7 +42,7 @@ just restate it.{% endcomment %}
 <!-- Approver actions: PL for supervised CCEO requests, CD for PL/PC/IA requests. -->
 <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/approve?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
 {% csrf_token %}
-<button type="submit" class="flex items-center gap-1.5 h-9 px-4 !bg-emerald-700 !text-white text-[12px] font-bold rounded-control hover:bg-opacity-95 shadow-sm focus:outline-none transition-all">
+<button type="submit" class="flex items-center gap-1.5 h-8 px-4 !bg-emerald-700 !text-white text-[12px] font-bold rounded-control hover:bg-opacity-95 shadow-sm focus:outline-none transition-all">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 Approve
 </button>
@@ -58,7 +58,7 @@ Approve
 utilities; "!edify-primary-solid" matched no CSS class, leaving this confirm
 button white-on-white (1.05:1). Plain component classes restore the primary
 look.{% endcomment %}
-<button type="submit" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
+<button type="submit" class="flex items-center gap-1.5 h-8 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 Send for Approval
 </button>
@@ -66,7 +66,7 @@ Send for Approval
 
 <form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/self-funded?fy={{ selected_fy }}&quarter={{ selected_quarter }}&month={{ selected_month }}&week={{ selected_week }}&district={{ selected_district }}&staff={{ selected_staff }}&status={{ selected_status }}&request_type={{ selected_request_type }}" hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
 {% csrf_token %}
-<button type="submit" class="flex items-center gap-1.5 h-9 px-3.5 edify-surface border border-slate-200 text-[var(--edify-accent-text)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm">
+<button type="submit" class="flex items-center gap-1.5 h-8 px-3.5 edify-surface border border-slate-200 text-[var(--edify-accent-text)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm">
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
 Self Fund
 </button>
@@ -85,7 +85,7 @@ Submitted — awaiting {% if active_wfr.status == 'submitted_to_pl' %}Program Le
   <input type="checkbox" name="bank_message_received" value="yes" required x-model="bankReceived" class="mt-1">
   <span>I have received the bank message and verified the funds are in my account.</span>
 </label>
-<button type="submit" :disabled="!bankReceived" class="flex items-center gap-1.5 h-9 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
+<button type="submit" :disabled="!bankReceived" class="flex items-center gap-1.5 h-8 px-4 edify-primary-solid text-[12px] font-bold rounded-control edify-primary-hover shadow-sm focus:outline-none transition-all">
 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
 Fund Received
 </button>
@@ -142,7 +142,7 @@ class="h-8 px-2.5 rounded-control border border-slate-200 text-[12px] w-44 focus
 <p class="edify-text-caption text-slate-400 mt-1">The fund request populates automatically the moment an activity is scheduled in My Plan — nothing to generate manually.</p>
 </div>
 <div class="flex items-center justify-center gap-2 pt-2">
-<a href="/my-plan" class="h-9 px-4 rounded-control btn-premium-primary text-white text-[12px] font-bold hover:bg-opacity-95 shadow-sm inline-flex items-center justify-center">
+<a href="/my-plan" class="h-8 px-4 rounded-control btn-premium-primary text-white text-[12px] font-bold hover:bg-opacity-95 shadow-sm inline-flex items-center justify-center">
 Open My Plan
 </a>
 </div>

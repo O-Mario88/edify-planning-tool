@@ -40,7 +40,7 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 </select>
 </div>
 
-<button type="button" class="btn btn-ghost h-9 self-end" aria-haspopup="dialog"
+<button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog"
         @click="$refs.advancedFilters.showModal()">
 More filters{% if selected_week or selected_district != "all" or selected_staff != "all" or selected_activity_type != "all" or selected_status != "all" %} · Applied{% endif %}
 </button>
@@ -109,7 +109,7 @@ More filters{% if selected_week or selected_district != "all" or selected_staff 
 
 </div>
 <footer class="edify-filter-drawer__footer">
-<button type="button" class="btn btn-primary h-10" @click="$refs.advancedFilters.close()">Apply filters</button>
+<button type="button" class="btn btn-primary h-8" @click="$refs.advancedFilters.close()">Apply filters</button>
 </footer>
 </dialog>
 

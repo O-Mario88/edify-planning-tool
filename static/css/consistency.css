@@ -3113,3 +3113,152 @@ main table tbody > tr:only-child > td[colspan] > :is(
     --page-header-padding-x: 0.75rem;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLE ROW RHYTHM: 32px (2026-09-03)
+   ───────────────────────────────────────────────────────────────────────────
+   One row height for every table on tablet and desktop: a single-line row
+   measures 32px or less, whatever utility classes the template carries.
+   Rows that hold a control keep the control at 24px inside a 4px cell so
+   the row still closes at 32px; badges sit on one text line; a record title
+   with a caption reads on one line as "title · caption". Phones are left to
+   the mobile patterns, which need 44px tap targets and card layouts.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media (min-width: 768px) {
+  :root {
+    --edify-table-cell-padding-block: 0.375rem;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th) {
+    padding-block: 0.375rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* A cell that carries the row's action: 24px control in a 4px cell. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td:is([data-record-action], .edify-table__actions, .edify-cell-action) {
+    padding-block: 0.21875rem !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td :is(a, button):is(.rounded-control, .btn) {
+    block-size: 1.5rem !important;
+    min-block-size: 1.5rem !important;
+    padding-block: 0 !important;
+    vertical-align: middle !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td .edify-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+
+  /* "Title" over "caption" becomes "Title · caption" on one line. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span):not(.edify-cell-row) + :is(div, p, span):not(.edify-cell-row) {
+    display: inline !important;
+    margin-block-start: 0 !important;
+    margin-inline-start: 0.375rem;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span):first-child:not(.edify-cell-row) {
+    display: inline !important;
+  }
+
+  /* Beside an avatar, the stacked pair reads on one line too. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > .edify-cell-row > :is(div, p) > :is(div, p, span, small):first-child {
+    display: inline !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span) + :is(div, p, span)::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+}
+
+/* Stacked cell content reads on one line. A table row is a record, not a
+   card: a name over an id, a value over a caption, an avatar beside a
+   stacked pair — all of it sits on one 32px line. Forms and flex rows keep
+   their own layout; only stacked text blocks are flattened. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(.edify-cell-row),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > .edify-cell-row > :is(div, p) > :is(div, p, span, small),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > :is(div, p):not(.edify-cell-row) + :is(div, p, small) {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small) + :is(div, p, span, small),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > .edify-cell-row > :is(div, p) > :is(div, p, span, small) + :is(div, p, span, small),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > :is(div, p):not(.edify-cell-row) + :is(div, p, small) {
+    margin-inline-start: 0.375rem;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small) + :is(div, p, span, small)::before,
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > .edify-cell-row > :is(div, p) > :is(div, p, span, small) + :is(div, p, span, small)::before,
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > :is(div, p):not(.edify-cell-row) + :is(div, p, small)::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+
+  /* An avatar in a row is a 24px mark, and the row never wraps around it. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > .edify-cell-row {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap;
+  }
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td > .edify-cell-row > .edify-cell-mark {
+    block-size: 1.125rem !important;
+    inline-size: 1.125rem !important;
+    min-inline-size: 1.125rem !important;
+  }
+
+  /* Inline pills (roles, categories, states) sit on the text line. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody td .edify-cell-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+/* Marked by micro-ux.js: a cell with two or more stacked blocks. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody td.edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+  :is(main, .drawer-body) table tbody td.edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) + :is(div, p):not(.edify-cell-row) {
+    margin-inline-start: 0.375rem;
+  }
+  :is(main, .drawer-body) table tbody td.edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) + :is(div, p):not(.edify-cell-row)::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+}

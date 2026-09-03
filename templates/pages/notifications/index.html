@@ -20,7 +20,7 @@
         <input type="hidden" name="action" value="mark_all_read">
         <button
           type="submit"
-          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-400 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-8 px-4 rounded-control border border-slate-200 hover:border-slate-400 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Mark All Read
         </button>
@@ -31,7 +31,7 @@
         <input type="hidden" name="action" value="archive_all_read">
         <button
           type="submit"
-          class="h-9 px-4 rounded-control border border-slate-200 hover:border-slate-400 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+          class="h-8 px-4 rounded-control border border-slate-200 hover:border-slate-400 edify-surface hover:bg-slate-50 font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
         >
           Archive All Read
         </button>
@@ -113,13 +113,13 @@
         <div class="flex items-center gap-2.5">
           <a
             href="/notifications"
-            class="h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center cursor-pointer transition-colors"
+            class="h-8 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-700 flex items-center justify-center cursor-pointer transition-colors"
           >
             Reset Filters
           </a>
           <button
             type="submit"
-            class="h-9 px-5 rounded-control edify-primary-solid edify-primary-hover text-white font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
+            class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white font-bold text-[12px] uppercase tracking-wider shadow-xs cursor-pointer transition-colors"
           >
             Apply Filters
           </button>
@@ -214,7 +214,7 @@
               {% if n.target_route %}
                 <a
                   href="{% if n.status == 'unread' %}/notifications/{{ n.id }}/read?redirect={{ n.target_route }}{% else %}{{ n.target_route }}{% endif %}"
-                  class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white font-extrabold text-[12px] uppercase tracking-wider flex items-center justify-center shadow-xs transition-colors cursor-pointer"
+                  class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white font-extrabold text-[12px] uppercase tracking-wider flex items-center justify-center shadow-xs transition-colors cursor-pointer"
                 >
                   {{ n.action_label|default:"Open Record" }}
                 </a>

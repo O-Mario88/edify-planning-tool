@@ -69,12 +69,12 @@ items are the only manual country-level costs.{% endcomment %}
 
   <!-- Top actions -->
   <div class="platform-page-actions -mt-2">
-    <a href="/country-budget?export=csv&fy={{ fy }}&month={{ month }}" class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+    <a href="/country-budget?export=csv&fy={{ fy }}&month={{ month }}" class="inline-flex items-center gap-1.5 h-8 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
       Export
     </a>
     <button hx-get="/country-budget/plan-sources?fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
+            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-semibold text-slate-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       View Plan Sources
     </button>
@@ -82,19 +82,19 @@ items are the only manual country-level costs.{% endcomment %}
     <button hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML"
             hx-vals='{"action":"send_to_rvp","budget_id":"{{ budget_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
             {% if not can_send_to_rvp %}disabled{% endif %}
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control text-white text-[12px] font-bold shadow-sm transition-colors {% if can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-control text-white text-[12px] font-bold shadow-sm transition-colors {% if can_send_to_rvp %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
       Send to RVP for Approval
     </button>
     {% elif is_rvp and can_approve_or_return %}
     <button hx-post="/country-budget/action" hx-target="#country-budget-root" hx-swap="innerHTML"
             hx-vals='{"action":"approve","budget_id":"{{ budget_id }}","fy":"{{ fy }}","month":"{{ month }}"}'
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">
+            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Approve
     </button>
     <button hx-get="/country-budget/return?budget_id={{ budget_id }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center gap-1.5 h-9 px-4 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[12px] font-bold text-rose-600 shadow-sm transition-colors">
+            class="inline-flex items-center gap-1.5 h-8 px-4 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[12px] font-bold text-rose-600 shadow-sm transition-colors">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       Return
     </button>
@@ -128,7 +128,7 @@ items are the only manual country-level costs.{% endcomment %}
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Category</span><input aria-label="Cost category" name="cost_category" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="operations"></label>
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Quantity</span><input aria-label="Quantity" required min="0.01" step="0.01" name="quantity" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" value="1"></label>
       <label><span class="edify-text-caption font-bold uppercase text-slate-400">Unit cost (UGX)</span><input required min="1" name="unit_cost" type="number" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="0"></label>
-      <div class="flex items-end"><button type="submit" class="h-9 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add admin item</button></div>
+      <div class="flex items-end"><button type="submit" class="h-8 w-full rounded-control edify-primary-solid px-3 text-[12px] font-bold text-white edify-primary-hover">Add admin item</button></div>
       <label class="md:col-span-6"><span class="edify-text-caption font-bold uppercase text-slate-400">Why is this needed? <span class="normal-case text-slate-300">(optional)</span></span><input name="justification" class="mt-1 h-9 w-full rounded-control border border-slate-200 px-2.5 text-[12px]" placeholder="Short explanation for the RVP"></label>
     </form>
   </details>

@@ -27,7 +27,7 @@ data-mobile-family="directory"
 <!-- Action buttons -->
 <div class="edify-page-header__controls">
 {% if can_upload_schools or can_add_ssa %}
-<a href="/uploads" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<a href="/uploads" class="h-8 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
 </svg>
@@ -35,7 +35,7 @@ data-mobile-family="directory"
 </a>
 {% endif %}
 {% if can_add_ssa %}
-<a href="/ssa/manual/" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
+<a href="/ssa/manual/" class="h-8 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-2 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m6-6H6" />
 </svg>
@@ -43,7 +43,7 @@ data-mobile-family="directory"
 </a>
 {% endif %}
 {% if can_upload_schools %}
-<button @click="addSchoolOpen = true" class="h-9 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
+<button @click="addSchoolOpen = true" class="h-8 px-4 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-accent-hover)] text-white text-[12px] font-bold flex items-center gap-1.5 transition-all shadow-sm">
 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
 </svg>
@@ -51,7 +51,7 @@ data-mobile-family="directory"
 </button>
 {% endif %}
 <div class="relative" x-data="{ open: false }">
-<button @click="open = !open" class="h-9 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
+<button @click="open = !open" class="h-8 px-3.5 rounded-control border border-[var(--edify-border)] hover:bg-slate-50 text-[12px] font-bold text-slate-600 flex items-center gap-1.5 transition-all">
 <svg class="h-5 w-5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4a4 4 0 11-8 0 4 4 0 018 0zM4 3h16a1 1 0 011 1v3M4 3a1 1 0 00-1 1v3" />
 </svg>
@@ -224,8 +224,8 @@ style="display: none;"
 <p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected cluster and update their status to Clustered.</p>
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="assignClusterOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Cluster</button>
+<button type="button" @click="assignClusterOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Cluster</button>
 </div>
 </form>
 </div>
@@ -261,8 +261,8 @@ style="display: none;"
 <p class="edify-text-caption text-slate-400 font-semibold">This action will assign <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the selected project. Duplicate assignments will be skipped automatically.</p>
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="bulkAssignProjectOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Project</button>
+<button type="button" @click="bulkAssignProjectOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm flex items-center gap-1.5"><svg class="shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z"/></svg> Assign Project</button>
 </div>
 </form>
 </div>
@@ -298,8 +298,8 @@ style="display: none;"
 <p class="edify-text-caption text-slate-400 font-semibold">This will match <span x-text="selectedSchools.length" class="text-slate-800 font-semibold"></span> selected school(s) to the designated staff profile and update their ownership state.</p>
 
 <div class="flex items-center justify-end gap-2 pt-2 border-t border-slate-100">
-<button type="button" @click="matchStaffOpen = false" class="h-9 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
-<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Match Staff</button>
+<button type="button" @click="matchStaffOpen = false" class="h-8 px-4 rounded-control border border-slate-200 text-[12px] font-bold text-slate-600 hover:bg-slate-50">Cancel</button>
+<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold shadow-sm">Match Staff</button>
 </div>
 </form>
 </div>

@@ -32,7 +32,7 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
       {% csrf_token %}
       <input type="hidden" name="fund_request_id" value="{{ p.id }}">
       <input type="hidden" name="next" value="/fund-requests/weekly">
-      <button type="submit" class="h-10 px-5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">Confirm Receipt</button>
+      <button type="submit" class="h-8 px-4 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold shadow-sm transition-colors">Confirm Receipt</button>
     </form>
   </div>
   {% endfor %}
@@ -51,7 +51,7 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 {% if can_add_non_school_activity %}
 <button
   type="button"
-  class="btn btn-primary h-9 shadow-sm"
+  class="btn btn-primary h-8 shadow-sm"
   hx-get="/work-plan/add"
   hx-target="#drawer-container"
   hx-swap="innerHTML"
@@ -62,17 +62,17 @@ class="p-6 max-w-7xl mx-auto space-y-6 text-slate-700"
 <!-- Export button -->
 <a
 href="{% querystring export='csv' %}"
-class="btn btn-ghost h-9 shadow-sm"
+class="btn btn-ghost h-8 shadow-sm"
 >
 <svg class="h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
 Export
 </a>
 
-<a href="/budget" class="btn btn-ghost h-9">Budget</a>
+<a href="/budget" class="btn btn-ghost h-8">Budget</a>
 <!-- Open My Plan -->
 <a
 href="/my-plan"
-class="flex items-center gap-1.5 h-9 px-4 edify-surface border border-slate-200 text-[var(--edify-accent-text)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
+class="flex items-center gap-1.5 h-8 px-4 edify-surface border border-slate-200 text-[var(--edify-accent-text)] text-[12px] font-bold rounded-control hover:bg-slate-50 focus:outline-none transition-all shadow-sm"
 >
 Open My Plan
 <svg class="h-3 w-3 text-slate-400 ml-0.5" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 11-1.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>

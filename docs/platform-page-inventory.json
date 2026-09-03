@@ -88,7 +88,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2352,
+      "bytes": 2350,
       "deprecated_alternatives": [],
       "example_pages": [
         "/business-transformation",
@@ -2579,7 +2579,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5640,
+      "bytes": 5639,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2748,7 +2748,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10270,
+      "bytes": 10268,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/<str:school_id>/champion-review"
@@ -2962,7 +2962,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15221,
+      "bytes": 15220,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -2990,7 +2990,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16465,
+      "bytes": 16464,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3726,7 +3726,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 13341,
+      "bytes": 13333,
       "deprecated_alternatives": [],
       "example_pages": [
         "/disbursements",
@@ -3755,7 +3755,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 4906,
+      "bytes": 4904,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3778,7 +3778,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3839,
+      "bytes": 3837,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3801,7 +3801,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3845,
+      "bytes": 3843,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3824,7 +3824,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19045,
+      "bytes": 19044,
       "deprecated_alternatives": [],
       "example_pages": [
         "/disbursements",
@@ -3916,7 +3916,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4336,
+      "bytes": 4333,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/admin-budget-drilldown"
@@ -3937,7 +3937,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3780,
+      "bytes": 3779,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/drilldown"
@@ -4047,7 +4047,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3781,
+      "bytes": 3779,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/return"
@@ -4105,7 +4105,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1844,
+      "bytes": 1843,
       "deprecated_alternatives": [],
       "example_pages": [
         "/finance/fund-allocation/export-drawer"
@@ -4243,7 +4243,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8066,
+      "bytes": 8063,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-approvals",
@@ -4274,7 +4274,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 3809,
+      "bytes": 3807,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-approvals/return"
@@ -4300,7 +4300,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 12362,
+      "bytes": 12360,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-approvals",
@@ -4518,7 +4518,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13952,
+      "bytes": 13951,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-requests/advances/<str:advance_id>/pl-approve",
@@ -4731,7 +4731,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6779,
+      "bytes": 6777,
       "deprecated_alternatives": [],
       "example_pages": [
         "/extra-work/assign-drawer"
@@ -4757,7 +4757,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3105,
+      "bytes": 3103,
       "deprecated_alternatives": [],
       "example_pages": [
         "/extra-work/<str:assignment_id>/submit-drawer"
@@ -4908,7 +4908,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8900,
+      "bytes": 8898,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/ssa-mapping/<str:item_id>/drawer"
@@ -4990,7 +4990,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4430,
+      "bytes": 4428,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/complete-drawer"
@@ -5016,7 +5016,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3089,
+      "bytes": 3087,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/partner-evidence/<str:activity_id>/return-drawer"
@@ -5417,7 +5417,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5136,
+      "bytes": 5135,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/accountability"
@@ -5441,7 +5441,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 13237,
+      "bytes": 13233,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>",
@@ -5631,7 +5631,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 19817,
+      "bytes": 19816,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/complete-drawer"
@@ -5656,7 +5656,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 2130,
+      "bytes": 2129,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/confirm-reimbursement-receipt"
@@ -5681,7 +5681,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4817,
+      "bytes": 4816,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/evidence"
@@ -5710,7 +5710,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7157,
+      "bytes": 7156,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -5758,7 +5758,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5762,
+      "bytes": 5760,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/partner-ssa-complete"
@@ -6122,7 +6122,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 4305,
+      "bytes": 4303,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/allowance-drawer"
@@ -6477,7 +6477,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3932,
+      "bytes": 3930,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/return-drawer"
@@ -6503,7 +6503,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 3038,
+      "bytes": 3036,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/assignments/<str:assignment_id>/schedule-drawer"
@@ -6624,7 +6624,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21169,
+      "bytes": 21168,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -6653,7 +6653,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 33168,
+      "bytes": 33167,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -6992,7 +6992,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4006,
+      "bytes": 4005,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-partner"
@@ -7017,7 +7017,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3612,
+      "bytes": 3611,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/planning/bulk-schedule"
@@ -7452,7 +7452,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12141,
+      "bytes": 12140,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/assign-to-project"

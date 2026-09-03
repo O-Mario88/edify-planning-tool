@@ -344,7 +344,7 @@
         <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">10. Quick Executive Actions</h2>
         <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
           {% for qa in quick_actions %}
-          <a href="{{ qa.url }}" class="h-11 px-3 flex items-center justify-between rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          <a href="{{ qa.url }}" class="h-8 px-3 flex items-center justify-between rounded-control border border-slate-200 edify-text-caption font-bold text-slate-600 hover:bg-slate-50 transition-colors">
             {{ qa.label }} <span class="text-slate-300">&rsaquo;</span>
           </a>
           {% endfor %}
@@ -511,7 +511,7 @@
           <label class="edify-text-caption font-bold text-slate-500 uppercase tracking-wider">Expected Outcome</label>
           <input type="text" name="expected_outcome" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 text-[12px]" placeholder="Measurable result expected">
         </div>
-        <button type="submit" class="w-full h-9 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Save Strategy Note</button>
+        <button type="submit" class="w-full h-8 rounded-control bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-bold transition-colors">Save Strategy Note</button>
       </form>
     </div>
   </div>

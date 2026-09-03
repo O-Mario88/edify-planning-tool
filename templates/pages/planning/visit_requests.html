@@ -80,7 +80,7 @@
       <form method="POST" action="/planning/visit-requests/{{ a.id }}/approve" class="space-y-2">
         {% csrf_token %}
         <input type="text" name="note" placeholder="Note for the requester (optional)" class="w-full h-8 px-2 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
-        <button type="submit" class="w-full h-9 rounded-control btn-premium-primary text-white text-[12px] font-semibold flex items-center justify-center">Approve visit</button>
+        <button type="submit" class="w-full h-8 rounded-control btn-premium-primary text-white text-[12px] font-semibold flex items-center justify-center">Approve visit</button>
       </form>
       <form method="POST" action="/planning/visit-requests/{{ a.id }}/decline" class="space-y-2">
         {% csrf_token %}

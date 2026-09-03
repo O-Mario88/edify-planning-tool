@@ -66,7 +66,7 @@
       <p class="text-[14px] font-bold text-slate-800">Ready to deliver this work?</p>
       <p class="mt-0.5 text-[12px] font-semibold text-slate-500">Start records the moment you began — it never marks anything complete.</p>
     </div>
-    <button type="submit" class="inline-flex h-11 items-center rounded-control edify-primary-solid edify-primary-hover px-6 text-[13px] font-bold text-white transition-colors">Start Activity</button>
+    <button type="submit" class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[13px] font-bold text-white transition-colors">Start Activity</button>
   </form>
   {% else %}
 
@@ -105,7 +105,7 @@
     trainings and cluster meetings, both PDF. {% endcomment %}
     <button type="button"
             hx-get="/activities/{{ a.id }}/evidence" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex h-10 items-center rounded-control border border-[var(--border-strong)] edify-surface px-4 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
+            class="inline-flex h-8 items-center rounded-control border border-[var(--border-strong)] edify-surface px-4 text-[12px] font-bold text-[var(--color-edify-primary)] hover:bg-[var(--color-edify-soft)] transition-colors">
       Upload Evidence
     </button>
     {% endif %}
@@ -186,7 +186,7 @@
     {% else %}
     <div class="flex items-center justify-end gap-3">
       <button type="submit" :disabled="submitting"
-              class="inline-flex h-11 items-center rounded-control edify-primary-solid edify-primary-hover px-6 text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50">
+              class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-4 text-[13px] font-bold text-white transition-colors disabled:cursor-not-allowed disabled:opacity-50">
         Submit Evidence to IA
       </button>
     </div>

@@ -61,7 +61,7 @@
     <p class="text-[12px] font-medium text-slate-400 mt-1.5">
       {% if version.preview_error %}This file could not be converted for in-app viewing. The original is unchanged and still available.{% else %}A preview is still being generated.{% endif %}
     </p>
-    {% if can_download %}<a href="/documents/{{ document.slug }}/download" class="inline-flex h-9 px-4 mt-3 rounded-control edify-primary-solid text-white text-[13px] font-bold items-center">Download the original</a>{% endif %}
+    {% if can_download %}<a href="/documents/{{ document.slug }}/download" class="inline-flex h-8 px-4 mt-3 rounded-control edify-primary-solid text-white text-[13px] font-bold items-center">Download the original</a>{% endif %}
   </div>
   {% endif %}
 </div>
