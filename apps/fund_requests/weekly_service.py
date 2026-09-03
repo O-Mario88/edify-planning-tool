@@ -9,7 +9,12 @@ from django.db.models import Q
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import (
+    country_bound,
+    country_user_ids,
+    person_country_q,
+    resolve_user_scope,
+)
 from .models import WeeklyFundRequest, WeeklyFundRequestLine
 
 logger = logging.getLogger("edify.weekly_fund_request")
@@ -215,6 +220,8 @@ def list_weekly_requests(query: dict, principal) -> list[dict]:
             ).values_list("user_id", flat=True)
             q |= Q(responsible_user__in=supervised_user_ids)
         qs = qs.filter(q)
+    else:
+        qs = qs.filter(person_country_q(scope, "responsible_user"))
 
     return [_serialize_request(r) for r in qs]
 
@@ -238,6 +245,13 @@ def get_weekly_request(request_id: str, principal) -> dict:
                 raise Forbidden("You are not authorized to view this request.")
         else:
             raise Forbidden("You are not authorized to view this request.")
+    elif (
+        scope.country_scope
+        and country_bound(scope)
+        and wfr.responsible_user != principal.user_id
+        and not country_user_ids(scope).filter(user_id=wfr.responsible_user).exists()
+    ):
+        raise Forbidden("This request belongs to another country.")
 
     return _serialize_request(wfr, include_lines=True)
 

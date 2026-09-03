@@ -1053,13 +1053,22 @@ def reports_view(request):
     requested_fy = request.GET.get("fy")
     fy = requested_fy if requested_fy in fy_choices else operational_fy
 
-    total_schools = active_schools().count()
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
-    completed = Activity.objects.filter(
-        status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
-    ).count()
+    from apps.core.scoping import (
+        activity_country_q,
+        resolve_user_scope,
+        scoped_school_queryset,
+    )
 
-    activities_fy = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    # The report is the country's, not the deployment's.
+    scope = resolve_user_scope(request.user)
+    total_schools = scoped_school_queryset(scope, active_schools()).count()
+    in_country = Activity.objects.filter(deleted_at__isnull=True).filter(
+        activity_country_q(scope)
+    )
+    total_activities = in_country.count()
+    completed = in_country.filter(status__in=COMPLETED_WORK_STATUSES).count()
+
+    activities_fy = in_country.filter(fy=fy)
     today = date.today()
     current_quarter = get_quarter_for_date(today) if fy == operational_fy else None
     quarter_order = {q[1]: q[3] for q in _REPORTS_QUARTER_PERIODS}

@@ -817,6 +817,25 @@ def country_staff_ids(scope: UserScope):
     return StaffProfile.objects.filter(country=scope.country).values("id")
 
 
+def country_user_ids(scope: UserScope):
+    """User ids of the staff in the scope's country, unevaluated.
+
+    Finance records (fund requests, weekly requests, cost lines) hang off a
+    responsible *user*, not a school, so the country boundary reaches them
+    through the person.
+    """
+    from apps.accounts.models import StaffProfile
+
+    return StaffProfile.objects.filter(country=scope.country).values("user_id")
+
+
+def person_country_q(scope: UserScope, field: str) -> Q:
+    """Q bounding a user-id field to the scope's country (no-op unbounded)."""
+    if not country_bound(scope):
+        return Q()
+    return Q(**{f"{field}__in": country_user_ids(scope)})
+
+
 def activity_country_q(scope: UserScope) -> Q:
     """An activity is in the country through its school, its cluster, or —
     when it has neither — the person responsible for it."""

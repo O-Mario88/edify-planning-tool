@@ -207,3 +207,77 @@ class CountryBoundaryTest(TestCase):
             self.assertNotContains(response, "Nairobi Primary", msg_prefix=url)
         coverage = self.client.get("/coverage")
         self.assertEqual(coverage.context["total_schools"], 1)
+
+
+class FinanceCountryBoundaryTest(CountryBoundaryTest):
+    """Finance hangs off the responsible person, not the school, so the
+    boundary reaches fund requests, weekly requests and the approval roster
+    through the staff profile's country."""
+
+    def test_fund_and_weekly_requests_stop_at_the_border(self):
+        from apps.fund_requests.models import FundRequest, WeeklyFundRequest
+        from apps.fund_requests.services import list_requests
+        from apps.fund_requests.weekly_service import (
+            get_weekly_request,
+            list_weekly_requests,
+        )
+        from apps.core.exceptions import Forbidden
+
+        for who, tag in ((self.ug_cceo, "UG"), (self.ke_cceo, "KE")):
+            FundRequest.objects.create(
+                fy="2026",
+                period="monthly",
+                period_key=f"2026-M3-{tag}",
+                scope="own",
+                submitted_by_user_id=who.id,
+                submitted_by_role="CCEO",
+                total_amount=1000,
+                activity_count=1,
+                status="submitted",
+            )
+            WeeklyFundRequest.objects.create(
+                fy="2026",
+                week_start_date=date(2026, 3, 2),
+                week_end_date=date(2026, 3, 8),
+                responsible_user=who.id,
+                responsible_role="CCEO",
+                total_amount=1000,
+                status="submitted_to_cd",
+            )
+        listed = {r["id"] for r in list_requests({}, self.cd)}
+        submitters = {
+            fr.submitted_by_user_id for fr in FundRequest.objects.filter(id__in=listed)
+        }
+        self.assertIn(self.ug_cceo.id, submitters)
+        self.assertNotIn(self.ke_cceo.id, submitters)
+        weekly = list_weekly_requests({}, self.cd)
+        owners = {w.get("responsibleUser") or w.get("responsible_user") for w in weekly}
+        self.assertIn(self.ug_cceo.id, owners)
+        self.assertNotIn(self.ke_cceo.id, owners)
+        ke_wfr = WeeklyFundRequest.objects.get(responsible_user=self.ke_cceo.id)
+        with self.assertRaises(Forbidden):
+            get_weekly_request(ke_wfr.id, self.cd)
+        self.assertEqual(len(list_weekly_requests({}, self.admin)), 2)
+
+    def test_the_cd_approval_roster_and_budget_cost_plan_are_bounded(self):
+        from apps.budget.services import from_schedule
+        from apps.fund_requests.pl_approval_service import _scoped_cceos
+
+        # The CD's roster is the country's PLs, IA and Accountant, not the
+        # region's; CCEOs are approved by their Programme Lead.
+        ke_ia = _user(
+            "cb-ke-ia@t.org", "KE IA", EdifyRole.IMPACT_ASSESSMENT.value, "Kenya"
+        )
+        roster = {row["user_id"] for row in _scoped_cceos(resolve_user_scope(self.cd))}
+        self.assertIn(self.ia.id, roster)
+        self.assertNotIn(ke_ia.id, roster)
+        plan = from_schedule(self.cd, {"fy": "2026"})
+        self.assertEqual(plan["activityCount"], 1)
+        self.assertEqual(from_schedule(self.admin, {"fy": "2026"})["activityCount"], 3)
+
+    def test_the_reports_page_counts_the_country(self):
+        self.client.force_login(self.cd)
+        response = self.client.get("/reports")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["total_schools"], 1)
+        self.assertEqual(response.context["total_activities"], 1)

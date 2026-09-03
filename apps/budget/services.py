@@ -16,7 +16,7 @@ from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import activity_country_q, resolve_user_scope
 
 from .models import (
     CostCatalogue,
@@ -361,6 +361,8 @@ def from_schedule(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
     activities = list(qs.prefetch_related("schedule_cost_lines"))
 
     MONTH_LABELS = {
@@ -538,6 +540,8 @@ def weekly(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
 
     activities = list(
         qs.select_related("school", "cluster").prefetch_related("schedule_cost_lines")
@@ -670,6 +674,8 @@ def board(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
 
     activities = list(qs.prefetch_related("schedule_cost_lines"))
 

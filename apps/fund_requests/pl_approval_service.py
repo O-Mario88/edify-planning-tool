@@ -158,11 +158,15 @@ def _scoped_cceos(scope):
             user__active_role="CCEO", deleted_at__isnull=True
         ).values_list("id", flat=True)
     elif scope.active_role == "CountryDirector":
-        profile_ids = StaffProfile.objects.filter(
+        country_staff = StaffProfile.objects.filter(
             user__active_role__in=CD_APPROVAL_ROLES,
             user__is_active=True,
             deleted_at__isnull=True,
-        ).values_list("id", flat=True)
+        )
+        if scope.country:
+            # The CD approves their own country's requests, not the region's.
+            country_staff = country_staff.filter(country=scope.country)
+        profile_ids = country_staff.values_list("id", flat=True)
 
     cceos = []
     for sp in StaffProfile.objects.filter(id__in=profile_ids).select_related("user"):
