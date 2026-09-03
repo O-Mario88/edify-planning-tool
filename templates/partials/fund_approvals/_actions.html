@@ -1,0 +1,30 @@
+{% comment %}Program Lead actions for the selected plan: view, approve, return.{% endcomment %}
+  <!-- Actions -->
+  <div class="fund-detail__actions">
+    {% comment %}Straight to this CCEO's tab on Team Oversight's planned
+    activities — the page the plan actually lives on — not the generic
+    planning workspace.{% endcomment %}
+    <a href="/team-planning-oversight/?view=planning&owner={{ selected.cceo_user_id }}" class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control border edify-primary-border edify-primary-soft edify-primary-text text-[13px] font-bold transition-colors edify-primary-soft-hover">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      View Full Plan
+    </a>
+    {% if selected.can_approve or selected.can_return %}
+    <button hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML"
+            hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}","week":"{{ week }}"}'
+            {% if not selected.can_approve %}disabled{% endif %}
+            class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control text-[13px] font-bold text-white transition-colors {% if selected.can_approve %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Approve
+    </button>
+    <button hx-get="/fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}&week={{ week }}" hx-target="#drawer-container" hx-swap="innerHTML"
+            class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[13px] font-bold text-rose-600 transition-colors">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      Return
+    </button>
+    {% else %}
+    <div class="sm:col-span-2 flex items-center gap-2 rounded-control border border-slate-200 bg-slate-50/70 px-4 text-[12px] font-semibold text-slate-500 min-h-11">
+      <svg class="h-4 w-4 shrink-0 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      <span>{{ selected.waiting_hint }}</span>
+    </div>
+    {% endif %}
+  </div>

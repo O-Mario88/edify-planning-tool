@@ -414,6 +414,13 @@ def get_pl_fund_approvals(principal, filters=None):
     month = int(filters.get("month") or timezone.now().month)
     selected_id = filters.get("cceo")
     status_filter = filters.get("status")
+    region_filter = (filters.get("region") or "").strip()
+    district_filter = (filters.get("district") or "").strip()
+    sort = (
+        filters.get("sort")
+        if filters.get("sort") in ("amount", "name", "status")
+        else "amount"
+    )
     search = (filters.get("q") or "").strip().lower()
 
     from datetime import date as _date, timedelta
@@ -528,12 +535,21 @@ def get_pl_fund_approvals(principal, filters=None):
     queue = plans
     if status_filter:
         queue = [p for p in queue if p["status"] == status_filter]
+    if region_filter:
+        queue = [p for p in queue if p["region"] == region_filter]
+    if district_filter:
+        queue = [p for p in queue if p["district"] == district_filter]
     if search:
         queue = [
             p
             for p in queue
             if search in p["name"].lower() or search in p["district"].lower()
         ]
+
+    if sort == "name":
+        queue = sorted(queue, key=lambda p: p["name"].lower())
+    elif sort == "status":
+        queue = sorted(queue, key=lambda p: (p["status"], -p["total"]))
 
     # ── KPIs (team-scoped, this week) ─────────────────────────────────────────
     total_requested = sum(p["request_total"] for p in plans)
@@ -550,6 +566,8 @@ def get_pl_fund_approvals(principal, filters=None):
 
     def _n(items):
         return f"{len(items)} request{'' if len(items) == 1 else 's'}"
+
+    schools_reached = len({s for p in plans for s in p["schools"]})
 
     kpis = [
         render_precomputed_metric_item(
@@ -587,6 +605,13 @@ def get_pl_fund_approvals(principal, filters=None):
             variant="danger",
             helper=_n(returned),
         ),
+        render_precomputed_metric_item(
+            "fund_requests_pl_approval_service_average_cost_per_school",
+            _ugx(round(total_requested / schools_reached) if schools_reached else 0),
+            icon="school",
+            variant="info",
+            helper=f"{schools_reached} planned school{'' if schools_reached == 1 else 's'}",
+        ),
     ]
 
     # ── Selected request detail ───────────────────────────────────────────────
@@ -599,7 +624,7 @@ def get_pl_fund_approvals(principal, filters=None):
 
     from .partner_invoices import pl_invoice_queue
 
-    return {
+    ctx = {
         "partner_invoices": pl_invoice_queue(principal),
         "fy": fy,
         "month": month,
@@ -622,6 +647,221 @@ def get_pl_fund_approvals(principal, filters=None):
         ],
         "has_team": bool(cceos),
         "principal_user_id": principal.user_id,
+        "region_options": sorted({p["region"] for p in plans if p["region"] != "—"}),
+        "district_options": sorted(
+            {p["district"] for p in plans if p["district"] != "—"}
+        ),
+        "region_filter": region_filter,
+        "district_filter": district_filter,
+        "q_filter": filters.get("q") or "",
+        "sort": sort,
+    }
+    ctx["workspace"] = _workspace(
+        principal, ctx, cceos, fy, month, week_base, plans, sel
+    )
+    return ctx
+
+
+def _workspace(principal, ctx, cceos, fy, month, week_base, plans, sel):
+    """The whole fund workspace for the Program Lead: copy, tiles, queue,
+    selected plan and the month panels, in the shape the shared
+    partials/finance/fund_workspace.html renders."""
+    import json
+
+    fy, month, week = ctx["fy"], ctx["month"], ctx["week"]
+    base = f"fy={fy}&month={month}&week={week}"
+    items = []
+    for card in ctx["queue"]:
+        chips = card["chips"]
+        items.append(
+            {
+                "key": card["cceo_user_id"],
+                "name": card["name"],
+                "initials": card["initials"],
+                "own_plan": card["cceo_user_id"] == principal.user_id,
+                "district": card["district"],
+                "region": card["region"],
+                "summary": "Includes own cluster trainings, staff visits, partner visits",
+                "total_fmt": card["total_fmt"],
+                "status": card["status"],
+                "status_tone": card["status_tone"],
+                "selected": card["selected"],
+                "hx_get": f"/fund-approvals/detail?cceo={card['cceo_user_id']}&{base}",
+                "hx_target": "#fund-plan-detail",
+                "chips": [
+                    {
+                        "icon": "visits",
+                        "label": f"{chips['visits']} Visits",
+                        "tone": "success",
+                    },
+                    {
+                        "icon": "partner",
+                        "label": f"{chips['partner']} Partner",
+                        "tone": "purple",
+                    },
+                    {
+                        "icon": "clusters",
+                        "label": f"{chips['clusters']} Clusters",
+                        "tone": "info",
+                    },
+                    {
+                        "icon": "trainings",
+                        "label": f"{chips['trainings']} Trainings",
+                        "tone": "warning",
+                    },
+                ],
+            }
+        )
+    panels = _workspace_panels(principal, cceos, fy, month, week_base, plans)
+    return {
+        "title": "Fund Approvals",
+        "tooltip": "Every figure is derived from the CCEO's scheduled, costed activities.",
+        "description": "All fund requests are derived from CCEO plans. You approve only funds for your own team.",
+        "export_url": f"/fund-approvals?export=csv&{base}",
+        "primary_action": {
+            "label": "Approve All Valid",
+            "hx_post": "/fund-approvals/action",
+            "hx_target": "#fund-approval-root",
+            "hx_vals": json.dumps(
+                {"action": "approve_all", "fy": fy, "month": month, "week": week}
+            ),
+        },
+        "filters_template": "partials/fund_approvals/_filters.html",
+        "filters_id": "fa-filters",
+        "kpis": ctx["kpis"],
+        "kpi_title": "Approval context",
+        "empty": None
+        if ctx["has_team"]
+        else {
+            "title": "No supervised CCEOs",
+            "message": "You don't have any CCEOs assigned to your supervision yet, so there are no team fund plans to approve.",
+        },
+        "sort_url": "/fund-approvals",
+        "root_target": "#fund-approval-root",
+        "queue": {
+            "title": "CCEO Fund Approval Queue",
+            "count": ctx["queue_count"],
+            "items": items,
+            "selected_key": sel["cceo"]["user_id"] if sel else "",
+            "sort": ctx["sort"],
+            "sort_options": [
+                {"value": "amount", "label": "Amount"},
+                {"value": "name", "label": "Name"},
+                {"value": "status", "label": "Status"},
+            ],
+            "empty_title": "No fund plans match your filters",
+            "empty_text": "Change the week, month or status, or clear the search.",
+        },
+        "detail_id": "fund-plan-detail",
+        "detail_template": "partials/fund_approvals/detail.html",
+        "side": panels,
+        "insights": panels["insights"],
+        "insights_title": panels["insights_title"],
+        "recent": panels["recent"],
+        "recent_title": "Recent Approval Activity",
+        "recent_link": panels["recent_link"],
+    }
+
+
+def _workspace_panels(principal, cceos, fy, month, week_base, plans):
+    """The right column and the bottom row of the fund workspace: the month's
+    position, the plan-versus-approved progress, the approval rate, where the
+    money goes and the latest decisions. Team- and month-scoped."""
+    from .fund_workspace import (
+        approval_rate,
+        approvals_today,
+        budget_mix,
+        month_bounds,
+        progress_panel,
+        recent_activity,
+    )
+    from .models import WeeklyFundRequest
+
+    fy_year = int(str(fy)[:4]) if str(fy)[:4].isdigit() else None
+    start, end = month_bounds(fy_year, month)
+    user_ids = [c["user_id"] for c in cceos]
+    month_wfrs = list(
+        WeeklyFundRequest.objects.filter(
+            responsible_user__in=user_ids,
+            week_start_date__gte=start,
+            week_start_date__lte=end,
+        )
+    )
+    awaiting = awaiting_status(principal)
+    waiting = [w for w in month_wfrs if w.status == awaiting]
+    returned = [w for w in month_wfrs if (w.status or "").startswith("returned")]
+    approved = [
+        w
+        for w in month_wfrs
+        if w.status in ("confirmed_for_advance", "disbursed", "accounted", "closed")
+    ]
+    today_ids = approvals_today([w.id for w in month_wfrs])
+    approved_today = [w for w in month_wfrs if w.id in today_ids]
+
+    month_lines = list(week_base.filter(month=month).select_related("activity"))
+    planned_total = sum(li.amount for li in month_lines)
+    mix_totals: dict[str, int] = {}
+    for li in month_lines:
+        a = li.activity
+        cat = _category(a.activity_type, a.delivery_type, a.programme_activity_type)
+        mix_totals[cat] = mix_totals.get(cat, 0) + int(li.amount)
+
+    month_name = MONTHS[month] if 1 <= month <= 12 else str(month)
+    return {
+        "month": {
+            "title": "This Month",
+            "rows": [
+                {
+                    "name": "Waiting for Approval",
+                    "figure": _ugx(sum(w.total_amount for w in waiting)),
+                    "tone": "warning",
+                },
+                {
+                    "name": "Returned",
+                    "figure": _ugx(sum(w.total_amount for w in returned)),
+                    "tone": "danger",
+                },
+                {
+                    "name": "Approved Today",
+                    "figure": _ugx(sum(w.total_amount for w in approved_today)),
+                    "tone": "success",
+                },
+            ],
+            "link": "/accounts/approval-history",
+            "link_label": "View all activity",
+        },
+        "progress": progress_panel(
+            f"{month_name} Plan & Budget Approval",
+            planned_total,
+            sum(w.total_amount for w in approved),
+            status_label="On Track" if not waiting else f"{len(waiting)} waiting",
+            link="/team-planning-oversight/?view=planning",
+            link_label="View approval dashboard",
+        ),
+        "rate": approval_rate(len(approved), len(returned), len(waiting)),
+        "rules": [
+            "Funds must come from approved plans.",
+            "Partner visits must map to planned schools.",
+            "Cluster training budget scales by participants.",
+            "Returned requests need correction before re-submission.",
+        ],
+        "rules_link": "/help",
+        "insights": budget_mix(mix_totals),
+        "insights_title": f"Approval Insights / Budget Mix ({month_name})",
+        "recent": recent_activity(
+            {
+                "weekly_fund_request.approve": "approved",
+                "weekly_fund_request.return": "returned for review",
+            },
+            subject_ids=[w.id for w in month_wfrs]
+            or [
+                w.id
+                for w in WeeklyFundRequest.objects.filter(
+                    responsible_user__in=user_ids
+                )[:200]
+            ],
+        ),
+        "recent_link": "/accounts/approval-history",
     }
 
 
@@ -742,6 +982,56 @@ def _selected_detail(p, week_start):
         "can_approve": p["can_approve"],
         "can_return": p["can_return"],
         "waiting_hint": hints.get(p["wfr_status"], ""),
+        "plan_label": f"{_week_label(week_start)} Fund Plan",
+        "total_label": "Total Requested",
+        "notes": [
+            note
+            for note in (
+                f"+ {_ugx(p['vendor_transport_total'])} transport · paid direct to provider"
+                if p["vendor_transport_total"]
+                else None,
+                f"+ {_ugx(p['vendor_accommodation_total'])} accommodation · booked by Finance"
+                if p["vendor_accommodation_total"]
+                else None,
+                f"+ {_ugx(p['partner_total'])} partner-delivered · paid via partner payments"
+                if p["partner_total"]
+                else None,
+            )
+            if note
+        ],
+        "snapshot": [
+            {
+                "icon": "visits",
+                "name": "Planned schools by staff",
+                "figure": visit_schools,
+                "tone": "success",
+            },
+            {
+                "icon": "partner",
+                "name": "Planned school visits",
+                "figure": p["chips"]["partner"],
+                "caption": "By partners",
+                "tone": "success",
+            },
+            {
+                "icon": "clusters",
+                "name": "Cluster meetings planned",
+                "figure": p["chips"]["clusters"],
+                "tone": "success",
+            },
+            {
+                "icon": "trainings",
+                "name": "Trainings planned",
+                "figure": p["chips"]["trainings"],
+                "caption": "Cluster + In-school",
+                "tone": "success",
+            },
+        ],
+        "schools": {
+            "name": "Total schools covered",
+            "figure": len(p["schools"]),
+            "caption": "Unique planned schools",
+        },
     }
 
 

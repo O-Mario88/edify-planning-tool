@@ -48,9 +48,11 @@ class PhaseThreeMobileRoleHomeContractTest(SimpleTestCase):
             admin.index("dashboard_kpi_title"),
             admin.index("admin-mobile-critical-title"),
         )
+        # Owner decision (2026-09-03): tiles sit below the header and ahead of
+        # the queue on every role home.
         self.assertLess(
-            projects.index("projects-mobile-portfolio-title"),
             projects.index('title="Portfolio headline"'),
+            projects.index("projects-mobile-portfolio-title"),
         )
 
     def test_role_actions_are_selected_from_scoped_view_data(self):

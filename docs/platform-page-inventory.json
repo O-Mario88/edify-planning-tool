@@ -59,14 +59,14 @@
       "bytes": 1301,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/accounts",
+        "/accounts/",
         "/business-transformation",
         "/business-transformation/impact-reports",
         "/business-transformation/overview",
         "/business-transformation/portfolio",
         "/country-budget/action",
-        "/disbursements",
-        "/disbursements/action",
-        "/disbursements/detail"
+        "/disbursements"
       ],
       "findings": [],
       "forms": 0,
@@ -179,14 +179,14 @@
       "bytes": 2333,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/accounts",
+        "/accounts/",
         "/admin-panel/school-upload-history",
         "/analytics/closure-quality",
         "/analytics/school-closures",
         "/business-transformation",
         "/business-transformation/impact-reports",
-        "/business-transformation/overview",
-        "/business-transformation/portfolio",
-        "/country-planning-oversight/"
+        "/business-transformation/overview"
       ],
       "findings": [],
       "forms": 0,
@@ -2646,8 +2646,9 @@
         "/core-schools/<str:school_id>/champion-review",
         "/disbursements",
         "/disbursements/action",
-        "/reports",
-        "/schools/<str:school_id>"
+        "/fund-approvals",
+        "/fund-approvals/action",
+        "/fund-approvals/invoices/<str:invoice_id>/action"
       ],
       "findings": [],
       "forms": 0,
@@ -3897,6 +3898,92 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 680,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/accounts",
+        "/accounts/",
+        "/fund-approvals",
+        "/fund-approvals/action",
+        "/fund-approvals/detail",
+        "/fund-approvals/invoices/<str:invoice_id>/action"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Chip Icon",
+      "purpose": "Reusable  chip icon interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/finance/_chip_icon.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1664,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Accountant Actions",
+      "purpose": "Reusable accountant actions interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/finance/accountant_actions.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 415,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Accountant Detail",
+      "purpose": "Reusable accountant detail interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/finance/accountant_detail.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 1856,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Accountant Filters",
+      "purpose": "Reusable accountant filters interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/finance/accountant_filters.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 6514,
       "deprecated_alternatives": [],
       "example_pages": [],
@@ -3913,6 +4000,33 @@
       "tables": 0,
       "template": "partials/finance/accountant_insights.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 930,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/accounts",
+        "/accounts/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Accountant Root",
+      "purpose": "Reusable accountant root interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/finance/accountant_root.html",
+      "variants": [
+        "danger",
+        "finance",
+        "success",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -4215,6 +4329,68 @@
     },
     {
       "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6087,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/fund-approvals/detail"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Fund Detail",
+      "purpose": "Reusable fund detail interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/finance/fund_detail.html",
+      "variants": [
+        "md"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 15954,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/accounts",
+        "/accounts/",
+        "/fund-approvals",
+        "/fund-approvals/action",
+        "/fund-approvals/invoices/<str:invoice_id>/action"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 3,
+      "kind": "application-partial",
+      "name": "Fund Workspace",
+      "purpose": "Reusable fund workspace interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "error",
+        "selected",
+        "open"
+      ],
+      "tables": 0,
+      "template": "partials/finance/fund_workspace.html",
+      "variants": [
+        "executive",
+        "sm",
+        "success"
+      ]
+    },
+    {
+      "accessibility_requirements": [
         "accessible name and label",
         "keyboard focus visibility",
         "announced dynamic state"
@@ -4243,31 +4419,66 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 8063,
+      "bytes": 2965,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/fund-approvals",
-        "/fund-approvals/action",
-        "/fund-approvals/detail",
-        "/fund-approvals/invoices/<str:invoice_id>/action"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 2,
       "kind": "application-partial",
-      "name": "Detail",
-      "purpose": "Reusable detail interface primitive",
+      "name": " Actions",
+      "purpose": "Reusable  actions interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty",
         "disabled"
       ],
-      "tables": 1,
+      "tables": 0,
+      "template": "partials/fund_approvals/_actions.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 3799,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Filters",
+      "purpose": "Reusable  filters interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/fund_approvals/_filters.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 425,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/fund-approvals/detail"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Detail",
+      "purpose": "Reusable detail interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
       "template": "partials/fund_approvals/detail.html",
-      "variants": [
-        "sm"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -4296,11 +4507,9 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility",
-        "announced dynamic state"
+        "accessible name and label"
       ],
-      "bytes": 12360,
+      "bytes": 3644,
       "deprecated_alternatives": [],
       "example_pages": [
         "/fund-approvals",
@@ -4308,22 +4517,18 @@
         "/fund-approvals/invoices/<str:invoice_id>/action"
       ],
       "findings": [],
-      "forms": 3,
-      "htmx_controls": 5,
+      "forms": 2,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Root",
       "purpose": "Reusable root interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
-        "default",
-        "empty"
+        "default"
       ],
       "tables": 0,
       "template": "partials/fund_approvals/root.html",
-      "variants": [
-        "executive",
-        "sm"
-      ]
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -8603,25 +8808,26 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/finance/accountant_root.html",
         "template:pages/accounts/dashboard.html",
         "test:referenced-by-automated-test",
         "permission:disbursements"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
+      "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -8629,11 +8835,11 @@
       "notifications": false,
       "page_id": "UI-PAGE-D4F8C108E9",
       "page_title": "Fund Disbursement Dashboard",
-      "page_type": "dashboard",
+      "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "disbursements",
-      "primary_action": "Open highest-priority work",
-      "primary_user_decision": "Which priority requires attention next?",
+      "primary_action": "Finance Dashboard",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Main Accountant Dashboard / Finance Command Center.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -8660,55 +8866,53 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "responsive-record-cards",
-      "tables": true,
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
         "type": "none"
       },
       "templates": [
+        "partials/finance/accountant_root.html",
         "pages/accounts/dashboard.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]",
-        "text-[22px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/finance/accountant_root.html",
         "template:pages/accounts/dashboard.html",
         "test:referenced-by-automated-test",
         "permission:disbursements"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
+      "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -8716,11 +8920,11 @@
       "notifications": false,
       "page_id": "UI-PAGE-252D9AB81D",
       "page_title": "Fund Disbursement Dashboard",
-      "page_type": "dashboard",
+      "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "disbursements",
-      "primary_action": "Open highest-priority work",
-      "primary_user_decision": "Which priority requires attention next?",
+      "primary_action": "Complete action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Main Accountant Dashboard / Finance Command Center.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -8747,30 +8951,27 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": false,
         "loading": false
       },
-      "surface_kind": "page",
-      "table_pattern": "responsive-record-cards",
-      "tables": true,
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
         "type": "none"
       },
       "templates": [
+        "partials/finance/accountant_root.html",
         "pages/accounts/dashboard.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]",
-        "text-[22px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -30918,7 +31119,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.pl_fund_approvals_view",
       "card_count": 0,
@@ -30930,19 +31131,16 @@
         "test:referenced-by-automated-test",
         "permission:fund_approvals"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /fund-approvals/action",
-        "GET /fund-approvals",
-        "POST /fund-approvals/invoices/{{ inv.id }}/action",
-        "GET /fund-approvals/detail?cceo={{ q.cceo_user_id }}&fy={{ fy }}&month={{ month }}&week={{ week }}"
+        "POST /fund-approvals/invoices/{{ inv.id }}/action"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -30953,7 +31151,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_approvals",
-      "primary_action": "Approve All Valid",
+      "primary_action": "Confirm &amp; Send to Accountant",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "PL Fund Approval \u2014 team-scoped fund plans derived from supervised CCEOs' scheduled activities. HTMX re-renders the root on filter/select/action.",
       "remediation": "No automated remediation outstanding",
@@ -31003,8 +31201,8 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
-        "error": true,
+        "empty": false,
+        "error": false,
         "loading": false
       },
       "surface_kind": "partial",
@@ -31034,7 +31232,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.pl_fund_action_view",
       "card_count": 0,
@@ -31045,30 +31243,27 @@
         "test:referenced-by-automated-test",
         "permission:fund_approvals"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /fund-approvals/action",
-        "GET /fund-approvals",
-        "POST /fund-approvals/invoices/{{ inv.id }}/action",
-        "GET /fund-approvals/detail?cceo={{ q.cceo_user_id }}&fy={{ fy }}&month={{ month }}&week={{ week }}"
+        "POST /fund-approvals/invoices/{{ inv.id }}/action"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-682E1299FA",
-      "page_title": "Fund Approvals",
+      "page_title": "Fund Approvals Action",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_approvals",
-      "primary_action": "Approve All Valid",
+      "primary_action": "Confirm &amp; Send to Accountant",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Approve / Return / Approve-All \u2014 mutate then re-render the root.",
       "remediation": "No automated remediation outstanding",
@@ -31118,8 +31313,8 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
-        "error": true,
+        "empty": false,
+        "error": false,
         "loading": false
       },
       "surface_kind": "partial",
@@ -31148,12 +31343,12 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.pl_fund_detail_view",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
         "template:partials/fund_approvals/detail.html",
         "test:referenced-by-automated-test",
@@ -31164,10 +31359,7 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /fund-approvals/action",
-        "GET /fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}&week={{ week }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -31180,7 +31372,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_approvals",
-      "primary_action": "Approve &amp; Send to Accountant",
+      "primary_action": "Fund Approvals Detail",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Just the selected detail panel for a selected CCEO \u2014 a light HTMX swap so clicking a CCEO in the queue instantly switches the funding breakdown without re-rendering the whole page.",
       "remediation": "No automated remediation outstanding",
@@ -31227,14 +31419,14 @@
         "standalone-document-or-fragment"
       ],
       "state_coverage": {
-        "disabled": true,
-        "empty": true,
+        "disabled": false,
+        "empty": false,
         "error": false,
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -31247,20 +31439,14 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[18px]",
-        "text-[20px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.pl_partner_invoice_action",
       "card_count": 0,
@@ -31271,30 +31457,27 @@
         "test:referenced-by-automated-test",
         "permission:fund_approvals"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /fund-approvals/action",
-        "GET /fund-approvals",
-        "POST /fund-approvals/invoices/{{ inv.id }}/action",
-        "GET /fund-approvals/detail?cceo={{ q.cceo_user_id }}&fy={{ fy }}&month={{ month }}&week={{ week }}"
+        "POST /fund-approvals/invoices/{{ inv.id }}/action"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-45A89C7D34",
-      "page_title": "Fund Approvals",
+      "page_title": "Pl Partner Invoice Action",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "fund_approvals",
-      "primary_action": "Approve All Valid",
+      "primary_action": "Confirm &amp; Send to Accountant",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "PL confirms or returns a partner invoice; the root re-renders.",
       "remediation": "No automated remediation outstanding",
@@ -31344,8 +31527,8 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
-        "error": true,
+        "empty": false,
+        "error": false,
         "loading": false
       },
       "surface_kind": "partial",
@@ -62479,7 +62662,7 @@
     },
     {
       "callback": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -62488,12 +62671,13 @@
       "route": "/accounts",
       "route_name": "finance_dashboard",
       "templates": [
+        "partials/finance/accountant_root.html",
         "pages/accounts/dashboard.html"
       ]
     },
     {
       "callback": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -62502,6 +62686,7 @@
       "route": "/accounts/",
       "route_name": "",
       "templates": [
+        "partials/finance/accountant_root.html",
         "pages/accounts/dashboard.html"
       ]
     },
@@ -78499,22 +78684,22 @@
     "activity_states": 24,
     "all_routes": 1055,
     "api_routes": 359,
-    "component_templates": 346,
-    "full_pages": 206,
+    "component_templates": 355,
+    "full_pages": 204,
     "mobile_contract_pass": 382,
     "nonvisual_actions": 186,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 4,
       "approval-or-verification": 17,
-      "dashboard": 3,
-      "interaction-fragment": 359,
+      "dashboard": 1,
+      "interaction-fragment": 361,
       "operational-queue": 122,
       "planning-or-creation": 7,
       "record-detail": 24,
       "report": 26
     },
-    "partials_and_drawers": 173,
+    "partials_and_drawers": 175,
     "permission_gated": 577,
     "permission_keys": 112,
     "roles": 14,

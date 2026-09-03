@@ -211,6 +211,43 @@
       );
     });
 
+    /* A figure drawn by hand -- a 22px numeral beside a caption -- is a tile.
+       It is marked so consistency.css can give it the one tile design; the
+       caption before the numeral is its label, the one after is its helper,
+       and a tile written value-first still reads label-first. */
+    elementsWithin(root, 'main [class*="text-[22px]"]').forEach(function (numeral) {
+      if (!numeral.classList.contains('font-extrabold')) return;
+      if (numeral.matches('h1, h2')) return;
+      var tile = numeral.parentElement;
+      if (!tile || tile.matches('main, section, article, th, td, li, dd, dt')) return;
+      if (tile.closest('[role="tab"], table, .edify-page-header, .kpi-strip, dialog, [role="dialog"], .mobile-role-home')) return;
+      var kids = Array.from(tile.children);
+      if (kids.length < 2 || kids.length > 4) return;
+      if (!kids.every(function (kid) { return kid.matches('p, span, h3, h4, h5, div, small, strong'); })) return;
+      if (kids.some(function (kid) { return kid !== numeral && kid.querySelector('div, p, table, ul, form, button, a'); })) return;
+      var captions = kids.filter(function (kid) { return kid !== numeral && kid.textContent.trim() !== ''; });
+      if (!captions.length) return;
+      tile.classList.add('edify-stat-tile');
+      numeral.classList.add('edify-stat-tile__value');
+      var before = captions.filter(function (caption) {
+        return Boolean(caption.compareDocumentPosition(numeral) & Node.DOCUMENT_POSITION_FOLLOWING);
+      });
+      var after = captions.filter(function (caption) { return before.indexOf(caption) === -1; });
+      if (!before.length && after.length) {
+        after[0].classList.add('edify-stat-tile__label');
+        after.slice(1).forEach(function (caption) { caption.classList.add('edify-stat-tile__helper'); });
+      } else {
+        before.forEach(function (caption) { caption.classList.add('edify-stat-tile__label'); });
+        after.forEach(function (caption) { caption.classList.add('edify-stat-tile__helper'); });
+      }
+      var palette = tile.className + ' ' + numeral.className;
+      var tone = /emerald|green|success/.test(palette) ? 'success'
+        : /amber|yellow|warning/.test(palette) ? 'warning'
+        : /rose|red|danger/.test(palette) ? 'danger'
+        : /sky|blue|primary|info/.test(palette) ? 'info' : '';
+      if (tone) tile.classList.add('edify-stat-tile--' + tone);
+    });
+
     elementsWithin(root, 'main .grid').forEach(function (grid) {
       var directTiles = Array.from(grid.children).filter(function (child) {
         return child.matches(tileSelector);

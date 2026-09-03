@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 638,
-  "templates": 226,
-  "distinct_titles": 607,
+  "titled_cards": 628,
+  "templates": 225,
+  "distinct_titles": 600,
   "with_card_key": 13,
-  "untitled_surfaces": 1011,
-  "untitled_chrome": 225,
-  "untitled_nested": 393,
-  "untitled_headless": 393,
+  "untitled_surfaces": 1006,
+  "untitled_chrome": 224,
+  "untitled_nested": 384,
+  "untitled_headless": 398,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 23,
+  "titles_in_several_templates": 20,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -45,10 +45,6 @@
    "templates/pages/ia/partner_review.html",
    "templates/pages/partner/activity_workroom.html"
   ],
-  "finance &amp; disbursement rules": [
-   "templates/pages/accounts/dashboard.html",
-   "templates/partials/disbursements/root.html"
-  ],
   "impact": [
    "templates/partials/oversight/withdrawal_drawer.html",
    "templates/partials/schools/close_drawer.html"
@@ -83,14 +79,6 @@
   "recent activity": [
    "templates/pages/profile/index.html",
    "templates/partials/debriefs/dashboard_body.html"
-  ],
-  "recent disbursement activity": [
-   "templates/pages/accounts/dashboard.html",
-   "templates/partials/disbursements/root.html"
-  ],
-  "reconciliation &amp; proof tracker": [
-   "templates/pages/accounts/dashboard.html",
-   "templates/partials/disbursements/root.html"
   ],
   "regional performance": [
    "templates/pages/ia/analytics_dashboard.html",
@@ -256,78 +244,6 @@
      0
     ]
    ]
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 127,
-   "title": "Weekly Advance Queue",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "xl:col-span-3 edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 248,
-   "title": "Verified Funding Breakdown",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "p-2 border rounded-surface flex flex-col items-center",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 299,
-   "title": "Region Plan Statistics",
-   "heading_level": 4,
-   "has_card_key": false,
-   "classes": "p-4 bg-slate-50 rounded-surface border border-slate-100 space-y-2 mt-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 389,
-   "title": "Disbursement Status This Financial Year",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 401,
-   "title": "Finance &amp; Disbursement Rules",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface p-5 rounded-surface shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 436,
-   "title": "Recent Disbursement Activity",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "xl:col-span-4 edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 466,
-   "title": "Reconciliation &amp; Proof Tracker",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "xl:col-span-5 edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 513,
-   "title": "Cash Position / Budget Balance",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "xl:col-span-3 edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between",
-   "branch_path": []
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
@@ -1530,7 +1446,7 @@
   },
   {
    "template": "templates/pages/dashboards/special_projects.html",
-   "line": 40,
+   "line": 26,
    "title": "Build transformational programs. Scale impact beyond the core model.",
    "heading_level": 2,
    "has_card_key": false,
@@ -2268,7 +2184,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 75,
+   "line": 76,
    "title": "Verification queue",
    "heading_level": 2,
    "has_card_key": false,
@@ -2277,7 +2193,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 153,
+   "line": 154,
    "title": "Open queues",
    "heading_level": 2,
    "has_card_key": false,
@@ -2286,7 +2202,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 184,
+   "line": 185,
    "title": "Needs attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -2295,7 +2211,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 231,
+   "line": 232,
    "title": "Eight-week activity flow",
    "heading_level": 3,
    "has_card_key": false,
@@ -2304,7 +2220,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 265,
+   "line": 266,
    "title": "Regional performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -2313,7 +2229,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 276,
+   "line": 277,
    "title": "District monitoring",
    "heading_level": 3,
    "has_card_key": false,
@@ -2322,7 +2238,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 284,
+   "line": 285,
    "title": "CCEO and Program Lead performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -2331,7 +2247,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 312,
+   "line": 313,
    "title": "SSA coverage",
    "heading_level": 3,
    "has_card_key": false,
@@ -2340,7 +2256,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 348,
+   "line": 349,
    "title": "Evidence quality",
    "heading_level": 3,
    "has_card_key": false,
@@ -2349,7 +2265,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 379,
+   "line": 380,
    "title": "Data integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -2358,7 +2274,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 423,
+   "line": 424,
    "title": "Queue ownership",
    "heading_level": 3,
    "has_card_key": false,
@@ -2367,7 +2283,7 @@
   },
   {
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 458,
+   "line": 459,
    "title": "Recent decisions",
    "heading_level": 3,
    "has_card_key": false,
@@ -5631,38 +5547,15 @@
   },
   {
    "template": "templates/partials/fund_approvals/root.html",
-   "line": 6,
-   "title": "Fund Approvals",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "p-3 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/fund_approvals/root.html",
-   "line": 76,
+   "line": 10,
    "title": "Partner Invoices \u2014 Confirm Against the Plan",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card overflow-hidden",
    "branch_path": [
     [
-     15,
+     0,
      0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/fund_approvals/root.html",
-   "line": 129,
-   "title": "CCEO Fund Approval Queue",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "card overflow-hidden",
-   "branch_path": [
-    [
-     17,
-     1
     ]
    ]
   },

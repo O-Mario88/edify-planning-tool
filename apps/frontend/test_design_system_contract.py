@@ -553,7 +553,7 @@ class DesignSystemContractTest(SimpleTestCase):
             "templates/pages/admin_ops/support_queue.html",
             "templates/pages/staff/detail.html",
             "templates/pages/staff/index.html",
-            "templates/pages/accounts/dashboard.html",
+            "templates/partials/finance/fund_workspace.html",
             "templates/partials/analytics/visit_effectiveness_workspace.html",
             "templates/partials/targets/my_body.html",
             "templates/partials/finance/country_budget/root.html",

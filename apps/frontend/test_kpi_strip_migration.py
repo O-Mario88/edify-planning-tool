@@ -51,7 +51,7 @@ class KpiStripMigrationTests(SimpleTestCase):
 
     def test_previously_bespoke_kpi_surfaces_use_the_shared_component(self):
         for template in (
-            "templates/pages/accounts/dashboard.html",
+            "templates/partials/finance/fund_workspace.html",
             "templates/pages/hr/my_performance.html",
             # ia/analytics_dashboard.html is not in this list because it uses
             # the real shared component rather than the legacy adapter — the

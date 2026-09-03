@@ -1091,8 +1091,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotIn("activeTab", active_template)
         self.assertNotIn("Documents &amp; Proofs (0)", active_template)
         self.assertNotIn("Disburse Funds\n</button>", active_template)
-        self.assertIn("Open Canonical Disbursement Queue", active_template)
-        self.assertIn("filteredFunds()", active_template)
+        # The page moved onto the shared fund workspace (2026-09-03): the
+        # selected advance's actions live in the Accountant's actions partial
+        # and point at the consolidated queue that owns the money movement.
+        actions = _read("templates/partials/finance/accountant_actions.html")
+        self.assertIn('href="/disbursements"', actions)
+        self.assertIn("Consolidated Queue", actions)
 
 
 class GeometryConsistencyGuardTest(SimpleTestCase):

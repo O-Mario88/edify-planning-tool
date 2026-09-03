@@ -2031,6 +2031,26 @@ select:not([multiple]):not(.select-native) {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
+  /* Exactly four never renders as three and an orphan: a four-metric strip is
+     the platform's most common headline, and at laptop width 3 + 1 left a
+     lone tile in a three-quarter-empty row. Four tracks of ~11rem still clear
+     the 9.5rem tile floor. Five balances as 3 + 2 on twelve tracks. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(5)):not(:has(> .kpi-strip__item:nth-child(6))) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(5)):not(:has(> .kpi-strip__item:nth-child(6))) > .kpi-strip__item {
+    grid-column: span 4;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(5)):not(:has(> .kpi-strip__item:nth-child(6))) > .kpi-strip__item:nth-child(n + 4) {
+    grid-column: span 6;
+  }
+
   /* Exact metric counts fill every row at tablet/workspace widths without
      compressing all of them into one line. Source order remains untouched. */
   .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(7)):not(:has(> .kpi-strip__item:nth-child(8))),
@@ -4109,3 +4129,40 @@ main .budget-ledger table.budget-ledger-table th[scope="row"] { white-space: nor
 main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: #fff !important; }
 main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa !important; color: #1e293b !important; font-weight: 700 !important; }
 main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, #fff) !important; }
+
+
+/* Inset tiles ----------------------------------------------------------------
+   The same tile, inside a panel. A panel's secondary figures (a reconciliation
+   count beside its table, a cash position beside its chart) used to be drawn
+   by hand with utility classes, so every page invented its own tile. They now
+   pass through the one component with variant="inset": the tray chrome and
+   the freshness pill go, the tile itself is unchanged. */
+.kpi-strip.kpi-strip--executive.kpi-strip--inset {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  margin-block-end: 0;
+  overflow: visible;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)) !important;
+  gap: 0.75rem !important;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__grid > .kpi-strip__item {
+  grid-column: auto !important;
+  min-block-size: 0;
+  padding: 0.875rem 1rem;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__topline,
+.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__label::before {
+  display: none;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__value {
+  font-size: clamp(1.125rem, 1rem + 1.6cqi, 1.5rem);
+}

@@ -81,7 +81,7 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertIn("padding-block: 0.75rem !important;", css)
         self.assertIn('[class~="sm:p-6"]', css)
         self.assertIn(".space-y-5, .space-y-6", css)
-        self.assertIn("20260827density2", base)
+        self.assertIn("20260903fundws11", base)
 
     def test_shared_feature_grids_do_not_force_blank_equal_height_surfaces(self):
         platform = _read("static/css/platform.css")

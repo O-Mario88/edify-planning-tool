@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **112**
 - Scheduled jobs: **25**
 - Activity states: **24**
-- Shared component templates: **346**
-- Full pages: **206**
-- Partials and drawers: **173**
+- Shared component templates: **355**
+- Full pages: **204**
+- Partials and drawers: **175**
 - Permission-gated surfaces: **577**
 - Referenced by automated tests: **541**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -25,8 +25,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | ID | Route | Page | Type | Mobile / tablet | Theme / a11y | Findings | Test |
 |---|---|---|---|---|---|---:|---|
 | UI-PAGE-9742C80CF8 | / | Sign in | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-D4F8C108E9 | /accounts | Fund Disbursement Dashboard | dashboard | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-252D9AB81D | /accounts/ | Fund Disbursement Dashboard | dashboard | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D4F8C108E9 | /accounts | Fund Disbursement Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-252D9AB81D | /accounts/ | Fund Disbursement Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E2B7D125EC | /accounts/accountability | Accountability Tracking - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F3E2C55053 | /accounts/accountability/ | Accountability Tracking - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3815BDB66D | /accounts/activities/<str:activity_id> | Activity Finance Detail - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -273,9 +273,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-22C341EEE0 | /finance/fund-allocation/drilldown | Allocation Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-85D177E3CF | /finance/fund-allocation/export-drawer | Export Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7921AB6C57 | /fund-approvals | Fund Approvals | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-682E1299FA | /fund-approvals/action | Fund Approvals | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-682E1299FA | /fund-approvals/action | Fund Approvals Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-604AD57E62 | /fund-approvals/detail | Fund Approvals Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-45A89C7D34 | /fund-approvals/invoices/<str:invoice_id>/action | Fund Approvals | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-45A89C7D34 | /fund-approvals/invoices/<str:invoice_id>/action | Pl Partner Invoice Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5D4FA661D2 | /fund-approvals/invoices/<str:invoice_id>/download | Pl Partner Invoice Download | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D2A71FB89F | /fund-approvals/return | Fund Approvals Return | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E752172BBA | /fund-requests | Fund Requests List | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

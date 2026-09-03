@@ -7,8 +7,8 @@
   "with_metric_key": 0,
   "with_drilldown": 0,
   "labels_in_several_modules": 0,
-  "breakdown_rows": 177,
-  "registered_metrics": 411,
+  "breakdown_rows": 185,
+  "registered_metrics": 412,
   "rendered_summaries": 67,
   "context_summaries": 0,
   "headline_summaries": 66,
@@ -16,7 +16,7 @@
   "legacy_summary_surfaces": 0,
   "shared_component_surfaces": 67,
   "registered_payload_groups": 37,
-  "source_items_in_registered_payloads": 212,
+  "source_items_in_registered_payloads": 213,
   "payload_groups_over_six": 13,
   "payload_groups_with_repeated_categories": 29,
   "professional_headline_limit": null,
@@ -2468,7 +2468,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2966,
+   "line": 2976,
    "label": null,
    "keys": [
     "label",
@@ -2584,6 +2584,57 @@
   },
   {
    "audit_id": "KPI-SOURCE-130",
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 1382,
+   "label": "Week",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-131",
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 1383,
+   "label": "Amount",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-132",
+   "kind": "breakdown-row",
+   "module": "apps/frontend/views/finance_operating_views.py",
+   "line": 1384,
+   "label": "Name",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-133",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
    "line": 1216,
@@ -2604,7 +2655,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-131",
+   "audit_id": "KPI-SOURCE-134",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/hr_today_views.py",
    "line": 43,
@@ -2623,7 +2674,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-132",
+   "audit_id": "KPI-SOURCE-135",
    "kind": "other",
    "module": "apps/frontend/views/hr_views.py",
    "line": 82,
@@ -2643,7 +2694,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-133",
+   "audit_id": "KPI-SOURCE-136",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 370,
@@ -2666,7 +2717,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-134",
+   "audit_id": "KPI-SOURCE-137",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1070,
@@ -2683,7 +2734,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-135",
+   "audit_id": "KPI-SOURCE-138",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1074,
@@ -2700,7 +2751,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-136",
+   "audit_id": "KPI-SOURCE-139",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1078,
@@ -2717,7 +2768,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-137",
+   "audit_id": "KPI-SOURCE-140",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1082,
@@ -2734,7 +2785,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-138",
+   "audit_id": "KPI-SOURCE-141",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1138,
@@ -2753,7 +2804,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-139",
+   "audit_id": "KPI-SOURCE-142",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1144,
@@ -2772,7 +2823,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-140",
+   "audit_id": "KPI-SOURCE-143",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1150,
@@ -2791,7 +2842,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-141",
+   "audit_id": "KPI-SOURCE-144",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1176,
@@ -2810,7 +2861,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-142",
+   "audit_id": "KPI-SOURCE-145",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1182,
@@ -2829,7 +2880,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-143",
+   "audit_id": "KPI-SOURCE-146",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
    "line": 1188,
@@ -2848,7 +2899,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-144",
+   "audit_id": "KPI-SOURCE-147",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
    "line": 467,
@@ -2865,7 +2916,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-145",
+   "audit_id": "KPI-SOURCE-148",
    "kind": "other",
    "module": "apps/frontend/views/leave_views.py",
    "line": 1091,
@@ -2885,7 +2936,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-146",
+   "audit_id": "KPI-SOURCE-149",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 130,
@@ -2908,7 +2959,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-147",
+   "audit_id": "KPI-SOURCE-150",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 291,
@@ -2927,7 +2978,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-148",
+   "audit_id": "KPI-SOURCE-151",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 2061,
@@ -2945,7 +2996,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-149",
+   "audit_id": "KPI-SOURCE-152",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 2172,
@@ -2968,7 +3019,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-150",
+   "audit_id": "KPI-SOURCE-153",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 298,
@@ -2987,7 +3038,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-151",
+   "audit_id": "KPI-SOURCE-154",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
    "line": 308,
@@ -3006,7 +3057,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-152",
+   "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 243,
@@ -3025,7 +3076,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-153",
+   "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 280,
@@ -3044,7 +3095,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-154",
+   "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 253,
@@ -3063,7 +3114,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-155",
+   "audit_id": "KPI-SOURCE-158",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 909,
@@ -3081,7 +3132,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-156",
+   "audit_id": "KPI-SOURCE-159",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
    "line": 915,
@@ -3099,7 +3150,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-157",
+   "audit_id": "KPI-SOURCE-160",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
    "line": 731,
@@ -3122,7 +3173,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-158",
+   "audit_id": "KPI-SOURCE-161",
    "kind": "other",
    "module": "apps/frontend/views/staff_views.py",
    "line": 615,
@@ -3143,7 +3194,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-159",
+   "audit_id": "KPI-SOURCE-162",
    "kind": "other",
    "module": "apps/frontend/views/target_distribution_views.py",
    "line": 190,
@@ -3164,7 +3215,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-160",
+   "audit_id": "KPI-SOURCE-163",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
    "line": 449,
@@ -3186,7 +3237,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-161",
+   "audit_id": "KPI-SOURCE-164",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
    "line": 440,
@@ -3208,7 +3259,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-162",
+   "audit_id": "KPI-SOURCE-165",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
    "line": 558,
@@ -3227,7 +3278,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-163",
+   "audit_id": "KPI-SOURCE-166",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
    "line": 650,
@@ -3244,7 +3295,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-164",
+   "audit_id": "KPI-SOURCE-167",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
    "line": 1274,
@@ -3264,7 +3315,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-165",
+   "audit_id": "KPI-SOURCE-168",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
    "line": 1281,
@@ -3284,7 +3335,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-166",
+   "audit_id": "KPI-SOURCE-169",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
    "line": 1288,
@@ -3304,7 +3355,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-167",
+   "audit_id": "KPI-SOURCE-170",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
    "line": 1295,
@@ -3324,7 +3375,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-168",
+   "audit_id": "KPI-SOURCE-171",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
    "line": 1353,
@@ -3343,7 +3394,106 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-169",
+   "audit_id": "KPI-SOURCE-172",
+   "kind": "other",
+   "module": "apps/fund_requests/fund_workspace.py",
+   "line": 72,
+   "label": "Approved",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-173",
+   "kind": "other",
+   "module": "apps/fund_requests/fund_workspace.py",
+   "line": 79,
+   "label": "Returned",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-174",
+   "kind": "other",
+   "module": "apps/fund_requests/fund_workspace.py",
+   "line": 86,
+   "label": "Pending",
+   "keys": [
+    "color",
+    "display",
+    "key",
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-175",
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/fund_workspace.py",
+   "line": 122,
+   "label": null,
+   "keys": [
+    "amount",
+    "amount_fmt",
+    "color",
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-176",
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/fund_workspace.py",
+   "line": 99,
+   "label": null,
+   "keys": [
+    "color",
+    "count",
+    "label",
+    "pct"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-177",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
    "line": 355,
@@ -3362,7 +3512,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-170",
+   "audit_id": "KPI-SOURCE-178",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
    "line": 370,
@@ -3382,7 +3532,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-171",
+   "audit_id": "KPI-SOURCE-179",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
    "line": 390,
@@ -3404,7 +3554,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-172",
+   "audit_id": "KPI-SOURCE-180",
    "kind": "other",
    "module": "apps/fund_requests/monthly_request_service.py",
    "line": 417,
@@ -3422,7 +3572,58 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-173",
+   "audit_id": "KPI-SOURCE-181",
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 748,
+   "label": "Amount",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-182",
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 749,
+   "label": "Name",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-183",
+   "kind": "breakdown-row",
+   "module": "apps/fund_requests/pl_approval_service.py",
+   "line": 750,
+   "label": "Status",
+   "keys": [
+    "label",
+    "value"
+   ],
+   "has_metric_key": false,
+   "has_drilldown": false,
+   "recommendation": "retain-as-breakdown",
+   "reason": "Status breakdown rows support a workflow distribution and are not independent headline KPIs.",
+   "priority": "low",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SOURCE-184",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/services.py",
    "line": 612,
@@ -3443,7 +3644,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-174",
+   "audit_id": "KPI-SOURCE-185",
    "kind": "other",
    "module": "apps/help_center/services.py",
    "line": 1238,
@@ -3462,7 +3663,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-175",
+   "audit_id": "KPI-SOURCE-186",
    "kind": "other",
    "module": "apps/help_center/views.py",
    "line": 179,
@@ -3482,7 +3683,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-176",
+   "audit_id": "KPI-SOURCE-187",
    "kind": "breakdown-row",
    "module": "apps/help_center/views.py",
    "line": 155,
@@ -3499,7 +3700,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-177",
+   "audit_id": "KPI-SOURCE-188",
    "kind": "breakdown-row",
    "module": "apps/help_center/views.py",
    "line": 159,
@@ -3516,7 +3717,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-178",
+   "audit_id": "KPI-SOURCE-189",
    "kind": "breakdown-row",
    "module": "apps/help_center/views.py",
    "line": 160,
@@ -3533,7 +3734,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-179",
+   "audit_id": "KPI-SOURCE-190",
    "kind": "other",
    "module": "apps/help_center/views.py",
    "line": 213,
@@ -3553,7 +3754,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-180",
+   "audit_id": "KPI-SOURCE-191",
    "kind": "other",
    "module": "apps/help_center/views.py",
    "line": 309,
@@ -3573,7 +3774,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-181",
+   "audit_id": "KPI-SOURCE-192",
    "kind": "other",
    "module": "apps/hr/milestone_allocations.py",
    "line": 500,
@@ -3595,7 +3796,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-182",
+   "audit_id": "KPI-SOURCE-193",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 323,
@@ -3613,7 +3814,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-183",
+   "audit_id": "KPI-SOURCE-194",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 330,
@@ -3631,7 +3832,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-184",
+   "audit_id": "KPI-SOURCE-195",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 352,
@@ -3649,7 +3850,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-185",
+   "audit_id": "KPI-SOURCE-196",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 370,
@@ -3667,7 +3868,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-186",
+   "audit_id": "KPI-SOURCE-197",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 394,
@@ -3685,7 +3886,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-187",
+   "audit_id": "KPI-SOURCE-198",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 399,
@@ -3703,7 +3904,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-188",
+   "audit_id": "KPI-SOURCE-199",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 400,
@@ -3721,7 +3922,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-189",
+   "audit_id": "KPI-SOURCE-200",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 401,
@@ -3739,7 +3940,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-190",
+   "audit_id": "KPI-SOURCE-201",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 402,
@@ -3757,7 +3958,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-191",
+   "audit_id": "KPI-SOURCE-202",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 407,
@@ -3775,7 +3976,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-192",
+   "audit_id": "KPI-SOURCE-203",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 431,
@@ -3793,7 +3994,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-193",
+   "audit_id": "KPI-SOURCE-204",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 436,
@@ -3811,7 +4012,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-194",
+   "audit_id": "KPI-SOURCE-205",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 437,
@@ -3829,7 +4030,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-195",
+   "audit_id": "KPI-SOURCE-206",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 438,
@@ -3847,7 +4048,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-196",
+   "audit_id": "KPI-SOURCE-207",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 439,
@@ -3865,7 +4066,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-197",
+   "audit_id": "KPI-SOURCE-208",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 440,
@@ -3883,7 +4084,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-198",
+   "audit_id": "KPI-SOURCE-209",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 441,
@@ -3901,7 +4102,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-199",
+   "audit_id": "KPI-SOURCE-210",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 456,
@@ -3919,7 +4120,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-200",
+   "audit_id": "KPI-SOURCE-211",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 461,
@@ -3937,7 +4138,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-201",
+   "audit_id": "KPI-SOURCE-212",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 462,
@@ -3955,7 +4156,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-202",
+   "audit_id": "KPI-SOURCE-213",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 463,
@@ -3973,7 +4174,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-203",
+   "audit_id": "KPI-SOURCE-214",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 464,
@@ -3991,7 +4192,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-204",
+   "audit_id": "KPI-SOURCE-215",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 479,
@@ -4009,7 +4210,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-205",
+   "audit_id": "KPI-SOURCE-216",
    "kind": "other",
    "module": "apps/hr/performance_engine.py",
    "line": 484,
@@ -4027,7 +4228,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-206",
+   "audit_id": "KPI-SOURCE-217",
    "kind": "breakdown-row",
    "module": "apps/hr/performance_service.py",
    "line": 307,
@@ -4044,7 +4245,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-207",
+   "audit_id": "KPI-SOURCE-218",
    "kind": "breakdown-row",
    "module": "apps/hr/priority_health.py",
    "line": 88,
@@ -4063,7 +4264,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-208",
+   "audit_id": "KPI-SOURCE-219",
    "kind": "breakdown-row",
    "module": "apps/hr/priority_health.py",
    "line": 97,
@@ -4082,7 +4283,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-209",
+   "audit_id": "KPI-SOURCE-220",
    "kind": "other",
    "module": "apps/hr/target_distribution.py",
    "line": 237,
@@ -4103,7 +4304,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-210",
+   "audit_id": "KPI-SOURCE-221",
    "kind": "other",
    "module": "apps/hr/target_distribution.py",
    "line": 198,
@@ -4124,7 +4325,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-211",
+   "audit_id": "KPI-SOURCE-222",
    "kind": "other",
    "module": "apps/hr/uganda_master_seed.py",
    "line": 665,
@@ -4144,7 +4345,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-212",
+   "audit_id": "KPI-SOURCE-223",
    "kind": "other",
    "module": "apps/hr/uganda_master_seed.py",
    "line": 672,
@@ -4164,7 +4365,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-213",
+   "audit_id": "KPI-SOURCE-224",
    "kind": "breakdown-row",
    "module": "apps/monthly_work_plan/country_budget_service.py",
    "line": 1985,
@@ -4194,7 +4395,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-214",
+   "audit_id": "KPI-SOURCE-225",
    "kind": "breakdown-row",
    "module": "apps/monthly_work_plan/schedule_plan.py",
    "line": 108,
@@ -4216,7 +4417,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-215",
+   "audit_id": "KPI-SOURCE-226",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 121,
@@ -4235,7 +4436,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-216",
+   "audit_id": "KPI-SOURCE-227",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 127,
@@ -4254,7 +4455,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-217",
+   "audit_id": "KPI-SOURCE-228",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 133,
@@ -4273,7 +4474,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-218",
+   "audit_id": "KPI-SOURCE-229",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 139,
@@ -4292,7 +4493,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-219",
+   "audit_id": "KPI-SOURCE-230",
    "kind": "breakdown-row",
    "module": "apps/planning/services.py",
    "line": 145,
@@ -4311,7 +4512,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-220",
+   "audit_id": "KPI-SOURCE-231",
    "kind": "breakdown-row",
    "module": "apps/professional_development/health.py",
    "line": 16,
@@ -4332,7 +4533,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-221",
+   "audit_id": "KPI-SOURCE-232",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
    "line": 497,
@@ -4349,7 +4550,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-222",
+   "audit_id": "KPI-SOURCE-233",
    "kind": "breakdown-row",
    "module": "apps/professional_development/hr_dashboard_service.py",
    "line": 447,
@@ -4368,7 +4569,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-223",
+   "audit_id": "KPI-SOURCE-234",
    "kind": "other",
    "module": "apps/projects/dashboard_service.py",
    "line": 628,
@@ -4387,7 +4588,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-224",
+   "audit_id": "KPI-SOURCE-235",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 607,
@@ -4404,7 +4605,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-225",
+   "audit_id": "KPI-SOURCE-236",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 608,
@@ -4421,7 +4622,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-226",
+   "audit_id": "KPI-SOURCE-237",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 609,
@@ -4438,7 +4639,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-227",
+   "audit_id": "KPI-SOURCE-238",
    "kind": "breakdown-row",
    "module": "apps/projects/dashboard_service.py",
    "line": 610,
@@ -4455,7 +4656,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-228",
+   "audit_id": "KPI-SOURCE-239",
    "kind": "breakdown-row",
    "module": "apps/projects/health.py",
    "line": 85,
@@ -4482,7 +4683,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-229",
+   "audit_id": "KPI-SOURCE-240",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 516,
@@ -4501,7 +4702,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-230",
+   "audit_id": "KPI-SOURCE-241",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1017,
@@ -4519,7 +4720,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-231",
+   "audit_id": "KPI-SOURCE-242",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1075,
@@ -4536,7 +4737,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-232",
+   "audit_id": "KPI-SOURCE-243",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1076,
@@ -4553,7 +4754,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-233",
+   "audit_id": "KPI-SOURCE-244",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1077,
@@ -4570,7 +4771,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-234",
+   "audit_id": "KPI-SOURCE-245",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1078,
@@ -4587,7 +4788,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-235",
+   "audit_id": "KPI-SOURCE-246",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
    "line": 1079,
@@ -4604,7 +4805,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-236",
+   "audit_id": "KPI-SOURCE-247",
    "kind": "other",
    "module": "apps/projects/my_plan_service.py",
    "line": 80,
@@ -4622,7 +4823,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-237",
+   "audit_id": "KPI-SOURCE-248",
    "kind": "other",
    "module": "apps/projects/my_plan_service.py",
    "line": 97,
@@ -4641,7 +4842,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-238",
+   "audit_id": "KPI-SOURCE-249",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 624,
@@ -4658,7 +4859,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-239",
+   "audit_id": "KPI-SOURCE-250",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 633,
@@ -4675,7 +4876,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-240",
+   "audit_id": "KPI-SOURCE-251",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 634,
@@ -4692,7 +4893,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-241",
+   "audit_id": "KPI-SOURCE-252",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 635,
@@ -4709,7 +4910,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-242",
+   "audit_id": "KPI-SOURCE-253",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 636,
@@ -4726,7 +4927,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-243",
+   "audit_id": "KPI-SOURCE-254",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 637,
@@ -4743,7 +4944,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-244",
+   "audit_id": "KPI-SOURCE-255",
    "kind": "breakdown-row",
    "module": "apps/projects/my_plan_service.py",
    "line": 638,
@@ -4760,7 +4961,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-245",
+   "audit_id": "KPI-SOURCE-256",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 746,
@@ -4777,7 +4978,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-246",
+   "audit_id": "KPI-SOURCE-257",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 755,
@@ -4794,7 +4995,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-247",
+   "audit_id": "KPI-SOURCE-258",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 756,
@@ -4811,7 +5012,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-248",
+   "audit_id": "KPI-SOURCE-259",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 757,
@@ -4828,7 +5029,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-249",
+   "audit_id": "KPI-SOURCE-260",
    "kind": "breakdown-row",
    "module": "apps/projects/planning_service.py",
    "line": 760,
@@ -4845,7 +5046,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-250",
+   "audit_id": "KPI-SOURCE-261",
    "kind": "other",
    "module": "apps/projects/staff_priorities.py",
    "line": 166,
@@ -4863,7 +5064,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-251",
+   "audit_id": "KPI-SOURCE-262",
    "kind": "other",
    "module": "apps/schools/closure_analytics.py",
    "line": 184,
@@ -4885,7 +5086,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-252",
+   "audit_id": "KPI-SOURCE-263",
    "kind": "breakdown-row",
    "module": "apps/system_health/kpi_inventory.py",
    "line": 802,
@@ -4902,7 +5103,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-253",
+   "audit_id": "KPI-SOURCE-264",
    "kind": "breakdown-row",
    "module": "apps/system_health/page_inventory.py",
    "line": 1307,
@@ -4919,7 +5120,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-254",
+   "audit_id": "KPI-SOURCE-265",
    "kind": "breakdown-row",
    "module": "apps/system_health/planning_oversight_health.py",
    "line": 69,
@@ -4942,7 +5143,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-255",
+   "audit_id": "KPI-SOURCE-266",
    "kind": "breakdown-row",
    "module": "apps/system_health/portfolio_access_health.py",
    "line": 67,
@@ -4965,7 +5166,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-256",
+   "audit_id": "KPI-SOURCE-267",
    "kind": "breakdown-row",
    "module": "apps/system_health/school_closure_health.py",
    "line": 26,
@@ -4988,7 +5189,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-257",
+   "audit_id": "KPI-SOURCE-268",
    "kind": "breakdown-row",
    "module": "apps/system_health/ui_quality.py",
    "line": 235,
@@ -5009,7 +5210,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-258",
+   "audit_id": "KPI-SOURCE-269",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
    "line": 962,
@@ -5035,7 +5236,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-259",
+   "audit_id": "KPI-SOURCE-270",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
    "line": 1115,
@@ -5052,7 +5253,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-260",
+   "audit_id": "KPI-SOURCE-271",
    "kind": "other",
    "module": "apps/targets/my_targets.py",
    "line": 1043,
@@ -5076,7 +5277,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-261",
+   "audit_id": "KPI-SOURCE-272",
    "kind": "breakdown-row",
    "module": "apps/targets/my_targets.py",
    "line": 1229,
@@ -5093,7 +5294,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-262",
+   "audit_id": "KPI-SOURCE-273",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 208,
@@ -5116,7 +5317,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-263",
+   "audit_id": "KPI-SOURCE-274",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 616,
@@ -5137,7 +5338,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-264",
+   "audit_id": "KPI-SOURCE-275",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 624,
@@ -5158,7 +5359,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-265",
+   "audit_id": "KPI-SOURCE-276",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 632,
@@ -5179,7 +5380,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-266",
+   "audit_id": "KPI-SOURCE-277",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 640,
@@ -5200,7 +5401,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-267",
+   "audit_id": "KPI-SOURCE-278",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 657,
@@ -5221,7 +5422,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-268",
+   "audit_id": "KPI-SOURCE-279",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 714,
@@ -5243,7 +5444,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-269",
+   "audit_id": "KPI-SOURCE-280",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 723,
@@ -5265,7 +5466,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-270",
+   "audit_id": "KPI-SOURCE-281",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 732,
@@ -5287,7 +5488,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-271",
+   "audit_id": "KPI-SOURCE-282",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 741,
@@ -5309,7 +5510,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-272",
+   "audit_id": "KPI-SOURCE-283",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 750,
@@ -5331,7 +5532,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-273",
+   "audit_id": "KPI-SOURCE-284",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 791,
@@ -5348,7 +5549,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-274",
+   "audit_id": "KPI-SOURCE-285",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 192,
@@ -5370,7 +5571,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-275",
+   "audit_id": "KPI-SOURCE-286",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 772,
@@ -5393,7 +5594,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-276",
+   "audit_id": "KPI-SOURCE-287",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 1192,
@@ -5411,7 +5612,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-277",
+   "audit_id": "KPI-SOURCE-288",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1243,
@@ -5428,7 +5629,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-278",
+   "audit_id": "KPI-SOURCE-289",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 290,
@@ -5452,7 +5653,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-279",
+   "audit_id": "KPI-SOURCE-290",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1187,
@@ -5469,7 +5670,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-280",
+   "audit_id": "KPI-SOURCE-291",
    "kind": "breakdown-row",
    "module": "apps/targets/team_targets.py",
    "line": 1189,
@@ -5486,7 +5687,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SOURCE-281",
+   "audit_id": "KPI-SOURCE-292",
    "kind": "other",
    "module": "apps/targets/team_targets.py",
    "line": 1141,
@@ -5512,31 +5713,6 @@
  "template_sites": [
   {
    "audit_id": "KPI-SURFACE-001",
-   "template": "templates/pages/accounts/dashboard.html",
-   "line": 106,
-   "source_pattern": "shared-component",
-   "items_expression": "account_kpis",
-   "presentation": "executive",
-   "page_type": "operational",
-   "route": "/accounts",
-   "page_title": "Fund Disbursement Dashboard",
-   "roles": [
-    "ACCOUNTANT",
-    "ADMIN"
-   ],
-   "page_purpose": "Main Accountant Dashboard / Finance Command Center.",
-   "primary_action": "Open highest-priority work",
-   "previous_presentation": "independent KPI tile grid",
-   "new_prominent_kpi_limit": 6,
-   "mobile_result": "At most six distinct headline metrics; the tray reflows without horizontal scrolling",
-   "accessibility_result": "Semantic list with accessible labels and no hidden overflow controls",
-   "recommendation": "retain",
-   "reason": "Dashboard or analytical headline metrics support a cross-record decision.",
-   "replacement_pattern": "primary KPI group",
-   "implementation_status": "completed"
-  },
-  {
-   "audit_id": "KPI-SURFACE-002",
    "template": "templates/pages/admin/data_quality_center.html",
    "line": 21,
    "source_pattern": "shared-component",
@@ -5561,7 +5737,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-003",
+   "audit_id": "KPI-SURFACE-002",
    "template": "templates/pages/admin_ops/incident_detail.html",
    "line": 20,
    "source_pattern": "shared-component",
@@ -5585,7 +5761,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-004",
+   "audit_id": "KPI-SURFACE-003",
    "template": "templates/pages/admin_ops/planning.html",
    "line": 14,
    "source_pattern": "shared-component",
@@ -5609,7 +5785,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-005",
+   "audit_id": "KPI-SURFACE-004",
    "template": "templates/pages/admin_ops/support_queue.html",
    "line": 14,
    "source_pattern": "shared-component",
@@ -5633,7 +5809,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-006",
+   "audit_id": "KPI-SURFACE-005",
    "template": "templates/pages/admin_ops/team_plans.html",
    "line": 20,
    "source_pattern": "shared-component",
@@ -5657,7 +5833,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-007",
+   "audit_id": "KPI-SURFACE-006",
    "template": "templates/pages/business_transformation/financial_health.html",
    "line": 15,
    "source_pattern": "shared-component",
@@ -5681,7 +5857,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-008",
+   "audit_id": "KPI-SURFACE-007",
    "template": "templates/pages/business_transformation/government_requirements.html",
    "line": 15,
    "source_pattern": "shared-component",
@@ -5705,7 +5881,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-009",
+   "audit_id": "KPI-SURFACE-008",
    "template": "templates/pages/business_transformation/impact_reports.html",
    "line": 15,
    "source_pattern": "shared-component",
@@ -5739,7 +5915,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-010",
+   "audit_id": "KPI-SURFACE-009",
    "template": "templates/pages/business_transformation/index.html",
    "line": 36,
    "source_pattern": "shared-component",
@@ -5773,7 +5949,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-011",
+   "audit_id": "KPI-SURFACE-010",
    "template": "templates/pages/business_transformation/loans.html",
    "line": 58,
    "source_pattern": "shared-component",
@@ -5802,7 +5978,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-012",
+   "audit_id": "KPI-SURFACE-011",
    "template": "templates/pages/business_transformation/mfi_portal.html",
    "line": 18,
    "source_pattern": "shared-component",
@@ -5827,7 +6003,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-013",
+   "audit_id": "KPI-SURFACE-012",
    "template": "templates/pages/core_schools/index.html",
    "line": 53,
    "source_pattern": "shared-component",
@@ -5856,9 +6032,9 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-014",
+   "audit_id": "KPI-SURFACE-013",
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 44,
+   "line": 24,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "executive",
@@ -5892,7 +6068,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-015",
+   "audit_id": "KPI-SURFACE-014",
    "template": "templates/pages/dashboards/main.html",
    "line": 41,
    "source_pattern": "shared-component",
@@ -5928,7 +6104,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-016",
+   "audit_id": "KPI-SURFACE-015",
    "template": "templates/pages/dashboards/rvp.html",
    "line": 36,
    "source_pattern": "shared-component",
@@ -5964,9 +6140,9 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-017",
+   "audit_id": "KPI-SURFACE-016",
    "template": "templates/pages/dashboards/special_projects.html",
-   "line": 51,
+   "line": 37,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "executive",
@@ -6000,7 +6176,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-018",
+   "audit_id": "KPI-SURFACE-017",
    "template": "templates/pages/documents/compliance.html",
    "line": 16,
    "source_pattern": "shared-component",
@@ -6028,7 +6204,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-019",
+   "audit_id": "KPI-SURFACE-018",
    "template": "templates/pages/documents/upload_center.html",
    "line": 79,
    "source_pattern": "shared-component",
@@ -6056,7 +6232,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-020",
+   "audit_id": "KPI-SURFACE-019",
    "template": "templates/pages/hr/module_workspace.html",
    "line": 44,
    "source_pattern": "shared-component",
@@ -6081,7 +6257,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-021",
+   "audit_id": "KPI-SURFACE-020",
    "template": "templates/pages/hr/my_performance.html",
    "line": 97,
    "source_pattern": "shared-component",
@@ -6113,7 +6289,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-022",
+   "audit_id": "KPI-SURFACE-021",
    "template": "templates/pages/hr/priority_configuration.html",
    "line": 47,
    "source_pattern": "shared-component",
@@ -6140,9 +6316,9 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-023",
+   "audit_id": "KPI-SURFACE-022",
    "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 72,
+   "line": 57,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "executive",
@@ -6166,7 +6342,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-024",
+   "audit_id": "KPI-SURFACE-023",
    "template": "templates/pages/ia/attribution.html",
    "line": 40,
    "source_pattern": "shared-component",
@@ -6192,7 +6368,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-025",
+   "audit_id": "KPI-SURFACE-024",
    "template": "templates/pages/ia/verification_analytics.html",
    "line": 36,
    "source_pattern": "shared-component",
@@ -6218,7 +6394,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-026",
+   "audit_id": "KPI-SURFACE-025",
    "template": "templates/pages/leave/leave_approvals.html",
    "line": 79,
    "source_pattern": "shared-component",
@@ -6246,7 +6422,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-027",
+   "audit_id": "KPI-SURFACE-026",
    "template": "templates/pages/my_team/index.html",
    "line": 19,
    "source_pattern": "shared-component",
@@ -6273,7 +6449,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-028",
+   "audit_id": "KPI-SURFACE-027",
    "template": "templates/pages/notifications/index.html",
    "line": 45,
    "source_pattern": "shared-component",
@@ -6309,7 +6485,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-029",
+   "audit_id": "KPI-SURFACE-028",
    "template": "templates/pages/partners/index.html",
    "line": 49,
    "source_pattern": "shared-component",
@@ -6331,7 +6507,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-030",
+   "audit_id": "KPI-SURFACE-029",
    "template": "templates/pages/planning/index.html",
    "line": 163,
    "source_pattern": "shared-component",
@@ -6361,7 +6537,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-031",
+   "audit_id": "KPI-SURFACE-030",
    "template": "templates/pages/projects/detail.html",
    "line": 27,
    "source_pattern": "shared-component",
@@ -6390,7 +6566,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-032",
+   "audit_id": "KPI-SURFACE-031",
    "template": "templates/pages/projects/index.html",
    "line": 109,
    "source_pattern": "shared-component",
@@ -6419,7 +6595,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-033",
+   "audit_id": "KPI-SURFACE-032",
    "template": "templates/pages/reports/index.html",
    "line": 90,
    "source_pattern": "shared-component",
@@ -6448,7 +6624,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-034",
+   "audit_id": "KPI-SURFACE-033",
    "template": "templates/pages/staff/detail.html",
    "line": 35,
    "source_pattern": "shared-component",
@@ -6476,7 +6652,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-035",
+   "audit_id": "KPI-SURFACE-034",
    "template": "templates/pages/staff/index.html",
    "line": 27,
    "source_pattern": "shared-component",
@@ -6504,7 +6680,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-036",
+   "audit_id": "KPI-SURFACE-035",
    "template": "templates/pages/todos/index.html",
    "line": 40,
    "source_pattern": "shared-component",
@@ -6540,7 +6716,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-037",
+   "audit_id": "KPI-SURFACE-036",
    "template": "templates/pages/work_plan/index.html",
    "line": 204,
    "source_pattern": "shared-component",
@@ -6572,7 +6748,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-038",
+   "audit_id": "KPI-SURFACE-037",
    "template": "templates/partials/analytics/cd/body.html",
    "line": 5,
    "source_pattern": "shared-component",
@@ -6597,7 +6773,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-039",
+   "audit_id": "KPI-SURFACE-038",
    "template": "templates/partials/analytics/impact_workspace.html",
    "line": 52,
    "source_pattern": "shared-component",
@@ -6619,7 +6795,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-040",
+   "audit_id": "KPI-SURFACE-039",
    "template": "templates/partials/analytics/kpi_cards.html",
    "line": 15,
    "source_pattern": "shared-component",
@@ -6651,7 +6827,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-041",
+   "audit_id": "KPI-SURFACE-040",
    "template": "templates/partials/analytics/kpi_cards.html",
    "line": 22,
    "source_pattern": "shared-component",
@@ -6683,7 +6859,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-042",
+   "audit_id": "KPI-SURFACE-041",
    "template": "templates/partials/analytics/pl/body.html",
    "line": 5,
    "source_pattern": "shared-component",
@@ -6708,7 +6884,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-043",
+   "audit_id": "KPI-SURFACE-042",
    "template": "templates/partials/analytics/visit_effectiveness_workspace.html",
    "line": 50,
    "source_pattern": "shared-component",
@@ -6738,7 +6914,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-044",
+   "audit_id": "KPI-SURFACE-043",
    "template": "templates/partials/clusters/kpi_strip.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -6766,7 +6942,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-045",
+   "audit_id": "KPI-SURFACE-044",
    "template": "templates/partials/dashboards/cd/body.html",
    "line": 9,
    "source_pattern": "shared-component",
@@ -6802,7 +6978,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-046",
+   "audit_id": "KPI-SURFACE-045",
    "template": "templates/partials/dashboards/hr/body.html",
    "line": 19,
    "source_pattern": "shared-component",
@@ -6838,7 +7014,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-047",
+   "audit_id": "KPI-SURFACE-046",
    "template": "templates/partials/dashboards/pl/body.html",
    "line": 5,
    "source_pattern": "shared-component",
@@ -6874,7 +7050,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-048",
+   "audit_id": "KPI-SURFACE-047",
    "template": "templates/partials/debriefs/dashboard_body.html",
    "line": 7,
    "source_pattern": "shared-component",
@@ -6906,7 +7082,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-049",
+   "audit_id": "KPI-SURFACE-048",
    "template": "templates/partials/disbursements/root.html",
    "line": 63,
    "source_pattern": "shared-component",
@@ -6931,7 +7107,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-050",
+   "audit_id": "KPI-SURFACE-049",
    "template": "templates/partials/finance/country_budget/root.html",
    "line": 137,
    "source_pattern": "shared-component",
@@ -6959,7 +7135,7 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-051",
+   "audit_id": "KPI-SURFACE-050",
    "template": "templates/partials/finance/fund_allocation_kpis.html",
    "line": 2,
    "source_pattern": "shared-component",
@@ -6981,22 +7157,46 @@
    "implementation_status": "completed"
   },
   {
-   "audit_id": "KPI-SURFACE-052",
-   "template": "templates/partials/fund_approvals/root.html",
-   "line": 116,
+   "audit_id": "KPI-SURFACE-051",
+   "template": "templates/partials/finance/fund_workspace.html",
+   "line": 69,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "executive",
    "page_type": "operational",
-   "route": "/fund-approvals",
-   "page_title": "Fund Approvals",
+   "route": "/accounts",
+   "page_title": "Fund Disbursement Dashboard",
    "roles": [
-    "ADMIN",
-    "CD",
-    "PL"
+    "ACCOUNTANT",
+    "ADMIN"
    ],
-   "page_purpose": "PL Fund Approval \u2014 team-scoped fund plans derived from supervised CCEOs' scheduled activities. HTMX re-renders the root on filter/select/action.",
-   "primary_action": "Approve All Valid",
+   "page_purpose": "Main Accountant Dashboard / Finance Command Center.",
+   "primary_action": "Finance Dashboard",
+   "previous_presentation": "independent KPI tile grid",
+   "new_prominent_kpi_limit": 6,
+   "mobile_result": "At most six distinct headline metrics; the tray reflows without horizontal scrolling",
+   "accessibility_result": "Semantic list with accessible labels and no hidden overflow controls",
+   "recommendation": "retain",
+   "reason": "Dashboard or analytical headline metrics support a cross-record decision.",
+   "replacement_pattern": "primary KPI group",
+   "implementation_status": "completed"
+  },
+  {
+   "audit_id": "KPI-SURFACE-052",
+   "template": "templates/partials/finance/fund_workspace.html",
+   "line": 71,
+   "source_pattern": "shared-component",
+   "items_expression": "workspace.kpis",
+   "presentation": "executive",
+   "page_type": "operational",
+   "route": "/accounts",
+   "page_title": "Fund Disbursement Dashboard",
+   "roles": [
+    "ACCOUNTANT",
+    "ADMIN"
+   ],
+   "page_purpose": "Main Accountant Dashboard / Finance Command Center.",
+   "primary_action": "Finance Dashboard",
    "previous_presentation": "independent KPI tile grid",
    "new_prominent_kpi_limit": 6,
    "mobile_result": "At most six distinct headline metrics; the tray reflows without horizontal scrolling",
@@ -20991,6 +21191,48 @@
   },
   {
    "audit_id": "KPI-REG-304",
+   "kpi_id": "fund_requests_pl_approval_service_average_cost_per_school",
+   "metric_registry_id": "fund_requests_pl_approval_service_average_cost_per_school",
+   "page": "fund_approval_workspace",
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "Accountant",
+    "Admin"
+   ],
+   "metric_name": "Average Cost per School",
+   "definition": "The staff advance requested this week divided by the distinct schools those activities reach, produced by apps.fund_requests.pl_approval_service.get_pl_fund_approvals; the preserved server display expression is `_ugx(round(total_requested / schools_reached))`.",
+   "value_type": "money_ugx",
+   "period": "week",
+   "scope": "The role- and filter-scoped records in the Fund approval workspace",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "_ugx(round(total_requested / schools_reached))",
+   "denominator": null,
+   "date_basis": "not_time_bound",
+   "finance_stage": "requested",
+   "primary_home": "fund_approval_workspace",
+   "approved_contextual_pages": [],
+   "user_question": "How much of this week's requested funding does each planned school cost the team?",
+   "user_decision": "How much of this week's requested funding does each planned school cost the team?",
+   "user_action": "The existing service exposes no underlying-record route; retain only as contextual information.",
+   "drill_down": null,
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "Reconciled from apps/fund_requests/pl_approval_service.py:510; no browser arithmetic added.",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.fund_requests.pl_approval_service.get_pl_fund_approvals",
+   "source_location": "apps/fund_requests/pl_approval_service.py:510",
+   "source_models": [
+    "apps.activities.models.ActivityScheduleCostLine"
+   ],
+   "filter_behaviour": "partial"
+  },
+  {
+   "audit_id": "KPI-REG-305",
    "kpi_id": "fund_requests_pl_approval_service_awaiting_your_approval",
    "metric_registry_id": "fund_requests_pl_approval_service_awaiting_your_approval",
    "page": "fund_approval_workspace",
@@ -21032,7 +21274,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-305",
+   "audit_id": "KPI-REG-306",
    "kpi_id": "fund_requests_pl_approval_service_awaiting_cceo_send",
    "metric_registry_id": "fund_requests_pl_approval_service_awaiting_cceo_send",
    "page": "fund_approval_workspace",
@@ -21074,7 +21316,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-306",
+   "audit_id": "KPI-REG-307",
    "kpi_id": "fund_requests_pl_approval_service_approved_this_week",
    "metric_registry_id": "fund_requests_pl_approval_service_approved_this_week",
    "page": "fund_approval_workspace",
@@ -21116,7 +21358,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-307",
+   "audit_id": "KPI-REG-308",
    "kpi_id": "fund_requests_pl_approval_service_returned_for_review",
    "metric_registry_id": "fund_requests_pl_approval_service_returned_for_review",
    "page": "fund_approval_workspace",
@@ -21158,7 +21400,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-308",
+   "audit_id": "KPI-REG-309",
    "kpi_id": "monthly_work_plan_country_budget_service_general_budget_total",
    "metric_registry_id": "monthly_work_plan_country_budget_service_general_budget_total",
    "page": "country_budget_workspace",
@@ -21199,7 +21441,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-309",
+   "audit_id": "KPI-REG-310",
    "kpi_id": "monthly_work_plan_country_budget_service_staff_visits_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_staff_visits_cost",
    "page": "country_budget_workspace",
@@ -21240,7 +21482,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-310",
+   "audit_id": "KPI-REG-311",
    "kpi_id": "monthly_work_plan_country_budget_service_partner_visits_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_partner_visits_cost",
    "page": "country_budget_workspace",
@@ -21281,7 +21523,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-311",
+   "audit_id": "KPI-REG-312",
    "kpi_id": "monthly_work_plan_country_budget_service_ssa_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_ssa_cost",
    "page": "country_budget_workspace",
@@ -21322,7 +21564,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-312",
+   "audit_id": "KPI-REG-313",
    "kpi_id": "monthly_work_plan_country_budget_service_cluster_training_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_cluster_training_cost",
    "page": "country_budget_workspace",
@@ -21363,7 +21605,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-313",
+   "audit_id": "KPI-REG-314",
    "kpi_id": "monthly_work_plan_country_budget_service_special_project_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_special_project_cost",
    "page": "country_budget_workspace",
@@ -21404,7 +21646,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-314",
+   "audit_id": "KPI-REG-315",
    "kpi_id": "monthly_work_plan_country_budget_service_admin_budget",
    "metric_registry_id": "monthly_work_plan_country_budget_service_admin_budget",
    "page": "country_budget_workspace",
@@ -21445,7 +21687,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-315",
+   "audit_id": "KPI-REG-316",
    "kpi_id": "monthly_work_plan_country_budget_service_staff_included",
    "metric_registry_id": "monthly_work_plan_country_budget_service_staff_included",
    "page": "country_budget_workspace",
@@ -21486,7 +21728,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-316",
+   "audit_id": "KPI-REG-317",
    "kpi_id": "monthly_work_plan_country_budget_service_total_planned_activities",
    "metric_registry_id": "monthly_work_plan_country_budget_service_total_planned_activities",
    "page": "country_budget_workspace",
@@ -21527,7 +21769,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-317",
+   "audit_id": "KPI-REG-318",
    "kpi_id": "monthly_work_plan_country_budget_service_planned_schools",
    "metric_registry_id": "monthly_work_plan_country_budget_service_planned_schools",
    "page": "country_budget_workspace",
@@ -21568,7 +21810,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-318",
+   "audit_id": "KPI-REG-319",
    "kpi_id": "monthly_work_plan_country_budget_service_partner_planned_schools",
    "metric_registry_id": "monthly_work_plan_country_budget_service_partner_planned_schools",
    "page": "country_budget_workspace",
@@ -21609,7 +21851,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-319",
+   "audit_id": "KPI-REG-320",
    "kpi_id": "monthly_work_plan_country_budget_service_cluster_meetings_sessions",
    "metric_registry_id": "monthly_work_plan_country_budget_service_cluster_meetings_sessions",
    "page": "country_budget_workspace",
@@ -21650,7 +21892,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-320",
+   "audit_id": "KPI-REG-321",
    "kpi_id": "monthly_work_plan_country_budget_service_trainings_planned",
    "metric_registry_id": "monthly_work_plan_country_budget_service_trainings_planned",
    "page": "country_budget_workspace",
@@ -21691,7 +21933,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-321",
+   "audit_id": "KPI-REG-322",
    "kpi_id": "monthly_work_plan_country_budget_service_ssa_collection_visits",
    "metric_registry_id": "monthly_work_plan_country_budget_service_ssa_collection_visits",
    "page": "country_budget_workspace",
@@ -21732,7 +21974,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-322",
+   "audit_id": "KPI-REG-323",
    "kpi_id": "monthly_work_plan_country_budget_service_special_project_activities",
    "metric_registry_id": "monthly_work_plan_country_budget_service_special_project_activities",
    "page": "country_budget_workspace",
@@ -21773,7 +22015,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-323",
+   "audit_id": "KPI-REG-324",
    "kpi_id": "monthly_work_plan_country_budget_service_admin_plan_items",
    "metric_registry_id": "monthly_work_plan_country_budget_service_admin_plan_items",
    "page": "country_budget_workspace",
@@ -21814,7 +22056,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-324",
+   "audit_id": "KPI-REG-325",
    "kpi_id": "monthly_work_plan_country_budget_service_highest_planned_cost_staff",
    "metric_registry_id": "monthly_work_plan_country_budget_service_highest_planned_cost_staff",
    "page": "country_budget_workspace",
@@ -21855,7 +22097,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-325",
+   "audit_id": "KPI-REG-326",
    "kpi_id": "monthly_work_plan_country_budget_service_largest_cluster_training_budget",
    "metric_registry_id": "monthly_work_plan_country_budget_service_largest_cluster_training_budget",
    "page": "country_budget_workspace",
@@ -21896,7 +22138,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-326",
+   "audit_id": "KPI-REG-327",
    "kpi_id": "monthly_work_plan_country_budget_service_partner_cost_share",
    "metric_registry_id": "monthly_work_plan_country_budget_service_partner_cost_share",
    "page": "country_budget_workspace",
@@ -21937,7 +22179,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-327",
+   "audit_id": "KPI-REG-328",
    "kpi_id": "monthly_work_plan_country_budget_service_top_cost_category",
    "metric_registry_id": "monthly_work_plan_country_budget_service_top_cost_category",
    "page": "country_budget_workspace",
@@ -21978,7 +22220,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-328",
+   "audit_id": "KPI-REG-329",
    "kpi_id": "monthly_work_plan_country_budget_service_admin_budget_share",
    "metric_registry_id": "monthly_work_plan_country_budget_service_admin_budget_share",
    "page": "country_budget_workspace",
@@ -22019,7 +22261,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-329",
+   "audit_id": "KPI-REG-330",
    "kpi_id": "monthly_work_plan_country_budget_service_average_allocation_per_staff",
    "metric_registry_id": "monthly_work_plan_country_budget_service_average_allocation_per_staff",
    "page": "country_budget_workspace",
@@ -22060,7 +22302,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-330",
+   "audit_id": "KPI-REG-331",
    "kpi_id": "planning_planning_service_ready_for_support",
    "metric_registry_id": "planning_planning_service_ready_for_support",
    "page": "annual_planning_workspace",
@@ -22106,7 +22348,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-331",
+   "audit_id": "KPI-REG-332",
    "kpi_id": "planning_planning_service_ssa_required",
    "metric_registry_id": "planning_planning_service_ssa_required",
    "page": "annual_planning_workspace",
@@ -22152,7 +22394,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-332",
+   "audit_id": "KPI-REG-333",
    "kpi_id": "planning_planning_service_clusters_needing_action",
    "metric_registry_id": "planning_planning_service_clusters_needing_action",
    "page": "annual_planning_workspace",
@@ -22198,7 +22440,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-333",
+   "audit_id": "KPI-REG-334",
    "kpi_id": "planning_planning_service_core_package_gaps",
    "metric_registry_id": "planning_planning_service_core_package_gaps",
    "page": "annual_planning_workspace",
@@ -22244,7 +22486,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-334",
+   "audit_id": "KPI-REG-335",
    "kpi_id": "planning_planning_service_partner_pending_schedule",
    "metric_registry_id": "planning_planning_service_partner_pending_schedule",
    "page": "annual_planning_workspace",
@@ -22290,7 +22532,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-335",
+   "audit_id": "KPI-REG-336",
    "kpi_id": "planning_planning_service_in_my_plan",
    "metric_registry_id": "planning_planning_service_in_my_plan",
    "page": "annual_planning_workspace",
@@ -22336,7 +22578,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-336",
+   "audit_id": "KPI-REG-337",
    "kpi_id": "planning_planning_service_cost_blocked",
    "metric_registry_id": "planning_planning_service_cost_blocked",
    "page": "annual_planning_workspace",
@@ -22382,7 +22624,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-337",
+   "audit_id": "KPI-REG-338",
    "kpi_id": "planning_planning_service_data_cleanup_required",
    "metric_registry_id": "planning_planning_service_data_cleanup_required",
    "page": "annual_planning_workspace",
@@ -22428,7 +22670,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-338",
+   "audit_id": "KPI-REG-339",
    "kpi_id": "professional_development_hr_dashboard_service_total_annual_pd_allocation",
    "metric_registry_id": "professional_development_hr_dashboard_service_total_annual_pd_allocation",
    "page": "hr_learning_dashboard",
@@ -22475,7 +22717,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-339",
+   "audit_id": "KPI-REG-340",
    "kpi_id": "professional_development_hr_dashboard_service_funds_committed",
    "metric_registry_id": "professional_development_hr_dashboard_service_funds_committed",
    "page": "hr_learning_dashboard",
@@ -22522,7 +22764,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-340",
+   "audit_id": "KPI-REG-341",
    "kpi_id": "professional_development_hr_dashboard_service_funds_accounted_for",
    "metric_registry_id": "professional_development_hr_dashboard_service_funds_accounted_for",
    "page": "hr_learning_dashboard",
@@ -22569,7 +22811,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-341",
+   "audit_id": "KPI-REG-342",
    "kpi_id": "professional_development_hr_dashboard_service_staff_enrolled",
    "metric_registry_id": "professional_development_hr_dashboard_service_staff_enrolled",
    "page": "hr_learning_dashboard",
@@ -22616,7 +22858,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-342",
+   "audit_id": "KPI-REG-343",
    "kpi_id": "professional_development_hr_dashboard_service_courses_in_progress",
    "metric_registry_id": "professional_development_hr_dashboard_service_courses_in_progress",
    "page": "hr_learning_dashboard",
@@ -22663,7 +22905,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-343",
+   "audit_id": "KPI-REG-344",
    "kpi_id": "professional_development_hr_dashboard_service_pending_certificate_uploads",
    "metric_registry_id": "professional_development_hr_dashboard_service_pending_certificate_uploads",
    "page": "hr_learning_dashboard",
@@ -22710,7 +22952,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-344",
+   "audit_id": "KPI-REG-345",
    "kpi_id": "professional_development_hr_dashboard_service_pending_accountability",
    "metric_registry_id": "professional_development_hr_dashboard_service_pending_accountability",
    "page": "hr_learning_dashboard",
@@ -22757,7 +22999,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-345",
+   "audit_id": "KPI-REG-346",
    "kpi_id": "professional_development_hr_dashboard_service_hr_sign_off_pending",
    "metric_registry_id": "professional_development_hr_dashboard_service_hr_sign_off_pending",
    "page": "hr_learning_dashboard",
@@ -22804,7 +23046,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-346",
+   "audit_id": "KPI-REG-347",
    "kpi_id": "professional_development_services_annual_pd_allocation",
    "metric_registry_id": "professional_development_services_annual_pd_allocation",
    "page": "learning_workspace",
@@ -22849,7 +23091,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-347",
+   "audit_id": "KPI-REG-348",
    "kpi_id": "professional_development_services_committed_amount",
    "metric_registry_id": "professional_development_services_committed_amount",
    "page": "learning_workspace",
@@ -22894,7 +23136,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-348",
+   "audit_id": "KPI-REG-349",
    "kpi_id": "professional_development_services_funds_used_accounted",
    "metric_registry_id": "professional_development_services_funds_used_accounted",
    "page": "learning_workspace",
@@ -22939,7 +23181,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-349",
+   "audit_id": "KPI-REG-350",
    "kpi_id": "professional_development_services_remaining_fund",
    "metric_registry_id": "professional_development_services_remaining_fund",
    "page": "learning_workspace",
@@ -22984,7 +23226,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-350",
+   "audit_id": "KPI-REG-351",
    "kpi_id": "professional_development_services_active_courses",
    "metric_registry_id": "professional_development_services_active_courses",
    "page": "learning_workspace",
@@ -23029,7 +23271,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-351",
+   "audit_id": "KPI-REG-352",
    "kpi_id": "professional_development_services_certificates_pending",
    "metric_registry_id": "professional_development_services_certificates_pending",
    "page": "learning_workspace",
@@ -23074,7 +23316,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-352",
+   "audit_id": "KPI-REG-353",
    "kpi_id": "professional_development_services_accountability_pending",
    "metric_registry_id": "professional_development_services_accountability_pending",
    "page": "learning_workspace",
@@ -23119,7 +23361,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-353",
+   "audit_id": "KPI-REG-354",
    "kpi_id": "professional_development_services_completed_courses",
    "metric_registry_id": "professional_development_services_completed_courses",
    "page": "learning_workspace",
@@ -23164,7 +23406,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-354",
+   "audit_id": "KPI-REG-355",
    "kpi_id": "projects_dashboard_service_total_projects",
    "metric_registry_id": "projects_dashboard_service_total_projects",
    "page": "projects_dashboard",
@@ -23210,7 +23452,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-355",
+   "audit_id": "KPI-REG-356",
    "kpi_id": "projects_dashboard_service_active_projects",
    "metric_registry_id": "projects_dashboard_service_active_projects",
    "page": "projects_dashboard",
@@ -23256,7 +23498,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-356",
+   "audit_id": "KPI-REG-357",
    "kpi_id": "projects_dashboard_service_project_schools",
    "metric_registry_id": "projects_dashboard_service_project_schools",
    "page": "projects_dashboard",
@@ -23302,7 +23544,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-357",
+   "audit_id": "KPI-REG-358",
    "kpi_id": "projects_dashboard_service_teachers_trained",
    "metric_registry_id": "projects_dashboard_service_teachers_trained",
    "page": "projects_dashboard",
@@ -23348,7 +23590,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-358",
+   "audit_id": "KPI-REG-359",
    "kpi_id": "projects_dashboard_service_leaders_trained",
    "metric_registry_id": "projects_dashboard_service_leaders_trained",
    "page": "projects_dashboard",
@@ -23394,7 +23636,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-359",
+   "audit_id": "KPI-REG-360",
    "kpi_id": "projects_dashboard_service_learners_reached",
    "metric_registry_id": "projects_dashboard_service_learners_reached",
    "page": "projects_dashboard",
@@ -23440,7 +23682,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-360",
+   "audit_id": "KPI-REG-361",
    "kpi_id": "projects_dashboard_service_assigned_partners",
    "metric_registry_id": "projects_dashboard_service_assigned_partners",
    "page": "projects_dashboard",
@@ -23486,7 +23728,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-361",
+   "audit_id": "KPI-REG-362",
    "kpi_id": "projects_dashboard_service_budget_generated",
    "metric_registry_id": "projects_dashboard_service_budget_generated",
    "page": "projects_dashboard",
@@ -23532,7 +23774,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-362",
+   "audit_id": "KPI-REG-363",
    "kpi_id": "projects_dashboard_service_activities_in_my_plan",
    "metric_registry_id": "projects_dashboard_service_activities_in_my_plan",
    "page": "projects_dashboard",
@@ -23578,7 +23820,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-363",
+   "audit_id": "KPI-REG-364",
    "kpi_id": "projects_dashboard_service_evidence_pending",
    "metric_registry_id": "projects_dashboard_service_evidence_pending",
    "page": "projects_dashboard",
@@ -23624,7 +23866,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-364",
+   "audit_id": "KPI-REG-365",
    "kpi_id": "projects_dashboard_service_ia_pending",
    "metric_registry_id": "projects_dashboard_service_ia_pending",
    "page": "projects_dashboard",
@@ -23670,7 +23912,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-365",
+   "audit_id": "KPI-REG-366",
    "kpi_id": "projects_dashboard_service_closed_activities",
    "metric_registry_id": "projects_dashboard_service_closed_activities",
    "page": "projects_dashboard",
@@ -23716,7 +23958,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-366",
+   "audit_id": "KPI-REG-367",
    "kpi_id": "projects_impact_service_total_projects",
    "metric_registry_id": "projects_impact_service_total_projects",
    "page": "project_impact_analytics",
@@ -23763,7 +24005,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-367",
+   "audit_id": "KPI-REG-368",
    "kpi_id": "projects_impact_service_schools_in_projects",
    "metric_registry_id": "projects_impact_service_schools_in_projects",
    "page": "project_impact_analytics",
@@ -23810,7 +24052,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-368",
+   "audit_id": "KPI-REG-369",
    "kpi_id": "projects_impact_service_great_impact",
    "metric_registry_id": "projects_impact_service_great_impact",
    "page": "project_impact_analytics",
@@ -23857,7 +24099,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-369",
+   "audit_id": "KPI-REG-370",
    "kpi_id": "projects_impact_service_negative_impact",
    "metric_registry_id": "projects_impact_service_negative_impact",
    "page": "project_impact_analytics",
@@ -23904,7 +24146,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-370",
+   "audit_id": "KPI-REG-371",
    "kpi_id": "projects_impact_service_teachers_impacted",
    "metric_registry_id": "projects_impact_service_teachers_impacted",
    "page": "project_impact_analytics",
@@ -23951,7 +24193,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-371",
+   "audit_id": "KPI-REG-372",
    "kpi_id": "projects_impact_service_school_leaders_impacted",
    "metric_registry_id": "projects_impact_service_school_leaders_impacted",
    "page": "project_impact_analytics",
@@ -23998,7 +24240,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-372",
+   "audit_id": "KPI-REG-373",
    "kpi_id": "projects_impact_service_students_reached",
    "metric_registry_id": "projects_impact_service_students_reached",
    "page": "project_impact_analytics",
@@ -24045,7 +24287,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-373",
+   "audit_id": "KPI-REG-374",
    "kpi_id": "projects_impact_service_avg_annual_ssa_delta",
    "metric_registry_id": "projects_impact_service_avg_annual_ssa_delta",
    "page": "project_impact_analytics",
@@ -24092,7 +24334,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-374",
+   "audit_id": "KPI-REG-375",
    "kpi_id": "projects_impact_service_delivery_adoption",
    "metric_registry_id": "projects_impact_service_delivery_adoption",
    "page": "project_impact_analytics",
@@ -24139,7 +24381,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-375",
+   "audit_id": "KPI-REG-376",
    "kpi_id": "projects_impact_service_evidence_completion",
    "metric_registry_id": "projects_impact_service_evidence_completion",
    "page": "project_impact_analytics",
@@ -24186,7 +24428,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-376",
+   "audit_id": "KPI-REG-377",
    "kpi_id": "projects_my_plan_service_planned_this_week",
    "metric_registry_id": "projects_my_plan_service_planned_this_week",
    "page": "special_project_personal_plan",
@@ -24232,7 +24474,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-377",
+   "audit_id": "KPI-REG-378",
    "kpi_id": "projects_my_plan_service_planned_this_month",
    "metric_registry_id": "projects_my_plan_service_planned_this_month",
    "page": "special_project_personal_plan",
@@ -24278,7 +24520,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-378",
+   "audit_id": "KPI-REG-379",
    "kpi_id": "projects_my_plan_service_planned_this_quarter",
    "metric_registry_id": "projects_my_plan_service_planned_this_quarter",
    "page": "special_project_personal_plan",
@@ -24324,7 +24566,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-379",
+   "audit_id": "KPI-REG-380",
    "kpi_id": "projects_my_plan_service_planned_this_fy",
    "metric_registry_id": "projects_my_plan_service_planned_this_fy",
    "page": "special_project_personal_plan",
@@ -24370,7 +24612,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-380",
+   "audit_id": "KPI-REG-381",
    "kpi_id": "projects_my_plan_service_school_visits_scheduled",
    "metric_registry_id": "projects_my_plan_service_school_visits_scheduled",
    "page": "special_project_personal_plan",
@@ -24416,7 +24658,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-381",
+   "audit_id": "KPI-REG-382",
    "kpi_id": "projects_my_plan_service_partner_activities",
    "metric_registry_id": "projects_my_plan_service_partner_activities",
    "page": "special_project_personal_plan",
@@ -24462,7 +24704,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-382",
+   "audit_id": "KPI-REG-383",
    "kpi_id": "projects_my_plan_service_project_trainings",
    "metric_registry_id": "projects_my_plan_service_project_trainings",
    "page": "special_project_personal_plan",
@@ -24508,7 +24750,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-383",
+   "audit_id": "KPI-REG-384",
    "kpi_id": "projects_my_plan_service_completion_readiness",
    "metric_registry_id": "projects_my_plan_service_completion_readiness",
    "page": "special_project_personal_plan",
@@ -24554,7 +24796,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-384",
+   "audit_id": "KPI-REG-385",
    "kpi_id": "projects_my_plan_service_budget_created",
    "metric_registry_id": "projects_my_plan_service_budget_created",
    "page": "special_project_personal_plan",
@@ -24600,7 +24842,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-385",
+   "audit_id": "KPI-REG-386",
    "kpi_id": "projects_my_plan_service_fund_request_synced",
    "metric_registry_id": "projects_my_plan_service_fund_request_synced",
    "page": "special_project_personal_plan",
@@ -24646,7 +24888,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-386",
+   "audit_id": "KPI-REG-387",
    "kpi_id": "projects_my_plan_service_evidence_pending",
    "metric_registry_id": "projects_my_plan_service_evidence_pending",
    "page": "special_project_personal_plan",
@@ -24692,7 +24934,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-387",
+   "audit_id": "KPI-REG-388",
    "kpi_id": "projects_my_plan_service_ia_review_pending",
    "metric_registry_id": "projects_my_plan_service_ia_review_pending",
    "page": "special_project_personal_plan",
@@ -24738,7 +24980,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-388",
+   "audit_id": "KPI-REG-389",
    "kpi_id": "projects_planning_service_total_project_schools",
    "metric_registry_id": "projects_planning_service_total_project_schools",
    "page": "special_project_planning",
@@ -24787,7 +25029,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-389",
+   "audit_id": "KPI-REG-390",
    "kpi_id": "projects_planning_service_ssa_score_required",
    "metric_registry_id": "projects_planning_service_ssa_score_required",
    "page": "special_project_planning",
@@ -24836,7 +25078,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-390",
+   "audit_id": "KPI-REG-391",
    "kpi_id": "projects_planning_service_scheduled_this_week",
    "metric_registry_id": "projects_planning_service_scheduled_this_week",
    "page": "special_project_planning",
@@ -24885,7 +25127,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-391",
+   "audit_id": "KPI-REG-392",
    "kpi_id": "projects_planning_service_planning_completion",
    "metric_registry_id": "projects_planning_service_planning_completion",
    "page": "special_project_planning",
@@ -24934,7 +25176,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-392",
+   "audit_id": "KPI-REG-393",
    "kpi_id": "projects_planning_service_high_risk_project_schools",
    "metric_registry_id": "projects_planning_service_high_risk_project_schools",
    "page": "special_project_planning",
@@ -24983,7 +25225,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-393",
+   "audit_id": "KPI-REG-394",
    "kpi_id": "projects_planning_service_schools_requiring_follow_up",
    "metric_registry_id": "projects_planning_service_schools_requiring_follow_up",
    "page": "special_project_planning",
@@ -25032,7 +25274,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-394",
+   "audit_id": "KPI-REG-395",
    "kpi_id": "projects_planning_service_ssa_required",
    "metric_registry_id": "projects_planning_service_ssa_required",
    "page": "special_project_planning",
@@ -25081,7 +25323,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-395",
+   "audit_id": "KPI-REG-396",
    "kpi_id": "projects_planning_service_ready_for_scheduling",
    "metric_registry_id": "projects_planning_service_ready_for_scheduling",
    "page": "special_project_planning",
@@ -25130,7 +25372,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-396",
+   "audit_id": "KPI-REG-397",
    "kpi_id": "projects_planning_service_ready_for_partner_assignment",
    "metric_registry_id": "projects_planning_service_ready_for_partner_assignment",
    "page": "special_project_planning",
@@ -25179,7 +25421,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-397",
+   "audit_id": "KPI-REG-398",
    "kpi_id": "projects_planning_service_visit_pending",
    "metric_registry_id": "projects_planning_service_visit_pending",
    "page": "special_project_planning",
@@ -25228,7 +25470,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-398",
+   "audit_id": "KPI-REG-399",
    "kpi_id": "projects_planning_service_training_pending",
    "metric_registry_id": "projects_planning_service_training_pending",
    "page": "special_project_planning",
@@ -25277,7 +25519,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-399",
+   "audit_id": "KPI-REG-400",
    "kpi_id": "projects_planning_service_partner_assignment_pending",
    "metric_registry_id": "projects_planning_service_partner_assignment_pending",
    "page": "special_project_planning",
@@ -25326,7 +25568,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-400",
+   "audit_id": "KPI-REG-401",
    "kpi_id": "projects_planning_service_high_risk_schools",
    "metric_registry_id": "projects_planning_service_high_risk_schools",
    "page": "special_project_planning",
@@ -25375,7 +25617,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-401",
+   "audit_id": "KPI-REG-402",
    "kpi_id": "targets_team_targets_high_risk_staff",
    "metric_registry_id": "targets_team_targets_high_risk_staff",
    "page": "team_targets_workspace",
@@ -25421,7 +25663,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-402",
+   "audit_id": "KPI-REG-403",
    "kpi_id": "targets_team_targets_activity_sf_id_compliance",
    "metric_registry_id": "targets_team_targets_activity_sf_id_compliance",
    "page": "team_targets_workspace",
@@ -25467,7 +25709,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-403",
+   "audit_id": "KPI-REG-404",
    "kpi_id": "targets_team_targets_awaiting_ia",
    "metric_registry_id": "targets_team_targets_awaiting_ia",
    "page": "team_targets_workspace",
@@ -25513,7 +25755,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-404",
+   "audit_id": "KPI-REG-405",
    "kpi_id": "targets_team_targets_missing_sf_ids",
    "metric_registry_id": "targets_team_targets_missing_sf_ids",
    "page": "team_targets_workspace",
@@ -25559,7 +25801,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-405",
+   "audit_id": "KPI-REG-406",
    "kpi_id": "targets_team_targets_returned_by_ia",
    "metric_registry_id": "targets_team_targets_returned_by_ia",
    "page": "team_targets_workspace",
@@ -25605,7 +25847,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-406",
+   "audit_id": "KPI-REG-407",
    "kpi_id": "targets_team_targets_team_achievement",
    "metric_registry_id": "targets_team_targets_team_achievement",
    "page": "team_targets_workspace",
@@ -25651,7 +25893,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-407",
+   "audit_id": "KPI-REG-408",
    "kpi_id": "targets_team_targets_monthly_on_track",
    "metric_registry_id": "targets_team_targets_monthly_on_track",
    "page": "team_targets_workspace",
@@ -25697,7 +25939,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-408",
+   "audit_id": "KPI-REG-409",
    "kpi_id": "targets_team_targets_at_risk_staff",
    "metric_registry_id": "targets_team_targets_at_risk_staff",
    "page": "team_targets_workspace",
@@ -25743,7 +25985,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-409",
+   "audit_id": "KPI-REG-410",
    "kpi_id": "targets_team_targets_current_quarter",
    "metric_registry_id": "targets_team_targets_current_quarter",
    "page": "team_targets_workspace",
@@ -25789,7 +26031,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-410",
+   "audit_id": "KPI-REG-411",
    "kpi_id": "targets_team_targets_fy_achievement",
    "metric_registry_id": "targets_team_targets_fy_achievement",
    "page": "team_targets_workspace",
@@ -25835,7 +26077,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-411",
+   "audit_id": "KPI-REG-412",
    "kpi_id": "targets_team_targets_recovery_plans",
    "metric_registry_id": "targets_team_targets_recovery_plans",
    "page": "team_targets_workspace",
@@ -26253,7 +26495,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2682,
+   "line": 2692,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -26275,7 +26517,7 @@
   {
    "audit_id": "KPI-PAYLOAD-015",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3147,
+   "line": 3157,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -26474,30 +26716,32 @@
   {
    "audit_id": "KPI-PAYLOAD-022",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 554,
+   "line": 572,
    "function": "get_pl_fund_approvals",
    "target": "kpis",
-   "source_item_count": 5,
+   "source_item_count": 6,
    "registered_metric_keys": [
     "fund_requests_pl_approval_service_requested_this_week",
     "fund_requests_pl_approval_service_awaiting_your_approval",
     "fund_requests_pl_approval_service_awaiting_cceo_send",
     "fund_requests_pl_approval_service_approved_this_week",
-    "fund_requests_pl_approval_service_returned_for_review"
+    "fund_requests_pl_approval_service_returned_for_review",
+    "fund_requests_pl_approval_service_average_cost_per_school"
    ],
    "professional_metric_keys": [
     "fund_requests_pl_approval_service_requested_this_week",
     "fund_requests_pl_approval_service_awaiting_your_approval",
     "fund_requests_pl_approval_service_awaiting_cceo_send",
     "fund_requests_pl_approval_service_approved_this_week",
-    "fund_requests_pl_approval_service_returned_for_review"
+    "fund_requests_pl_approval_service_returned_for_review",
+    "fund_requests_pl_approval_service_average_cost_per_school"
    ],
    "distinct_category_count": 2,
    "repeated_categories": [
     "pending_action",
     "scale"
    ],
-   "professional_headline_count": 5,
+   "professional_headline_count": 6,
    "requires_headline_consolidation": false
   },
   {

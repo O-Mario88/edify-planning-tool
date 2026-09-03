@@ -350,6 +350,26 @@ def accountant_dashboard_view(request):
             "url": "/disbursements" if all_funds else "/accounts/advances",
         },
     }
+    context["workspace"] = _accountant_workspace(
+        request,
+        all_funds,
+        wfrs_db,
+        fy,
+        kpis_raw={
+            "total_approved": total_approved_db,
+            "total_disbursed": total_disbursed_db,
+            "pending_disb_sum": pending_disb_sum,
+            "pending_disb_count": pending_disb_count,
+            "awaiting_sum": awaiting_sum,
+            "awaiting_count": awaiting_count,
+            "disbursed_count": disbursed_count,
+            "returned_sum": returned_sum,
+            "accounted_count": accounted_count,
+        },
+        month_overview=month_overview,
+        recon_stats=recon_stats,
+        recent_disbursements=recent_activity,
+    )
     context["topbar_search"] = {
         "placeholder": "Search funds, people, activities…",
         "name": "q",
@@ -358,6 +378,8 @@ def accountant_dashboard_view(request):
         "hx_target": "#accounts-root",
         "hx_trigger": "keyup changed delay:250ms, search",
     }
+    if request.headers.get("HX-Target") == "accounts-root":
+        return render(request, "partials/finance/accountant_root.html", context)
     return render(request, "pages/accounts/dashboard.html", context)
 
 
@@ -1095,3 +1117,307 @@ def partner_invoice_pay_action(request, invoice_id):
         except Exception as e:  # noqa: BLE001 — page-level error surface
             messages.error(request, f"Invoice payment failed: {e}")
     return redirect("/accounts/partner-payments/")
+
+
+def _accountant_workspace(
+    request,
+    all_funds,
+    wfrs_db,
+    fy,
+    *,
+    kpis_raw,
+    month_overview,
+    recon_stats,
+    recent_disbursements=(),
+):
+    """The Accountant's money movement page in the shared fund workspace
+    shape: weekly advances as the queue, the selected advance in the middle,
+    the month's position on the right, the FY budget mix and the latest
+    disbursement decisions underneath."""
+    from apps.fund_requests.fund_workspace import (
+        LINE_TYPE_LABELS,
+        approval_rate,
+        budget_mix,
+        progress_panel,
+        recent_activity,
+    )
+
+    # One vocabulary for a request's state, whichever desk reads it: the queue
+    # pill says what the Program Lead's page says for the same status.
+    from apps.fund_requests.pl_approval_service import WEEKLY_STATUS_LABELS
+
+    def _status(w):
+        label, tone = WEEKLY_STATUS_LABELS.get(
+            w.status if w else None, (None, "warning")
+        )
+        return label, tone
+
+    q = (request.GET.get("q") or "").strip().lower()
+    status_filter = (request.GET.get("status") or "").strip()
+    district_filter = (request.GET.get("district") or "").strip()
+    sort = (
+        request.GET.get("sort")
+        if request.GET.get("sort") in ("week", "amount", "name")
+        else "week"
+    )
+    funds = [
+        f
+        for f in all_funds
+        if (not status_filter or f["status"] == status_filter)
+        and (not district_filter or f["region"] == district_filter)
+        and (
+            not q
+            or q in f"{f['user_name']} {f['region']} {f['role']} {f['status']}".lower()
+        )
+    ]
+    if sort == "amount":
+        funds = sorted(funds, key=lambda f: -float(f["requested"] or 0))
+    elif sort == "name":
+        funds = sorted(funds, key=lambda f: f["user_name"].lower())
+    selected_id = request.GET.get("selected") or (funds[0]["id"] if funds else None)
+    wfr_by_id = {w.id: w for w in wfrs_db}
+    items = []
+    for f in funds:
+        w = wfr_by_id.get(f["id"])
+        line_types = {}
+        for line in w.lines.all() if w else []:
+            label = LINE_TYPE_LABELS.get(
+                line.line_item_type,
+                (line.line_item_type or "Line").replace("_", " ").title(),
+            )
+            line_types[label] = line_types.get(label, 0) + 1
+        chips = [
+            {"icon": "lines", "label": f"{n} {label}", "tone": "info"}
+            for label, n in sorted(line_types.items(), key=lambda kv: -kv[1])[:4]
+        ]
+        items.append(
+            {
+                "key": f["id"],
+                "name": f["user_name"],
+                "initials": "".join(
+                    part[0] for part in f["user_name"].split()[:2]
+                ).upper(),
+                "own_plan": False,
+                "district": f["region"],
+                "region": f["role"],
+                "summary": f"Week of {f['week_start']} · {len(f['lines'])} cost line{'' if len(f['lines']) == 1 else 's'}",
+                "total_fmt": format_ugx_compact(f["requested"]),
+                "status": _status(w)[0] or f["status"],
+                "status_tone": _status(w)[1],
+                "selected": f["id"] == selected_id,
+                "hx_get": f"/accounts?selected={f['id']}"
+                + (f"&status={status_filter}" if status_filter else "")
+                + (f"&q={q}" if q else ""),
+                "hx_target": "#accounts-root",
+                "hx_push": "true",
+                "chips": chips,
+            }
+        )
+
+    selected = None
+    sel = next((f for f in funds if f["id"] == selected_id), None)
+    if sel:
+        w = wfr_by_id.get(sel["id"])
+        selected = {
+            "id": sel["id"],
+            "name": sel["user_name"],
+            "plan_label": "Weekly Fund Plan",
+            "district": sel["region"],
+            "region": sel["role"],
+            "period": f"{sel['week_start']} – {sel['week_end']}",
+            "status": _status(w)[0] or sel["status"],
+            "status_tone": _status(w)[1],
+            "total_label": "Total Requested",
+            "total_fmt": format_ugx_compact(sel["requested"]),
+            "breakdown_title": "Funding Breakdown from the Weekly Request",
+            "breakdown": [
+                {
+                    "category": line["category"],
+                    "qty": line["quantity"] or "—",
+                    "unit_cost": f"{int(line['unit_cost']):,}"
+                    if line["unit_cost"]
+                    else "—",
+                    "total": f"{int(line['total']):,}",
+                }
+                for line in sel["lines"]
+            ],
+            "empty_breakdown": "No cost lines are attached to this request. Review its source plan before disbursement.",
+            "issues": [],
+            "notes": [],
+            "snapshot_title": "Request Snapshot",
+            "snapshot": [
+                {
+                    "icon": "lines",
+                    "name": "Requested",
+                    "figure": format_ugx_compact(sel["requested"]),
+                    "tone": "info",
+                },
+                {
+                    "icon": "lines",
+                    "name": "Approved",
+                    "figure": format_ugx_compact(sel["approved"]),
+                    "tone": "success",
+                },
+                {
+                    "icon": "lines",
+                    "name": "Disbursed",
+                    "figure": format_ugx_compact(sel["disbursed"]),
+                    "tone": "success",
+                },
+                {
+                    "icon": "lines",
+                    "name": "Remaining balance",
+                    "figure": format_ugx_compact(sel["balance"]),
+                    "tone": "warning",
+                },
+            ],
+            "schools": {
+                "name": "Approval chain",
+                "figure": "PL ✓ · CD "
+                + ("✓" if sel["cd_approved"] else "·")
+                + " · RVP "
+                + ("✓" if sel["rvp_approved"] else "·")
+                + " · Finance "
+                + ("✓" if sel["finance_completed"] else "·"),
+                "caption": "Payment sent"
+                if sel["disbursed_completed"]
+                else "Payment pending",
+            },
+        }
+
+    fy_ids = [w.id for w in wfrs_db]
+    disbursed_n = kpis_raw["disbursed_count"]
+    returned_n = len([w for w in wfrs_db if (w.status or "").startswith("returned")])
+    pending_n = kpis_raw["pending_disb_count"]
+    mix = {}
+    for w in wfrs_db:
+        for line in w.lines.all():
+            label = LINE_TYPE_LABELS.get(
+                line.line_item_type,
+                (line.line_item_type or "Other").replace("_", " ").title(),
+            )
+            mix[label] = mix.get(label, 0) + int(line.total_cost or 0)
+    rate = approval_rate(disbursed_n, returned_n, pending_n)
+    rate["title"] = "Disbursement Rate This FY"
+    rate["subline"] = "Disbursed"
+    side = {
+        "month": {
+            "title": "All Fund Types This Month",
+            "rows": [
+                {
+                    "name": "Waiting for Approval",
+                    "figure": month_overview["waiting_for_approval"],
+                    "tone": "warning",
+                },
+                {
+                    "name": "Returned",
+                    "figure": month_overview["returned"],
+                    "tone": "danger",
+                },
+                {
+                    "name": "Approved (Not Disbursed)",
+                    "figure": month_overview["approved_not_disbursed"],
+                    "tone": "warning",
+                },
+                {
+                    "name": "Disbursed",
+                    "figure": month_overview["disbursed"],
+                    "tone": "success",
+                },
+                {
+                    "name": "Reconciled",
+                    "figure": month_overview["reconciled"],
+                    "tone": "success",
+                },
+                {
+                    "name": "Awaiting receipts (proof)",
+                    "figure": f"{recon_stats['awaiting_receipts']} request{'' if recon_stats['awaiting_receipts'] == 1 else 's'}",
+                    "tone": "warning",
+                },
+            ],
+            "link": "/accounts/audit-log",
+            "link_label": "View all activity",
+        },
+        "progress": progress_panel(
+            f"FY {fy} Approved vs Disbursed",
+            kpis_raw["total_approved"],
+            kpis_raw["total_disbursed"],
+            status_label="On Track" if not pending_n else f"{pending_n} to disburse",
+            link="/disbursements",
+            link_label="Open the consolidated queue",
+            caption="Disbursed (to date)",
+        ),
+        "rate": rate,
+        "rules_title": "Finance & Disbursement Rules",
+        "rules": [
+            "Disbursements must match approved weekly staff plans exactly.",
+            "All disbursements require supporting cost catalogue settings.",
+            "Receipts must be submitted within 7 days of field activity.",
+            "Return unused funds within plan period limits.",
+            "Non-compliance triggers a hold on subsequent weekly fund requests.",
+        ],
+        "rules_link": "/help",
+    }
+    return {
+        "title": "Fund Disbursement Dashboard",
+        "tooltip": "Reconcile and disburse funds",
+        "description": "Weekly advances only: the money the Accountant moves. The figures cover every fund type.",
+        "export_url": None,
+        "primary_action": {
+            "label": "Create Disbursement",
+            "href": "/accounts/advances",
+        },
+        "filters_template": "partials/finance/accountant_filters.html",
+        "filters_id": "accounts-filters",
+        "kpis": None,  # the page builds the tiles in-template from `kpis`
+        "kpi_title": "Finance headline",
+        "empty": None,
+        "queue": {
+            "title": "Weekly Advance Queue",
+            "count": len(funds),
+            "items": items,
+            "selected_key": selected_id or "",
+            "sort": sort,
+            "sort_options": [
+                {"value": "week", "label": "Week"},
+                {"value": "amount", "label": "Amount"},
+                {"value": "name", "label": "Name"},
+            ],
+            "empty_title": "No fund requests match these filters",
+            "empty_text": "Clear the search or choose another workflow status.",
+        },
+        "sort_url": "/accounts",
+        "root_target": "#accounts-root",
+        "district_options": sorted(
+            {f["region"] for f in all_funds if f["region"] != "—"}
+        ),
+        "district_filter": district_filter,
+        "detail_id": "accounts-fund-detail",
+        "detail_template": "partials/finance/accountant_detail.html",
+        "selected": selected,
+        "status_options": sorted({f["status"] for f in all_funds}),
+        "status_filter": status_filter,
+        "q": q,
+        "side": side,
+        "insights": budget_mix(mix),
+        "insights_title": f"Budget Mix by Cost Line (FY {fy})",
+        "recent": recent_activity(
+            {
+                "weekly_fund_request.disburse": "disbursed",
+                "weekly_fund_request.return": "returned",
+                "weekly_fund_request.approve": "approved for disbursement",
+            },
+            subject_ids=fy_ids,
+        )
+        or [
+            {
+                "tone": "success",
+                "text": f"{row['name']} — {row['region']} disbursed",
+                "amount_fmt": row["amount"],
+                "when": row["when"],
+            }
+            for row in recent_disbursements
+        ],
+        "recent_title": "Recent Disbursement Activity",
+        "recent_link": "/accounts/audit-log",
+    }

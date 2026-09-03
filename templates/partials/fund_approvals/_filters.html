@@ -1,0 +1,48 @@
+{% comment %}Program Lead fund approval filters. Re-renders the workspace root on change.{% endcomment %}
+<input type="hidden" name="sort" value="{{ workspace.queue.sort }}" form="fa-filters">
+  <form id="fa-filters" hx-get="/fund-approvals" hx-target="#fund-approval-root" hx-swap="innerHTML" hx-trigger="change, search"
+        class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+      <select aria-label="Fiscal year" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Month</span>
+      <select aria-label="Month" name="month" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        <option value="1" {% if month == 1 %}selected{% endif %}>January</option>
+        <option value="2" {% if month == 2 %}selected{% endif %}>February</option>
+        <option value="3" {% if month == 3 %}selected{% endif %}>March</option>
+        <option value="4" {% if month == 4 %}selected{% endif %}>April</option>
+        <option value="5" {% if month == 5 %}selected{% endif %}>May</option>
+        <option value="6" {% if month == 6 %}selected{% endif %}>June</option>
+        <option value="7" {% if month == 7 %}selected{% endif %}>July</option>
+        <option value="8" {% if month == 8 %}selected{% endif %}>August</option>
+        <option value="9" {% if month == 9 %}selected{% endif %}>September</option>
+        <option value="10" {% if month == 10 %}selected{% endif %}>October</option>
+        <option value="11" {% if month == 11 %}selected{% endif %}>November</option>
+        <option value="12" {% if month == 12 %}selected{% endif %}>December</option>
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Week</span>
+      <select aria-label="Week" name="week" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        {% for w in weeks %}<option value="{{ w.val }}" {% if w.val == week %}selected{% endif %}>{{ w.label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Region</span>
+      <select aria-label="Region" name="region" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        <option value="">All Regions</option>
+        {% for opt in region_options %}<option value="{{ opt }}" {% if opt == region_filter %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</span>
+      <select aria-label="District" name="district" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+        <option value="">All Districts</option>
+        {% for opt in district_options %}<option value="{{ opt }}" {% if opt == district_filter %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+</form>

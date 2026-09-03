@@ -1,0 +1,97 @@
+{% comment %}
+The selected record of the fund workspace. Expects `selected` (name,
+plan_label, district, region, period, status, status_tone, total_label,
+total_fmt, issues, breakdown, subtotal_fmt, adjustment, snapshot, schools,
+notes) and `actions_template`, the page's own action row.
+{% endcomment %}
+{% if selected %}
+<div class="fund-detail__inner">
+  <div class="fund-detail__head">
+    <div class="min-w-0">
+      <h2 class="fund-detail__title">{{ selected.name }} — {{ selected.plan_label }}</h2>
+      <p class="fund-detail__place">{{ selected.district }} · {{ selected.region }}</p>
+    </div>
+    <div class="fund-detail__period">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M16 3v4M8 3v4M3 10h18"/></svg>
+      <span><small>Plan Period</small><strong>{{ selected.period }}</strong></span>
+    </div>
+    <div class="fund-detail__total">
+      {% include "components/badge.html" with tone=selected.status_tone label=selected.status size="md" %}
+      <small>{{ selected.total_label|default:"Total Requested" }}</small>
+      <strong>{{ selected.total_fmt }}</strong>
+    </div>
+  </div>
+
+  {% if selected.issues %}
+  <div class="rounded-surface bg-amber-50 border border-amber-200 p-3">
+    <p class="text-[12px] font-bold text-amber-800 mb-1">Needs Review — resolve before approving:</p>
+    <ul class="space-y-0.5">{% for i in selected.issues %}<li class="edify-text-caption font-semibold text-amber-700">• {{ i }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% for note in selected.notes %}
+  <p class="edify-text-caption font-semibold text-slate-500">{{ note }}</p>
+  {% endfor %}
+
+  <div class="fund-detail__body">
+    <div class="min-w-0">
+      <h3 class="fund-panel__title">{{ selected.breakdown_title|default:"Funding Breakdown from Planned Activities" }}</h3>
+      <div class="overflow-x-auto edify-table-scroll-region rounded-surface border border-slate-100 mt-2">
+        <table class="edify-record-table w-full text-left text-[12px] edify-mobile-table--scroll">
+          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 bg-slate-50/60">
+            <th class="px-3 py-2">Activity Category</th><th class="px-3 py-2 text-center">Planned Qty</th><th class="px-3 py-2 text-right">Unit Cost (UGX)</th><th class="px-3 py-2 text-right">Total (UGX)</th>
+          </tr></thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for b in selected.breakdown %}
+            <tr>
+              <td class="px-3 py-2 font-semibold text-slate-700">{{ b.category }}{% if b.note %} <span class="edify-text-caption font-medium text-slate-400">{{ b.note }}</span>{% endif %}</td>
+              <td class="px-3 py-2 text-slate-500 text-center tabular-nums">{{ b.qty|default:"—" }}</td>
+              <td class="px-3 py-2 text-slate-500 text-right tabular-nums">{{ b.unit_cost|default:"—" }}</td>
+              <td class="px-3 py-2 font-bold text-slate-700 text-right tabular-nums">{{ b.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="px-3 py-6 text-center font-semibold text-slate-400">{{ selected.empty_breakdown|default:"No costed activities in this period." }}</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            {% if selected.subtotal_fmt %}
+            <tr class="border-t border-slate-100"><td class="px-3 py-2 font-bold text-slate-700" colspan="3">Subtotal</td><td class="px-3 py-2 font-bold text-slate-700 text-right tabular-nums">{{ selected.subtotal_fmt }}</td></tr>
+            {% endif %}
+            {% if selected.adjustment_fmt %}
+            <tr><td class="px-3 py-1.5 text-slate-500" colspan="3">{{ selected.adjustment_label }}</td><td class="px-3 py-1.5 text-rose-600 text-right tabular-nums font-semibold">{{ selected.adjustment_fmt }}</td></tr>
+            {% endif %}
+            <tr class="border-t border-slate-100 bg-slate-50/40">
+              <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700" colspan="3">{{ selected.total_label|default:"Total Requested" }}</td>
+              <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700 text-right tabular-nums">{{ selected.total_fmt }}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+
+    <aside class="fund-snapshot" aria-label="{{ selected.snapshot_title|default:'Plan Snapshot' }}">
+      <h3 class="fund-panel__title">{{ selected.snapshot_title|default:"Plan Snapshot" }}</h3>
+      <ul class="fund-snapshot__list">
+        {% for item in selected.snapshot %}
+        <li>
+          <span class="fund-snapshot__icon fund-snapshot__icon--{{ item.tone|default:'success' }}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{% include "partials/finance/_chip_icon.html" with name=item.icon %}</svg></span>
+          <span><small>{{ item.name }}</small><strong>{{ item.figure }}</strong>{% if item.caption %}<em>{{ item.caption }}</em>{% endif %}</span>
+        </li>
+        {% endfor %}
+      </ul>
+      {% if selected.schools %}
+      <div class="fund-snapshot__total">
+        <span class="fund-snapshot__icon fund-snapshot__icon--neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg></span>
+        <span><small>{{ selected.schools.name }}</small><strong>{{ selected.schools.figure }}</strong><em>{{ selected.schools.caption }}</em></span>
+      </div>
+      {% endif %}
+    </aside>
+  </div>
+
+  {% include actions_template %}
+</div>
+{% else %}
+<div class="py-16 text-center">
+  <p class="text-[14px] font-semibold text-slate-500">{{ empty_detail_title|default:"Select a request to review it" }}</p>
+  <p class="text-[12px] font-medium text-slate-400 mt-1">{{ empty_detail_text|default:"Each request is derived from scheduled, costed activities." }}</p>
+</div>
+{% endif %}

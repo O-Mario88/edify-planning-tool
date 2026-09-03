@@ -2503,7 +2503,17 @@ def pl_fund_approvals_view(request):
 
     filters = {
         k: request.GET.get(k)
-        for k in ("fy", "month", "week", "cceo", "status", "q")
+        for k in (
+            "fy",
+            "month",
+            "week",
+            "cceo",
+            "status",
+            "q",
+            "region",
+            "district",
+            "sort",
+        )
         if request.GET.get(k)
     }
     ctx = get_pl_fund_approvals(request.user, filters)

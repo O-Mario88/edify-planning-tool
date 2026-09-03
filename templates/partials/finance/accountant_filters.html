@@ -1,0 +1,22 @@
+{% comment %}Accountant queue filters: status and search. Re-render the workspace root on change.{% endcomment %}
+<form id="accounts-filters" hx-get="/accounts" hx-target="#accounts-root" hx-swap="innerHTML" hx-trigger="change, search" hx-push-url="true"
+      class="platform-filter-bar grid grid-cols-2 md:grid-cols-3 gap-2.5" role="group" aria-label="Fund queue filters">
+  <label class="block">
+    <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+    <span class="mt-1 flex h-9 items-center px-3 rounded-control border border-slate-200 bg-slate-50 text-[12px] font-semibold text-slate-600">FY {{ fy }} · Live workflow data</span>
+  </label>
+  <label class="block">
+    <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Status</span>
+    <select name="status" aria-label="Filter fund queue by status" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <option value="">All statuses</option>
+      {% for opt in workspace.status_options %}<option value="{{ opt }}" {% if opt == workspace.status_filter %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+    </select>
+  </label>
+  <label class="block">
+    <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</span>
+    <select name="district" aria-label="Filter fund queue by district" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <option value="">All Districts</option>
+      {% for opt in workspace.district_options %}<option value="{{ opt }}" {% if opt == workspace.district_filter %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+    </select>
+  </label>
+</form>
