@@ -14,7 +14,7 @@ from django.utils import timezone
 
 from apps.core.enums import DuplicateStatus, PlanningReadiness, SchoolType
 from apps.core.exceptions import BadRequest, NotFoundError
-from apps.core.scoping import resolve_user_scope, school_queryset
+from apps.core.scoping import resolve_user_scope, school_country_q, school_queryset
 from apps.geography.models import District, Region, SubCounty
 
 from .models import (
@@ -88,7 +88,9 @@ def _scoped_ids(scope):
     reopening a profile never widens who can see it.
     """
     if scope.country_scope:
-        return School.objects.values_list("id", flat=True)
+        return School.objects.filter(school_country_q(scope)).values_list(
+            "id", flat=True
+        )
     if scope.can_view_summary_only:
         return []
     return scope.school_ids or []

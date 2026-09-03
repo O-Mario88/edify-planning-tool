@@ -28,6 +28,8 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
     COUNTRY_SCHEDULING_ROLES,
     VISIT_REQUEST_ROLES,
+    activity_country_q,
+    country_bound,
     owner_ids,
     resolve_user_scope,
 )
@@ -322,6 +324,9 @@ def list_activities(query: dict, principal) -> list[Activity]:
             qs = qs.filter(_reduce(lambda a, b: a | b, conds))
         else:
             qs = qs.none()
+    else:
+        # Country reach stops at the country's border.
+        qs = qs.filter(activity_country_q(scope))
 
     if query.get("status"):
         qs = qs.filter(status=query["status"])
@@ -349,7 +354,11 @@ def _assert_in_scope(activity: Activity, principal) -> None:
     """Object-level scope check (mirrors assertInScope)."""
     scope = resolve_user_scope(principal)
     if scope.country_scope:
-        return
+        if not country_bound(scope) or (
+            Activity.objects.filter(activity_country_q(scope), id=activity.id).exists()
+        ):
+            return
+        raise Forbidden("Activity outside your country.")
     if scope.staff_ids and activity.responsible_staff_id in scope.staff_ids:
         return
     if getattr(activity, "monitored_by_staff_id", None) in owner_ids(principal):
@@ -4203,6 +4212,8 @@ def payment_queue(principal) -> list[dict]:
             qs = qs.filter(school_id__in=scope.school_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
     qs = qs.select_related("school")[:200]
     out = []
     for a in qs:

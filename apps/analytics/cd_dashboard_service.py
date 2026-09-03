@@ -32,6 +32,7 @@ from apps.analytics.cd_analytics_service import (
     _country_activities,
     _cycle_fys,
     _prime_target_series,
+    country_for,
     resolve_cd_scope,
 )
 from apps.analytics.pl_analytics_service import (
@@ -92,7 +93,7 @@ class CDDashboardService:
     @staticmethod
     def get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, month=month)
+        cd = resolve_cd_scope(fy, month=month, country=country_for(user))
         acts = _country_activities(cd)
         # The KPI strip's "Country Target Progress" and the PL performance
         # table's per-row target_pct both read the validated ledger — refresh
@@ -218,7 +219,7 @@ class CDDashboardService:
         prior_fy = str(int(fy) - 1) if str(fy).isdigit() else None
         prior = None
         if prior_fy:
-            prior_cd = resolve_cd_scope(prior_fy, month=cd.month)
+            prior_cd = resolve_cd_scope(prior_fy, month=cd.month, country=cd.country)
             prior = CDDashboardService._tile_numbers(
                 prior_cd, _country_activities(prior_cd), prior_fy, user
             )
@@ -483,7 +484,7 @@ class CDDashboardService:
         from apps.core.fy import get_month_date_range
 
         base = CDAnalyticsService.performance_vs_target(cd)  # labels + pct line
-        full = _country_activities(resolve_cd_scope(cd.fy))
+        full = _country_activities(resolve_cd_scope(cd.fy, country=cd.country))
         # One grouped pass instead of 36 per-month counts. Exactly equivalent
         # to the per-month loop it replaces: get_month_date_range() yields
         # contiguous first-of-month boundaries (verified: m and m+1 share an
@@ -524,7 +525,9 @@ class CDDashboardService:
             _, p_end = get_month_date_range(prior_fy, 12)
             prior_buckets = {
                 row["month_bucket"]: row
-                for row in _country_activities(resolve_cd_scope(prior_fy))
+                for row in _country_activities(
+                    resolve_cd_scope(prior_fy, country=cd.country)
+                )
                 .filter(planned_date__gte=p_start.date(), planned_date__lt=p_end.date())
                 .annotate(month_bucket=TruncMonth("planned_date"))
                 .values("month_bucket")

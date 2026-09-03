@@ -60,6 +60,8 @@ class CDScope:
     quarter: str | None = None
     month: int | None = None
     filters: dict = field(default_factory=dict)
+    # The country this scope is bounded to; "" is the whole deployment.
+    country: str = ""
 
     @property
     def target_period(self):
@@ -118,11 +120,26 @@ def _initials(name):
     return "".join(p[0].upper() for p in (name or "").split() if p)[:2] or "—"
 
 
-def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
+def country_for(user) -> str:
+    """The country a principal's oversight is bounded to ("" = deployment)."""
+    if user is None or not getattr(user, "active_role", None):
+        return ""
+    try:
+        from apps.core.scoping import resolve_user_scope
+
+        return resolve_user_scope(user).country
+    except Exception:  # noqa: BLE001 - a bare principal in a unit test
+        return ""
+
+
+def resolve_cd_scope(fy, quarter=None, month=None, filters=None, country="") -> CDScope:
     """Country-wide scope, narrowed by the CD filters (pl / cceo / district /
-    cluster / school_type)."""
+    cluster / school_type). ``country`` bounds it to one country's regions
+    and staff; empty keeps the whole deployment."""
     filters = filters or {}
     schools = School.objects.filter(deleted_at__isnull=True)
+    if country:
+        schools = schools.filter(region__country=country)
 
     # PL filter → that PL's supervised CCEOs' schools.
     pl_filter = (filters.get("pl") or "").strip()
@@ -159,6 +176,8 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
 
     # CCEO id sets (country-wide unless pl/cceo filtered).
     cceo_qs = User.objects.filter(roles__contains=["CCEO"], deleted_at__isnull=True)
+    if country:
+        cceo_qs = cceo_qs.filter(staff_profile__country=country)
     cceo_users = list(cceo_qs.values_list("id", flat=True))
     cceo_sps = list(
         StaffProfile.objects.filter(user__in=cceo_users).values_list("id", flat=True)
@@ -189,6 +208,7 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
         quarter=quarter or None,
         month=month or None,
         filters=filters,
+        country=country or "",
         school_ids=school_ids,
         # The same queryset that produced school_ids, left unevaluated.
         school_ref=schools.values("id"),
@@ -200,6 +220,19 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
 
 def _country_activities(cd: CDScope):
     qs = Activity.objects.filter(fy=cd.fy, deleted_at__isnull=True)
+    if cd.country:
+        qs = qs.filter(
+            Q(school__region__country=cd.country)
+            | Q(cluster__district__region__country=cd.country)
+            | (
+                Q(school__isnull=True, cluster__isnull=True)
+                & Q(
+                    responsible_staff_id__in=StaffProfile.objects.filter(
+                        country=cd.country
+                    ).values("id")
+                )
+            )
+        )
     # School-scope when a school-narrowing filter is active; else all activities.
     if (
         cd.filters.get("pl")
@@ -355,7 +388,7 @@ class CDAnalyticsService:
             if (filters.get("month") or "").strip().isdigit()
             else None
         )
-        cd = resolve_cd_scope(fy, quarter, month, filters)
+        cd = resolve_cd_scope(fy, quarter, month, filters, country=country_for(user))
         acts = _country_activities(cd)
         map_context = {}
         if include_regional_map:
@@ -2429,7 +2462,9 @@ class CDAnalyticsService:
     def export_rows(user, fy=None, quarter=None, month=None, filters=None):
         """PL-oversight roster for CSV export (read-only)."""
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, quarter, month, filters or {})
+        cd = resolve_cd_scope(
+            fy, quarter, month, filters or {}, country=country_for(user)
+        )
         acts = _country_activities(cd)
         _prime_target_series(cd)
         return CDAnalyticsService.pl_oversight(cd, acts)["rows"]
@@ -2441,7 +2476,9 @@ class CDAnalyticsService:
         live from state (no storage; auto-close when the state resolves). Every
         To-Do routes to an oversight workflow — never field execution."""
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, quarter, month, filters or {})
+        cd = resolve_cd_scope(
+            fy, quarter, month, filters or {}, country=country_for(user)
+        )
         acts = _country_activities(cd)
         # Prime the per-user target series once for the whole roster.
         #
@@ -2627,7 +2664,9 @@ class CDAnalyticsService:
         user, drill, params, fy=None, quarter=None, month=None, filters=None
     ):
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, quarter, month, filters or {})
+        cd = resolve_cd_scope(
+            fy, quarter, month, filters or {}, country=country_for(user)
+        )
         acts = _country_activities(cd)
         actions = CDAnalyticsService._OVERSIGHT_ACTIONS.get(
             drill,

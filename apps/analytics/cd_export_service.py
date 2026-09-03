@@ -39,12 +39,13 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
         CDAnalyticsService,
         _country_activities,
         _prime_target_series,
+        country_for,
         resolve_cd_scope,
     )
 
     fy = fy or get_operational_fy()
     dataset = normalise_dataset(dataset)
-    cd = resolve_cd_scope(fy, quarter, month, filters or {})
+    cd = resolve_cd_scope(fy, quarter, month, filters or {}, country=country_for(user))
     acts = _country_activities(cd)
 
     if dataset == "risk":

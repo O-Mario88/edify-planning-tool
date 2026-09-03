@@ -823,7 +823,11 @@ def cd_ssa_heatmap_view(request):
     looking at are never computed. The page ships with district rendered; the
     rest arrive when asked for.
     """
-    from apps.analytics.cd_analytics_service import CDAnalyticsService, resolve_cd_scope
+    from apps.analytics.cd_analytics_service import (
+        CDAnalyticsService,
+        country_for,
+        resolve_cd_scope,
+    )
 
     level = (request.GET.get("level") or "district").strip()
     # `get_dashboard` normalises this before resolving scope; calling
@@ -833,7 +837,9 @@ def cd_ssa_heatmap_view(request):
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
-    cd = resolve_cd_scope(fy, quarter=quarter, month=month)
+    cd = resolve_cd_scope(
+        fy, quarter=quarter, month=month, country=country_for(request.user)
+    )
     return render(
         request,
         "partials/analytics/cd/district_heatmap.html",

@@ -1308,7 +1308,10 @@ def coverage_view(request):
     requested_fy = (request.GET.get("fy") or "").strip()
     fy = requested_fy if requested_fy in fy_choices else get_operational_fy()
 
-    schools = active_schools()
+    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+
+    # The CD's country, not the deployment.
+    schools = scoped_school_queryset(resolve_user_scope(request.user), active_schools())
     total_schools = schools.count()
     visited_ids = set(
         Activity.objects.filter(

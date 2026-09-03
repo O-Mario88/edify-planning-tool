@@ -25,6 +25,10 @@ class Region(TimeStampedModel):
 
     id = CuidField()
     name = models.CharField(max_length=255, unique=True)
+    # The country a region belongs to. Schools carry no country of their own;
+    # they inherit it through region -> district, which is the boundary the
+    # country roles are scoped to (apps.core.scoping.school_country_q).
+    country = models.CharField(max_length=64, default="Uganda", db_index=True)
     code = models.CharField(max_length=64, null=True, blank=True, unique=True)
     pcode = models.CharField(max_length=64, null=True, blank=True, unique=True)
     source = models.CharField(max_length=255, null=True, blank=True)
