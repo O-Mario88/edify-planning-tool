@@ -114,11 +114,16 @@ class EscalationChannelTests(TestCase):
                 esc.id, {"decision": "approved", "decision_note": "self"}, self.cd
             )
 
-    def test_cd_sees_only_their_own_escalations(self):
+    def test_cd_sees_only_their_own_countrys_escalations(self):
+        # Owner, 2026-09-03: the board belongs to the country, not the raiser,
+        # so a second Uganda CD account sees it and a Kenya CD does not.
         self._raise()
         other_cd = _user("cd2-esc@t.org", "Cara", EdifyRole.COUNTRY_DIRECTOR.value)
-        StaffProfile.objects.create(user=other_cd, title="CD", country="Uganda")
+        StaffProfile.objects.create(user=other_cd, title="CD", country="Kenya")
+        same_country = _user("cd3-esc@t.org", "Cyril", EdifyRole.COUNTRY_DIRECTOR.value)
+        StaffProfile.objects.create(user=same_country, title="CD", country="Uganda")
         self.assertEqual(escalation_service.visible_to(other_cd).count(), 0)
+        self.assertEqual(escalation_service.visible_to(same_country).count(), 1)
         self.assertEqual(escalation_service.visible_to(self.cd).count(), 1)
         self.assertEqual(escalation_service.visible_to(self.rvp).count(), 1)
 

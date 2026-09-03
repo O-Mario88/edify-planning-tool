@@ -16,7 +16,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Partials and drawers: **173**
 - Permission-gated surfaces: **571**
 - Referenced by automated tests: **537**
-- Findings: critical **0**, high **2**, medium **0**, low **0**
+- Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
 
@@ -199,7 +199,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-1B92F939B0 | /core-schools/schedule-visit/action | Core Schedule Visit Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E1FE532B4B | /core-schools/strategy-playbook | Core Strategy Playbook Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B2C7B8534B | /cost-intelligence | Cost Intelligence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-AD648BAC50 | /cost-settings | Cost Catalogue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / remediation required | 1 | referenced by automated test |
+| UI-PAGE-AD648BAC50 | /cost-settings | Cost Catalogue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6B5ACDE957 | /cost-settings/initialize-default | Initialize Default Catalogue | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B40AF5ED77 | /cost-settings/row/<str:key> | Cost Setting Row | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-172950D3EF | /country-budget | Country Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -213,7 +213,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-D0BD7CD860 | /country-planning-oversight/export | Country Planning Oversight Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-15D0AB1EB0 | /country-planning-oversight/send | Country Planning Oversight Send | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F26256AF53 | /country-planning-oversight/team/<str:staff_id> | Country Planning Oversight Team | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-3C3DB87ABF | /coverage | Coverage · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / remediation required | 1 | referenced by automated test |
+| UI-PAGE-3C3DB87ABF | /coverage | Coverage · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6E4DAD286B | /cpd-learning | CPD & Learning | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-442BF26C2E | /cpd-learning/action | Pd Dashboard Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-86CEE7AF2C | /cpd-learning/adjust-allocation | Pd Dashboard Adjust Allocation | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

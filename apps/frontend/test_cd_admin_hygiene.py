@@ -1,7 +1,7 @@
 """Navigation and admin hygiene for the Country Director.
 
 The CD's mobile bar asked for a `country_budget` item nobody registered and
-silently dropped it; the Cost Catalogue was locked to the current year; the
+silently dropped it (the sidebar keeps the platform's one 'Budget' label); the Cost Catalogue was locked to the current year; the
 Users page listed every user in every country, unpaginated, and offered an
 Admin role the service refuses (owner, 2026-09-03).
 """
@@ -33,7 +33,7 @@ def _person(email, name, role, country="Uganda"):
 
 
 class CdNavigationHygieneTest(TestCase):
-    def test_the_cd_budget_entry_is_named_country_budget_and_reaches_the_phone(self):
+    def test_the_cd_budget_entry_reaches_the_phone(self):
         from apps.core.navigation import (
             build_mobile_nav_for_user,
             build_sidebar_for_user,
@@ -45,7 +45,7 @@ class CdNavigationHygieneTest(TestCase):
             for g in build_sidebar_for_user(cd, "/")
             for i in g["items"]
         }
-        self.assertEqual(labels.get("Country Budget"), "/budget")
+        self.assertEqual(labels.get("Budget"), "/budget")
         mobile = build_mobile_nav_for_user(cd, "/")
         self.assertIn("/budget", {i["url"] for i in mobile})
 
@@ -76,9 +76,7 @@ class UsersPageScopeTest(TestCase):
         response = self.client.get("/admin-panel/users")
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Usr Abroad")
-        self.assertEqual(
-            len(response.context["users_pager"]["rows"]), TABLE_PAGE_SIZE
-        )
+        self.assertEqual(len(response.context["users_pager"]["rows"]), TABLE_PAGE_SIZE)
         page_two = self.client.get("/admin-panel/users?page=2")
         self.assertEqual(page_two.status_code, 200)
         self.assertNotIn("Admin", response.context["available_roles"])

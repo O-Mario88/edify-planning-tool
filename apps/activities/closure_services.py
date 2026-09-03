@@ -284,6 +284,17 @@ def _assert_may_close(actor) -> None:
         actor = User.objects.filter(id=actor).first()
     if actor is None or not RolePermissionService.can_view_page(actor, "planning"):
         raise Forbidden("Your role cannot close an activity.")
+    # Since 2026-09-03 the Accountant and Impact Assessment reach Planning to
+    # request owner-approved school visits (apps.planning.visit_requests).
+    # That is a request door, not closure authority: they still verify and
+    # clear the money, and closure comes after both.
+    from apps.core.rbac import EdifyRole
+
+    if getattr(actor, "active_role", None) in (
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+    ):
+        raise Forbidden("Your role cannot close an activity.")
 
 
 class ActivityClosureService:

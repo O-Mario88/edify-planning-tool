@@ -1201,7 +1201,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 27,
+   "line": 29,
    "title": "Country operational cost",
    "heading_level": 2,
    "has_card_key": false,
@@ -1210,7 +1210,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 31,
+   "line": 33,
    "title": "Minimum viable cost",
    "heading_level": 2,
    "has_card_key": false,
@@ -1219,7 +1219,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 38,
+   "line": 40,
    "title": "Cost review requests",
    "heading_level": 2,
    "has_card_key": false,
@@ -1233,7 +1233,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 105,
+   "line": 107,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -1242,7 +1242,7 @@
   },
   {
    "template": "templates/pages/coverage/index.html",
-   "line": 46,
+   "line": 50,
    "title": "Reach by district \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -1251,7 +1251,7 @@
   },
   {
    "template": "templates/pages/coverage/index.html",
-   "line": 88,
+   "line": 92,
    "title": "Clusters",
    "heading_level": 2,
    "has_card_key": false,

@@ -24247,11 +24247,11 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "remediation-required",
+      "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 8.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.finance_views",
       "backend_view": "apps.frontend.views.finance_views.cost_settings_view",
       "card_count": 0,
@@ -24262,17 +24262,9 @@
         "test:referenced-by-automated-test",
         "permission:cost_settings"
       ],
-      "filters": "none",
-      "findings": [
-        {
-          "evidence": "Inline browser event handlers bypass the shared interaction layer.",
-          "finding_id": "UI-FINDING-15F58F607E",
-          "key": "inline-event-handler",
-          "recommended_action": "Move behavior to the shared Alpine/JavaScript component and keep semantic HTML fallbacks.",
-          "severity": "high"
-        }
-      ],
-      "fix_status": "pending",
+      "filters": "canvas-level shared filter bar",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
@@ -24291,7 +24283,7 @@
       "primary_action": "Initialize Default Catalogue",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Governed operational/reference cost control for finance leadership.",
-      "remediation": "Move behavior to the shared Alpine/JavaScript component and keep semantic HTML fallbacks.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -25492,11 +25484,11 @@
       "typography_exceptions": []
     },
     {
-      "accessibility_status": "remediation-required",
+      "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 8.5,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.coverage_view",
       "card_count": 0,
@@ -25507,17 +25499,9 @@
         "test:referenced-by-automated-test",
         "permission:coverage"
       ],
-      "filters": "filter controls detected; parent/context review",
-      "findings": [
-        {
-          "evidence": "Inline browser event handlers bypass the shared interaction layer.",
-          "finding_id": "UI-FINDING-F87133A2E1",
-          "key": "inline-event-handler",
-          "recommended_action": "Move behavior to the shared Alpine/JavaScript component and keep semantic HTML fallbacks.",
-          "severity": "high"
-        }
-      ],
-      "fix_status": "pending",
+      "filters": "canvas-level shared filter bar",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
@@ -25536,7 +25520,7 @@
       "primary_action": "Open next queue record",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Coverage overview \u2014 CD/IA.",
-      "remediation": "Move behavior to the shared Alpine/JavaScript component and keep semantic HTML fallbacks.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -25549,7 +25533,9 @@
       "route": "/coverage",
       "route_name": "coverage",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/coverage"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -77743,7 +77729,7 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 377,
+    "accessibility_contract_pass": 379,
     "activity_states": 24,
     "all_routes": 1049,
     "api_routes": 359,
@@ -77770,7 +77756,7 @@
     "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
-      "high": 2,
+      "high": 0,
       "low": 0,
       "medium": 0
     },

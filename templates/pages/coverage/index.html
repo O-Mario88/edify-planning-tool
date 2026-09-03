@@ -14,18 +14,22 @@
       <p class="edify-page-header__description">Which schools the program has actually reached with completed visits.</p>
     </div>
     <div class="edify-page-header__controls">
-    <form method="get" class="flex items-center gap-2" data-component="filter-toolbar">
-      <label for="coverage-fy" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</label>
-      <select id="coverage-fy" name="fy" onchange="this.form.requestSubmit()" class="h-8 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
-        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
-      </select>
-    </form>
     <a href="/analytics" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors w-fit">
       <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M7 14l3-3 3 3 4-5M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
       Open Analytics
     </a>
     </div>
   </div>
+
+  <form method="get" action="/coverage" class="platform-filter-bar" data-component="filter-toolbar" aria-label="Fiscal year">
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial Year</span>
+      <select id="coverage-fy" name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="self-end h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show year</button>
+  </form>
 
   <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">

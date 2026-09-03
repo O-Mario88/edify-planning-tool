@@ -90,7 +90,7 @@ def raise_escalation(data: dict, principal) -> LeadershipEscalation:
     esc = LeadershipEscalation.objects.create(
         raised_by_user_id=_actor_id(principal),
         raised_by_name=getattr(principal, "name", None),
-        country_id=(data.get("country_id") or "Uganda"),
+        country_id=(data.get("country_id") or _country_of(principal) or "Uganda"),
         category=category,
         subject=subject[:255],
         detail=detail,
@@ -201,6 +201,12 @@ def resolve(escalation_id: str, data: dict, principal) -> LeadershipEscalation:
     return esc
 
 
+def _country_of(principal) -> str:
+    from apps.documents.services import country_of
+
+    return country_of(principal)
+
+
 def visible_to(principal):
     """Escalations a principal may read: the CD sees what they raised, the RVP
     and Admin see the whole board."""
@@ -212,7 +218,10 @@ def visible_to(principal):
         # The country's board, not the raiser's own list: a second CD account,
         # or the same director under another account, could not see what
         # the country had escalated.
-        return qs.filter(country_id=getattr(principal, "country", None) or "Uganda")
+        from apps.documents.services import country_of
+
+        country = country_of(principal)
+        return qs.filter(country_id=country) if country else qs.none()
     return qs.none()
 
 

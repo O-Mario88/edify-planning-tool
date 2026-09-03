@@ -1539,7 +1539,6 @@ SIDEBAR_ITEMS = [
                 "url": "/budget",
                 "page_key": "monthly_budget",
                 "icon_key": "my_budget",
-                "role_labels": {CD: "Country Budget", RVP: "Country Budget"},
             },
             {
                 "label": "Cost Settings",
