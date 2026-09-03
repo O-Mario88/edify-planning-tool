@@ -34,7 +34,7 @@
   text-transform: uppercase;
 }
 
-.mobile-role-home__copy > h1 {
+.mobile-role-home__copy > h2 {
   margin: 0;
   color: var(--edify-text);
   font-size: clamp(1.35rem, 1.15rem + 1.1vw, 2rem);

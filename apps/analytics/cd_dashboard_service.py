@@ -195,7 +195,7 @@ class CDDashboardService:
             return {}
         delta = int(current) - int(previous)
         if delta == 0:
-            return {"direction": "neutral", "value": f"= {label}".strip()}
+            return {"direction": "neutral", "value": f"flat {label}".strip()}
         sign = "+" if delta > 0 else "−"
         return {
             "direction": "up" if delta > 0 else "down",

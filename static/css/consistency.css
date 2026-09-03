@@ -1069,6 +1069,41 @@ main :is(
   box-shadow: none !important;
 }
 
+/* A toolbar with one selector (a fiscal-year switch, say) must not stretch
+   that selector across the page: the flex-grow above exists to share a row
+   between several fields, not to make one field the width of the bar. Same
+   selector list as the field rule, so it carries the same specificity. */
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) > .edify-filter-field.platform-filter-compact {
+  flex: 0 1 20rem;
+  max-inline-size: 20rem;
+}
+
 /* Search fields routinely carry longer labels and query text than compact
    selectors. This shared modifier keeps their label and control together on
    narrow toolbars without changing the one-row scrolling contract. */

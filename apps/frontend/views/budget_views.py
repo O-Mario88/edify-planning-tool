@@ -33,6 +33,9 @@ from apps.core.fy import (
 from apps.core.scoping import resolve_user_scope
 
 
+from apps.accounts.hr_dashboard_service import ROLE_LABELS as _ROLE_LABELS  # noqa: E402
+
+
 def parse_date(d_str: str) -> date:
     if isinstance(d_str, (date, datetime)):
         return d_str.date() if isinstance(d_str, datetime) else d_str
@@ -130,6 +133,8 @@ def budget_view(request):
         workspace_kind="planned",
         workspace_base_url="/budget",
         selected_district=request.GET.get("district", ""),
+        # The header names the person's role; "CountryDirector" is a code.
+        role=_ROLE_LABELS.get(ctx.get("role") or role, ctx.get("role") or role),
     )
     if is_country:
         ctx["districts"] = District.objects.order_by("name")

@@ -784,13 +784,16 @@ class Command(BaseCommand):
 
         seed_catalogue = ensure_active_catalogue()
         for key, cost in rate_card.items():
-            CostSetting.objects.get_or_create(
+            # A key exists once per catalogue version, so a plain
+            # get_or_create(key=...) raised MultipleObjectsReturned as soon
+            # as the CD had versioned a rate. Ask per catalogue instead.
+            if CostSetting.objects.filter(key=key).exists():
+                continue
+            CostSetting.objects.create(
                 key=key,
-                defaults={
-                    "label": friendly_labels.get(key, key.replace("_", " ").title()),
-                    "unit_cost": cost,
-                    "catalogue": seed_catalogue,
-                },
+                label=friendly_labels.get(key, key.replace("_", " ").title()),
+                unit_cost=cost,
+                catalogue=seed_catalogue,
             )
         self.stdout.write(
             f"  sample cost settings: {CostSetting.objects.count()} (local only)"

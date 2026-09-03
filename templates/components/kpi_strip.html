@@ -98,10 +98,10 @@
             {% endcomment %}
             <span class="sr-only">{{ item.accessible_description }}</span>
             <span class="kpi-strip__label" aria-hidden="true" title="{% firstof item.canonical_label item.label %}">{% firstof item.label item.canonical_label %}</span>
-            <span class="kpi-strip__value" aria-hidden="true">{% firstof item.display_value item.value %}</span>
+            <span class="kpi-strip__value" aria-hidden="true">{% if item.display_value == None or item.display_value == "" %}{{ item.value }}{% else %}{{ item.display_value }}{% endif %}</span>
           {% else %}
             <span class="kpi-strip__label" title="{% firstof item.canonical_label item.label %}">{% firstof item.label item.canonical_label %}</span>
-            <span class="kpi-strip__value">{% firstof item.display_value item.value %}</span>
+            <span class="kpi-strip__value">{% if item.display_value == None or item.display_value == "" %}{{ item.value }}{% else %}{{ item.display_value }}{% endif %}</span>
           {% endif %}
           {% if item.helper or item.meta %}
           <span class="kpi-strip__meta">

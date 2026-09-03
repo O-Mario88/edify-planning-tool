@@ -16,7 +16,7 @@
 </div>
 
 <form method="get" action="/cost-settings" class="platform-filter-bar" data-component="filter-toolbar" aria-label="Fiscal year">
-  <label class="block">
+  <label class="block platform-filter-compact">
     <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Fiscal year</span>
     <select id="cost-settings-fy" name="fy" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 text-[12px] font-semibold focus:outline-none">
 {% for option in fy_options %}<option value="{{ option }}" {% if option|stringformat:"s" == selected_fy|stringformat:"s" %}selected{% endif %}>FY{{ option }}</option>{% endfor %}
