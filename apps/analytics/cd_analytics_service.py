@@ -2583,6 +2583,49 @@ class CDAnalyticsService:
 
     @staticmethod
     def drilldown(user, drill, params, fy=None, quarter=None, month=None, filters=None):
+        """A drawer whose actions know what they are about.
+
+        The action chips used to be static hrefs — "Flag to Program Lead"
+        opened an empty flag form, "Escalate to RVP" an empty escalation —
+        so the director re-typed the entity they had just drilled into. Each
+        chip now carries the entity (and, for a Program Lead, the assignee)
+        into the form it opens.
+        """
+        payload = CDAnalyticsService._drilldown_raw(
+            user, drill, params, fy=fy, quarter=quarter, month=month, filters=filters
+        )
+        entity_id = str(
+            params.get("id") or params.get("issue") or params.get("intervention") or ""
+        )
+        title = str(payload.get("title") or "")
+        payload["actions"] = [
+            CDAnalyticsService._contextual_action(a, drill, entity_id, title)
+            for a in payload.get("actions", [])
+        ]
+        return payload
+
+    @staticmethod
+    def _contextual_action(
+        action: dict, drill: str, entity_id: str, title: str
+    ) -> dict:
+        from urllib.parse import urlencode
+
+        href = action.get("href", "")
+        scope = {"scope_type": drill, "scope_id": entity_id, "scope_name": title}
+        if href == "/quality-checks":
+            params = dict(scope)
+            if drill == "pl" and entity_id:
+                params["assign_to"] = entity_id
+            return {**action, "href": f"/quality-checks?{urlencode(params)}"}
+        if href == "/escalations":
+            params = {**scope, "subject": title[:120]}
+            return {**action, "href": f"/escalations?{urlencode(params)}"}
+        return action
+
+    @staticmethod
+    def _drilldown_raw(
+        user, drill, params, fy=None, quarter=None, month=None, filters=None
+    ):
         fy = fy or get_operational_fy()
         cd = resolve_cd_scope(fy, quarter, month, filters or {})
         acts = _country_activities(cd)

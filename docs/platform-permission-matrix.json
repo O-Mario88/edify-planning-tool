@@ -9622,6 +9622,7 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CountryDirector",
     "ImpactAssessment",
     "Admin"
    ],
@@ -14255,7 +14256,7 @@
   "Admin": 771,
   "BusinessTransformationOfficer": 212,
   "CCEO": 475,
-  "CountryDirector": 569,
+  "CountryDirector": 570,
   "HumanResources": 264,
   "ImpactAssessment": 451,
   "MfiLoanOfficer": 111,

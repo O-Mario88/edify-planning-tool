@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 628,
+  "titled_cards": 629,
   "templates": 223,
-  "distinct_titles": 597,
+  "distinct_titles": 598,
   "with_card_key": 13,
-  "untitled_surfaces": 1011,
+  "untitled_surfaces": 1016,
   "untitled_chrome": 229,
-  "untitled_nested": 390,
+  "untitled_nested": 395,
   "untitled_headless": 392,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
@@ -1858,7 +1858,7 @@
   },
   {
    "template": "templates/pages/escalations/index.html",
-   "line": 76,
+   "line": 77,
    "title": "Open",
    "heading_level": 2,
    "has_card_key": false,
@@ -1867,14 +1867,14 @@
   },
   {
    "template": "templates/pages/escalations/index.html",
-   "line": 135,
+   "line": 136,
    "title": "Recently decided",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
    "branch_path": [
     [
-     17,
+     19,
      0
     ]
    ]
@@ -4908,7 +4908,16 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 351,
+   "line": 349,
+   "title": "Verification &amp; Data Quality",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/cd/body.html",
+   "line": 397,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4917,7 +4926,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 375,
+   "line": 421,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4926,7 +4935,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 424,
+   "line": 470,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4935,7 +4944,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 498,
+   "line": 544,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,

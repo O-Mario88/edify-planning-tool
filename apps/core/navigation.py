@@ -433,7 +433,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # `ia_` prefix fallback in permissions.py and the page was reachable only
     # by typing the URL — it had no key and no navigation. Named explicitly now
     # that it is an Analytics section.
-    "ia_dashboard": {IA, ADMIN},
+    # The CD reads verification analytics since 2026-09-03 — the only
+    # throughput view of the country's verification chain.
+    "ia_dashboard": {IA, CD, ADMIN},
     # Closure quality. IA and Admin only: this is a data-quality worklist about
     # which closure records to distrust, not a report on how many schools the
     # country lost. Leadership gets that from the closure analytics on their own

@@ -37,6 +37,9 @@ def escalations_view(request):
                         "detail": request.POST.get("detail"),
                         "requested_decision": request.POST.get("requested_decision"),
                         "due_date": request.POST.get("due_date") or None,
+                        "scope_type": request.POST.get("scope_type") or None,
+                        "scope_id": request.POST.get("scope_id") or None,
+                        "scope_name": request.POST.get("scope_name") or None,
                     },
                     request.user,
                 )
@@ -74,6 +77,18 @@ def escalations_view(request):
         "pages/escalations/index.html",
         {
             "board": escalation_service.board(request.user),
+            # From an analytics drill-down: the entity comes along.
+            "prefill": {
+                key: (request.GET.get(key) or "").strip()
+                for key in (
+                    "subject",
+                    "detail",
+                    "category",
+                    "scope_type",
+                    "scope_id",
+                    "scope_name",
+                )
+            },
             "is_rvp": is_rvp,
             "can_raise": is_cd,
         },

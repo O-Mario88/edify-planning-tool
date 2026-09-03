@@ -35,7 +35,28 @@
       <h2 class="edify-section-heading">{% for entry in tabs %}{% if entry.is_active %}{{ entry.label }}{% endif %}{% endfor %}</h2>
       <p class="edify-text-caption edify-text-muted">The Programme Lead’s own work and every supervised CCEO are grouped below.</p>
     </div>
-    <span class="pill pill-neutral">{{ period_label }}</span>
+    <div class="flex items-center gap-3">
+      {% if may_delegate and program_lead %}
+      <form hx-post="/country-planning-oversight/send"
+            hx-target="#team-send-result"
+            hx-swap="innerHTML"
+            class="flex items-center gap-1.5" data-team-send>
+        {% csrf_token %}
+        <input type="hidden" name="program_lead" value="{{ program_lead }}">
+        <input type="hidden" name="fy" value="{{ fy }}">
+        {% if selected_month %}<input type="hidden" name="month" value="{{ selected_month }}">{% endif %}
+        <label class="sr-only" for="team-issue">What to ask for</label>
+        <select id="team-issue" name="issue" class="h-8 px-2 rounded-control border edify-border text-sm">
+          <option value="team_execution_risk">Recovery plan</option>
+          <option value="team_partner_backlog">Partner backlog</option>
+          <option value="team_costing_backlog">Costing backlog</option>
+        </select>
+        <button type="submit" class="btn h-8">Send to PL</button>
+      </form>
+      <div id="team-send-result" class="edify-text-caption"></div>
+      {% endif %}
+      <span class="pill pill-neutral">{{ period_label }}</span>
+    </div>
   </header>
 
   {% include "partials/oversight/cd_team_detail.html" with owner_groups=groups %}

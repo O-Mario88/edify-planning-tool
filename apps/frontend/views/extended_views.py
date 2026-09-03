@@ -2764,6 +2764,9 @@ def quality_checks_view(request):
                         "recommendedAction": request.POST.get("recommended_action"),
                         "priority": request.POST.get("priority", "normal"),
                         "dueDate": request.POST.get("due_date"),
+                        "scopeType": request.POST.get("scope_type") or None,
+                        "scopeId": request.POST.get("scope_id") or None,
+                        "scopeName": request.POST.get("scope_name") or None,
                     },
                     request.user,
                 )
@@ -2798,12 +2801,27 @@ def quality_checks_view(request):
         qs = qs.filter(assigned_to_user_id=request.user.id)
     # IA / Admin: unfiltered — the global monitoring audience.
 
+    # Arriving from an analytics drill-down: the entity and, when known, the
+    # Program Lead come along so the director does not re-type what they
+    # just looked at.
+    prefill = {
+        key: (request.GET.get(key) or "").strip()
+        for key in (
+            "assign_to",
+            "scope_type",
+            "scope_id",
+            "scope_name",
+            "note",
+            "category",
+        )
+    }
     context = {
         "flags": qs[:50],
         "can_raise": is_cd,
         "can_act": is_pl,
         "program_leads": flag_services.program_leads(request.user) if is_cd else [],
         "current_user_id": request.user.id,
+        "prefill": prefill,
     }
     return render(request, "pages/quality_checks/index.html", context)
 

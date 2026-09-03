@@ -129,6 +129,7 @@ class CDDashboardService:
             "country_performance": CDDashboardService.country_performance(cd),
             "regional_performance": regional,
             "geography": CDDashboardService.geography_breakdown(cd, acts),
+            "verification": CDDashboardService.verification_and_quality(cd, acts),
             "pl_performance": pl_rows,
             "finance_snapshot": CDDashboardService.finance_snapshot(cd, acts, fy),
             "operational_risk": CDDashboardService.operational_risk_backlog(
@@ -616,6 +617,56 @@ class CDDashboardService:
         return {"rows": rows, "national": national}
 
     # ── PL performance table (mandate §10) ───────────────────────────────────
+    @staticmethod
+    def verification_and_quality(cd, acts) -> dict:
+        """The verification backlog by age, and the data-quality checks.
+
+        Both were IA-only pages. The CD's own signals were a raw "IA Pending"
+        count whose "30+ days" label was decorative, and nothing at all about
+        data quality — even where a finding names the CD as its owner.
+        """
+        from datetime import timedelta
+
+        from apps.activities.ia_models import VerificationHistory
+        from apps.system_health.data_quality_health import data_quality_health
+
+        now = timezone.now()
+        waiting = acts.filter(status="awaiting_ia_verification")
+        buckets = {"under_7": 0, "d7_30": 0, "over_30": 0, "undated": 0}
+        for submitted in waiting.values_list("submitted_to_ia_at", flat=True):
+            if submitted is None:
+                buckets["undated"] += 1
+                continue
+            age = (now - submitted).days
+            if age < 7:
+                buckets["under_7"] += 1
+            elif age <= 30:
+                buckets["d7_30"] += 1
+            else:
+                buckets["over_30"] += 1
+        week_start = (now - timedelta(days=now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        verified_week = VerificationHistory.objects.filter(
+            verified_at__gte=week_start
+        ).count()
+        returned = acts.filter(status="returned_by_ia").count()
+        checks = []
+        try:
+            report = data_quality_health()
+            checks = report.get("checks") or []
+        except Exception:  # noqa: BLE001 - a health probe must never break the page
+            checks = []
+        return {
+            "waiting": waiting.count(),
+            "buckets": buckets,
+            "verified_week": verified_week,
+            "returned": returned,
+            "checks": checks,
+            "critical": sum(1 for c in checks if c.get("severity") == "critical"),
+            "warnings": sum(1 for c in checks if c.get("severity") == "warning"),
+        }
+
     @staticmethod
     def geography_breakdown(cd, acts) -> dict:
         """Delivery, backlog and money by region, then by district.

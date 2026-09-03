@@ -41,7 +41,7 @@
 <div>
 <label class="block mb-1 font-bold text-slate-700" for="esc-category">Category</label>
 <select id="esc-category" name="category" required class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
-{% for value, label in board.categories %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+{% for value, label in board.categories %}<option value="{{ value }}" {% if prefill.category == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
 </select>
 </div>
 <div>
@@ -52,11 +52,12 @@
 </div>
 <div class="sm:col-span-2">
 <label class="block mb-1 font-bold text-slate-700" for="esc-subject">Subject</label>
-<input id="esc-subject" type="text" name="subject" required maxlength="255" placeholder="One line: what needs deciding" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
+{% if prefill.scope_name %}<input type="hidden" name="scope_type" value="{{ prefill.scope_type }}"><input type="hidden" name="scope_id" value="{{ prefill.scope_id }}"><input type="hidden" name="scope_name" value="{{ prefill.scope_name }}">{% endif %}
+<input id="esc-subject" type="text" name="subject" value="{{ prefill.subject }}" required maxlength="255" placeholder="One line: what needs deciding" class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">
 </div>
 <div class="sm:col-span-2">
 <label class="block mb-1 font-bold text-slate-700" for="esc-detail">What is happening</label>
-<textarea id="esc-detail" name="detail" required rows="3" placeholder="The situation, what you have already tried, and why it needs regional authority." class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]"></textarea>
+<textarea id="esc-detail" name="detail" required rows="3" placeholder="The situation, what you have already tried, and why it needs regional authority." class="w-full border border-[var(--edify-border)] rounded-control px-3 py-2 text-[12px]">{{ prefill.detail }}</textarea>
 </div>
 <div class="sm:col-span-2">
 <label class="block mb-1 font-bold text-slate-700" for="esc-requested">Decision you are asking for</label>

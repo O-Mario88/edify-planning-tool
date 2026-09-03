@@ -360,8 +360,11 @@ def team_planning_oversight_view(request):
         "fy_options": fy_options(),
         # IA and the Accountant read this page for Cluster Oversight below.
         # The send controls are theirs to see refused, so they are not drawn:
-        # a control that answers "not you" is worse than no control.
-        "may_delegate": may_delegate(request.user, country=False),
+        # a control that answers "not you" is worse than no control. The
+        # country lens asks the country rule, so the CD can send from here as
+        # they can from Country Planning Oversight — the two pages used to
+        # disagree.
+        "may_delegate": may_delegate(request.user, country=country_lens),
         "cluster_oversight": grouped_clusters(request.user),
         # §12's Team School Oversight, as a section rather than a page: plans,
         # clusters and flagged schools are three lenses on one team, and a

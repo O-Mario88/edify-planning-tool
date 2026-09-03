@@ -3211,7 +3211,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 36896,
+      "bytes": 40432,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -6373,7 +6373,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2389,
+      "bytes": 3520,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -6381,8 +6381,8 @@
         "/team-targets/"
       ],
       "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
+      "forms": 1,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Team Country Workspace",
       "purpose": "Reusable team country workspace interface primitive",
@@ -26153,7 +26153,8 @@
         "text-[14px]",
         "text-[15px]",
         "text-[16px]",
-        "text-[20px]"
+        "text-[20px]",
+        "text-[22px]"
       ]
     },
     {
@@ -26249,7 +26250,8 @@
         "text-[14px]",
         "text-[15px]",
         "text-[16px]",
-        "text-[20px]"
+        "text-[20px]",
+        "text-[22px]"
       ]
     },
     {
@@ -35260,6 +35262,7 @@
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
+        "CD",
         "IA"
       ],
       "route": "/ia/dashboard/",

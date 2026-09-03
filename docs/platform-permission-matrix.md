@@ -15,7 +15,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | --- | --- |
 | CCEO | 475 |
 | Program Lead | 549 |
-| CountryDirector | 569 |
+| CountryDirector | 570 |
 | RegionalVicePresident | 303 |
 | ImpactAssessment | 451 |
 | Accountant | 351 |
@@ -621,7 +621,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/hr/performance-cycle` | performance_console |  |  |  |  |  |  | Y |  |  |  |  |  |  | Y |
 | `/hr/performance-cycle/action` | performance_console |  |  |  |  |  |  | Y |  |  |  |  |  |  | Y |
 | `/ia/compare/` | ia_compare |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
-| `/ia/dashboard/` | ia_dashboard |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
+| `/ia/dashboard/` | ia_dashboard |  |  | Y |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/ia/duplicates/` | ia_duplicates |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/ia/duplicates/<str:duplicate_id>/action` | ia_duplicates |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |
 | `/ia/history/` | ia_history |  |  |  |  | Y |  |  |  |  |  |  |  |  | Y |

@@ -1377,7 +1377,7 @@
    "audit_id": "KPI-SOURCE-071",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1238,
+   "line": 1289,
    "label": null,
    "keys": [
     "amount",
@@ -1397,7 +1397,7 @@
    "audit_id": "KPI-SOURCE-072",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 915,
+   "line": 966,
    "label": null,
    "keys": [
     "count",
@@ -1418,7 +1418,7 @@
    "audit_id": "KPI-SOURCE-073",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1230,
+   "line": 1281,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -2468,7 +2468,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2867,
+   "line": 2885,
    "label": null,
    "keys": [
     "label",
@@ -3066,7 +3066,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 906,
+   "line": 909,
    "label": "All Partners",
    "keys": [
     "count",
@@ -3084,7 +3084,7 @@
    "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 912,
+   "line": 915,
    "label": null,
    "keys": [
     "count",
@@ -6151,6 +6151,7 @@
    "page_title": "Impact Assessment Dashboard",
    "roles": [
     "ADMIN",
+    "CD",
     "IA"
    ],
    "page_purpose": "IA Analytics Dashboard for quality monitoring \u2014 all metrics computed live.",
@@ -26582,7 +26583,7 @@
   {
    "audit_id": "KPI-PAYLOAD-015",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3038,
+   "line": 3056,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

@@ -345,6 +345,52 @@
     </div>
   </div>
 
+  {# ── Verification & Data Quality ── #}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="cd-verification-heading" data-cd-verification>
+    <div class="flex items-center justify-between gap-3">
+      <h2 id="cd-verification-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+        <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="shield" %}</span>Verification &amp; Data Quality
+      </h2>
+      <a href="/ia/dashboard/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open verification analytics →</a>
+    </div>
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
+        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Awaiting verification</p>
+        <p class="text-[22px] font-extrabold tabular-nums">{{ verification.waiting|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">{{ verification.buckets.under_7 }} under 7 days · {{ verification.buckets.d7_30 }} at 7–30 · <span class="{% if verification.buckets.over_30 %}text-rose-700 font-bold{% endif %}">{{ verification.buckets.over_30 }} over 30</span></p>
+      </div>
+      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
+        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Verified this week</p>
+        <p class="text-[22px] font-extrabold tabular-nums">{{ verification.verified_week|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">by Impact Assessment</p>
+      </div>
+      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
+        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Returned by IA</p>
+        <p class="text-[22px] font-extrabold tabular-nums">{{ verification.returned|intcomma }}</p>
+        <p class="edify-text-caption edify-text-muted">awaiting correction</p>
+      </div>
+      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
+        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Data quality checks</p>
+        <p class="text-[22px] font-extrabold tabular-nums"><span class="{% if verification.critical %}text-rose-700{% endif %}">{{ verification.critical }}</span> <span class="text-[13px] font-semibold text-slate-400">critical</span> · {{ verification.warnings }} <span class="text-[13px] font-semibold text-slate-400">warnings</span></p>
+        <p class="edify-text-caption edify-text-muted">across the country's school, cluster and staff data</p>
+      </div>
+    </div>
+    {% if verification.checks %}
+    <ul class="divide-y edify-border text-[12px]">
+      {% for c in verification.checks %}
+      <li class="py-2 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-800"><span class="edify-status-badge {% if c.severity == 'critical' %}danger{% else %}warning{% endif %} mr-1.5">{{ c.severity|title }}</span>{{ c.current_state }}</p>
+          <p class="edify-text-caption edify-text-muted">{{ c.component }} · owner: {{ c.owner }} · {{ c.recommended_action }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="edify-text-caption edify-text-muted">No open data-quality checks.</p>
+    {% endif %}
+  </section>
+
   {# ── Operational Risk & Backlog | School & SSA Intelligence ───────────── #}
   <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5" data-cd-school-ssa-cards>
     <div data-cd-risk-priority-row class="contents">
