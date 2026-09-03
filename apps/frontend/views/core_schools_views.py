@@ -1,7 +1,7 @@
 from apps.core.metrics import render_precomputed_metric_item
 import logging
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseForbidden
 from django.contrib import messages
 from django.utils.html import escape
 from django.db import transaction
@@ -11,8 +11,10 @@ from datetime import date
 from apps.core.htmx_errors import error_fragment
 from apps.core.donut import build_gauge
 from apps.core.permissions import (
+    RolePermissionService,
     require_page_permission,
     get_operational_school_or_404,
+    get_visit_target_school_or_404,
 )
 from apps.core.exceptions import BadRequest
 from apps.core.fy import get_operational_fy
@@ -349,11 +351,50 @@ def core_schools_view(request):
     return render(request, "pages/core_schools/index.html", context)
 
 
+def _core_visit_request_context(school, user) -> dict:
+    """The request-only country roles ask for a core visit, not plan it.
+
+    Same rule as the ordinary school drawer (apps.planning.visit_requests):
+    at a school somebody owns the visit waits for the owner's approval, and
+    the requester — not the owner — is the one going.
+    """
+    from apps.planning.visit_requests import approval_owner_for, staff_name
+
+    owner_id = approval_owner_for(school, user)
+    if not owner_id:
+        return {"visit_request_owner_id": None, "visit_request_owner_name": ""}
+    return {
+        "visit_request_owner_id": owner_id,
+        "visit_request_owner_name": staff_name(owner_id) or "the school's owner",
+    }
+
+
+def _requester_identity(user) -> str | None:
+    return (
+        getattr(user, "staff_profile_id", None)
+        or getattr(user, "user_id", None)
+        or getattr(user, "id", None)
+    )
+
+
+CORE_TRAINING_REFUSED = (
+    "Core trainings are planned by the CCEO or Program Lead responsible for "
+    "the school. Your role schedules school visits only."
+)
+
+
+def _refuse_core_training_for_requesters(user):
+    """Core trainings are the owner's; these roles schedule visits only."""
+    if RolePermissionService.can_request_school_visit(user):
+        return HttpResponseForbidden(CORE_TRAINING_REFUSED)
+    return None
+
+
 @require_page_permission("core_schools")
 def core_schedule_visit_drawer(request):
     """Renders schedule core visit drawer."""
     school_id = request.GET.get("school_id")
-    school = get_operational_school_or_404(request.user, school_id=school_id)
+    school = get_visit_target_school_or_404(request.user, school_id=school_id)
 
     (
         school.ssa_records.filter(deleted_at__isnull=True)
@@ -406,6 +447,8 @@ def core_schedule_visit_drawer(request):
         "available_visit_slots": available_visit_slots,
         "interventions": SsaIntervention.choices,
         "catalogue_items": visit_catalogue_items,
+        "requester_name": getattr(request.user, "name", "") or "You",
+        **_core_visit_request_context(school, request.user),
     }
     return render(request, "partials/core_schools/schedule_visit_drawer.html", context)
 
@@ -415,7 +458,7 @@ def core_schedule_visit_drawer(request):
 def core_schedule_visit_action(request):
     """Handles schedule visit submission."""
     school_id = request.POST.get("school_id")
-    school = get_operational_school_or_404(request.user, school_id=school_id)
+    school = get_visit_target_school_or_404(request.user, school_id=school_id)
     visit_seq = request.POST.get("visit_number", "1")
     scheduled_date = request.POST.get("scheduled_date")
     focus_intervention = request.POST.get("focus_intervention")
@@ -425,6 +468,15 @@ def core_schedule_visit_action(request):
     partner_id = request.POST.get("assigned_partner_id")
     catalogue_item_id = request.POST.get("catalogue_item_id", "").strip()
     source_activity_id = request.POST.get("source_activity_id", "").strip()
+    # A request-only country role at somebody else's school: the requester
+    # goes, the owner decides (apps.planning.visit_requests). Resolved here,
+    # never from the form, so a posted responsible person cannot reassign it.
+    visit_request = _core_visit_request_context(school, request.user)
+    visit_request_owner_id = visit_request["visit_request_owner_id"]
+    visit_justification = request.POST.get("visit_justification", "").strip()
+    if visit_request_owner_id:
+        responsible_staff_id = _requester_identity(request.user)
+        partner_id = None
     if not catalogue_item_id:
         return error_fragment(
             BadRequest("Select an eligible approved Catalogue visit."),
@@ -456,6 +508,11 @@ def core_schedule_visit_action(request):
         # Omit the key entirely for staff delivery — an empty string would be
         # stamped into the budget line's partner FK and violate the constraint.
         **({"assignedPartnerId": partner_id} if partner_id else {}),
+        **(
+            {"visitJustification": visit_justification}
+            if visit_request_owner_id
+            else {}
+        ),
     }
 
     if scheduled_date:
@@ -514,6 +571,20 @@ def core_schedule_visit_action(request):
                 success=True,
             )
 
+            if visit_request_owner_id:
+                from apps.planning.visit_requests import QUEUE_URL
+
+                messages.success(
+                    request,
+                    f"Core Visit V{visit_sequence} scheduled, pending "
+                    f"{visit_request['visit_request_owner_name']}'s approval. It "
+                    "takes effect on your plan and enters your budget once approved.",
+                )
+                response = HttpResponse(
+                    f'<script>window.location.href = "{QUEUE_URL}";</script>'
+                )
+                response["HX-Trigger"] = "close-drawer"
+                return response
             # Success message & direct redirect to My Plan
             messages.success(
                 request, f"Core Visit V{visit_sequence} scheduled successfully."
@@ -530,6 +601,9 @@ def core_schedule_visit_action(request):
 @require_page_permission("core_schools")
 def core_schedule_training_drawer(request):
     """Renders schedule core training drawer."""
+    refused = _refuse_core_training_for_requesters(request.user)
+    if refused is not None:
+        return refused
     school_id = request.GET.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
 
@@ -591,6 +665,9 @@ def core_schedule_training_drawer(request):
 @require_page_permission("core_schools")
 def core_schedule_training_action(request):
     """Handles schedule training submission."""
+    refused = _refuse_core_training_for_requesters(request.user)
+    if refused is not None:
+        return refused
     school_id = request.POST.get("school_id")
     school = get_operational_school_or_404(request.user, school_id=school_id)
     train_seq = request.POST.get("training_number", "1")
@@ -777,12 +854,17 @@ def core_assign_partner_drawer(request):
 def core_schedule_activity_drawer(request):
     """Choose Core package support or an unrestricted general activity."""
     school_id = request.GET.get("school_id")
-    school = get_operational_school_or_404(request.user, school_id=school_id)
+    school = get_visit_target_school_or_404(request.user, school_id=school_id)
     plan = CorePlan.objects.filter(school_id=school_id, fy=get_operational_fy()).first()
     summary = CorePackageSchedulingService.summary(plan) if plan else None
 
     context = {
         "school": school,
+        # Core trainings are the owner's programme; the request-only country
+        # roles schedule visits only (apps.planning.visit_requests).
+        "can_plan_core_training": RolePermissionService.can_schedule_activity(
+            request.user
+        ),
         "package_available": bool(plan),
         "package_complete": bool(summary and summary["package_complete"]),
         "visits_remaining": max(0, (summary["visits_target"] - summary["visits"]))

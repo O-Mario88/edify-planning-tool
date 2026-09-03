@@ -1,0 +1,102 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Visit Requests - Edify Planning Tool{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+<header class="edify-page-header">
+  <div class="edify-page-header__lead">
+  <p class="edify-page-eyebrow">My Work</p>
+  <h1 class="edify-page-title edify-page-header__title">Visit Requests</h1>
+  <p class="edify-page-header__description">{% if is_requester %}Visits you scheduled into another person&rsquo;s schools, and what their owners decided. A visit takes effect on your plan and budget once approved.{% else %}Visits other staff have asked to make to your schools. Approve them onto their plan, or decline with a reason.{% endif %}</p>
+  </div>
+</header>
+
+{% if messages %}
+<div class="space-y-2">
+{% for message in messages %}
+<div class="p-3.5 rounded-surface border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-rose-800 border-rose-100{% endif %}">
+<span>{{ message }}</span>
+</div>
+{% endfor %}
+</div>
+{% endif %}
+
+{% if is_requester %}
+<section class="space-y-3" aria-labelledby="visit-request-mine-heading">
+  <h2 id="visit-request-mine-heading" class="edify-section-heading text-sm font-bold">Your requests</h2>
+  {% if mine %}
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-x-auto">
+  <table class="w-full text-left text-[12px]">
+    <thead>
+      <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+        <th scope="col" class="px-4 py-2 font-semibold">School</th>
+        <th scope="col" class="px-4 py-2 font-semibold">Date</th>
+        <th scope="col" class="px-4 py-2 font-semibold">Owner asked</th>
+        <th scope="col" class="px-4 py-2 font-semibold">Decision</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for a in mine %}
+      <tr class="border-t edify-border" data-visit-request-row="{{ a.id }}">
+        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{{ a.school.name }}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
+        <td class="px-4 py-2.5 tabular-nums">{% if a.planned_date %}{{ a.planned_date|date:"j M Y" }}{% else %}&mdash;{% endif %}</td>
+        <td class="px-4 py-2.5">{{ a.owner_name }}</td>
+        <td class="px-4 py-2.5">
+          {% if a.status == awaiting %}<span class="edify-status-badge warning">Awaiting approval</span>
+          {% elif a.status == 'rejected' %}<span class="edify-status-badge danger">Declined</span>{% if a.owner_decision_note %}<p class="edify-text-caption font-medium edify-text-muted mt-0.5">{{ a.owner_decision_note }}</p>{% endif %}
+          {% else %}<span class="edify-status-badge success">Approved</span>{% if a.owner_decision_note %}<p class="edify-text-caption font-medium edify-text-muted mt-0.5">{{ a.owner_decision_note }}</p>{% endif %}{% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)]">
+  {% include "components/empty_state.html" with title="No requests yet" message="Schedule a visit from Planning; at a school someone else owns it appears here while they decide." cta_label="Open Planning" cta_href="/planning" %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+
+{% if not is_requester or pending %}
+<section class="space-y-3" aria-labelledby="visit-request-queue-heading">
+  <h2 id="visit-request-queue-heading" class="edify-section-heading text-sm font-bold">Awaiting your decision</h2>
+  {% if pending %}
+  <div class="grid gap-4">
+  {% for a in pending %}
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-5" data-visit-request-pending="{{ a.id }}">
+    <div class="space-y-2 min-w-0 flex-1 text-[12px]">
+      <h3 class="text-[15px] font-semibold text-slate-800">{{ a.requester_name }} asks to visit {% if a.school %}{{ a.school.name }}{% else %}your school{% endif %}</h3>
+      <p class="text-slate-500 font-semibold">{{ a.get_activity_type_display }}{% if a.planned_date %} &bull; {{ a.planned_date|date:"j M Y" }}{% endif %}{% if a.school and a.school.district %} &bull; {{ a.school.district.name }}{% endif %}</p>
+      {% if a.activity_purpose_text %}
+      <div><p class="edify-text-caption uppercase font-bold text-slate-400">Purpose</p><p class="text-slate-600 leading-normal">{{ a.activity_purpose_text }}</p></div>
+      {% endif %}
+      <div><p class="edify-text-caption uppercase font-bold text-slate-400">Why they need to visit</p><p class="text-slate-700 leading-normal">{{ a.visit_justification }}</p></div>
+    </div>
+    <div class="flex flex-col gap-3 min-w-[220px]">
+      <form method="POST" action="/planning/visit-requests/{{ a.id }}/approve" class="space-y-2">
+        {% csrf_token %}
+        <input type="text" name="note" placeholder="Note for the requester (optional)" class="w-full h-8 px-2 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+        <button type="submit" class="w-full h-9 rounded-control btn-premium-primary text-white text-[12px] font-semibold flex items-center justify-center">Approve visit</button>
+      </form>
+      <form method="POST" action="/planning/visit-requests/{{ a.id }}/decline" class="space-y-2">
+        {% csrf_token %}
+        <input type="text" name="reason" placeholder="Reason for declining" required class="w-full h-8 px-2 rounded-control border border-slate-200 text-[12px] bg-slate-50 focus:outline-none">
+        <button type="submit" class="w-full h-8 rounded-control border border-rose-200 text-rose-700 hover:bg-rose-50 text-[12px] font-bold flex items-center justify-center">Decline</button>
+      </form>
+    </div>
+  </div>
+  {% endfor %}
+  </div>
+  {% else %}
+  <div class="edify-surface rounded-surface border border-[var(--edify-border)]">
+  {% include "components/empty_state.html" with title="Nothing to decide" message="When someone asks to visit one of your schools, the request appears here." tone="success" icon="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" %}
+  </div>
+  {% endif %}
+</section>
+{% endif %}
+</div>
+{% endblock %}

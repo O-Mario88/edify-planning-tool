@@ -226,7 +226,7 @@ def _fund_request_todos(principal, role):
                 "due_tone": "warning",
                 "linked": f"Weekly Fund Request · {w.week_start_date:%b %-d}",
                 "action_label": "Open",
-                "action_url": "/fund-requests/weekly",
+                "action_url": f"/fund-requests/weekly/{w.id}",
                 "actionable": True,
                 "source": "Finance workflow",
                 "_due_sort": date.today(),
@@ -253,20 +253,22 @@ def _fund_request_todos(principal, role):
                 {
                     "id": f"wfr-appr-{w.id}",
                     "title": "Approve Fund Request",
+                    # Money a team is waiting on is not medium, and it is not
+                    # undated: the week it funds is the deadline.
                     "description": f"Fund request {w.week_start_date:%b %-d}–{w.week_end_date:%b %-d} awaits your approval",
                     "category": "Approval",
-                    "priority": "medium",
+                    "priority": "high",
                     "status_key": "waiting_me",
                     "status_label": "Waiting on Me",
                     "status_tone": "info",
-                    "due_label": "—",
+                    "due_label": f"Week of {w.week_start_date:%-d %b}" if w.week_start_date else "—",
                     "due_tone": "neutral",
                     "linked": f"Weekly Fund Request · {w.week_start_date:%b %-d}",
                     "action_label": "Review",
-                    "action_url": "/fund-requests/weekly",
+                    "action_url": f"/fund-requests/weekly/{w.id}",
                     "actionable": True,
                     "source": "Finance approval",
-                    "_due_sort": date.max,
+                    "_due_sort": w.week_start_date or date.max,
                 }
             )
 
@@ -314,7 +316,7 @@ def _fund_request_todos(principal, role):
                     "due_tone": "neutral",
                     "linked": "Fund Accountability",
                     "action_label": "Review",
-                    "action_url": "/fund-requests/weekly",
+                    "action_url": f"/fund-requests/weekly/{w.id}",
                     "actionable": True,
                     "source": "Finance approval",
                     "_due_sort": date.max,
@@ -348,7 +350,7 @@ def _fund_request_todos(principal, role):
                 "due_tone": "warning",
                 "linked": f"Monthly Fund Plan · {fr.period_key}",
                 "action_label": "Fix",
-                "action_url": "/fund-requests/weekly",
+                "action_url": f"/fund-requests/weekly/{w.id}",
                 "actionable": True,
                 "source": "Finance workflow",
                 "_due_sort": date.today(),
@@ -384,7 +386,7 @@ def _fund_request_todos(principal, role):
                 "due_tone": "warning",
                 "linked": f"Weekly Fund Request · {wfr.week_start_date:%d %b}",
                 "action_label": "Confirm",
-                "action_url": "/fund-requests/weekly",
+                "action_url": f"/fund-requests/weekly/{w.id}",
                 "actionable": True,
                 "source": "Finance workflow",
                 "_due_sort": date.today(),
@@ -416,7 +418,7 @@ def _fund_request_todos(principal, role):
                 "due_tone": "warning",
                 "linked": f"Monthly Fund Plan · {fr.period_key}",
                 "action_label": "Confirm",
-                "action_url": "/fund-requests/weekly",
+                "action_url": f"/fund-requests/weekly/{w.id}",
                 "actionable": True,
                 "source": "Finance workflow",
                 "_due_sort": date.today(),
@@ -798,6 +800,43 @@ def _pl_review_todos(principal, role):
                 "actionable": True,
                 "source": "Activity workflow",
                 "_due_sort": date.max,
+            }
+        )
+    return todos
+
+
+def _visit_request_todos(principal):
+    """Visits into this owner's portfolio waiting for their yes.
+
+    The request is addressed to the school's owner by name, so the queue is
+    the owner's own — no role gate, the service returns nothing for anyone
+    who was not asked.
+    """
+    from apps.planning.visit_requests import QUEUE_URL, pending_for_owner
+    from apps.planning.visit_requests import requester_name
+
+    todos = []
+    for a in pending_for_owner(principal)[:10]:
+        where = a.school.name if a.school_id and a.school else "your school"
+        when = f"{a.planned_date:%-d %b}" if a.planned_date else "a date to confirm"
+        todos.append(
+            {
+                "id": f"visitreq-{a.id}",
+                "title": "Decide on Visit Request",
+                "description": f"{requester_name(a)} asks to visit {where} on {when}",
+                "category": "Execution",
+                "priority": "high",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": when,
+                "due_tone": "neutral",
+                "linked": f"{where} · visit request",
+                "action_label": "Decide",
+                "action_url": QUEUE_URL,
+                "actionable": True,
+                "source": "Visit requests",
+                "_due_sort": a.planned_date or date.max,
             }
         )
     return todos
@@ -3156,6 +3195,7 @@ def get_todos(principal) -> dict:
     # someone escalated to you by name outranks routine queue work.
     todos += _school_action_todos(principal)
     todos += _pl_review_todos(principal, role)
+    todos += _visit_request_todos(principal)
     todos += _partner_delay_todos(principal, scope, today)
     todos += _partner_assignment_todos(principal, scope, today)
     todos += _partner_invoice_todos(principal, role)

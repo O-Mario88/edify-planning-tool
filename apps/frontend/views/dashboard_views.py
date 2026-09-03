@@ -1447,6 +1447,44 @@ def _action_recipient_name(action) -> str:
 
 
 @require_page_permission("cd_analytics")
+def cd_dashboard_return_view(request):
+    """Return an escalated weekly fund request with a reason, from the CD
+    dashboard. Approve had no counterpart here, so a request the CD would
+    not sign had to be hunted down on the weekly page by staff tab and week."""
+    if (
+        request.user.active_role not in ("CountryDirector", "Admin")
+        or request.method != "POST"
+    ):
+        from django.http import HttpResponseForbidden
+
+        return HttpResponseForbidden("Not allowed.")
+    from apps.analytics.cd_dashboard_service import CDDashboardService
+    from apps.core.fy import fy_options, get_operational_fy
+    from apps.fund_requests.weekly_service import return_weekly_request
+
+    rid = request.GET.get("id")
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    reason = (request.POST.get("reason") or "").strip()
+    error = None
+    if not reason:
+        error = "Give the requester a reason for returning their request."
+    elif rid:
+        try:
+            return_weekly_request(rid, {"reason": reason}, request.user)
+        except Exception as e:  # noqa: BLE001
+            error = str(e)
+    data = CDDashboardService.get_dashboard(request.user, fy=fy)
+    context = {
+        **data,
+        "fy_options": fy_options(),
+        "approve_error": error,
+        "role": "CountryDirector",
+        "user_name": request.user.name,
+    }
+    return render(request, "partials/dashboards/cd/body.html", context)
+
+
+@require_page_permission("cd_analytics")
 def cd_dashboard_approve_view(request):
     """Approve an escalated weekly fund request straight from the CD command
     dashboard, then re-render the dashboard body. The service enforces that

@@ -116,8 +116,36 @@ def _category(activity_type, delivery_type, programme_activity_type=None):
     return "Other"
 
 
+# Requests routed to the Country Director (weekly_service._ROUTE_TO_CD): the
+# owners' roles, so the CD's queue lists exactly the people whose requests
+# reach them.
+CD_APPROVAL_ROLES = (
+    "Program Lead",
+    "ProjectCoordinator",
+    "ImpactAssessment",
+    "Accountant",
+)
+
+
+def awaiting_status(principal) -> str:
+    """The status a request holds while it waits for THIS approver.
+
+    A CCEO's request waits on the PL as `submitted_to_pl`; a PL's, Project
+    Coordinator's, IA's or Accountant's waits on the Country Director as
+    `submitted_to_cd`. One queue page, two stages (owner, 2026-09-03: the CD
+    had no queue — they found each escalated request by guessing the staff
+    tab and the week).
+    """
+    role = getattr(principal, "active_role", None)
+    return "submitted_to_cd" if role == "CountryDirector" else "submitted_to_pl"
+
+
 def _scoped_cceos(scope):
-    """The CCEO records this PL supervises. Returns dicts with both id spaces."""
+    """The requesters this approver reviews. Returns dicts with both id spaces.
+
+    For a Program Lead: the CCEOs they supervise. For the Country Director:
+    every active holder of a role whose requests route to the CD.
+    """
     from apps.accounts.models import StaffProfile
 
     # Administrators have country-wide finance authority.  Their Fund
@@ -128,6 +156,12 @@ def _scoped_cceos(scope):
     if scope.active_role == "Admin" and scope.country_scope:
         profile_ids = StaffProfile.objects.filter(
             user__active_role="CCEO", deleted_at__isnull=True
+        ).values_list("id", flat=True)
+    elif scope.active_role == "CountryDirector":
+        profile_ids = StaffProfile.objects.filter(
+            user__active_role__in=CD_APPROVAL_ROLES,
+            user__is_active=True,
+            deleted_at__isnull=True,
         ).values_list("id", flat=True)
 
     cceos = []
@@ -146,8 +180,10 @@ def _scoped_cceos(scope):
 
 def _require_pl(principal):
     role = getattr(principal, "active_role", None)
-    if role not in ("Program Lead", "Admin"):
-        raise Forbidden("Only a Program Lead can access team fund approvals.")
+    if role not in ("Program Lead", "CountryDirector", "Admin"):
+        raise Forbidden(
+            "Only a Program Lead or the Country Director can access fund approvals."
+        )
 
 
 def _require_pl_action(principal):
@@ -158,8 +194,10 @@ def _require_pl_action(principal):
     an approval nobody in the field made, recorded as though they had.
     """
     role = getattr(principal, "active_role", None)
-    if role != "Program Lead":
-        raise Forbidden("Only a Program Lead can act on team fund plans.")
+    if role not in ("Program Lead", "CountryDirector"):
+        raise Forbidden(
+            "Only a Program Lead or the Country Director can act on fund plans."
+        )
 
 
 WEEKLY_STATUS_LABELS = {
@@ -240,7 +278,7 @@ def _validate(cceo, lines, month):
     return out[:6]
 
 
-def _build_cceo_plan(cceo, lines, wfr):
+def _build_cceo_plan(cceo, lines, wfr, awaiting="submitted_to_pl"):
     """Aggregate one CCEO's week of budget lines + their weekly fund request
     into a queue/detail record. The request (and the money the PL approves) is
     the staff advance on the WeeklyFundRequest; partner-delivered lines are
@@ -321,7 +359,11 @@ def _build_cceo_plan(cceo, lines, wfr):
     status_label, status_tone = WEEKLY_STATUS_LABELS.get(
         wfr_status, ("Awaiting CCEO Send", "info")
     )
-    if wfr_status == "submitted_to_pl" and not valid:
+    if wfr_status == awaiting:
+        # "Awaiting CD" reads right on the PL's page and wrong on the CD's own
+        # queue, where it is simply awaiting approval.
+        status_label, status_tone = "Awaiting Approval", "warning"
+    if wfr_status == awaiting and not valid:
         status_label, status_tone = "Needs Review", "info"
     request_total = int(wfr.total_amount) if wfr else 0
 
@@ -355,8 +397,8 @@ def _build_cceo_plan(cceo, lines, wfr):
         "cat_totals": cat_totals,
         "wfr_id": wfr.id if wfr else None,
         "wfr_status": wfr_status,
-        "can_approve": bool(wfr and wfr_status == "submitted_to_pl" and valid),
-        "can_return": bool(wfr and wfr_status == "submitted_to_pl"),
+        "can_approve": bool(wfr and wfr_status == awaiting and valid),
+        "can_return": bool(wfr and wfr_status == awaiting),
     }
 
 
@@ -475,7 +517,7 @@ def get_pl_fund_approvals(principal, filters=None):
                 wfr = generate_weekly_fund_request(c["user_id"], week_start.isoformat())
             except Exception:
                 wfr = None
-        plans.append(_build_cceo_plan(c, c_lines, wfr))
+        plans.append(_build_cceo_plan(c, c_lines, wfr, awaiting_status(principal)))
     plans.sort(key=lambda p: -p["total"])
 
     # filters
@@ -491,7 +533,7 @@ def get_pl_fund_approvals(principal, filters=None):
 
     # ── KPIs (team-scoped, this week) ─────────────────────────────────────────
     total_requested = sum(p["request_total"] for p in plans)
-    awaiting = [p for p in plans if p["wfr_status"] == "submitted_to_pl"]
+    awaiting = [p for p in plans if p["wfr_status"] == awaiting_status(principal)]
     pending_send = [
         p
         for p in plans
@@ -734,7 +776,7 @@ def approve(principal, cceo_user_id, week):
 
     _require_pl_action(principal)
     cceo, week_start, wfr = _weekly_for_action(principal, cceo_user_id, week)
-    if wfr.status != "submitted_to_pl":
+    if wfr.status != awaiting_status(principal):
         label, _tone = WEEKLY_STATUS_LABELS.get(wfr.status, (wfr.status, ""))
         raise BadRequest(f"This request is not awaiting your approval ({label}).")
 
@@ -790,7 +832,7 @@ def approve_all_valid(principal, week):
     approved = 0
     for cceo in _scoped_cceos(scope):
         wfr = _weekly_request_for(cceo["user_id"], week_start)
-        if not wfr or wfr.status != "submitted_to_pl":
+        if not wfr or wfr.status != awaiting_status(principal):
             continue
         lines = list(
             ActivityScheduleCostLine.objects.filter(

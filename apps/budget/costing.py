@@ -280,6 +280,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             add("Transport (primary)", "primary_transport_per_day")
             add("Lunch", "primary_lunch_per_day")
     elif activity_type in TRAINING_TYPES:
+        # The same recipe as a cluster training: a general training is a
+        # facilitated session too, and it used to price without the
+        # facilitation fee (owner, 2026-09-02: "general training should have
+        # the same costing as cluster training or group training").
         n = _participants_of(a, 0)
         days = _days_of(a)
         add(
@@ -287,6 +291,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             "group_training_participant_meal_cost_per_head",
             n * days,
         )
+        add("Facilitation fee", "group_training_facilitation_fee", days)
         add("Venue fee", "group_training_venue_cost", days)
         add_staff_day(days)
     elif activity_type in ("partner_activity", "project_activity"):

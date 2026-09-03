@@ -16,6 +16,7 @@ from .views import (
     school_views,
     cluster_views,
     planning_views,
+    visit_request_views,
     oversight_views,
     budget_views,
     my_plan_views,
@@ -247,6 +248,11 @@ urlpatterns = [
         "dashboard/cd-approve",
         dashboard_views.cd_dashboard_approve_view,
         name="cd_dashboard_approve",
+    ),
+    path(
+        "dashboard/cd-return",
+        dashboard_views.cd_dashboard_return_view,
+        name="cd_dashboard_return",
     ),
     # To-Do operating queue (system-generated, role-scoped)
     path("todos", extended_views.todos_view, name="todos"),
@@ -561,6 +567,17 @@ urlpatterns = [
         "planning/schedule-action",
         planning_views.schedule_action_view,
         name="planning_schedule_action",
+    ),
+    # Visit requests: the owner's queue and the requester's follow-up.
+    path(
+        "planning/visit-requests",
+        visit_request_views.visit_requests_page,
+        name="visit_requests",
+    ),
+    path(
+        "planning/visit-requests/<str:activity_id>/<str:decision>",
+        visit_request_views.visit_request_decide,
+        name="visit_request_decide",
     ),
     path(
         "planning/assign-partner-modal",

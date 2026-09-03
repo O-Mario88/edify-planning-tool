@@ -27,6 +27,7 @@ from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
     COUNTRY_SCHEDULING_ROLES,
+    VISIT_REQUEST_ROLES,
     owner_ids,
     resolve_user_scope,
 )
@@ -378,10 +379,33 @@ def _assert_may_schedule(activity: Activity, principal) -> None:
     scope = resolve_user_scope(principal)
     if scope.active_role in COUNTRY_SCHEDULING_ROLES:
         return
+    if activity.responsible_staff_id in owner_ids(principal):
+        # Their own visit (apps.planning.visit_requests): the Accountant
+        # schedules nothing for anyone else, but may move what they
+        # scheduled for themselves.
+        return
     if scope.country_scope:
         raise Forbidden(
             "Your role reviews and pays for this work rather than scheduling "
             "it. Ask the staff member who owns the activity to move it."
+        )
+
+
+def _assert_not_awaiting_owner(activity: Activity) -> None:
+    """A visit request is decided by its owner, not edited around them.
+
+    Rescheduling and reassigning both rewrite the status to a live plan.
+    Applied to a pending request, either would turn "asked" into "scheduled"
+    with nobody having said yes. The requester withdraws (cancel) and asks
+    again; the owner declines with the reason if the date is wrong.
+    """
+    from apps.planning.visit_requests import AWAITING
+
+    if activity.status == AWAITING:
+        raise BadRequest(
+            "This visit is still waiting for the school owner's approval. "
+            "Withdraw it and request again for a different date, or wait "
+            "for their decision."
         )
 
 
@@ -542,6 +566,18 @@ def _assert_target_in_scope(
     flag could not tell those two apart, so it granted the union.
     """
     scope = resolve_user_scope(principal)
+    if scope.active_role in VISIT_REQUEST_ROLES:
+        # School visits only, at any school. At somebody else's school the
+        # target is admitted here and `create` files it as a request the
+        # owner decides on (apps.planning.visit_requests); where nobody owns
+        # it there is nobody to ask and the visit is simply scheduled. A
+        # cluster meeting or training is the cluster owner's programme and
+        # is refused whoever holds the cluster (owner, 2026-09-02).
+        from apps.planning.visit_requests import refuse_cluster
+
+        refuse_cluster(cluster_id, principal)
+        if school is not None:
+            return
     if scope.active_role in COUNTRY_SCHEDULING_ROLES:
         # Admin stays permitted *here* on purpose, even though the drawer no
         # longer offers it (`can_schedule_activity`). The two are different
@@ -1661,6 +1697,14 @@ def create(
             principal=principal,
             owner_id=data.get("responsibleStaffId"),
         )
+    # Whose approval this needs, if anyone's. Set only for a request-only role
+    # at a school somebody else owns; everything below that reads it is the
+    # request path (apps.planning.visit_requests).
+    approval_owner_id = None
+    if not non_school and school is not None:
+        from apps.planning.visit_requests import approval_owner_for
+
+        approval_owner_id = approval_owner_for(school, principal)
     _assert_schedule_entitlement(
         activity_type,
         school,
@@ -1702,6 +1746,11 @@ def create(
     responsible_staff_id = data.get("responsibleStaffId") or (
         None if is_partner else principal_owner_id
     )
+    if approval_owner_id and not is_partner:
+        # The requester is the one going. The drawer derives the responsible
+        # person from the school's owner, which is right for the owner's own
+        # planning and wrong here: the owner is being asked, not sent.
+        responsible_staff_id = principal_owner_id
     # For partner-delivered activities, also record the scheduling staff member
     # as the monitor so the activity surfaces on THEIR My Plan (the partner
     # branch of My Plan filters by monitored_by_staff_id).
@@ -2064,6 +2113,14 @@ def create(
             if is_partner
             else ("scheduled" if scheduled_date else "planned")
         )
+    visit_justification = ""
+    if approval_owner_id:
+        from apps.planning.visit_requests import AWAITING, JUSTIFICATION_REQUIRED
+
+        visit_justification = (data.get("visitJustification") or "").strip()
+        if not visit_justification:
+            raise BadRequest(JUSTIFICATION_REQUIRED)
+        status = AWAITING
     # The Activity row and its initial cost snapshot (budget lines + weekly
     # fund request sync) must succeed or fail together — otherwise a costing
     # failure right after creation leaves a scheduled Activity persisted with
@@ -2213,6 +2270,8 @@ def create(
             status=status,
             salesforce_activity_type=sf_kind(activity_type),
             ssa_collection_expected=is_ssa_activity,
+            visit_justification=visit_justification,
+            approval_owner_id=approval_owner_id or "",
         )
         if catalogue_item:
             from apps.activity_catalogue.services import apply_catalogue_snapshot
@@ -2280,7 +2339,10 @@ def create(
         # missing-rate blocker above, which only guards dated work
         # (2026-08-12 audit M-4). Pricing happens when the activity is dated
         # (reschedule sets scheduled_date and re-prices).
-        if not skip_cost_snapshot and activity.scheduled_date:
+        # A visit still waiting for its owner's approval is not a plan yet,
+        # so it is not priced yet either — the same rule as undated work.
+        # Approval prices it (apps.planning.visit_requests.approve).
+        if not skip_cost_snapshot and activity.scheduled_date and not approval_owner_id:
             _apply_schedule_cost_snapshot(activity, data, principal=principal)
     # Planning and scheduling must both be on the tamper-evident audit chain.
     # An undated draft is a real planning authorization but it is not yet
@@ -2314,6 +2376,10 @@ def create(
         )
     except Exception:  # pragma: no cover — audit must never break scheduling
         pass
+    if approval_owner_id:
+        from apps.planning.visit_requests import notify_requested
+
+        notify_requested(activity, principal)
     if is_certified_agency_booking:
         _notify_certified_agency_booking(activity, certified_agency, principal)
     _ensure_partner_handover(activity, data)
@@ -3333,6 +3399,7 @@ def _notify_ia_return(a, reason: str) -> None:
 def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     _assert_may_schedule(a, principal)
+    _assert_not_awaiting_owner(a)
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
 
@@ -3523,6 +3590,7 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
     # not a review/pay power, so country-visibility-only roles are refused the
     # same way reschedule refuses them (2026-08-12 audit M-3).
     _assert_may_schedule(a, principal)
+    _assert_not_awaiting_owner(a)
     # The ownership flip and the cost/request rebuild must land together — a
     # costing failure otherwise leaves the activity reassigned while the money
     # still sits with the previous owner. The row lock serialises concurrent

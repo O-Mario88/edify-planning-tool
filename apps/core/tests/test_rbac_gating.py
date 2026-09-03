@@ -104,17 +104,17 @@ class RbacGatingTestCase(TestCase):
         """Accountants must be blocked from scheduling or planning actions."""
         self.client.force_login(self.accountant_user)
 
-        # Attempt to access planning workspace / scheduling dashboard
+        # Planning opens for them since 2026-09-02, and only so they can
+        # schedule a visit into a school somebody else owns. At such a school
+        # the drawer asks why and files a request the owner must approve
+        # (apps.planning.visit_requests) — never a plan of their own.
         response = self.client.get("/planning")
-        self.assertEqual(response.status_code, 302)  # Redirects to dashboard
-        self.assertIn("/dashboard", response.url)
-
-        # Attempt to open scheduling modal (direct GET/POST checks)
+        self.assertEqual(response.status_code, 200)
         response = self.client.get(
             "/planning/schedule-modal?school_id=" + str(self.school.id)
         )
-        self.assertEqual(response.status_code, 302)  # Redirects to dashboard
-        self.assertIn("/dashboard", response.url)
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="visit_justification"')
 
     def test_partner_restricted_access(self):
         """Partner cannot access broad staff directory, admin panel or other private views."""

@@ -92,21 +92,22 @@ class BudgetSpecificationTest(TestCase):
     ):
         act, payload = self.planned_training()
         minimal = preview(payload, minimum=True)
-        # Generic training carries participant meals, a venue and the staff
-        # member's daily transport/lunch. Facilitation is cluster-only.
-        self.assertEqual(minimal["amount"], 64000)
+        # Generic training carries participant meals, facilitation, a venue
+        # and the staff member's daily transport/lunch — the same recipe as a
+        # cluster training (owner, 2026-09-02).
+        self.assertEqual(minimal["amount"], 69000)
         self.assertFalse(minimal["costMissing"])
         self.assertNotIn("operationalCost", minimal)
         self.assertEqual(
             ActivityScheduleCostLine.objects.filter(activity=act).aggregate(
                 total=Sum("amount")
             )["total"],
-            246000,
+            276000,
         )
         wfr = self.request()
         # School-anchored transport is routed to the transport-provider
         # channel, so the staff weekly request excludes that UGX 56,000 line.
-        self.assertEqual(wfr.total_amount, 190000)
+        self.assertEqual(wfr.total_amount, 220000)
         for period in ("month", "quarter", "fy"):
             self.assertEqual(
                 budget_workspace(
@@ -119,7 +120,7 @@ class BudgetSpecificationTest(TestCase):
                         "plan_only": True,
                     },
                 )["total"],
-                246000,
+                276000,
             )
         # A larger regional benchmark is metadata, never a top-up to this request.
         ActivityCostSnapshot.objects.filter(activity=act).update(reference_cost=900000)
@@ -128,10 +129,10 @@ class BudgetSpecificationTest(TestCase):
         )
         submitted = country_budget_service.send_to_rvp(self.cd, ctx["budget_id"])
         snapshot = submitted.snapshots.get(version=submitted.submission_version)
-        self.assertEqual(submitted.total_amount, 246000)
-        self.assertEqual(snapshot.total_amount, 246000)
+        self.assertEqual(submitted.total_amount, 276000)
+        self.assertEqual(snapshot.total_amount, 276000)
         self.assertEqual(snapshot.strategic_reserve_requested, 0)
-        self.assertEqual(sum(line["amount"] for line in snapshot.line_items), 246000)
+        self.assertEqual(sum(line["amount"] for line in snapshot.line_items), 276000)
         country_budget_service.approve(self.rvp, submitted.id)
 
     def test_unset_minimum_is_not_replaced_by_an_operational_price(self):
@@ -168,7 +169,9 @@ class BudgetSpecificationTest(TestCase):
         history = cost_setting_history(key, self.cd)[0]
         self.assertEqual(history["oldApprovedMinimum"], 3000)
         self.assertEqual(history["newApprovedMinimum"], 4000)
-        self.assertEqual(preview(payload, minimum=True)["amount"], 74000)
+        # 69,000 minimal recipe (meals, facilitation, venue, staff day) plus
+        # the 5,000 the CD just added to the participant-meal minimum.
+        self.assertEqual(preview(payload, minimum=True)["amount"], 79000)
         with self.assertRaises(BadRequest):
             upsert_cost_setting(
                 {

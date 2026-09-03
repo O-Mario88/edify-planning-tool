@@ -3921,6 +3921,36 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 }
 
+/* Planning rows keep Schedule and Assign beside the school name at every
+   width (owner, 2026-09-02). The shared row drops its actions under the name
+   once the list is narrower than 58rem — which, beside the sidebar, is most
+   laptops — so the planner's two buttons sat a line below the school they
+   act on. Here they stay on the name's row and shed their labels for icons
+   when the row gets tight; each button carries an aria-label, so nothing is
+   lost to a screen reader. Written for both the media-query fallback and
+   the container-query twin above, like the rules they override. */
+@media (max-width: 52rem) {
+  .planning-school-row .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+  .planning-school-row .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 3; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end; }
+}
+
+@media (max-width: 33rem) {
+  .planning-school-row .school-record-action span { display: none; }
+  .planning-school-row .school-record-action { padding-inline: .55rem; }
+}
+
+@supports (container-type: inline-size) {
+  @container school-record (max-width: 58rem) {
+    .planning-school-row .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+    .planning-school-row .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 3; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end; }
+  }
+
+  @container school-record (max-width: 38rem) {
+    .planning-school-row .school-record-action span { display: none; }
+    .planning-school-row .school-record-action { padding-inline: .55rem; }
+  }
+}
+
 /* ── Report and performance workspace ──────────────────────────────────────
    The report canvas shares the topbar's workspace gutter at every width. It
    must not introduce a centered inner rail: on wide monitors that made the

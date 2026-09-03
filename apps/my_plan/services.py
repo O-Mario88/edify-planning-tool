@@ -92,6 +92,9 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     if status in ("completed", "closed"):
         return "Activity complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
 
+    if status == "awaiting_owner_approval":
+        return "Awaiting owner approval", "bg-amber-50 text-amber-700 border-amber-200"
+
     if status in (
         "submitted_to_pl",
         "awaiting_ia_verification",
@@ -285,6 +288,15 @@ _WORKED_STATUSES = (
 
 def compute_next_action(a, today) -> dict:
     """Computes the single primary action and its properties for a given activity."""
+    # 0. Asked, not yet granted. Nothing to do here but wait; the request
+    # page shows who was asked and what they said.
+    if a.status == "awaiting_owner_approval":
+        return {
+            "text": "Waiting for owner approval",
+            "action": "await_owner",
+            "url": "/planning/visit-requests",
+            "description": "The school's owner has been asked to approve this visit",
+        }
     # 1. Returned by IA or PL -> Fix and Resubmit
     if a.status in (
         "returned",

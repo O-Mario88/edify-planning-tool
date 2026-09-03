@@ -4,6 +4,8 @@ from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.htmx_errors import error_fragment
 from apps.core.exceptions import BadRequest
 from apps.core.permissions import (
+    get_visit_target_school_or_404,
+    require_any_page_permission,
     require_export_permission,
     require_page_permission,
     RolePermissionService,
@@ -757,8 +759,14 @@ def planning_dashboard_view(request):
         and not request.headers.get("HX-Target")
         else "layouts/shell.html",
         "use_dark_sidebar": False,
-        # Guards
-        "can_schedule": RolePermissionService.can_schedule_activity(request.user),
+        # Guards. A request-only country role gets the same button: the
+        # drawer it opens files a request for the owner to decide, not a plan.
+        "can_schedule": _may_open_schedule_drawer(request.user),
+        # Cluster meetings and trainings are the cluster owner's programme;
+        # the request-only country roles schedule school visits only.
+        "can_plan_clusters": RolePermissionService.can_schedule_activity(
+            request.user
+        ),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
         "planning_priority": planning_priority,
         "priority_allocation_id": priority_allocation_id,
@@ -782,9 +790,24 @@ def planning_dashboard_view(request):
     return render(request, "pages/planning/index.html", context)
 
 
-@require_page_permission("planning")
+def _may_open_schedule_drawer(user) -> bool:
+    """Planners plan; the request-only country roles ask. Same drawer."""
+    return RolePermissionService.can_schedule_activity(
+        user
+    ) or RolePermissionService.can_request_school_visit(user)
+
+
+def _requester_identity(user) -> str | None:
+    return (
+        getattr(user, "staff_profile_id", None)
+        or getattr(user, "user_id", None)
+        or getattr(user, "id", None)
+    )
+
+
+@require_any_page_permission("planning", "visit_requests")
 def schedule_modal_view(request):
-    if not RolePermissionService.can_schedule_activity(request.user):
+    if not _may_open_schedule_drawer(request.user):
         return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 
     priority_allocation_id = (request.GET.get("priority_allocation") or "").strip()
@@ -797,6 +820,10 @@ def schedule_modal_view(request):
         )
     cluster_id = request.GET.get("cluster_id")
     if cluster_id:
+        if not RolePermissionService.can_schedule_activity(request.user):
+            from apps.planning.visit_requests import CLUSTER_REFUSED
+
+            return HttpResponseForbidden(CLUSTER_REFUSED)
         cluster = get_operational_cluster_or_404(request.user, id=cluster_id)
         action = request.GET.get("action", "training")
         partners = assignable_partners()
@@ -848,7 +875,7 @@ def schedule_modal_view(request):
         )
 
     school_id = request.GET.get("school_id")
-    school = get_operational_school_or_404(
+    school = get_visit_target_school_or_404(
         request.user, Q(id=school_id) | Q(school_id=school_id)
     )
     project_id = request.GET.get("project_id", "")
@@ -982,9 +1009,23 @@ def schedule_modal_view(request):
     responsible_staff_id, responsible_staff_name = resolve_monitoring_staff(
         school, request.user
     )
+    # A request-only role at somebody else's school: the drawer asks for the
+    # reason, names the owner who will decide, and files the visit against the
+    # person going rather than the person being asked.
+    from apps.planning.visit_requests import approval_owner_for, staff_name
+
+    visit_request_owner_id = approval_owner_for(school, request.user)
+    visit_request_owner_name = ""
+    if visit_request_owner_id:
+        visit_request_owner_name = (
+            staff_name(visit_request_owner_id) or "the school's owner"
+        )
+        responsible_staff_id = _requester_identity(request.user)
+        responsible_staff_name = getattr(request.user, "name", "") or "You"
 
     context = {
         "school": school,
+        "visit_request_owner_name": visit_request_owner_name,
         "recommendations": recommendations,
         "interventions": SsaIntervention.choices,
         "partners": partners,
@@ -1029,9 +1070,9 @@ def schedule_modal_view(request):
     return render(request, "partials/planning/schedule_drawer.html", context)
 
 
-@require_page_permission("planning")
+@require_any_page_permission("planning", "visit_requests")
 def schedule_action_view(request):
-    if not RolePermissionService.can_schedule_activity(request.user):
+    if not _may_open_schedule_drawer(request.user):
         return HttpResponseForbidden(_no_scheduling_permission_message(request.user))
 
     if request.method != "POST":
@@ -1267,17 +1308,29 @@ def schedule_action_view(request):
         except ValueError:
             pass
 
+    visit_request_owner_id = None
     if school_id:
         payload["schoolId"] = school_id
         # School scheduling is owned by the portfolio owner, not whichever
         # authorised staff member happened to open the drawer.  Resolve again
         # on POST so a forged/stale hidden field cannot reassign the work.
-        owner_school = get_operational_school_or_404(
+        owner_school = get_visit_target_school_or_404(
             request.user, Q(id=school_id) | Q(school_id=school_id)
         )
         responsible_staff_id, _name = resolve_monitoring_staff(
             owner_school, request.user
         )
+        from apps.planning.visit_requests import approval_owner_for
+
+        visit_request_owner_id = approval_owner_for(owner_school, request.user)
+        if visit_request_owner_id:
+            # Asking, not planning: the requester is the one going, and the
+            # reason travels with the request. The service refuses a request
+            # without one.
+            responsible_staff_id = _requester_identity(request.user)
+            payload["visitJustification"] = request.POST.get(
+                "visit_justification", ""
+            ).strip()
         if delivery_type == "staff" and not partner_id:
             payload["responsibleStaffId"] = responsible_staff_id
     if cluster_id:
@@ -1335,6 +1388,21 @@ def schedule_action_view(request):
         else:
             created = schedule_cluster_activity(payload, request.user)
             noun = "Cluster activity"
+        if visit_request_owner_id:
+            # Not on anyone's plan yet. Say who decides and where to follow it.
+            from apps.planning.visit_requests import QUEUE_URL, staff_name
+
+            who = staff_name(visit_request_owner_id) or "the school's owner"
+            messages.success(
+                request,
+                f"Scheduled, pending {who}'s approval. It takes effect on your "
+                "plan and enters your budget once approved.",
+            )
+            response = HttpResponse(
+                f'<script>window.location.href = "{QUEUE_URL}";</script>'
+            )
+            response["HX-Trigger"] = "close-drawer"
+            return response
         # Confirm where it went, not just that it happened. When the work is
         # filed against somebody else the creator must be told so, because the
         # next screen will not show it and silence there reads as a failure.

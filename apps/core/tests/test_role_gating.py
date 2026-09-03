@@ -158,10 +158,10 @@ class RoleGatingPermissionTest(APITestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(response.url.endswith("/accounts"))
 
-        # Blocked from planning
+        # Planning opens since 2026-09-02, only as the door to scheduling a
+        # visit the school's owner must approve (apps.planning.visit_requests).
         response_planning = self.client.get("/planning")
-        self.assertEqual(response_planning.status_code, 302)
-        self.assertTrue(response_planning.url.endswith("/dashboard"))
+        self.assertEqual(response_planning.status_code, 200)
 
     def test_rvp_dashboard_rendering_and_blocking(self):
         """Regional Vice President dashboard should render successfully and restrict operational planning access."""

@@ -269,7 +269,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "public_holidays": ALL_ROLES,
     "team_availability": {PL, CD, RVP, HR, ADMIN},
     "schools": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
-    "core_schools": {CCEO, PL, IA, ADMIN},
+    # CD and the Accountant since 2026-09-02, for the same reason as
+    # `planning`: a core visit they schedule is filed as a request the school's
+    # owner approves (apps.planning.visit_requests). Core trainings stay the
+    # owner's; the drawer refuses those roles.
+    "core_schools": {CCEO, PL, IA, CD, ACCOUNTANT, ADMIN},
     "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
     "school_profile": {
         CCEO,
@@ -297,7 +301,18 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The CD plans plenty of non-school work (district trips, boot camps,
     # partner meetings), so they hold the planning surface too — the field-
     # event drawer is its entry point for them (owner, 2026-08-19).
-    "planning": {CCEO, PL, PROJECT_COORDINATOR, CD, ADMIN},
+    # Impact Assessment and the Accountant are here since 2026-09-02, for one
+    # reason: it is where they schedule a visit into a CCEO's or PL's school.
+    # The page's Schedule button opens the same drawer for them, and the
+    # service files what they schedule as a request the school's owner must
+    # approve before it takes effect (apps.planning.visit_requests). Nothing
+    # else on the page is theirs to act on — every write behind it keeps its
+    # own gate (owner, 2026-09-02).
+    "planning": {CCEO, PL, PROJECT_COORDINATOR, CD, IA, ACCOUNTANT, ADMIN},
+    # The owner's approval queue and the requester's follow-up
+    # (apps.planning.visit_requests). Not in the sidebar: owners reach it
+    # from the To-Do and the notification, requesters from the notification.
+    "visit_requests": {CCEO, PL, PROJECT_COORDINATOR, CD, IA, ACCOUNTANT, ADMIN},
     # Work Plan is the FY-level roll-up of the same activity ledger Planning
     # writes. Field planners keep it, and the leadership/verification roles
     # (CD, IA, HR) read it without being able to plan. The RVP gets aggregate
@@ -308,7 +323,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # _ROUTE_TO_CD names them explicitly — so locking them out of the page meant
     # they generated requests they could never see or confirm.
     "weekly_fund_request": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
-    "fund_approvals": {PL, ADMIN},
+    # The CD since 2026-09-03: PL, Project Coordinator, IA and Accountant
+    # weekly requests route to the Country Director, who had no queue page.
+    "fund_approvals": {PL, CD, ADMIN},
     "fund_requests": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
     "monthly_request": {CD, PL, RVP, ACCOUNTANT, IA, PROJECT_COORDINATOR, ADMIN},
     "my_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
@@ -1135,9 +1152,25 @@ SIDEBAR_ITEMS = [
                 # non-school work (district trips, boot camps, partner
                 # meetings) — Planning surfaces here for them; field roles
                 # keep their entry in SCHOOLS & FIELD (owner, 2026-08-19).
+                # IA and the Accountant reach it here too: it is where they
+                # schedule a visit the school's owner then approves
+                # (owner, 2026-09-02).
                 "label": "Planning",
                 "url": "/planning",
                 "page_key": "planning",
+                "visible_to": {CD, IA, ACCOUNTANT},
+            },
+            {
+                # Same reasoning as Planning above. The CD holds `clusters`
+                # with country scope, so /clusters already lists every
+                # cluster for them in the same card directory a CCEO or PL
+                # opens from SCHOOLS & FIELD — but with no entry here the only
+                # cluster list they were ever offered was the grouped
+                # oversight table on Team Oversight, which is a different
+                # layout answering a different question (who holds what).
+                "label": "Clusters",
+                "url": "/clusters",
+                "page_key": "clusters",
                 "visible_to": {CD},
             },
             {

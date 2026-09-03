@@ -51,7 +51,15 @@ from apps.my_plan.services import (
 # Terminal states that never count toward plan totals. A status filter naming
 # one of them reveals those rows explicitly (§ spec: excluded from totals and
 # the default list, revealable on demand).
-HIDDEN_TERMINAL_STATUSES = ("cancelled", "rejected", "deferred")
+# `awaiting_owner_approval` is not terminal, but it is not a plan either: a
+# visit requested into another person's portfolio counts for nothing until
+# that owner approves it, and then it appears here as ordinary scheduled work.
+HIDDEN_TERMINAL_STATUSES = (
+    "cancelled",
+    "rejected",
+    "deferred",
+    "awaiting_owner_approval",
+)
 
 # "Still expected to happen" — the scheduled/in-progress family. A dated
 # activity whose service window has fully passed while still in one of these

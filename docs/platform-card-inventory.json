@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 624,
-  "templates": 222,
-  "distinct_titles": 593,
+  "titled_cards": 627,
+  "templates": 223,
+  "distinct_titles": 596,
   "with_card_key": 13,
-  "untitled_surfaces": 1007,
+  "untitled_surfaces": 1010,
   "untitled_chrome": 229,
-  "untitled_nested": 387,
+  "untitled_nested": 390,
   "untitled_headless": 391,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
@@ -3122,6 +3122,52 @@
    "branch_path": []
   },
   {
+   "template": "templates/pages/planning/visit_requests.html",
+   "line": 19,
+   "title": "Your requests",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "p-3.5 rounded-surface border text-[12px] font-bold flex items-center justify-between {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-eme",
+   "branch_path": [
+    [
+     3,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/planning/visit_requests.html",
+   "line": 57,
+   "title": "Awaiting your decision",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)]",
+   "branch_path": [
+    [
+     10,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/planning/visit_requests.html",
+   "line": 70,
+   "title": "asks to visit your school",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm flex flex-col md:flex-row md:items-start justify-between gap-5",
+   "branch_path": [
+    [
+     10,
+     0
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
    "template": "templates/pages/professional_development/index.html",
    "line": 54,
    "title": "PD Policy &amp; Guidelines",
@@ -4835,7 +4881,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 169,
+   "line": 174,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4844,7 +4890,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 237,
+   "line": 242,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4853,7 +4899,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 274,
+   "line": 279,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4862,7 +4908,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 298,
+   "line": 303,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4871,7 +4917,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 347,
+   "line": 352,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4880,7 +4926,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 421,
+   "line": 426,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -6050,22 +6096,22 @@
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",
-   "line": 140,
+   "line": 147,
    "title": "Top SSA recommendation:",
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-risk-card",
    "branch_path": [
     [
-     8,
+     9,
      0
     ],
     [
-     9,
+     10,
      1
     ],
     [
-     10,
+     11,
      0
     ]
    ]

@@ -79,8 +79,8 @@ inset themselves — see components/mobile-shell.css.
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260828tiles1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260831budget1">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260902popover1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260902popover1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbaralign2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260828tiles1">
@@ -100,12 +100,12 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260826modal1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260828schoolid1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260902rowactions1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260828tiles1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260902popover2">{% endblock %}
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260828schoolid1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on

@@ -48,6 +48,13 @@ aria-label="Close schedule Core Visit dialog"
 </button>
 </div>
 
+{% if visit_request_owner_name %}
+<div class="rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900 text-[12px]" role="status" data-visit-request-notice>
+  <p class="font-bold">This school is in {{ visit_request_owner_name }}&rsquo;s portfolio.</p>
+  <p class="mt-1 font-medium">Schedule the visit as usual and say why you need to be there. {{ visit_request_owner_name }} approves or declines it; once approved it takes effect on your plan and enters your budget.</p>
+</div>
+{% endif %}
+
 <!-- Form Error Container -->
 <div id="visit-form-errors"></div>
 
@@ -254,6 +261,17 @@ x-text="day"
 </div>
 
 <!-- Responsible Staff -->
+{% if visit_request_owner_name %}
+<div>
+<label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Responsible Person</label>
+<div class="w-full min-h-10 px-3 flex items-center rounded-control border border-slate-200 bg-slate-100 font-semibold text-slate-700">{{ requester_name }}</div>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">You are the one visiting. {{ visit_request_owner_name }} is asked to approve, not to go.</p>
+</div>
+<div>
+<label for="visit_justification" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Why you need to visit this school <span class="text-rose-500">*</span></label>
+<textarea name="visit_justification" id="visit_justification" required rows="3" class="w-full p-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none font-medium text-slate-700" placeholder="On top of the purpose above: why must you, rather than {{ visit_request_owner_name }}, be at this school?"></textarea>
+</div>
+{% else %}
 <div>
 <label for="responsible_staff_id" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Responsible Staff Owner</label>
 <select name="responsible_staff_id" id="responsible_staff_id" class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 focus:outline-none cursor-pointer">
@@ -263,6 +281,7 @@ x-text="day"
 {% endfor %}
 </select>
 </div>
+{% endif %}
 
 <!-- Delivery Option -->
 <div>

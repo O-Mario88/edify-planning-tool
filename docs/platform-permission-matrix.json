@@ -626,6 +626,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -641,6 +643,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -656,6 +660,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -783,6 +789,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -926,6 +934,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -968,6 +978,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -983,6 +995,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -998,6 +1012,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -1013,6 +1029,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6962,6 +6980,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6977,6 +6997,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -6992,6 +7014,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7007,6 +7031,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7022,6 +7048,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7037,6 +7065,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7052,6 +7082,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7067,6 +7099,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7082,6 +7116,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7097,6 +7133,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7112,6 +7150,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7127,6 +7167,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7142,6 +7184,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7157,6 +7201,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7200,6 +7246,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7215,6 +7263,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7256,7 +7306,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools",
@@ -7271,6 +7323,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -7285,7 +7339,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/<str:school_id>/champion-approve",
@@ -7299,7 +7355,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/<str:school_id>/champion-reject",
@@ -7313,7 +7371,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/<str:school_id>/champion-review",
@@ -7327,7 +7387,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/assessment",
@@ -7341,7 +7403,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/assign-partner",
@@ -7355,7 +7419,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/assign-partner/action",
@@ -7369,7 +7435,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/champion-candidates",
@@ -7383,7 +7451,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/champions",
@@ -7397,7 +7467,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/oversight/send",
@@ -7411,7 +7483,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/schedule-activity",
@@ -7425,7 +7499,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/schedule-training",
@@ -7439,7 +7515,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/schedule-training/action",
@@ -7453,7 +7531,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/schedule-visit",
@@ -7467,7 +7547,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/schedule-visit/action",
@@ -7481,7 +7563,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "Admin"
    ],
    "route": "/core-schools/strategy-playbook",
@@ -7802,6 +7886,18 @@
    "route": "/dashboard/cd-approve",
    "route_name": "cd_dashboard_approve",
    "view": "apps.frontend.views.dashboard_views.cd_dashboard_approve_view"
+  },
+  {
+   "page_permission": "cd_analytics",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/dashboard/cd-return",
+   "route_name": "cd_dashboard_return",
+   "view": "apps.frontend.views.dashboard_views.cd_dashboard_return_view"
   },
   {
    "page_permission": "dashboard",
@@ -8246,6 +8342,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -8261,6 +8359,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -8346,6 +8446,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -8612,6 +8714,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "CountryDirector",
     "Admin"
    ],
    "route": "/fund-approvals",
@@ -8624,6 +8727,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "CountryDirector",
     "Admin"
    ],
    "route": "/fund-approvals/action",
@@ -8636,6 +8740,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "CountryDirector",
     "Admin"
    ],
    "route": "/fund-approvals/detail",
@@ -8648,6 +8753,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "CountryDirector",
     "Admin"
    ],
    "route": "/fund-approvals/invoices/<str:invoice_id>/action",
@@ -8660,6 +8766,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "CountryDirector",
     "Admin"
    ],
    "route": "/fund-approvals/invoices/<str:invoice_id>/download",
@@ -8672,6 +8779,7 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
+    "CountryDirector",
     "Admin"
    ],
    "route": "/fund-approvals/return",
@@ -8919,6 +9027,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -11389,6 +11499,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -11404,6 +11516,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12142,6 +12256,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12157,6 +12273,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12172,6 +12290,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12187,6 +12307,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12202,6 +12324,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12217,6 +12341,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12232,6 +12358,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12247,6 +12375,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12262,6 +12392,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12277,6 +12409,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12292,6 +12426,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12307,6 +12443,8 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -12322,12 +12460,48 @@
     "CCEO",
     "Program Lead",
     "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
    "route": "/planning/schedule/schools",
    "route_name": "planning_schedule_school_options",
    "view": "apps.frontend.views.planning_views.schedule_school_options_view"
+  },
+  {
+   "page_permission": "visit_requests",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/visit-requests",
+   "route_name": "visit_requests",
+   "view": "apps.frontend.views.visit_request_views.visit_requests_page"
+  },
+  {
+   "page_permission": "visit_requests",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/planning/visit-requests/<str:activity_id>/<str:decision>",
+   "route_name": "visit_request_decide",
+   "view": "apps.frontend.views.visit_request_views.visit_request_decide"
   },
   {
    "page_permission": "policies",
@@ -14077,26 +14251,26 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 288,
-  "Admin": 768,
+  "Accountant": 351,
+  "Admin": 771,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 473,
-  "CountryDirector": 544,
+  "CCEO": 475,
+  "CountryDirector": 569,
   "HumanResources": 264,
-  "ImpactAssessment": 404,
+  "ImpactAssessment": 451,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
-  "Program Lead": 547,
-  "ProjectCoordinator": 404,
+  "Program Lead": 549,
+  "ProjectCoordinator": 406,
   "RegionalVicePresident": 303
  },
  "summary": {
-  "page_keys_declared": 148,
-  "page_keys_in_navigation": 165,
-  "routes_guarded": 862,
-  "routes_total": 1046,
+  "page_keys_declared": 149,
+  "page_keys_in_navigation": 166,
+  "routes_guarded": 865,
+  "routes_total": 1049,
   "routes_unguarded": 184,
   "surfaces_no_role_can_reach": 0
  },

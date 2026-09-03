@@ -96,6 +96,7 @@
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/services.py",
+        "apps/planning/visit_requests.py",
         "apps/professional_development/approval_service.py",
         "apps/professional_development/completion_service.py",
         "apps/professional_development/fund_service.py",
@@ -458,6 +459,7 @@
         "apps/pl_review/services.py",
         "apps/planning/action_service.py",
         "apps/planning/services.py",
+        "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
         "apps/projects/signals.py",
         "apps/realtime/bus.py",
@@ -1015,6 +1017,7 @@
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/services.py",
+        "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
         "apps/projects/handlers.py",
         "apps/projects/models.py",
@@ -1243,6 +1246,7 @@
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/services.py",
+        "apps/planning/visit_requests.py",
         "apps/projects/signals.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
@@ -1454,6 +1458,7 @@
         "apps/notifications/services.py",
         "apps/outbox/services.py",
         "apps/planning/services.py",
+        "apps/planning/visit_requests.py",
         "apps/projects/signals.py",
         "apps/routes/engine.py",
         "apps/routes/location.py",
@@ -1775,6 +1780,7 @@
         "apps/outbox/services.py",
         "apps/pl_review/services.py",
         "apps/planning/services.py",
+        "apps/planning/visit_requests.py",
         "apps/professional_development/services.py",
         "apps/projects/signals.py",
         "apps/projects/staff_priorities.py",
@@ -2039,6 +2045,7 @@
         "apps/core/audit_hash.py",
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
+        "apps/core/logging_filters.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
@@ -3282,9 +3289,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "7aed47ea6253a0b3992825abff6c6df6da3dbbfac74746071c2179185c14a668",
-    "sources": "5ec252b607c0e5cb088d4a38fec303d99902449f399aa1e4701c3cc8b140fa81",
-    "sourceCount": 177,
+    "payload": "e23b4040fc41609e794986ef6ad6d34959931f625745b6192e51e581d09d6a92",
+    "sources": "b205920803fb9080e0f64d257e75c43b45425282c16e1d6176db7482767a0c50",
+    "sourceCount": 178,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

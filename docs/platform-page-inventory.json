@@ -744,7 +744,8 @@
       "example_pages": [
         "/analytics/country-director",
         "/dashboard",
-        "/dashboard/cd-approve"
+        "/dashboard/cd-approve",
+        "/dashboard/cd-return"
       ],
       "findings": [],
       "forms": 0,
@@ -2332,7 +2333,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3746,
+      "bytes": 3787,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -2935,7 +2936,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 4317,
+      "bytes": 4344,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-activity"
@@ -2986,9 +2987,10 @@
     {
       "accessibility_requirements": [
         "accessible name and label",
-        "keyboard focus visibility"
+        "keyboard focus visibility",
+        "announced dynamic state"
       ],
-      "bytes": 14880,
+      "bytes": 16465,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3114,7 +3116,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6502,
+      "bytes": 6611,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
@@ -3205,16 +3207,20 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 30713,
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 31393,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
-        "/dashboard/cd-approve"
+        "/dashboard/cd-approve",
+        "/dashboard/cd-return"
       ],
       "findings": [],
-      "forms": 0,
-      "htmx_controls": 1,
+      "forms": 1,
+      "htmx_controls": 2,
       "kind": "application-partial",
       "name": "Body",
       "purpose": "Reusable body interface primitive",
@@ -6646,7 +6652,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 31415,
+      "bytes": 33168,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -6695,7 +6701,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5282,
+      "bytes": 5447,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -6721,7 +6727,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 14710,
+      "bytes": 14777,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -12748,9 +12754,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -12836,9 +12844,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -12923,9 +12933,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -13669,9 +13681,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -14603,9 +14617,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -14773,9 +14789,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -14855,9 +14873,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -14937,9 +14957,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -15020,9 +15042,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -20779,9 +20803,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -20869,9 +20895,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -20954,9 +20982,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21044,9 +21074,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21131,9 +21163,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21216,9 +21250,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21305,9 +21341,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21393,9 +21431,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21478,9 +21518,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21570,9 +21612,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21662,9 +21706,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21757,9 +21803,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21847,9 +21895,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -21929,9 +21979,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -22176,9 +22228,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -22261,9 +22315,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -22509,8 +22565,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -22602,9 +22660,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -22709,8 +22769,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -22796,8 +22858,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -22884,8 +22948,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -22982,8 +23048,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23078,8 +23146,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23172,8 +23242,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23262,8 +23334,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23355,8 +23429,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23447,8 +23523,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23539,8 +23617,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23635,8 +23715,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23731,8 +23813,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23821,8 +23905,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -23916,8 +24002,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -24004,8 +24092,10 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
         "IA",
         "PL"
       ],
@@ -25862,6 +25952,7 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
+        "POST /dashboard/cd-return?id={{ r.id }}&fy={{ fy }}",
         "GET /dashboard",
         "GET /dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}",
         "GET /rvp/approvals?fy={{ fy }}",
@@ -25907,6 +25998,7 @@
       "route_name": "dashboard",
       "search": "shared topbar search or none",
       "secondary_actions": [
+        "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}",
         "/rvp/project/{{ p.id }}/decision",
         "/country-budget/action",
         "/rvp/annual/{{ a.id }}/action",
@@ -25986,10 +26078,11 @@
       "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}"
+        "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
+        "POST /dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
@@ -26015,7 +26108,105 @@
       "route": "/dashboard/cd-approve",
       "route_name": "cd_dashboard_approve",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.admin_ops.services",
+        "apps.core.scoping",
+        "apps.fund_requests.models",
+        "apps.notifications.models",
+        "apps.projects.models",
+        "apps.projects.scoping",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": true,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "partial",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/dashboards/cd/body.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]",
+        "text-[14px]",
+        "text-[15px]",
+        "text-[16px]",
+        "text-[20px]"
+      ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.dashboard_views",
+      "backend_view": "apps.frontend.views.dashboard_views.cd_dashboard_return_view",
+      "card_count": 0,
+      "charts": true,
+      "drawers": false,
+      "evidence": [
+        "template:partials/dashboards/cd/body.html",
+        "test:referenced-by-automated-test",
+        "permission:cd_analytics"
+      ],
+      "filters": "filter controls detected; parent/context review",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
+        "POST /dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-35678484B9",
+      "page_title": "Cd Dashboard Return",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cd_analytics",
+      "primary_action": "Cd Dashboard Return",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Return an escalated weekly fund request with a reason, from the CD dashboard. Approve had no counterpart here, so a request the CD would not sign had to be hunted down on the weekly page by staff tab and week.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/dashboard/cd-return",
+      "route_name": "cd_dashboard_return",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -28307,9 +28498,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -28415,9 +28608,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -29025,9 +29220,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -30677,6 +30874,7 @@
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
+        "CD",
         "PL"
       ],
       "route": "/fund-approvals",
@@ -30790,6 +30988,7 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
+        "CD",
         "PL"
       ],
       "route": "/fund-approvals/action",
@@ -30900,6 +31099,7 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
+        "CD",
         "PL"
       ],
       "route": "/fund-approvals/detail",
@@ -31012,6 +31212,7 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
+        "CD",
         "PL"
       ],
       "route": "/fund-approvals/invoices/<str:invoice_id>/action",
@@ -31118,6 +31319,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "ADMIN",
+        "CD",
         "PL"
       ],
       "route": "/fund-approvals/invoices/<str:invoice_id>/download",
@@ -31219,6 +31421,7 @@
       "responsive_state": "detected",
       "role_access": [
         "ADMIN",
+        "CD",
         "PL"
       ],
       "route": "/fund-approvals/return",
@@ -32590,9 +32793,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -44687,9 +44892,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -44774,9 +44981,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -48838,9 +49047,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -48936,9 +49147,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49026,9 +49239,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49128,9 +49343,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49227,9 +49444,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49320,9 +49539,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49417,9 +49638,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49508,9 +49731,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49604,9 +49829,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49701,9 +49928,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49798,9 +50027,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49893,9 +50124,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -49994,9 +50227,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
+        "IA",
         "PL",
         "PROJECT_COORDINATOR"
       ],
@@ -50044,6 +50279,173 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.visit_request_views",
+      "backend_view": "apps.frontend.views.visit_request_views.visit_requests_page",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/planning/visit_requests.html",
+        "test:referenced-by-automated-test",
+        "permission:visit_requests"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4F8B7694FF",
+      "page_title": "Visit Requests - Edify Planning Tool",
+      "page_type": "planning-or-creation",
+      "per_page_css": [],
+      "permission_key": "visit_requests",
+      "primary_action": "Complete planning form",
+      "primary_user_decision": "What should be created, scheduled, or allocated?",
+      "purpose": "Visits you scheduled into another person&rsquo;s schools, and what their owners decided. A visit takes effect on your plan and budget once approved. Visits other staff have asked to make to your schools. Approve them onto their plan, or decline with a reason.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/visit-requests",
+      "route_name": "visit_requests",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/planning/visit-requests/{{ a.id }}/approve",
+        "/planning/visit-requests/{{ a.id }}/decline"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.audit.services"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/planning/visit_requests.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[15px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.visit_request_views",
+      "backend_view": "apps.frontend.views.visit_request_views.visit_request_decide",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:visit_requests"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C8A20A3C2A",
+      "page_title": "Visit Request Decide",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "visit_requests",
+      "primary_action": "Visit Request Decide",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate visit request decide within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/planning/visit-requests/<str:activity_id>/<str:decision>",
+      "route_name": "visit_request_decide",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.audit.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -60672,6 +61074,10 @@
       {
         "label": "Not Planned",
         "value": "not_planned"
+      },
+      {
+        "label": "Awaiting Owner Approval",
+        "value": "awaiting_owner_approval"
       },
       {
         "label": "Planned",
@@ -71807,6 +72213,20 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.dashboard_views.cd_dashboard_return_view",
+      "kind": "partial",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cd_analytics",
+      "required_permissions": [],
+      "route": "/dashboard/cd-return",
+      "route_name": "cd_dashboard_return",
+      "templates": [
+        "partials/dashboards/cd/body.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.dashboard_views.program_lead_dashboard_view",
       "kind": "action",
       "methods": [
@@ -75508,6 +75928,32 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.visit_request_views.visit_requests_page",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "visit_requests",
+      "required_permissions": [],
+      "route": "/planning/visit-requests",
+      "route_name": "visit_requests",
+      "templates": [
+        "pages/planning/visit_requests.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.visit_request_views.visit_request_decide",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "visit_requests",
+      "required_permissions": [],
+      "route": "/planning/visit-requests/<str:activity_id>/<str:decision>",
+      "route_name": "visit_request_decide",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.hr_views.policies_view",
       "kind": "action",
       "methods": [
@@ -77228,30 +77674,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 377,
-    "activity_states": 23,
-    "all_routes": 1046,
+    "accessibility_contract_pass": 379,
+    "activity_states": 24,
+    "all_routes": 1049,
     "api_routes": 359,
     "component_templates": 346,
-    "full_pages": 202,
-    "mobile_contract_pass": 377,
-    "nonvisual_actions": 183,
+    "full_pages": 203,
+    "mobile_contract_pass": 379,
+    "nonvisual_actions": 184,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 3,
       "approval-or-verification": 16,
       "dashboard": 3,
-      "interaction-fragment": 355,
+      "interaction-fragment": 357,
       "operational-queue": 121,
-      "planning-or-creation": 6,
+      "planning-or-creation": 7,
       "record-detail": 24,
       "report": 25
     },
-    "partials_and_drawers": 172,
-    "permission_gated": 568,
+    "partials_and_drawers": 173,
+    "permission_gated": 571,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 578,
+    "routed_surfaces": 581,
     "scheduled_jobs": 23,
     "severity_counts": {
       "critical": 0,
@@ -77259,8 +77705,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 377,
-    "test_referenced": 534,
-    "theme_contract_pass": 377
+    "tablet_contract_pass": 379,
+    "test_referenced": 537,
+    "theme_contract_pass": 379
   }
 }

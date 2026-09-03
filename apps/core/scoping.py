@@ -59,6 +59,18 @@ COUNTRY_SCHEDULING_ROLES = {
     EdifyRole.ADMIN.value,
 }
 SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
+# Country roles with no portfolio of their own. They never plan *directly*
+# into a CCEO's or Programme Lead's schools or clusters — a visit they need at
+# somebody else's school is scheduled the ordinary way, carries the reason for
+# it, and waits for that owner's approval before it takes effect. The Country
+# Director and Impact Assessment keep their direct authority over targets
+# nobody owns (COUNTRY_SCHEDULING_ROLES); the Accountant, who schedules
+# nothing of their own, can only ask. See apps.planning.visit_requests.
+VISIT_REQUEST_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.PROGRAM_ACCOUNTANT.value,
+}
 
 
 @dataclass
@@ -849,6 +861,19 @@ def may_plan_school(scope: UserScope, school) -> bool:
         return False
     school_id = getattr(school, "id", school)
     return bool(scope.own_school_ids) and school_id in scope.own_school_ids
+
+
+def may_request_school_visit(scope: UserScope, school) -> bool:
+    """Whether this person may ask the school's owner for a visit.
+
+    The request path, not the planning path: a Country Director, Impact
+    Assessment or the Accountant reaching a school that belongs to a CCEO or
+    Programme Lead. `may_plan_school` stays the answer for everyone who owns
+    what they are planning in.
+    """
+    # Any school: where it has an owner the visit waits for their approval,
+    # where it has none it is simply scheduled (owner, 2026-09-02).
+    return getattr(scope, "active_role", None) in VISIT_REQUEST_ROLES
 
 
 def assert_may_plan_school(principal, school) -> None:

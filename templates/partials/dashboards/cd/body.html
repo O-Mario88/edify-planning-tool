@@ -133,7 +133,12 @@
                 <button hx-post="/dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}"
                         hx-target="#cd-dashboard-body" hx-swap="innerHTML"
                         class="h-7 px-2.5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-bold transition-colors">Approve</button>
-                <a href="/fund-requests/weekly" class="h-7 px-2.5 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold inline-flex items-center hover:bg-slate-50">Review</a>
+                <form hx-post="/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}" hx-target="#cd-dashboard-body" hx-swap="innerHTML" class="m-0 inline-flex items-center gap-1" @submit.stop>
+                  {% csrf_token %}
+                  <input type="text" name="reason" required placeholder="Return reason" aria-label="Reason for returning this request" class="h-7 w-36 px-2 rounded-control border border-slate-200 edify-text-caption bg-slate-50 focus:outline-none">
+                  <button type="submit" class="h-7 px-2.5 rounded-control border border-rose-200 text-rose-700 edify-text-caption font-bold hover:bg-rose-50 transition-colors">Return</button>
+                </form>
+                <a href="/fund-approvals" class="h-7 px-2.5 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold inline-flex items-center hover:bg-slate-50">Review</a>
               </div>
             </div>
             {% endfor %}

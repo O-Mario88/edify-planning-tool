@@ -36,7 +36,7 @@
         </button>
       {% endif %}
 
-      {% if package_available and not package_complete and trainings_remaining %}
+      {% if package_available and not package_complete and trainings_remaining and can_plan_core_training %}
         <button
           type="button"
           hx-get="/core-schools/schedule-training?school_id={{ school.school_id }}"

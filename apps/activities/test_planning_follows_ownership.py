@@ -337,11 +337,29 @@ class SeeingTheCountryIsNotSchedulingInItTest(PlanningFollowsDirectOwnershipTest
 
         self._plan(ia, self.cceo_school)  # does not raise
 
-    def test_the_accountant_may_not_schedule_at_all(self):
+    def test_the_accountant_may_only_ask(self):
+        """At a school somebody owns, the Accountant is admitted as a
+        *requester*: `create` files the visit awaiting that owner's approval
+        (apps.planning.visit_requests) rather than scheduling it. Where nobody
+        owns the school there is nobody to ask, and the refusal stands."""
+        from apps.planning.visit_requests import approval_owner_for
+
         accountant = self._country(EdifyRole.PROGRAM_ACCOUNTANT, "acct@sched.test")
 
-        with self.assertRaises(Forbidden):
-            self._plan(accountant, self.cceo_school)
+        self._plan(accountant, self.cceo_school)  # admitted — as a request
+        self.assertEqual(
+            approval_owner_for(self.cceo_school, accountant), self.cceo_profile.id
+        )
+        unowned = School.objects.create(
+            school_id="SCHED-NONE",
+            name="School SCHED-NONE",
+            region=self.region,
+            district=self.district,
+            school_type="client",
+        )
+        # Nobody to ask: a visit there is simply scheduled (owner, 2026-09-02).
+        self._plan(accountant, unowned)  # does not raise
+        self.assertIsNone(approval_owner_for(unowned, accountant))
 
     def test_the_accountant_may_not_schedule_at_their_own_cluster_either(self):
         """ "Anything" means anything: the cluster branch is a separate path

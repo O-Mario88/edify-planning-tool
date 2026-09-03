@@ -329,6 +329,11 @@ class ActivityStatus(models.TextChoices):
     """The 21-state activity workflow lifecycle."""
 
     NOT_PLANNED = "not_planned", "Not Planned"
+    # A visit into somebody else's portfolio, waiting for that owner's yes.
+    # Not yet a plan: it enters no funding channel, no work-plan total and no
+    # calendar until the school's owner approves it (see
+    # apps.planning.visit_requests).
+    AWAITING_OWNER_APPROVAL = "awaiting_owner_approval", "Awaiting Owner Approval"
     PLANNED = "planned", "Planned"
     SCHEDULED = "scheduled", "Scheduled"
     ASSIGNED_TO_PARTNER = "assigned_to_partner", "Assigned to Partner"

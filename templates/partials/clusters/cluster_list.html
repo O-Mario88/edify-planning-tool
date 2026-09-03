@@ -12,6 +12,7 @@
 <p class="text-[14px] font-semibold text-slate-500">No clusters found.</p>
 <p class="edify-text-caption text-slate-400">Create new clusters or modify your filter settings to locate clusters.</p>
 <div class="flex items-center justify-center gap-2 pt-2">
+{% if can_create_clusters %}
 <button
 hx-get="/clusters/create-drawer"
 hx-target="#drawer-container"
@@ -20,6 +21,7 @@ class="h-8 px-3 rounded-control bg-[var(--edify-accent)] hover:bg-[var(--edify-a
 >
 Create Cluster
 </button>
+{% endif %}
 <a href="/schools" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 edify-text-caption font-bold text-slate-600 flex items-center justify-center transition-all">Open School Directory</a>
 </div>
 </div>

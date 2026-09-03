@@ -1916,7 +1916,11 @@ main :is(
 ):not([data-edify-summary-kpi]):not(.card-alert):not(.edify-risk-card):not(
   [role="alert"], [role="dialog"], [role="menu"], [role="listbox"],
   [popover], .drawer-surface, .edify-popup-dialog__surface,
-  .platform-filter-bar, .overflow-x-auto, .overflow-auto
+  .platform-filter-bar, .overflow-x-auto, .overflow-auto,
+  /* A floating overlay inside the drawer, not a nested card: the date
+     picker must keep its own opaque surface, border and shadow or the form
+     shows through the day grid (2026-09-02). */
+  .edify-calendar-popover
 ) {
   background-color: transparent !important;
   background-image: none !important;
@@ -2157,7 +2161,11 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
 ):not([role="alert"]):not([role="status"]):not([role="listbox"]):not(
   [role="radiogroup"]
 ):not(
-  .platform-filter-bar, .overflow-x-auto, .overflow-auto
+  .platform-filter-bar, .overflow-x-auto, .overflow-auto,
+  /* A floating overlay, not a nested card: the date picker must keep its
+     own opaque surface, border and shadow, or the form shows through the
+     day grid (2026-09-02). */
+  .edify-calendar-popover
 ) {
   background-color: transparent !important;
   background-image: none !important;

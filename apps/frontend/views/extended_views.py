@@ -395,7 +395,11 @@ def calendar_view(request):
             status__in=_CALENDAR_STATUS_FAMILIES["cancelled"]
         )
     else:
-        activities = activities.exclude(status__in=["cancelled", "rejected"])
+        # A visit still waiting for its owner's approval is not on anyone's
+        # calendar yet — it becomes scheduled the moment it is approved.
+        activities = activities.exclude(
+            status__in=["cancelled", "rejected", "awaiting_owner_approval"]
+        )
         if selected_status:
             activities = activities.filter(
                 status__in=_CALENDAR_STATUS_FAMILIES[selected_status]

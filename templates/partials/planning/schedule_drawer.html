@@ -9,7 +9,7 @@
   where it stays visible.
 {% endcomment %}
 {% block drawer_title %}{% if reschedule_mode %}Reschedule {{ recommended_activity_label|default:"Activity" }}{% else %}Schedule Activity{% endif %}{% endblock %}
-{% block drawer_subtitle %}{% if reschedule_mode %}Update the planned date for {{ schedule_subject_name }} without creating another activity.{% else %}Configure activity details for {{ school.name }}{% endif %}{% endblock %}
+{% block drawer_subtitle %}{% if reschedule_mode %}Update the planned date for {{ schedule_subject_name }} without creating another activity.{% elif visit_request_owner_name %}{{ school.name }} belongs to {{ visit_request_owner_name }}, who approves this visit before it takes effect.{% else %}Configure activity details for {{ school.name }}{% endif %}{% endblock %}
 
 {% block drawer_body %}
 <form
@@ -108,6 +108,13 @@ x-init="ensureTrainingActivity()"
 <div class="rounded-surface border edify-primary-border edify-primary-soft p-3 edify-primary-text" role="status">
   <p class="font-bold">Links to priority: {{ planning_priority.milestone.title }}</p>
   <p class="mt-1 font-medium">The scheduled activity will be traceable to this approved allocation.</p>
+</div>
+{% endif %}
+
+{% if visit_request_owner_name and not reschedule_mode %}
+<div class="rounded-surface border border-amber-200 bg-amber-50 p-3 text-amber-900" role="status" data-visit-request-notice>
+  <p class="font-bold">This school is in {{ visit_request_owner_name }}&rsquo;s portfolio.</p>
+  <p class="mt-1 font-medium">Schedule the visit as usual and say why you need to be there. {{ visit_request_owner_name }} approves or declines it; once approved it takes effect on your plan and enters your budget.</p>
 </div>
 {% endif %}
 
@@ -512,7 +519,11 @@ x-text="day"
 <div>
   <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Responsible Person</label>
   <div class="mt-1 flex min-h-10 items-center rounded-control border border-slate-200 bg-slate-100 px-3 font-semibold text-slate-700">{{ responsible_staff_name|default:"You" }}</div>
+  {% if visit_request_owner_name %}
+  <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">You are the one visiting. {{ visit_request_owner_name }} is asked to approve, not to go.</p>
+  {% else %}
   <p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Automatically assigned from this School&rsquo;s portfolio owner.</p>
+  {% endif %}
 </div>
 <input type="hidden" name="executor_type" :value="executorType">
 
@@ -567,6 +578,22 @@ placeholder="What needs to be achieved in this activity?"
 class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
 ></textarea>
 </div>
+
+{% if visit_request_owner_name %}
+<!-- Why the requester needs to be at a school that is not theirs -->
+<div>
+<label for="visit_justification" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Why you need to visit this school <span class="text-rose-500">*</span></label>
+<textarea
+name="visit_justification"
+id="visit_justification"
+required
+rows="3"
+placeholder="On top of the purpose above: why must you, rather than {{ visit_request_owner_name }}, be at this school?"
+class="w-full p-2.5 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus placeholder-slate-400"
+></textarea>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">{{ visit_request_owner_name }} reads this when deciding.</p>
+</div>
+{% endif %}
 {% else %}
 <div>
 <label for="reason" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reason for changing the date</label>

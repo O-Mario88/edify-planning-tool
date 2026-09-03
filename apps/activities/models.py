@@ -330,6 +330,18 @@ class Activity(SoftDeleteModel):
     pl_reviewed_at = models.DateTimeField(null=True, blank=True)
     pl_reviewed_by = models.CharField(max_length=30, null=True, blank=True)
 
+    # Owner approval of a visit requested into somebody else's portfolio
+    # (apps.planning.visit_requests). `approval_owner_id` is the StaffProfile
+    # id of the school owner asked; it stays set after the decision so the
+    # request's history reads on the row. The justification is what the
+    # requester wrote on top of the ordinary purpose — why *they* need to be
+    # at a school that is not theirs.
+    visit_justification = models.TextField(blank=True, default="")
+    approval_owner_id = models.CharField(max_length=30, blank=True, default="")
+    owner_decided_at = models.DateTimeField(null=True, blank=True)
+    owner_decided_by = models.CharField(max_length=30, null=True, blank=True)
+    owner_decision_note = models.CharField(max_length=512, blank=True, default="")
+
     # Training/cluster-meeting completion detail.
     # The confirmed headcount at scheduling time.  This remains available for
     # planning, fund requests and budget reporting before actual attendance is
@@ -392,6 +404,8 @@ class Activity(SoftDeleteModel):
             # in-row filter on fy/activity_type for every matching row.
             models.Index(fields=["responsible_staff_id", "fy", "activity_type"]),
             models.Index(fields=["status"]),
+            # The owner's approval queue: one status, one owner.
+            models.Index(fields=["approval_owner_id", "status"]),
             models.Index(fields=["scheduled_date"]),
             models.Index(fields=["assigned_partner_id"]),
             models.Index(fields=["ia_verification_status", "payment_status"]),

@@ -339,6 +339,18 @@ class RolePermissionService:
         return RolePermissionService.can_view_record(user, school_or_cluster)
 
     @staticmethod
+    def can_request_school_visit(user) -> bool:
+        """May this person ask a school's owner for a visit?
+
+        The country roles with no portfolio of their own. They open the same
+        scheduling drawer as a planner and leave a request in it rather than
+        a plan — see apps.planning.visit_requests.
+        """
+        from apps.core.scoping import VISIT_REQUEST_ROLES
+
+        return getattr(user, "active_role", None) in VISIT_REQUEST_ROLES
+
+    @staticmethod
     def can_assign_to_partner(user, school_or_cluster=None) -> bool:
         role = getattr(user, "active_role", None)
         # Mirrors can_schedule_activity's allowed set: assigning to a partner
@@ -733,6 +745,36 @@ def get_operational_school_or_404(user, *args, **kwargs):
             "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
         )
     if not may_plan_school(resolve_user_scope(user), school.id):
+        raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    return school
+
+
+def get_visit_target_school_or_404(user, *args, **kwargs):
+    """`get_operational_school_or_404`, plus the request path.
+
+    The scheduling drawer is the one surface a request-only role opens at a
+    school it does not own — to ask, not to plan. Every other operational
+    drawer keeps the strict twin above.
+    """
+    from django.shortcuts import get_object_or_404
+    from django.core.exceptions import PermissionDenied
+    from apps.core.scoping import (
+        OVERSIGHT_ONLY_MESSAGE,
+        may_plan_school,
+        may_request_school_visit,
+        resolve_user_scope,
+    )
+    from apps.schools.models import School
+
+    school = get_object_or_404(School, *args, **kwargs)
+    if not RolePermissionService.can_view_record(user, school):
+        raise PermissionDenied(
+            "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
+        )
+    scope = resolve_user_scope(user)
+    if not (
+        may_plan_school(scope, school.id) or may_request_school_visit(scope, school)
+    ):
         raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
     return school
 

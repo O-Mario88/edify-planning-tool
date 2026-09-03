@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "edify-web",
-      "runtimeExecutable": "/Users/omario/Developer/Edify Planning Tool/.venv/bin/python",
+      "runtimeExecutable": "/Users/edwinomario/Developer/edify-planning-tool/.venv/bin/python",
       "runtimeArgs": [
         "manage.py",
         "runserver",
@@ -16,7 +16,7 @@
     },
     {
       "name": "edify-cascade",
-      "runtimeExecutable": "/Users/omario/Developer/Edify Planning Tool/.venv/bin/python",
+      "runtimeExecutable": "/Users/edwinomario/Developer/edify-planning-tool/.venv/bin/python",
       "runtimeArgs": [
         "/Users/omario/Developer/edify-target-cascade/manage.py",
         "runserver",

@@ -228,6 +228,10 @@
   --edify-surface: #f8fafb;
   --edify-surface-muted: #e5eaed;
   --edify-surface-raised: #ffffff;
+  /* A floating overlay (calendar, menu) must hide what it floats over, so
+     this step is opaque in every theme — including Blue, whose other
+     surfaces are deliberately glass. */
+  --edify-surface-popover: #ffffff;
   --edify-surface-hover: #e9eef1;
   --edify-surface-selected: #dfe8ed;
   --edify-border: #c7d1d7;
@@ -634,6 +638,11 @@
   --edify-surface: rgba(5, 54, 96, 0.58);
   --edify-surface-muted: rgba(5, 54, 96, 0.58);
   --edify-surface-raised: rgba(5, 54, 96, 0.58);
+  /* The one opaque step. The glass plane is right for panels that sit on
+     the page, and wrong for a popover that sits on those panels: the date
+     picker read as transparent, with the form's text showing through the
+     day grid. Same navy, no alpha. */
+  --edify-surface-popover: #0b3a63;
   --edify-border: rgba(123, 189, 232, 0.32);
   --edify-border-strong: rgba(123, 189, 232, 0.58);
   --edify-text: #f5fbff;
@@ -849,6 +858,7 @@ html.theme-blue body {
   --edify-surface-muted: #121c25;
   --edify-surface: #151f29;
   --edify-surface-raised: #1a2732;
+  --edify-surface-popover: #1a2732;
   --edify-surface-hover: #1e2e3a;
   --edify-surface-selected: #18364b;
   --edify-border: #31404d;

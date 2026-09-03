@@ -80,6 +80,15 @@
   max-width: calc(100vw - 2rem);
 }
 
+/* The popover floats over a form and must hide it. `.edify-surface` gives
+   it the theme's panel colour, which in Blue is translucent glass — so the
+   day grid rendered see-through, with the fields beneath showing between
+   the numbers. Two classes, so this outranks the single-class surface rule
+   whichever stylesheet declares it last. */
+.edify-calendar-popover.edify-surface {
+  background-color: var(--edify-surface-popover, var(--edify-surface-raised)) !important;
+}
+
 .edify-toast-card {
   width: min(22.5rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);

@@ -181,7 +181,14 @@ class NotificationLinkResolver:
             "weekly_fund_request_submitted",
             "weekly_fund_request_returned",
         ):
-            route = "/fund-requests/weekly"
+            # The request itself, not the page: /fund-requests/weekly/<id>
+            # redirects to the owner's tab and week, where the bare page
+            # opened on the recipient's own current week instead.
+            route = (
+                f"/fund-requests/weekly/{context_id}"
+                if context_id
+                else "/fund-requests/weekly"
+            )
             label = (
                 "Review Fund Request"
                 if event_type.endswith("submitted")
@@ -189,7 +196,11 @@ class NotificationLinkResolver:
             )
 
         elif event_type == "weekly_fund_request_approved":
-            route = "/fund-requests/weekly"
+            route = (
+                f"/fund-requests/weekly/{context_id}"
+                if context_id
+                else "/fund-requests/weekly"
+            )
             label = "View Approved Request"
 
         elif event_type in (
@@ -227,6 +238,14 @@ class NotificationLinkResolver:
         elif event_type == "activity_returned_by_pl":
             route = f"/my-plan/{context_id}"
             label = "Fix and Resubmit"
+
+        elif event_type == "school_visit_requested":
+            route = "/planning/visit-requests"
+            label = "Decide on Visit Request"
+
+        elif event_type in ("school_visit_approved", "school_visit_declined"):
+            route = "/planning/visit-requests"
+            label = "View Visit Request"
 
         elif event_type == "activity_ia_verified":
             route = f"/my-plan/{context_id}"

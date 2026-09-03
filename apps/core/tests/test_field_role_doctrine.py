@@ -228,10 +228,13 @@ class ProgramAccountantDoctrine(TestCase):
             )
 
     def test_cannot_reach_programme_execution_pages(self):
+        # `planning` left this list on 2026-09-02: the Accountant opens the
+        # page to schedule a visit into a school somebody else owns, which
+        # the owner must approve before it takes effect
+        # (apps.planning.visit_requests). They still hold no PLANNING_CREATE
+        # and cannot plan into anyone's portfolio directly.
         for page in (
-            "planning",
             "my_plan",
-            "core_schools",
             "ia_verification_queue",
             "cost_settings",
             "school_directory",

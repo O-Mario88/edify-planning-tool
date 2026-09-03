@@ -55,6 +55,9 @@ class ResolverCoverageTests(TestCase):
         "fund_request_sent_to_accountant",
     ]
     ACTIVITY_EVENTS = [
+        "school_visit_requested",
+        "school_visit_approved",
+        "school_visit_declined",
         "activity_submitted_for_review",
         "activity_returned_by_pl",
         "activity_ia_verified",

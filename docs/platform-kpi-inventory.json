@@ -2295,7 +2295,7 @@
    "audit_id": "KPI-SOURCE-115",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 850,
+   "line": 869,
    "label": null,
    "keys": [
     "label",
@@ -2331,7 +2331,7 @@
    "audit_id": "KPI-SOURCE-117",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 495,
+   "line": 507,
    "label": null,
    "keys": [
     "label",
@@ -2348,7 +2348,7 @@
    "audit_id": "KPI-SOURCE-118",
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 321,
+   "line": 323,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -2448,7 +2448,7 @@
    "audit_id": "KPI-SOURCE-123",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1903,
+   "line": 1907,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -2468,7 +2468,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2863,
+   "line": 2867,
    "label": null,
    "keys": [
     "label",
@@ -2485,7 +2485,7 @@
    "audit_id": "KPI-SOURCE-125",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1177,
+   "line": 1181,
    "label": null,
    "keys": [
     "achieved",
@@ -3167,7 +3167,7 @@
    "audit_id": "KPI-SOURCE-160",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 441,
+   "line": 449,
    "label": "Undated",
    "keys": [
     "at_risk",
@@ -3189,7 +3189,7 @@
    "audit_id": "KPI-SOURCE-161",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 432,
+   "line": 440,
    "label": "{\u2026} {\u2026}",
    "keys": [
     "at_risk",
@@ -3211,7 +3211,7 @@
    "audit_id": "KPI-SOURCE-162",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 550,
+   "line": 558,
    "label": null,
    "keys": [
     "cost",
@@ -3230,7 +3230,7 @@
    "audit_id": "KPI-SOURCE-163",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/work_plan_page.py",
-   "line": 642,
+   "line": 650,
    "label": null,
    "keys": [
     "amount",
@@ -5837,8 +5837,10 @@
    "route": "/core-schools",
    "page_title": "Core Schools",
    "roles": [
+    "ACCOUNTANT",
     "ADMIN",
     "CCEO",
+    "CD",
     "IA",
     "PL"
    ],
@@ -6286,9 +6288,11 @@
    "route": "/planning",
    "page_title": "Planning",
    "roles": [
+    "ACCOUNTANT",
     "ADMIN",
     "CCEO",
     "CD",
+    "IA",
     "PL",
     "PROJECT_COORDINATOR"
    ],
@@ -6935,6 +6939,7 @@
    "page_title": "Fund Approvals",
    "roles": [
     "ADMIN",
+    "CD",
     "PL"
    ],
    "page_purpose": "PL Fund Approval \u2014 team-scoped fund plans derived from supervised CCEOs' scheduled activities. HTMX re-renders the root on filter/select/action.",
@@ -26426,7 +26431,7 @@
   {
    "audit_id": "KPI-PAYLOAD-011",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 198,
+   "line": 200,
    "function": "core_schools_view",
    "target": "kpi_strip_items",
    "source_item_count": 7,
@@ -26512,7 +26517,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2597,
+   "line": 2601,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -26534,7 +26539,7 @@
   {
    "audit_id": "KPI-PAYLOAD-015",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3034,
+   "line": 3038,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
@@ -26765,7 +26770,7 @@
   {
    "audit_id": "KPI-PAYLOAD-023",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 508,
+   "line": 550,
    "function": "get_pl_fund_approvals",
    "target": "kpis",
    "source_item_count": 5,

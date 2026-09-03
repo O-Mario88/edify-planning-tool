@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **578**
-- All registered routes: **1046**
+- Routed product surfaces: **581**
+- All registered routes: **1049**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **23**
-- Activity states: **23**
+- Activity states: **24**
 - Shared component templates: **346**
-- Full pages: **202**
-- Partials and drawers: **172**
-- Permission-gated surfaces: **568**
-- Referenced by automated tests: **534**
+- Full pages: **203**
+- Partials and drawers: **173**
+- Permission-gated surfaces: **571**
+- Referenced by automated tests: **537**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -220,6 +220,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-7D69FB07E8 | /culture-engagement | Culture Engagement | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-EFB8E1FB3D | /dashboard | Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4738B1CEF1 | /dashboard/cd-approve | Cd Dashboard Approve | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-35678484B9 | /dashboard/cd-return | Cd Dashboard Return | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-190160CA0F | /dashboard/pl | Pl Dashboard | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9ED6856417 | /dashboard/pl-approve | Pl Dashboard Approve | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3D83415EFD | /dashboard/pl-drilldown | Pl Dashboard Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -487,6 +488,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-CB5D63ABE3 | /planning/schedule-action | Planning Schedule Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2AF2FF5ECA | /planning/schedule-modal | Planning Schedule Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C597B8F97C | /planning/schedule/schools | Planning Schedule School Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-4F8B7694FF | /planning/visit-requests | Visit Requests - Edify Planning Tool | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C8A20A3C2A | /planning/visit-requests/<str:activity_id>/<str:decision> | Visit Request Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8354F50663 | /policies | Policies & Documents | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-43B307D6C8 | /policy-agreement | Policy Agreement | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-433A02DA3B | /policy-agreement/restricted | Access Restricted | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
