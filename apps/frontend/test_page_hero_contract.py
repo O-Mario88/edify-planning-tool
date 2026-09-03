@@ -33,11 +33,6 @@ LEGACY_HERO_TEMPLATES = (
     "templates/pages/finance/country_budget_history.html",
     "templates/pages/finance/country_budget_submission.html",
     "templates/pages/finance/fund_allocation.html",
-    "templates/pages/ia/compare_evidence.html",
-    "templates/pages/ia/duplicate_review.html",
-    "templates/pages/ia/notifications.html",
-    "templates/pages/ia/returned_activities.html",
-    "templates/pages/ia/verification_history.html",
     # verification_queue.html is gone from this list: the 2026-07-31
     # consistency pass migrated it off the legacy page-hero family onto the
     # canonical `edify-page-header`. Anything migrated should leave here, so

@@ -65,6 +65,20 @@ class UnconfirmedSsaFailsVerificationGates(TestCase):
         StaffProfile.objects.create(
             user=cls.ia_user, staff_number="ST-GATE-IA", country="Uganda"
         )
+        # The work under verification belongs to a field officer: since
+        # 2026-09-03 nobody may verify their own activity, so the gate under
+        # test must be reached by a verifier who did not run the visit.
+        cls.field_user = User.objects.create_user(
+            email="gate-cceo@edify.org",
+            name="Gate CCEO",
+            roles=["CCEO"],
+            active_role="CCEO",
+            password="x",
+            is_active=True,
+        )
+        StaffProfile.objects.create(
+            user=cls.field_user, staff_number="ST-GATE-CCEO", country="Uganda"
+        )
 
     def _pending_record(self):
         """The only SSA this school has is one nobody has verified."""
@@ -84,7 +98,7 @@ class UnconfirmedSsaFailsVerificationGates(TestCase):
             planned_date=timezone.localdate() - datetime.timedelta(days=5),
             focus_intervention="leadership",
             salesforce_activity_id="SVE-GATE-001",
-            responsible_staff_id=str(self.ia_user.id),
+            responsible_staff_id=str(self.field_user.staff_profile.id),
             ssa_collection_expected=True,
         )
         EvidenceRecord.objects.create(

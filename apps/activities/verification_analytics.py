@@ -21,6 +21,7 @@ from apps.activities.ia_models import (
     VerificationSample,
 )
 from apps.activities.models import Activity
+from apps.core.metrics import percentage_or_zero as _pct
 from apps.core.scoping import activity_country_q, resolve_user_scope
 
 DEFAULT_WINDOW_DAYS = 90
@@ -66,8 +67,6 @@ def _hours(start, end):
     return round((end - start).total_seconds() / 3600, 1)
 
 
-def _pct(part, whole):
-    return round(part / whole * 100) if whole else 0
 
 
 def verification_analytics(principal, window_days: int | None = None) -> dict:

@@ -274,3 +274,20 @@ class AttributionTest(IaOversightFixture):
         self.assertEqual(data["confirmed_share"], 50)
         self.client.force_login(self.ia)
         self.assertEqual(self.client.get("/ia/attribution/?fy=2026").status_code, 200)
+
+
+class LedgerPolishTest(IaOversightFixture):
+    def test_the_history_ledger_names_people_and_pages(self):
+        a = self._activity(self.cceo, status="ia_verified", code="SF-H1")
+        VerificationHistory.objects.create(
+            activity=a, verified_by=self.ia.id, verified_at=timezone.now()
+        )
+        self.client.force_login(self.ia2)
+        page = self.client.get("/ia/history/")
+        self.assertEqual(page.status_code, 200)
+        self.assertContains(page, "Cara")  # the CCEO, not her staff id
+        self.assertContains(page, "Ida")  # the verifier, not her user id
+        self.assertNotContains(page, self.cceo.staff_profile.id)
+        self.assertIn("history_pager", page.context)
+        for url in ("/ia/returned/", "/ia/duplicates/", "/ia/notifications/"):
+            self.assertEqual(self.client.get(url).status_code, 200, url)

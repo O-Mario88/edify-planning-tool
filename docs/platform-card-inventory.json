@@ -4,10 +4,10 @@
   "templates": 226,
   "distinct_titles": 607,
   "with_card_key": 13,
-  "untitled_surfaces": 1025,
-  "untitled_chrome": 229,
+  "untitled_surfaces": 1020,
+  "untitled_chrome": 225,
   "untitled_nested": 400,
-  "untitled_headless": 396,
+  "untitled_headless": 395,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -2376,7 +2376,7 @@
   },
   {
    "template": "templates/pages/ia/attribution.html",
-   "line": 48,
+   "line": 49,
    "title": "Movement by intervention \u00b7 FY to FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -2385,7 +2385,7 @@
   },
   {
    "template": "templates/pages/ia/attribution.html",
-   "line": 79,
+   "line": 82,
    "title": "Movement by district, all interventions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2394,7 +2394,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 28,
+   "line": 19,
    "title": "Awaiting Verification",
    "heading_level": 3,
    "has_card_key": false,
@@ -2403,7 +2403,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 47,
+   "line": 38,
    "title": "Plan Parameters vs Field Submission",
    "heading_level": 3,
    "has_card_key": false,
@@ -2417,7 +2417,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 57,
+   "line": 48,
    "title": "Plan Targets",
    "heading_level": 4,
    "has_card_key": false,
@@ -2431,7 +2431,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 71,
+   "line": 62,
    "title": "Field Execution Actuals",
    "heading_level": 4,
    "has_card_key": false,
@@ -2445,7 +2445,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 92,
+   "line": 83,
    "title": "Uploaded Evidence Document List",
    "heading_level": 3,
    "has_card_key": false,
@@ -2459,7 +2459,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 114,
+   "line": 105,
    "title": "Compliance Variance Analysis",
    "heading_level": 3,
    "has_card_key": false,
@@ -2473,7 +2473,7 @@
   },
   {
    "template": "templates/pages/ia/compare_evidence.html",
-   "line": 157,
+   "line": 148,
    "title": "Ready to certify this activity?",
    "heading_level": 4,
    "has_card_key": false,
@@ -2487,7 +2487,7 @@
   },
   {
    "template": "templates/pages/ia/duplicate_review.html",
-   "line": 44,
+   "line": 36,
    "title": "Submitted Activity Detail",
    "heading_level": 4,
    "has_card_key": false,
@@ -2501,7 +2501,7 @@
   },
   {
    "template": "templates/pages/ia/duplicate_review.html",
-   "line": 60,
+   "line": 52,
    "title": "Matching Activity Detail",
    "heading_level": 4,
    "has_card_key": false,
@@ -2606,7 +2606,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 45,
+   "line": 46,
    "title": "Why work is returned",
    "heading_level": 2,
    "has_card_key": false,
@@ -2615,7 +2615,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 67,
+   "line": 70,
    "title": "Return rate by month",
    "heading_level": 2,
    "has_card_key": false,
@@ -2624,7 +2624,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 83,
+   "line": 97,
    "title": "Submitters, highest return rate first",
    "heading_level": 2,
    "has_card_key": false,
@@ -2633,7 +2633,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 97,
+   "line": 113,
    "title": "Partners, highest return rate first",
    "heading_level": 2,
    "has_card_key": false,
@@ -2642,7 +2642,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 112,
+   "line": 130,
    "title": "Verifiers",
    "heading_level": 2,
    "has_card_key": false,
@@ -2651,7 +2651,7 @@
   },
   {
    "template": "templates/pages/ia/verification_samples.html",
-   "line": 24,
+   "line": 25,
    "title": "Waiting for a second look \u00b7",
    "heading_level": 2,
    "has_card_key": false,

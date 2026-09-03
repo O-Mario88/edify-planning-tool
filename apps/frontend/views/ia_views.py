@@ -668,6 +668,11 @@ def ia_returned_view(request):
         .order_by("-updated_at")
     )
 
+    from apps.activities.verification_analytics import _staff_names
+
+    _returned_names = _staff_names(
+        set(returned_activities.values_list("responsible_staff_id", flat=True))
+    )
     serialized_returned = []
     for a in returned_activities.select_related("school", "ia_verification"):
         reasons = []
@@ -681,7 +686,9 @@ def ia_returned_view(request):
                 "id": a.id,
                 "activity_type_label": a.get_activity_type_display(),
                 "school_name": a.school.name if a.school else "Cluster",
-                "responsible_staff_name": a.responsible_staff_id or "N/A",
+                "responsible_staff_name": _returned_names.get(
+                    a.responsible_staff_id, a.responsible_staff_id or "Unassigned"
+                ),
                 "reasons": ", ".join(reasons) or "None Specified",
                 "date_returned": a.updated_at,
                 "status_label": a.get_status_display(),
@@ -696,14 +703,45 @@ def ia_returned_view(request):
 @require_page_permission("ia_history")
 def ia_history_view(request):
     """Everything IA has verified."""
-    history = (
+    from apps.activities.verification_analytics import (
+        _names,
+        _partner_names,
+        _staff_names,
+    )
+
+    entries = list(
         VerificationHistory.objects.filter(
             activity__in=Activity.objects.filter(_ia_reach_q(request)).values("id")
         )
         .order_by("-verified_at")
-        .select_related("activity", "activity__school")
+        .select_related("activity", "activity__school", "activity__cluster")
     )
-
+    # The ledger printed raw staff, partner and verifier ids. People, not
+    # identifiers, is what an auditor reads.
+    staff = _staff_names({e.activity.responsible_staff_id for e in entries})
+    partners = _partner_names({e.activity.assigned_partner_id for e in entries})
+    verifiers = _names({e.verified_by for e in entries})
+    history = [
+        {
+            "id": e.activity.id,
+            "activity_type": e.activity.get_activity_type_display(),
+            "school": e.activity.school.name
+            if e.activity.school_id
+            else "Cluster-wide",
+            "cluster": e.activity.cluster.name if e.activity.cluster_id else "",
+            "partner": partners.get(e.activity.assigned_partner_id, "")
+            if e.activity.assigned_partner_id
+            else "",
+            "staff": staff.get(
+                e.activity.responsible_staff_id,
+                e.activity.responsible_staff_id or "Unassigned",
+            ),
+            "verified_by": verifiers.get(e.verified_by, e.verified_by),
+            "verified_at": e.verified_at,
+            "analytics_included": e.analytics_included,
+        }
+        for e in entries
+    ]
     context = {"history": history}
     return render(request, "pages/ia/verification_history.html", context)
 

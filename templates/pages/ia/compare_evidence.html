@@ -1,25 +1,16 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}Evidence Comparison Workspace - Edify Command Center{% endblock %}
+{% block title %}Evidence Compare · Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 {% include "partials/_back_link.html" with back_href="/ia/verification/" back_label="Verification Queue" %}
 
-<!-- Premium Header Pane -->
-<div class="edify-page-header edify-page-hero relative">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill edify-primary-tint-10 blur-3xl pointer-events-none"></div>
-<div class="absolute -left-20 -bottom-20 w-80 h-80 rounded-pill bg-emerald-500/15 blur-3xl pointer-events-none"></div>
-
-<div class="relative z-10 space-y-2 edify-page-header__lead">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill edify-primary-tint-10 border edify-primary-border-alpha-20 edify-primary-text edify-text-caption font-semibold tracking-widest">
-Compare &amp; Contrast
-</div>
-<p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Evidence Comparison Workspace</h1>
-<p class="max-w-2xl edify-page-header__description">
-Side-by-side verification pane. Review deviations between planned schedule objectives and field execution evidence inputs.
-</p>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Verification</p>
+<h1 class="edify-page-title edify-page-header__title">Evidence Compare</h1>
+<p class="edify-page-header__description">The plan beside the evidence: what was scheduled for a school and what the field submitted, side by side.</p>
 </div>
 </div>
 

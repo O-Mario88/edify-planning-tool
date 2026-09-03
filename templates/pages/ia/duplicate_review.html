@@ -1,23 +1,15 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}Duplicate Activity Review Queue - Edify Command Center{% endblock %}
+{% block title %}Duplicate Review · Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<!-- Premium Header Pane -->
-<div class="edify-page-header edify-page-hero relative">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-amber-500/10 blur-3xl pointer-events-none"></div>
-
-<div class="relative z-10 space-y-2 edify-page-header__lead">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-amber-500/10 border border-amber-500/20 text-amber-500 edify-text-caption font-semibold tracking-widest">
-Anomaly Detection
-</div>
-<p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Duplicate Activity Review Queue</h1>
-<p class="max-w-2xl edify-page-header__description">
-Duplicate review hub. Identify and resolve activities flagged with duplicate indicator warnings (same school/date/staff/type, duplicate Salesforce ID, or duplicate evidence uploads).
-</p>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Verification</p>
+<h1 class="edify-page-title edify-page-header__title">Duplicate Review</h1>
+<p class="edify-page-header__description">Activities flagged as possible duplicates — same school, date, staff and type, a repeated Salesforce ID, or the same evidence uploaded twice. Decide each one.</p>
 </div>
 </div>
 
@@ -97,14 +89,7 @@ Flag Investigation
 </div>
 {% endfor %}
 {% else %}
-<div class="edify-surface rounded-surface border border-slate-100 p-16 text-center text-slate-400 font-semibold shadow-sm">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-500">No duplicate overlap warnings in review queue database.</p>
-</div>
-</div>
+{% include "components/empty_state.html" with title="No duplicates flagged" message="Possible duplicates appear here when two records look like the same work." %}
 {% endif %}
 </div>
 </div>

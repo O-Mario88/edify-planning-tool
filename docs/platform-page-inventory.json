@@ -14750,7 +14750,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-3D8032E1C9",
-      "page_title": "Activity Timeline - Edify Command Center",
+      "page_title": "Activity Timeline \u00b7 Edify",
       "page_type": "record-detail",
       "per_page_css": [],
       "permission_key": "activity_timeline",
@@ -35502,7 +35502,7 @@
       "drawers": false,
       "evidence": [
         "template:pages/ia/compare_evidence.html",
-        "test:referenced-by-automated-test",
+        "test:coverage-review-required",
         "permission:ia_compare"
       ],
       "filters": "none",
@@ -35519,7 +35519,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-2E91310CCB",
-      "page_title": "Evidence Comparison Workspace - Edify Command Center",
+      "page_title": "Evidence Compare \u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "ia_compare",
@@ -35569,7 +35569,7 @@
       "templates": [
         "pages/ia/compare_evidence.html"
       ],
-      "test_status": "referenced-by-automated-test",
+      "test_status": "coverage-review-required",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -35699,7 +35699,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-2C691B24CA",
-      "page_title": "Duplicate Activity Review Queue - Edify Command Center",
+      "page_title": "Duplicate Review \u00b7 Edify",
       "page_type": "approval-or-verification",
       "per_page_css": [],
       "permission_key": "ia_duplicates",
@@ -35872,7 +35872,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-FC9CDB48DF",
-      "page_title": "Verification History - Edify Command Center",
+      "page_title": "Verification History \u00b7 Edify",
       "page_type": "approval-or-verification",
       "per_page_css": [],
       "permission_key": "ia_history",
@@ -35927,8 +35927,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -35961,7 +35960,7 @@
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-8C41E94385",
-      "page_title": "IA Quality Notifications - Edify Command Center",
+      "page_title": "Verification Notifications \u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "ia_notifications",
@@ -36049,7 +36048,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-BAE9F806E9",
-      "page_title": "Partner Evidence &amp; Salesforce Confirmation \u00b7 Edify",
+      "page_title": "Partner Evidence \u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "ia_partner_evidence",
@@ -36587,7 +36586,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-0163A867E0",
-      "page_title": "Returned Activities Ledger - Edify Command Center",
+      "page_title": "Returned Activities \u00b7 Edify",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "ia_returned",
@@ -36642,8 +36641,7 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]",
-        "text-[14px]"
+        "text-[12px]"
       ]
     },
     {
@@ -78531,7 +78529,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 382,
-    "test_referenced": 542,
+    "test_referenced": 541,
     "theme_contract_pass": 382
   }
 }

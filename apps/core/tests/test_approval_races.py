@@ -207,6 +207,10 @@ class ConcurrentCertificationTest(RaceTestCase):
 
         activity = self._awaiting_activity()
         activity_id = activity.id
+        # Returning asserts verification authority since 2026-09-03, so the
+        # racers must be real Impact Assessment officers, not bare ids.
+        ia_a = _user("ia-a@edify.test", EdifyRole.IMPACT_ASSESSMENT.value)
+        ia_b = _user("ia-b@edify.test", EdifyRole.IMPACT_ASSESSMENT.value)
 
         def return_it(actor):
             def run():
@@ -218,7 +222,7 @@ class ConcurrentCertificationTest(RaceTestCase):
 
             return run
 
-        results = self._race(return_it("ia-a"), return_it("ia-b"))
+        results = self._race(return_it(ia_a.id), return_it(ia_b.id))
         winners = [r for ok, r in results if ok]
         self.assertEqual(len(winners), 1, f"both returns succeeded: {results}")
 

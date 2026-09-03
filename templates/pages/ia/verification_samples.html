@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Sample Checks · Edify{% endblock %}
 
@@ -33,7 +34,8 @@
           <th class="text-left font-bold py-2 pl-1">Activity</th><th class="text-left font-bold py-2">Original verifier</th><th class="text-left font-bold py-2">Drawn</th><th class="text-left font-bold py-2">Outcome</th><th class="text-left font-bold py-2 pr-1">Second look</th>
         </tr></thead>
         <tbody class="divide-y divide-slate-50">
-          {% for s in samples %}
+          {% paginate samples "samples_page" as samples_pager %}
+{% for s in samples_pager.rows %}
           <tr>
             <td class="py-2.5 pl-1" data-record-title><a href="/ia/verification/{{ s.activity_id }}/" class="font-semibold edify-primary-text">{{ s.school }}</a><p class="edify-text-caption text-slate-500">{{ s.activity_type }}</p></td>
             <td class="py-2.5" data-label="Original verifier">{{ s.original_verifier }}</td>
@@ -59,6 +61,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=samples_pager param="samples_page" %}
     </div>
     {% else %}{% include "components/empty_state.html" with title="No samples drawn yet" message="The first sample is drawn on Monday, or draw this week now." %}{% endif %}
   </div>

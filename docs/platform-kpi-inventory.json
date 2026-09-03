@@ -2669,7 +2669,7 @@
    "audit_id": "KPI-SOURCE-134",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1052,
+   "line": 1090,
    "label": "Schools Missing SSA",
    "keys": [
     "label",
@@ -2686,7 +2686,7 @@
    "audit_id": "KPI-SOURCE-135",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1056,
+   "line": 1094,
    "label": "Duplicate Records Detected",
    "keys": [
     "label",
@@ -2703,7 +2703,7 @@
    "audit_id": "KPI-SOURCE-136",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1060,
+   "line": 1098,
    "label": "Schools with Missing Fields",
    "keys": [
     "label",
@@ -2720,7 +2720,7 @@
    "audit_id": "KPI-SOURCE-137",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1064,
+   "line": 1102,
    "label": "Activities Missing Salesforce IDs",
    "keys": [
     "label",
@@ -2737,7 +2737,7 @@
    "audit_id": "KPI-SOURCE-138",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1120,
+   "line": 1158,
    "label": "SSA done",
    "keys": [
     "color",
@@ -2756,7 +2756,7 @@
    "audit_id": "KPI-SOURCE-139",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1126,
+   "line": 1164,
    "label": "Scheduled",
    "keys": [
     "color",
@@ -2775,7 +2775,7 @@
    "audit_id": "KPI-SOURCE-140",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1132,
+   "line": 1170,
    "label": "Not done",
    "keys": [
     "color",
@@ -2794,7 +2794,7 @@
    "audit_id": "KPI-SOURCE-141",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1158,
+   "line": 1196,
    "label": "Confirmed",
    "keys": [
     "color",
@@ -2813,7 +2813,7 @@
    "audit_id": "KPI-SOURCE-142",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1164,
+   "line": 1202,
    "label": "Pending",
    "keys": [
     "color",
@@ -2832,7 +2832,7 @@
    "audit_id": "KPI-SOURCE-143",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1170,
+   "line": 1208,
    "label": "Returned / flagged",
    "keys": [
     "color",

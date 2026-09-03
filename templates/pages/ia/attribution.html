@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load table_pagination %}
 
 {% block title %}Impact Attribution · Edify{% endblock %}
 
@@ -59,7 +60,8 @@
           <th class="text-left font-bold py-2 pl-1">Intervention</th><th class="text-right font-bold py-2">Schools</th><th class="text-right font-bold py-2">FY{{ prior_fy }}</th><th class="text-right font-bold py-2">FY{{ fy }}</th><th class="text-right font-bold py-2">Movement</th><th class="text-right font-bold py-2">Improved</th><th class="text-right font-bold py-2">Trainings</th><th class="text-right font-bold py-2 pr-1">Visits</th>
         </tr></thead>
         <tbody class="divide-y divide-slate-50">
-          {% for r in rows %}
+          {% paginate rows "rows_page" as rows_pager %}
+{% for r in rows_pager.rows %}
           <tr>
             <td class="py-2.5 pl-1 font-semibold" data-record-title>{{ r.label }}</td>
             <td class="text-right tabular-nums py-2.5" data-label="Schools">{{ r.schools_measured }}</td>
@@ -73,6 +75,7 @@
           {% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=rows_pager param="rows_page" %}
     </div>
   </div>
 
@@ -83,11 +86,13 @@
       <table class="edify-record-table w-full edify-text-caption">
         <thead><tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100"><th class="text-left font-bold py-2 pl-1">District</th><th class="text-right font-bold py-2">Measurements</th><th class="text-right font-bold py-2">Movement</th><th class="text-right font-bold py-2 pr-1">Improved</th></tr></thead>
         <tbody class="divide-y divide-slate-50">
-          {% for d in districts %}<tr><td class="py-2 pl-1 font-semibold" data-record-title>{{ d.name }}</td><td class="text-right tabular-nums py-2" data-label="Measurements">{{ d.measurements }}</td><td class="text-right tabular-nums py-2 font-bold {% if d.movement > 0 %}text-emerald-600{% elif d.movement < 0 %}text-rose-600{% endif %}" data-label="Movement">{% if d.movement > 0 %}+{% endif %}{{ d.movement }}</td><td class="text-right tabular-nums py-2 pr-1" data-label="Improved">{{ d.improved_pct }}%</td></tr>{% endfor %}
+          {% paginate districts "districts_page" as districts_pager %}
+{% for d in districts_pager.rows %}<tr><td class="py-2 pl-1 font-semibold" data-record-title>{{ d.name }}</td><td class="text-right tabular-nums py-2" data-label="Measurements">{{ d.measurements }}</td><td class="text-right tabular-nums py-2 font-bold {% if d.movement > 0 %}text-emerald-600{% elif d.movement < 0 %}text-rose-600{% endif %}" data-label="Movement">{% if d.movement > 0 %}+{% endif %}{{ d.movement }}</td><td class="text-right tabular-nums py-2 pr-1" data-label="Improved">{{ d.improved_pct }}%</td></tr>{% endfor %}
         </tbody>
       </table>
+{% include "components/table_pager.html" with pager=districts_pager param="districts_page" %}
     </div>
-    {% else %}{% include "components/empty_state.html" with title="Nothing measured in both years" message="Movement needs a confirmed assessment in FY{{ prior_fy }} and FY{{ fy }} for the same school." %}{% endif %}
+    {% else %}{% include "components/empty_state.html" with title="Nothing measured in both years" message="Movement needs a confirmed assessment in both years for the same school." %}{% endif %}
   </div>
 
 </div>
