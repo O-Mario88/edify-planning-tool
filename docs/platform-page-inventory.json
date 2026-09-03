@@ -12463,8 +12463,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -12565,8 +12568,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -12664,8 +12670,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13013,8 +13022,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13103,8 +13115,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13199,8 +13214,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13297,8 +13315,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13395,8 +13416,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13494,8 +13518,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13592,8 +13619,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13764,8 +13794,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13861,8 +13894,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -13954,8 +13990,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -14051,8 +14090,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -14144,8 +14186,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -14241,8 +14286,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -14334,8 +14382,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -14431,8 +14482,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -14522,8 +14576,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -22159,6 +22216,7 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
@@ -41614,8 +41672,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -41720,8 +41781,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -41821,8 +41885,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -41919,8 +41986,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42012,8 +42082,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42109,8 +42182,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42203,8 +42279,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42304,8 +42383,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42401,8 +42483,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42491,8 +42576,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42584,8 +42672,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "detected",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -42682,8 +42773,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -60233,8 +60327,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"
@@ -60501,8 +60598,11 @@
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
+        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
+        "CD",
+        "IA",
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR"

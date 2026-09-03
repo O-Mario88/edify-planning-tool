@@ -136,7 +136,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # wider set for a permissive gate to expose.
     "my_actions": ALL_ROLES,
     "actions_sent": {PL, IA, CD, RVP, ADMIN},
-    "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN},
+    # IA holds My Targets since 2026-09-03: assessment visits and verifications
+    # are measured work, not just planned work.
+    "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN, IA},
     # Supervised-team target oversight. `supervised_users` resolves a team only
     # for the PL (their supervisees) and the CD (country lens); every other
     # role got an empty page. Removed for the Accountant, who supervises nobody
@@ -246,7 +248,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         PROJECT_COORDINATOR,
         ADMIN,
     },
-    "my_plan": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, ADMIN},
+    # CD, IA and the Accountant hold My Plan since 2026-09-03: an owner-approved
+    # visit (apps.planning.visit_requests) lands on the requester's plan and
+    # runs the ordinary lifecycle from there through to closure.
+    "my_plan": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, ADMIN, CD, IA, ACCOUNTANT},
     # Field Debrief (§4/§20): CCEO/PL/Partner/ProjectCoordinator submit; CD/HR/
     # IA/RVP are read-only leadership-intelligence audiences — their actual
     # data is narrowed further by FieldDebriefService.scoped_queryset(), not
@@ -294,7 +299,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cluster_detail": {CCEO, PL, IA, CD, ADMIN},
     "partners": ALL_ROLES,
     "partner_detail": ALL_ROLES,
-    "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN},
+    "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN, IA},
     # Calendar is a shared read-only operational surface. The view applies its
     # own role-to-staff audience rule before returning schedules.
     "calendar": ALL_ROLES,
@@ -339,7 +344,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cd_analytics": {CD, ADMIN},
     "reports": {CD, PL, IA, RVP, PROJECT_COORDINATOR, ADMIN},
     "completed_archive": {IA, ADMIN},
-    "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD},
+    "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD, ACCOUNTANT},
     # RBAC matrix grants USER_MANAGE to CD and HR as well as Admin
     # (apps/core/rbac.py ROLE_PERMISSIONS) and
     # RolePermissionService.can_manage_users() already includes
@@ -470,7 +475,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cost_intelligence": {RVP, ACCOUNTANT},
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
-    "ia_verification_queue": {IA, ADMIN},
+    # The Country Director reaches the queue and the workspace as the
+    # fallback verifier: the one person who may certify an Impact Assessment
+    # officer's OWN field work, which that officer may never verify
+    # themselves (2026-09-03). The views narrow the CD to exactly that.
+    "ia_verification_queue": {IA, CD, ADMIN},
+    "ia_review_workspace": {IA, CD, ADMIN},
     "ia_partner_evidence": {IA, ADMIN},
     "ia_duplicates": {IA, ADMIN},
     "ia_compare": {IA, ADMIN},

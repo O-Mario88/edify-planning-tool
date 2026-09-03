@@ -18,7 +18,16 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import owner_ids, resolve_user_scope
 
-ACTIVE_MY_PLAN_EXCLUDED_STATUSES = ("closed", "cancelled", "rejected")
+# A visit request that the school owner has not yet approved is not on the
+# requester's plan: it takes effect there only once approved (owner,
+# 2026-09-03; apps.planning.visit_requests). Pending ones are tracked on the
+# Visit Requests page, and stay reachable here through the status filter.
+ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
+    "closed",
+    "cancelled",
+    "rejected",
+    "awaiting_owner_approval",
+)
 
 
 def get_weeks_for_month(year: int, month: int) -> list[dict]:

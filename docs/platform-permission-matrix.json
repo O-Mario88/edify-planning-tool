@@ -577,6 +577,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -593,6 +596,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -609,6 +615,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -676,6 +685,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -692,6 +704,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -708,6 +723,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -724,6 +742,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -740,6 +761,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -756,6 +780,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -772,6 +799,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -805,6 +835,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -821,6 +854,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -837,6 +873,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -853,6 +892,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -869,6 +911,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -885,6 +930,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -901,6 +949,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -917,6 +968,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -950,6 +1004,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -7231,6 +7288,7 @@
     "Program Lead",
     "CountryDirector",
     "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "Admin"
    ],
@@ -10864,6 +10922,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10880,6 +10941,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10896,6 +10960,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10912,6 +10979,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10928,6 +10998,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10944,6 +11017,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10960,6 +11036,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10976,6 +11055,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -10992,6 +11074,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -11008,6 +11093,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -11024,6 +11112,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -11040,6 +11131,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -14115,6 +14209,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -14161,6 +14258,9 @@
    "roles": [
     "CCEO",
     "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
     "ProjectCoordinator",
     "PartnerAdmin",
     "PartnerFieldOfficer",
@@ -14252,13 +14352,13 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 351,
+  "Accountant": 385,
   "Admin": 771,
   "BusinessTransformationOfficer": 212,
   "CCEO": 475,
-  "CountryDirector": 570,
+  "CountryDirector": 603,
   "HumanResources": 264,
-  "ImpactAssessment": 451,
+  "ImpactAssessment": 484,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,

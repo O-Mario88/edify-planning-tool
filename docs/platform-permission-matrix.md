@@ -15,10 +15,10 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | --- | --- |
 | CCEO | 475 |
 | Program Lead | 549 |
-| CountryDirector | 570 |
+| CountryDirector | 603 |
 | RegionalVicePresident | 303 |
-| ImpactAssessment | 451 |
-| Accountant | 351 |
+| ImpactAssessment | 484 |
+| Accountant | 385 |
 | HumanResources | 264 |
 | ProjectCoordinator | 406 |
 | PartnerAdmin | 201 |
@@ -78,30 +78,30 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/actions/<str:action_id>/<str:transition>` | my_actions | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/actions/mine` | my_actions | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/actions/sent` | actions_sent |  | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
-| `/activities/<str:activity_id>` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/attendance` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/attendance/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/attendance` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/attendance/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/activities/<str:activity_id>/closure` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/activities/<str:activity_id>/closure/` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/activities/<str:activity_id>/closure/close` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
-| `/activities/<str:activity_id>/complete` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/complete/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/evidence` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/evidence/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/evidence/detail` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/partner-ssa-complete` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/partner-ssa-complete/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/complete` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/complete/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/evidence` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/evidence/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/evidence/detail` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/partner-ssa-complete` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/partner-ssa-complete/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/activities/<str:activity_id>/reopen` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
-| `/activities/<str:activity_id>/salesforce-id` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/salesforce-id/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/ssa-upload` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/ssa-upload/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/start` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/start/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/submit` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/activities/<str:activity_id>/submit/action` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/salesforce-id` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/salesforce-id/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/ssa-upload` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/ssa-upload/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/start` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/start/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/submit` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/submit/action` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/activities/<str:activity_id>/timeline` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
-| `/activities/<str:activity_id>/timeline` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/activities/<str:activity_id>/timeline` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/activities/<str:activity_id>/timeline/` | activity_timeline |  |  |  |  |  |  |  |  |  |  |  |  |  | Y |
 | `/activities/closure` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/activities/closure/` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
@@ -478,7 +478,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/clusters/schedule-meeting-drawer` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/clusters/schedule-training-drawer` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/compensation-benefits` | compensation_benefits |  |  |  |  |  |  | Y |  |  |  |  |  |  | Y |
-| `/completed-activities` | completed_activities | Y | Y | Y |  | Y |  |  | Y |  |  |  |  |  | Y |
+| `/completed-activities` | completed_activities | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/completed-activities/<str:activity_id>` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/completed-activities/<str:activity_id>/` | planning | Y | Y | Y |  | Y | Y |  | Y |  |  |  |  |  | Y |
 | `/compliance-register` | compliance_register |  |  |  |  |  |  | Y |  |  |  |  |  |  | Y |
@@ -693,18 +693,18 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/my-performance/development` | my_performance | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
 | `/my-performance/documents` | my_performance | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
 | `/my-performance/values` | my_performance | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
-| `/my-plan` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/accountability` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/cancel` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/cancel-drawer` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/complete` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/complete-drawer` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/confirm-reimbursement-receipt` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/request-amendment` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/reschedule` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/<str:activity_id>/reschedule-drawer` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
-| `/my-plan/day-package` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/accountability` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/cancel` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/cancel-drawer` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/complete` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/complete-drawer` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/confirm-reimbursement-receipt` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/request-amendment` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/reschedule` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/<str:activity_id>/reschedule-drawer` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
+| `/my-plan/day-package` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/my-professional-development` | my_professional_development | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
 | `/my-professional-development/` | my_professional_development | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
 | `/my-professional-development/allocation-history` | my_professional_development | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
@@ -891,10 +891,10 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/today` | today | Y | Y |  |  |  |  |  | Y |  |  |  |  |  | Y |
 | `/today/action` | today | Y | Y |  |  |  |  |  | Y |  |  |  |  |  | Y |
 | `/todos` | todos | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
-| `/trainings` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/trainings` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/uploads` | uploads |  |  | Y | Y | Y |  | Y |  |  |  |  |  |  | Y |
 | `/uploads/new` | uploads |  |  | Y | Y | Y |  | Y |  |  |  |  |  |  | Y |
-| `/visits` | my_plan | Y | Y |  |  |  |  |  | Y | Y | Y |  |  |  | Y |
+| `/visits` | my_plan | Y | Y | Y |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/wellness` | wellness |  |  |  |  |  |  | Y |  |  |  |  |  |  | Y |
 | `/work-plan` | work_plan | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |
 | `/work-plan/` | work_plan | Y | Y | Y | Y | Y | Y | Y | Y |  |  |  |  |  | Y |

@@ -233,8 +233,10 @@ class ProgramAccountantDoctrine(TestCase):
         # the owner must approve before it takes effect
         # (apps.planning.visit_requests). They still hold no PLANNING_CREATE
         # and cannot plan into anyone's portfolio directly.
+        # `my_plan` left on 2026-09-03 for the same reason: once the owner
+        # approves the visit it lands on the Accountant's own plan and runs
+        # the ordinary lifecycle there.
         for page in (
-            "my_plan",
             "ia_verification_queue",
             "cost_settings",
             "school_directory",

@@ -242,7 +242,7 @@ class ClosureEligibilityService:
         return ClosureEligibilityService._core_requirements_met(checklist)
 
 
-def _assert_may_close(actor) -> None:
+def _assert_may_close(actor, activity: Activity | None = None) -> None:
     """Authority at the act, not only at the door (CLOSE-01).
 
     Closure is terminal: it locks the record, freezes the financial snapshot,
@@ -288,13 +288,20 @@ def _assert_may_close(actor) -> None:
     # request owner-approved school visits (apps.planning.visit_requests).
     # That is a request door, not closure authority: they still verify and
     # clear the money, and closure comes after both.
+    # Their OWN approved visit is the exception: it lands on their plan and
+    # runs the ordinary lifecycle, and closing it is the last step of that.
     from apps.core.rbac import EdifyRole
+    from apps.core.scoping import owner_ids
 
     if getattr(actor, "active_role", None) in (
         EdifyRole.PROGRAM_ACCOUNTANT.value,
         EdifyRole.IMPACT_ASSESSMENT.value,
     ):
-        raise Forbidden("Your role cannot close an activity.")
+        owns = activity is not None and str(activity.responsible_staff_id or "") in {
+            str(i) for i in owner_ids(actor) if i
+        }
+        if not owns:
+            raise Forbidden("Your role cannot close an activity.")
 
 
 class ActivityClosureService:
@@ -314,7 +321,7 @@ class ActivityClosureService:
         # added later has to say so rather than inheriting a bypass from the
         # `closed_by="system"` default.
         if not system:
-            _assert_may_close(closed_by)
+            _assert_may_close(closed_by, activity)
         # Check eligibility first
         if not bypass_checks and not ClosureEligibilityService.is_eligible(activity):
             raise BadRequest(
