@@ -121,6 +121,12 @@
       cell.querySelectorAll('span.rounded-pill, a.rounded-pill').forEach(function (pill) {
         pill.classList.add('edify-cell-pill');
       });
+      /* A `.block` line directly in a cell, and a flex row of controls beside
+         cell text, both sit on the one line. */
+      Array.from(cell.children).forEach(function (child) {
+        if (child.matches('span.block, small.block')) child.classList.add('edify-cell-line');
+        if (child.matches('.flex') && cell.children.length > 1) child.classList.add('edify-cell-inline-row');
+      });
       /* A cell that carries a control closes at 32px around a 24px control. */
       cell.classList.toggle(
         'edify-cell-action',

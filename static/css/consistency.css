@@ -3262,3 +3262,30 @@ main table tbody > tr:only-child > td[colspan] > :is(
     color: var(--edify-text-subtle, var(--edify-text-muted));
   }
 }
+
+/* Marked by micro-ux.js: `.block` lines and control rows inside a cell. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody td > .edify-cell-line {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+  :is(main, .drawer-body) table tbody td > .edify-cell-line + .edify-cell-line,
+  :is(main, .drawer-body) table tbody td > :not(.edify-cell-line) + .edify-cell-line {
+    margin-inline-start: 0.375rem;
+  }
+  :is(main, .drawer-body) table tbody td > .edify-cell-inline-row {
+    display: inline-flex !important;
+    vertical-align: middle;
+    margin-block: 0 !important;
+    margin-inline-start: 0.5rem;
+  }
+  :is(main, .drawer-body) table tbody td .status-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+}

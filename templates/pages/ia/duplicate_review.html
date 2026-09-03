@@ -43,7 +43,7 @@ Submitted Activity Detail
 <p class="flex justify-between"><span class="text-slate-500">Type:</span> <span class="text-slate-800">{{ dup.activity.get_activity_type_display }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">School:</span> <span class="text-slate-800">{{ dup.activity.school.name|default:"Cluster-wide" }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Date:</span> <span class="text-slate-800">{{ dup.activity.planned_date|date:"Y-m-d" }}</span></p>
-<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.activity.responsible_staff_id }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.activity.owner_name }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Salesforce ID:</span> <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill">{{ dup.activity.salesforce_activity_id|default:"Unlinked" }}</span></p>
 </div>
 </div>
@@ -59,7 +59,7 @@ Matching Activity Detail
 <p class="flex justify-between"><span class="text-slate-500">Type:</span> <span class="text-slate-800">{{ dup.duplicate_of.get_activity_type_display }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">School:</span> <span class="text-slate-800">{{ dup.duplicate_of.school.name|default:"Cluster-wide" }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Date:</span> <span class="text-slate-800">{{ dup.duplicate_of.planned_date|date:"Y-m-d" }}</span></p>
-<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.duplicate_of.responsible_staff_id }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.duplicate_of.owner_name }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Salesforce ID:</span> <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill">{{ dup.duplicate_of.salesforce_activity_id|default:"Unlinked" }}</span></p>
 </div>
 </div>

@@ -347,6 +347,20 @@ def ia_verification_queue_view(request):
         )
         serialized_queue.append(data)
 
+    # People, not identifiers: the queue printed the responsible person's
+    # raw staff id.
+    from apps.activities.verification_analytics import _partner_names, _staff_names
+
+    _queue_names = _staff_names({d.get("responsibleStaffId") for d in serialized_queue})
+    _queue_partners = _partner_names(
+        {d.get("assignedPartnerId") for d in serialized_queue}
+    )
+    for d in serialized_queue:
+        d["responsibleStaffName"] = _queue_names.get(
+            d.get("responsibleStaffId"), d.get("responsibleStaffId") or "Unassigned"
+        )
+        d["assignedPartnerName"] = _queue_partners.get(d.get("assignedPartnerId"), "")
+
     context = {
         "queue": serialized_queue,
         "page_obj": page_obj,
@@ -475,8 +489,16 @@ def ia_review_workspace_view(request, activity_id):
             ).order_by("name")
         )
 
+    from apps.activities.verification_analytics import _partner_names, _staff_names
+
+    _ws_names = _staff_names({a.responsible_staff_id})
+    _ws_partners = _partner_names({a.assigned_partner_id})
     context = {
         "act": a,
+        "owner_name": _ws_names.get(
+            a.responsible_staff_id, a.responsible_staff_id or "Unassigned"
+        ),
+        "partner_name": _ws_partners.get(a.assigned_partner_id, ""),
         "checks": checks,
         "duplicates": dups,
         "evidence_list": evidence_list,
@@ -698,6 +720,22 @@ def ia_duplicates_view(request):
         "activity", "activity__school", "duplicate_of", "duplicate_of__school"
     )
 
+    from apps.activities.verification_analytics import _staff_names
+
+    duplicates = list(duplicates)
+    owner_names = _staff_names(
+        {d.activity.responsible_staff_id for d in duplicates}
+        | {d.duplicate_of.responsible_staff_id for d in duplicates}
+    )
+    for d in duplicates:
+        d.activity.owner_name = owner_names.get(
+            d.activity.responsible_staff_id,
+            d.activity.responsible_staff_id or "Unassigned",
+        )
+        d.duplicate_of.owner_name = owner_names.get(
+            d.duplicate_of.responsible_staff_id,
+            d.duplicate_of.responsible_staff_id or "Unassigned",
+        )
     context = {"duplicates": duplicates}
     return render(request, "pages/ia/duplicate_review.html", context)
 
