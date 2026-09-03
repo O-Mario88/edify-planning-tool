@@ -209,7 +209,10 @@ def visible_to(principal):
     if role in (EdifyRole.REGIONAL_VICE_PRESIDENT.value, EdifyRole.ADMIN.value):
         return qs
     if role == EdifyRole.COUNTRY_DIRECTOR.value:
-        return qs.filter(raised_by_user_id=_actor_id(principal))
+        # The country's board, not the raiser's own list: a second CD account,
+        # or the same director under another account, could not see what
+        # the country had escalated.
+        return qs.filter(country_id=getattr(principal, "country", None) or "Uganda")
     return qs.none()
 
 
@@ -240,6 +243,13 @@ def sweep_overdue() -> int:
             _notify_rvps(
                 esc,
                 title=f"Overdue escalation ({esc.age_days}d): {esc.subject}",
+            )
+            # The CD who raised it is the one waiting; tell them too.
+            _notify_raiser(
+                esc,
+                f"Your escalation is overdue ({esc.age_days}d)",
+                f"“{esc.subject}” has passed its SLA without an RVP decision.",
+                "leadership_escalation_overdue",
             )
             pushed += 1
     return pushed

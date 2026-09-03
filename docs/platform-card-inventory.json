@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 627,
+  "titled_cards": 628,
   "templates": 223,
-  "distinct_titles": 596,
+  "distinct_titles": 597,
   "with_card_key": 13,
-  "untitled_surfaces": 1010,
+  "untitled_surfaces": 1011,
   "untitled_chrome": 229,
   "untitled_nested": 390,
-  "untitled_headless": 391,
+  "untitled_headless": 392,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -4863,7 +4863,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 85,
+   "line": 88,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4872,7 +4872,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 116,
+   "line": 119,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -4881,7 +4881,16 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 174,
+   "line": 171,
+   "title": "Delivery, Backlog and Money by Region",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/cd/body.html",
+   "line": 246,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4890,7 +4899,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 242,
+   "line": 314,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4899,7 +4908,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 279,
+   "line": 351,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4908,7 +4917,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 303,
+   "line": 375,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4917,7 +4926,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 352,
+   "line": 424,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4926,7 +4935,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 426,
+   "line": 498,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,

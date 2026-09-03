@@ -60,6 +60,31 @@ class CDScope:
     quarter: str | None = None
     month: int | None = None
     filters: dict = field(default_factory=dict)
+
+    @property
+    def target_period(self):
+        """What `_weighted_achievement` should measure over.
+
+        A selected month narrows target performance to that one FY month;
+        otherwise the quarter (or the whole FY) does. Every consumer of the
+        achievement math passes this rather than `quarter`, so the KPI strip
+        and the PL/CCEO tables beneath it always measure the same period —
+        the headline used to stay FY-cumulative while every other tile moved
+        with the month selector.
+        """
+        if self.month:
+            from datetime import date
+
+            from apps.core.fy import get_fy_date_range
+            from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
+
+            start = get_fy_date_range(self.fy)[0].date()
+            year = start.year if int(self.month) >= start.month else start.year + 1
+            fy_month = TCal.month_of_fy_for(date(year, int(self.month), 1), self.fy)
+            if fy_month:
+                return [fy_month]
+        return self.quarter
+
     school_ids: list = field(default_factory=list)  # all in-scope schools
     # What goes into `school_id__in=` filters. Same membership as school_ids,
     # but unevaluated: at 17,000 schools binding the materialised id list costs
@@ -122,6 +147,9 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
 
     district = (filters.get("district") or "").strip()
     cluster = (filters.get("cluster") or "").strip()
+    region = (filters.get("region") or "").strip()
+    if region:
+        schools = schools.filter(region_id=region)
     if district:
         schools = schools.filter(district_id=district)
     if cluster:
@@ -135,6 +163,16 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
     cceo_sps = list(
         StaffProfile.objects.filter(user__in=cceo_users).values_list("id", flat=True)
     )
+    if staff_ids is None and (region or district or cluster):
+        # A geography filter must narrow the people too. Every activity
+        # reader admits work by school OR by responsible staff, so leaving
+        # the staff set country-wide let a district filter match the whole
+        # country's activities through the second half of that OR.
+        staff_ids = list(
+            StaffSchoolAssignment.objects.filter(school_id__in=school_ids)
+            .values_list("staff_id", flat=True)
+            .distinct()
+        )
     if staff_ids is not None:
         # Narrow the CCEO set to the filtered staff.
         cceo_sps = [s for s in cceo_sps if s in set(staff_ids)]
@@ -166,6 +204,7 @@ def _country_activities(cd: CDScope):
     if (
         cd.filters.get("pl")
         or cd.filters.get("cceo")
+        or cd.filters.get("region")
         or cd.filters.get("district")
         or cd.filters.get("cluster")
     ):
@@ -709,7 +748,7 @@ class CDAnalyticsService:
         from one place instead of recomputing its own definition."""
         return CDAnalyticsService._weighted_achievement(
             cd.fy,
-            cd.quarter,
+            cd.target_period,
             cd.cceo_user_ids,
             cd.cceo_staff_ids,
             areas=cd.areas or None,
@@ -732,7 +771,7 @@ class CDAnalyticsService:
         for staff_id, user_id, name in CDAnalyticsService._cceo_identities(cd):
             pct, achieved, target = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [user_id] if user_id else [],
                 [staff_id],
                 areas=cd.areas or None,
@@ -908,7 +947,14 @@ class CDAnalyticsService:
         if not resolved_user_ids:
             return 0, 0, 0
 
-        months = TCal.months_of_quarter(quarter) if quarter else list(range(1, 13))
+        # `quarter` is a quarter label, a list of FY months (a single selected
+        # month, from CDScope.target_period), or None for the whole FY.
+        if isinstance(quarter, (list, tuple)):
+            months = [int(m) for m in quarter]
+        elif quarter:
+            months = TCal.months_of_quarter(quarter)
+        else:
+            months = list(range(1, 13))
         users = None
         if areas is None:
             # See _prime_target_series: agreed areas, never the catalogue.
@@ -1039,6 +1085,7 @@ class CDAnalyticsService:
         if (
             cd.filters.get("pl")
             or cd.filters.get("cceo")
+            or cd.filters.get("region")
             or cd.filters.get("district")
             or cd.filters.get("cluster")
         ):
@@ -1055,10 +1102,48 @@ class CDAnalyticsService:
 
     @staticmethod
     def _budget_utilization(cd):
+        return CDAnalyticsService.budget_utilisation_detail(cd)["pct"]
+
+    @staticmethod
+    def budget_utilisation_detail(cd) -> dict:
+        """Disbursed against the APPROVED envelope, falling back to requested.
+
+        Utilisation used to divide by the request pipeline, which is what
+        people asked for rather than what the RVP approved. The approved
+        envelope is the sum of the monthly work-plan budgets the RVP has
+        signed (or that have gone on to the Accountant), narrowed to the
+        selected month when there is one. Where no envelope exists yet the
+        requested basis is kept, and the helper says so.
+        """
+        from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
+
         qs = CDAnalyticsService._advance_qs(cd)
         requested = int(qs.aggregate(s=Sum("amount"))["s"] or 0)
         disbursed = int(qs.aggregate(s=Sum("disbursed_amount"))["s"] or 0)
-        return _pct(disbursed, requested)
+        envelopes = MonthlyWorkPlanBudget.objects.filter(
+            fy=cd.fy,
+            status__in=("approved_by_rvp", "sent_to_accountant", "disbursed", "closed"),
+        )
+        if cd.month:
+            envelopes = envelopes.filter(month_key__endswith=f"-{int(cd.month):02d}")
+        approved = int(envelopes.aggregate(s=Sum("total_amount"))["s"] or 0)
+        if approved:
+            return {
+                "pct": _pct(disbursed, approved),
+                "basis": "approved",
+                "approved": approved,
+                "requested": requested,
+                "disbursed": disbursed,
+                "helper": "disbursed vs approved envelope",
+            }
+        return {
+            "pct": _pct(disbursed, requested),
+            "basis": "requested",
+            "approved": 0,
+            "requested": requested,
+            "disbursed": disbursed,
+            "helper": "disbursed vs requested (no approved envelope yet)",
+        }
 
     # ── 1. Performance vs target over time ───────────────────────────────────
     @staticmethod
@@ -1205,7 +1290,7 @@ class CDAnalyticsService:
             # per-CCEO numbers, which would silently unweight the team total).
             pl_pct, _pl_a, _pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [c["user_id"] for c in cceos if c["user_id"]],
                 [c["staff_id"] for c in cceos],
                 areas=cd.areas or None,
@@ -1215,7 +1300,7 @@ class CDAnalyticsService:
             for c in cceos:
                 pct, _a, t = CDAnalyticsService._weighted_achievement(
                     cd.fy,
-                    cd.quarter,
+                    cd.target_period,
                     [c["user_id"]] if c["user_id"] else [],
                     [c["staff_id"]],
                     areas=cd.areas or None,
@@ -1734,7 +1819,7 @@ class CDAnalyticsService:
             # per-row table can never disagree with the KPI above it.
             pl_pct, pl_a, pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [c["user_id"] for c in cceos if c["user_id"]],
                 [c["staff_id"] for c in cceos],
                 areas=cd.areas or None,
@@ -2308,6 +2393,16 @@ class CDAnalyticsService:
             "fy_options": fy_options(),
             "quarters": ["Q1", "Q2", "Q3", "Q4"],
             "pls": [{"id": p.id, "name": p.name} for p in CDAnalyticsService._pls()],
+            "regions": list(
+                __import__("apps.geography.models", fromlist=["Region"])
+                .Region.objects.filter(
+                    id__in=schools.exclude(region__isnull=True)
+                    .values_list("region_id", flat=True)
+                    .distinct()
+                )
+                .values("id", "name")
+                .order_by("name")
+            ),
             "districts": list(
                 District.objects.filter(id__in=district_ids)
                 .values("id", "name")
@@ -2586,7 +2681,7 @@ class CDAnalyticsService:
             )
             pct, a, t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [c["user_id"]] if c["user_id"] else [],
                 [c["staff_id"]],
                 areas=cd.areas or None,

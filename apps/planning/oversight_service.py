@@ -92,6 +92,9 @@ class PlanningOversightItem:
     # Context
     school_id: str | None = None
     school_name: str = ""
+    district_id: str | None = None
+    district_name: str = ""
+    region_name: str = ""
     cluster_id: str | None = None
     cluster_name: str = ""
     project_id: str | None = None
@@ -376,7 +379,7 @@ def _activities_in_scope(
         Activity.objects.filter(
             deleted_at__isnull=True, status__in=LIVE_ACTIVITY_STATUSES
         )
-        .select_related("school", "cluster")
+        .select_related("school", "school__district", "school__region", "cluster")
         .only(
             "id",
             "activity_type",
@@ -408,6 +411,10 @@ def _activities_in_scope(
             "reschedule_count",
             "venue",
             "school__name",
+            "school__district_id",
+            "school__district__name",
+            "school__region_id",
+            "school__region__name",
             "cluster__name",
         )
     )
@@ -472,7 +479,9 @@ def _unscheduled_assignments_in_scope(
                 _RETURNED_ASSIGNMENT_STATUS,
             )
         )
-        .select_related("school", "cluster", "partner")
+        .select_related(
+            "school", "school__district", "school__region", "cluster", "partner"
+        )
         .only(
             "id",
             "status",
@@ -490,6 +499,10 @@ def _unscheduled_assignments_in_scope(
             "scheduled_date",
             "created_at",
             "school__name",
+            "school__district_id",
+            "school__district__name",
+            "school__region_id",
+            "school__region__name",
             "cluster__name",
             "partner__name",
         )
@@ -645,6 +658,7 @@ def _activity_item(
         activity_id=activity.id,
         school_id=activity.school_id,
         school_name=getattr(activity.school, "name", "") or "",
+        **_geography_of(activity.school if activity.school_id else None),
         cluster_id=activity.cluster_id,
         cluster_name=getattr(activity.cluster, "name", "") or "",
         project_id=activity.project_id,
@@ -712,6 +726,7 @@ def _assignment_item(assignment, directory: _StaffDirectory) -> PlanningOversigh
         partner_assignment_id=assignment.id,
         school_id=assignment.school_id,
         school_name=getattr(assignment.school, "name", "") or "",
+        **_geography_of(assignment.school if assignment.school_id else None),
         cluster_id=assignment.cluster_id,
         cluster_name=getattr(assignment.cluster, "name", "") or "",
         project_id=assignment.project_id,
@@ -759,12 +774,32 @@ FILTER_KEYS = (
 )
 
 
+def _geography_of(school) -> dict:
+    """District and region names for an item, read off the school's FKs.
+
+    `district_id` was declared in FILTER_KEYS for a long time and read by
+    nobody: the item carried no geography, so the country plan could only be
+    grouped by Program Lead.
+    """
+    if school is None:
+        return {}
+    district = getattr(school, "district", None)
+    region = getattr(school, "region", None)
+    return {
+        "district_id": getattr(school, "district_id", None),
+        "district_name": getattr(district, "name", "") or "",
+        "region_name": getattr(region, "name", "") or "",
+    }
+
+
 def apply_filters(items, filters: dict | None):
     """Narrow the items by the advanced filter drawer's selections."""
     if not filters:
         return items
 
     def keep(item) -> bool:
+        if (want := filters.get("district_id")) and item.district_id != want:
+            return False
         if (want := filters.get("activity_type")) and item.activity_type != want:
             return False
         if (want := filters.get("executor_type")) and item.executor_type != want:

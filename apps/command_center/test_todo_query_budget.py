@@ -63,7 +63,12 @@ class TodoQueryBudgetTests(TestCase):
     #: Measured at 55 for a Country Director against this fixture after the
     #: series-priming fix (was ~120 before). The headroom covers a handful of
     #: Program Leads; it is a ceiling, never a target.
-    CEILING = 90
+    #: Raised from 90 on 2026-09-03 when the CD's own queue gained six
+    #: sources it never had — returned FY plan, PL monthly team requests,
+    #: missing catalogue rates, overdue and delegated escalations, and
+    #: quality flags — one query each. ISSUE-007 (pl_oversight N+1) remains
+    #: the real cost on this page and is unchanged by the six.
+    CEILING = 96
 
     #: The direct, no-request path with three Programme Leads. Higher than
     #: CEILING because it re-reads what a request memoises; see the module

@@ -90,11 +90,25 @@ class NotificationLinkResolver:
         if event_type.startswith("leadership_escalation_"):
             return "/escalations", "Open Escalation"
 
+        if event_type == "cd_flag_raised":
+            return "/quality-checks", "Respond to Flag"
+
+        if event_type == "monthly_team_request_submitted":
+            # A PL's monthly team request waits for the CD on the country
+            # budget page, not on the weekly advance page this used to fall
+            # through to.
+            return "/budget", "Review Team Request"
+
         if event_type == "annual_budget_submitted":
             # The FY Work Plan and the Country Annual Budget are one envelope
             # (apps/planning/work_plan_approval.py); the RVP approves it from
             # the work-plan surface the submission notice always pointed at.
             return "/work-plan?view=fy", "Review Work Plan"
+
+        if event_type == "annual_budget_returned":
+            # Returned means "fix the plan", and the plan is fixed on the
+            # work-plan surface, where every activity's date and cost lives.
+            return "/work-plan?view=fy", "Fix Work Plan"
 
         if event_type.startswith("annual_budget_"):
             return "/country-budget", "Open Annual Budget"

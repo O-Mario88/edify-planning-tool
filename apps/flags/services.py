@@ -35,6 +35,25 @@ def raise_flag(data: dict, principal) -> dict:
         priority=data.get("priority", "normal"),
         due_date=data.get("dueDate"),
     )
+    # The flag is the CD's way of asking a PL to act; it used to be raised in
+    # silence, and the PL learned of it only by opening the page.
+    try:
+        from apps.notifications.services import WorkflowNotificationService
+
+        WorkflowNotificationService.trigger(
+            event_type="cd_flag_raised",
+            category="leadership",
+            priority="high" if flag.priority == "high" else "normal",
+            title="Flag from the Country Director",
+            body=(
+                flag.note or flag.recommended_action or "Please respond to this flag."
+            )[:500],
+            context_type="CdFlag",
+            context_id=flag.id,
+            recipients=[assigned_to],
+        )
+    except Exception:  # noqa: BLE001 - never fail the flag over a notice
+        pass
     return _serialize(flag)
 
 

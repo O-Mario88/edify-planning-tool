@@ -236,8 +236,12 @@ class CDCommandCenterTest(TestCase):
     # 5 ─ pending fund requests calculation
     def test_cd_pending_fund_requests_calculation(self):
         by = self._kpis()
-        # 1 escalated weekly + 1 monthly budget in cd_review = 2.
-        self.assertEqual(by["Pending Fund Requests"]["value"], "2")
+        # The tile counts APPROVALS — the escalated weekly request — and names
+        # the monthly budget sitting at cd_review as a review in the helper,
+        # rather than adding two different objects into one integer.
+        self.assertEqual(by["Pending Fund Requests"]["value"], "1")
+        self.assertIn("1 budget to review", by["Pending Fund Requests"]["helper"])
+        self.assertEqual(by["Pending Fund Requests"]["link"], "/fund-approvals")
         WeeklyFundRequest.objects.filter(id=self.wfr.id).update(
             status="confirmed_for_advance"
         )

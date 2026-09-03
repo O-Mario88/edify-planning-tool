@@ -56,6 +56,9 @@
                { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
                { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
              ];
+             {% if country_performance.prior_completed %}
+             cfg.series.push({ name: 'Completed FY{{ country_performance.prior_fy }}', type: 'line', data: {{ country_performance.prior_completed|escape }} });
+             {% endif %}
              cfg.chart.height = 265;
              cfg.labels = {{ country_performance.labels|escape }};
              cfg.xaxis.type = 'category';
@@ -135,7 +138,7 @@
                         class="h-7 px-2.5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-bold transition-colors">Approve</button>
                 <form hx-post="/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}" hx-target="#cd-dashboard-body" hx-swap="innerHTML" class="m-0 inline-flex items-center gap-1" @submit.stop>
                   {% csrf_token %}
-                  <input type="text" name="reason" required placeholder="Return reason" aria-label="Reason for returning this request" class="h-7 w-36 px-2 rounded-control border border-slate-200 edify-text-caption bg-slate-50 focus:outline-none">
+                  <input type="text" name="reason" required placeholder="Return reason" aria-label="Reason for returning this request" class="h-7 w-40 px-2 rounded-control border border-slate-200 edify-text-caption bg-slate-50 focus:outline-none">
                   <button type="submit" class="h-7 px-2.5 rounded-control border border-rose-200 text-rose-700 edify-text-caption font-bold hover:bg-rose-50 transition-colors">Return</button>
                 </form>
                 <a href="/fund-approvals" class="h-7 px-2.5 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold inline-flex items-center hover:bg-slate-50">Review</a>
@@ -163,6 +166,75 @@
       </div>
     </div>
   </div>
+
+  {# ── Region and district breakdown ── #}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="cd-geography-heading" data-cd-geography>
+    <div class="flex items-center justify-between gap-3">
+      <h2 id="cd-geography-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+        <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="map" %}</span>Delivery, Backlog and Money by Region
+      </h2>
+      <span class="edify-text-caption font-semibold text-slate-400">Open a region for its districts · sorted by backlog</span>
+    </div>
+    {% if geography.rows %}
+    <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px]">
+      <thead>
+        <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+          <th scope="col" class="px-3 py-2 font-semibold">Region / district</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Schools</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Planned</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Done</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Achievement</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Backlog</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Planned budget</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Disbursed</th>
+        </tr>
+      </thead>
+      {% for r in geography.rows %}
+      <tbody x-data="{ open: false }">
+        <tr class="border-t edify-border cursor-pointer hover:bg-slate-50" @click="open = !open" :aria-expanded="open.toString()">
+          <td class="px-3 py-2.5 font-semibold text-slate-800"><span class="inline-block w-4 text-slate-400" x-text="open ? '−' : '+'">+</span>{{ r.name }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.schools|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.planned|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.completed|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums font-bold {% if r.tone == 'danger' %}text-rose-700{% elif r.tone == 'warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ r.achievement }}%</td>
+          <td class="px-3 py-2.5 text-right tabular-nums {% if r.backlog %}text-rose-700 font-bold{% endif %}">{{ r.backlog|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.planned_budget_label }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.disbursed_label }}</td>
+        </tr>
+        {% for d in r.districts %}
+        <tr class="border-t border-slate-50 bg-slate-50" x-show="open" x-cloak>
+          <td class="px-3 py-2 pl-9 text-slate-600"><a href="/analytics/country-director?fy={{ fy }}&district={{ d.id }}" class="hover:underline">{{ d.name }}</a></td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.schools|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.planned|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.completed|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums {% if d.tone == 'danger' %}text-rose-700{% elif d.tone == 'warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ d.achievement }}%</td>
+          <td class="px-3 py-2 text-right tabular-nums {% if d.backlog %}text-rose-700{% endif %}">{{ d.backlog|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.planned_budget_label }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.disbursed_label }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      {% endfor %}
+      <tfoot>
+        <tr class="border-t edify-border font-bold text-slate-800">
+          <td class="px-3 py-2.5">Country</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.schools|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.planned|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.completed|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.achievement }}%</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.backlog|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.planned_budget_label }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.disbursed_label }}</td>
+        </tr>
+      </tfoot>
+    </table>
+    </div>
+    <p class="edify-text-caption edify-text-muted">Backlog counts planned work whose date has passed without completion. Planned budget is the costed estimate of the period&rsquo;s activities; disbursed is money already released against them.</p>
+    {% else %}
+    {% include "components/empty_state.html" with title="No regional data yet" message="Regions and districts appear as schools are uploaded and assigned." compact="true" %}
+    {% endif %}
+  </section>
 
   {% comment %}
   Country Program Leads Performance — a full row of its own. This shared three

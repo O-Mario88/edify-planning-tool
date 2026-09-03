@@ -571,6 +571,10 @@ def _filter_options(items) -> dict:
             {(i.partner_id, i.partner_name) for i in items if i.partner_id},
             key=lambda pair: pair[1],
         ),
+        "districts": sorted(
+            {(i.district_id, i.district_name) for i in items if i.district_id},
+            key=lambda pair: pair[1],
+        ),
         "risks": sorted({r["key"] for i in items for r in i.risks}),
     }
 

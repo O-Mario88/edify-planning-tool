@@ -1238,6 +1238,16 @@ SIDEBAR_ITEMS = [
                 "page_key": "my_actions",
             },
             {
+                # The CD's flags to Program Leads (apps.flags). Permitted for
+                # years, reachable from nowhere: no sidebar item registered
+                # the page for any role.
+                "label": "Quality Flags",
+                "url": "/quality-checks",
+                "page_key": "quality_checks",
+                "icon_key": "todos",
+                "visible_to": {CD, PL, IA},
+            },
+            {
                 # The other end of the same rows. Only the roles that can send
                 # — PL supervises, IA assures — have anything to monitor here.
                 "label": "Actions Sent",

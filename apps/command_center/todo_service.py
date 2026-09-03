@@ -261,7 +261,9 @@ def _fund_request_todos(principal, role):
                     "status_key": "waiting_me",
                     "status_label": "Waiting on Me",
                     "status_tone": "info",
-                    "due_label": f"Week of {w.week_start_date:%-d %b}" if w.week_start_date else "—",
+                    "due_label": f"Week of {w.week_start_date:%-d %b}"
+                    if w.week_start_date
+                    else "—",
                     "due_tone": "neutral",
                     "linked": f"Weekly Fund Request · {w.week_start_date:%b %-d}",
                     "action_label": "Review",
@@ -840,6 +842,195 @@ def _visit_request_todos(principal):
             }
         )
     return todos
+
+
+def _cost_catalogue_todos(principal, role):
+    """Rates the CD owns and nobody else can set.
+
+    Scheduling and fund requests refuse with "ask the Country Director to set
+    the missing rate", but the count of blocked work was shown only on the
+    Admin-only System Health page. This is the CD's own queue item for it.
+    """
+    if role not in ("CountryDirector", "Admin"):
+        return []
+    from apps.activities.models import Activity
+
+    blocked = Activity.objects.filter(
+        deleted_at__isnull=True,
+        cost_missing=True,
+        scheduled_date__isnull=False,
+    ).exclude(status__in=("cancelled", "rejected", "deferred", "closed"))
+    n = blocked.count()
+    if not n:
+        return []
+    return [
+        {
+            "id": "cost-catalogue-missing-rates",
+            "title": "Set Missing Cost Catalogue Rates",
+            "description": (
+                f"{n} scheduled activit{'y' if n == 1 else 'ies'} cannot be "
+                "priced or funded until the missing rate is set."
+            ),
+            "category": "Finance",
+            "priority": "high",
+            "status_key": "blocked",
+            "status_label": "Blocking Funding",
+            "status_tone": "danger",
+            "due_label": "Today",
+            "due_tone": "warning",
+            "linked": "Cost Catalogue",
+            "action_label": "Set Rates",
+            "action_url": "/cost-settings",
+            "actionable": True,
+            "source": "Cost catalogue",
+            "_due_sort": date.today(),
+        }
+    ]
+
+
+def _escalation_todos(principal, role):
+    """What the CD's own escalations need from the CD.
+
+    An escalation past its SLA re-notified only the RVP, and a decision
+    delegated back to the CD produced a normal notice and nothing to act on.
+    """
+    if role not in ("CountryDirector", "Admin"):
+        return []
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    from apps.flags.escalation_service import _is_overdue
+    from apps.flags.models import LeadershipEscalation
+
+    todos = []
+    qs = LeadershipEscalation.objects.all()
+    if role == "CountryDirector":
+        qs = qs.filter(country_id=getattr(principal, "country", None) or "Uganda")
+    for esc in qs.exclude(status="resolved").order_by("created_at")[:50]:
+        if not _is_overdue(esc):
+            continue
+        todos.append(
+            {
+                "id": f"esc-overdue-{esc.id}",
+                "title": "Chase Overdue Escalation",
+                "description": (
+                    f"{esc.subject} has waited {esc.age_days} days for the RVP."
+                ),
+                "category": "Leadership",
+                "priority": "high",
+                "status_key": "overdue",
+                "status_label": "Overdue",
+                "status_tone": "danger",
+                "due_label": f"{esc.age_days}d open",
+                "due_tone": "warning",
+                "linked": f"Escalation · {esc.category}",
+                "action_label": "Open",
+                "action_url": "/escalations",
+                "actionable": True,
+                "source": "Escalations",
+                "_due_sort": date.today(),
+            }
+        )
+    since = timezone.now() - timedelta(days=14)
+    for esc in qs.filter(
+        status="resolved", decision="delegated_back", resolved_at__gte=since
+    ).order_by("-resolved_at")[:10]:
+        todos.append(
+            {
+                "id": f"esc-delegated-{esc.id}",
+                "title": "Act on Delegated Escalation",
+                "description": (
+                    f"The RVP delegated “{esc.subject}” back to you"
+                    + (
+                        f": {esc.decision_note}"
+                        if getattr(esc, "decision_note", "")
+                        else "."
+                    )
+                ),
+                "category": "Leadership",
+                "priority": "high",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "info",
+                "due_label": "This week",
+                "due_tone": "neutral",
+                "linked": f"Escalation · {esc.category}",
+                "action_label": "Open",
+                "action_url": "/escalations",
+                "actionable": True,
+                "source": "Escalations",
+                "_due_sort": date.today(),
+            }
+        )
+    return todos
+
+
+def _cd_flag_todos(principal, role):
+    """Quality flags: the PL answers them, the CD follows up the overdue ones."""
+    from apps.flags.models import CdFlag
+
+    uid = str(getattr(principal, "user_id", None) or getattr(principal, "id", ""))
+    todos = []
+    if role in ("Program Lead", "ImpactAssessment"):
+        for flag in CdFlag.objects.filter(
+            assigned_to_user_id=uid, status="open"
+        ).order_by("created_at")[:10]:
+            todos.append(
+                {
+                    "id": f"cdflag-{flag.id}",
+                    "title": "Respond to CD Flag",
+                    "description": flag.note[:160]
+                    if flag.note
+                    else "A flag from the Country Director.",
+                    "category": "Leadership",
+                    "priority": "critical" if flag.priority == "high" else "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "warning",
+                    "due_label": flag.due_date or "—",
+                    "due_tone": "warning" if flag.due_date else "neutral",
+                    "linked": flag.scope_name or "Quality flag",
+                    "action_label": "Respond",
+                    "action_url": "/quality-checks",
+                    "actionable": True,
+                    "source": "Quality flags",
+                    "_due_sort": _parse_iso_date(flag.due_date) or date.max,
+                }
+            )
+    if role in ("CountryDirector", "Admin"):
+        for flag in CdFlag.objects.filter(status="open").order_by("created_at")[:50]:
+            due = _parse_iso_date(flag.due_date)
+            if not due or due >= date.today():
+                continue
+            todos.append(
+                {
+                    "id": f"cdflag-overdue-{flag.id}",
+                    "title": "Follow Up Overdue Flag",
+                    "description": f"{flag.scope_name or 'A flag'} was due {due:%-d %b} and is still open.",
+                    "category": "Leadership",
+                    "priority": "high",
+                    "status_key": "overdue",
+                    "status_label": "Overdue",
+                    "status_tone": "danger",
+                    "due_label": f"{due:%-d %b}",
+                    "due_tone": "warning",
+                    "linked": flag.scope_name or "Quality flag",
+                    "action_label": "Follow up",
+                    "action_url": "/quality-checks",
+                    "actionable": True,
+                    "source": "Quality flags",
+                    "_due_sort": due,
+                }
+            )
+    return todos
+
+
+def _parse_iso_date(value):
+    try:
+        return date.fromisoformat(str(value)[:10]) if value else None
+    except ValueError:
+        return None
 
 
 def _hr_exception_todos(principal, role, today):
@@ -1598,6 +1789,67 @@ def _country_budget_todos(principal, role):
             country_id="Uganda", status="returned_by_rvp"
         ).order_by("-month_key")[:5]:
             todos.append(_country_budget_todo(b, returned=True))
+        # The FY Work Plan envelope, returned by the RVP. It produced no
+        # To-Do at all, and its notification pointed at the budget page
+        # rather than the plan that needs fixing.
+        from apps.monthly_work_plan.models import CountryAnnualBudget
+
+        for cab in CountryAnnualBudget.objects.filter(
+            country_id="Uganda", status="returned_by_rvp"
+        ).order_by("-fy")[:3]:
+            todos.append(
+                {
+                    "id": f"cab-cd-{cab.id}",
+                    "title": f"Fix Returned FY{cab.fy} Work Plan",
+                    "description": (
+                        getattr(cab, "rvp_review_note", None)
+                        or "The RVP returned the FY work plan and budget envelope."
+                    ),
+                    "category": "Budget Approval",
+                    "priority": "critical",
+                    "status_key": "returned",
+                    "status_label": "Returned",
+                    "status_tone": "danger",
+                    "due_label": "Today",
+                    "due_tone": "warning",
+                    "linked": f"FY Work Plan · {cab.fy}",
+                    "action_label": "Fix",
+                    "action_url": "/work-plan?view=fy",
+                    "actionable": True,
+                    "source": "Country budget workflow",
+                    "_due_sort": date.today(),
+                }
+            )
+        # PL monthly team requests at the CD stage: real approvals with money
+        # behind them that reached the CD only as a mis-routed notification.
+        from apps.fund_requests.models import FundRequest
+
+        for fr in FundRequest.objects.filter(status="submitted_to_cd").order_by(
+            "-created_at"
+        )[:10]:
+            todos.append(
+                {
+                    "id": f"fr-cd-{fr.id}",
+                    "title": "Approve Team Monthly Request",
+                    "description": (
+                        f"{_country_budget_ugx(fr.total_amount)} across "
+                        f"{fr.activity_count} activities · {fr.period_key}"
+                    ),
+                    "category": "Budget Approval",
+                    "priority": "high",
+                    "status_key": "waiting_me",
+                    "status_label": "Waiting on Me",
+                    "status_tone": "info",
+                    "due_label": fr.period_key,
+                    "due_tone": "neutral",
+                    "linked": f"Team request · {fr.period_key}",
+                    "action_label": "Review",
+                    "action_url": "/budget",
+                    "actionable": True,
+                    "source": "Country budget workflow",
+                    "_due_sort": date.today(),
+                }
+            )
 
     if role in ("RegionalVicePresident", "Admin"):
         for b in MonthlyWorkPlanBudget.objects.filter(
@@ -3210,6 +3462,9 @@ def get_todos(principal) -> dict:
     todos += _pl_fund_todos(principal, role)
     todos += _accountant_todos(principal, role)
     todos += _country_budget_todos(principal, role)
+    todos += _cost_catalogue_todos(principal, role)
+    todos += _escalation_todos(principal, role)
+    todos += _cd_flag_todos(principal, role)
     todos += _pl_analytics_todos(principal, role)
     todos += _cd_analytics_todos(principal, role)
     todos += _route_todos(principal, role)

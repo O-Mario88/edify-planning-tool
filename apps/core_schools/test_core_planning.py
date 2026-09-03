@@ -966,9 +966,19 @@ class CoreSchoolsPlanningTest(TestCase):
         self._complete_core_activity(act, "SVE-CORE4")
         CorePlan.objects.filter(id=self.plan.id).update(baseline_average=5.6)
 
-        core = CDDashboardService._core_on_track(FY)
+        cd, _ = self._staff(
+            "cd-core@core.org", "Core CD", EdifyRole.COUNTRY_DIRECTOR.value
+        )
+        core = CDDashboardService._core_on_track(FY, cd)
         self.assertEqual(core["total"], 2)  # both core plans in this fixture
-        self.assertEqual(core["on_track"], 1)  # only the completed + baselined plan
+        # One definition, shared with the Core School Health page: a package
+        # is on track within two slots of done. One visit of nine is behind.
+        self.assertEqual(core["on_track"], 0)
+        from apps.core_schools.leadership_service import core_school_health
+
+        self.assertEqual(
+            core["on_track"], core_school_health(cd, {"fy": FY})["onTrackCount"]
+        )
 
     # ── 25: self-heal SSA gate + audit provenance ────────────────────────────
     def test_self_heal_skips_core_school_without_ssa_record(self):

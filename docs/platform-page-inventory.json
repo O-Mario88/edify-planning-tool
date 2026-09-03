@@ -3211,7 +3211,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 31393,
+      "bytes": 36896,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3227,9 +3227,10 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty"
+        "empty",
+        "open"
       ],
-      "tables": 3,
+      "tables": 4,
       "template": "partials/dashboards/cd/body.html",
       "variants": [
         "executive"
@@ -6220,7 +6221,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4649,
+      "bytes": 5139,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-planning-oversight/",

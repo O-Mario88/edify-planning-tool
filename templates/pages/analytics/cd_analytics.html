@@ -66,6 +66,13 @@
       </select>
     </div>
     <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
+      <span class="uppercase tracking-wider edify-text-caption">Region</span>
+      <select aria-label="Region" name="region" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
+        <option value="">All Regions</option>
+        {% for r in filter_options.regions %}<option value="{{ r.id }}" {% if filters.region == r.id %}selected{% endif %}>{{ r.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div class="flex items-center gap-1.5 bg-slate-50 px-2.5 py-1.5 rounded-surface border border-slate-100">
       <span class="uppercase tracking-wider edify-text-caption">District</span>
       <select aria-label="District" name="district" class="bg-transparent focus:outline-none cursor-pointer font-semibold max-w-[120px] truncate">
         <option value="">All Districts</option>
