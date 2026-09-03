@@ -89,6 +89,13 @@ MONTHS = [
 
 from apps.core.metrics import format_ugx_compact as _ugx  # noqa: E402
 
+
+def _ugx_exact(amount) -> str:
+    """The full figure for a breakdown the reader may reconcile: UGX 24,000.
+    Tiles and cards stay compact; a money table never rounds."""
+    return f"UGX {int(round(float(amount or 0))):,}"
+
+
 # Was a local copy differing from the other two compact-UGX helpers only at the
 # billion scale (.2f here, .1f in finance operations). One formatter now, so
 # the same amount reads the same on the approval queue and the finance pages.
@@ -554,11 +561,6 @@ def get_pl_fund_approvals(principal, filters=None):
     # ── KPIs (team-scoped, this week) ─────────────────────────────────────────
     total_requested = sum(p["request_total"] for p in plans)
     awaiting = [p for p in plans if p["wfr_status"] == awaiting_status(principal)]
-    pending_send = [
-        p
-        for p in plans
-        if p["wfr_status"] in (None, "pending_responsible_confirmation")
-    ]
     approved = [
         p for p in plans if p["wfr_status"] in ("confirmed_for_advance", "disbursed")
     ]
@@ -566,8 +568,6 @@ def get_pl_fund_approvals(principal, filters=None):
 
     def _n(items):
         return f"{len(items)} request{'' if len(items) == 1 else 's'}"
-
-    schools_reached = len({s for p in plans for s in p["schools"]})
 
     kpis = [
         render_precomputed_metric_item(
@@ -585,13 +585,6 @@ def get_pl_fund_approvals(principal, filters=None):
             helper=_n(awaiting),
         ),
         render_precomputed_metric_item(
-            "fund_requests_pl_approval_service_awaiting_cceo_send",
-            _ugx(sum(p["request_total"] or p["total"] for p in pending_send)),
-            icon="briefcase",
-            variant="info",
-            helper=_n(pending_send),
-        ),
-        render_precomputed_metric_item(
             "fund_requests_pl_approval_service_approved_this_week",
             _ugx(sum(p["request_total"] for p in approved)),
             icon="check",
@@ -604,13 +597,6 @@ def get_pl_fund_approvals(principal, filters=None):
             icon="warning",
             variant="danger",
             helper=_n(returned),
-        ),
-        render_precomputed_metric_item(
-            "fund_requests_pl_approval_service_average_cost_per_school",
-            _ugx(round(total_requested / schools_reached) if schools_reached else 0),
-            icon="school",
-            variant="info",
-            helper=f"{schools_reached} planned school{'' if schools_reached == 1 else 's'}",
         ),
     ]
 
@@ -681,7 +667,6 @@ def _workspace(principal, ctx, cceos, fy, month, week_base, plans, sel):
                 "own_plan": card["cceo_user_id"] == principal.user_id,
                 "district": card["district"],
                 "region": card["region"],
-                "summary": "Includes own cluster trainings, staff visits, partner visits",
                 "total_fmt": card["total_fmt"],
                 "status": card["status"],
                 "status_tone": card["status_tone"],
@@ -689,26 +674,34 @@ def _workspace(principal, ctx, cceos, fy, month, week_base, plans, sel):
                 "hx_get": f"/fund-approvals/detail?cceo={card['cceo_user_id']}&{base}",
                 "hx_target": "#fund-plan-detail",
                 "chips": [
-                    {
-                        "icon": "visits",
-                        "label": f"{chips['visits']} Visits",
-                        "tone": "success",
-                    },
-                    {
-                        "icon": "partner",
-                        "label": f"{chips['partner']} Partner",
-                        "tone": "purple",
-                    },
-                    {
-                        "icon": "clusters",
-                        "label": f"{chips['clusters']} Clusters",
-                        "tone": "info",
-                    },
-                    {
-                        "icon": "trainings",
-                        "label": f"{chips['trainings']} Trainings",
-                        "tone": "warning",
-                    },
+                    chip
+                    for chip in (
+                        {
+                            "icon": "visits",
+                            "label": f"{chips['visits']} Visits",
+                            "tone": "success",
+                            "count": chips["visits"],
+                        },
+                        {
+                            "icon": "partner",
+                            "label": f"{chips['partner']} Partner",
+                            "tone": "purple",
+                            "count": chips["partner"],
+                        },
+                        {
+                            "icon": "clusters",
+                            "label": f"{chips['clusters']} Clusters",
+                            "tone": "info",
+                            "count": chips["clusters"],
+                        },
+                        {
+                            "icon": "trainings",
+                            "label": f"{chips['trainings']} Trainings",
+                            "tone": "warning",
+                            "count": chips["trainings"],
+                        },
+                    )
+                    if chip["count"]
                 ],
             }
         )
@@ -720,6 +713,7 @@ def _workspace(principal, ctx, cceos, fy, month, week_base, plans, sel):
         "export_url": f"/fund-approvals?export=csv&{base}",
         "primary_action": {
             "label": "Approve All Valid",
+            "confirm": "Approve every valid plan for this week and send them to the Accountant?",
             "hx_post": "/fund-approvals/action",
             "hx_target": "#fund-approval-root",
             "hx_vals": json.dumps(
@@ -872,6 +866,7 @@ def _queue_card(p, sel):
         "district": p["district"],
         "region": p["region"],
         "total_fmt": p["total_fmt"],
+        "total": int(p["request_total"] if p["wfr_id"] else p["total"]),
         "status": p["status"],
         "status_tone": p["status_tone"],
         "chips": p["chips"],
@@ -892,8 +887,8 @@ def _selected_detail(p, week_start):
             {
                 "category": cat,
                 "qty": qty,
-                "unit_cost": _ugx(round(d["total"] / qty)) if qty else "—",
-                "total": _ugx(d["total"]),
+                "unit_cost": _ugx_exact(round(d["total"] / qty)) if qty else "—",
+                "total": _ugx_exact(d["total"]),
             }
         )
 
@@ -960,7 +955,7 @@ def _selected_detail(p, week_start):
         "period": f"Week of {_week_label(week_start)}",
         "status": p["status"],
         "status_tone": p["status_tone"],
-        "total_fmt": p["total_fmt"],
+        "total_fmt": _ugx_exact(p["request_total"] if p["wfr_id"] else p["total"]),
         "partner_total_fmt": _ugx(p["partner_total"]) if p["partner_total"] else None,
         "vendor_transport_fmt": (
             _ugx(p["vendor_transport_total"]) if p["vendor_transport_total"] else None
@@ -999,39 +994,6 @@ def _selected_detail(p, week_start):
             )
             if note
         ],
-        "snapshot": [
-            {
-                "icon": "visits",
-                "name": "Planned schools by staff",
-                "figure": visit_schools,
-                "tone": "success",
-            },
-            {
-                "icon": "partner",
-                "name": "Planned school visits",
-                "figure": p["chips"]["partner"],
-                "caption": "By partners",
-                "tone": "success",
-            },
-            {
-                "icon": "clusters",
-                "name": "Cluster meetings planned",
-                "figure": p["chips"]["clusters"],
-                "tone": "success",
-            },
-            {
-                "icon": "trainings",
-                "name": "Trainings planned",
-                "figure": p["chips"]["trainings"],
-                "caption": "Cluster + In-school",
-                "tone": "success",
-            },
-        ],
-        "schools": {
-            "name": "Total schools covered",
-            "figure": len(p["schools"]),
-            "caption": "Unique planned schools",
-        },
     }
 
 

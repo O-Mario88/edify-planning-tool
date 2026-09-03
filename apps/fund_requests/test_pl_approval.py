@@ -279,16 +279,16 @@ class PLFundApprovalTest(TestCase):
         act = self._activity(self.cceo_a_sp, self._school("SCH-A3"))
         self._cost_line(act, 999_000, planned=WEEK_START + timedelta(days=8))
         detail = self._page(self.pl1_principal, cceo=self.cceo_a.id)["selected"]
-        self.assertEqual(detail["total_fmt"], svc._ugx(300_000))
+        self.assertEqual(detail["total_fmt"], svc._ugx_exact(300_000))
 
     def test_breakdown_derives_from_planned_activities(self):
         detail = self._page(self.pl1_principal, cceo=self.cceo_a.id)["selected"]
         self.assertEqual(detail["name"], "Sarah Ncube")
-        self.assertEqual(detail["total_fmt"], svc._ugx(300_000))
+        self.assertEqual(detail["total_fmt"], svc._ugx_exact(300_000))
         cats = {r["category"]: r for r in detail["breakdown"]}
         self.assertIn("Staff School Visits", cats)
         self.assertEqual(cats["Staff School Visits"]["qty"], 2)
-        self.assertEqual(cats["Staff School Visits"]["total"], svc._ugx(300_000))
+        self.assertEqual(cats["Staff School Visits"]["total"], svc._ugx_exact(300_000))
 
     # ── the send gate ────────────────────────────────────────────────────────
     def test_approve_requires_the_cceo_to_send_first(self):
@@ -329,7 +329,7 @@ class PLFundApprovalTest(TestCase):
 
         detail = self._page(self.pl1_principal, cceo=self.cceo_a.id)["selected"]
         # Breakdown and request total are staff-only (300k, not 380k)…
-        self.assertEqual(detail["total_fmt"], svc._ugx(300_000))
+        self.assertEqual(detail["total_fmt"], svc._ugx_exact(300_000))
         self.assertNotIn(
             "Partner School Visits",
             {row["category"] for row in detail["breakdown"]},

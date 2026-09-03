@@ -1,8 +1,10 @@
 {% comment %}
 The selected record of the fund workspace. Expects `selected` (name,
 plan_label, district, region, period, status, status_tone, total_label,
-total_fmt, issues, breakdown, subtotal_fmt, adjustment, snapshot, schools,
-notes) and `actions_template`, the page's own action row.
+total_fmt, issues, breakdown, subtotal_fmt, adjustment, notes) and
+`actions_template`, the page's own action row. No snapshot column: the
+queue card's chips already carry the counts, so the breakdown reads at
+full width.
 {% endcomment %}
 {% if selected %}
 <div class="fund-detail__inner">
@@ -37,6 +39,7 @@ notes) and `actions_template`, the page's own action row.
       <h3 class="fund-panel__title">{{ selected.breakdown_title|default:"Funding Breakdown from Planned Activities" }}</h3>
       <div class="overflow-x-auto edify-table-scroll-region rounded-surface border border-slate-100 mt-2">
         <table class="edify-record-table w-full text-left text-[12px] edify-mobile-table--scroll">
+          <caption class="sr-only">{{ selected.breakdown_title|default:"Funding breakdown from planned activities" }} for {{ selected.name }}, {{ selected.period }}</caption>
           <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 bg-slate-50/60">
             <th class="px-3 py-2">Activity Category</th><th class="px-3 py-2 text-center">Planned Qty</th><th class="px-3 py-2 text-right">Unit Cost (UGX)</th><th class="px-3 py-2 text-right">Total (UGX)</th>
           </tr></thead>
@@ -68,23 +71,6 @@ notes) and `actions_template`, the page's own action row.
       </div>
     </div>
 
-    <aside class="fund-snapshot" aria-label="{{ selected.snapshot_title|default:'Plan Snapshot' }}">
-      <h3 class="fund-panel__title">{{ selected.snapshot_title|default:"Plan Snapshot" }}</h3>
-      <ul class="fund-snapshot__list">
-        {% for item in selected.snapshot %}
-        <li>
-          <span class="fund-snapshot__icon fund-snapshot__icon--{{ item.tone|default:'success' }}" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">{% include "partials/finance/_chip_icon.html" with name=item.icon %}</svg></span>
-          <span><small>{{ item.name }}</small><strong>{{ item.figure }}</strong>{% if item.caption %}<em>{{ item.caption }}</em>{% endif %}</span>
-        </li>
-        {% endfor %}
-      </ul>
-      {% if selected.schools %}
-      <div class="fund-snapshot__total">
-        <span class="fund-snapshot__icon fund-snapshot__icon--neutral" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="8"/><path d="M12 8v8M8 12h8"/></svg></span>
-        <span><small>{{ selected.schools.name }}</small><strong>{{ selected.schools.figure }}</strong><em>{{ selected.schools.caption }}</em></span>
-      </div>
-      {% endif %}
-    </aside>
   </div>
 
   {% include actions_template %}

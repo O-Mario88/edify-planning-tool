@@ -14,6 +14,7 @@ from apps.core.activity_types import (
 )
 from apps.core.enums import ActivityType
 import calendar
+import csv
 import re
 from collections import defaultdict
 from urllib.parse import urlencode
@@ -2495,6 +2496,7 @@ def todos_view(request):
     return render(request, "pages/todos/index.html", get_cached_todos(request.user))
 
 
+@require_export_permission
 @require_page_permission("fund_approvals")
 def pl_fund_approvals_view(request):
     """PL Fund Approval — team-scoped fund plans derived from supervised CCEOs'
@@ -2517,6 +2519,43 @@ def pl_fund_approvals_view(request):
         if request.GET.get(k)
     }
     ctx = get_pl_fund_approvals(request.user, filters)
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="fund-approvals-{ctx["fy"]}-week-{ctx["week"]}.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "CCEO",
+                "District",
+                "Region",
+                "Week",
+                "Requested (UGX)",
+                "Status",
+                "Visits",
+                "Partner visits",
+                "Clusters",
+                "Trainings",
+            ]
+        )
+        for card in ctx["queue"]:
+            chips = card["chips"]
+            writer.writerow(
+                [
+                    card["name"],
+                    card["district"],
+                    card["region"],
+                    ctx["week_label"],
+                    card["total"],
+                    card["status"],
+                    chips["visits"],
+                    chips["partner"],
+                    chips["clusters"],
+                    chips["trainings"],
+                ]
+            )
+        return response
     if request.headers.get("HX-Target") == "fund-approval-root":
         return render(request, "partials/fund_approvals/root.html", ctx)
     ctx["topbar_search"] = {

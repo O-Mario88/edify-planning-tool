@@ -10,8 +10,10 @@
     </a>
     {% if selected.can_approve or selected.can_return %}
     <button hx-post="/fund-approvals/action" hx-target="#fund-approval-root" hx-swap="innerHTML"
+            hx-confirm="Approve {{ selected.name }}'s plan for {{ selected.total_fmt }} and send it to the Accountant?"
             hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}","week":"{{ week }}"}'
-            {% if not selected.can_approve %}disabled{% endif %}
+            {% if not selected.can_approve %}disabled aria-disabled="true" title="{% if selected.issues %}Resolve: {{ selected.issues|join:'; ' }}{% else %}{{ selected.waiting_hint }}{% endif %}"{% endif %}
+            hx-indicator="#fund-workspace-updating"
             class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control text-[13px] font-bold text-white transition-colors {% if selected.can_approve %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Approve

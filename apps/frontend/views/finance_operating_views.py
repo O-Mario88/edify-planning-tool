@@ -1228,7 +1228,7 @@ def _accountant_workspace(
             "status": _status(w)[0] or sel["status"],
             "status_tone": _status(w)[1],
             "total_label": "Total Requested",
-            "total_fmt": format_ugx_compact(sel["requested"]),
+            "total_fmt": f"UGX {int(round(float(sel['requested'] or 0))):,}",
             "breakdown_title": "Funding Breakdown from the Weekly Request",
             "breakdown": [
                 {
@@ -1243,46 +1243,20 @@ def _accountant_workspace(
             ],
             "empty_breakdown": "No cost lines are attached to this request. Review its source plan before disbursement.",
             "issues": [],
-            "notes": [],
-            "snapshot_title": "Request Snapshot",
-            "snapshot": [
-                {
-                    "icon": "lines",
-                    "name": "Requested",
-                    "figure": format_ugx_compact(sel["requested"]),
-                    "tone": "info",
-                },
-                {
-                    "icon": "lines",
-                    "name": "Approved",
-                    "figure": format_ugx_compact(sel["approved"]),
-                    "tone": "success",
-                },
-                {
-                    "icon": "lines",
-                    "name": "Disbursed",
-                    "figure": format_ugx_compact(sel["disbursed"]),
-                    "tone": "success",
-                },
-                {
-                    "icon": "lines",
-                    "name": "Remaining balance",
-                    "figure": format_ugx_compact(sel["balance"]),
-                    "tone": "warning",
-                },
-            ],
-            "schools": {
-                "name": "Approval chain",
-                "figure": "PL ✓ · CD "
+            "notes": [
+                "Approval chain: PL ✓ · CD "
                 + ("✓" if sel["cd_approved"] else "·")
                 + " · RVP "
                 + ("✓" if sel["rvp_approved"] else "·")
                 + " · Finance "
-                + ("✓" if sel["finance_completed"] else "·"),
-                "caption": "Payment sent"
-                if sel["disbursed_completed"]
-                else "Payment pending",
-            },
+                + ("✓" if sel["finance_completed"] else "·")
+                + (
+                    " · payment sent"
+                    if sel["disbursed_completed"]
+                    else " · payment pending"
+                ),
+                f"Approved {format_ugx_compact(sel['approved'])} · disbursed {format_ugx_compact(sel['disbursed'])} · balance {format_ugx_compact(sel['balance'])}",
+            ],
         }
 
     fy_ids = [w.id for w in wfrs_db]
