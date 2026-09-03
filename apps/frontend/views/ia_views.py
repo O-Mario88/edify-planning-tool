@@ -1,4 +1,3 @@
-from apps.core.metrics import render_precomputed_metric_item
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import HttpResponseForbidden
 from django.contrib import messages
@@ -348,66 +347,9 @@ def ia_verification_queue_view(request):
         )
         serialized_queue.append(data)
 
-    kpi_items = [
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_awaiting_verification",
-            str(waiting_count),
-            helper="Active certification queue",
-            icon="clock",
-            variant="info",
-        ),
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_verified_today",
-            f"+{verified_today}",
-            helper=f"{sla_compliance:g}% within 24h"
-            if sla_compliance is not None
-            else "SLA tracking ready",
-            icon="check",
-            variant="success",
-        ),
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_returned_today",
-            str(returned_today),
-            helper="Returned to field",
-            icon="warning",
-            variant="danger",
-        ),
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_avg_process_sla",
-            f"{avg_hours:g}h" if avg_hours is not None else "—",
-            helper="30-day measured turnaround"
-            if avg_hours is not None
-            else "No measured cycle yet",
-            icon="clock",
-            variant="info",
-        ),
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_ssa_pending",
-            str(ssa_pending),
-            helper="Needs collection",
-            icon="warning",
-            variant="warning",
-        ),
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_duplicate_risks",
-            str(duplicate_risks),
-            helper="Potential duplicates",
-            icon="danger",
-            variant="danger",
-        ),
-        render_precomputed_metric_item(
-            "frontend_views_ia_views_high_priority",
-            str(high_priority),
-            helper="Core visits/trainings",
-            icon="warning",
-            variant="warning",
-        ),
-    ]
-
     context = {
         "queue": serialized_queue,
         "page_obj": page_obj,
-        "kpi_strip_items": kpi_items,
         # The queue offered twelve dropdowns and nowhere to type. A reviewer is
         # usually handed one identifier — a Salesforce ID, a school name — and
         # had to translate it into filter selections to find the row.

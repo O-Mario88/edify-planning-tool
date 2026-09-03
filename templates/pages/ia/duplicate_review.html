@@ -68,20 +68,20 @@ Matching Activity Detail
 <!-- Action buttons -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4">
 <!-- View side-by-side comparison -->
-<a href="/ia/compare/?activity_id={{ dup.activity.id }}" class="h-9 px-4 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/ia/compare/?activity_id={{ dup.activity.id }}" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-all shadow-sm">
 Compare Evidence side-by-side
 </a>
 
 <!-- Action submit forms -->
 <form method="POST" action="/ia/duplicates/{{ dup.id }}/action" class="flex gap-2">
 {% csrf_token %}
-<button type="submit" name="action" value="ignore" class="h-9 px-4 rounded-control border border-slate-200 hover:bg-slate-50 text-[12px] font-semibold transition-all shadow-sm">
+<button type="submit" name="action" value="ignore" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 text-[12px] font-semibold transition-all shadow-sm">
 Ignore Flag
 </button>
-<button type="submit" name="action" value="return" class="h-9 px-4 rounded-control bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold transition-all shadow-sm">
+<button type="submit" name="action" value="return" class="h-8 px-3 rounded-control bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold transition-all shadow-sm">
 Return to Plan
 </button>
-<button type="submit" name="action" value="flag" class="h-9 px-4 rounded-control bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-semibold transition-all shadow-sm">
+<button type="submit" name="action" value="flag" class="h-8 px-3 rounded-control bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-semibold transition-all shadow-sm">
 Flag Investigation
 </button>
 </form>
