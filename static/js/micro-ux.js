@@ -104,9 +104,20 @@
     /* A cell whose direct children are two or more stacked blocks (a name
        over an id, a value over a caption) is marked so consistency.css can
        lay them on one 32px line. Flex and grid wrappers keep their layout. */
-    elementsWithin(root, 'main table tbody td, .drawer-body table tbody td').forEach(function (cell) {
+    elementsWithin(root, 'main table tbody td, main table tbody th, .drawer-body table tbody td, .drawer-body table tbody th').forEach(function (cell) {
+      /* Every cell carries the marker the row rhythm hangs its rules on, so a
+         page stylesheet with a class selector cannot out-rank the rhythm. */
+      cell.classList.add('edify-cell');
+      /* A child the page hides at this width (a phone-only label) is not a
+         line of the row; marking it would show it again. */
+      Array.from(cell.children).forEach(function (child) {
+        child.classList.toggle('edify-cell-hidden', window.getComputedStyle(child).display === 'none');
+      });
+      Array.from(cell.children).forEach(function (child) {
+        if (child.matches('div.rounded-pill, div.rounded-full')) child.classList.add('edify-cell-mark');
+      });
       var blocks = Array.from(cell.children).filter(function (child) {
-        return child.matches('div, p, span.block, small.block') && !child.matches('.flex, .grid, .inline-flex, form');
+        return child.matches('div, p, span.block, small.block') && !child.matches('.flex, .grid, .inline-flex, form, .edify-cell-hidden');
       });
       cell.classList.toggle('edify-cell-stack', blocks.length > 1);
       /* A flex row in a cell (avatar beside a name) and the pills inside a
@@ -114,24 +125,59 @@
          utility class in a selector. */
       Array.from(cell.children).forEach(function (child) {
         if (!child.classList.contains('flex')) return;
+        if (child.classList.contains('edify-cell-mark')) return;
         child.classList.add('edify-cell-row');
         var first = child.firstElementChild;
         if (first && first.classList.contains('rounded-pill')) first.classList.add('edify-cell-mark');
       });
-      cell.querySelectorAll('span.rounded-pill, a.rounded-pill').forEach(function (pill) {
-        pill.classList.add('edify-cell-pill');
+      cell.querySelectorAll('span.rounded-pill, a.rounded-pill, span.rounded-full, a.rounded-full').forEach(function (pill) {
+        /* A colour dot carries no text; only labelled pills take the 18px line. */
+        if (pill.textContent.trim() !== '') pill.classList.add('edify-cell-pill');
+      });
+      /* A cell laid out as a flex box is still a table cell: its children
+         sit side by side on the one line. */
+      var flexCell = window.getComputedStyle(cell).display === 'flex' ||
+        Array.from(cell.classList).some(function (name) { return /^(?:[a-z-]+:)?(?:inline-)?flex$/.test(name); });
+      if (flexCell) cell.classList.add('edify-cell-flex');
+      /* Chips a page stylesheet draws as inline-flex (a score, a status, a
+         badge) take the 18px pill line. Colour dots carry no text. */
+      cell.querySelectorAll('span, strong, b, em, small, a, div').forEach(function (chip) {
+        if (chip.matches('.edify-cell-row, .edify-cell-inline-row, .rounded-control, .btn, .edify-cell-pill, .edify-cell-stackchip')) return;
+        if (chip.textContent.trim() === '') return;
+        if (chip.matches('div') && chip.querySelector('div, p, table, form, ul, a, button')) return;
+        if (window.getComputedStyle(chip).display === 'inline-flex') chip.classList.add('edify-cell-pill');
+      });
+      /* A stacked tile in a cell (a heatmap value over its caption) reads
+         as one 20px chip on the row line. */
+      Array.from(cell.children).forEach(function (child) {
+        if (child.matches('div.inline-flex.flex-col, div.flex.flex-col')) child.classList.add('edify-cell-stackchip');
+      });
+      /* A block that follows a pill or a control in a cell (a status over
+         its action) sits beside it on the row line. */
+      Array.from(cell.children).forEach(function (child, index) {
+        if (index === 0 || child.classList.contains('edify-cell-hidden')) return;
+        if (!child.matches('div, p')) return;
+        if (child.matches('.flex, .grid, .inline-flex, form, table, details, .edify-cell-stackchip, .edify-cell-row')) return;
+        child.classList.add('edify-cell-line', 'edify-cell-follows');
+      });
+      /* Every control in a cell is 24px tall, whatever the page gives it. */
+      cell.querySelectorAll('button, label.edify-table-choice, select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), a').forEach(function (control) {
+        if (control.matches('a') && window.getComputedStyle(control).display === 'inline') return;
+        if (control.matches('.edify-cell-pill, .edify-cell-row')) return;
+        control.classList.add('edify-cell-control');
       });
       /* A `.block` line directly in a cell, and a flex row of controls beside
          cell text, both sit on the one line. */
       var lines = Array.from(cell.children).filter(function (child) {
         return child.matches('a, span, p, small, div, time, strong') &&
-          !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge');
+          !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge, .edify-cell-hidden');
       });
       Array.from(cell.children).forEach(function (child) {
+        if (child.classList.contains('edify-cell-hidden')) return;
         if (child.matches('span.block, small.block') || (lines.length > 1 && lines.indexOf(child) !== -1)) {
           child.classList.add('edify-cell-line');
         }
-        if (child.matches('.flex') && cell.children.length > 1) child.classList.add('edify-cell-inline-row');
+        if (child.matches('.flex') && cell.children.length > 1 && !child.classList.contains('edify-cell-mark')) child.classList.add('edify-cell-inline-row');
       });
       /* Bare text followed by a paragraph or block span: the block sits inline
          after the text, with a separator. */
@@ -141,7 +187,7 @@
       if (hasText) {
         Array.from(cell.children).forEach(function (child) {
           if (child.matches('p, div, span.block, small') &&
-              !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn')) {
+              !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .edify-cell-hidden')) {
             child.classList.add('edify-cell-line', 'edify-cell-follows');
           }
         });
@@ -161,7 +207,7 @@
       /* A cell that carries a control closes at 32px around a 24px control. */
       cell.classList.toggle(
         'edify-cell-action',
-        Boolean(cell.querySelector(':scope a.rounded-control, :scope button.rounded-control, :scope .btn'))
+        Boolean(cell.querySelector(':scope a.rounded-control, :scope button.rounded-control, :scope .btn, :scope .edify-cell-control, :scope > input[type="checkbox"]'))
       );
     });
 

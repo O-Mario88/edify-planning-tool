@@ -505,6 +505,19 @@ def partner_payments_view(request):
     )
     for inv in invoice_queue:
         inv.partner_name = partner_names.get(inv.partner_id, inv.partner_id)
+    from apps.activities.verification_analytics import _partner_names as _pn
+    from apps.activities.verification_analytics import _staff_names
+
+    for _key in ("advance_queue", "payments"):
+        _acts = locals().get(_key) or []
+        _pnames = _pn({getattr(a, "assigned_partner_id", None) for a in _acts})
+        _snames = _staff_names({a.responsible_staff_id for a in _acts})
+        for a in _acts:
+            a.assigned_partner_name = _pnames.get(
+                getattr(a, "assigned_partner_id", None),
+                getattr(a, "assigned_partner_id", "") or "—",
+            )
+            a.responsible_name = _snames.get(a.responsible_staff_id, "")
 
     context = {
         "payments": payments,
@@ -717,6 +730,16 @@ def blocked_view(request):
                 {"activity": a, "reasons": reasons, "reasons_label": ", ".join(reasons)}
             )
 
+    from apps.activities.verification_analytics import _staff_names
+
+    _blocked_names = _staff_names(
+        {b["activity"].responsible_staff_id for b in blocked_list}
+    )
+    for b in blocked_list:
+        b["responsible_name"] = _blocked_names.get(
+            b["activity"].responsible_staff_id,
+            b["activity"].responsible_staff_id or "Unassigned",
+        )
     context = {"blocked": blocked_list}
     return render(request, "pages/accounts/blocked.html", context)
 
@@ -896,8 +919,14 @@ def approval_history_view(request):
     # Materialised before stamping: `{% paginate %}` re-evaluates a queryset,
     # which would rebuild the model instances and drop the attribute.
     requests = list(WeeklyFundRequest.objects.all().order_by("-week_start_date"))
+    from apps.activities.verification_analytics import _names
+
+    _owner_names = _names({r.responsible_user for r in requests})
     for req in requests:
         req.approval_chain = _weekly_chain(req)
+        req.responsible_name = _owner_names.get(
+            req.responsible_user, req.responsible_user
+        )
 
     context = {"requests": requests}
     return render(request, "pages/accounts/approval_history.html", context)
@@ -1013,11 +1042,18 @@ def monthly_request_action_view(request):
 @require_page_permission("disbursements")
 def weekly_requests_view(request):
     """Weekly Fund Request Review Page."""
-    requests = (
+    from apps.activities.verification_analytics import _names
+
+    requests = list(
         WeeklyFundRequest.objects.all()
         .order_by("-week_start_date")
         .prefetch_related("lines")
     )
+    _owner_names = _names({r.responsible_user for r in requests})
+    for req in requests:
+        req.responsible_name = _owner_names.get(
+            req.responsible_user, req.responsible_user
+        )
 
     context = {"requests": requests}
     return render(request, "pages/accounts/weekly_requests.html", context)

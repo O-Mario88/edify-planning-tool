@@ -330,6 +330,8 @@
 
 /* Lower dashboard */
 
+/* A sparkline is a 56×18 mark on the row line, never a cell-wide chart. */
+.admin-spark-line { display: block; inline-size: 3.5rem; block-size: 1.125rem; }
 .admin-clusters tbody tr:nth-child(3n + 2) .admin-spark-line { color: var(--edify-warning); }
 .admin-clusters tbody tr:nth-child(3n) .admin-spark-line { color: var(--edify-danger); }
 

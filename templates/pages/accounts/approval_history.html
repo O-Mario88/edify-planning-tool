@@ -54,7 +54,7 @@ dashboard renders.{% endcomment %}
 </td>
 <!-- Owner -->
 <td class="px-6 py-4" data-label="Submitted By">
-<div class="font-semibold text-slate-800">{{ req.responsible_user }}</div>
+<div class="font-semibold text-slate-800">{{ req.responsible_name }}</div>
 </td>
 {% for stage in req.approval_chain %}
 <td class="px-6 py-4 text-center" data-label="{{ stage.label }}">

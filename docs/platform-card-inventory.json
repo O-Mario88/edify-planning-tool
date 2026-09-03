@@ -331,7 +331,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 57,
+   "line": 58,
    "title": "Transport Provider Payments",
    "heading_level": 2,
    "has_card_key": false,
@@ -345,7 +345,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 113,
+   "line": 111,
    "title": "Partner Invoices \u2014 Awaiting Payment",
    "heading_level": 2,
    "has_card_key": false,
@@ -359,7 +359,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 171,
+   "line": 166,
    "title": "Awaiting 50% MOU Advance",
    "heading_level": 2,
    "has_card_key": false,
@@ -373,7 +373,7 @@
   },
   {
    "template": "templates/pages/accounts/partner_payments.html",
-   "line": 239,
+   "line": 229,
    "title": "Verified \u2014 Awaiting Clearance",
    "heading_level": 2,
    "has_card_key": false,
@@ -582,7 +582,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 265,
+   "line": 263,
    "title": "Add Partner Organisation",
    "heading_level": 3,
    "has_card_key": false,
@@ -596,7 +596,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 347,
+   "line": 345,
    "title": "Remove ?",
    "heading_level": 3,
    "has_card_key": false,
@@ -610,7 +610,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 382,
+   "line": 380,
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,

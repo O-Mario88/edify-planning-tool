@@ -2646,7 +2646,7 @@
    "audit_id": "KPI-SOURCE-133",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 356,
+   "line": 370,
    "label": "Search the queue by school, School ID, Salesforce ID or owner",
    "keys": [
     "hx_get",
@@ -2669,7 +2669,7 @@
    "audit_id": "KPI-SOURCE-134",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1032,
+   "line": 1070,
    "label": "Schools Missing SSA",
    "keys": [
     "label",
@@ -2686,7 +2686,7 @@
    "audit_id": "KPI-SOURCE-135",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1036,
+   "line": 1074,
    "label": "Duplicate Records Detected",
    "keys": [
     "label",
@@ -2703,7 +2703,7 @@
    "audit_id": "KPI-SOURCE-136",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1040,
+   "line": 1078,
    "label": "Schools with Missing Fields",
    "keys": [
     "label",
@@ -2720,7 +2720,7 @@
    "audit_id": "KPI-SOURCE-137",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1044,
+   "line": 1082,
    "label": "Activities Missing Salesforce IDs",
    "keys": [
     "label",
@@ -2737,7 +2737,7 @@
    "audit_id": "KPI-SOURCE-138",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1100,
+   "line": 1138,
    "label": "SSA done",
    "keys": [
     "color",
@@ -2756,7 +2756,7 @@
    "audit_id": "KPI-SOURCE-139",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1106,
+   "line": 1144,
    "label": "Scheduled",
    "keys": [
     "color",
@@ -2775,7 +2775,7 @@
    "audit_id": "KPI-SOURCE-140",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1112,
+   "line": 1150,
    "label": "Not done",
    "keys": [
     "color",
@@ -2794,7 +2794,7 @@
    "audit_id": "KPI-SOURCE-141",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1138,
+   "line": 1176,
    "label": "Confirmed",
    "keys": [
     "color",
@@ -2813,7 +2813,7 @@
    "audit_id": "KPI-SOURCE-142",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1144,
+   "line": 1182,
    "label": "Pending",
    "keys": [
     "color",
@@ -2832,7 +2832,7 @@
    "audit_id": "KPI-SOURCE-143",
    "kind": "other",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 1150,
+   "line": 1188,
    "label": "Returned / flagged",
    "keys": [
     "color",
@@ -2851,7 +2851,7 @@
    "audit_id": "KPI-SOURCE-144",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/ia_views.py",
-   "line": 453,
+   "line": 467,
    "label": null,
    "keys": [
     "label",
@@ -26275,7 +26275,7 @@
   {
    "audit_id": "KPI-PAYLOAD-015",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3137,
+   "line": 3147,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

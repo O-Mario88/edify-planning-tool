@@ -3082,7 +3082,17 @@ def admin_school_upload_history_view(request):
             )
         return redirect("/admin-panel/school-upload-history")
 
-    batches = UploadBatch.objects.all().order_by("-created_at")[:50]
+    batches = list(UploadBatch.objects.all().order_by("-created_at")[:50])
+    # Batches store the uploader's user id; the page shows the person's name.
+    from django.contrib.auth import get_user_model
+
+    uploader_names = dict(
+        get_user_model()
+        .objects.filter(id__in={b.uploaded_by for b in batches if b.uploaded_by})
+        .values_list("id", "name")
+    )
+    for batch in batches:
+        batch.uploaded_by_name = uploader_names.get(batch.uploaded_by) or "Unknown user"
 
     context = {
         "batches": batches,
@@ -3452,7 +3462,12 @@ def admin_notifications_mgmt_view(request):
     """
     from apps.notifications.models import Notification
 
-    logs = Notification.objects.all().order_by("-created_at")[:50]
+    logs = list(Notification.objects.all().order_by("-created_at")[:50])
+    from apps.activities.verification_analytics import _names
+
+    _recipient_names = _names({log.recipient_id for log in logs})
+    for log in logs:
+        log.recipient_name = _recipient_names.get(log.recipient_id, log.recipient_id)
 
     context = {
         "logs": logs,
