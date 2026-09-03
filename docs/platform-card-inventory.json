@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 630,
-  "templates": 223,
-  "distinct_titles": 599,
+  "titled_cards": 638,
+  "templates": 226,
+  "distinct_titles": 607,
   "with_card_key": 13,
-  "untitled_surfaces": 1016,
+  "untitled_surfaces": 1025,
   "untitled_chrome": 229,
-  "untitled_nested": 393,
-  "untitled_headless": 394,
+  "untitled_nested": 400,
+  "untitled_headless": 396,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -2375,6 +2375,24 @@
    "branch_path": []
   },
   {
+   "template": "templates/pages/ia/attribution.html",
+   "line": 48,
+   "title": "Movement by intervention \u00b7 FY to FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/attribution.html",
+   "line": 79,
+   "title": "Movement by district, all interventions",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
    "template": "templates/pages/ia/compare_evidence.html",
    "line": 28,
    "title": "Awaiting Verification",
@@ -2584,6 +2602,60 @@
    "heading_level": 4,
    "has_card_key": false,
    "classes": "w-full lg:w-80 shrink-0 edify-surface border-t lg:border-t-0 lg:border-l border-slate-200 lg:overflow-y-auto p-4 lg:p-5 relative flex flex-col justify-between",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/verification_analytics.html",
+   "line": 45,
+   "title": "Why work is returned",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/verification_analytics.html",
+   "line": 67,
+   "title": "Return rate by month",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/verification_analytics.html",
+   "line": 83,
+   "title": "Submitters, highest return rate first",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/verification_analytics.html",
+   "line": 97,
+   "title": "Partners, highest return rate first",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/verification_analytics.html",
+   "line": 112,
+   "title": "Verifiers",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/ia/verification_samples.html",
+   "line": 24,
+   "title": "Waiting for a second look \u00b7",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "p-3.5 rounded-surface border text-[12px] font-bold {% if message.tags == 'success' %}bg-emerald-50 text-emerald-800 border-emerald-100{% else %}bg-rose-50 text-",
    "branch_path": []
   },
   {

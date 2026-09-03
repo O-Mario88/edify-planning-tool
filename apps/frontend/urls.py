@@ -936,6 +936,24 @@ urlpatterns = [
     path("ia/notifications/", ia_views.ia_notifications_view, name="ia_notifications"),
     path("ia/compare/", ia_views.ia_compare_view, name="ia_compare"),
     path(
+        "ia/analytics/",
+        ia_views.ia_verification_analytics_view,
+        name="ia_verification_analytics",
+    ),
+    path(
+        "ia/analytics/export",
+        ia_views.ia_verification_analytics_export_view,
+        name="ia_verification_analytics_export",
+    ),
+    path("ia/samples/", ia_views.ia_samples_view, name="ia_samples"),
+    path("ia/samples/draw", ia_views.ia_sample_draw_action, name="ia_sample_draw"),
+    path(
+        "ia/samples/<str:sample_id>/outcome",
+        ia_views.ia_sample_outcome_action,
+        name="ia_sample_outcome",
+    ),
+    path("ia/attribution/", ia_views.ia_attribution_view, name="ia_attribution"),
+    path(
         "activities/<str:activity_id>/timeline/",
         ia_views.activity_timeline_view,
         name="activity_timeline",

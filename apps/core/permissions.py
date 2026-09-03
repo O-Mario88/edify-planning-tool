@@ -64,6 +64,44 @@ class AllowAny(BasePermission):
 
 
 # Common role gating helpers used by services for object-level checks.
+def verifies_own_work(user, activity) -> bool:
+    """True when `user` is the person responsible for `activity`."""
+    from apps.core.scoping import owner_ids
+
+    responsible = str(getattr(activity, "responsible_staff_id", "") or "")
+    if not responsible:
+        return False
+    return responsible in {str(i) for i in owner_ids(user) if i}
+
+
+def ia_officer_staff_ids(country: str | None = None):
+    """Staff profile ids of Impact Assessment officers, unevaluated."""
+    from apps.accounts.models import StaffProfile
+    from apps.core.rbac import EdifyRole
+
+    qs = StaffProfile.objects.filter(
+        user__roles__contains=[EdifyRole.IMPACT_ASSESSMENT.value],
+        deleted_at__isnull=True,
+    )
+    if country:
+        qs = qs.filter(country=country)
+    return qs.values("id")
+
+
+def is_ia_fallback_verifier(user, activity) -> bool:
+    """The Country Director may verify an IA officer's own field work."""
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import resolve_user_scope
+
+    if getattr(user, "active_role", None) != EdifyRole.COUNTRY_DIRECTOR.value:
+        return False
+    responsible = str(getattr(activity, "responsible_staff_id", "") or "")
+    if not responsible:
+        return False
+    scope = resolve_user_scope(user)
+    return ia_officer_staff_ids(scope.country or None).filter(id=responsible).exists()
+
+
 def has_permission(principal: AuthPrincipal, permission: str) -> bool:
     return permission in _user_permissions(principal)
 
@@ -494,7 +532,15 @@ class RolePermissionService:
         """
         from apps.core.rbac import Permission
 
-        return has_permission(user, Permission.IA_VERIFY.value)
+        if activity is not None and verifies_own_work(user, activity):
+            # Nobody certifies their own field work (2026-09-03).
+            return False
+        if has_permission(user, Permission.IA_VERIFY.value):
+            return True
+        # The Country Director is the fallback verifier for work an Impact
+        # Assessment officer ran themselves — the one case the IA cannot
+        # verify — and for nothing else.
+        return activity is not None and is_ia_fallback_verifier(user, activity)
 
     @staticmethod
     def can_clear_accounts(user, activity) -> bool:

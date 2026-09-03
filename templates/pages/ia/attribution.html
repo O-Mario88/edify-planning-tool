@@ -1,0 +1,94 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Impact Attribution · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Quality &amp; Insights</p>
+      <h1 class="edify-page-title edify-page-header__title">Impact Attribution</h1>
+      <p class="edify-page-header__description">For each intervention: how confirmed assessment scores moved from FY{{ prior_fy }} to FY{{ fy }} across the schools measured in both years, beside the trainings and visits delivered with that intervention in focus.</p>
+    </div>
+  </div>
+
+  <form method="get" action="/ia/attribution/" class="platform-filter-bar" data-component="filter-toolbar" aria-label="Filters">
+    <label class="block platform-filter-compact">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial year</span>
+      <select name="fy" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block platform-filter-compact">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">District</span>
+      <select name="district" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        <option value="">All districts</option>
+        {% for d in districts_options %}<option value="{{ d.id }}" {% if d.id == selected_district %}selected{% endif %}>{{ d.name }}</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="self-end h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show</button>
+  </form>
+
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Schools in scope</p>
+      <p class="text-[20px] font-bold text-slate-800 tabular-nums mt-0.5">{{ schools_in_scope }}</p>
+    </div>
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Measured both years</p>
+      <p class="text-[20px] font-bold text-slate-800 tabular-nums mt-0.5">{{ schools_with_both_years }}</p>
+      <p class="edify-text-caption font-semibold text-slate-400">confirmed SSA in FY{{ prior_fy }} and FY{{ fy }}</p>
+    </div>
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Confirmed share</p>
+      <p class="text-[20px] font-bold tabular-nums mt-0.5 {% if confirmed_share >= 80 %}text-emerald-600{% elif confirmed_share >= 50 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ confirmed_share }}%</p>
+      <p class="edify-text-caption font-semibold text-slate-400">{{ confirmed_records }} of {{ total_records }} FY{{ fy }} assessments</p>
+    </div>
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
+      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Reading</p>
+      <p class="edify-text-caption font-semibold text-slate-500 mt-1">Movement is the average score change per intervention. Unconfirmed assessments are excluded, never assumed.</p>
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Movement by intervention · FY{{ prior_fy }} to FY{{ fy }}</h2>
+    <div class="overflow-x-auto -mx-1">
+      <table class="edify-record-table w-full edify-text-caption">
+        <thead><tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+          <th class="text-left font-bold py-2 pl-1">Intervention</th><th class="text-right font-bold py-2">Schools</th><th class="text-right font-bold py-2">FY{{ prior_fy }}</th><th class="text-right font-bold py-2">FY{{ fy }}</th><th class="text-right font-bold py-2">Movement</th><th class="text-right font-bold py-2">Improved</th><th class="text-right font-bold py-2">Trainings</th><th class="text-right font-bold py-2 pr-1">Visits</th>
+        </tr></thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for r in rows %}
+          <tr>
+            <td class="py-2.5 pl-1 font-semibold" data-record-title>{{ r.label }}</td>
+            <td class="text-right tabular-nums py-2.5" data-label="Schools">{{ r.schools_measured }}</td>
+            <td class="text-right tabular-nums py-2.5" data-label="Prior">{% if r.avg_prior != None %}{{ r.avg_prior }}{% else %}—{% endif %}</td>
+            <td class="text-right tabular-nums py-2.5" data-label="Latest">{% if r.avg_latest != None %}{{ r.avg_latest }}{% else %}—{% endif %}</td>
+            <td class="text-right tabular-nums py-2.5 font-bold {% if r.tone == 'success' %}text-emerald-600{% elif r.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}" data-label="Movement">{% if r.movement != None %}{% if r.movement > 0 %}+{% endif %}{{ r.movement }}{% else %}not measured{% endif %}</td>
+            <td class="text-right tabular-nums py-2.5" data-label="Improved">{% if r.improved_pct != None %}{{ r.improved_pct }}%{% else %}—{% endif %}</td>
+            <td class="text-right tabular-nums py-2.5" data-label="Trainings">{{ r.trainings }}</td>
+            <td class="text-right tabular-nums py-2.5 pr-1" data-label="Visits">{{ r.visits }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Movement by district, all interventions</h2>
+    {% if districts %}
+    <div class="overflow-x-auto -mx-1">
+      <table class="edify-record-table w-full edify-text-caption">
+        <thead><tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100"><th class="text-left font-bold py-2 pl-1">District</th><th class="text-right font-bold py-2">Measurements</th><th class="text-right font-bold py-2">Movement</th><th class="text-right font-bold py-2 pr-1">Improved</th></tr></thead>
+        <tbody class="divide-y divide-slate-50">
+          {% for d in districts %}<tr><td class="py-2 pl-1 font-semibold" data-record-title>{{ d.name }}</td><td class="text-right tabular-nums py-2" data-label="Measurements">{{ d.measurements }}</td><td class="text-right tabular-nums py-2 font-bold {% if d.movement > 0 %}text-emerald-600{% elif d.movement < 0 %}text-rose-600{% endif %}" data-label="Movement">{% if d.movement > 0 %}+{% endif %}{{ d.movement }}</td><td class="text-right tabular-nums py-2 pr-1" data-label="Improved">{{ d.improved_pct }}%</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}{% include "components/empty_state.html" with title="Nothing measured in both years" message="Movement needs a confirmed assessment in FY{{ prior_fy }} and FY{{ fy }} for the same school." %}{% endif %}
+  </div>
+
+</div>
+{% endblock %}

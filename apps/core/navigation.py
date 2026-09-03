@@ -486,6 +486,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "ia_compare": {IA, ADMIN},
     "ia_returned": {IA, ADMIN},
     "ia_history": {IA, ADMIN},
+    # Verification as a pattern, sample checks and attribution (2026-09-03).
+    # The CD reads all three: they are the country's quality picture.
+    "ia_verification_analytics": {IA, CD, ADMIN},
+    "ia_samples": {IA, CD, ADMIN},
+    "ia_attribution": {IA, CD, ADMIN},
     "ia_upload_center": {IA, ADMIN},
     # Finance operations sidebar visibility (views gate on "disbursements")
     "finance_advances": {ACCOUNTANT, ADMIN},
@@ -1651,6 +1656,21 @@ SIDEBAR_ITEMS = [
                 "label": "Verification History",
                 "url": "/ia/history/",
                 "page_key": "ia_history",
+            },
+            {
+                "label": "Verification Analytics",
+                "url": "/ia/analytics/",
+                "page_key": "ia_verification_analytics",
+            },
+            {
+                "label": "Sample Checks",
+                "url": "/ia/samples/",
+                "page_key": "ia_samples",
+            },
+            {
+                "label": "Impact Attribution",
+                "url": "/ia/attribution/",
+                "page_key": "ia_attribution",
             },
         ],
     },

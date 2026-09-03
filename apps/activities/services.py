@@ -2829,6 +2829,8 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
+            submitted = a
+            transaction.on_commit(lambda: _notify_ia_submitted(submitted))
         a.evidence_status = (
             "accepted" if a.evidence_status == "none" else a.evidence_status
         )
@@ -2949,6 +2951,8 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
+            submitted = a
+            transaction.on_commit(lambda: _notify_ia_submitted(submitted))
         a.save(update_fields=["status", "submitted_to_ia_at", "updated_at"])
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
@@ -3357,6 +3361,68 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
         transaction.on_commit(lambda: _notify_ia_return(a, reason))
 
     return _serialize(a)
+
+
+def _notify_ia_submitted(a) -> None:
+    """Tell the people who must verify that work has arrived (2026-09-03).
+
+    The queue used to be discovered, not pushed: `submitted_to_ia_at` was
+    stamped and nobody was told. Recipients are the Impact Assessment
+    officers in the submitter's country, never the submitter themselves;
+    when the submitter IS an Impact Assessment officer the Country Director
+    is told instead, as the fallback verifier. Never raises: the
+    submission is committed and a notification backend being down must not
+    make the field think it failed."""
+    import logging
+
+    try:
+        from apps.accounts.models import StaffProfile
+        from apps.core.permissions import ia_officer_staff_ids
+        from apps.core.rbac import EdifyRole
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            role_recipients,
+        )
+
+        responsible = (
+            StaffProfile.objects.filter(id=a.responsible_staff_id).first()
+            or StaffProfile.objects.filter(user_id=a.responsible_staff_id).first()
+        )
+        country = responsible.country if responsible else None
+        if (
+            responsible
+            and ia_officer_staff_ids(country).filter(id=responsible.id).exists()
+        ):
+            recipients = role_recipients(
+                EdifyRole.COUNTRY_DIRECTOR.value, country=country
+            )
+        else:
+            recipients = role_recipients(
+                EdifyRole.IMPACT_ASSESSMENT.value,
+                exclude_user_id=responsible.user_id if responsible else None,
+                country=country,
+            )
+        if not recipients:
+            return
+        where = (
+            a.school.name
+            if a.school_id
+            else (a.cluster.name if a.cluster_id else "field work")
+        )
+        WorkflowNotificationService.trigger(
+            event_type="activity_submitted_for_verification",
+            category="verification",
+            priority="normal",
+            title="Work submitted for verification",
+            body=f"{where}: {a.get_activity_type_display()} is waiting for you.",
+            context_type="activity",
+            context_id=str(a.id),
+            recipients=recipients,
+        )
+    except Exception:  # noqa: BLE001 — bookkeeping never breaks the submission
+        logging.getLogger(__name__).warning(
+            "ia submission notification failed for %s", a.id, exc_info=True
+        )
 
 
 def _notify_ia_return(a, reason: str) -> None:

@@ -21,7 +21,13 @@ from django.db.models.functions import Coalesce
 
 from apps.core.redirects import local_redirect
 from apps.core.donut import build_gauge, build_rings
-from apps.core.permissions import require_page_permission, RolePermissionService
+from apps.core.permissions import (
+    RolePermissionService,
+    ia_officer_staff_ids,
+    require_page_permission,
+)
+from apps.core.rbac import Permission
+from apps.core.scoping import activity_country_q, resolve_user_scope
 from apps.audit.services import log as audit_log
 from apps.activities.models import (
     Activity,
@@ -44,6 +50,19 @@ from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.accounts.staff_matching import on_staff
 
 QUEUE_PAGE_SIZE = 50
+
+
+def _ia_reach_q(request) -> Q:
+    """What this verifier may see: their country, and — for a Country
+    Director standing in as the fallback verifier — only the work an Impact
+    Assessment officer ran themselves."""
+    from apps.core.permissions import has_permission
+
+    scope = resolve_user_scope(request.user)
+    q = activity_country_q(scope)
+    if not has_permission(request.user, Permission.IA_VERIFY.value):
+        q &= Q(responsible_staff_id__in=ia_officer_staff_ids(scope.country or None))
+    return q
 
 
 def _recent_fy_labels(count: int = 4) -> list[str]:
@@ -81,6 +100,7 @@ def ia_verification_queue_view(request):
         Activity.objects.filter(
             deleted_at__isnull=True, status="awaiting_ia_verification"
         )
+        .filter(_ia_reach_q(request))
         .exclude(Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id=""))
         .annotate(
             # The queue is operational, not chronological decoration:
@@ -449,7 +469,11 @@ def ia_verification_queue_view(request):
 @require_page_permission("ia_review_workspace")
 def ia_review_workspace_view(request, activity_id):
     """Premium workspace for verifying a single activity."""
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    a = get_object_or_404(
+        Activity.objects.filter(_ia_reach_q(request)),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
 
     # Resolve checks
     checks = IAVerificationService.get_verification_checks(a)
@@ -543,7 +567,11 @@ def ia_review_workspace_view(request, activity_id):
 @require_page_permission("ia_review_workspace")
 def ia_verify_action(request, activity_id):
     """POST to approve and certify the activity."""
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    a = get_object_or_404(
+        Activity.objects.filter(_ia_reach_q(request)),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
 
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
@@ -589,7 +617,11 @@ def ia_verify_action(request, activity_id):
 @require_page_permission("ia_review_workspace")
 def ia_return_action(request, activity_id):
     """POST to return activity for correction."""
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    a = get_object_or_404(
+        Activity.objects.filter(_ia_reach_q(request)),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
 
     if not RolePermissionService.can_verify_ia(request.user, a):
         return HttpResponseForbidden("Access Denied: Unauthorized role.")
@@ -628,9 +660,13 @@ def ia_return_action(request, activity_id):
 @require_page_permission("ia_returned")
 def ia_returned_view(request):
     """History of everything IA has returned."""
-    returned_activities = Activity.objects.filter(
-        deleted_at__isnull=True, status=ActivityStatus.RETURNED_BY_IA
-    ).order_by("-updated_at")
+    returned_activities = (
+        Activity.objects.filter(
+            deleted_at__isnull=True, status=ActivityStatus.RETURNED_BY_IA
+        )
+        .filter(_ia_reach_q(request))
+        .order_by("-updated_at")
+    )
 
     serialized_returned = []
     for a in returned_activities.select_related("school", "ia_verification"):
@@ -661,7 +697,9 @@ def ia_returned_view(request):
 def ia_history_view(request):
     """Everything IA has verified."""
     history = (
-        VerificationHistory.objects.all()
+        VerificationHistory.objects.filter(
+            activity__in=Activity.objects.filter(_ia_reach_q(request)).values("id")
+        )
         .order_by("-verified_at")
         .select_related("activity", "activity__school")
     )
@@ -673,7 +711,10 @@ def ia_history_view(request):
 @require_page_permission("ia_duplicates")
 def ia_duplicates_view(request):
     """Duplicate review queue dashboard."""
-    duplicates = DuplicateActivity.objects.filter(status="potential").select_related(
+    duplicates = DuplicateActivity.objects.filter(
+        status="potential",
+        activity__in=Activity.objects.filter(_ia_reach_q(request)).values("id"),
+    ).select_related(
         "activity", "activity__school", "duplicate_of", "duplicate_of__school"
     )
 
@@ -736,7 +777,9 @@ def ia_dashboard_view(request):
     # Renamed so it stops shadowing the shared name.
     IA_REVIEWABLE_STATUSES = ["completed", "ia_verified", "closed"]
 
-    activities = Activity.objects.filter(deleted_at__isnull=True)
+    activities = Activity.objects.filter(deleted_at__isnull=True).filter(
+        _ia_reach_q(request)
+    )
     waiting_qs = activities.filter(status__in=PENDING_STATUSES)
     waiting_cnt = waiting_qs.count()
 
@@ -1585,7 +1628,11 @@ def ia_compare_view(request):
             activity_id = first_waiting.id
 
     if activity_id:
-        a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+        a = get_object_or_404(
+            Activity.objects.filter(_ia_reach_q(request)),
+            id=activity_id,
+            deleted_at__isnull=True,
+        )
         timeline = VerificationTimelineService.get_timeline(a)
         from apps.evidence.models import EvidenceRecord
 
@@ -1620,7 +1667,11 @@ def ia_compare_view(request):
 @require_page_permission("activity_timeline")
 def activity_timeline_view(request, activity_id):
     """Visual walkthrough step-by-step history log for auditing."""
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
+    a = get_object_or_404(
+        Activity.objects.filter(_ia_reach_q(request)),
+        id=activity_id,
+        deleted_at__isnull=True,
+    )
     timeline = VerificationTimelineService.get_timeline(a)
 
     context = {"act": a, "timeline": timeline}
@@ -1673,6 +1724,7 @@ def ia_partner_evidence_queue_view(request):
             status="awaiting_ia_verification",
             deleted_at__isnull=True,
         )
+        .filter(_ia_reach_q(request))
         .select_related("school", "school__district", "cluster")
         .prefetch_related("evidence")
         .order_by("submitted_to_ia_at")
@@ -1853,3 +1905,164 @@ def ia_partner_complete_action(request, activity_id):
     )
     response["HX-Trigger"] = "close-drawer"
     return response
+
+
+# ── Verification analytics, sample checks and attribution (2026-09-03) ───────
+@require_page_permission("ia_verification_analytics")
+def ia_verification_analytics_view(request):
+    """Verification quality as a pattern: return reasons, who submits weak
+    evidence, verifier turnaround, and how certifications survive a sample."""
+    from apps.activities.verification_analytics import verification_analytics
+
+    raw = (request.GET.get("window") or "").strip()
+    window = int(raw) if raw.isdigit() and int(raw) in (30, 90, 180, 365) else 90
+    data = verification_analytics(request.user, window_days=window)
+    context = {**data, "window_options": (30, 90, 180, 365)}
+    return render(request, "pages/ia/verification_analytics.html", context)
+
+
+@require_page_permission("ia_verification_analytics")
+def ia_verification_analytics_export_view(request):
+    """The decisions behind the analytics, as CSV, for the same window."""
+    import csv
+
+    from django.http import HttpResponse
+
+    from apps.activities.verification_analytics import (
+        EXPORT_HEADER,
+        export_rows,
+        verification_analytics,
+    )
+    from apps.core.permissions import RolePermissionService, render_access_denied
+
+    if not RolePermissionService.can_export(request.user, request.path):
+        return render_access_denied(request, "Your role does not include data export.")
+    raw = (request.GET.get("window") or "").strip()
+    window = int(raw) if raw.isdigit() and int(raw) in (30, 90, 180, 365) else 90
+    data = verification_analytics(request.user, window_days=window)
+    response = HttpResponse(content_type="text/csv")
+    response["Content-Disposition"] = (
+        f'attachment; filename="verification-decisions-{window}d.csv"'
+    )
+    writer = csv.writer(response)
+    writer.writerow(EXPORT_HEADER)
+    for row in export_rows(data):
+        writer.writerow(row)
+    return response
+
+
+@require_page_permission("ia_samples")
+def ia_samples_view(request):
+    """Sample checks: a second look at a share of verified work."""
+    from apps.activities.verification_sampling import sample_share_pct, samples_for
+
+    samples = list(samples_for(request.user)[:200])
+    user_ids = {s.original_verifier for s in samples} | {
+        s.checked_by for s in samples if s.checked_by
+    }
+    from apps.accounts.models import User
+
+    names = dict(User.objects.filter(id__in=user_ids).values_list("id", "name"))
+    rows = []
+    for smp in samples:
+        rows.append(
+            {
+                "id": smp.id,
+                "activity_id": smp.activity_id,
+                "school": smp.activity.school.name
+                if smp.activity.school_id
+                else "Cluster-wide",
+                "activity_type": smp.activity.get_activity_type_display(),
+                "original_verifier": names.get(
+                    smp.original_verifier, smp.original_verifier
+                ),
+                "is_own": str(smp.original_verifier) == str(request.user.user_id),
+                "sampled_at": smp.sampled_at,
+                "status": smp.get_status_display(),
+                "status_key": smp.status,
+                "outcome_note": smp.outcome_note,
+                "checked_by": names.get(smp.checked_by, "") if smp.checked_by else "",
+                "checked_at": smp.checked_at,
+            }
+        )
+    context = {
+        "samples": rows,
+        "pending_count": sum(1 for r in rows if r["status_key"] == "pending"),
+        "share_pct": sample_share_pct(),
+        "can_draw": getattr(request.user, "active_role", "")
+        in (
+            "ImpactAssessment",
+            "CountryDirector",
+            "Admin",
+        ),
+    }
+    return render(request, "pages/ia/verification_samples.html", context)
+
+
+@require_page_permission("ia_samples")
+def ia_sample_outcome_action(request, sample_id):
+    from apps.activities.verification_sampling import record_outcome
+    from apps.core.exceptions import Forbidden as _Forbidden
+
+    if request.method != "POST":
+        return local_redirect("/ia/samples/")
+    try:
+        sample = record_outcome(
+            sample_id,
+            request.POST.get("status", ""),
+            request.POST.get("note", ""),
+            request.user,
+        )
+        audit_log(
+            action="verification_sample_graded",
+            subject_kind="VerificationSample",
+            subject_id=str(sample.id),
+            actor_id=str(request.user.id),
+            actor_role=request.user.active_role,
+            success=True,
+            payload={"status": sample.status, "note": sample.outcome_note},
+        )
+        messages.success(
+            request, f"Sample recorded as {sample.get_status_display().lower()}."
+        )
+    except (BadRequest, _Forbidden) as exc:
+        messages.error(request, str(exc))
+    return local_redirect("/ia/samples/")
+
+
+@require_page_permission("ia_samples")
+def ia_sample_draw_action(request):
+    """Draw this week's sample now rather than waiting for Monday."""
+    from apps.activities.verification_sampling import draw_samples
+
+    if request.method != "POST":
+        return local_redirect("/ia/samples/")
+    created = draw_samples(days=7, actor=request.user.user_id)
+    messages.success(
+        request,
+        f"{created} activit{'y' if created == 1 else 'ies'} drawn for a second look."
+        if created
+        else "Nothing new to draw: last week's verifications are already sampled.",
+    )
+    return local_redirect("/ia/samples/")
+
+
+@require_page_permission("ia_attribution")
+def ia_attribution_view(request):
+    """Did the work move the scores? Confirmed assessments only."""
+    from apps.analytics.attribution_service import attribution
+    from apps.core.fy import fy_options, get_operational_fy
+    from apps.geography.models import District
+
+    choices = fy_options()
+    fy = (request.GET.get("fy") or "").strip()
+    fy = fy if fy in choices else get_operational_fy()
+    district_id = (request.GET.get("district") or "").strip() or None
+    data = attribution(request.user, fy=fy, district_id=district_id)
+    context = {
+        **data,
+        "fy_options": choices,
+        "selected_district": district_id or "",
+        "districts_options": District.objects.order_by("name").values("id", "name"),
+    }
+    return render(request, "pages/ia/attribution.html", context)

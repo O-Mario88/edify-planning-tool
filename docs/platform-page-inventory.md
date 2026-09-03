@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **581**
-- All registered routes: **1049**
+- Routed product surfaces: **587**
+- All registered routes: **1055**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
-- Scheduled jobs: **23**
+- Scheduled jobs: **25**
 - Activity states: **24**
 - Shared component templates: **346**
-- Full pages: **203**
+- Full pages: **206**
 - Partials and drawers: **173**
-- Permission-gated surfaces: **571**
-- Referenced by automated tests: **537**
+- Permission-gated surfaces: **577**
+- Referenced by automated tests: **542**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -319,6 +319,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-9F67B3997A | /hr-today | HR Today · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-C506EBA646 | /hr/performance-cycle | Performance Cycle Console · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0D27B24301 | /hr/performance-cycle/action | Hr Performance Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-B3FD287B4A | /ia/analytics/ | Verification Analytics · Edify | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A5A99F0875 | /ia/analytics/export | Ia Verification Analytics Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-A555CE49BA | /ia/attribution/ | Impact Attribution · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2E91310CCB | /ia/compare/ | Evidence Comparison Workspace - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9D69AC162C | /ia/dashboard/ | Impact Assessment Dashboard | dashboard | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2C691B24CA | /ia/duplicates/ | Duplicate Activity Review Queue - Edify Command Center | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -332,6 +335,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-16878A51E5 | /ia/partner-evidence/<str:activity_id>/return-action | Ia Partner Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-A62065CC3E | /ia/partner-evidence/<str:activity_id>/return-drawer | Ia Partner Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-0163A867E0 | /ia/returned/ | Returned Activities Ledger - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-1BE041489D | /ia/samples/ | Sample Checks · Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-7296E71278 | /ia/samples/<str:sample_id>/outcome | Ia Sample Outcome | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-E7FA5C31DB | /ia/samples/draw | Ia Sample Draw | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-A05C99B6EA | /ia/verification/ | Verification Queue | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-107DE82212 | /ia/verification/<str:activity_id>/ | IA Review Workspace - Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-374CDD4882 | /ia/verification/<str:activity_id>/return | Ia Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |

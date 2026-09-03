@@ -125,3 +125,39 @@ class VerificationHistory(TimeStampedModel):
 
     class Meta:
         db_table = "ia_verification_history"
+
+
+class VerificationSample(TimeStampedModel):
+    """A verified activity drawn for a second look (2026-09-03).
+
+    Verification quality was itself unmeasured: every certification was
+    final and nobody re-checked a share of them. A sample is drawn from
+    recently verified work, a second verifier (never the original one)
+    confirms or disputes it in the field or from the record, and the outcome
+    is recorded against the ORIGINAL verifier, which is what the
+    verification analytics read.
+    """
+
+    STATUS_CHOICES = (
+        ("pending", "Pending"),
+        ("confirmed", "Confirmed"),
+        ("disputed", "Disputed"),
+    )
+
+    id = CuidField()
+    activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.CASCADE,
+        related_name="verification_samples",
+    )
+    original_verifier = models.CharField(max_length=30)  # user id
+    sampled_at = models.DateTimeField(auto_now_add=True)
+    sampled_by = models.CharField(max_length=30, default="system")
+    status = models.CharField(max_length=16, choices=STATUS_CHOICES, default="pending")
+    outcome_note = models.TextField(blank=True, default="")
+    checked_by = models.CharField(max_length=30, null=True, blank=True)
+    checked_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "ia_verification_sample"
+        indexes = [models.Index(fields=["status", "sampled_at"])]
