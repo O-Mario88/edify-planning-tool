@@ -49,7 +49,9 @@ def _scope_user_ids(principal) -> set[str] | None:
 
         country = country_of(principal)
         if not country:
-            return None
+            # A CD with no country on file has no country to report on. The
+            # old ``None`` here opened the whole platform to them.
+            return set()
         return set(
             StaffProfile.objects.filter(country=country)
             .exclude(user_id=None)
@@ -89,9 +91,13 @@ class PolicyComplianceService:
         if query.get("role"):
             qs = qs.filter(role_at_acknowledgement=query["role"])
 
+        today = timezone.localdate()
+        # The strip and the supporting counts read the whole scope; only the
+        # table is capped, and it says so through ``truncated``.
+        strip_kpis = PolicyComplianceService.kpis(principal, qs, today)
+        strip_counts = PolicyComplianceService.counts(qs, today)
         records = list(qs[:1000])
         names = _names({r.user_id for r in records})
-        today = timezone.localdate()
 
         rows = []
         for ack in records:
@@ -125,8 +131,9 @@ class PolicyComplianceService:
 
         return {
             "rows": rows,
-            "kpis": PolicyComplianceService.kpis(principal, records, today),
-            "counts": PolicyComplianceService.counts(records, today),
+            "kpis": strip_kpis,
+            "counts": strip_counts,
+            "truncated": strip_counts["required"] > len(rows),
             "views": VIEWS,
             "filters": query,
             "policies": list(
@@ -149,19 +156,12 @@ class PolicyComplianceService:
         from apps.core.metrics import MetricValue, render_metric, render_strip
 
         today = today or timezone.localdate()
-        accepted = sum(1 for r in records if r.state == AcknowledgementState.AGREED)
-        overdue = sum(
-            1
-            for r in records
-            if r.state == AcknowledgementState.PENDING
-            and r.due_date
-            and r.due_date < today
-        )
+        accepted, overdue, required = _state_counts(records, today)
         return render_strip(
             [
                 render_metric(
                     "policy_acknowledgements_accepted",
-                    MetricValue.measured(accepted, denominator=len(records) or None),
+                    MetricValue.measured(accepted, denominator=required or None),
                     drilldown_url="/policy-compliance?state=agreed",
                 ),
                 render_metric(
@@ -176,6 +176,14 @@ class PolicyComplianceService:
     def counts(records, today=None) -> dict:
         """Plain supporting figures shown beside the strip."""
         today = today or timezone.localdate()
+        if hasattr(records, "filter"):
+            return {
+                "required": records.count(),
+                "pending": records.filter(state=AcknowledgementState.PENDING).count(),
+                "declined": records.filter(
+                    state=AcknowledgementState.DISAGREED
+                ).count(),
+            }
         return {
             "required": len(records),
             "pending": sum(
@@ -185,6 +193,30 @@ class PolicyComplianceService:
                 1 for r in records if r.state == AcknowledgementState.DISAGREED
             ),
         }
+
+
+def _state_counts(records, today) -> tuple[int, int, int]:
+    """(accepted, overdue, required) for a queryset or an in-memory list.
+
+    The report used to count only the first thousand rows it rendered, so a
+    country with more acknowledgements than that showed a strip that was
+    quietly wrong. A queryset is counted in the database.
+    """
+    if hasattr(records, "filter"):
+        return (
+            records.filter(state=AcknowledgementState.AGREED).count(),
+            records.filter(
+                state=AcknowledgementState.PENDING, due_date__lt=today
+            ).count(),
+            records.count(),
+        )
+    accepted = sum(1 for r in records if r.state == AcknowledgementState.AGREED)
+    overdue = sum(
+        1
+        for r in records
+        if r.state == AcknowledgementState.PENDING and r.due_date and r.due_date < today
+    )
+    return accepted, overdue, len(records)
 
 
 def _names(user_ids: set[str]) -> dict[str, str]:

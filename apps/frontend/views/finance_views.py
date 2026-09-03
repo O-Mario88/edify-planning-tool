@@ -585,10 +585,16 @@ def cost_settings_view(request):
         CountryStrategicActivityReserve,
         RateCardKind,
     )
+    from apps.core.fy import fy_options
     from apps.core.permissions import has_permission
     from apps.core.rbac import Permission
 
-    fy = get_operational_fy()
+    # The CD owns every year's rate card, not only this year's: the page was
+    # locked to the operational FY, so last year's card could not be
+    # inspected and next year's could not be prepared ahead of rollover.
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    if not fy.isdigit():
+        fy = get_operational_fy()
 
     catalogues = CostCatalogue.objects.filter(
         fy=fy, kind=RateCardKind.OPERATIONAL
@@ -631,6 +637,8 @@ def cost_settings_view(request):
     )
 
     context = {
+        "fy_options": fy_options(),
+        "selected_fy": fy,
         "catalogues": catalogues,
         "active_catalogue": active_catalogue,
         "cost_items": cost_items,

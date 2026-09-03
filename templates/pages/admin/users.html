@@ -177,6 +177,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 <!-- User Listings Table -->
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden animate-fade-in">
 <div class="overflow-x-auto">
+{% paginate users "page" as users_pager %}
 <table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
 <tr class="bg-slate-50 border-b border-slate-100 text-left">
@@ -188,7 +189,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for u in users %}
+{% for u in users_pager.rows %}
 <tr class="hover:bg-slate-50/50 transition-colors">
 <td class="px-5 py-3.5" data-record-title>
 <div class="flex items-center gap-3">
@@ -244,6 +245,7 @@ No user accounts found matching your query.
 {% endfor %}
 </tbody>
 </table>
+{% include "components/table_pager.html" with pager=users_pager param="page" %}
 </div>
 </div>
 

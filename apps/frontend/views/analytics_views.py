@@ -723,6 +723,10 @@ def system_health_view(request):
 
 
 # ── Country Director Analytics — national leadership-intelligence cockpit ──────
+from apps.analytics.cd_export_service import DATASETS as EXPORT_DATASETS  # noqa: E402
+from apps.analytics.cd_export_service import dataset_label  # noqa: E402
+
+
 def _cd_filters(request):
     return {
         "pl": request.GET.get("pl"),
@@ -796,6 +800,7 @@ def cd_analytics_view(request):
     ]
     month_options = [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)]
     context = {
+        "export_sets": [(k, dataset_label(k)) for k in EXPORT_DATASETS],
         **data,
         "month_options": month_options,
         "month": (month or ""),
@@ -895,55 +900,37 @@ def cd_analytics_drilldown_view(request):
 @require_page_permission("cd_analytics")
 @require_export_permission
 def cd_analytics_export_view(request):
-    """CSV export of the CD's country oversight roster (PL performance + risk).
-    Read-only export; respects the CD role gate."""
+    """One of the CD's four country CSVs, for the cockpit's current period.
+
+    ``?set=delivery|risk|finance|core`` picks the dataset; the FY, quarter,
+    month and filters are the ones the page is showing. Read-only; respects
+    the CD role gate and the export permission."""
     import csv
 
     from django.http import HttpResponse
 
-    from apps.analytics.cd_analytics_service import CDAnalyticsService
+    from apps.analytics.cd_export_service import country_export, normalise_dataset
 
     fy = (request.GET.get("fy") or "").strip() or None
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
-    rows = CDAnalyticsService.export_rows(
-        request.user, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+    dataset = normalise_dataset(request.GET.get("set"))
+    slug, header, rows = country_export(
+        request.user,
+        dataset,
+        fy=fy,
+        quarter=quarter,
+        month=month,
+        filters=_cd_filters(request),
     )
     resp = HttpResponse(content_type="text/csv")
-    resp["Content-Disposition"] = 'attachment; filename="cd_analytics_pl_oversight.csv"'
-    w = csv.writer(resp)
-    w.writerow(
-        [
-            "PL",
-            "CCEOs Supervised",
-            "Target Achievement %",
-            "School Visits %",
-            "Cluster Meetings %",
-            "Cluster Trainings %",
-            "SSA Completed %",
-            "MSCS %",
-            "Schools at Risk",
-            "Budget Utilization %",
-            "Backlog",
-            "Risk Status",
-        ]
+    resp["Content-Disposition"] = (
+        f'attachment; filename="cd-{slug}-{fy or get_operational_fy()}.csv"'
     )
-    for r in rows:
-        w.writerow(
-            [
-                r["name"],
-                r["cceos"],
-                r["target_pct"],
-                *[
-                    area["pct"] if area["pct"] is not None else "Not set"
-                    for area in r["areas"]
-                ],
-                r["schools_at_risk"],
-                r["budget_util"],
-                r["backlog"],
-                r["risk"],
-            ]
-        )
+    w = csv.writer(resp)
+    w.writerow(header)
+    for row in rows:
+        w.writerow(row)
     return resp
 
 

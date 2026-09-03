@@ -1297,18 +1297,31 @@ def reports_view(request):
 
 @require_page_permission("coverage")
 def coverage_view(request):
-    """Coverage overview — CD/IA."""
-    total_schools = active_schools().count()
-    visited = (
+    """Coverage overview — CD/IA.
+
+    Reach is a fiscal-year question: a school visited two years ago has not
+    been reached this year. The page therefore honours ``?fy=`` (defaulting
+    to the operational year) and breaks reach down by district, which is the
+    unit a Country Director actually redeploys people across.
+    """
+    fy_choices = fy_options()
+    requested_fy = (request.GET.get("fy") or "").strip()
+    fy = requested_fy if requested_fy in fy_choices else get_operational_fy()
+
+    schools = active_schools()
+    total_schools = schools.count()
+    visited_ids = set(
         Activity.objects.filter(
             activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
             status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
+            fy=fy,
+            school_id__in=schools.values("id"),
         )
-        .values("school_id")
+        .values_list("school_id", flat=True)
         .distinct()
-        .count()
     )
+    visited = len(visited_ids)
 
     # School.cluster_id is the canonical cluster membership source. Build the
     # counts in one aggregate query instead of reading the legacy assignment
@@ -1316,8 +1329,7 @@ def coverage_view(request):
     clusters = list(Cluster.objects.filter(deleted_at__isnull=True).order_by("name"))
     school_counts = {
         row["cluster_id"]: row["count"]
-        for row in active_schools()
-        .exclude(cluster_id__isnull=True)
+        for row in schools.exclude(cluster_id__isnull=True)
         .exclude(cluster_id="")
         .values("cluster_id")
         .annotate(count=Count("id"))
@@ -1325,12 +1337,31 @@ def coverage_view(request):
     for cluster in clusters:
         cluster.school_count = school_counts.get(cluster.id, 0)
 
+    districts: dict = {}
+    for school_id, district_name in schools.values_list("id", "district__name"):
+        bucket = districts.setdefault(
+            district_name or "No district",
+            {"name": district_name or "No district", "total": 0, "visited": 0},
+        )
+        bucket["total"] += 1
+        if school_id in visited_ids:
+            bucket["visited"] += 1
+    district_rows = []
+    for bucket in districts.values():
+        bucket["unvisited"] = bucket["total"] - bucket["visited"]
+        bucket["pct"] = round(bucket["visited"] / max(bucket["total"], 1) * 100)
+        district_rows.append(bucket)
+    district_rows.sort(key=lambda row: (row["pct"], -row["total"], row["name"]))
+
     context = {
+        "fy": fy,
+        "fy_options": fy_choices,
         "total_schools": total_schools,
         "visited": visited,
         "unvisited": total_schools - visited,
         "coverage_pct": round(visited / max(total_schools, 1) * 100),
         "clusters": clusters,
+        "districts": district_rows,
     }
     return render(request, "pages/coverage/index.html", context)
 
@@ -1496,6 +1527,22 @@ def admin_users_view(request):
     selected_status = request.GET.get("status", "").strip()
 
     users = User.objects.filter(deleted_at__isnull=True).order_by("name")
+    # Country roles administer their country. Admin and superusers see the
+    # deployment; everyone else was seeing every user in every country here
+    # while /staff and HR Today scoped them correctly.
+    viewer_is_admin = (
+        request.user.is_superuser
+        or getattr(request.user, "active_role", None) == EdifyRole.ADMIN.value
+    )
+    if not viewer_is_admin:
+        viewer_country = getattr(
+            getattr(request.user, "staff_profile", None), "country", None
+        )
+        users = (
+            users.filter(staff_profile__country=viewer_country)
+            if viewer_country
+            else users.none()
+        )
     if search:
         users = users.filter(
             Q(name__icontains=search)
@@ -1512,7 +1559,9 @@ def admin_users_view(request):
         users = users.filter(Q(is_active=False) | Q(status="inactive"))
 
     districts = District.objects.all().order_by("name")
-    roles = [r.value for r in EdifyRole]
+    # The form must not promise a role the service refuses: Admin grants are
+    # rejected by admin_users.services for anyone but an Admin.
+    roles = [r.value for r in EdifyRole if viewer_is_admin or r is not EdifyRole.ADMIN]
     partners = []
     partner_regions = []
     partner_interventions = []
@@ -1574,7 +1623,7 @@ def admin_users_view(request):
         ]
 
     context = {
-        "users": users[:100],
+        "users": users,
         "total": users.count(),
         "search": search,
         "selected_role": selected_role,
@@ -1860,6 +1909,15 @@ def settings_view(request):
     return render(request, "pages/settings/index.html", context)
 
 
+def _searches_every_country(user) -> bool:
+    role = getattr(user, "active_role", None)
+    return bool(getattr(user, "is_superuser", False)) or role in {
+        EdifyRole.ADMIN.value,
+        EdifyRole.HUMAN_RESOURCES.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+    }
+
+
 @require_page_permission("search")
 def search_view(request):
     """Global search — open to every authenticated role (the topbar renders
@@ -1887,9 +1945,20 @@ def search_view(request):
             )[:10]
         )
         if RolePermissionService.can_view_page(request.user, "staff_directory"):
-            results["staff"] = list(
-                User.objects.filter(name__icontains=q, deleted_at__isnull=True)[:10]
-            )
+            staff = User.objects.filter(name__icontains=q, deleted_at__isnull=True)
+            # A Country Director searching "Okello" must not be handed the
+            # Kenya office. Only the roles whose directory spans countries
+            # (Admin, HR, RVP) search across them.
+            if not _searches_every_country(request.user):
+                from apps.documents.services import country_of
+
+                country = country_of(request.user)
+                staff = (
+                    staff.filter(staff_profile__country=country)
+                    if country
+                    else staff.none()
+                )
+            results["staff"] = list(staff[:10])
         results["activities"] = list(
             list_activities({}, request.user)
             .filter(Q(school__name__icontains=q) | Q(cluster__name__icontains=q))

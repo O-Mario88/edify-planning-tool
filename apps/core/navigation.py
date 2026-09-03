@@ -1531,10 +1531,15 @@ SIDEBAR_ITEMS = [
                 "page_key": "fund_approvals",
             },
             {
+                # For the CD and RVP this IS the country budget: /budget forces
+                # the country scope for them and /country-budget redirects
+                # here. Named accordingly, and the mobile bar asks for this
+                # key rather than a `country_budget` item nobody registers.
                 "label": "Budget",
                 "url": "/budget",
                 "page_key": "monthly_budget",
                 "icon_key": "my_budget",
+                "role_labels": {CD: "Country Budget", RVP: "Country Budget"},
             },
             {
                 "label": "Cost Settings",
@@ -2212,8 +2217,8 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
     # People work: the directory and the approvals that block others.
     HR: ("dashboard", "staff", "leave_approvals", "messages"),
     # Leadership decides on budget and reads the evidence.
-    CD: ("dashboard", "country_budget", "analytics", "messages"),
-    RVP: ("dashboard", "country_budget", "analytics", "messages"),
+    CD: ("dashboard", "monthly_budget", "analytics", "messages"),
+    RVP: ("dashboard", "monthly_budget", "analytics", "messages"),
     # Platform operations: the incoming queue and the health of the system.
     ADMIN: ("dashboard", "admin_support_queue", "system_health", "messages"),
 }

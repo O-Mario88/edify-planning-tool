@@ -2199,7 +2199,7 @@
    "audit_id": "KPI-SOURCE-110",
    "kind": "breakdown-row",
    "module": "apps/debriefs/dashboard_service.py",
-   "line": 299,
+   "line": 312,
    "label": null,
    "keys": [
     "count",
@@ -2448,7 +2448,7 @@
    "audit_id": "KPI-SOURCE-123",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 1907,
+   "line": 1976,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -2468,7 +2468,7 @@
    "audit_id": "KPI-SOURCE-124",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2885,
+   "line": 2954,
    "label": null,
    "keys": [
     "label",
@@ -2586,7 +2586,7 @@
    "audit_id": "KPI-SOURCE-130",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1208,
+   "line": 1216,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",
@@ -26561,7 +26561,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2601,
+   "line": 2670,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -26583,7 +26583,7 @@
   {
    "audit_id": "KPI-PAYLOAD-015",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3056,
+   "line": 3125,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,

@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 629,
+  "titled_cards": 630,
   "templates": 223,
-  "distinct_titles": 598,
+  "distinct_titles": 599,
   "with_card_key": 13,
   "untitled_surfaces": 1016,
   "untitled_chrome": 229,
-  "untitled_nested": 395,
-  "untitled_headless": 392,
+  "untitled_nested": 393,
+  "untitled_headless": 394,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -582,7 +582,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 263,
+   "line": 265,
    "title": "Add Partner Organisation",
    "heading_level": 3,
    "has_card_key": false,
@@ -596,7 +596,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 345,
+   "line": 347,
    "title": "Remove ?",
    "heading_level": 3,
    "has_card_key": false,
@@ -610,7 +610,7 @@
   },
   {
    "template": "templates/pages/admin/users.html",
-   "line": 380,
+   "line": 382,
    "title": "Provision New System User",
    "heading_level": 3,
    "has_card_key": false,
@@ -1201,7 +1201,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 19,
+   "line": 27,
    "title": "Country operational cost",
    "heading_level": 2,
    "has_card_key": false,
@@ -1210,7 +1210,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 23,
+   "line": 31,
    "title": "Minimum viable cost",
    "heading_level": 2,
    "has_card_key": false,
@@ -1219,21 +1219,21 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 30,
+   "line": 38,
    "title": "Cost review requests",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden",
    "branch_path": [
     [
-     0,
+     1,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 97,
+   "line": 105,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -1242,11 +1242,20 @@
   },
   {
    "template": "templates/pages/coverage/index.html",
-   "line": 38,
-   "title": "Clusters",
+   "line": 46,
+   "title": "Reach by district \u00b7 FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/coverage/index.html",
+   "line": 88,
+   "title": "Clusters",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": []
   },
   {
@@ -1775,14 +1784,14 @@
   },
   {
    "template": "templates/pages/documents/compliance.html",
-   "line": 86,
+   "line": 87,
    "title": "Policy Comments",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-4",
    "branch_path": [
     [
-     7,
+     8,
      0
     ]
    ]
