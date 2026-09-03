@@ -4,10 +4,10 @@
   "templates": 226,
   "distinct_titles": 607,
   "with_card_key": 13,
-  "untitled_surfaces": 1020,
+  "untitled_surfaces": 1012,
   "untitled_chrome": 225,
-  "untitled_nested": 400,
-  "untitled_headless": 395,
+  "untitled_nested": 394,
+  "untitled_headless": 393,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 23,
   "ambiguous_titles": 1
@@ -2376,16 +2376,16 @@
   },
   {
    "template": "templates/pages/ia/attribution.html",
-   "line": 49,
+   "line": 42,
    "title": "Movement by intervention \u00b7 FY to FY",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": []
   },
   {
    "template": "templates/pages/ia/attribution.html",
-   "line": 82,
+   "line": 69,
    "title": "Movement by district, all interventions",
    "heading_level": 2,
    "has_card_key": false,
@@ -2606,16 +2606,16 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 46,
+   "line": 39,
    "title": "Why work is returned",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": []
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 70,
+   "line": 55,
    "title": "Return rate by month",
    "heading_level": 2,
    "has_card_key": false,
@@ -2624,7 +2624,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 97,
+   "line": 82,
    "title": "Submitters, highest return rate first",
    "heading_level": 2,
    "has_card_key": false,
@@ -2633,7 +2633,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 113,
+   "line": 98,
    "title": "Partners, highest return rate first",
    "heading_level": 2,
    "has_card_key": false,
@@ -2642,7 +2642,7 @@
   },
   {
    "template": "templates/pages/ia/verification_analytics.html",
-   "line": 130,
+   "line": 115,
    "title": "Verifiers",
    "heading_level": 2,
    "has_card_key": false,

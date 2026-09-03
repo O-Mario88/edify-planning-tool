@@ -35240,7 +35240,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -35306,8 +35306,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[20px]"
+        "text-[13px]"
       ]
     },
     {
@@ -35417,7 +35416,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -35483,8 +35482,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[20px]"
+        "text-[13px]"
       ]
     },
     {

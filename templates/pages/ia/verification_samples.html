@@ -28,24 +28,24 @@
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Waiting for a second look · {{ pending_count }}</h2>
     {% if samples %}
-    <div class="overflow-x-auto -mx-1">
-      <table class="edify-record-table w-full edify-text-caption">
-        <thead><tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
-          <th class="text-left font-bold py-2 pl-1">Activity</th><th class="text-left font-bold py-2">Original verifier</th><th class="text-left font-bold py-2">Drawn</th><th class="text-left font-bold py-2">Outcome</th><th class="text-left font-bold py-2 pr-1">Second look</th>
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full text-[12px] font-semibold">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr>
+          <th class="px-6 py-4 text-left">Activity</th><th class="px-6 py-4 text-left">Original verifier</th><th class="px-6 py-4 text-left">Drawn</th><th class="px-6 py-4 text-left">Outcome</th><th class="px-6 py-4 text-left">Second look</th>
         </tr></thead>
-        <tbody class="divide-y divide-slate-50">
+        <tbody class="divide-y divide-slate-100">
           {% paginate samples "samples_page" as samples_pager %}
 {% for s in samples_pager.rows %}
           <tr>
-            <td class="py-2.5 pl-1" data-record-title><a href="/ia/verification/{{ s.activity_id }}/" class="font-semibold edify-primary-text">{{ s.school }}</a><p class="edify-text-caption text-slate-500">{{ s.activity_type }}</p></td>
-            <td class="py-2.5" data-label="Original verifier">{{ s.original_verifier }}</td>
-            <td class="py-2.5 tabular-nums" data-label="Drawn">{{ s.sampled_at|date:"d M Y" }}</td>
-            <td class="py-2.5" data-label="Outcome">
+            <td class="px-6 py-3" data-record-title><a href="/ia/verification/{{ s.activity_id }}/" class="font-semibold edify-primary-text">{{ s.school }}</a><p class="edify-text-caption text-slate-500">{{ s.activity_type }}</p></td>
+            <td class="px-6 py-3" data-label="Original verifier">{{ s.original_verifier }}</td>
+            <td class="px-6 py-3 tabular-nums" data-label="Drawn">{{ s.sampled_at|date:"d M Y" }}</td>
+            <td class="px-6 py-3" data-label="Outcome">
               {% if s.status_key == 'confirmed' %}<span class="edify-status-badge success">Confirmed</span>{% elif s.status_key == 'disputed' %}<span class="edify-status-badge danger">Disputed</span>{% else %}<span class="edify-status-badge warning">Pending</span>{% endif %}
               {% if s.outcome_note %}<p class="edify-text-caption text-slate-500 mt-0.5">{{ s.outcome_note }}</p>{% endif %}
               {% if s.checked_by %}<p class="edify-text-caption text-slate-400">by {{ s.checked_by }} · {{ s.checked_at|date:"d M" }}</p>{% endif %}
             </td>
-            <td class="py-2.5 pr-1" data-label="Second look">
+            <td class="px-6 py-3" data-label="Second look">
               {% if s.status_key == 'pending' %}
                 {% if s.is_own %}<span class="edify-text-caption text-slate-400">Your own certification — a colleague grades it.</span>{% else %}
                 <form method="post" action="/ia/samples/{{ s.id }}/outcome" class="flex flex-col gap-1.5 sm:flex-row sm:items-center">{% csrf_token %}

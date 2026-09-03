@@ -1955,7 +1955,17 @@ def ia_verification_analytics_view(request):
     raw = (request.GET.get("window") or "").strip()
     window = int(raw) if raw.isdigit() and int(raw) in (30, 90, 180, 365) else 90
     data = verification_analytics(request.user, window_days=window)
-    context = {**data, "window_options": (30, 90, 180, 365)}
+    rate = data["return_rate"]
+    context = {
+        **data,
+        "window_options": (30, 90, 180, 365),
+        "return_rate_label": f"{rate}%",
+        "return_rate_tone": "danger"
+        if rate > 25
+        else "warning"
+        if rate > 10
+        else "success",
+    }
     return render(request, "pages/ia/verification_analytics.html", context)
 
 
@@ -2097,8 +2107,17 @@ def ia_attribution_view(request):
     fy = fy if fy in choices else get_operational_fy()
     district_id = (request.GET.get("district") or "").strip() or None
     data = attribution(request.user, fy=fy, district_id=district_id)
+    share = data["confirmed_share"]
     context = {
         **data,
+        "both_years_helper": f"confirmed SSA in FY{data['prior_fy']} and FY{fy}",
+        "confirmed_share_label": f"{share}%",
+        "confirmed_helper": f"{data['confirmed_records']} of {data['total_records']} FY{fy} assessments",
+        "confirmed_tone": "success"
+        if share >= 80
+        else "warning"
+        if share >= 50
+        else "danger",
         "fy_options": choices,
         "selected_district": district_id or "",
         "districts_options": District.objects.order_by("name").values("id", "name"),
