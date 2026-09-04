@@ -238,7 +238,7 @@ class MobileNavLabelTests(SimpleTestCase):
     def test_long_sidebar_labels_are_shortened(self):
         nav = nav_for(ACCOUNTANT)
         labels = {i["page_key"]: i["label"] for i in nav}
-        self.assertEqual(labels["disbursements"], "Disburse")
+        self.assertEqual(labels["weekly_fund_request"], "Funds")
 
     def test_shortening_does_not_rename_the_sidebar(self):
         # The mobile items are built from the same dicts the sidebar renders.
@@ -251,7 +251,7 @@ class MobileNavLabelTests(SimpleTestCase):
             for section in sections
             for item in section["items"]
         }
-        self.assertEqual(sidebar_labels["disbursements"], "Disbursement Dashboard")
+        self.assertEqual(sidebar_labels["weekly_fund_request"], "Weekly Advance Request")
 
     def test_short_labels_stay_short_enough_for_a_tab(self):
         # ~10 characters is what fits a fifth of a 360px screen at 11px before

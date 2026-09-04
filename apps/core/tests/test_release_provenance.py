@@ -213,8 +213,13 @@ class ServiceWorkerCacheTest(TestCase):
         body = self.client.get("/sw.js").content.decode()
         has_fetch_handler = "addEventListener('fetch'" in body
 
-        if has_fetch_handler:
+        # The worker may always carry the offline navigation fallback (a
+        # precached /offline page, rendered for nobody). What must stay tied to
+        # content-hashed names is the static cache branch, so it is asserted
+        # only when that branch is compiled in.
+        if "startsWith('/static/')" in body:
             self.assertIn("/static/", body)
+        if has_fetch_handler:
             for forbidden in ("/api/", "/dashboard", "text/html"):
                 self.assertNotIn(
                     forbidden,

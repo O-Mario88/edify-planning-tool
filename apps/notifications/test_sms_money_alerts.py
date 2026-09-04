@@ -89,7 +89,8 @@ class SmsMoneyAlertsTest(TestCase):
         msg = send.call_args.args[0]
         self.assertEqual(msg.to, PHONE)
         self.assertTrue(msg.text.startswith(f"{TITLE}. {BODY}"), msg.text)
-        self.assertTrue(msg.text.endswith(" /fund-requests/weekly"), msg.text)
+        # The resolver deep-links the request itself when it can.
+        self.assertTrue(msg.text.endswith(" /fund-requests/weekly/WFR-1"), msg.text)
         self.assertLessEqual(len(msg.text), SMS_MAX_LENGTH)
 
     def test_every_money_event_fans_out(self):

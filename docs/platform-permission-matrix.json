@@ -8489,8 +8489,11 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "CCEO",
+    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/escalations",
@@ -9026,6 +9029,23 @@
    "route": "/fund-requests/weekly/<str:request_id>/disburse",
    "route_name": "weekly_fund_request_disburse",
    "view": "apps.frontend.views.budget_views.weekly_fund_request_disburse_action"
+  },
+  {
+   "page_permission": "fund_requests",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/fund-requests/weekly/<str:request_id>/not-requested",
+   "route_name": "weekly_fund_request_not_requested",
+   "view": "apps.frontend.views.budget_views.weekly_fund_request_not_requested_action"
   },
   {
    "page_permission": "fund_requests",
@@ -14439,27 +14459,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 385,
-  "Admin": 777,
+  "Accountant": 386,
+  "Admin": 778,
   "BusinessTransformationOfficer": 212,
-  "CCEO": 475,
-  "CountryDirector": 613,
+  "CCEO": 477,
+  "CountryDirector": 614,
   "HumanResources": 264,
-  "ImpactAssessment": 495,
+  "ImpactAssessment": 496,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
-  "Program Lead": 549,
-  "ProjectCoordinator": 406,
+  "Program Lead": 551,
+  "ProjectCoordinator": 408,
   "RegionalVicePresident": 303
  },
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 871,
-  "routes_total": 1055,
-  "routes_unguarded": 184,
+  "routes_guarded": 872,
+  "routes_total": 1057,
+  "routes_unguarded": 185,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -15624,6 +15644,13 @@
    "route": "/manifest.webmanifest",
    "route_name": "webmanifest",
    "view": "apps.frontend.views.pwa_views.manifest"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/offline",
+   "route_name": "offline",
+   "view": "apps.frontend.views.pwa_views.offline"
   },
   {
    "page_permission": "",

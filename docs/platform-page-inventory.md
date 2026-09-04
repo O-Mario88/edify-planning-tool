@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **587**
-- All registered routes: **1055**
+- Routed product surfaces: **589**
+- All registered routes: **1057**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **25**
 - Activity states: **24**
-- Shared component templates: **355**
-- Full pages: **204**
-- Partials and drawers: **175**
-- Permission-gated surfaces: **577**
-- Referenced by automated tests: **541**
+- Shared component templates: **357**
+- Full pages: **205**
+- Partials and drawers: **176**
+- Permission-gated surfaces: **578**
+- Referenced by automated tests: **543**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -242,7 +242,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-F1B955629C | /decisions | Decision Intelligence | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A2AAB0EEE2 | /declining-schools | Declining Schools | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E25D80DF26 | /disbursements | Disbursement Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-B2B709AA56 | /disbursements/action | Fund Disbursement Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B2B709AA56 | /disbursements/action | Disbursements Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-99ACD5614E | /disbursements/detail | Disbursements Detail | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-66250CABB0 | /disbursements/drawer | Disbursements Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-3E7346BCB9 | /districts | Districts | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -279,19 +279,20 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5D4FA661D2 | /fund-approvals/invoices/<str:invoice_id>/download | Pl Partner Invoice Download | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D2A71FB89F | /fund-approvals/return | Fund Approvals Return | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E752172BBA | /fund-requests | Fund Requests List | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-A0B364D43A | /fund-requests/advances/<str:advance_id>/pl-approve | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-CA0E7F63DC | /fund-requests/advances/<str:advance_id>/pl-return | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A0B364D43A | /fund-requests/advances/<str:advance_id>/pl-approve | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CA0E7F63DC | /fund-requests/advances/<str:advance_id>/pl-return | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-69D5E8ADAD | /fund-requests/generate-request | Generate Request Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6085EBC380 | /fund-requests/receipt-confirm | Fund Receipt Confirm | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-DCD56713A1 | /fund-requests/weekly | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BA500F51A1 | /fund-requests/weekly/<str:request_id> | Weekly Fund Request Detail | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-E7DBE89831 | /fund-requests/weekly/<str:request_id>/approve | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-31F49EF531 | /fund-requests/weekly/<str:request_id>/confirm | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3BCE4448DD | /fund-requests/weekly/<str:request_id>/confirm-receipt | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-E7DBE89831 | /fund-requests/weekly/<str:request_id>/approve | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-31F49EF531 | /fund-requests/weekly/<str:request_id>/confirm | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3BCE4448DD | /fund-requests/weekly/<str:request_id>/confirm-receipt | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-28C1ED349E | /fund-requests/weekly/<str:request_id>/disburse | Weekly Fund Request Disburse | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-97195E5671 | /fund-requests/weekly/<str:request_id>/not-requested | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-15785CF711 | /fund-requests/weekly/<str:request_id>/return | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-41CB76A0D0 | /fund-requests/weekly/<str:request_id>/return-drawer | Weekly Fund Request Return Drawer | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-CF59C113B1 | /fund-requests/weekly/<str:request_id>/self-funded | Fund Requests | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CF59C113B1 | /fund-requests/weekly/<str:request_id>/self-funded | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9E1520AF65 | /fy | Fiscal Year Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-61030068A3 | /help | Knowledge Center · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7A2D19730D | /help/articles/<slug:slug> | · Knowledge Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -433,6 +434,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-0D3E8983C0 | /notifications/drawer | Notifications Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-45CD52E6FC | /notifications/mark-all-read | Mark All Notifications Read | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CA1DBB98A4 | /offboarding | Offboarding | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-08B3C226D4 | /offline | Offline | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-99A6BD1230 | /onboarding | Onboarding | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9A561927AF | /org-structure | Organization Structure | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-CED66A2471 | /partials/clusters/<str:cluster_id>/schools | Cluster Schools Partial | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

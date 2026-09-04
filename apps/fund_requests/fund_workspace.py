@@ -15,6 +15,8 @@ log. Nothing is typed in.
 
 from __future__ import annotations
 
+from apps.core.metrics.ratio import percentage_or_zero
+
 from collections import OrderedDict
 from datetime import date, timedelta
 
@@ -48,10 +50,6 @@ LINE_TYPE_LABELS = {
 }
 
 
-def _pct(part, whole):
-    return round(part * 100 / whole) if whole else 0
-
-
 def month_bounds(fy_year: int | None, month: int) -> tuple[date, date]:
     """First and last day of `month` in the calendar year it falls in."""
     year = fy_year or timezone.now().year
@@ -65,7 +63,7 @@ def month_bounds(fy_year: int | None, month: int) -> tuple[date, date]:
 def approval_rate(approved: int, returned: int, pending: int) -> dict:
     """The month's decisions as a share: approved, returned, still pending."""
     total = approved + returned + pending
-    pct = _pct(approved, total)
+    pct = percentage_or_zero(approved, total)
     from apps.core.donut import build_rings
 
     series = [
@@ -73,21 +71,21 @@ def approval_rate(approved: int, returned: int, pending: int) -> dict:
             "key": "approved",
             "label": "Approved",
             "value": approved,
-            "display": f"{_pct(approved, total)}%",
+            "display": f"{percentage_or_zero(approved, total)}%",
             "color": "var(--edify-success)",
         },
         {
             "key": "returned",
             "label": "Returned",
             "value": returned,
-            "display": f"{_pct(returned, total)}%",
+            "display": f"{percentage_or_zero(returned, total)}%",
             "color": "var(--edify-danger)",
         },
         {
             "key": "pending",
             "label": "Pending",
             "value": pending,
-            "display": f"{_pct(pending, total)}%",
+            "display": f"{percentage_or_zero(pending, total)}%",
             "color": "var(--edify-warn)",
         },
     ]
@@ -98,7 +96,7 @@ def approval_rate(approved: int, returned: int, pending: int) -> dict:
         "legend": [
             {
                 "label": s["label"],
-                "pct": _pct(s["value"], total),
+                "pct": percentage_or_zero(s["value"], total),
                 "count": s["value"],
                 "color": s["color"],
             }
@@ -123,7 +121,7 @@ def budget_mix(totals_by_label: dict[str, int]) -> dict:
             "label": label,
             "amount": amount,
             "amount_fmt": format_ugx_compact(amount),
-            "pct": _pct(amount, total),
+            "pct": percentage_or_zero(amount, total),
             "color": MIX_COLOURS.get(label, "#94a3b8"),
         }
         for label, amount in head
@@ -220,7 +218,7 @@ def progress_panel(
     link_label,
     caption="Approved (to date)",
 ):
-    pct = _pct(approved, allocation)
+    pct = percentage_or_zero(approved, allocation)
     return {
         "title": title,
         "status_label": status_label,

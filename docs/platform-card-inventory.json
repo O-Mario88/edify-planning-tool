@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 628,
-  "templates": 225,
-  "distinct_titles": 600,
+  "titled_cards": 620,
+  "templates": 224,
+  "distinct_titles": 591,
   "with_card_key": 13,
-  "untitled_surfaces": 1006,
-  "untitled_chrome": 224,
-  "untitled_nested": 384,
-  "untitled_headless": 398,
+  "untitled_surfaces": 968,
+  "untitled_chrome": 219,
+  "untitled_nested": 368,
+  "untitled_headless": 381,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 20,
+  "titles_in_several_templates": 21,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -31,6 +31,10 @@
    "templates/pages/projects/index.html",
    "templates/partials/core_schools/right_panel.html",
    "templates/partials/projects/my_plan_workspace.html"
+  ],
+  "awaiting your decision": [
+   "templates/pages/escalations/index.html",
+   "templates/pages/planning/visit_requests.html"
   ],
   "cumulative progress by time period": [
    "templates/pages/reports/index.html",
@@ -1769,37 +1773,70 @@
   },
   {
    "template": "templates/pages/escalations/index.html",
-   "line": 30,
-   "title": "Escalate to the Regional Vice President",
+   "line": 36,
+   "title": "Escalate to , your the",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border px-4 py-3 text-[13px] font-bold {% if message.tags == 'error' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-emerald-50 border-em",
    "branch_path": [
     [
-     6,
+     8,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/escalations/index.html",
-   "line": 77,
-   "title": "Open",
+   "line": 87,
+   "title": "Awaiting your decision",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": []
+   "branch_path": [
+    [
+     15,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/escalations/index.html",
-   "line": 136,
+   "line": 103,
+   "title": "Raised by you",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     18,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/escalations/index.html",
+   "line": 119,
+   "title": "Received by your Programme Leads",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     20,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/escalations/index.html",
+   "line": 129,
    "title": "Recently decided",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
    "branch_path": [
     [
-     19,
+     21,
      0
     ]
    ]
@@ -2911,6 +2948,15 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface p-5 shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/pages/offline.html",
+   "line": 24,
+   "title": "Pending uploads ( 0 )",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "mt-5 edify-surface rounded-surface border edify-border p-4",
    "branch_path": []
   },
   {
@@ -5183,20 +5229,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/disbursements/detail.html",
-   "line": 54,
-   "title": "Funding Breakdown",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "rounded-surface bg-rose-50 border border-rose-200 p-3",
-   "branch_path": [
-    [
-     0,
-     0
-    ]
-   ]
-  },
-  {
    "template": "templates/partials/disbursements/disburse_drawer.html",
    "line": 8,
    "title": "Disburse \u2014",
@@ -5221,96 +5253,6 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-popup-dialog__surface relative z-10 w-full max-w-[480px] edify-surface rounded-surface shadow-2xl border border-slate-200 overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 7,
-   "title": "Fund Disbursement Dashboard",
-   "heading_level": 1,
-   "has_card_key": false,
-   "classes": "p-3 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 69,
-   "title": "Consolidated Fund Queue",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "lg:col-span-3 card overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 112,
-   "title": "All Fund Types This Month",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 129,
-   "title": "Disbursement Status This Month",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 140,
-   "title": "Budget Allocation &amp; Utilization ()",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 151,
-   "title": "Finance &amp; Disbursement Rules",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 163,
-   "title": "Disbursement Mix (by amount, )",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 184,
-   "title": "Recent Disbursement Activity",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 203,
-   "title": "Reconciliation &amp; Proof Tracker",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/disbursements/root.html",
-   "line": 230,
-   "title": "Cash Position / Budget Balance (FY )",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "card p-5",
    "branch_path": []
   },
   {
@@ -5561,11 +5503,11 @@
   },
   {
    "template": "templates/partials/fund_requests/breakdown_by_period.html",
-   "line": 3,
+   "line": 4,
    "title": "Request Breakdown by Period",
    "heading_level": 3,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700",
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 text-slate-700",
    "branch_path": []
   },
   {

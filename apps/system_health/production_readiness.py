@@ -237,6 +237,9 @@ _EXEMPT_VIEW_NAMES = {
     "handler500",
     "manifest_view",
     "manifest",
+    # The precached offline fallback: no user data, served to whoever the
+    # worker is protecting when the network is gone.
+    "offline",
     "service_worker_view",
     "service_worker",
     "offline_view",

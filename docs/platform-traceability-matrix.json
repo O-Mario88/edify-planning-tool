@@ -524,15 +524,17 @@
         "disbursements",
         "fund_requests",
         "ia_review_workspace",
+        "monthly_request",
         "my_plan",
         "planning",
+        "reports",
         "weekly_fund_request_disburse"
       ],
       "objectGuards": [],
       "notifications": [
+        "accountability_pl_approved",
         "activity_closed",
         "activity_submitted_for_review",
-        "advance_accountability_pl_approved",
         "advance_accountability_ready",
         "advance_accountability_submitted",
         "weekly_fund_request_approved",
@@ -551,9 +553,9 @@
         "advance_request.submit_accountability",
         "complete_activity",
         "ia_verify_completion",
+        "notification.accountability_pl_approved",
         "notification.activity_closed",
         "notification.activity_submitted_for_review",
-        "notification.advance_accountability_pl_approved",
         "notification.advance_accountability_ready",
         "notification.advance_accountability_submitted",
         "notification.weekly_fund_request_approved",
@@ -1303,8 +1305,8 @@
       ],
       "objectGuards": [],
       "notifications": [
+        "accountability_pl_approved",
         "activity_submitted_for_review",
-        "advance_accountability_pl_approved",
         "advance_accountability_ready",
         "advance_accountability_submitted",
         "weekly_fund_request_approved",
@@ -1321,8 +1323,8 @@
         "advance_request.reimburse",
         "advance_request.route_to_reimbursement",
         "advance_request.submit_accountability",
+        "notification.accountability_pl_approved",
         "notification.activity_submitted_for_review",
-        "notification.advance_accountability_pl_approved",
         "notification.advance_accountability_ready",
         "notification.advance_accountability_submitted",
         "notification.weekly_fund_request_approved",
@@ -1506,7 +1508,7 @@
       ],
       "objectGuards": [],
       "notifications": [
-        "advance_accountability_pl_approved",
+        "accountability_pl_approved",
         "advance_accountability_ready",
         "advance_accountability_submitted",
         "weekly_fund_request_approved",
@@ -1522,7 +1524,7 @@
         "advance_request.pl_approve_accountability",
         "advance_request.submit_accountability",
         "advance_request.verify_return",
-        "notification.advance_accountability_pl_approved",
+        "notification.accountability_pl_approved",
         "notification.advance_accountability_ready",
         "notification.advance_accountability_submitted",
         "notification.weekly_fund_request_approved",
@@ -3289,8 +3291,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "e23b4040fc41609e794986ef6ad6d34959931f625745b6192e51e581d09d6a92",
-    "sources": "66f210722368ef7fb042a4f05a3b9f792cd58795f6ef81592a561b9ed81349cd",
+    "payload": "4623dd9bb654ca437779496e63709933499093e20b25c0a7b5b31bcfb355dc8c",
+    "sources": "3b27bfde93a31668f34895b5a15b8ba96fedd9481f3f70933a33d62908b39394",
     "sourceCount": 178,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
