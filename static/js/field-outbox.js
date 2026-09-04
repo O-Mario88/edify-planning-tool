@@ -90,7 +90,12 @@
   function entryFor(form, path) {
     var fields = [];
     new FormData(form).forEach(function (value, name) {
-      if (name !== CSRF_FIELD) fields.push({ name: name, value: value });
+      if (name === CSRF_FIELD) return;
+      // An untouched <input type="file"> serialises as a nameless, empty
+      // File. Replaying that part makes the server see an upload with no
+      // extension and refuse the whole action; the live form never sends it.
+      if (value instanceof File && !value.name && !value.size) return;
+      fields.push({ name: name, value: value });
     });
     var subtitle = document.getElementById('drawer-subtitle');
     return {
