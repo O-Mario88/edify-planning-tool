@@ -52,6 +52,9 @@ urlpatterns = [
     # must live at the root or its scope covers only /static/.
     path("manifest.webmanifest", pwa_views.manifest, name="webmanifest"),
     path("sw.js", pwa_views.service_worker, name="service_worker"),
+    # Rendered without user data: the worker precaches it and serves it to
+    # any navigation the network cannot answer.
+    path("offline", pwa_views.offline, name="offline"),
     # Auth
     path("login", auth_views.login_view, name="login"),
     path(
