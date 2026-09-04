@@ -100,8 +100,69 @@ class ServiceWorkerTest(TestCase):
             }
         ):
             body = self.client.get("/sw.js").content.decode()
-        self.assertNotIn("addEventListener('fetch'", body)
-        self.assertNotIn("caches.match", body)
+        # The fetch handler still exists for the navigation fallback, but the
+        # static branch -- the only thing that stores a request's response --
+        # is compiled out.
+        self.assertNotIn("startsWith('/static/')", body)
+        self.assertNotIn("caches.match(req)", body)
+        self.assertNotIn("c.put(req", body)
+        self.assertNotIn("html.matchAll", body)
+
+    def test_offline_page_is_precached_and_serves_failed_navigations_in_both_builds(
+        self,
+    ):
+        """The fallback is user-independent, so it is the one page the worker
+        may hold -- in the hashed build and the passthrough build alike.
+
+        Precached at install under a cache named for the worker version, so a
+        deploy replaces it; served only when the network *fails* a navigation,
+        never in place of an answer the app actually gave."""
+        for backend in (
+            "whitenoise.storage.CompressedManifestStaticFilesStorage",
+            "django.contrib.staticfiles.storage.StaticFilesStorage",
+        ):
+            with self.subTest(backend=backend), override_settings(
+                STORAGES={
+                    "default": {
+                        "BACKEND": "django.core.files.storage.FileSystemStorage"
+                    },
+                    "staticfiles": {"BACKEND": backend},
+                }
+            ):
+                body = self.client.get("/sw.js").content.decode()
+            self.assertIn("const OFFLINE_URL = '/offline';", body)
+            self.assertIn("const OFFLINE_CACHE = 'edify-offline-' + VERSION;", body)
+            self.assertIn("c.add(new Request(OFFLINE_URL, { cache: 'reload' }))", body)
+            self.assertIn("req.mode === 'navigate'", body)
+            self.assertIn(
+                "fetch(req).catch(() => caches.match(OFFLINE_URL, "
+                "{ cacheName: OFFLINE_CACHE }))",
+                body,
+            )
+            # Activation must spare the fallback's cache or every deploy
+            # would delete the page it just precached.
+            self.assertIn("k !== CACHE && k !== OFFLINE_CACHE", body)
+            # Background Sync wakes open pages to replay the outbox.
+            self.assertIn("event.tag !== OUTBOX_SYNC_TAG", body)
+            self.assertIn("'edify-outbox-replay'", body)
+
+    def test_hashed_build_precaches_the_assets_the_offline_page_links(self):
+        """An unstyled fallback reads as a broken app. Content-hashed assets are
+        immutable, so precaching the ones the page links is safe there -- and
+        only there."""
+        with override_settings(
+            STORAGES={
+                "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
+                "staticfiles": {
+                    "BACKEND": (
+                        "whitenoise.storage.CompressedManifestStaticFilesStorage"
+                    )
+                },
+            }
+        ):
+            body = self.client.get("/sw.js").content.decode()
+        self.assertIn("html.matchAll", body)
+        self.assertIn("c.add(a).catch(() => null)", body)
 
     def test_the_cache_name_moves_with_the_assets(self):
         """`activate` deletes every cache that is not the current one, so a
@@ -254,3 +315,116 @@ class IconAssetTest(SimpleTestCase):
                     OPAQUE_SURROUND,
                     f"{name} corner ({x},{y}) must use the circular-icon surround",
                 )
+
+
+class OfflinePageTest(TestCase):
+    """The one page the worker stores, so the one page that must carry no user.
+
+    It is precached by whichever session installs the worker and shown to
+    whoever holds the phone afterwards. Anything session-specific in it would
+    be handed across users -- which is the exact reason the worker caches no
+    other page.
+    """
+
+    def test_renders_anonymously_with_the_platform_chrome(self):
+        res = self.client.get("/offline")
+        self.assertEqual(res.status_code, 200)
+        body = res.content.decode()
+        self.assertIn('<header class="edify-page-header">', body)
+        self.assertIn('class="btn btn-primary h-8"', body)
+        self.assertIn("data-offline-retry", body)
+        # The queue lives in the phone's IndexedDB; the page leaves slots for
+        # field-outbox.js to fill.
+        self.assertIn("data-field-outbox-list", body)
+        self.assertIn("data-field-outbox-count", body)
+        self.assertIn("js/field-outbox.js", body)
+
+    def test_carries_nothing_from_the_signed_in_session(self):
+        from django.contrib.auth import get_user_model
+
+        user = get_user_model().objects.create_user(
+            email="offline-probe@edify.test",
+            password="password123",
+            name="Offline Probe Person",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
+        )
+        self.client.force_login(user)
+        res = self.client.get("/offline")
+        self.assertEqual(res.status_code, 200)
+        body = res.content.decode()
+        self.assertNotIn("Offline Probe Person", body)
+        self.assertNotIn("offline-probe@edify.test", body)
+        # base.html stamps the session's CSRF token on <body>; the fallback
+        # blanks it so the precached copy carries no session's token.
+        token = res.context["csrf_token"] if res.context else ""
+        self.assertEqual(token, "")
+        self.assertIn('hx-headers=\'{"X-CSRFToken": ""}\'', body)
+        cookie_token = self.client.cookies.get("csrftoken")
+        if cookie_token and cookie_token.value:
+            self.assertNotIn(cookie_token.value, body)
+
+
+class FieldOutboxWiringTest(SimpleTestCase):
+    ROOT = Path(settings.BASE_DIR)
+
+    def _read(self, rel):
+        return (self.ROOT / rel).read_text(encoding="utf-8")
+
+    def test_base_loads_the_outbox_with_a_cache_bust(self):
+        """Every script in base.html is versioned so a deploy is not served the
+        previous build's copy; the outbox is no exception."""
+        base = self._read("templates/base.html")
+        self.assertRegex(
+            base, r"js/field-outbox\.js' %}\?v=\w+\"", "field-outbox.js needs a ?v="
+        )
+        # After csrf-sync.js, whose token handling it depends on at replay.
+        self.assertLess(base.index("js/csrf-sync.js"), base.index("js/field-outbox.js"))
+
+    def test_outbox_is_scoped_to_field_actions_and_replays_with_a_fresh_token(self):
+        js = self._read("static/js/field-outbox.js")
+        self.assertIn("indexedDB.open(DB_NAME", js)
+        self.assertIn("var DB_NAME = 'edify-outbox';", js)
+        self.assertIn("var SYNC_TAG = 'edify-outbox';", js)
+        for route in (
+            "start", "complete", "evidence", "attendance", "ssa-upload",
+            "salesforce-id", "submit",
+        ):
+            self.assertIn(route, js)
+        self.assertIn("/^\\/my-plan\\/[^/]+\\/(complete|accountability)$/", js)
+        # Fresh token per replay, read the way csrf-sync.js reads it.
+        self.assertIn("'csrftoken'", js)
+        self.assertIn("'X-CSRFToken': token", js)
+        # 4xx keeps the entry and flags it; only 2xx removes it.
+        self.assertIn("entry.status = 'attention'", js)
+        self.assertIn("if (res.ok)", js)
+        self.assertIn("Saved offline", js)
+        # No framework: the file must work on the offline page with nothing else loaded.
+        self.assertNotIn("Alpine.", js)
+        self.assertNotIn("htmx.ajax", js)
+
+    def test_mobile_shell_carries_the_pending_uploads_badge(self):
+        nav = self._read("templates/components/mobile_bottom_nav.html")
+        self.assertIn("data-field-outbox-badge", nav)
+        self.assertIn("data-field-outbox-count", nav)
+        self.assertIn("pending uploads", nav)
+
+    def test_camera_capture_only_where_a_photo_is_accepted(self):
+        """Governed forms are PDF-only by rule (apps/evidence/services.py), so
+        their inputs must not open a camera; every other evidence input may."""
+        expected_capture = {
+            "templates/partials/my_plan/complete_drawer.html": 1,
+            "templates/partials/my_plan/attendance_drawer.html": 1,
+            "templates/partials/my_plan/ssa_upload_drawer.html": 1,
+            "templates/partials/my_plan/accountability_drawer.html": 1,
+            "templates/partials/my_plan/evidence_drawer.html": 0,
+        }
+        for rel, count in expected_capture.items():
+            with self.subTest(template=rel):
+                self.assertEqual(self._read(rel).count('capture="environment"'), count)
+        complete = self._read("templates/partials/my_plan/complete_drawer.html")
+        for governed in ("training_evidence_file", "visit_evidence_file"):
+            tag = complete.split(f'name="{governed}"', 1)[1].split(">", 1)[0]
+            self.assertNotIn("capture", tag)
+            self.assertNotIn("image/", tag)
