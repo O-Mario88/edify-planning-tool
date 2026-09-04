@@ -4938,7 +4938,7 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
    own rather than squeezing the selected request. */
 @media (min-width: 90rem) {
   .fund-workspace__grid {
-    grid-template-columns: minmax(20rem, 1.35fr) minmax(0, 1.8fr) minmax(16rem, 1fr);
+    grid-template-columns: minmax(20rem, 1.2fr) minmax(0, 2.1fr) minmax(14rem, 0.75fr);
   }
   .fund-side { grid-column: auto; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
 }
@@ -5101,3 +5101,49 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .fund-recent__amount { color: var(--edify-text); font-weight: 600; font-variant-numeric: tabular-nums; }
 .fund-recent__when { color: var(--edify-text-muted); white-space: nowrap; }
 .fund-recent__empty { grid-template-columns: minmax(0, 1fr) !important; color: var(--edify-text-muted); }
+
+/* Fund workspace: approval chain stages and the waiting hint on a detail. */
+.fund-stages { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.fund-stage { --stage-accent: var(--edify-text-muted); display: inline-flex; align-items: center; gap: 0.375rem; block-size: 1.75rem; padding-inline: 0.5rem 0.625rem; border: 1px solid color-mix(in srgb, var(--stage-accent) 35%, var(--edify-border)); border-radius: var(--edify-radius-pill); background: color-mix(in srgb, var(--stage-accent) 8%, var(--edify-surface)); font-size: var(--edify-text-label-size); color: var(--edify-text); }
+.fund-stage__mark { display: inline-grid; place-items: center; inline-size: 1rem; block-size: 1rem; color: var(--stage-accent); }
+.fund-stage__mark svg { inline-size: 0.75rem; block-size: 0.75rem; }
+.fund-stage__label { font-weight: 600; }
+.fund-stage__state { color: var(--edify-text-muted); }
+.fund-stage--approved, .fund-stage--done { --stage-accent: var(--edify-success); }
+.fund-stage--pending { --stage-accent: var(--edify-warn); }
+.fund-stage--held { --stage-accent: #ea580c; }
+.fund-stage--returned { --stage-accent: var(--edify-danger); }
+.fund-stage--not_required { --stage-accent: var(--edify-text-subtle, var(--edify-text-muted)); border-style: dashed; }
+.fund-detail__hint { display: flex; align-items: center; gap: 0.5rem; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-detail__hint svg { inline-size: 1rem; block-size: 1rem; flex: 0 0 auto; }
+
+
+/* Queue accordion below the desktop breakpoint. The standalone detail card
+   is the desktop reading surface; on tablet and phone the tapped card opens
+   like the cluster, planning and school lists and the detail loads inside. */
+.fund-queue__expand { display: none; }
+@media (max-width: 63.999rem) {
+  .fund-detail { display: none; }
+  .fund-queue__expand { display: block; padding: 0.25rem 0.25rem 0.5rem; }
+  .fund-queue__list > li.is-expanded { border: 1px solid color-mix(in srgb, var(--edify-success) 45%, var(--edify-border)); border-radius: var(--edify-radius-md); background: var(--edify-surface); }
+  .fund-queue__list > li.is-expanded > .fund-queue__card { border-color: transparent; box-shadow: none; }
+  .fund-queue__expand .fund-detail__inner { padding: 0.75rem 0.5rem 0.5rem; }
+  .fund-queue__card .fund-queue__chevron { transition: transform var(--edify-transition-fast, 0.15s); }
+  .fund-queue__list > li.is-expanded .fund-queue__chevron { transform: rotate(90deg); }
+}
+
+/* The filter card wraps its fields on tablet and phone instead of scrolling
+   them off the edge. */
+/* The id outranks the platform filter-bar contract's id-level selector, which
+   otherwise lays the fields out as one scrolling row on phones. */
+@media (max-width: 63.999rem) {
+  main #fund-filters-card .platform-filter-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem !important;
+    overflow: visible !important;
+    flex-flow: initial !important;
+  }
+  main #fund-filters-card .platform-filter-bar > label { inline-size: 100%; min-inline-size: 0; }
+  main #fund-filters-card .platform-filter-bar select { inline-size: 100%; }
+}

@@ -17,7 +17,7 @@
         <p class="edify-text-caption font-semibold text-slate-400">{{ selected.kind_label }} · {{ selected.subtitle }} · Approved {{ selected.amount_fmt }}</p>
       </div>
     </div>
-    <form hx-post="/disbursements/action" hx-target="#disb-root" hx-swap="innerHTML" class="drawer-body p-5 space-y-4">
+    <form hx-post="/disbursements/action" hx-target="#disb-root" hx-swap="innerHTML" hx-confirm="Disburse the amount entered to {{ selected.name }}? The requester is notified and the payment is audited." hx-indicator="#fund-workspace-updating" class="drawer-body p-5 space-y-4">
       {% csrf_token %}
       <input type="hidden" name="action" value="disburse">
       <input type="hidden" name="fund_request_id" value="{{ selected.fund_request_id }}">

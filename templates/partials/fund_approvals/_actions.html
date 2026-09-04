@@ -4,7 +4,7 @@
     {% comment %}Straight to this CCEO's tab on Team Oversight's planned
     activities — the page the plan actually lives on — not the generic
     planning workspace.{% endcomment %}
-    <a href="/team-planning-oversight/?view=planning&owner={{ selected.cceo_user_id }}" class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control border edify-primary-border edify-primary-soft edify-primary-text text-[13px] font-bold transition-colors edify-primary-soft-hover">
+    <a href="/team-planning-oversight/?view=planning&owner={{ selected.cceo_user_id }}" class="btn btn-ghost h-8">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
       View Full Plan
     </a>
@@ -14,12 +14,12 @@
             hx-vals='{"action":"approve","cceo":"{{ selected.cceo_user_id }}","fy":"{{ fy }}","month":"{{ month }}","week":"{{ week }}"}'
             {% if not selected.can_approve %}disabled aria-disabled="true" title="{% if selected.issues %}Resolve: {{ selected.issues|join:'; ' }}{% else %}{{ selected.waiting_hint }}{% endif %}"{% endif %}
             hx-indicator="#fund-workspace-updating"
-            class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control text-[13px] font-bold text-white transition-colors {% if selected.can_approve %}edify-primary-solid edify-primary-hover{% else %}bg-slate-300 cursor-not-allowed{% endif %}">
+            class="btn btn-success h-8">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
       Approve
     </button>
     <button hx-get="/fund-approvals/return?cceo={{ selected.cceo_user_id }}&name={{ selected.name|urlencode }}&fy={{ fy }}&month={{ month }}&week={{ week }}" hx-target="#drawer-container" hx-swap="innerHTML"
-            class="inline-flex items-center justify-center gap-1.5 h-8 rounded-control border border-rose-200 edify-surface hover:bg-rose-50 text-[13px] font-bold text-rose-600 transition-colors">
+            class="btn btn-danger h-8">
       <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
       Return
     </button>

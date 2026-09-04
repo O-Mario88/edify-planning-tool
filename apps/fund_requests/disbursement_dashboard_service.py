@@ -21,6 +21,7 @@ from __future__ import annotations
 
 from apps.core.metrics import render_precomputed_metric_item
 
+
 from django.db import transaction
 from django.db.models import F, Q, Sum
 from django.utils import timezone
@@ -36,6 +37,13 @@ from .pl_approval_service import (
     _category,
     _ugx,
 )
+
+
+def _ugx_exact(amount) -> str:
+    """The full figure for a breakdown the Accountant reconciles: UGX 24,000.
+    Tiles, cards and panels stay compact; a money table never rounds."""
+    return f"UGX {int(round(float(amount or 0))):,}"
+
 
 # Monthly FundRequest status buckets.
 M_PENDING_APPROVAL = {
@@ -694,10 +702,10 @@ def _monthly_detail(item, fy, month):
         {
             "category": c,
             "qty": len(cats[c]["acts"]),
-            "unit_cost": _ugx(round(cats[c]["total"] / len(cats[c]["acts"])))
+            "unit_cost": _ugx_exact(round(cats[c]["total"] / len(cats[c]["acts"])))
             if cats[c]["acts"]
             else "—",
-            "total": _ugx(cats[c]["total"]),
+            "total": _ugx_exact(cats[c]["total"]),
             "raw_total": cats[c]["total"],
         }
         for c in CATEGORY_ORDER
@@ -748,8 +756,8 @@ def _weekly_detail(item):
         {
             "category": label,
             "qty": g["qty"],
-            "unit_cost": _ugx(round(g["total"] / g["qty"])) if g["qty"] else "—",
-            "total": _ugx(g["total"]),
+            "unit_cost": _ugx_exact(round(g["total"] / g["qty"])) if g["qty"] else "—",
+            "total": _ugx_exact(g["total"]),
             "raw_total": g["total"],
         }
         for label, g in sorted(groups.items(), key=lambda kv: -kv[1]["total"])
@@ -771,8 +779,8 @@ def _partner_detail(item):
         {
             "category": li.label,
             "qty": li.quantity,
-            "unit_cost": _ugx(li.unit_cost),
-            "total": _ugx(li.amount),
+            "unit_cost": _ugx_exact(li.unit_cost),
+            "total": _ugx_exact(li.amount),
             "raw_total": li.amount,
         }
         for li in lines
@@ -792,8 +800,8 @@ def _reimb_detail(item):
         {
             "category": "Approved budget",
             "qty": 1,
-            "unit_cost": _ugx(adv.amount),
-            "total": _ugx(adv.amount),
+            "unit_cost": _ugx_exact(adv.amount),
+            "total": _ugx_exact(adv.amount),
             "raw_total": adv.amount,
         }
     ]
@@ -802,8 +810,8 @@ def _reimb_detail(item):
             {
                 "category": "Actual spend (claimed)",
                 "qty": 1,
-                "unit_cost": _ugx(adv.accounted_amount),
-                "total": _ugx(adv.accounted_amount),
+                "unit_cost": _ugx_exact(adv.accounted_amount),
+                "total": _ugx_exact(adv.accounted_amount),
                 "raw_total": adv.accounted_amount,
             }
         )
@@ -925,7 +933,7 @@ def _selected_detail(item, fy, month):
                 "status_tone",
             )
         },
-        "amount_fmt": _ugx(item["amount"] or total),
+        "amount_fmt": _ugx_exact(item["amount"] or total),
         "raw_amount": item["amount"] or total,
         "chain": chain,
         "breakdown": breakdown,
@@ -955,6 +963,66 @@ def _selected_detail(item, fy, month):
         "disburse_reference": getattr(obj, "disburse_reference", None),
         "receipt_confirmed_at": getattr(obj, "receipt_confirmed_at", None),
     }
+    # The shared fund workspace reads one shape for every desk: stages for the
+    # approval chain, one alert for a hold or a return, notes for the payment
+    # facts, and the action gates the Accountant's action row needs.
+    state_labels = {
+        "approved": "Approved",
+        "done": "Done",
+        "pending": "Pending",
+        "held": "Held",
+        "returned": "Returned",
+        "not_required": "Not required",
+    }
+    notes = []
+    if detail.get("disbursed_at"):
+        facts = [f"Disbursed {detail['disbursed_at']:%b %-d, %-I:%M %p}"]
+        if detail.get("disburse_method"):
+            facts.append(detail["disburse_method"])
+        if detail.get("disburse_reference"):
+            facts.append(f"Ref {detail['disburse_reference']}")
+        if detail.get("receipt_confirmed_at"):
+            facts.append("Receipt confirmed")
+        notes.append(" · ".join(facts))
+    if accountability:
+        notes.append(
+            f"Accountability submitted — {accountability['accounted_total']} spent · "
+            f"{accountability['returned_total']} returned · NetSuite code "
+            f"{accountability['netsuite_id'] or 'missing'}"
+        )
+        if accountability.get("variance_note"):
+            notes.append(f"Variance: {accountability['variance_note']}")
+    alert = None
+    if detail["status"] == "Held" and detail.get("held_reason"):
+        alert = {"tone": "warning", "text": f"On hold — {detail['held_reason']}"}
+    elif detail["status"] == "Returned" and detail.get("review_note"):
+        alert = {"tone": "danger", "text": f"Returned — {detail['review_note']}"}
+    detail["workspace"] = {
+        **detail,
+        "plan_label": detail["kind_label"],
+        "district": detail["subtitle"],
+        "region": "",
+        "period": next(
+            (
+                str(value)
+                for label, value in snapshot
+                if label in ("Week", "Period", "Month")
+            ),
+            "",
+        ),
+        "total_label": "Approved Amount",
+        "total_fmt": detail["amount_fmt"],
+        "breakdown_title": "Funding Breakdown",
+        "empty_breakdown": "No budget lines behind this item.",
+        "stages": [
+            {**st, "state_label": state_labels.get(st["state"], "Not started")}
+            for st in chain
+        ],
+        "alert": alert,
+        "notes": notes,
+        "issues": [],
+    }
+
     return detail
 
 
@@ -1401,7 +1469,7 @@ def get_disbursement_dashboard(principal, filters=None):
     recon_rate_total = sum(recon["raw_counts"].values()) or 1
     recon_rate = round(recon["raw_counts"]["Closed"] / recon_rate_total * 100)
 
-    return {
+    ctx = {
         "fy": fy,
         "month": month,
         "month_label": MONTHS[month] if 1 <= month <= 12 else str(month),
@@ -1424,6 +1492,172 @@ def get_disbursement_dashboard(principal, filters=None):
         "hold_reasons": HOLD_REASONS,
         "return_reasons": RETURN_REASONS,
         "payment_methods": PAYMENT_METHODS,
+        "status_filter": status_filter,
+    }
+    ctx["workspace"] = _workspace(
+        ctx,
+        queue=queue,
+        visible=visible,
+        selected_key=sel["key"] if sel else "",
+        mix_totals=mix_tot,
+        overview_raw=_overview_raw,
+        allocation_total=allocation_total,
+        utilized=utilized,
+        committed=committed,
+        available=available,
+        recon=recon,
+    )
+    return ctx
+
+
+def _workspace(
+    ctx,
+    *,
+    queue,
+    visible,
+    selected_key,
+    mix_totals,
+    overview_raw,
+    allocation_total,
+    utilized,
+    committed,
+    available,
+    recon,
+):
+    """The Disbursements page in the shared fund workspace shape (see
+    partials/finance/fund_workspace.html): the consolidated queue on the
+    left, the selected item in the middle, the month's position on the
+    right, the disbursement mix and the latest money movements underneath."""
+    from .fund_workspace import approval_rate, budget_mix
+
+    fy, month = ctx["fy"], ctx["month"]
+    items = []
+    for i in visible:
+        items.append(
+            {
+                "key": i["key"],
+                "name": i["name"],
+                "initials": "".join(part[0] for part in i["name"].split()[:2]).upper(),
+                "own_plan": False,
+                "district": i["subtitle"],
+                "region": i["kind_label"],
+                "total_fmt": i["amount_fmt"],
+                "status": i["status"],
+                "status_tone": i["status_tone"],
+                "selected": i["key"] == selected_key,
+                "hx_get": f"/disbursements/detail?item={i['key']}&fy={fy}&month={month}",
+                "hx_target": "#disb-detail",
+                "chips": [{"icon": "lines", "label": i["kind_label"], "tone": "info"}],
+            }
+        )
+    by_status = {}
+    for i in queue:
+        by_status[i["status"]] = by_status.get(i["status"], 0) + 1
+    disbursed_n = (
+        by_status.get("Disbursed", 0)
+        + by_status.get("Awaiting Reconciliation", 0)
+        + by_status.get("Closed", 0)
+    )
+    rate = approval_rate(
+        disbursed_n,
+        by_status.get("Returned", 0),
+        by_status.get("Pending Disbursement", 0)
+        + by_status.get("Held", 0)
+        + by_status.get("Pending Approval", 0),
+    )
+    rate["title"] = "Disbursement Rate This Month"
+    rate["subline"] = "Disbursed"
+    rate["empty"] = "No fund items this month yet."
+    pct = round(utilized / allocation_total * 100) if allocation_total else 0
+    return {
+        "title": "Fund Disbursement Dashboard",
+        "tooltip": "Every item was generated from scheduled, costed, approved plans.",
+        "description": "Monitor approved funds, disbursements, balances and reconciliation across every fund type.",
+        "export_url": f"/disbursements?export=csv&fy={fy}&month={month}",
+        "primary_action": None,
+        "filters_template": "partials/disbursements/_filters.html",
+        "filters_id": "disb-filters",
+        "kpis": ctx["kpis"][:4],
+        "kpi_title": "Disbursement context",
+        "sort_url": "/disbursements",
+        "root_target": "#disb-root",
+        "empty": None,
+        "queue": {
+            "title": "Consolidated Fund Queue",
+            "count": len(visible),
+            "items": items,
+            "selected_key": selected_key,
+            "sort": "priority",
+            "sort_options": [{"value": "priority", "label": "Priority"}],
+            "empty_title": "No fund items match your filters",
+            "empty_text": "Change the month or status, or clear the search.",
+        },
+        "detail_id": "disb-detail",
+        "detail_template": "partials/disbursements/detail.html",
+        "side": {
+            "month": {
+                "title": "All Fund Types This Month",
+                "rows": [
+                    {
+                        "name": "Waiting for Approval",
+                        "figure": _ugx(overview_raw["waiting_for_approval"]),
+                        "tone": "warning",
+                    },
+                    {
+                        "name": "Returned",
+                        "figure": _ugx(overview_raw["returned"]),
+                        "tone": "danger",
+                    },
+                    {
+                        "name": "Approved (Not Disbursed)",
+                        "figure": _ugx(overview_raw["approved_not_disbursed"]),
+                        "tone": "warning",
+                    },
+                    {
+                        "name": "Disbursed",
+                        "figure": _ugx(overview_raw["disbursed"]),
+                        "tone": "success",
+                    },
+                    {
+                        "name": "Reconciled",
+                        "figure": _ugx(overview_raw["reconciled"]),
+                        "tone": "success",
+                    },
+                    {
+                        "name": "Awaiting receipts (proof)",
+                        "figure": f"{recon['raw_counts'].get('Awaiting Receipts', 0)} item{'' if recon['raw_counts'].get('Awaiting Receipts', 0) == 1 else 's'}",
+                        "tone": "warning",
+                    },
+                ],
+                "link": "/accounts/accountability",
+                "link_label": "View reconciliation queue",
+            },
+            "progress": {
+                "title": f"{ctx['month_label']} Allocation & Utilization",
+                "status_label": "On Track" if pct <= 100 else "Over plan",
+                "status_tone": "success" if pct <= 100 else "danger",
+                "allocation_fmt": _ugx(allocation_total),
+                "approved_fmt": _ugx(utilized),
+                "pct": min(pct, 100),
+                "caption": f"Utilized · committed {_ugx(committed)} · available {_ugx(available)}",
+                "link": "/budgets/overview",
+                "link_label": "View budget overview",
+            },
+            "rate": rate,
+        },
+        "insights": budget_mix(mix_totals),
+        "insights_title": f"Disbursement Mix ({ctx['month_label']})",
+        "recent": [
+            {
+                "tone": r["tone"],
+                "text": f"{r['who']} — {r['what']} {r['action'].lower()}",
+                "amount_fmt": r["amount_fmt"],
+                "when": r["when"],
+            }
+            for r in ctx["recent"]
+        ],
+        "recent_title": "Recent Disbursement Activity",
+        "recent_link": "/accounts/audit-log",
     }
 
 

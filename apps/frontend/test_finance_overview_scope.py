@@ -40,6 +40,9 @@ ACCOUNTANT_CARD = ROOT / "templates" / "pages" / "accounts" / "dashboard.html"
 # the shared fund workspace (2026-09-03); the template keeps the link.
 ACCOUNTANT_WORKSPACE = ROOT / "apps" / "frontend" / "views" / "finance_operating_views.py"
 DISBURSEMENTS_CARD = ROOT / "templates" / "partials" / "disbursements" / "root.html"
+# The Disbursements page renders the shared fund workspace; its queue title is
+# built by the service (2026-09-04).
+DISBURSEMENTS_WORKSPACE = ROOT / "apps" / "fund_requests" / "disbursement_dashboard_service.py"
 
 OVERVIEW_KEYS = (
     "waiting_for_approval",
@@ -202,7 +205,7 @@ class MonthCardIsActuallyMonthScopedTest(TestCase):
 
 class CardsNameTheirPopulationTest(SimpleTestCase):
     def test_both_cards_say_they_cover_every_fund_type(self):
-        for path in (ACCOUNTANT_WORKSPACE, DISBURSEMENTS_CARD):
+        for path in (ACCOUNTANT_WORKSPACE, DISBURSEMENTS_WORKSPACE):
             with self.subTest(path.name):
                 self.assertIn("All Fund Types This Month", _read(path))
 
@@ -246,7 +249,7 @@ class QueueListNamesItsContentsTest(SimpleTestCase):
 
     def test_the_disbursements_queue_keeps_the_consolidated_name(self):
         """It earns the title: monthly, weekly, partner and reimbursement."""
-        self.assertIn(">Consolidated Fund Queue<", _read(DISBURSEMENTS_CARD))
+        self.assertIn('"Consolidated Fund Queue"', _read(DISBURSEMENTS_WORKSPACE))
 
     def test_the_accountant_page_points_at_the_consolidated_queue(self):
         self.assertIn('"/disbursements"', _read(ACCOUNTANT_WORKSPACE))

@@ -17,6 +17,8 @@ from apps.core.rbac import Permission
 from apps.core.exceptions import BadRequest
 from django.contrib import messages
 from django.utils import timezone
+import csv
+
 from django.http import HttpResponse
 
 from apps.fund_requests.models import (
@@ -62,6 +64,7 @@ def _disb_filters(request):
     }
 
 
+@require_export_permission
 @require_page_permission("disbursements")
 def disbursements_view(request):
     """Fund Disbursement Dashboard — the Accountant's finance execution center.
@@ -74,6 +77,24 @@ def disbursements_view(request):
     ctx = get_disbursement_dashboard(request.user, _disb_filters(request))
     ctx["status_filter"] = request.GET.get("status", "")
     ctx["q"] = request.GET.get("q", "")
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="disbursements-{ctx["fy"]}-{ctx["month"]:02d}.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(["Requester", "Fund type", "Reference", "Amount (UGX)", "Status"])
+        for item in ctx["queue"]:
+            writer.writerow(
+                [
+                    item["name"],
+                    item["kind_label"],
+                    item["subtitle"],
+                    int(item["amount"] or 0),
+                    item["status"],
+                ]
+            )
+        return response
     if request.headers.get("HX-Target") == "disb-root":
         return render(request, "partials/disbursements/root.html", ctx)
     ctx["topbar_search"] = {

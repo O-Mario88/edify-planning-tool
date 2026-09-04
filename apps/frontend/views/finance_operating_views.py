@@ -380,6 +380,8 @@ def accountant_dashboard_view(request):
     }
     if request.headers.get("HX-Target") == "accounts-root":
         return render(request, "partials/finance/accountant_root.html", context)
+    if request.headers.get("HX-Request") == "true" and request.GET.get("selected"):
+        return render(request, "partials/finance/accountant_detail.html", context)
     return render(request, "pages/accounts/dashboard.html", context)
 
 
@@ -1208,8 +1210,7 @@ def _accountant_workspace(
                 "hx_get": f"/accounts?selected={f['id']}"
                 + (f"&status={status_filter}" if status_filter else "")
                 + (f"&q={q}" if q else ""),
-                "hx_target": "#accounts-root",
-                "hx_push": "true",
+                "hx_target": "#accounts-fund-detail",
                 "chips": chips,
             }
         )
@@ -1334,6 +1335,7 @@ def _accountant_workspace(
     }
     return {
         "title": "Fund Disbursement Dashboard",
+        "has_role_home": True,
         "tooltip": "Reconcile and disburse funds",
         "description": "Weekly advances only: the money the Accountant moves. The figures cover every fund type.",
         "export_url": None,

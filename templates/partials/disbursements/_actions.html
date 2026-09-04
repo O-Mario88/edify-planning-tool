@@ -1,0 +1,56 @@
+{% comment %}Accountant actions for the selected fund item: review accountability, disburse, pay, hold, release, return.{% endcomment %}
+  <!-- Actions -->
+  <div class="fund-detail__actions">
+    {% if selected.can_confirm_accountability %}
+    <button hx-get="/finance/actions/drawer?action=confirm_accountability&request_id={{ selected.weekly_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-success h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Review Accountability
+    </button>
+    {% endif %}
+    {% if selected.can_disburse %}
+    <button hx-get="/disbursements/drawer?type=disburse&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-success h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1"/></svg>
+      Disburse
+    </button>
+    {% endif %}
+    {% if selected.weekly_can_disburse %}
+    <button hx-get="/finance/actions/drawer?action=disburse_advance&request_id={{ selected.weekly_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-success h-8">Disburse Advance</button>
+    {% endif %}
+    {% if selected.activity_id %}
+    <button hx-get="/finance/actions/drawer?action=clear_partner_payment&activity_id={{ selected.activity_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-success h-8">Pay Partner</button>
+    {% endif %}
+    {% if selected.advance_id %}
+    <button hx-get="/finance/actions/drawer?action=process_reimbursement&advance_id={{ selected.advance_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-success h-8">Process Reimbursement</button>
+    {% endif %}
+    {% if selected.can_hold %}
+    <button hx-get="/disbursements/drawer?type=hold&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-warning h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 9v6m4-6v6m7-3a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+      Hold
+    </button>
+    {% endif %}
+    {% if selected.can_release %}
+    <form hx-post="/disbursements/action" hx-target="#disb-root" hx-swap="innerHTML" hx-confirm="Release the hold on {{ selected.name }} and return it to the disbursement queue?" hx-indicator="#fund-workspace-updating" class="contents">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="release">
+      <input type="hidden" name="fund_request_id" value="{{ selected.fund_request_id }}">
+      <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+      <button type="submit" class="btn btn-ghost h-8">Release Hold</button>
+    </form>
+    {% endif %}
+    {% if selected.can_return %}
+    <button hx-get="/disbursements/drawer?type=return&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-danger h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>
+      Return
+    </button>
+    {% endif %}
+    {% if selected.status == 'Pending Approval' %}
+    <p class="fund-detail__hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Disbursement unlocks once the approval chain is complete.</p>
+    {% endif %}
+  </div>
