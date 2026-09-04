@@ -391,9 +391,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # CD raises flags, PL is assigned to act on them (apps/flags) — both
     # need the page; IA/Admin keep global read-only monitoring access.
     "quality_checks": {IA, CD, PL, ADMIN},
-    # The upward decision channel: the CD escalates, the RVP decides. Only the
-    # two principals in that exchange (rows are filtered again in the service).
-    "escalations": {CD, RVP, ADMIN},
+    # The upward decision channel, one level at a time: a CCEO or Project
+    # Coordinator escalates to their Programme Lead, the PL to the CD, the CD
+    # to the RVP; the addressee decides. Every principal in that chain needs
+    # the page (rows are filtered again in the service).
+    "escalations": {CCEO, PROJECT_COORDINATOR, PL, CD, RVP, ADMIN},
     # The Leadership Decision + Budget Intelligence engines. Both ran headless
     # for the platform's whole life — permissions granted, detectors firing,
     # no page to open. Audience matches LEADERSHIP_ENGINE_VIEW holders who can
@@ -1291,9 +1293,13 @@ SIDEBAR_ITEMS = [
                 "page_key": "daily_debrief",
             },
             {
+                # Everyone who can raise or decide an escalation: the field
+                # (CCEO, Project Coordinator) raises to the PL, the PL to the
+                # CD, the CD to the RVP.
                 "label": "Escalations",
                 "url": "/escalations",
                 "page_key": "escalations",
+                "visible_to": {CCEO, PROJECT_COORDINATOR, PL, CD, RVP, ADMIN},
             },
             {
                 "label": "Leave & Personal Time Off",

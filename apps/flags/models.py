@@ -55,8 +55,16 @@ class EscalationSeverity(models.TextChoices):
     NORMAL = "normal", "Normal"
 
 
+class EscalationAddressee(models.TextChoices):
+    """The level an escalation is addressed to — one step above the raiser."""
+
+    PROGRAM_LEAD = "PL", "Programme Lead"
+    COUNTRY_DIRECTOR = "CD", "Country Director"
+    REGIONAL_VICE_PRESIDENT = "RVP", "Regional Vice President"
+
+
 class LeadershipEscalation(TimeStampedModel):
-    """A CD→RVP escalation — the missing upward path.
+    """An upward escalation — one level up the reporting line.
 
     The CD cockpit rendered an "Escalate to RVP" action with nothing behind it,
     and the RVP had no inbound surface of any kind: flags only ever travel
@@ -65,17 +73,32 @@ class LeadershipEscalation(TimeStampedModel):
     a partner failing across regions, a decision needing regional trade-off)
     had no way to put it in front of the person who can decide it.
 
+    The same channel now runs one level down at each step: a CCEO or Project
+    Coordinator raises to their Programme Lead, a PL raises to the Country
+    Director, and the CD raises to the RVP as before. `addressed_role` names
+    the level; `assigned_to_user_id` names the person when supervision
+    resolves one.
+
     Deliberately distinct from CdFlag: that is a quality-assurance handoff to
     an operator, this is a decision request to an approver, and it carries the
-    RVP's decision back as a first-class field.
+    decider's answer back as a first-class field.
     """
 
     id = CuidField()
-    raised_by_user_id = models.CharField(max_length=30)  # the CD
+    raised_by_user_id = models.CharField(max_length=30)
     raised_by_name = models.CharField(max_length=255, null=True, blank=True)
-    # Null means "any RVP" — escalations are addressed to the role, since a
-    # country has exactly one RVP above it and hard-wiring an id would strand
-    # the item whenever the post changes hands.
+    # The level this escalation is addressed to. Existing rows were all
+    # CD→RVP, so the migration defaults them to RVP.
+    addressed_role = models.CharField(
+        max_length=8,
+        choices=EscalationAddressee.choices,
+        default=EscalationAddressee.REGIONAL_VICE_PRESIDENT,
+    )
+    # The specific person at that level when supervision names one (a CCEO's
+    # PL, a PL's CD). Null means "anyone holding the addressed role" — the
+    # RVP is always addressed this way, since a country has exactly one RVP
+    # above it and hard-wiring an id would strand the item whenever the post
+    # changes hands.
     assigned_to_user_id = models.CharField(max_length=30, null=True, blank=True)
     country_id = models.CharField(max_length=64, default="Uganda")
 
@@ -88,7 +111,7 @@ class LeadershipEscalation(TimeStampedModel):
         choices=EscalationSeverity.choices,
         default=EscalationSeverity.NORMAL,
     )
-    # What the escalation is about, so the RVP can open the underlying record.
+    # What the escalation is about, so the decider can open the underlying record.
     scope_type = models.CharField(max_length=32, null=True, blank=True)
     scope_id = models.CharField(max_length=30, null=True, blank=True)
     scope_name = models.CharField(max_length=255, null=True, blank=True)
@@ -99,7 +122,7 @@ class LeadershipEscalation(TimeStampedModel):
     )
     acknowledged_at = models.DateTimeField(null=True, blank=True)
     acknowledged_by_user_id = models.CharField(max_length=30, null=True, blank=True)
-    # The RVP's answer — the reason this is not just a message thread.
+    # The decider's answer — the reason this is not just a message thread.
     decision = models.CharField(max_length=64, null=True, blank=True)
     decision_note = models.TextField(null=True, blank=True)
     resolved_at = models.DateTimeField(null=True, blank=True)
@@ -111,6 +134,8 @@ class LeadershipEscalation(TimeStampedModel):
             models.Index(fields=["status", "severity"]),
             models.Index(fields=["raised_by_user_id"]),
             models.Index(fields=["country_id", "status"]),
+            models.Index(fields=["addressed_role", "status"]),
+            models.Index(fields=["assigned_to_user_id", "status"]),
         ]
 
     @property
@@ -129,5 +154,6 @@ __all__ = [
     "CdFlag",
     "EscalationStatus",
     "EscalationSeverity",
+    "EscalationAddressee",
     "LeadershipEscalation",
 ]
