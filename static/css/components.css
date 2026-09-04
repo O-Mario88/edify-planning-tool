@@ -4137,7 +4137,7 @@ main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):
    by hand with utility classes, so every page invented its own tile. They now
    pass through the one component with variant="inset": the tray chrome and
    the freshness pill go, the tile itself is unchanged. */
-.kpi-strip.kpi-strip--executive.kpi-strip--inset {
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting {
   padding: 0;
   border: 0;
   border-radius: 0;
@@ -4147,22 +4147,22 @@ main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):
   overflow: visible;
 }
 
-.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__grid {
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)) !important;
   gap: 0.75rem !important;
 }
 
-.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__grid > .kpi-strip__item {
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__grid > .kpi-strip__item {
   grid-column: auto !important;
   min-block-size: 0;
   padding: 0.875rem 1rem;
 }
 
-.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__topline,
-.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__label::before {
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__topline,
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__label::before {
   display: none;
 }
 
-.kpi-strip.kpi-strip--executive.kpi-strip--inset .kpi-strip__value {
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__value {
   font-size: clamp(1.125rem, 1rem + 1.6cqi, 1.5rem);
 }

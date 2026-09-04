@@ -997,8 +997,34 @@ def _selected_detail(item, fy, month):
         alert = {"tone": "warning", "text": f"On hold — {detail['held_reason']}"}
     elif detail["status"] == "Returned" and detail.get("review_note"):
         alert = {"tone": "danger", "text": f"Returned — {detail['review_note']}"}
+    # The same ledger the Weekly Advance Request page draws: the submitted
+    # snapshot for a weekly advance, the live costed lines for a monthly plan.
+    ledger = None
+    if kind == "weekly":
+        from apps.budget.services import weekly_request_budget
+
+        ledger = weekly_request_budget(obj)
+    elif kind == "monthly":
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.budget.services import budget_groups
+
+        line_ids = list(
+            fr.items.values_list("activity_schedule_cost_line_id", flat=True)
+        )
+        lines = list(
+            ActivityScheduleCostLine.objects.filter(id__in=line_ids).select_related(
+                "activity", "activity__school"
+            )
+        )
+        groups = budget_groups(lines, {})
+        ledger = {
+            "groups": groups,
+            "total": sum(g["total"] for g in groups),
+            "staff_total": sum(g["staff_total"] for g in groups),
+        }
     detail["workspace"] = {
         **detail,
+        "ledger": ledger,
         "plan_label": detail["kind_label"],
         "district": detail["subtitle"],
         "region": "",

@@ -55,6 +55,13 @@ full width.
   <div class="fund-detail__body">
     <div class="min-w-0">
       <h3 class="fund-panel__title">{{ selected.breakdown_title|default:"Funding Breakdown from Planned Activities" }}</h3>
+      {% if selected.ledger %}
+      {% comment %}The same six-column ledger the Weekly Advance Request page
+      draws, so a request reads identically wherever it is reviewed.{% endcomment %}
+      <div class="overflow-x-auto edify-table-scroll-region rounded-control border border-slate-200 mt-2">
+        {% include "partials/budgets/budget_group_tables.html" with groups=selected.ledger.groups all_groups=selected.ledger.groups staff_total=selected.ledger.staff_total total=selected.ledger.total selected=selected.ledger_scope workspace_title=selected.plan_label %}
+      </div>
+      {% else %}
       <div class="overflow-x-auto edify-table-scroll-region rounded-surface border border-slate-100 mt-2">
         <table class="edify-record-table w-full text-left text-[12px] edify-mobile-table--scroll">
           <caption class="sr-only">{{ selected.breakdown_title|default:"Funding breakdown from planned activities" }} for {{ selected.name }}, {{ selected.period }}</caption>
@@ -87,6 +94,7 @@ full width.
           </tfoot>
         </table>
       </div>
+      {% endif %}
     </div>
 
   </div>

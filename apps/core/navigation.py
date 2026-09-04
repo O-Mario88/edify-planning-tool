@@ -1539,6 +1539,9 @@ SIDEBAR_ITEMS = [
                 "label": "Weekly Advance Request",
                 "url": "/fund-requests/weekly",
                 "page_key": "weekly_fund_request",
+                # The Accountant's advance requests live on the disbursement
+                # workspace (owner, 2026-09-04): one page for the money desk.
+                "role_urls": {ACCOUNTANT: "/disbursements"},
             },
             {
                 "label": "Fund Approvals",
@@ -1588,6 +1591,9 @@ SIDEBAR_ITEMS = [
                 "label": "Disbursement Dashboard",
                 "url": "/disbursements",
                 "page_key": "disbursements",
+                # The Accountant reaches the same workspace through "Weekly
+                # Advance Request" above; one entry, not two, for one page.
+                "visible_to": {ADMIN},
             },
             {
                 "label": "Partner Payments",

@@ -17,7 +17,8 @@ workspace, so the roles differ only where their work differs.
   {% endif %}
 
   {% comment %}A page with a role-home hero keeps that as its phone header. {% endcomment %}
-  {% if workspace.has_role_home %}<header class="edify-page-header mobile-home-hide">{% else %}<header class="edify-page-header">{% endif %}
+  <div{% if workspace.has_role_home %} class="mobile-home-hide"{% endif %}>
+  <header class="edify-page-header">
     <div class="min-w-0 edify-page-header__lead">
       <div class="flex items-center gap-2">
         <h1 class="edify-page-header__title edify-page-title">{{ workspace.title }}</h1>
@@ -64,6 +65,7 @@ workspace, so the roles differ only where their work differs.
       </button>
     </div>
   </header>
+  </div>
 
   <div x-show="filtersOpen" x-collapse>
     <div class="card fund-filters" id="fund-filters-card">
@@ -82,78 +84,42 @@ workspace, so the roles differ only where their work differs.
     {% include "components/empty_state.html" with title=workspace.empty.title message=workspace.empty.message %}
   </div>
   {% else %}
-  <div class="fund-workspace__grid">
-
-    <section class="card fund-queue" aria-label="{{ workspace.queue.title }}">
-      <div class="fund-queue__header">
-        <div class="flex items-center gap-2 min-w-0">
-          <h2 class="fund-panel__title">{{ workspace.queue.title }}</h2>
-          <span class="fund-queue__count" aria-label="{{ workspace.queue.count }} in queue">{{ workspace.queue.count }}</span>
-        </div>
-        <label class="fund-queue__sort">Sort by:
-          <select name="sort" aria-label="Sort the queue" form="{{ workspace.filters_id }}" hx-trigger="change" hx-get="{{ workspace.sort_url }}" hx-target="{{ workspace.root_target }}" hx-swap="innerHTML" hx-include="#{{ workspace.filters_id }}" hx-indicator="#fund-workspace-updating">
-            {% for opt in workspace.queue.sort_options %}<option value="{{ opt.value }}" {% if opt.value == workspace.queue.sort %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}
-          </select>
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-        </label>
-      </div>
-      {% comment %}
-        Below the desktop breakpoint the queue is an accordion, like the
-        cluster, planning and school lists: tapping a card expands it and the
-        record's detail loads into the card. On desktop the same tap swaps the
-        detail panel beside the queue. `narrow` picks the HTMX target.
-      {% endcomment %}
-      <ul class="fund-queue__list"
-          x-data="{ selectedKey: '{{ workspace.queue.selected_key }}', expandedKey: '{{ workspace.queue.selected_key }}', narrow: window.matchMedia('(max-width: 63.999rem)').matches }"
-          @resize.window.debounce.150ms="narrow = window.matchMedia('(max-width: 63.999rem)').matches">
+  {% comment %}
+      The requesters are tabs, like the team tabs on the Weekly Advance Request
+      page, so the selected request's ledger reads at full width. Each tab
+      swaps the detail beside it; the strip scrolls sideways on small screens.
+    {% endcomment %}
+    <nav class="fund-requesters" data-edify-tablist aria-label="{{ workspace.queue.title }}"
+         x-data="{ selectedKey: '{{ workspace.queue.selected_key }}' }">
+      <span class="fund-requesters__label">{{ workspace.queue.title }} <span class="fund-queue__count">{{ workspace.queue.count }}</span></span>
+      <div class="fund-requesters__strip">
         {% for item in workspace.queue.items %}
-        <li :class="{ 'is-expanded': narrow && expandedKey === '{{ item.key }}' }">
-        <button type="button"
-                {% if item.hx_get %}hx-get="{{ item.hx_get }}" hx-target="{{ item.hx_target }}" :hx-target="narrow ? 'next .fund-queue__expand' : '{{ item.hx_target }}'" hx-swap="innerHTML"{% endif %}
-                {% if item.hx_push %}hx-push-url="{{ item.hx_push }}"{% endif %}
-                hx-indicator="#fund-workspace-updating"
-                @click="selectedKey = '{{ item.key }}'; expandedKey = (narrow && expandedKey === '{{ item.key }}') ? '' : '{{ item.key }}'"
-                :aria-pressed="selectedKey === '{{ item.key }}' ? 'true' : 'false'"
-                :aria-expanded="narrow ? (expandedKey === '{{ item.key }}' ? 'true' : 'false') : null"
-                :class="selectedKey === '{{ item.key }}' ? 'is-selected' : ''"
-                class="fund-queue__card{% if item.selected %} is-selected{% endif %}"
-                data-fund-queue-item>
-          <span class="fund-queue__avatar" aria-hidden="true">{{ item.initials }}</span>
-          <span class="fund-queue__body">
-            <span class="fund-queue__row">
-              <span class="fund-queue__name">{{ item.name }}{% if item.own_plan %} <em class="fund-queue__own">(My Own Plan)</em>{% endif %}</span>
-              <span class="fund-queue__status">
-                {% if item.own_plan %}{% include "components/badge.html" with tone="success" label="My Own Plan" size="sm" %}{% endif %}
-                {% include "components/badge.html" with tone=item.status_tone label=item.status size="sm" %}
-              </span>
-            </span>
-            <span class="fund-queue__row">
-              <span class="fund-queue__place">{{ item.district }} · {{ item.region }}</span>
-              <span class="fund-queue__amount">{{ item.total_fmt }}</span>
-            </span>
-            {% if item.chips %}
-            <span class="fund-queue__chips">
-              {% for chip in item.chips %}
-              <span class="fund-chip fund-chip--{{ chip.tone|default:'neutral' }}">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">{% include "partials/finance/_chip_icon.html" with name=chip.icon %}</svg>
-                {{ chip.label }}
-              </span>
-              {% endfor %}
-            </span>
-            {% endif %}
-          </span>
-          <svg class="fund-queue__chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg>
+        <button type="button" data-edify-tab
+                {% if item.hx_get %}hx-get="{{ item.hx_get }}" hx-target="{{ item.hx_target }}" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"{% endif %}
+                @click="selectedKey = '{{ item.key }}'"
+                :aria-current="selectedKey === '{{ item.key }}' ? 'page' : null"
+                :class="selectedKey === '{{ item.key }}' ? 'is-active' : ''"
+                class="fund-requester{% if item.selected %} is-active{% endif %}"
+                title="{{ item.name }} · {{ item.district }} · {{ item.status }}">
+          <span class="fund-requester__dot fund-requester__dot--{{ item.status_tone|default:'neutral' }}" aria-hidden="true"></span>
+          <span class="fund-requester__name">{{ item.name }}</span>
+          <span class="fund-requester__amount">{{ item.total_fmt }}</span>
         </button>
-        <div class="fund-queue__expand" x-show="narrow && expandedKey === '{{ item.key }}'" x-cloak>
-          {% if item.selected %}{% include workspace.detail_template %}{% endif %}
-        </div>
-        </li>
         {% empty %}
-        <li><div class="edify-empty-state px-4 py-10"><strong>{{ workspace.queue.empty_title }}</strong><span>{{ workspace.queue.empty_text }}</span></div></li>
+        <span class="fund-requesters__empty">{{ workspace.queue.empty_title }}. {{ workspace.queue.empty_text }}</span>
         {% endfor %}
-      </ul>
-    </section>
+      </div>
+      {% if workspace.queue.sort_options|length > 1 %}
+      <label class="fund-queue__sort">Sort by:
+        <select name="sort" aria-label="Sort the queue" form="{{ workspace.filters_id }}" hx-trigger="change" hx-get="{{ workspace.sort_url }}" hx-target="{{ workspace.root_target }}" hx-swap="innerHTML" hx-include="#{{ workspace.filters_id }}" hx-indicator="#fund-workspace-updating">
+          {% for opt in workspace.queue.sort_options %}<option value="{{ opt.value }}" {% if opt.value == workspace.queue.sort %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}
+        </select>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+      </label>
+      {% endif %}
+    </nav>
 
+  <div class="fund-workspace__grid">
     <section class="card fund-detail" id="{{ workspace.detail_id }}" aria-live="polite">
       {% include workspace.detail_template %}
     </section>

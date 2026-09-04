@@ -1136,6 +1136,7 @@ def _accountant_workspace(
     shape: weekly advances as the queue, the selected advance in the middle,
     the month's position on the right, the FY budget mix and the latest
     disbursement decisions underneath."""
+    from apps.budget.services import weekly_request_budget
     from apps.fund_requests.fund_workspace import (
         LINE_TYPE_LABELS,
         approval_rate,
@@ -1231,6 +1232,7 @@ def _accountant_workspace(
             "total_label": "Total Requested",
             "total_fmt": f"UGX {int(round(float(sel['requested'] or 0))):,}",
             "breakdown_title": "Funding Breakdown from the Weekly Request",
+            "ledger": weekly_request_budget(w) if w else None,
             "breakdown": [
                 {
                     "category": line["category"],

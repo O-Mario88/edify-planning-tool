@@ -405,6 +405,8 @@ def _build_cceo_plan(cceo, lines, wfr, awaiting="submitted_to_pl"):
         },
         "schools": schools,
         "activities": act_list,
+        "staff_lines": staff_lines,
+        "wfr": wfr,
         "cat_totals": cat_totals,
         "wfr_id": wfr.id if wfr else None,
         "wfr_status": wfr_status,
@@ -875,6 +877,22 @@ def _queue_card(p, sel):
     }
 
 
+def _ledger(p):
+    """The same activity/item ledger the Weekly Advance Request page draws:
+    the submitted snapshot once the request exists, the live costed lines
+    while it is still forming."""
+    from apps.budget.services import budget_groups, weekly_request_budget
+
+    if p.get("wfr"):
+        return weekly_request_budget(p["wfr"])
+    groups = budget_groups(p.get("staff_lines") or [], {})
+    return {
+        "groups": groups,
+        "total": sum(g["total"] for g in groups),
+        "staff_total": sum(g["staff_total"] for g in groups),
+    }
+
+
 def _selected_detail(p, week_start):
     # funding breakdown rows (real, from budget lines grouped by activity category)
     breakdown = []
@@ -978,6 +996,7 @@ def _selected_detail(p, week_start):
         "can_return": p["can_return"],
         "waiting_hint": hints.get(p["wfr_status"], ""),
         "plan_label": f"{_week_label(week_start)} Fund Plan",
+        "ledger": _ledger(p),
         "total_label": "Total Requested",
         "notes": [
             note

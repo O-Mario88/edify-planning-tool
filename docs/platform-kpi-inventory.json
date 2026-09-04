@@ -2277,7 +2277,7 @@
    "audit_id": "KPI-SOURCE-114",
    "kind": "other",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 887,
+   "line": 888,
    "label": null,
    "keys": [
     "label",
@@ -2586,7 +2586,7 @@
    "audit_id": "KPI-SOURCE-130",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1358,
+   "line": 1360,
    "label": "Week",
    "keys": [
     "label",
@@ -2603,7 +2603,7 @@
    "audit_id": "KPI-SOURCE-131",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1359,
+   "line": 1361,
    "label": "Amount",
    "keys": [
     "label",
@@ -2620,7 +2620,7 @@
    "audit_id": "KPI-SOURCE-132",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1360,
+   "line": 1362,
    "label": "Name",
    "keys": [
     "label",
@@ -3298,7 +3298,7 @@
    "audit_id": "KPI-SOURCE-167",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1342,
+   "line": 1368,
    "label": "Disbursed",
    "keys": [
     "color",
@@ -3318,7 +3318,7 @@
    "audit_id": "KPI-SOURCE-168",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1349,
+   "line": 1375,
    "label": "Approved",
    "keys": [
     "color",
@@ -3338,7 +3338,7 @@
    "audit_id": "KPI-SOURCE-169",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1356,
+   "line": 1382,
    "label": "Pending",
    "keys": [
     "color",
@@ -3358,7 +3358,7 @@
    "audit_id": "KPI-SOURCE-170",
    "kind": "other",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1363,
+   "line": 1389,
    "label": "Returned",
    "keys": [
     "color",
@@ -3378,7 +3378,7 @@
    "audit_id": "KPI-SOURCE-171",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1421,
+   "line": 1447,
    "label": null,
    "keys": [
     "amount",
@@ -3397,7 +3397,7 @@
    "audit_id": "KPI-SOURCE-172",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1591,
+   "line": 1617,
    "label": "Priority",
    "keys": [
     "label",
@@ -3592,7 +3592,7 @@
    "audit_id": "KPI-SOURCE-182",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 742,
+   "line": 744,
    "label": "Amount",
    "keys": [
     "label",
@@ -3609,7 +3609,7 @@
    "audit_id": "KPI-SOURCE-183",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 743,
+   "line": 745,
    "label": "Name",
    "keys": [
     "label",
@@ -3626,7 +3626,7 @@
    "audit_id": "KPI-SOURCE-184",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 744,
+   "line": 746,
    "label": "Status",
    "keys": [
     "label",
@@ -3643,7 +3643,7 @@
    "audit_id": "KPI-SOURCE-185",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 679,
+   "line": 681,
    "label": "{\u2026} Visits",
    "keys": [
     "count",
@@ -3662,7 +3662,7 @@
    "audit_id": "KPI-SOURCE-186",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 685,
+   "line": 687,
    "label": "{\u2026} Partner",
    "keys": [
     "count",
@@ -3681,7 +3681,7 @@
    "audit_id": "KPI-SOURCE-187",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 691,
+   "line": 693,
    "label": "{\u2026} Clusters",
    "keys": [
     "count",
@@ -3700,7 +3700,7 @@
    "audit_id": "KPI-SOURCE-188",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 697,
+   "line": 699,
    "label": "{\u2026} Trainings",
    "keys": [
     "count",
@@ -7227,7 +7227,7 @@
   {
    "audit_id": "KPI-SURFACE-050",
    "template": "templates/partials/finance/fund_workspace.html",
-   "line": 75,
+   "line": 77,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "executive",
@@ -7252,7 +7252,7 @@
   {
    "audit_id": "KPI-SURFACE-051",
    "template": "templates/partials/finance/fund_workspace.html",
-   "line": 77,
+   "line": 79,
    "source_pattern": "shared-component",
    "items_expression": "workspace.kpis",
    "presentation": "executive",
@@ -7283,7 +7283,7 @@
    "presentation": "executive",
    "page_type": "operational",
    "route": "/fund-requests/advances/<str:advance_id>/pl-approve",
-   "page_title": "Fund Requests",
+   "page_title": "Weekly Advance Request",
    "roles": [
     "ACCOUNTANT",
     "ADMIN",
@@ -26404,7 +26404,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/budget_views.py",
-   "line": 618,
+   "line": 619,
    "function": "_build_fund_requests_context",
    "target": "kpi_strip_items",
    "source_item_count": 6,
@@ -26710,7 +26710,7 @@
   {
    "audit_id": "KPI-PAYLOAD-021",
    "module": "apps/fund_requests/disbursement_dashboard_service.py",
-   "line": 1269,
+   "line": 1295,
    "function": "get_disbursement_dashboard",
    "target": "kpis",
    "source_item_count": 6,
@@ -26742,7 +26742,7 @@
   {
    "audit_id": "KPI-PAYLOAD-022",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 572,
+   "line": 574,
    "function": "get_pl_fund_approvals",
    "target": "kpis",
    "source_item_count": 4,

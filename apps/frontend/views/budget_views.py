@@ -4,6 +4,7 @@ from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.metrics import format_ugx_compact
 from apps.core.redirects import local_redirect
+from apps.core.permissions import RolePermissionService
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
@@ -1195,6 +1196,12 @@ def _build_fund_requests_context(request):
         "recommended_desc": recommended_desc,
         "can_take_action": can_take_action,
         "action_type": action_type,
+        # A link the viewer cannot open is a dead button: gate the two
+        # cross-page links on the same page permissions their routes enforce.
+        "can_prepare_monthly": RolePermissionService.can_view_page(
+            request.user, "monthly_request"
+        ),
+        "can_view_report": RolePermissionService.can_view_page(request.user, "reports"),
     }
 
     # 8. Period Breakdown
