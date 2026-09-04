@@ -644,6 +644,11 @@ urlpatterns = [
         name="advance_pl_return",
     ),
     path(
+        "fund-requests/weekly/<str:request_id>/not-requested",
+        budget_views.weekly_fund_request_not_requested_action,
+        name="weekly_fund_request_not_requested",
+    ),
+    path(
         "fund-requests/weekly/<str:request_id>/self-funded",
         budget_views.weekly_fund_request_self_funded_action,
         name="weekly_fund_request_self_funded",

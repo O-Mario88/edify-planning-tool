@@ -542,6 +542,31 @@ def compute_next_action(a, today) -> dict:
                 "url": f"/my-plan/{a.id}",
                 "description": "Accountability submitted — Accountant review pending",
             }
+    # The two PL stages had no branch, so an officer whose accountability or
+    # reimbursement claim sat with their Programme Lead fell through to the
+    # generic "Scheduled / Waiting" and was told nothing.
+    for adv in advances:
+        if adv.status == "accountability_pl_pending":
+            return {
+                "text": "Awaiting PL Accountability Approval",
+                "action": "view_status",
+                "url": f"/my-plan/{a.id}",
+                "description": "Accountability submitted — Programme Lead approval pending",
+            }
+        if adv.status == "reimbursement_pl_pending":
+            return {
+                "text": "Awaiting PL Claim Approval",
+                "action": "view_status",
+                "url": f"/my-plan/{a.id}",
+                "description": "Self-funded claim submitted — Programme Lead approval pending",
+            }
+        if adv.status == "reimbursement_submitted":
+            return {
+                "text": "Awaiting Reimbursement",
+                "action": "view_status",
+                "url": f"/my-plan/{a.id}",
+                "description": "Claim approved — Accountant reimbursement pending",
+            }
 
     # 10. Default
     return {

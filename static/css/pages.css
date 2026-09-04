@@ -5113,16 +5113,16 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 /* The id outranks the platform filter-bar contract's id-level selector, which
    otherwise lays the fields out as one scrolling row on phones. */
 @media (max-width: 63.999rem) {
-  main #fund-filters-card .platform-filter-bar {
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 0.625rem !important;
     overflow: visible !important;
     flex-flow: initial !important;
   }
-  main #fund-filters-card .platform-filter-bar > label,
-  main #fund-filters-card .platform-filter-bar > .edify-filter-field { grid-column: auto !important; inline-size: 100%; min-inline-size: 0; flex-basis: auto !important; }
-  main #fund-filters-card .platform-filter-bar select { inline-size: 100%; }
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar > label,
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar > .edify-filter-field { grid-column: auto !important; inline-size: 100%; min-inline-size: 0; flex-basis: auto !important; }
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar select { inline-size: 100%; }
 }
 
 
@@ -5157,3 +5157,19 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 .fund-detail__notes { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
 .fund-workspace { gap: 1rem; }
 .fund-workspace__grid, .fund-workspace__bottom { gap: 1rem; }
+
+/* Weekly advance stepper: the six stages of the money chain, with the
+   request's current stage lit. On a phone it becomes a two-column list so
+   the labels stay whole instead of wrapping into a paragraph of arrows. */
+.fund-stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.75rem; margin: 0; padding: 0; list-style: none; counter-reset: stage; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-stepper__step { display: inline-flex; align-items: center; gap: 0.375rem; white-space: nowrap; }
+.fund-stepper__step::before { counter-increment: stage; content: counter(stage); display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; border-radius: var(--edify-radius-pill); border: 1px solid var(--edify-border); font-size: var(--edify-text-micro-size); font-weight: 700; color: var(--edify-text-muted); background: var(--edify-surface); }
+.fund-stepper__step--done { color: var(--edify-text); }
+.fund-stepper__step--done::before { content: "\2713"; background: var(--edify-success); border-color: var(--edify-success); color: #fff; }
+.fund-stepper__step--current { color: var(--edify-text); font-weight: 700; }
+.fund-stepper__step--current::before { background: var(--edify-accent); border-color: var(--edify-accent); color: var(--edify-on-accent, #fff); }
+.fund-stepper__step--returned::before { background: var(--edify-danger); border-color: var(--edify-danger); color: #fff; content: "!"; }
+@media (max-width: 47.999rem) {
+  .fund-stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 0.75rem; }
+  .fund-stepper__step { white-space: normal; }
+}

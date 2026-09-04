@@ -1093,6 +1093,17 @@ def complete_activity_action(request, activity_id):
             "leadersAttended": int(leaders) if leaders else 0,
             "otherParticipants": int(other) if other else 0,
             "attendedSchoolIds": attended_school_ids,
+            # What the officer saw -- stored by complete(); absent keys leave
+            # earlier entries alone, so only send what the form carried.
+            **{
+                key: request.POST.get(field, "").strip()
+                for key, field in (
+                    ("actualOutcome", "actual_outcome"),
+                    ("actualObservations", "actual_observations"),
+                    ("followUpNote", "follow_up_note"),
+                )
+                if field in request.POST
+            },
         }
 
         try:

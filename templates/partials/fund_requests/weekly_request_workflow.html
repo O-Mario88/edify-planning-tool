@@ -71,6 +71,12 @@ Send for Approval
 Self Fund
 </button>
 </form>
+{% if active_wfr.status != 'not_requested' %}
+<form hx-post="/fund-requests/weekly/{{ active_wfr.id }}/not-requested?{{ weekly_action_query }}" hx-confirm="Skip the advance for this week? The planned work stays; no money will be requested." hx-target="#fund-requests-page-root" hx-swap="innerHTML" class="inline-block">
+{% csrf_token %}
+<button type="submit" class="btn btn-ghost h-8">No Advance This Week</button>
+</form>
+{% endif %}
 {% elif active_wfr.status == 'returned_by_pl' or active_wfr.status == 'returned_by_cd' or active_wfr.status == 'returned_by_accountant' %}
 <p class="text-sm text-slate-500">Awaiting the requester's corrected weekly plan and resubmission.</p>
 {% elif active_wfr.status == 'submitted_to_pl' or active_wfr.status == 'submitted_to_cd' %}
@@ -98,11 +104,11 @@ Disbursed — awaiting the owner's confirmation that the funds arrived.
 {% endif %}
 {% elif active_wfr.status == 'disbursed' and active_wfr.receipt_confirmed_at %}
 <p class="text-sm text-emerald-700">Receipt confirmed by the requester. Accountability is now available.</p>
-{% if viewer_is_wfr_owner %}<a href="/my-plan?week={{ selected_week }}" class="btn btn-primary h-8">Start Accountability</a>{% endif %}
+{% if viewer_is_wfr_owner %}<a href="{% if accountability_activity_id %}/my-plan/{{ accountability_activity_id }}/accountability{% else %}/my-plan?week={{ selected_week }}{% endif %}" class="btn btn-primary h-8">Start Accountability</a>{% endif %}
 {% else %}
 <div class="text-[12px] font-bold text-slate-400 flex items-center gap-1">
-&check; Action completed. Status of this weekly request is locked to
-<span class="font-semibold text-slate-600 uppercase">{{ active_wfr.status }}</span>.
+&check; Action completed. This weekly request is
+<span class="font-semibold text-slate-600">{{ active_wfr_status_label|default:"closed" }}</span>.
 </div>
 {% endif %}
 

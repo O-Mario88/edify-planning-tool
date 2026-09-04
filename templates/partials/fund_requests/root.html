@@ -94,7 +94,8 @@ Export
 {% include "partials/fund_requests/workflow_strip.html" %}
 </div>
 
-<!-- Filters Bar — the platform filter toolbar; labels above fields, wrapping grid. -->
+<!-- Filters Bar — the platform filter toolbar; labels above fields, wrapping grid (two columns on phone and tablet, not a scrolling row). -->
+<div class="edify-filters-wrap">
 <form
 id="filters-form"
 hx-get="/fund-requests/weekly"
@@ -194,6 +195,7 @@ class="platform-filter-bar grid grid-cols-2 md:grid-cols-4 gap-2.5"
 <button type="button" @click="$el.form.reset(); $el.form.dispatchEvent(new Event('change', { bubbles: true }))" class="btn btn-ghost h-8">Clear filters</button>
 </div>
 </form>
+</div>
 
 <details class="rounded-control border border-slate-200 p-3">
 <summary class="text-sm font-semibold cursor-pointer">Request totals and approval status</summary>
