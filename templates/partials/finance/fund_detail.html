@@ -62,37 +62,40 @@ full width.
         {% include "partials/budgets/budget_group_tables.html" with groups=selected.ledger.groups all_groups=selected.ledger.groups staff_total=selected.ledger.staff_total total=selected.ledger.total selected=selected.ledger_scope workspace_title=selected.plan_label %}
       </div>
       {% else %}
-      <div class="overflow-x-auto edify-table-scroll-region rounded-surface border border-slate-100 mt-2">
-        <table class="edify-record-table w-full text-left text-[12px] edify-mobile-table--scroll">
+      <div class="overflow-x-auto edify-table-scroll-region rounded-control border border-slate-200 mt-2">
+        {% comment %}The category breakdown wears the Weekly Advance Request ledger's dress: blue header band, bold total row.{% endcomment %}
+        <div class="budget-ledger">
+        <table class="budget-ledger-table fund-breakdown-table w-full edify-mobile-table--scroll">
           <caption class="sr-only">{{ selected.breakdown_title|default:"Funding breakdown from planned activities" }} for {{ selected.name }}, {{ selected.period }}</caption>
-          <thead><tr class="edify-text-caption uppercase tracking-wider text-slate-400 font-bold border-b border-slate-100 bg-slate-50/60">
-            <th class="px-3 py-2">Activity Category</th><th class="px-3 py-2 text-center">Planned Qty</th><th class="px-3 py-2 text-right">Unit Cost (UGX)</th><th class="px-3 py-2 text-right">Total (UGX)</th>
+          <thead><tr class="budget-ledger-band">
+            <th scope="col">Activity Category</th><th scope="col">Planned Qty</th><th scope="col">Unit Cost (UGX)</th><th scope="col">Total (UGX)</th>
           </tr></thead>
-          <tbody class="divide-y divide-slate-50">
+          <tbody>
             {% for b in selected.breakdown %}
             <tr>
-              <td class="px-3 py-2 font-semibold text-slate-700">{{ b.category }}{% if b.note %} <span class="edify-text-caption font-medium text-slate-400">{{ b.note }}</span>{% endif %}</td>
-              <td class="px-3 py-2 text-slate-500 text-center tabular-nums">{{ b.qty|default:"—" }}</td>
-              <td class="px-3 py-2 text-slate-500 text-right tabular-nums">{{ b.unit_cost|default:"—" }}</td>
-              <td class="px-3 py-2 font-bold text-slate-700 text-right tabular-nums">{{ b.total }}</td>
+              <th scope="row">{{ b.category }}{% if b.note %} <span class="fund-breakdown-table__note">{{ b.note }}</span>{% endif %}</th>
+              <td>{{ b.qty|default:"—" }}</td>
+              <td>{{ b.unit_cost|default:"—" }}</td>
+              <td>{{ b.total }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="4" class="px-3 py-6 text-center font-semibold text-slate-400">{{ selected.empty_breakdown|default:"No costed activities in this period." }}</td></tr>
+            <tr><td colspan="4" class="fund-breakdown-table__empty">{{ selected.empty_breakdown|default:"No costed activities in this period." }}</td></tr>
             {% endfor %}
           </tbody>
           <tfoot>
             {% if selected.subtotal_fmt %}
-            <tr class="border-t border-slate-100"><td class="px-3 py-2 font-bold text-slate-700" colspan="3">Subtotal</td><td class="px-3 py-2 font-bold text-slate-700 text-right tabular-nums">{{ selected.subtotal_fmt }}</td></tr>
+            <tr class="budget-ledger-subtotal"><th scope="row" colspan="3">Subtotal</th><td>{{ selected.subtotal_fmt }}</td></tr>
             {% endif %}
             {% if selected.adjustment_fmt %}
-            <tr><td class="px-3 py-1.5 text-slate-500" colspan="3">{{ selected.adjustment_label }}</td><td class="px-3 py-1.5 text-rose-600 text-right tabular-nums font-semibold">{{ selected.adjustment_fmt }}</td></tr>
+            <tr class="fund-breakdown-table__adjustment"><th scope="row" colspan="3">{{ selected.adjustment_label }}</th><td>{{ selected.adjustment_fmt }}</td></tr>
             {% endif %}
-            <tr class="border-t border-slate-100 bg-slate-50/40">
-              <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700" colspan="3">{{ selected.total_label|default:"Total Requested" }}</td>
-              <td class="px-3 py-2.5 text-[13px] font-bold text-emerald-700 text-right tabular-nums">{{ selected.total_fmt }}</td>
+            <tr class="budget-ledger-band fund-breakdown-table__total">
+              <th scope="row" colspan="3">{{ selected.total_label|default:"Total Requested" }}</th>
+              <td>{{ selected.total_fmt }}</td>
             </tr>
           </tfoot>
         </table>
+        </div>
       </div>
       {% endif %}
     </div>

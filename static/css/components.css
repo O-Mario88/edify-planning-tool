@@ -4127,8 +4127,21 @@ main .budget-ledger table.budget-ledger-table { border-collapse: collapse; font-
 main .budget-ledger table.budget-ledger-table :is(th, td) { padding: 5px 9px !important; border: 0 !important; font-size: var(--edify-text-body-size) !important; }
 main .budget-ledger table.budget-ledger-table th[scope="row"] { white-space: normal; text-wrap: wrap; }
 main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: #fff !important; }
+/* A band that lives in <thead> must outrank the platform's neutral heading contract (main table thead th). */
+main .budget-ledger table.budget-ledger-table thead .budget-ledger-band > th { background-color: #145b9a !important; color: #fff !important; font-weight: 600 !important; border-block-end: 0 !important; }
 main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa !important; color: #1e293b !important; font-weight: 700 !important; }
 main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, #fff) !important; }
+/* The grand total reads as the loudest row of the ledger. */
+main .budget-ledger table.budget-ledger-table tfoot .budget-ledger-band > * { font-weight: 700 !important; }
+/* Four-column category breakdown (fund detail) in the same dress, without the six-column minimum. */
+main .budget-ledger table.fund-breakdown-table { min-width: 0; }
+main .budget-ledger table.fund-breakdown-table tr > :nth-child(2) { text-align: center; }
+main .budget-ledger table.fund-breakdown-table tr > :nth-child(n+3) { text-align: right; white-space: nowrap; }
+main .budget-ledger table.fund-breakdown-table tfoot th[scope="row"] { text-align: left; }
+main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weight: 600; white-space: normal; }
+.fund-breakdown-table__note { font-size: var(--edify-text-caption-size); font-weight: 500; color: var(--edify-text-muted); margin-inline-start: 0.25rem; }
+.fund-breakdown-table__empty { text-align: center !important; color: var(--edify-text-muted); padding-block: 1.25rem !important; }
+.fund-breakdown-table__adjustment td { color: var(--edify-danger, #dc2626); font-weight: 600; }
 
 
 /* Inset tiles ----------------------------------------------------------------
