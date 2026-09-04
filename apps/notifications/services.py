@@ -2,10 +2,122 @@
 
 from __future__ import annotations
 
+import logging
+
 from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 from .models import Notification
+
+logger = logging.getLogger("edify.notifications")
+
+# ── SMS money alerts ───────────────────────────────────────────────────────
+# The in-app rail only reaches a person who is on the platform. The decisions
+# that move a field officer's money — approved, returned, disbursed, cleared —
+# also go out over SMS (apps.core.sms) to every recipient with a phone on
+# file who has not switched the channel off (User.sms_money_alerts).
+SMS_MONEY_EVENTS = frozenset(
+    {
+        "weekly_fund_request_approved",
+        "weekly_fund_request_returned",
+        "weekly_fund_request_disbursed",
+        "fund_request_disbursed",
+        "accountability_cleared",
+        "accountability_pl_approved",
+        "accountability_pl_returned",
+    }
+)
+# One GSM segment. Longer bodies split into several messages, each billed,
+# and arrive out of order on the networks this is deployed against.
+SMS_MAX_LENGTH = 160
+
+
+def compose_money_sms(title: str, body: str, route: str | None) -> str:
+    """ "<title>. <body>", cut to one segment, with the route on the end only
+    when the whole message still fits — a truncated URL is worse than none."""
+    text = f"{(title or '').strip().rstrip('.')}. {(body or '').strip()}".strip()
+    route = (route or "").strip()
+    if route and len(text) + 1 + len(route) <= SMS_MAX_LENGTH:
+        text = f"{text} {route}"
+    return text[:SMS_MAX_LENGTH]
+
+
+def _wants_money_sms(user) -> bool:
+    phone = (getattr(user, "phone", None) or "").strip()
+    return bool(phone) and bool(getattr(user, "sms_money_alerts", True))
+
+
+def _queue_money_sms(event_type: str, title: str, body: str, targets) -> None:
+    """Queue one SMS per (user, notification) pair, sent after commit.
+
+    Never raises: an SMS is a courtesy copy of a decision the workflow has
+    already recorded, and a provider problem must not undo that decision.
+    `SmsService.send` refuses inside a transaction, so the send is deferred to
+    `transaction.on_commit` — which also means a message is never sent about
+    work that then rolled back.
+    """
+    if event_type not in SMS_MONEY_EVENTS:
+        return
+    try:
+        messages = [
+            (
+                (user.phone or "").strip(),
+                compose_money_sms(title, body, notif.target_route),
+            )
+            for user, notif in targets
+            if _wants_money_sms(user)
+        ]
+    except Exception:  # noqa: BLE001
+        logger.exception("money SMS could not be composed for %s", event_type)
+        return
+    if not messages:
+        return
+
+    def _send_all() -> None:
+        from apps.core.sms import SmsMessage, sms
+
+        for to, text in messages:
+            try:
+                sms.send(SmsMessage(to=to, text=text))
+            except Exception:  # noqa: BLE001
+                logger.exception("money SMS to %s failed for %s", to, event_type)
+
+    try:
+        transaction.on_commit(_send_all)
+    except Exception:  # noqa: BLE001
+        logger.exception("money SMS could not be queued for %s", event_type)
+
+
+def _weekly_request_id_for_advance(advance_id: str | None) -> str | None:
+    """The week an advance was requested under, if it was compiled into one.
+
+    An AdvanceRequest and a WeeklyFundRequest share the ActivityScheduleCostLine
+    (AdvanceRequest.budget_line / WeeklyFundRequestLine.activity_budget_line);
+    that is the only link between the two, and it is enough to land the owner
+    on the week's own page rather than the list.
+    """
+    if not advance_id:
+        return None
+    try:
+        from apps.fund_requests.models import AdvanceRequest, WeeklyFundRequestLine
+
+        budget_line_id = (
+            AdvanceRequest.objects.filter(id=advance_id)
+            .values_list("budget_line_id", flat=True)
+            .first()
+        )
+        if not budget_line_id:
+            return None
+        return (
+            WeeklyFundRequestLine.objects.filter(activity_budget_line_id=budget_line_id)
+            .order_by("-created_at")
+            .values_list("weekly_fund_request_id", flat=True)
+            .first()
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("weekly request lookup failed for advance %s", advance_id)
+        return None
+
 
 # Roles that approve leave, in the lowercased form `resolve()` compares against.
 _APPROVER_ROLES = {
@@ -277,6 +389,22 @@ class NotificationLinkResolver:
             route = f"/my-plan/{context_id}"
             label = "View Activity"
 
+        # The Program Lead's accountability decision, addressed to the owner.
+        # context_id is the AdvanceRequest id (advance_service._notify); the
+        # owner reads and resubmits from the weekly request it belongs to.
+        elif event_type in ("accountability_pl_approved", "accountability_pl_returned"):
+            weekly_id = _weekly_request_id_for_advance(context_id)
+            route = (
+                f"/fund-requests/weekly/{weekly_id}"
+                if weekly_id
+                else "/fund-requests/weekly"
+            )
+            label = (
+                "View Accountability"
+                if event_type.endswith("approved")
+                else "Fix Accountability"
+            )
+
         elif event_type == "reimbursement_due":
             route = f"/my-plan/{context_id}/confirm-reimbursement-receipt"
             label = "Confirm Reimbursement"
@@ -421,6 +549,7 @@ class WorkflowNotificationService:
             recipient_list = [recipients]
 
         seen_recipient_ids: set[str] = set()
+        sms_targets: list[tuple[User, Notification]] = []
         for r in recipient_list:
             user_obj = None
             if isinstance(r, User):
@@ -506,6 +635,7 @@ class WorkflowNotificationService:
                     ]
                 )
                 created_notifications.append(existing)
+                sms_targets.append((user_obj, existing))
                 continue
 
             notif = Notification.objects.create(
@@ -524,8 +654,10 @@ class WorkflowNotificationService:
                 action_required=priority in ("high", "urgent"),
             )
             created_notifications.append(notif)
+            sms_targets.append((user_obj, notif))
 
         if created_notifications:
+            _queue_money_sms(event_type, title, body, sms_targets)
             recipient_ids = [n.recipient_id for n in created_notifications]
             try:
                 # Most workflows call this service directly. Record one
