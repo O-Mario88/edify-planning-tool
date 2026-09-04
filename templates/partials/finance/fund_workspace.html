@@ -90,7 +90,8 @@ workspace, so the roles differ only where their work differs.
                 {% if item.hx_get %}hx-get="{{ item.hx_get }}" hx-target="{{ item.hx_target }}" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"{% endif %}
                 @click="selectedKey = '{{ item.key }}'"
                 :aria-current="selectedKey === '{{ item.key }}' ? 'page' : null"
-                :class="selectedKey === '{{ item.key }}' ? 'is-active' : ''"
+                {# Object syntax so Alpine also REMOVES the server-rendered is-active from the tab you just left. #}
+                :class="{ 'is-active': selectedKey === '{{ item.key }}' }"
                 class="fund-requester{% if item.selected %} is-active{% endif %}"
                 title="{{ item.name }} · {{ item.total_fmt }} · {{ item.status }}">
           <span class="fund-requester__dot fund-requester__dot--{{ item.status_tone|default:'neutral' }}" aria-hidden="true"></span>
