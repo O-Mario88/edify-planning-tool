@@ -1751,6 +1751,14 @@ select:not([multiple]):not(.select-native) {
   }
 }
 
+/* Four tiles, in the band that fits three columns but not four (auto-fit's
+   14rem minimum): two rows of two, never 3 + 1 with an orphan (2026-09-04). */
+@container kpi-strip (min-width: 42rem) and (max-width: 55.99rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @container kpi-strip (min-width: 48rem) {
   .kpi-strip__grid { gap: 0.75rem; }
 
@@ -4029,14 +4037,29 @@ search:has(.edify-search-submit) input[type="search"] {
 .kpi-strip__item.kpi-strip__item--info,
 .kpi-strip__item.kpi-strip__item--primary { --kpi-accent: var(--edify-accent); }
 .kpi-strip__item.kpi-strip__item--amber,
+.kpi-strip__item.kpi-strip__item--orange,
 .kpi-strip__item.kpi-strip__item--warning { --kpi-accent: var(--edify-warn, #f59e0b); }
+.kpi-strip__item.kpi-strip__item--teal { --kpi-accent: var(--edify-chart-teal, #0d9488); }
 .kpi-strip__item.kpi-strip__item--emerald,
 .kpi-strip__item.kpi-strip__item--green,
 .kpi-strip__item.kpi-strip__item--success { --kpi-accent: var(--edify-success, #10b981); }
 .kpi-strip__item.kpi-strip__item--violet,
 .kpi-strip__item.kpi-strip__item--purple { --kpi-accent: #8b5cf6; }
 .kpi-strip__item.kpi-strip__item--rose,
+.kpi-strip__item.kpi-strip__item--red,
 .kpi-strip__item.kpi-strip__item--danger { --kpi-accent: var(--edify-danger, #ef4444); }
+/* Every tone a caller actually passes needs an accent here, or the tile falls
+   through the gradient rule below with `--kpi-accent` unset and renders as a
+   plain white card beside its coloured siblings — which is what
+   `variant="finance"` did to Budget utilization on the Accountant's home
+   (2026-09-04). test_kpi_tile_tones pins the mapping to the tones in use. */
+.kpi-strip__item.kpi-strip__item--finance { --kpi-accent: var(--edify-accent); }
+.kpi-strip__item.kpi-strip__item--analytics { --kpi-accent: #8b5cf6; }
+.kpi-strip__item.kpi-strip__item--lime { --kpi-accent: var(--edify-success, #10b981); }
+.kpi-strip__item.kpi-strip__item--document,
+.kpi-strip__item.kpi-strip__item--slate,
+.kpi-strip__item.kpi-strip__item--default,
+.kpi-strip__item.kpi-strip__item--neutral { --kpi-accent: var(--edify-text-muted, #64748b); }
 
 .kpi-strip__item[class*="kpi-strip__item--"] {
   border-color: color-mix(in srgb, var(--kpi-accent) 42%, var(--edify-border));
