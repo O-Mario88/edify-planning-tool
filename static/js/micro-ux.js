@@ -160,6 +160,32 @@
         if (child.matches('.flex, .grid, .inline-flex, form, table, details, .edify-cell-stackchip, .edify-cell-row')) return;
         child.classList.add('edify-cell-line', 'edify-cell-follows');
       });
+      /* A text-carrying element with no element children of its own is a
+         line of text wherever it sits, so it reads inline. Role pages built
+         before `.edify-cell-row` nested their stacks two levels down inside a
+         raw `flex items-center` (/staff) or wrote a caption as a bare
+         `span.block` after a text node (Team Oversight), and neither was
+         reached by the cell-level markers above: 67px and 46px rows against
+         the 32px contract. Marked here rather than matched with `:has()`,
+         which the bridge bans. */
+      cell.querySelectorAll('p, span, small').forEach(function (line) {
+        if (line.firstElementChild) return;
+        if (line.textContent.trim() === '') return;
+        if (line.matches('.edify-cell-pill, .edify-cell-mark, .edify-cell-row, .pill, .edify-status-badge, [class*="badge"], [class*="chip"], [class*="pill"], [x-show]')) return;
+        line.classList.add('edify-cell-text');
+      });
+      /* A cell holding an identity mark (an avatar, a logo) keeps the mark at
+         24px in a 4px cell, so the row still closes at 32px. */
+      if (cell.querySelector('img, .edify-cell-mark, .h-8.w-8, .h-9.w-9, .h-10.w-10, .h-11.w-11, .h-12.w-12')) {
+        cell.classList.add('edify-cell-media');
+      }
+      /* The label wrapping a row checkbox is not a 44px touch control: the
+         row is. Marked here because the bridge cannot ask `:has()`. */
+      cell.querySelectorAll('label').forEach(function (choice) {
+        if (choice.querySelector('input[type="checkbox"], input[type="radio"]')) {
+          choice.classList.add('edify-cell-choice');
+        }
+      });
       /* Every control in a cell is 24px tall, whatever the page gives it. */
       cell.querySelectorAll('button, label.edify-table-choice, select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), a').forEach(function (control) {
         if (control.matches('a') && window.getComputedStyle(control).display === 'inline') return;

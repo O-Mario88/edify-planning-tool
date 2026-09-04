@@ -1841,10 +1841,13 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 @media (pointer: coarse) {
-  main :where(button, [role="button"], input, select, textarea),
-  main a[class*="btn"],
-  main a[class*="button"],
-  main a[class*="bg-"] {
+  /* Not inside a table cell: the record row is the 32px target, and a 44px
+     control in it made a phone's table row 60px against the 32px contract
+     (2026-09-04). Controls in cells are sized by the row rhythm instead. */
+  main :where(button, [role="button"], input, select, textarea):not(:is(td, th) *),
+  main a[class*="btn"]:not(:is(td, th) *),
+  main a[class*="button"]:not(:is(td, th) *),
+  main a[class*="bg-"]:not(:is(td, th) *) {
     min-block-size: 2.75rem;
   }
 }

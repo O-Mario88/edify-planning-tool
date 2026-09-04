@@ -1,5 +1,6 @@
 """Regression contracts for the platform-wide intrinsic density system."""
 
+import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -72,6 +73,44 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertIn("padding-block: 0 !important;", density)
         for data_canvas in ("canvas", "map", "upload", "chart"):
             self.assertNotIn(f".{data_canvas}", density)
+
+    def test_one_action_button_height_at_every_width(self):
+        """32px "platform-wide" meant 32px above 1024px only: the responsive
+        scale stepped the same button to 36px on a tablet and 30px on a phone,
+        so a role page looked denser or looser purely by window size."""
+        css = _read("static/css/components/mobile-micro-ux.css")
+        sizes = set(
+            re.findall(r"--edify-action-button-block-size:\s*([0-9.]+rem)", css)
+        )
+        self.assertEqual(sizes, {"2rem"})
+
+    def test_the_row_rhythm_is_not_gated_on_a_desktop_width(self):
+        """A record table stays a table on a phone (mobile-shell.css says so),
+        so the 32px row applies there too. Gating it at 768px left the same
+        table 40-43px per row on a phone and 30px on a laptop."""
+        css = _read("static/css/consistency.css")
+        block = css.split("TABLE ROW RHYTHM", 1)[1][:2000]
+        self.assertIn("@media all {", block)
+        self.assertNotIn("@media (min-width: 768px)", block)
+
+    def test_a_record_row_is_the_touch_target_not_what_sits_in_it(self):
+        """Inflating a link, checkbox or label inside a cell to 44px grew the
+        row instead of the target: 56px rows on a phone, 44px on a tablet."""
+        for path in (
+            "static/css/components/mobile-micro-ux.css",
+            "static/css/platform.css",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(":not(:is(td, th) *)", _read(path))
+
+    def test_the_cell_markers_the_rhythm_needs_are_applied(self):
+        """consistency.css may not use `:has()` (the bridge contract), so the
+        cell markers it hangs these rules on come from micro-ux.js."""
+        behaviour = _read("static/js/micro-ux.js")
+        for marker in ("edify-cell-text", "edify-cell-media", "edify-cell-choice"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, behaviour)
+                self.assertIn(marker, _read("static/css/consistency.css"))
 
     def test_mobile_and_desktop_page_edges_share_the_compact_rhythm(self):
         css = _read("static/css/consistency.css")

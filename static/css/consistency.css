@@ -157,10 +157,12 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
      sit closer than 44px apart, and overlapping tap targets between adjacent
      rows would be worse than a slightly shorter one. 32px still clears the
      24px WCAG 2.5.8 minimum with margin. */
-  main table td > a {
+  main table td > a,
+  main table td > :is(div, p, span) > a {
     display: inline-flex;
     align-items: center;
     min-height: 32px;
+    /* Negative margin so the hit area does not become the row height. */
     margin-block: -8px;
   }
 }
@@ -2009,7 +2011,11 @@ main .edify-inline-metrics {
   min-inline-size: 0;
 }
 
-main .edify-data-row {
+/* Never a <tr>: the monthly work plan puts this class on a table row, and a
+   row told to be a grid stacks its own cells -- four 30px cells became a
+   95px "row" on a 32px table (2026-09-04). A table row already has the
+   layout this class is trying to create. */
+main .edify-data-row:not(tr) {
   display: grid;
   /* Label sizes to its own content (never collapses); the value takes the
      rest and WRAPS. The old `minmax(0, 1fr) auto` let a long free-text value
@@ -2022,7 +2028,7 @@ main .edify-data-row {
   padding-block: var(--edify-content-row-padding);
 }
 
-main .edify-data-row:not(:last-child) {
+main .edify-data-row:not(tr):not(:last-child) {
   border-block-end: 1px solid var(--edify-content-divider);
 }
 
@@ -3117,14 +3123,19 @@ main table tbody > tr:only-child > td[colspan] > :is(
 /* ═══════════════════════════════════════════════════════════════════════════
    TABLE ROW RHYTHM: 32px (2026-09-03)
    ───────────────────────────────────────────────────────────────────────────
-   One row height for every table on tablet and desktop: a single-line row
-   measures 32px or less, whatever utility classes the template carries.
-   Rows that hold a control keep the control at 24px inside a 4px cell so
-   the row still closes at 32px; badges sit on one text line; a record title
-   with a caption reads on one line as "title · caption". Phones are left to
-   the mobile patterns, which need 44px tap targets and card layouts.
+   One row height for EVERY table at EVERY width: a single-line row measures
+   32px or less, whatever utility classes the template carries. Rows that
+   hold a control keep the control at 24px inside a 4px cell so the row still
+   closes at 32px; badges sit on one text line; a record title with a caption
+   reads on one line as "title · caption".
+
+   Phones were excluded here until 2026-09-04, on the assumption that a table
+   becomes a card list on a phone. It does not — mobile-shell.css states the
+   opposite ("Record tables stay tables", the region scrolls inline instead)
+   — so the exclusion only meant the same table was 40-43px per row on a
+   phone and 30px on a laptop.
    ═══════════════════════════════════════════════════════════════════════════ */
-@media (min-width: 768px) {
+@media all {
   :root {
     --edify-table-cell-padding-block: 0.34375rem;
   }
@@ -3190,10 +3201,81 @@ main table tbody > tr:only-child > td[colspan] > :is(
   }
 }
 
+/* The same one line, whatever the template called its wrapper.
+   The rules above only reach a stack that is a direct child of the cell or
+   of one wrapper, and only when the wrapper carries `.edify-cell-row`. Role
+   pages built before that class flattened nothing: /staff nested its name
+   and email two levels down inside a raw `flex items-center`, and Team
+   Oversight wrote a caption as a bare `<span class="block">` after a text
+   node, so their rows measured 67px and 46px against the 32px contract.
+
+   A text-carrying element with no element children of its own is a line of
+   text, wherever it sits, so it reads inline. Badges, pills and chips are
+   excluded (they are boxes with padding), `div` is excluded (an empty div is
+   usually a bar or a rule, and inline would collapse it), and `[x-show]` is
+   excluded because display on those belongs to the script. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]) {
+  display: inline !important;
+  margin-block: 0 !important;
+}
+
+/* A checkbox or radio in a record row, and the label wrapping it: 20px, the
+   size a 32px row can hold. A 44px touch target here made a phone's row
+   56px; the row itself is the target. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(input[type="checkbox"], input[type="radio"]) {
+  min-block-size: 1.25rem !important;
+  block-size: 1.25rem !important;
+  min-inline-size: 1.25rem !important;
+  inline-size: 1.25rem !important;
+}
+
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  label.edify-cell-choice {
+  min-block-size: 1.25rem !important;
+}
+
+/* A badge written with utility classes rather than `.edify-status-badge`
+   still sits on one text line. /staff wrote its status as a bare
+   `span.inline-flex` with `py-1`, which measured 26px and set the row to
+   38px against the 32px contract. Height is not forced here -- an icon
+   inside the badge keeps its size -- only the padding that made it tall. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(span, div)[class~="inline-flex"]:not(.btn):not(.edify-action-button):not(.row-menu):not(.row-menu__trigger):not([class~="h-8"]):not([class~="h-9"]):not([class~="h-10"]) {
+  min-block-size: 0 !important;
+  padding-block: 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* An avatar in a record row is an identity mark, not a picture: 24px in a
+   4px cell, so the row still closes at 32px. Square utility boxes and images
+   only — a pill badge is round too, and must keep its own size. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(img, [class~="h-8"][class~="w-8"], [class~="h-9"][class~="w-9"], [class~="h-10"][class~="w-10"], [class~="h-11"][class~="w-11"], [class~="h-12"][class~="w-12"]) {
+  block-size: 1.5rem !important;
+  inline-size: 1.5rem !important;
+  min-block-size: 0 !important;
+  font-size: var(--edify-text-micro-size) !important;
+  object-fit: cover;
+}
+
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody
+  :is(td, th).edify-cell-media {
+  padding-block: 0.21875rem !important;
+}
+
 /* Stacked cell content reads on one line. A table row is a record, not a
    card: a name over an id, a value over a caption, an avatar beside a
    stacked pair — all of it sits on one 32px line. Forms and flex rows keep
-   their own layout; only stacked text blocks are flattened.
+   their own layout; only stacked text blocks are flattened. Every width, for
+   the reason above the row-rhythm block: a table is still a table on a phone.
 
    `[x-show]` is excluded because display on those elements belongs to the
    script, not the stylesheet. A `display: inline !important` here outranks
@@ -3203,7 +3285,7 @@ main table tbody > tr:only-child > td[colspan] > :is(
    which put it off the right edge of the window. `.row-menu` is excluded for
    the same reason one level up: the trigger and its list are a positioning
    context, not a stacked pair of text lines. */
-@media (min-width: 768px) {
+@media all {
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
     table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(.edify-cell-row):not(.row-menu):not([x-show]),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
