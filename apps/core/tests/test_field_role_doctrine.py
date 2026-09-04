@@ -73,7 +73,9 @@ class CceoDoctrine(TestCase):
             "cost_settings",
             "disbursements",
             "finance_partner_payments",
-            "escalations",
+            # "escalations" left this list on 2026-09-04: the channel now runs
+            # one level up from every raiser, so a CCEO reaches the page to
+            # escalate to their Programme Lead (never to decide).
             "cd_analytics",
             "pl_analytics",
             "decision_intelligence",
@@ -127,7 +129,8 @@ class ProgramLeadDoctrine(TestCase):
             "disbursements",
             "finance_partner_payments",
             "cd_analytics",
-            "escalations",
+            # "escalations" is no longer country-only: the PL decides their
+            # team's escalations and raises their own to the CD (2026-09-04).
         ):
             self.assertNotIn(
                 "PL", PAGE_PERMISSIONS.get(page, set()), f"PL must not reach '{page}'"
@@ -182,7 +185,7 @@ class ProjectCoordinatorDoctrine(TestCase):
             "cd_analytics",
             "pl_analytics",
             "team_targets",
-            "escalations",
+            # "escalations": a PC raises to their Programme Lead (2026-09-04).
         ):
             self.assertNotIn(
                 "PROJECT_COORDINATOR",
