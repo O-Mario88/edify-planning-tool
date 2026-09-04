@@ -611,7 +611,7 @@ def pl_approve_accountability(advance_id: str, principal) -> dict:
     claim = adv.status == AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED
     _notify(
         [adv.responsible_user_id],
-        "advance_accountability_pl_approved",
+        "accountability_pl_approved",
         "Accountability approved by your Program Lead",
         (
             "Your reimbursement claim was approved and sent to the Accountant."
@@ -667,7 +667,7 @@ def pl_return_accountability(advance_id: str, data: dict, principal) -> dict:
     )
     _notify(
         [adv.responsible_user_id],
-        "advance_accountability_returned",
+        "accountability_pl_returned",
         "Accountability returned by your Program Lead",
         f"Correct and resubmit. Reason: {reason}",
         adv,

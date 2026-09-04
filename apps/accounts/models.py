@@ -105,6 +105,10 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     password = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=64, null=True, blank=True)
+    # Off-device channel for the decisions that move this person's money
+    # (apps.notifications.services.SMS_MONEY_EVENTS). Opt-out per user;
+    # a blank `phone` opts out by absence.
+    sms_money_alerts = models.BooleanField(default=True)
     roles = ArrayField(
         base_field=models.CharField(
             max_length=64, choices=[(r.value, r.value) for r in EdifyRole]
