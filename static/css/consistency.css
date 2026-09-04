@@ -3193,14 +3193,23 @@ main table tbody > tr:only-child > td[colspan] > :is(
 /* Stacked cell content reads on one line. A table row is a record, not a
    card: a name over an id, a value over a caption, an avatar beside a
    stacked pair — all of it sits on one 32px line. Forms and flex rows keep
-   their own layout; only stacked text blocks are flattened. */
+   their own layout; only stacked text blocks are flattened.
+
+   `[x-show]` is excluded because display on those elements belongs to the
+   script, not the stylesheet. A `display: inline !important` here outranks
+   the `display: none` Alpine writes inline, so every CLOSED row-actions menu
+   in a table was painted at its unplaced default of left:0/top:0 — a stack of
+   menus over the sidebar — and the open one measured itself while inline,
+   which put it off the right edge of the window. `.row-menu` is excluded for
+   the same reason one level up: the trigger and its list are a positioning
+   context, not a stacked pair of text lines. */
 @media (min-width: 768px) {
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(.edify-cell-row),
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(.edify-cell-row):not(.row-menu):not([x-show]),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small),
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):not(.row-menu):not([x-show]),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row) + :is(div, p, small) {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row) + :is(div, p, small):not(.row-menu):not([x-show]) {
     display: inline !important;
     margin-block: 0 !important;
   }
