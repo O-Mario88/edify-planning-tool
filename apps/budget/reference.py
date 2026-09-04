@@ -59,46 +59,9 @@ DIRECT_ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
         16000,
     ),
     ("partner_visit_lump_sum", "Partner visit rate", 40000),
-    ("core_school_visit", "Core school visit cost", 50000),
-    ("core_school_training", "Core school training cost", 250000),
-    ("ssa_visit_rate", "SSA visit cost", 50000),
-    (
-        "project_partner_lump_sum",
-        "Special project partner activity rate",
-        40000,
-    ),
 )
 
-# Non-school programme event recipe (conferences, camps, exhibitions,
-# launches, workshops). Venue + participant meals are the demanded core; the
-# optional components price only when the CD keeps a rate for them.
-PROGRAMME_EVENT_RATES: tuple[tuple[str, str, int], ...] = (
-    ("programme_venue_per_day", "Programme event venue (per day)", 300000),
-    (
-        "programme_participant_meal_cost_per_head",
-        "Programme participant meals (per head per day)",
-        15000,
-    ),
-    ("programme_facilitation_per_day", "Programme facilitation (per day)", 100000),
-    ("programme_transport_per_day", "Programme transport (per day)", 100000),
-    (
-        "programme_materials_per_participant",
-        "Programme materials (per participant)",
-        5000,
-    ),
-    (
-        "programme_accommodation_per_night",
-        "Programme accommodation (per night)",
-        80000,
-    ),
-)
-
-CANONICAL_RATES = (
-    DAILY_BATCH_RATES
-    + CLUSTER_ACTIVITY_RATES
-    + DIRECT_ACTIVITY_RATES
-    + PROGRAMME_EVENT_RATES
-)
+CANONICAL_RATES = DAILY_BATCH_RATES + CLUSTER_ACTIVITY_RATES + DIRECT_ACTIVITY_RATES
 CANONICAL_RATE_KEYS = frozenset(key for key, _label, _cost in CANONICAL_RATES)
 
 # These keys remain in old schedule snapshots and, on upgraded installations,
@@ -124,7 +87,41 @@ LEGACY_CLUSTER_ACTIVITY_COST_KEYS = frozenset(
         "venue",
     }
 )
-RETIRED_COST_SETTING_KEYS = LEGACY_VISIT_COST_KEYS | LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+# Rates that named a recipe the platform already had (owner, 2026-09-04:
+# "remove all duplicate costs").
+#
+#   core_school_visit / ssa_visit_rate  a core school visit and an SSA visit
+#       are school visits: one staff visit day, priced by district. The flat
+#       50,000 ignored the district and was 12,000 short in a primary one and
+#       102,000 short in a secondary one.
+#   core_school_training                a core training is a group training.
+#       No catalogue item even produced the type, and the seeded default
+#       (250,000) and the live rate (55,000) had drifted 195,000 apart.
+#   project_partner_lump_sum            the same 40,000 as the partner visit
+#       rate: a second name for one number.
+#   programme_*                         a six-key mirror of the group-training
+#       recipe at ten times the venue and double the facilitation, for a type
+#       no catalogue item produced. Conferences and camps are catalogued as
+#       trainings and always priced on the group recipe.
+DUPLICATE_COST_SETTING_KEYS = frozenset(
+    {
+        "core_school_visit",
+        "core_school_training",
+        "ssa_visit_rate",
+        "project_partner_lump_sum",
+        "programme_venue_per_day",
+        "programme_participant_meal_cost_per_head",
+        "programme_facilitation_per_day",
+        "programme_transport_per_day",
+        "programme_materials_per_participant",
+        "programme_accommodation_per_night",
+    }
+)
+RETIRED_COST_SETTING_KEYS = (
+    LEGACY_VISIT_COST_KEYS
+    | LEGACY_CLUSTER_ACTIVITY_COST_KEYS
+    | DUPLICATE_COST_SETTING_KEYS
+)
 
 
 def ensure_active_catalogue():

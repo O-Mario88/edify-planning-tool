@@ -539,11 +539,11 @@ class ParticipantModeTest(StandardSupportBase):
         """§11 is a rule about the DRAWER, which has no total field.
 
         Discarding a total an API client did state looks stricter and costs
-        money: `costing._participants_of` substitutes
-        DEFAULT_TRAINING_PARTICIPANTS (25) when nothing reaches it, so
-        throwing away a stated 15 prices twenty-five people. A number
-        somebody stated beats a hardcoded default; a number DERIVED from
-        cluster membership beats both, and that is asserted above.
+        money: the engine demands a participant count for every group session
+        and flags the activity cost-missing without one, so throwing away a
+        stated 15 blocks the funding request instead of pricing it. A number
+        somebody stated beats no number; a number DERIVED from cluster
+        membership beats both, and that is asserted above.
         """
         result = self.schedule(
             clusterId=self.cluster.id,

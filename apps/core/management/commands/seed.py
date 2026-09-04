@@ -763,10 +763,6 @@ class Command(BaseCommand):
             "cluster_meeting_participant_meal_cost_per_head": 10000,
             "partner_visit_lump_sum": 40000,
             "partner_training_lump_sum": 16000,
-            "core_school_visit": 50000,
-            "core_school_training": 250000,
-            "ssa_visit_rate": 50000,
-            "project_partner_lump_sum": 40000,
         }
         friendly_labels = {
             "cluster_meeting_participant_meal_cost_per_head": "Participant snacks",

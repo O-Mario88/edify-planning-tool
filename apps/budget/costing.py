@@ -42,9 +42,6 @@ class ActivityCost:
     missing_items: list[str] = field(default_factory=list)
 
 
-DEFAULT_TRAINING_PARTICIPANTS = 25
-
-
 # A cluster session has a deliberately small, predictable cost recipe.  These
 # stable keys are shared by the catalogue, planning preview, saved schedule
 # lines, fund requests and budget reports.  Do not add ad-hoc cluster costs in
@@ -134,9 +131,19 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             )
         )
 
-    def add_staff_day(days: int = 1) -> None:
-        if is_partner:
-            return
+    def add_staff_visit_day(days: int = 1, nights: int | None = None) -> None:
+        """One staff day away from base — the ONLY recipe for one.
+
+        This used to be written three times: here, inline in the visit branch
+        and again in the field-event branch. The inline copies left out
+        `secondary_incidentals_per_day`, so the same person on the same day
+        cost 157,000 inside a cluster training and 152,000 on a school visit
+        (owner, 2026-09-04: "fix all the cost").
+
+        `nights` exists because a visit day charges accommodation per NIGHT
+        (one by default, the activity may say otherwise) while a multi-day
+        trip carries the full per-diem set per day.
+        """
         from apps.daily_visit_batches.pricing import (
             KEY_LABELS,
             OPTIONAL_KEYS,
@@ -144,11 +151,36 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
 
         profile = "secondary" if is_secondary else "primary"
-        for key in REQUIRED_KEYS[profile]:
-            add(KEY_LABELS[key].replace("shared, ", ""), key, days)
-        for key in OPTIONAL_KEYS[profile]:
-            if key in rates:
-                add(KEY_LABELS[key].replace("shared, ", ""), key, days)
+        nights = days if nights is None else nights
+        for key in REQUIRED_KEYS[profile] + OPTIONAL_KEYS[profile]:
+            if key in OPTIONAL_KEYS[profile] and key not in rates:
+                continue
+            qty = nights if key == "secondary_accommodation_per_night" else days
+            if qty <= 0:
+                continue
+            add(KEY_LABELS[key].replace("shared, ", ""), key, qty)
+
+    def add_staff_day(days: int = 1) -> None:
+        """The staff day inside a group session — the partner's lump sum
+        already covers their own travel, so partner delivery adds none."""
+        if is_partner:
+            return
+        add_staff_visit_day(days)
+
+    def add_group_session(days: int) -> None:
+        """The one group-training recipe: participants eat, someone
+        facilitates, the room costs money, and the staff member travels.
+        Cluster trainings, general trainings and non-school programme events
+        (conferences, camps) are the same event with different attendees."""
+        n = _participants_of(a, 0)
+        add(
+            "Participant meals",
+            "group_training_participant_meal_cost_per_head",
+            n * days,
+        )
+        add("Facilitation fee", "group_training_facilitation_fee", days)
+        add("Venue fee", "group_training_venue_cost", days)
+        add_staff_day(days)
 
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
@@ -171,36 +203,20 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     # a same-day return — draws transport + lunch; a different district with
     # an overnight adds accommodation, dinner and breakfast per night.
     if activity_type == "field_event":
-        days = _days_of(a)
-        # Transport accrues PER DAY for every day away — moving between the
-        # venue, lodging and home leg happens daily, not once per trip — in
-        # both the primary and secondary profiles (owner rule, 2026-08-19).
-        if is_secondary:
-            add("Transport (secondary)", "secondary_transport_per_day", days)
-            add("Lunch", "secondary_lunch_per_day", days)
-            # Every secondary away-day carries the full per-diem set —
-            # breakfast, dinner and a night's accommodation PER DAY (owner
-            # rule, 2026-08-19) — matching the secondary visit-day policy.
-            add("Accommodation", "secondary_accommodation_per_night", days)
-            add("Dinner", "secondary_overnight_dinner_per_day", days)
-            add("Breakfast", "secondary_breakfast_per_day", days)
-        else:
-            add("Transport (primary)", "primary_transport_per_day", days)
-            add("Lunch", "primary_lunch_per_day", days)
+        # Attendee-side field work — district meetings, boot camps, workshops.
+        # Every day away carries the full per-diem set, accommodation included
+        # in a secondary district (owner rule, 2026-08-19).
+        add_staff_visit_day(_days_of(a))
 
     elif activity_type == "programme_event":
-        days = _days_of(a)
-        n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        add("Venue", "programme_venue_per_day", days)
-        add("Participant meals", "programme_participant_meal_cost_per_head", n * days)
-        if "programme_facilitation_per_day" in rates:
-            add("Facilitation", "programme_facilitation_per_day", days)
-        if "programme_transport_per_day" in rates:
-            add("Transport", "programme_transport_per_day", days)
-        if "programme_materials_per_participant" in rates:
-            add("Materials", "programme_materials_per_participant", n)
-        if days > 1 and "programme_accommodation_per_night" in rates:
-            add("Accommodation", "programme_accommodation_per_night", days - 1)
+        # A conference, camp, exhibition or launch is a group training whose
+        # attendees are not one school's staff. It had its own six-key rate
+        # family — venue 300,000 against the group training's 30,000,
+        # facilitation 100,000 against 50,000 — for an activity type no
+        # catalogue item even produced, while the real conferences and camps
+        # were catalogued as trainings and priced on the group recipe. One
+        # recipe (owner, 2026-09-04).
+        add_group_session(_days_of(a))
 
     # Cluster meetings and cluster trainings use their fixed recipe even when
     # a partner delivers the session.  The programme budget needs the same
@@ -213,16 +229,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
-        n = _participants_of(a, 0)
-        days = _days_of(a)
-        add(
-            "Participant meals",
-            "group_training_participant_meal_cost_per_head",
-            n * days,
-        )
-        add("Facilitation fee", "group_training_facilitation_fee", days)
-        add("Venue fee", "group_training_venue_cost", days)
-        add_staff_day(days)
+        add_group_session(_days_of(a))
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not
@@ -236,11 +243,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             key = "partner_training_lump_sum"
             basis = "per training"
             label = "Partner training rate"
-        elif a.get("projectId"):
-            key = "project_partner_lump_sum"
-            basis = "project-specific"
-            label = "Project partner rate"
         else:
+            # Including special-project work: `project_partner_lump_sum` held
+            # the same 40,000 as the partner visit rate, so it was a second
+            # name for one number (owner, 2026-09-04).
             key = "partner_visit_lump_sum"
             basis = "per activity"
             label = "Partner visit lump sum"
@@ -248,60 +254,36 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         label_with_basis = f"{label} [Rate basis: {basis}]"
         add(label_with_basis, key)
 
-    elif activity_type == "baseline_ssa_visit":
-        add("SSA Visit", "ssa_visit_rate")
-
-    elif activity_type == "core_visit":
-        add("Core School Visit", "core_school_visit")
-
-    elif activity_type == "core_training":
-        add("Core School Training", "core_school_training")
-
     elif activity_type in VISIT_TYPES or is_in_school_training:
-        if is_secondary:
-            add("Transport (secondary)", "secondary_transport_per_day")
-            add("Breakfast", "secondary_breakfast_per_day")
-            add("Lunch", "secondary_lunch_per_day")
-            add("Dinner", "secondary_overnight_dinner_per_day")
-            # A secondary-district visit day is an overnight by policy — the
-            # Daily Visit Batch pool always carries one night's accommodation.
-            nights = a.get("nights")
-            try:
-                nights = 1 if nights is None else max(0, int(nights))
-            except (TypeError, ValueError):
-                nights = 1
-            if nights > 0:
-                add(
-                    "Accommodation",
-                    "secondary_accommodation_per_night",
-                    nights,
-                )
-        else:
-            add("Transport (primary)", "primary_transport_per_day")
-            add("Lunch", "primary_lunch_per_day")
+        # Every school mission by staff, whatever the school is called: an
+        # ordinary visit, a core school visit, an SSA visit, a core
+        # assessment, a special-project visit and an in-school training are
+        # one journey with one recipe. `core_school_visit` and
+        # `ssa_visit_rate` used to intercept two of them with a flat 50,000
+        # that ignored the district — 12,000 short in a primary district and
+        # 102,000 short in a secondary one (owner, 2026-09-04).
+        #
+        # A secondary-district visit day is an overnight by policy: the Daily
+        # Visit Batch pool always carries one night's accommodation unless the
+        # activity says otherwise.
+        nights = a.get("nights")
+        try:
+            nights = 1 if nights is None else max(0, int(nights))
+        except (TypeError, ValueError):
+            nights = 1
+        add_staff_visit_day(1, nights=nights)
     elif activity_type in TRAINING_TYPES:
-        # The same recipe as a cluster training: a general training is a
-        # facilitated session too, and it used to price without the
-        # facilitation fee (owner, 2026-09-02: "general training should have
-        # the same costing as cluster training or group training").
-        n = _participants_of(a, 0)
-        days = _days_of(a)
-        add(
-            "Participant meals",
-            "group_training_participant_meal_cost_per_head",
-            n * days,
-        )
-        add("Facilitation fee", "group_training_facilitation_fee", days)
-        add("Venue fee", "group_training_venue_cost", days)
-        add_staff_day(days)
+        # Every group training is the same event: cluster, general, core and
+        # special-project trainings all price here (owner, 2026-09-02 and
+        # 2026-09-04). `core_training` used to take a 55,000 lump of its own.
+        add_group_session(_days_of(a))
     elif activity_type in ("partner_activity", "project_activity"):
-        project_key = "project_partner_lump_sum" if a.get("projectId") else None
-        key = project_key or "partner_visit_lump_sum"
-        add("Partner/project lump sum", key)
+        add("Partner/project lump sum", "partner_visit_lump_sum")
     else:
-        # ssa_activity and anything else default to a staff visit cost.
-        add("Transport", "primary_transport_per_day")
-        add("Lunch", "primary_lunch_per_day")
+        # ssa_activity and anything else: a staff visit day. This used to add
+        # PRIMARY transport and lunch whatever the district, so the same work
+        # in a secondary district was costed 90,000 short.
+        add_staff_visit_day(1)
 
     cost_missing = any(line.missing for line in lines)
     amount = sum(line.amount for line in lines)

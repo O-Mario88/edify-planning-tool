@@ -1211,11 +1211,13 @@ def _apply_participant_mode(data: dict, mode: str) -> dict:
         # whenever `participantsPerSchool` is present.
         #
         # Clearing it looks like the stricter, safer rule and is the opposite.
-        # `apps.budget.costing._participants_of` falls back to
-        # DEFAULT_TRAINING_PARTICIPANTS (25) when no count reaches it, so
-        # discarding a stated 15 did not price zero participants — it priced
-        # twenty-five, and quietly raised the budget line by 120,000 UGX. A
-        # figure someone actually stated beats a hardcoded default.
+        # A stated 15 that never reaches the engine prices no participants at
+        # all: `apps.budget.costing` demands a real count for every group
+        # session and flags the activity cost-missing without one, so the
+        # request cannot be funded until somebody re-enters the number they
+        # already gave. (Before 2026-09-04 it was worse — the engine
+        # substituted a hardcoded 25 and quietly raised the line by 120,000
+        # UGX.) A figure someone actually stated beats both.
         #
         # The rule the drawer enforces (§11 — never ask for a total) is a
         # drawer rule, and the drawer has no total field for cluster work.

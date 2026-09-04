@@ -152,17 +152,25 @@ class CostReferenceTest(TestCase):
         self.assertFalse(result["canSchedule"])
 
     def test_missing_activity_specific_rate_is_not_replaced_by_visit_costs(self):
+        """A missing component blocks its own activity; it is never swapped
+        for another activity's rate. Written against `core_school_training`,
+        which was retired as a duplicate of the group-training recipe
+        (2026-09-04), so it now asks the same question of the recipe a core
+        training actually prices on."""
         from apps.budget.costing_service import preview
 
-        key = "core_school_training"
+        key = "group_training_facilitation_fee"
         rate = CostSetting.objects.get(key=key)
         rate.catalogue = None
         rate.save(update_fields=["catalogue", "updated_at"])
 
-        result = preview({"activityType": "core_training"})
+        result = preview(
+            {"activityType": "core_training", "expectedParticipants": 20}
+        )
 
-        self.assertEqual(result["missingItems"], [key])
-        self.assertEqual([line["key"] for line in result["lines"]], [key])
+        self.assertIn(key, result["missingItems"])
+        self.assertIn(key, [line["key"] for line in result["lines"]])
+        self.assertNotIn("core_school_training", [line["key"] for line in result["lines"]])
         self.assertFalse(result["canSchedule"])
 
     def test_cost_catalogue_projects_coverage_for_all_governed_activities(self):

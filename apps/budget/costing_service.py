@@ -716,6 +716,18 @@ def _programme_period_specs(cost, activity, planned_date):
         "group_training_participant_meal_cost_per_head",
         "group_training_facilitation_fee",
         "group_training_venue_cost",
+        # The staff day accrues per service day like everything else. Left
+        # out until 2026-09-04, when programme events moved onto the group
+        # recipe and started carrying one: a three-day event crossing a month
+        # boundary booked all three staff days into the first month.
+        "primary_transport_per_day",
+        "primary_lunch_per_day",
+        "secondary_transport_per_day",
+        "secondary_lunch_per_day",
+        "secondary_accommodation_per_night",
+        "secondary_overnight_dinner_per_day",
+        "secondary_breakfast_per_day",
+        "secondary_incidentals_per_day",
     }
 
     def _largest_remainder(total: int, weights: list[int]) -> list[int]:

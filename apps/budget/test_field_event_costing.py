@@ -247,7 +247,12 @@ class FieldEventEndToEndTest(TestCase):
         self.assertEqual(lines["secondary_accommodation_per_night"].amount, 3 * 80_000)
         self.assertEqual(lines["secondary_overnight_dinner_per_day"].amount, 3 * 12_000)
         self.assertEqual(lines["secondary_breakfast_per_day"].amount, 3 * 8_000)
-        expected_total = 180_000 + 45_000 + 240_000 + 36_000 + 24_000
+        # Incidentals are part of one staff day everywhere since 2026-09-04.
+        # The field-event branch used to write its own per-diem list without
+        # them, so the same day cost 5,000 less here than inside a cluster
+        # training.
+        self.assertEqual(lines["secondary_incidentals_per_day"].amount, 3 * 5_000)
+        expected_total = 180_000 + 45_000 + 240_000 + 36_000 + 24_000 + 15_000
 
         # Money trail: the owner's weekly request materialised automatically.
         wfr = WeeklyFundRequest.objects.get(

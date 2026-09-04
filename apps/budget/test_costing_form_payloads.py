@@ -43,10 +43,12 @@ class CostingFormPayloadTest(SimpleTestCase):
     def test_multi_day_days_accepts_a_string_and_garbage(self):
         """`days` arrives as a string from number inputs; garbage falls back
         to one day instead of raising (the programme-event branch used a bare
-        int() until the 2026-08-12 audit's L-2)."""
+        int() until the 2026-08-12 audit's L-2). A programme event prices on
+        the group-training recipe since 2026-09-04."""
         rates = {
-            "programme_venue_per_day": 100_000,
-            "programme_participant_meal_cost_per_head": 5_000,
+            "group_training_venue_cost": 100_000,
+            "group_training_participant_meal_cost_per_head": 5_000,
+            "group_training_facilitation_fee": 50_000,
         }
         cost = cost_for_activity(
             {
@@ -56,12 +58,12 @@ class CostingFormPayloadTest(SimpleTestCase):
             },
             rates,
         )
-        venue = next(line for line in cost.lines if line.label == "Venue")
+        venue = next(line for line in cost.lines if line.label == "Venue fee")
         self.assertEqual(venue.qty, 3)
 
         cost = cost_for_activity(
             {"activityType": "programme_event", "days": "garbage"},
             rates,
         )
-        venue = next(line for line in cost.lines if line.label == "Venue")
+        venue = next(line for line in cost.lines if line.label == "Venue fee")
         self.assertEqual(venue.qty, 1)

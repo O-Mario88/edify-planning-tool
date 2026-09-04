@@ -151,35 +151,49 @@ class PlanningReadinessTestCase(TestCase):
             res["recommendedAction"], "Recommend Staff (Visit/training support)"
         )
 
-    def test_baseline_ssa_visit_costing_custom_rate(self):
+    def test_baseline_ssa_visit_is_priced_as_the_school_visit_it_is(self):
+        """An SSA visit is a staff school visit. `ssa_visit_rate` was a flat
+        lump beside the visit recipe, and it ignored the district: 50,000
+        where the same journey costs 62,000 in a primary district and 152,000
+        in a secondary one (owner, 2026-09-04)."""
         from apps.budget.costing import cost_for_activity
 
-        rates = {
-            "ssa_visit_rate": 75000,
-            "staff_visit_transport_primary": 50000,
-            "lunch": 20000,
-        }
+        rates = {"primary_transport_per_day": 50000, "primary_lunch_per_day": 12000}
         a = {
             "activityType": "baseline_ssa_visit",
             "deliveryType": "staff",
             "districtType": "primary",
         }
         cost = cost_for_activity(a, rates)
-        self.assertEqual(cost.amount, 75000)
-        self.assertEqual(cost.lines[0].key, "ssa_visit_rate")
+        self.assertEqual(cost.amount, 62000)
+        self.assertEqual(
+            [line.key for line in cost.lines],
+            ["primary_transport_per_day", "primary_lunch_per_day"],
+        )
 
-    def test_core_visit_costing_custom_rate(self):
+    def test_core_visit_is_priced_as_the_school_visit_it_is(self):
+        """A core school visit is the same journey as any other school
+        visit, and a secondary-district one carries the full per-diem set."""
         from apps.budget.costing import cost_for_activity
 
-        rates = {"core_school_visit": 120000, "school_visit_cost_per_school": 60000}
+        rates = {
+            "primary_transport_per_day": 50000,
+            "primary_lunch_per_day": 12000,
+            "secondary_transport_per_day": 80000,
+            "secondary_lunch_per_day": 12000,
+            "secondary_accommodation_per_night": 40000,
+            "secondary_overnight_dinner_per_day": 12000,
+        }
         a = {
             "activityType": "core_visit",
             "deliveryType": "staff",
             "districtType": "primary",
         }
-        cost = cost_for_activity(a, rates)
-        self.assertEqual(cost.amount, 120000)
-        self.assertEqual(cost.lines[0].key, "core_school_visit")
+        self.assertEqual(cost_for_activity(a, rates).amount, 62000)
+
+        secondary = cost_for_activity({**a, "districtType": "secondary"}, rates)
+        self.assertEqual(secondary.amount, 144000)
+        self.assertFalse(secondary.cost_missing)
 
     def test_partner_visit_rate_basis_per_activity(self):
         from apps.budget.costing import cost_for_activity

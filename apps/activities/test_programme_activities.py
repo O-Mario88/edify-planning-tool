@@ -35,24 +35,20 @@ from apps.notifications.models import Notification
 from apps.planning import services as psvc
 from apps.projects.models import Project
 
-# Canonical programme component rates seeded by apps.budget.reference (UGX).
-# Conferences and student camps use the dedicated CD programme-event rate
-# family, separate from training and cluster-meeting participant costs.
-VENUE = 300_000
-MEAL = 15_000
-FACILITATION = 100_000
-TRANSPORT = 100_000
-MATERIALS = 5_000
-ACCOMMODATION = 80_000
+# Canonical rates seeded by apps.budget.reference (UGX). A conference or
+# student camp IS a group training whose attendees are not one school's
+# staff, so it prices on the group-training recipe plus the staff day of the
+# person running it. The dedicated programme-event rate family was retired on
+# 2026-09-04 as a duplicate of exactly this (owner: "remove all duplicate
+# costs").
+VENUE = 30_000
+MEAL = 5_000
+FACILITATION = 50_000
+TRANSPORT_PER_DAY = 50_000
+LUNCH_PER_DAY = 12_000
+STAFF_DAY = TRANSPORT_PER_DAY + LUNCH_PER_DAY
 
-THREE_DAY_TOTAL = (
-    3 * VENUE
-    + 40 * 3 * MEAL
-    + 3 * FACILITATION
-    + 3 * TRANSPORT
-    + 40 * MATERIALS
-    + 2 * ACCOMMODATION
-)
+THREE_DAY_TOTAL = 3 * VENUE + 40 * 3 * MEAL + 3 * FACILITATION + 3 * STAFF_DAY
 
 FY = "2026"  # Aug/Sep 2026 both sit in operational FY2026 (Oct 1 boundary)
 
@@ -166,11 +162,11 @@ class ProgrammeActivityCreateTest(_ProgrammeFixture):
         self.assertEqual(a.planned_date, date(2026, 9, 1))
         self.assertEqual(a.end_date, date(2026, 9, 3))
         lines = list(a.schedule_cost_lines.all())
-        # One line per component, no month suffixes for a single-month span.
-        self.assertEqual(len(lines), 6)
+        # One line per component, no month suffixes for a single-month span:
+        # venue, meals, facilitation and the staff day's transport + lunch.
+        self.assertEqual(len(lines), 5)
         self.assertFalse(any("#m" in ln.cost_setting_key for ln in lines))
-        # 3 days × (venue+facilitation+transport) + 40×3 meals + 40 materials
-        # + 2 nights accommodation = 3,660,000
+        # 3 days × (venue + facilitation + staff day) + 40 × 3 meals
         self.assertEqual(a.est_cost_cents, THREE_DAY_TOTAL)
         self.assertEqual(sum(ln.amount for ln in lines), a.est_cost_cents)
 
@@ -309,20 +305,17 @@ class ProgrammeCostingTest(_ProgrammeFixture):
             by_key,
             {
                 # August hosts 1 of the 3 service days.
-                "programme_venue_per_day#m202608": VENUE,
-                "programme_participant_meal_cost_per_head#m202608": 40 * MEAL,
-                "programme_facilitation_per_day#m202608": FACILITATION,
-                "programme_transport_per_day#m202608": TRANSPORT,
-                # Materials are a one-off on the first service day.
-                "programme_materials_per_participant": 40 * MATERIALS,
-                # Two accommodation nights: Aug 31 and Sep 1.
-                "programme_accommodation_per_night#m202608": ACCOMMODATION,
+                "group_training_venue_cost#m202608": VENUE,
+                "group_training_participant_meal_cost_per_head#m202608": 40 * MEAL,
+                "group_training_facilitation_fee#m202608": FACILITATION,
+                "primary_transport_per_day#m202608": TRANSPORT_PER_DAY,
+                "primary_lunch_per_day#m202608": LUNCH_PER_DAY,
                 # September hosts the other 2.
-                "programme_venue_per_day#m202609": 2 * VENUE,
-                "programme_participant_meal_cost_per_head#m202609": 80 * MEAL,
-                "programme_facilitation_per_day#m202609": 2 * FACILITATION,
-                "programme_transport_per_day#m202609": 2 * TRANSPORT,
-                "programme_accommodation_per_night#m202609": ACCOMMODATION,
+                "group_training_venue_cost#m202609": 2 * VENUE,
+                "group_training_participant_meal_cost_per_head#m202609": 80 * MEAL,
+                "group_training_facilitation_fee#m202609": 2 * FACILITATION,
+                "primary_transport_per_day#m202609": 2 * TRANSPORT_PER_DAY,
+                "primary_lunch_per_day#m202609": 2 * LUNCH_PER_DAY,
             },
         )
 
@@ -330,16 +323,11 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         september = [ln for ln in lines if ln.month == 9]
         self.assertEqual(
             sum(ln.amount for ln in august),
-            VENUE
-            + 40 * MEAL
-            + FACILITATION
-            + TRANSPORT
-            + 40 * MATERIALS
-            + ACCOMMODATION,
+            VENUE + 40 * MEAL + FACILITATION + STAFF_DAY,
         )
         self.assertEqual(
             sum(ln.amount for ln in september),
-            2 * VENUE + 80 * MEAL + 2 * FACILITATION + 2 * TRANSPORT + ACCOMMODATION,
+            2 * (VENUE + FACILITATION + STAFF_DAY) + 80 * MEAL,
         )
         # The two months re-sum to the whole: a cross-period activity never
         # costs less than the same activity inside one month.
@@ -384,10 +372,10 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         keys = [ln.cost_setting_key for ln in a.schedule_cost_lines.all()]
         self.assertEqual(len(keys), len(set(keys)))
         self.assertFalse(any("#m" in k for k in keys))
-        self.assertEqual(len(keys), 6)
+        self.assertEqual(len(keys), 5)
 
     def test_no_silent_zero_cost(self):
-        CostSetting.objects.filter(key="programme_venue_per_day").delete()
+        CostSetting.objects.filter(key="group_training_venue_cost").delete()
         before = Activity.objects.count()
         with self.assertRaises(BadRequest):
             psvc.schedule_programme_activity(_payload(), self.cceo)
@@ -655,9 +643,9 @@ class ProgrammeFundingFlowTest(_ProgrammeFixture):
         self.assertEqual(a.status, "rescheduled")
 
         lines = list(a.schedule_cost_lines.all())
-        # Re-priced as a single-month event: 6 unsuffixed component lines,
+        # Re-priced as a single-month event: 5 unsuffixed component lines,
         # all attributed to September, same total.
-        self.assertEqual(len(lines), 6)
+        self.assertEqual(len(lines), 5)
         self.assertFalse(any("#m" in ln.cost_setting_key for ln in lines))
         self.assertTrue(all(ln.month == 9 for ln in lines))
         self.assertTrue(all(ln.planned_date == date(2026, 9, 14) for ln in lines))
