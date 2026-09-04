@@ -995,7 +995,7 @@ def _selected_detail(p, week_start):
         "can_approve": p["can_approve"],
         "can_return": p["can_return"],
         "waiting_hint": hints.get(p["wfr_status"], ""),
-        "plan_label": f"{_week_label(week_start)} Fund Plan",
+        "plan_label": "Weekly Fund Plan",
         "ledger": _ledger(p),
         "total_label": "Total Requested",
         "notes": [

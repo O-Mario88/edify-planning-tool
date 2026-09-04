@@ -10,7 +10,7 @@ selected record and the month's position. The filter form, the selected
 record's body and its actions are page-owned templates named on the
 workspace, so the roles differ only where their work differs.
 {% endcomment %}
-<div class="fund-workspace" data-fund-workspace x-data="{ filtersOpen: true }">
+<div class="fund-workspace" data-fund-workspace>
 
   {% if action_error %}
   <div class="p-3 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700" role="alert">{{ action_error }}</div>
@@ -57,20 +57,12 @@ workspace, so the roles differ only where their work differs.
       </a>
       {% endif %}
       {% endif %}
-      <button type="button" @click="filtersOpen = !filtersOpen" :aria-expanded="filtersOpen" aria-controls="{{ workspace.filters_id }}"
-              class="btn btn-ghost h-8">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M3 4h18l-7 8v6l-4 2v-8L3 4z"/></svg>
-        Filters
-        <svg class="h-3.5 w-3.5 transition-transform" :class="filtersOpen ? 'rotate-180' : ''" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </button>
     </div>
   </header>
   </div>
 
-  <div x-show="filtersOpen" x-collapse>
-    <div class="card fund-filters" id="fund-filters-card">
-      {% include workspace.filters_template %}
-    </div>
+  <div id="fund-filters-card">
+    {% include workspace.filters_template %}
   </div>
 
   {% if kpis %}
@@ -89,10 +81,10 @@ workspace, so the roles differ only where their work differs.
       page, so the selected request's ledger reads at full width. Each tab
       swaps the detail beside it; the strip scrolls sideways on small screens.
     {% endcomment %}
-    <nav class="fund-requesters" data-edify-tablist aria-label="{{ workspace.queue.title }}"
-         x-data="{ selectedKey: '{{ workspace.queue.selected_key }}' }">
-      <span class="fund-requesters__label">{{ workspace.queue.title }} <span class="fund-queue__count">{{ workspace.queue.count }}</span></span>
-      <div class="fund-requesters__strip">
+    <div class="fund-requesters">
+      <p class="fund-requesters__label">{{ workspace.queue.title }} <span class="fund-queue__count">{{ workspace.queue.count }}</span></p>
+      <nav class="fund-requesters__strip" data-edify-tablist aria-label="{{ workspace.queue.title }}"
+           x-data="{ selectedKey: '{{ workspace.queue.selected_key }}' }">
         {% for item in workspace.queue.items %}
         <button type="button" data-edify-tab
                 {% if item.hx_get %}hx-get="{{ item.hx_get }}" hx-target="{{ item.hx_target }}" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"{% endif %}
@@ -100,33 +92,24 @@ workspace, so the roles differ only where their work differs.
                 :aria-current="selectedKey === '{{ item.key }}' ? 'page' : null"
                 :class="selectedKey === '{{ item.key }}' ? 'is-active' : ''"
                 class="fund-requester{% if item.selected %} is-active{% endif %}"
-                title="{{ item.name }} · {{ item.district }} · {{ item.status }}">
+                title="{{ item.name }} · {{ item.total_fmt }} · {{ item.status }}">
           <span class="fund-requester__dot fund-requester__dot--{{ item.status_tone|default:'neutral' }}" aria-hidden="true"></span>
           <span class="fund-requester__name">{{ item.name }}</span>
-          <span class="fund-requester__amount">{{ item.total_fmt }}</span>
         </button>
         {% empty %}
         <span class="fund-requesters__empty">{{ workspace.queue.empty_title }}. {{ workspace.queue.empty_text }}</span>
         {% endfor %}
-      </div>
-      {% if workspace.queue.sort_options|length > 1 %}
-      <label class="fund-queue__sort">Sort by:
-        <select name="sort" aria-label="Sort the queue" form="{{ workspace.filters_id }}" hx-trigger="change" hx-get="{{ workspace.sort_url }}" hx-target="{{ workspace.root_target }}" hx-swap="innerHTML" hx-include="#{{ workspace.filters_id }}" hx-indicator="#fund-workspace-updating">
-          {% for opt in workspace.queue.sort_options %}<option value="{{ opt.value }}" {% if opt.value == workspace.queue.sort %}selected{% endif %}>{{ opt.label }}</option>{% endfor %}
-        </select>
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
-      </label>
-      {% endif %}
-    </nav>
+      </nav>
+    </div>
 
   <div class="fund-workspace__grid">
     <section class="card fund-detail" id="{{ workspace.detail_id }}" aria-live="polite">
       {% include workspace.detail_template %}
     </section>
 
-    <aside class="fund-side" aria-label="This month">
+    <aside class="card fund-side" aria-label="This month">
       {% with side=workspace.side %}
-      <section class="card fund-panel">
+      <section class="fund-side__section">
         <h3 class="fund-panel__title">{{ side.month.title }}</h3>
         <dl class="fund-panel__rows">
           {% for row in side.month.rows %}
@@ -136,7 +119,7 @@ workspace, so the roles differ only where their work differs.
         <a href="{{ side.month.link }}" class="fund-panel__link">{{ side.month.link_label }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg></a>
       </section>
 
-      <section class="card fund-panel">
+      <section class="fund-side__section">
         <div class="fund-panel__head">
           <h3 class="fund-panel__title">{{ side.progress.title }}</h3>
           {% include "components/badge.html" with tone=side.progress.status_tone label=side.progress.status_label size="sm" %}
@@ -149,7 +132,7 @@ workspace, so the roles differ only where their work differs.
         <a href="{{ side.progress.link }}" class="fund-panel__link">{{ side.progress.link_label }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg></a>
       </section>
 
-      <section class="card fund-panel">
+      <section class="fund-side__section">
         <h3 class="fund-panel__title">{{ side.rate.title|default:"Approval Rate This Month" }}</h3>
         {% if side.rate.total %}
         <div class="fund-rate">
@@ -164,7 +147,6 @@ workspace, so the roles differ only where their work differs.
         <p class="fund-panel__empty">{{ side.rate.empty|default:"No decisions recorded this month yet." }}</p>
         {% endif %}
       </section>
-
       {% endwith %}
     </aside>
   </div>

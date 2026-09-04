@@ -1,5 +1,4 @@
 {% comment %}Program Lead fund approval filters. Re-renders the workspace root on change.{% endcomment %}
-<input type="hidden" name="sort" value="{{ workspace.queue.sort }}" form="fa-filters">
   <form id="fa-filters" hx-get="/fund-approvals" hx-target="#fund-approval-root" hx-swap="innerHTML" hx-trigger="change, search" hx-indicator="#fund-workspace-updating"
         class="platform-filter-bar grid grid-cols-2 md:grid-cols-4 gap-2.5">
     <label class="block">
@@ -36,6 +35,14 @@
       <select aria-label="District" name="district" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
         <option value="">All Districts</option>
         {% for opt in district_options %}<option value="{{ opt }}" {% if opt == district_filter %}selected{% endif %}>{{ opt }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sort by</span>
+      <select aria-label="Sort the queue" name="sort" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <option value="amount" {% if workspace.queue.sort == "amount" %}selected{% endif %}>Amount</option>
+      <option value="name" {% if workspace.queue.sort == "name" %}selected{% endif %}>Name</option>
+      <option value="status" {% if workspace.queue.sort == "status" %}selected{% endif %}>Status</option>
       </select>
     </label>
 </form>

@@ -19,4 +19,12 @@
       {% for opt in workspace.district_options %}<option value="{{ opt }}" {% if opt == workspace.district_filter %}selected{% endif %}>{{ opt }}</option>{% endfor %}
     </select>
   </label>
+    <label class="block">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Sort by</span>
+      <select aria-label="Sort the queue" name="sort" class="mt-1 w-full h-9 px-2 rounded-control border border-slate-200 text-[12px] font-semibold text-slate-700 bg-slate-50 focus:outline-none">
+      <option value="week" {% if workspace.queue.sort == "week" %}selected{% endif %}>Week</option>
+      <option value="amount" {% if workspace.queue.sort == "amount" %}selected{% endif %}>Amount</option>
+      <option value="name" {% if workspace.queue.sort == "name" %}selected{% endif %}>Name</option>
+      </select>
+    </label>
 </form>

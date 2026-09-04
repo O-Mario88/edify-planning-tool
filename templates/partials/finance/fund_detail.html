@@ -48,9 +48,9 @@ full width.
     <ul class="space-y-0.5">{% for i in selected.issues %}<li class="edify-text-caption font-semibold text-amber-700">• {{ i }}</li>{% endfor %}</ul>
   </div>
   {% endif %}
-  {% for note in selected.notes %}
-  <p class="edify-text-caption font-semibold text-slate-500">{{ note }}</p>
-  {% endfor %}
+  {% if selected.notes %}
+  <p class="fund-detail__notes">{% for note in selected.notes %}<span>{{ note }}</span>{% endfor %}</p>
+  {% endif %}
 
   <div class="fund-detail__body">
     <div class="min-w-0">
