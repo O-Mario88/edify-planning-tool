@@ -19,7 +19,7 @@ from django.contrib import messages
 from django.utils import timezone
 import csv
 
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseNotFound
 
 from apps.fund_requests.models import (
     WeeklyFundRequest,
@@ -64,6 +64,41 @@ def _disb_filters(request):
     }
 
 
+def _disbursement_voucher(ctx):
+    """One item's payment voucher as CSV: who, what, the approval chain, the
+    funding breakdown and the amount. It is the paper the Accountant files
+    with the payment, so it carries exactly what the detail panel shows."""
+    selected = ctx.get("selected")
+    if not selected:
+        return HttpResponseNotFound("No fund item selected for a voucher.")
+    response = HttpResponse(content_type="text/csv")
+    slug = selected["key"].replace(":", "-")
+    response["Content-Disposition"] = f'attachment; filename="voucher-{slug}.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["Payment voucher", selected["name"]])
+    writer.writerow(["Fund type", selected["kind_label"]])
+    writer.writerow(["Reference", selected["subtitle"]])
+    writer.writerow(["Period", f'{ctx["month_label"]} {ctx["fy"]}'])
+    writer.writerow(["Status", selected["status"]])
+    writer.writerow([])
+    writer.writerow(["Approval chain", "State"])
+    for stage in selected.get("chain", []):
+        writer.writerow([stage["label"], stage["state"].replace("_", " ")])
+    writer.writerow([])
+    writer.writerow(["Activity category", "Planned qty", "Unit cost (UGX)", "Total (UGX)"])
+    for row in selected.get("breakdown", []):
+        writer.writerow(
+            [row["category"], row.get("qty") or "", row.get("unit_cost") or "", int(row["raw_total"] or 0)]
+        )
+    writer.writerow(["Total", "", "", int(selected["raw_amount"] or 0)])
+    if selected.get("disburse_reference"):
+        writer.writerow([])
+        writer.writerow(["Disbursed", selected.get("disbursed_at") or ""])
+        writer.writerow(["Method", selected.get("disburse_method") or ""])
+        writer.writerow(["Reference", selected["disburse_reference"]])
+    return response
+
+
 @require_export_permission
 @require_page_permission("disbursements")
 def disbursements_view(request):
@@ -77,6 +112,8 @@ def disbursements_view(request):
     ctx = get_disbursement_dashboard(request.user, _disb_filters(request))
     ctx["status_filter"] = request.GET.get("status", "")
     ctx["q"] = request.GET.get("q", "")
+    if request.GET.get("export") == "voucher":
+        return _disbursement_voucher(ctx)
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
         response["Content-Disposition"] = (

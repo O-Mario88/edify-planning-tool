@@ -1237,6 +1237,30 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   transform: translateY(-1px);
 }
 
+/* Outline variants: a destructive or cautionary act that is not the row's
+   primary action. Same tokens as the solid fills, worn as a border. */
+.btn-outline-danger {
+  background-color: transparent;
+  border-color: var(--edify-danger);
+  color: var(--edify-danger-solid);
+}
+.btn-outline-danger:hover {
+  background-color: var(--edify-danger-solid) !important;
+  border-color: var(--edify-danger-solid);
+  color: var(--edify-danger-on-solid) !important;
+  transform: translateY(-1px);
+}
+.btn-outline-warning {
+  background-color: transparent;
+  border-color: var(--edify-warning);
+  color: var(--edify-warning);
+}
+.btn-outline-warning:hover {
+  background-color: var(--edify-warning) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
 /* Icon button modifier: Circular */
 .btn-icon {
   border-radius: var(--edify-radius-circle);

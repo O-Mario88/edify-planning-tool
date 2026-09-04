@@ -80,7 +80,7 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260902popover1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260904tiles3">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260904tiles4">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbaralign2">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260903rolehome1">
@@ -105,7 +105,7 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260903tiles1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260904tiles4">{% endblock %}
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260903tiles1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on

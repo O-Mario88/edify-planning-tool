@@ -127,6 +127,25 @@ class ConfirmAccountabilityActionTest(TestCase):
         self.assertEqual(acc["raw_returned_total"], 2_000)
         self.assertEqual(acc["variance_note"], "Fuel cheaper than planned.")
 
+    def test_voucher_download_carries_the_detail(self):
+        """Download Voucher on the detail is a real CSV of the selected item:
+        who, fund type, approval chain, breakdown and total."""
+        ctx = svc.get_disbursement_dashboard(
+            self.accountant, {"fy": FY, "month": 7, "item": f"wfr:{self.wfr.id}"}
+        )
+        sel = ctx["selected"]
+        self.assertEqual(
+            sel["plan_url"],
+            f"/team-planning-oversight/?view=planning&owner={self.cceo.id}",
+        )
+        resp = self.client.get(sel["voucher_url"])
+        self.assertEqual(resp.status_code, 200)
+        self.assertIn("attachment; filename=\"voucher-wfr-", resp["Content-Disposition"])
+        body = resp.content.decode()
+        self.assertIn("Payment voucher,Cara CCEO", body)
+        self.assertIn("Approval chain,State", body)
+        self.assertIn("Total,", body)
+
     def test_drawer_renders_submitted_code_without_input_field(self):
         resp = self.client.get(
             f"/finance/actions/drawer?action=confirm_accountability&request_id={self.wfr.id}"

@@ -610,7 +610,7 @@ main table tbody tr:hover,
  * their own colour ramps and are intentionally excluded. */
 :root:not(.theme-blue):not(.theme-dark) :is(button, a).btn:not(
   .btn-primary, .btn-secondary, .btn-ghost, .btn-danger, .btn-success,
-  .btn-warning, .btn-smooth
+  .btn-warning, .btn-smooth, .btn-outline-danger, .btn-outline-warning
 ) {
   color: var(--brand-primary-text) !important;
   background-color: var(--edify-surface-raised) !important;

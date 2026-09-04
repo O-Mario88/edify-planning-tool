@@ -848,6 +848,25 @@ def _history(item):
     return []
 
 
+def _owner_user_id(kind, obj):
+    """The user whose plan the money belongs to. Weekly advances and
+    reimbursements store the user id as text; an activity knows only its
+    responsible staff profile, so that hops to the profile's user."""
+    if kind == "monthly":
+        return getattr(obj, "submitted_by_user_id", None)
+    if kind in ("weekly", "reimbursement"):
+        return getattr(obj, "responsible_user", None) or None
+    if kind == "partner" and getattr(obj, "responsible_staff_id", None):
+        from apps.accounts.models import StaffProfile
+
+        return (
+            StaffProfile.objects.filter(id=obj.responsible_staff_id)
+            .values_list("user_id", flat=True)
+            .first()
+        )
+    return None
+
+
 def _selected_detail(item, fy, month):
     kind = item["kind"]
     if kind == "monthly":
@@ -878,6 +897,9 @@ def _selected_detail(item, fy, month):
     obj = item["obj"]
     fr = obj if kind == "monthly" else None
     total = sum(b["raw_total"] for b in breakdown) or item["amount"]
+    # "View Full Plan" opens the requester's planning workspace, so the
+    # Accountant reads the plan behind the money before moving it.
+    owner_user_id = _owner_user_id(kind, obj)
 
     # Submitted-but-unreviewed accountability on a weekly item — the payload
     # the Accountant reviews (spend, returned, variance note, NetSuite Code,
@@ -946,6 +968,13 @@ def _selected_detail(item, fy, month):
         "can_return": item["status"] in ("Pending Disbursement", "Held")
         and kind == "monthly",
         "fund_request_id": fr.id if fr else None,
+        "owner_user_id": owner_user_id,
+        "plan_url": (
+            f"/team-planning-oversight/?view=planning&owner={owner_user_id}"
+            if owner_user_id
+            else None
+        ),
+        "voucher_url": f"/disbursements?export=voucher&item={item['key']}&fy={fy}&month={month}",
         # Existing endpoints handle non-monthly kinds (weekly/partner/reimburse).
         "weekly_id": obj.id if kind == "weekly" else None,
         "activity_id": obj.id if kind == "partner" else None,
