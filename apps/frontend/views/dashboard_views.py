@@ -10,7 +10,6 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.activities.models import Activity
-from apps.fund_requests.models import WeeklyFundRequest
 from apps.command_center import services as cc_services
 from apps.command_center.planning_progress import (
     normalise_period as normalise_progress_period,
@@ -21,21 +20,7 @@ from apps.core.permissions import RolePermissionService, require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
 from apps.core.activity_types import VISIT_TYPES
-from apps.core.donut import build_rings
 from apps.core.metrics import MetricValue, render_kpi_item
-
-
-def _format_ugx_compact(val):
-    """Compact UGX formatting helper (mirrors budget_views.format_ugx_compact)."""
-    if not val:
-        return "UGX 0"
-    if val >= 1_000_000_000:
-        return f"UGX {val / 1_000_000_000:.1f}B"
-    if val >= 1_000_000:
-        return f"UGX {val / 1_000_000:.1f}M"
-    if val >= 1_000:
-        return f"UGX {val / 1_000:.0f}K"
-    return f"UGX {val}"
 
 
 def _export_hr_dashboard_csv(data, *, fy, month, country, department):
@@ -142,18 +127,6 @@ def _agenda_icon(activity_type):
     return svg(
         '<path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.6L18 7.4V19a2 2 0 01-2 2z"/>'
     )
-
-
-def _agenda_type_class(activity_type):
-    if activity_type in _TRAINING_TYPES:
-        return "bg-emerald-50 text-emerald-600"
-    if activity_type in _VISIT_TYPES:
-        return "edify-primary-soft edify-primary-text"
-    if activity_type in _MEETING_TYPES or activity_type in _PARTNER_TYPES:
-        return "bg-violet-50 text-violet-600"
-    if activity_type in _SSA_TYPES:
-        return "bg-amber-50 text-amber-600"
-    return "bg-slate-50 text-slate-600"
 
 
 def _agenda_status_pill(activity, today):
@@ -263,10 +236,15 @@ def dashboard_view(request):
     if role in ("MfiPartnerAdmin", "MfiLoanOfficer"):
         return redirect("/mfi-portal/dashboard")
 
-    # Fetch common alerts and todays items
-    alerts_list = cc_services.alerts(user)
-    alerts_summary = cc_services.alerts_summary(user)
-    today_context = cc_services.today(user)
+    # Fetch common alerts and todays items. The CCEO dashboard renders none
+    # of them (its right rail was removed), so that role does not pay for
+    # the five alert queries and the today() derivation it would discard.
+    if role == "CCEO":
+        alerts_list = alerts_summary = today_context = None
+    else:
+        alerts_list = cc_services.alerts(user)
+        alerts_summary = cc_services.alerts_summary(user)
+        today_context = cc_services.today(user)
 
     # Get user avatar initials
     names = user.name.split()
@@ -566,19 +544,6 @@ def dashboard_view(request):
             .count()
         )
 
-        total_tasks = completed_cnt + in_progress_cnt + planned_cnt + overdue_cnt
-
-        # A CCEO with nothing scheduled has every share render as 0% -- which
-        # on this strip reads as "you have done none of it" rather than "you
-        # have nothing". Preserved as-is for now; the honest form is
-        # apps.core.metrics.percentage (None) or MetricValue.ratio (NO_DATA).
-        from apps.core.metrics import percentage_or_zero
-
-        completed_pct = percentage_or_zero(completed_cnt, total_tasks)
-        in_progress_pct = percentage_or_zero(in_progress_cnt, total_tasks)
-        planned_pct = percentage_or_zero(planned_cnt, total_tasks)
-        overdue_pct = percentage_or_zero(overdue_cnt, total_tasks)
-
         # ── "This Week's Plan" — three real, actionable operating lists ────────
         _interv = dict(SsaIntervention.choices)
         CLUSTER_TYPES = [
@@ -719,70 +684,6 @@ def dashboard_view(request):
                 }
             )
 
-        # Rest of the coming week — real activities, not yet done.
-        upcoming_qs = (
-            cc_activities.filter(
-                planned_date__range=[today + timedelta(days=1), week_end],
-            )
-            .exclude(status__in=["completed", "closed"])
-            .select_related(
-                "school", "school__district", "cluster", "cluster__district"
-            )
-            .order_by("planned_date")[:10]
-        )
-
-        upcoming_week = []
-        for a in upcoming_qs:
-            title, _, short_location = _agenda_title_and_location(a)
-            upcoming_week.append(
-                {
-                    "day": a.planned_date.strftime("%a, %b %-d"),
-                    "title": title,
-                    "desc": short_location,
-                    "icon": _agenda_icon(a.activity_type),
-                    "type_class": _agenda_type_class(a.activity_type),
-                }
-            )
-
-        # Pending approvals — this CCEO's own weekly fund requests that need
-        # their action (awaiting confirmation, or bounced back for fixes).
-        CCEO_ACTION_STATUSES = [
-            "pending_responsible_confirmation",
-            "returned_by_pl",
-            "returned_by_cd",
-            "returned_by_rvp",
-            "returned_by_accountant",
-        ]
-        STATUS_LABELS = {
-            "pending_responsible_confirmation": "Awaiting",
-            "returned_by_pl": "Returned",
-            "returned_by_cd": "Returned",
-            "returned_by_rvp": "Returned",
-            "returned_by_accountant": "Returned",
-        }
-        wfrs = WeeklyFundRequest.objects.filter(
-            responsible_user=user.id,
-            status__in=CCEO_ACTION_STATUSES,
-        ).order_by("-week_start_date")[:5]
-
-        pending_approvals = []
-        for w in wfrs:
-            line_count = w.lines.count()
-            pending_approvals.append(
-                {
-                    "title": f"Weekly Fund Request — {w.week_start_date.strftime('%b %-d')}–{w.week_end_date.strftime('%b %-d')}",
-                    "desc": f"{_format_ugx_compact(w.total_amount)} &bull; {line_count} item{'s' if line_count != 1 else ''}",
-                    "status": STATUS_LABELS.get(w.status, "Awaiting"),
-                }
-            )
-
-        # Unread notifications, for the header bell badge.
-        from apps.notifications.models import Notification
-
-        unread_notifications_count = Notification.objects.filter(
-            recipient_id=user.id, status="unread"
-        ).count()
-
         cceo_kpi_items = [
             render_precomputed_metric_item(
                 "frontend_views_dashboard_views_completed_tasks",
@@ -814,12 +715,6 @@ def dashboard_view(request):
             ),
         ]
 
-        # System-generated To-Do operating queue (derived from live workflow
-        # state — auto-closes when the underlying action completes).
-        from apps.command_center.todo_service import get_cached_todos
-
-        todo_data = get_cached_todos(user)
-
         if overdue_last_week:
             mobile_primary_action = {
                 "label": overdue_last_week[0]["action_label"],
@@ -841,76 +736,24 @@ def dashboard_view(request):
                 "url": "/planning",
             }
 
+        # Only what pages/dashboards/cceo.html renders. The keys that fed the
+        # removed right rail (alerts, an At-a-Glance donut and its percentages,
+        # Upcoming This Week, Pending Approvals, the To-Do queue and the
+        # unread-notification badge the context processor already supplies)
+        # went with it; each one was queries the template threw away.
         context = {
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
             "today": today,
             "current_week_number": today.isocalendar()[1],
-            "unread_notifications_count": unread_notifications_count,
-            "kpis": {
-                "completed": completed_cnt,
-                "in_progress": in_progress_cnt,
-                "planned": planned_cnt,
-                "overdue": overdue_cnt,
-                "total": total_tasks,
-                "completed_pct": completed_pct,
-                "in_progress_pct": in_progress_pct,
-                "planned_pct": planned_pct,
-                "overdue_pct": overdue_pct,
-                "in_progress_offset": -completed_pct,
-                "planned_offset": -(completed_pct + in_progress_pct),
-                "overdue_offset": -(completed_pct + in_progress_pct + planned_pct),
-            },
-            # Concentric rings, largest state outermost. Each ring is a share
-            # of the total, so the ring lengths are comparable to each other
-            # and the centre reads the completion rate.
-            "at_a_glance_donut": build_rings(
-                [
-                    {
-                        "key": "completed",
-                        "label": "Completed",
-                        "value": completed_cnt,
-                        "color": "var(--edify-success)",
-                    },
-                    {
-                        "key": "in_progress",
-                        "label": "In Progress",
-                        "value": in_progress_cnt,
-                        "color": "var(--edify-accent)",
-                    },
-                    {
-                        "key": "planned",
-                        "label": "Planned",
-                        "value": planned_cnt,
-                        "color": "var(--edify-warning)",
-                    },
-                    {
-                        "key": "overdue",
-                        "label": "Overdue",
-                        "value": overdue_cnt,
-                        "color": "var(--edify-danger)",
-                    },
-                ],
-                share_of=total_tasks or None,
-            ),
-            "at_a_glance_subline": (
-                f"{total_tasks} activities" if total_tasks else "No activities yet"
-            ),
             "overdue_last_week": overdue_last_week,
             "school_visits_week": school_visits_week,
             "cluster_activities_week": cluster_activities_week,
             "week_plan_total": len(overdue_last_week)
             + len(school_visits_week)
             + len(cluster_activities_week),
-            "upcoming_week": upcoming_week,
-            "pending_approvals": pending_approvals,
             "kpi_strip_items": cceo_kpi_items,
-            "todos": todo_data["todos"][:6],
-            "todo_counts": todo_data["counts"],
-            "todo_total": todo_data["total"],
             "urgent_schools": urgent_schools,
             # Whether to offer "Assign" on each urgent row — handing the visit
             # to a partner is the alternative to doing it yourself, and the
@@ -920,6 +763,9 @@ def dashboard_view(request):
             ),
             "mobile_primary_action": mobile_primary_action,
         }
+        # No HTMX partial: nothing on cceo.html hx-gets the dashboard body
+        # (its only hx-get targets are the drawers), so there is no fragment
+        # for an HX-Request to ask for.
         return render(request, "pages/dashboards/cceo.html", context)
 
     elif role == "ProjectCoordinator":

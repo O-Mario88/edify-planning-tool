@@ -1,39 +1,15 @@
-"""Planning models — annual + monthly plans."""
+"""Planning models — the CCEO's monthly plan and team actions.
+
+AnnualPlan / AnnualPlanActivity used to live here too. Nothing read or wrote
+them (the 2026-07-14 audit listed them as dead), so they were dropped along
+with their table in migration 0009.
+"""
 
 from __future__ import annotations
 
 from django.db import models
 
-from apps.core.enums import ActivityType
 from apps.core.models import CuidField, TimeStampedModel
-
-
-class AnnualPlan(TimeStampedModel):
-    id = CuidField()
-    fy = models.CharField(max_length=16)
-    owner_staff_id = models.CharField(max_length=30, null=True, blank=True)
-    status = models.CharField(max_length=32, default="draft")
-
-    class Meta:
-        db_table = "annual_plan"
-        constraints = [
-            models.UniqueConstraint(
-                fields=["fy", "owner_staff_id"], name="uniq_annualplan_fy_owner"
-            )
-        ]
-
-
-class AnnualPlanActivity(TimeStampedModel):
-    id = CuidField()
-    annual_plan = models.ForeignKey(
-        AnnualPlan, on_delete=models.CASCADE, related_name="activities"
-    )
-    activity_type = models.CharField(max_length=48, choices=ActivityType.choices)
-    school_id = models.CharField(max_length=30, null=True, blank=True)
-    cluster_id = models.CharField(max_length=30, null=True, blank=True)
-    quarter = models.CharField(max_length=8)
-    month = models.IntegerField(null=True, blank=True)
-    week = models.IntegerField(null=True, blank=True)
 
 
 class MonthlyPlan(TimeStampedModel):
@@ -101,8 +77,6 @@ from apps.planning.action_models import (  # noqa: E402
 )
 
 __all__ = [
-    "AnnualPlan",
-    "AnnualPlanActivity",
     "MonthlyPlan",
     "MonthlyPlanActivity",
     "TeamAction",
