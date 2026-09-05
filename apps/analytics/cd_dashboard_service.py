@@ -86,6 +86,18 @@ def _ugx_compact(amount: int) -> str:
     return f"UGX {amount:,}"
 
 
+# The Country Program Leads Performance table shows one column per target
+# area, in the order the owner set (2026-09-05): MSCS, School Visit, Training,
+# SSA Completed, Cluster Meetings. Cells fill by key, never by position.
+PL_AREA_COLUMNS = (
+    ("mscs", "MSCS"),
+    ("school_visits", "School Visit"),
+    ("cluster_trainings", "Training"),
+    ("ssa_completed", "SSA Completed"),
+    ("cluster_meetings", "Cluster Meetings"),
+)
+
+
 class CDDashboardService:
     """Facade for the CD Executive Command Center. All figures are
     country-wide, real, and month/FY filterable."""
@@ -851,6 +863,12 @@ class CDDashboardService:
                     # in a list it had just been taken out of.
                     "areas": b["areas"],
                     "mscs": b.get("mscs"),
+                    # One column per target area on the dashboard (owner,
+                    # 2026-09-05), so each is looked up by key, not position.
+                    "areas_by_key": {
+                        area["key"]: area
+                        for area in [*b["areas"], *([b["mscs"]] if b.get("mscs") else [])]
+                    },
                     "staff": len(cceos),
                     "planned": planned,
                     "verified": verified,
@@ -861,7 +879,7 @@ class CDDashboardService:
                 }
             )
         rows.sort(key=lambda r: r["target_pct"])
-        return {"rows": rows}
+        return {"rows": rows, "area_columns": PL_AREA_COLUMNS}
 
     @staticmethod
     def _pl_region(school_ids) -> str:

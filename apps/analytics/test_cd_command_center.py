@@ -8,6 +8,8 @@ budget at a CD stage, and a core plan behind schedule.
 
 from __future__ import annotations
 
+import re
+
 from datetime import date
 
 from django.contrib.auth import get_user_model
@@ -297,6 +299,43 @@ class CDCommandCenterTest(TestCase):
             areas,
             "an area nobody agreed appeared in the Programme Lead's row",
         )
+
+    def test_program_lead_table_renders_one_column_per_target_area(self):
+        """The CD dashboard shows each target area as its own column.
+
+        Owner, 2026-09-05: "Country Program Leads Performance should have MSCS,
+        School Visit, Training, SSA Completed, Cluster Meetings ... SF Pending,
+        Backlog, Risk". A column is filled by key, never by position, so an
+        area the team has not agreed leaves a dash in ITS column rather than
+        shifting the others left.
+        """
+        d = self._dash()
+        ada = next(r for r in d["pl_performance"]["rows"] if r["name"] == "PL Ada")
+        self.assertEqual(ada["areas_by_key"]["school_visits"]["pct"], 50)
+        self.assertEqual([k for k, _ in d["pl_performance"]["area_columns"]],
+                         ["mscs", "school_visits", "cluster_trainings", "ssa_completed", "cluster_meetings"])
+        self.assertNotIn("ssa_completed", ada["areas_by_key"])
+        self.assertNotIn("mscs", ada["areas_by_key"])
+
+        self.client.force_login(self.cd)
+        html = self.client.get("/dashboard").content.decode()
+        table = html.split("Country Program Leads Performance", 1)[1]
+        headers = re.findall(r"<th[^>]*>\s*([^<]+?)\s*</th>", table)[:14]
+        self.assertEqual(
+            headers,
+            ["Lead", "Region", "Target %", "MSCS", "School Visit", "Training",
+             "SSA Completed", "Cluster Meetings", "Staff", "Planned", "Verified",
+             "SF Pending", "Backlog", "Risk"],
+        )
+        row = table.split("PL Ada", 1)[1].split("</tr>", 1)[0]
+        cells = [
+            re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", c)).strip()
+            for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+        ]
+        # Region, Target %, then MSCS · School Visit · Training · SSA · Meetings.
+        self.assertEqual(cells[2:7], ["—", "50%", "0%", "—", "—"])
+        self.assertIn('title="School Visit: 50% (1 of 2)"', row)
+        self.assertIn('title="SSA Completed: no target agreed"', row)
 
     # 8 ─ leadership attention from real data
     def test_cd_leadership_attention_cards_generated_from_real_data(self):

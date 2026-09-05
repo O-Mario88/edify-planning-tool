@@ -1377,7 +1377,7 @@
    "audit_id": "KPI-SOURCE-071",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1307,
+   "line": 1325,
    "label": null,
    "keys": [
     "amount",
@@ -1397,7 +1397,7 @@
    "audit_id": "KPI-SOURCE-072",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 984,
+   "line": 1002,
    "label": null,
    "keys": [
     "count",
@@ -1418,7 +1418,7 @@
    "audit_id": "KPI-SOURCE-073",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1299,
+   "line": 1317,
    "label": "Not Started",
    "keys": [
     "amount",

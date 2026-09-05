@@ -738,10 +738,7 @@
       "bytes": 1559,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics/country-director",
-        "/dashboard",
-        "/dashboard/cd-approve",
-        "/dashboard/cd-return"
+        "/analytics/country-director"
       ],
       "findings": [],
       "forms": 0,
@@ -3628,7 +3625,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 41315,
+      "bytes": 41822,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",

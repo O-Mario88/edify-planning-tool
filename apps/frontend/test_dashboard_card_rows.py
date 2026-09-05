@@ -1,3 +1,4 @@
+import re
 from pathlib import Path
 
 from django.conf import settings
@@ -121,8 +122,19 @@ class DashboardCardRowContractTest(SimpleTestCase):
         oversight = self._source("templates/partials/analytics/cd/pl_oversight.html")
         drawer = self._source("templates/partials/analytics/cd/drilldown.html")
 
-        self.assertIn("Supervised CCEO Areas", dashboard)
-        self.assertIn("_target_area_badges.html", dashboard)
+        # The dashboard carries one column per target area, in the owner's
+        # order (2026-09-05); each is looked up by key, never by position.
+        service = self._source("apps/analytics/cd_dashboard_service.py")
+        columns = service.split("PL_AREA_COLUMNS = (", 1)[1].split(")\n", 1)[0]
+        self.assertEqual(
+            re.findall(r'\("(\w+)", "([^"]+)"\)', columns),
+            [("mscs", "MSCS"), ("school_visits", "School Visit"),
+             ("cluster_trainings", "Training"), ("ssa_completed", "SSA Completed"),
+             ("cluster_meetings", "Cluster Meetings")],
+        )
+        self.assertEqual(dashboard.count("{% for key, label in pl_performance.area_columns %}"), 2)
+        self.assertIn("r.areas_by_key|get_item:key", dashboard)
+        self.assertNotIn("Supervised CCEO Areas", dashboard)
         self.assertIn("CCEO Area Results", oversight)
         self.assertIn("Supervised CCEOs · All Target Areas", drawer)
         self.assertIn("{% for area in c.areas %}", drawer)

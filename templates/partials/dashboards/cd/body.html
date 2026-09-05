@@ -261,14 +261,19 @@
         <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
       </div>
       <div class="overflow-x-auto -mx-1">
-        <table class="edify-performance-table w-full min-w-[980px] edify-text-caption">
+        <table class="edify-performance-table w-full min-w-[1120px] edify-text-caption">
           <thead>
             <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
               <th class="text-left font-bold py-1.5 pl-1">Lead</th>
               <th class="text-left font-bold py-1.5">Region</th>
               <th class="text-right font-bold py-1.5">Target %</th>
-              <th class="text-right font-bold py-1.5">Supervised CCEO Areas</th>
-              <th class="text-right font-bold py-1.5 whitespace-nowrap">MSCS</th>
+              {% comment %}One column per target area, in the owner's order (2026-09-05):
+              MSCS, School Visit, Training, SSA Completed, Cluster Meetings. The list is
+              PL_AREA_COLUMNS in the dashboard service; headers and cells both walk it,
+              so a cell can never sit under the wrong header.{% endcomment %}
+              {% for key, label in pl_performance.area_columns %}
+              <th class="text-right font-bold py-1.5 whitespace-nowrap">{{ label }}</th>
+              {% endfor %}
               <th class="text-right font-bold py-1.5">Staff</th>
               <th class="text-right font-bold py-1.5">Planned</th>
               <th class="text-right font-bold py-1.5">Verified</th>
@@ -288,17 +293,18 @@
                   <span class="font-bold text-slate-700 tabular-nums">{{ r.target_pct }}%</span>
                 </span>
               </td>
-              <td class="py-2 pl-3">
-                {% include "partials/analytics/cd/_target_area_badges.html" with areas=r.areas %}
-              </td>
+              {% for key, label in pl_performance.area_columns %}
+              {% with area=r.areas_by_key|get_item:key %}
               <td class="text-right tabular-nums py-2 whitespace-nowrap">
-                {% if r.mscs and r.mscs.pct is not None %}
-                  <span title="{{ r.mscs.label }}: {{ r.mscs.pct }}% ({{ r.mscs.achieved }}/{{ r.mscs.target }})"
-                        class="font-bold {% if r.mscs.tone == 'success' %}text-emerald-600{% elif r.mscs.tone == 'warning' %}text-amber-600{% elif r.mscs.tone == 'danger' %}text-rose-600{% else %}text-slate-600{% endif %}">{{ r.mscs.pct }}%</span>
+                {% if area and area.pct is not None %}
+                  <span title="{{ label }}: {{ area.pct }}% ({{ area.achieved }} of {{ area.target }})"
+                        class="font-bold {% if area.tone == 'success' %}text-emerald-600{% elif area.tone == 'info' %}text-sky-600{% elif area.tone == 'warning' %}text-amber-600{% elif area.tone == 'danger' %}text-rose-600{% else %}text-slate-500{% endif %}">{{ area.pct }}%</span>
                 {% else %}
-                  <span class="text-slate-400" title="No MSCS target set">—</span>
+                  <span class="text-slate-400" title="{{ label }}: no target agreed">—</span>
                 {% endif %}
               </td>
+              {% endwith %}
+              {% endfor %}
               <td class="text-right tabular-nums text-slate-500 py-2">{{ r.staff }}</td>
               <td class="text-right tabular-nums text-slate-500 py-2">{{ r.planned|intcomma }}</td>
               <td class="text-right tabular-nums text-slate-500 py-2">{{ r.verified|intcomma }}</td>
@@ -312,12 +318,12 @@
               </td>
             </tr>
             {% empty %}
-            <tr><td colspan="11" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios yet.</td></tr>
+            <tr><td colspan="14" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios yet.</td></tr>
             {% endfor %}
           </tbody>
         </table>
       </div>
-      <p class="edify-text-caption text-slate-400 font-medium">Area results pool the validated performance of each lead's supervised CCEOs: visits, meetings, trainings, SSA and MSCS. Select the lead in Analytics for individual CCEO detail.</p>
+      <p class="edify-text-caption text-slate-400 font-medium">Area results pool the validated performance of each lead's supervised CCEOs: visits, meetings, trainings, SSA and MSCS. A dash means no CCEO under that lead has agreed a target for that area in this period. Select the lead in Analytics for individual CCEO detail.</p>
     </div>
   </div>
 
