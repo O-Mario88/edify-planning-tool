@@ -960,6 +960,27 @@ main :where(
   .oversight-entity-tabs__link,
   .edify-section-nav__cluster,
   .edify-section-nav__link
+) {
+  block-size: 2rem !important;
+  min-block-size: 2rem !important;
+  max-block-size: 2rem !important;
+  padding-block: 0 !important;
+  padding-inline: 0.875rem !important;
+  line-height: 1 !important;
+}
+
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
 ):hover:not(:disabled) {
   color: var(--edify-text) !important;
   border-color: transparent !important;

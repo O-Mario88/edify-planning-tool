@@ -256,9 +256,23 @@ main :is(
      a visible white seam under fixed-height legacy tabs and made the active
      fill look unfinished. */
   padding: 0 !important;
-  min-block-size: 0 !important;
-  block-size: auto !important;
-  height: auto !important;
+  /* ONE rail height, everywhere (2026-09-05).
+   *
+   * The rail's container was already one design — same surface, border,
+   * radius and zero gap on every family — but its HEIGHT was `auto`, so the
+   * tallest segment decided it and each family landed somewhere different: a
+   * sweep of the eight tab surfaces measured 32px on Core Schools and My
+   * Plan, 34px on Messages, 36px on Analytics, Team Targets and Special
+   * Projects. Nothing chose those numbers; they fell out of which padding or
+   * density override happened to win inside each rail.
+   *
+   * 32px is the platform's control height — the action button, the table row
+   * and the row-action trigger all close there — so the rail closes there
+   * too. The segments keep `align-self: stretch` below and fill it exactly,
+   * which is what keeps the active fill flush with the rail border. */
+  min-block-size: 2rem !important;
+  block-size: 2rem !important;
+  height: 2rem !important;
   border-radius: var(--edify-radius-sm) !important;
   background: var(--edify-surface) !important;
 }
