@@ -76,7 +76,9 @@ class KpiStripMigrationTests(SimpleTestCase):
         fund_allocation = _read("templates/pages/finance/fund_allocation.html")
         targets = _read("templates/partials/targets/my_body.html")
         self.assertIn("budget-period-rail", fund_allocation)
-        self.assertIn("target-period-progression", targets)
+        # The period cards became the progress table (2026-09-05); the table
+        # is a disclosure, not a KPI strip.
+        self.assertIn('<details class="edify-disclosure" open>', targets)
         self.assertNotIn("edify-kpi-strip", fund_allocation)
 
     def test_no_template_bypasses_the_platform_kpi_renderer(self):

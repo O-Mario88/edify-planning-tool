@@ -92,6 +92,11 @@ class PeriodMatrixContractTest(SimpleTestCase):
 
     def test_my_target_matrix_is_an_accordion(self):
         my_body = _read("templates/partials/targets/my_body.html")
+        # The table leads the page; the six period cards it replaces are gone,
+        # and the no-priorities state stands where the table would.
+        self.assertNotIn("target-period-progression", my_body)
+        self.assertLess(my_body.index("_period_matrix.html"), my_body.index("strategic_priority_overview.html"))
+        self.assertEqual(my_body.count("no-performance-priorities-title"), 2)
         section = my_body.split("Operational agreements + approved strategic", 1)[1]
         self.assertIn('<details class="edify-disclosure" open>', section)
         self.assertIn('<h2 id="my-cumulative-progress-title">Cumulative progress by time period</h2>', section)

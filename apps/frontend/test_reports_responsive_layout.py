@@ -103,14 +103,16 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         self.assertIn("block-size: auto !important;", css)
         self.assertIn("min-inline-size: 70rem !important;", css)
 
-    def test_period_timelines_wrap_across_report_and_target_pages(self):
+    def test_my_target_opens_on_the_progress_table_not_period_cards(self):
+        """Six period cards of the weighted roll-up said "0 / 0" six times when
+        nothing was agreed; the page opens on the progress table with every
+        priority instead (owner, 2026-09-05)."""
         targets = _read("templates/partials/targets/my_body.html")
 
-        self.assertIn("target-period-progression", targets)
-        self.assertIn("flex flex-col lg:flex-row", targets)
-        self.assertNotIn(
-            "overflow-x-auto",
-            targets.split("target-period-progression", 1)[1].split("</div>", 1)[0],
+        self.assertNotIn("target-period-progression", targets)
+        self.assertLess(
+            targets.index("partials/targets/_period_matrix.html"),
+            targets.index("partials/targets/strategic_priority_overview.html"),
         )
 
     def test_shared_section_nav_scrolls_only_when_the_active_link_is_hidden(self):

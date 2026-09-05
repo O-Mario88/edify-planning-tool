@@ -7628,7 +7628,7 @@
   {
    "audit_id": "KPI-SURFACE-067",
    "template": "templates/partials/targets/my_body.html",
-   "line": 90,
+   "line": 95,
    "source_pattern": "shared-component",
    "items_expression": "area_kpi_items",
    "presentation": "executive",
