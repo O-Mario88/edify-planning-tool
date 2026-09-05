@@ -25,7 +25,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _read(relative_path: str) -> str:
-    return ROOT.joinpath(relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 TEMPLATE = ROOT / "templates" / "pages" / "dashboards" / "cceo.html"
 
 
@@ -64,7 +66,7 @@ class ScriptControlledCellChildrenKeepTheirDisplayTest(SimpleTestCase):
 
 class OverdueRowMenuMarkupTest(TestCase):
     def setUp(self):
-        self.src = TEMPLATE.read_text()
+        self.src = _read("templates/pages/dashboards/cceo.html")
 
     def test_the_row_offers_a_menu_not_a_lone_reschedule_button(self):
         self.assertIn("row-menu__trigger", self.src)
