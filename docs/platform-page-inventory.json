@@ -1552,7 +1552,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 10829,
+      "bytes": 10840,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4625,7 +4625,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 28701,
+      "bytes": 28727,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/action"
@@ -8920,7 +8920,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3733,
+      "bytes": 3688,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-targets/matrix"

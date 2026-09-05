@@ -4229,7 +4229,7 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   z-index: 1;
   inline-size: 10rem;
   min-inline-size: 10rem;
-  background: var(--edify-surface);
+  background: var(--edify-frozen-surface);
   box-shadow: 1px 0 0 var(--edify-border);
 }
 
@@ -4833,6 +4833,23 @@ main .edify-disclosure__body {
   padding: 0 1rem 1rem;
 }
 
+/* ── Frozen cell ────────────────────────────────────────────────────────
+   The platform's sticky first column, for tables written with utility
+   classes. Opaque in every theme (see --edify-frozen-surface). */
+main table .edify-frozen-cell {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background: var(--edify-frozen-surface);
+}
+
+main table thead .edify-frozen-cell,
+main table .edify-frozen-cell--muted {
+  background: var(--edify-frozen-surface-muted);
+}
+
+main table thead .edify-frozen-cell { z-index: 2; }
+
 /* ── Period matrix ──────────────────────────────────────────────────────
    Target · achieved · share per reporting period, one row per priority. The
    first column is frozen, and frozen means opaque: the table scrolls
@@ -4870,11 +4887,11 @@ main .edify-disclosure__body {
   text-align: left;
   font-weight: 600;
   color: var(--edify-text);
-  background: var(--edify-surface);
+  background: var(--edify-frozen-surface);
   box-shadow: 1px 0 0 var(--edify-border);
 }
 
-:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead .period-matrix__label { z-index: 2; background: var(--edify-surface-muted); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead .period-matrix__label { z-index: 2; background: var(--edify-frozen-surface-muted); }
 :is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label-sub { color: var(--edify-text-muted); font-weight: 500; font-size: var(--edify-text-micro-size); }
 
 :is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__period { border-inline-start: 1px solid var(--edify-border); }
@@ -4895,7 +4912,7 @@ main .edify-disclosure__body {
 
 :is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable { cursor: pointer; }
 :is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > td { background: color-mix(in oklab, var(--edify-accent) 6%, var(--edify-surface)); }
-:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > .period-matrix__label { background: color-mix(in oklab, var(--edify-accent) 9%, var(--edify-surface)); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > .period-matrix__label { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
 
 /* Inside a Team Target row the shell scrolls the wide matrix instead of
    clipping it, and the row's own frozen label stays opaque over it. */
@@ -4903,5 +4920,5 @@ main .edify-disclosure__body {
 .tt-area-matrix-shell--matrix > .tt-area-matrix { min-width: 0; table-layout: auto; }
 .tt-area-matrix-shell--matrix > .tt-area-matrix th,
 .tt-area-matrix-shell--matrix > .tt-area-matrix td { position: static; width: auto; }
-.tt-area-matrix-shell--matrix > .tt-area-matrix .period-matrix__label { position: sticky; background: var(--edify-surface-muted); }
+.tt-area-matrix-shell--matrix > .tt-area-matrix .period-matrix__label { position: sticky; background: var(--edify-frozen-surface-muted); }
 

@@ -17,28 +17,62 @@ def _read(relative_path: str) -> str:
 
 
 class FrozenColumnContractTest(SimpleTestCase):
-    def test_a_frozen_column_is_opaque(self):
-        """"The frozen first column on the tables should not be transparent":
-        the cells that stay put while the rest scroll under them wear the
-        solid surface, not the row's translucent tint."""
-        css = _read("static/css/pages.css")
+    """"The frozen first column on the tables should not be transparent."
+
+    A sticky column is a curtain the rest of the row scrolls behind. It is
+    opaque in every theme only when painted over the page background, because
+    the blue theme's surface is itself a 58% glass — so every frozen cell on
+    the platform paints --edify-frozen-surface, never a bare surface or a
+    translucent utility.
+    """
+
+    def test_the_frozen_surface_tokens_paint_over_the_page_background(self):
+        tokens = _read("static/css/design-system.css")
         self.assertIn(
-            ".tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; "
-            "background: var(--edify-surface); }",
-            css,
+            "--edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);",
+            tokens,
         )
-        action = css.split(".tt-member-row > td.tt-matrix__action-cell {", 1)[1][:400]
-        self.assertIn("background: var(--edify-surface);", action)
-        # Hover mixes the accent INTO the surface, so it stays opaque too.
         self.assertIn(
-            ".tt-member-row:hover > td:first-child { background: color-mix(in oklab, "
-            "var(--edify-accent) 9%, var(--edify-surface)); }",
-            css,
+            "--edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);",
+            tokens,
         )
+
+    def test_every_stylesheet_frozen_column_paints_the_token(self):
+        pages = _read("static/css/pages.css")
+        self.assertIn(
+            ".tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--edify-frozen-surface); }",
+            pages,
+        )
+        action = pages.split(".tt-member-row > td.tt-matrix__action-cell {", 1)[1][:400]
+        self.assertIn("background: var(--edify-frozen-surface);", action)
+        area = pages.split(".tt-matrix .tt-area-matrix th:first-child {", 1)[1][:300]
+        self.assertIn("background: var(--edify-frozen-surface-muted);", area)
         platform = _read("static/css/platform.css")
         label = platform.split(":is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label {", 1)[1][:400]
         self.assertIn("position: sticky;", label)
-        self.assertIn("background: var(--edify-surface);", label)
+        self.assertIn("background: var(--edify-frozen-surface);", label)
+        self.assertIn("main table .edify-frozen-cell {", platform)
+        report = platform.split(".edify-report-matrix__table :is(th, td):first-child {", 1)[1][:300]
+        self.assertIn("background: var(--edify-frozen-surface);", report)
+        analytics = _read("static/css/pages/analytics-dashboard.css")
+        impact = analytics.split('.impact-analysis-table tbody th[scope="row"] {', 1)[1][:300]
+        self.assertIn("background: var(--edify-frozen-surface);", impact)
+
+    def test_no_template_freezes_a_cell_with_a_bare_utility(self):
+        """A `sticky left-0` cell with a translucent utility (bg-slate-50/60,
+        bg-violet-50/30) or a bare surface is the bug; the frozen-cell class
+        is the only way a template freezes a column."""
+        offenders = []
+        for path in ROOT.joinpath("templates").rglob("*.html"):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if "sticky left-0" in line or "sticky inset-inline-start-0" in line:
+                    offenders.append(f"{path.relative_to(ROOT)}: {line.strip()[:80]}")
+        self.assertEqual(offenders, [])
+        for path in (
+            "templates/partials/finance/country_budget/root.html",
+            "templates/partials/targets/team/matrix_drawer.html",
+        ):
+            self.assertIn("edify-frozen-cell", _read(path), path)
 
 
 class PeriodMatrixContractTest(SimpleTestCase):
@@ -130,3 +164,16 @@ class YearComparisonWordingTest(SimpleTestCase):
                 path,
             )
             self.assertNotIn("{{ d.methodology.baseline_fy }} → ", source, path)
+
+    def test_no_template_joins_two_years_with_an_arrow(self):
+        import re
+
+        arrow = re.compile(r"FY[^<\n]{0,24}→[^<\n]{0,8}FY")
+        offenders = []
+        for path in ROOT.joinpath("templates").rglob("*.html"):
+            for line in path.read_text(encoding="utf-8").splitlines():
+                if line.lstrip().startswith(("{#", "{% comment")):
+                    continue
+                if arrow.search(line):
+                    offenders.append(f"{path.relative_to(ROOT)}: {line.strip()[:80]}")
+        self.assertEqual(offenders, [])

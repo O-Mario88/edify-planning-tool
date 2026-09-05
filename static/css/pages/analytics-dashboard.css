@@ -1364,7 +1364,7 @@
   inset-inline-start: 0;
   z-index: 1;
   max-inline-size: 17rem;
-  background: var(--edify-surface, #fff);
+  background: var(--edify-frozen-surface);
   color: var(--edify-text, #1e293b);
   box-shadow: 1px 0 0 var(--edify-border, #e2e8f0);
   white-space: normal;

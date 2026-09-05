@@ -3416,8 +3416,8 @@
    2026-09-05: "the frozen first column on the tables should not be
    transparent"). Hover mixes the accent INTO the surface for the same
    reason — a translucent accent tint would let the scroll show again. */
-.tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--edify-surface); }
-.tt-member-row:hover > td:first-child { background: color-mix(in oklab, var(--edify-accent) 9%, var(--edify-surface)); }
+.tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--edify-frozen-surface); }
+.tt-member-row:hover > td:first-child { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
 .tt-member-row.is-expanded > td:first-child { box-shadow: inset 3px 0 0 var(--edify-accent); }
 
 .tt-member-row > td.tt-matrix__action-cell {
@@ -3428,10 +3428,10 @@
   min-width: 4.75rem;
   padding-inline: 0.55rem;
   border-left: 1px solid var(--edify-border);
-  background: var(--edify-surface);
+  background: var(--edify-frozen-surface);
   text-align: center;
 }
-.tt-member-row:hover > td.tt-matrix__action-cell { background: color-mix(in oklab, var(--edify-accent) 9%, var(--edify-surface)); }
+.tt-member-row:hover > td.tt-matrix__action-cell { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
 
 .tt-person {
   display: flex;
@@ -3577,7 +3577,7 @@
   z-index: 1;
   width: auto;
   min-width: 0;
-  background: var(--edify-surface-muted);
+  background: var(--edify-frozen-surface-muted);
   text-align: left;
 }
 .tt-matrix .tt-area-matrix thead th:first-child { z-index: 2; background: color-mix(in oklab, var(--edify-surface-muted) 84%, var(--edify-accent-light)); }

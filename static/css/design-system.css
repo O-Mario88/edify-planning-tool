@@ -264,6 +264,13 @@
      recede behind its content, not compete with it. Body text still reads
      at 12.77:1 and muted text at 7.22:1 against it. */
   --edify-bg: #e3f2fa;
+  /* A FROZEN table cell's background. A sticky column is a curtain the rest
+     of the row scrolls behind, so it must be opaque — and the surface token
+     alone is not: the blue theme's surface is a 58% glass over the page.
+     Painting the surface over the page background gives every theme the
+     same solid curtain (owner, 2026-09-05). */
+  --edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);
+  --edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);
 
   /* ── Page header: tonal elevation ──────────────────────────────────────
      The header is the page's context band, and it should read as part of
