@@ -582,7 +582,9 @@ class TeamTargetsPageTest(TestCase):
         page = self._page()
 
         self.assertIn('class="tt-line-chart"', html)
-        self.assertIn('class="tt-line-chart__series"', html)
+        # Drawn through the chart system from the monthly values (2026-09-05).
+        self.assertIn('id="tt-trend-payload"', html)
+        self.assertIn("EdifyChartSystem.lineTrend(1)", html)
         self.assertIn("Monthly team performance values", html)
         self.assertNotIn("Weekly pacing", html)
         self.assertNotIn("pacing", page)

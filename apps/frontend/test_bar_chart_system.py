@@ -61,6 +61,9 @@ class BarChartSystemContractTest(SimpleTestCase):
             "templates/partials/analytics/cd/performance_vs_target.html",
             "templates/partials/analytics/performance_overview.html",
             "templates/partials/analytics/pl/core_champion.html",
+            "templates/partials/ia/dashboard_body.html",
+            "templates/partials/ssa/performance_workspace.html",
+            "templates/partials/targets/team/body.html",
             "templates/partials/analytics/pl/team_performance.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
@@ -157,7 +160,7 @@ class SharedChartFormTest(SimpleTestCase):
 
         offenders = []
         preset = re.compile(
-            r"EdifyChartSystem\.(formBase|areaTrend|rankedBar|comparisonBar|donut|mixedTrend)"
+            r"EdifyChartSystem\.(formBase|areaTrend|rankedBar|comparisonBar|donut|mixedTrend|lineTrend|gauge)"
         )
         # Since FREEZE-01 charts are built through EdifyChartSystem.renderDetached
         # rather than constructed inline, so `new ApexCharts` alone no longer

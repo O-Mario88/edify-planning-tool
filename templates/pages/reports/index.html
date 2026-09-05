@@ -9,6 +9,7 @@ This standalone page is kept as the section's own frame and includes the very
 same panel, so the two can never drift apart.
 {% endcomment %}
 {% block title %}Reports & Performance — Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 {% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260905frozen1">{% endblock %}
 
 {% block shell_content %}

@@ -1109,86 +1109,12 @@
   padding: 1.25rem;
 }
 
-.ia-chart-legend {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: 0.45rem 0.9rem;
-  color: var(--edify-text-muted);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 700;
-}
-
-.ia-chart-legend span {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-}
-
-.ia-chart-legend i {
-  width: 0.55rem;
-  height: 0.55rem;
-  border-radius: 50%;
-  background: var(--edify-accent);
-}
-
-.ia-chart-legend [data-series="verified"] i {
-  background: var(--edify-success);
-}
-
 .ia-line-chart {
   width: 100%;
   margin-top: 0.75rem;
 }
 
-.ia-line-chart svg {
-  display: block;
-  width: 100%;
-  height: auto;
-  min-height: 14rem;
-}
-
-.ia-line-chart__grid line {
-  stroke: var(--edify-border);
-  stroke-width: 1;
-}
-
-.ia-line-chart__grid text,
-.ia-line-chart__label {
-  fill: var(--edify-text-subtle);
-  /* The micro tier is the floor for every surface, chart axis labels
-     included — 10px here was below it and unnamed. */
-  font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size));
-  font-weight: 700;
-}
-
-.ia-line-chart__series {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  stroke-width: 3;
-}
-
-.ia-line-chart__series--planned {
-  stroke: var(--edify-accent);
-}
-
-.ia-line-chart__series--verified {
-  stroke: var(--edify-success);
-}
-
-.ia-line-chart__dot {
-  stroke: var(--edify-surface-raised);
-  stroke-width: 2;
-}
-
-.ia-line-chart__dot--planned {
-  fill: var(--edify-accent);
-}
-
-.ia-line-chart__dot--verified {
-  fill: var(--edify-success);
-}
+.ia-line-chart [x-ref="el"] { min-height: 15rem; }
 
 .ia-chart-values {
   display: grid;
@@ -1638,16 +1564,6 @@
 
   .ia-chart-values {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .ia-line-chart {
-    overflow-x: auto;
-    overscroll-behavior-x: contain;
-  }
-
-  .ia-line-chart svg {
-    width: 44rem;
-    max-width: none;
   }
 
   .ia-evidence-table {

@@ -76,7 +76,9 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertIn("Regional performance", self.template)
         self.assertIn("District monitoring", self.template)
         self.assertIn("CCEO and Program Lead performance", self.template)
-        self.assertIn("activity_trend.planned_points", self.template)
+        # Drawn through the chart system from the weekly values (2026-09-05).
+        self.assertIn("ia-activity-trend-payload", self.template)
+        self.assertIn("EdifyChartSystem.lineTrend(2)", self.template)
         self.assertIn("district_performance", self.template)
         self.assertIn("leadership_performance", self.template)
         self.assertIn("align-items: start", self.css)

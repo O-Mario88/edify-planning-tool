@@ -165,31 +165,36 @@ layout is the role home above it; the Analytics panel lifts it.
       <article class="ia-panel ia-trend-card">
         <header class="ia-card-heading">
           <div><h3>Eight-week activity flow</h3><p>Planned work compared with completed IA verifications</p></div>
-          <div class="ia-chart-legend" aria-label="Chart legend">
-            <span data-series="planned"><i></i>Planned</span>
-            <span data-series="verified"><i></i>IA verified</span>
-          </div>
         </header>
-        <div class="ia-line-chart">
-          <svg viewBox="0 0 720 230" data-edify-svg-typography role="img"
-               aria-labelledby="activity-trend-title activity-trend-desc" preserveAspectRatio="xMidYMid meet">
-            <title id="activity-trend-title">Planned and IA-verified activities over eight weeks</title>
-            <desc id="activity-trend-desc">The blue line is planned activities and the green line is IA-verified activities. Exact weekly values follow the chart.</desc>
-            <g class="ia-line-chart__grid" aria-hidden="true">
-              <line x1="42" y1="42" x2="686" y2="42"></line><line x1="42" y1="89" x2="686" y2="89"></line>
-              <line x1="42" y1="136" x2="686" y2="136"></line><line x1="42" y1="184" x2="686" y2="184"></line>
-              <text x="28" y="47" text-anchor="end">{{ activity_trend.max }}</text><text x="28" y="188" text-anchor="end">0</text>
-            </g>
-            <polyline class="ia-line-chart__series ia-line-chart__series--planned" points="{{ activity_trend.planned_points }}"></polyline>
-            <polyline class="ia-line-chart__series ia-line-chart__series--verified" points="{{ activity_trend.verified_points }}"></polyline>
-            {% for week in activity_trend.weeks %}
-            <g class="ia-line-chart__point">
-              <circle class="ia-line-chart__dot ia-line-chart__dot--planned" cx="{{ week.x }}" cy="{{ week.planned_y }}" r="4"><title>{{ week.label }}: {{ week.planned }} planned</title></circle>
-              <circle class="ia-line-chart__dot ia-line-chart__dot--verified" cx="{{ week.x }}" cy="{{ week.verified_y }}" r="4"><title>{{ week.label }}: {{ week.verified }} IA verified</title></circle>
-              <text class="ia-line-chart__label" x="{{ week.x }}" y="215" text-anchor="middle">{{ week.label }}</text>
-            </g>
-            {% endfor %}
-          </svg>
+        {% comment %}Planned and IA-verified activities per week, drawn through the chart
+        system (2026-09-05) — the same ordered palette, legend and axes as every
+        other line chart, in place of a hand-drawn SVG. The exact weekly values
+        follow the chart for anyone the chart does not serve.{% endcomment %}
+        {{ activity_trend.weeks|json_script:"ia-activity-trend-payload" }}
+        <div class="ia-line-chart"
+             x-data="{
+               chart: null,
+               init() { this.$nextTick(() => this.draw()); },
+               destroy() { if (this.chart) this.chart.destroy(); },
+               draw() {
+                 const weeks = JSON.parse(document.getElementById('ia-activity-trend-payload').textContent || '[]');
+                 if (!window.EdifyChartSystem || !this.$refs.el) return;
+                 const cfg = window.EdifyChartSystem.lineTrend(2);
+                 cfg.chart.height = 240;
+                 cfg.colors = ['var(--edify-series-1)', 'var(--edify-success)'];
+                 cfg.series = [
+                   { name: 'Planned', data: weeks.map(w => w.planned) },
+                   { name: 'IA verified', data: weeks.map(w => w.verified) }
+                 ];
+                 cfg.xaxis.categories = weeks.map(w => w.label);
+                 /* Eight weeks of zero is a flat line on the floor, not an empty box:
+                    the axis keeps at least one step so the lines stay visible. */
+                 const peak = Math.max(1, ...weeks.map(w => Math.max(w.planned, w.verified)));
+                 cfg.yaxis = window.EdifyChartSystem.countAxis('', { max: peak });
+                 this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+               }
+             }">
+          <div x-ref="el" role="img" aria-label="Planned and IA-verified activities over eight weeks"></div>
         </div>
         <div class="ia-chart-values" aria-label="Exact weekly activity values">
           {% for week in activity_trend.weeks %}<span><b>{{ week.label }}</b><small>{{ week.planned }} planned · {{ week.verified }} verified</small></span>{% endfor %}

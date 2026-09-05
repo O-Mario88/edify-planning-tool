@@ -4,8 +4,8 @@
   "templates": 224,
   "distinct_titles": 591,
   "with_card_key": 13,
-  "untitled_surfaces": 989,
-  "untitled_chrome": 217,
+  "untitled_surfaces": 986,
+  "untitled_chrome": 214,
   "untitled_nested": 358,
   "untitled_headless": 414,
   "templates_with_same_title_twice": 0,
@@ -2868,7 +2868,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 109,
+   "line": 110,
    "title": "Scheduling Status Breakdown",
    "heading_level": 2,
    "has_card_key": false,
@@ -2877,7 +2877,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 121,
+   "line": 136,
    "title": "Pending Partner Reminders",
    "heading_level": 2,
    "has_card_key": false,
@@ -2886,7 +2886,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 131,
+   "line": 146,
    "title": "Upcoming Partner Activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -2895,7 +2895,7 @@
   },
   {
    "template": "templates/pages/partners/index.html",
-   "line": 141,
+   "line": 156,
    "title": "Quick Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -4300,7 +4300,7 @@
   },
   {
    "template": "templates/partials/analytics/panels/reports.html",
-   "line": 129,
+   "line": 150,
    "title": "Achievement vs Target",
    "heading_level": 3,
    "has_card_key": false,
@@ -4309,7 +4309,7 @@
   },
   {
    "template": "templates/partials/analytics/panels/reports.html",
-   "line": 171,
+   "line": 193,
    "title": "Top Priorities",
    "heading_level": 3,
    "has_card_key": false,
@@ -5525,7 +5525,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 199,
+   "line": 204,
    "title": "Regional performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -5534,7 +5534,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 210,
+   "line": 215,
    "title": "District monitoring",
    "heading_level": 3,
    "has_card_key": false,
@@ -5543,7 +5543,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 218,
+   "line": 223,
    "title": "CCEO and Program Lead performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -5552,7 +5552,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 246,
+   "line": 251,
    "title": "SSA coverage",
    "heading_level": 3,
    "has_card_key": false,
@@ -5561,7 +5561,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 282,
+   "line": 287,
    "title": "Evidence quality",
    "heading_level": 3,
    "has_card_key": false,
@@ -5570,7 +5570,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 313,
+   "line": 318,
    "title": "Data integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -5579,7 +5579,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 357,
+   "line": 362,
    "title": "Queue ownership",
    "heading_level": 3,
    "has_card_key": false,
@@ -5588,7 +5588,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 392,
+   "line": 397,
    "title": "Recent decisions",
    "heading_level": 3,
    "has_card_key": false,
@@ -6720,7 +6720,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 294,
+   "line": 285,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -6729,7 +6729,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 315,
+   "line": 306,
    "title": "Districts most behind",
    "heading_level": 2,
    "has_card_key": false,

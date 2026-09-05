@@ -237,46 +237,37 @@
         <div><span class="tt-eyebrow">{{ fy_label }}</span><h2>Team performance trend</h2></div>
         <span class="tt-status" data-tone="{% if summary_kpis.0.value == '0%' %}danger{% else %}success{% endif %}">{{ summary_kpis.0.value }}</span>
       </header>
+      {% comment %}Weighted monthly team achievement, drawn through the chart system
+      (2026-09-05): one line in the platform's palette, gaps where no target
+      was assigned, the selected month marked. The values table below the
+      figure carries the same numbers for anyone the chart does not serve.{% endcomment %}
       <figure class="tt-line-chart" aria-labelledby="tt-trend-title tt-trend-description">
-        <div class="tt-line-chart__viewport">
-          <svg viewBox="0 0 1200 600" data-edify-svg-typography role="img"
-               aria-labelledby="tt-trend-title tt-trend-description">
-            <title id="tt-trend-title">Monthly team performance trend for {{ fy_label }}</title>
-            <desc id="tt-trend-description">Validated weighted team achievement from October through September. Months without assigned targets are shown as gaps.</desc>
-            <defs aria-hidden="true">
-              <linearGradient id="tt-trend-line-gradient" x1="0" y1="0" x2="1" y2="0">
-                <stop offset="0" stop-color="var(--edify-teal-400)"/>
-                <stop offset="0.55" stop-color="var(--edify-accent)"/>
-                <stop offset="1" stop-color="var(--edify-success)"/>
-              </linearGradient>
-            </defs>
-
-            <g class="tt-line-chart__grid" aria-hidden="true">
-              <line x1="52" y1="45" x2="1148" y2="45"/><text x="16" y="50">100%</text>
-              <line x1="52" y1="161.25" x2="1148" y2="161.25"/><text x="22" y="166">75%</text>
-              <line x1="52" y1="277.5" x2="1148" y2="277.5"/><text x="22" y="282">50%</text>
-              <line x1="52" y1="393.75" x2="1148" y2="393.75"/><text x="22" y="399">25%</text>
-              <line x1="52" y1="510" x2="1148" y2="510"/><text x="29" y="515">0%</text>
-            </g>
-
-            <g aria-hidden="true">
-              {% for segment in team_trend_segments %}
-              <polyline class="tt-line-chart__glow" points="{{ segment.points }}"/>
-              <polyline class="tt-line-chart__series" points="{{ segment.points }}"/>
-              {% endfor %}
-            </g>
-
-            {% for point in team_trend %}
-            {% if point.pct is not None %}
-            <g class="tt-line-chart__point{% if point.selected %} is-selected{% endif %}" aria-hidden="true">
-              <circle class="tt-line-chart__halo" cx="{{ point.x }}" cy="{{ point.y }}" r="11"/>
-              <circle class="tt-line-chart__dot" cx="{{ point.x }}" cy="{{ point.y }}" r="5"/>
-              {% if point.selected %}<text class="tt-line-chart__selected-value" x="{{ point.x }}" y="{{ point.label_y }}">{{ point.pct }}%</text>{% endif %}
-            </g>
-            {% endif %}
-            <text class="tt-line-chart__month{% if point.selected %} is-selected{% endif %}" x="{{ point.x }}" y="566" aria-hidden="true">{{ point.month }}</text>
-            {% endfor %}
-          </svg>
+        <p id="tt-trend-title" class="sr-only">Monthly team performance trend for {{ fy_label }}</p>
+        <p id="tt-trend-description" class="sr-only">Validated weighted team achievement from October through September. Months without assigned targets are shown as gaps.</p>
+        {{ team_trend|json_script:"tt-trend-payload" }}
+        <div class="tt-line-chart__viewport"
+             x-data="{
+               chart: null,
+               init() { this.$nextTick(() => this.draw()); },
+               destroy() { if (this.chart) this.chart.destroy(); },
+               draw() {
+                 const points = JSON.parse(document.getElementById('tt-trend-payload').textContent || '[]');
+                 if (!window.EdifyChartSystem || !this.$refs.el) return;
+                 const cfg = window.EdifyChartSystem.lineTrend(1);
+                 cfg.chart.height = 260;
+                 cfg.series = [{ name: 'Team achievement', data: points.map(p => p.pct) }];
+                 cfg.xaxis.categories = points.map(p => p.month);
+                 cfg.yaxis = window.EdifyChartSystem.rateAxis('', { opposite: false });
+                 const selected = points.find(p => p.selected);
+                 if (selected) {
+                   cfg.annotations = { xaxis: [{ x: selected.month, borderColor: 'var(--edify-accent)', strokeDashArray: 4,
+                     label: { text: selected.pct == null ? 'Selected month' : selected.pct + '%', orientation: 'horizontal',
+                              style: { color: 'var(--edify-surface-raised)', background: 'var(--edify-accent)', fontSize: '12px', fontWeight: 600 } } }] };
+                 }
+                 this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+               }
+             }">
+          <div x-ref="el" role="img" aria-label="Monthly team achievement for {{ fy_label }}"></div>
         </div>
         <figcaption class="tt-insight-note">Weighted from the same validated ledger used by each team member’s My Targets page.</figcaption>
         <table class="sr-only">

@@ -784,8 +784,10 @@
       ]
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 3677,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4714,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1655,9 +1657,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 11705,
+      "bytes": 12805,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1699,7 +1702,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 743,
+      "bytes": 745,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3795,7 +3798,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1701,
+      "bytes": 1938,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -5675,7 +5678,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 23265,
+      "bytes": 23046,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -8862,7 +8865,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 21366,
+      "bytes": 21077,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8879,7 +8882,6 @@
       "states": [
         "default",
         "empty",
-        "selected",
         "open"
       ],
       "tables": 3,
@@ -49575,7 +49577,7 @@
       "backend_module": "apps.frontend.views.partner_views",
       "backend_view": "apps.frontend.views.partner_views.partners_list_view",
       "card_count": 0,
-      "charts": false,
+      "charts": true,
       "drawers": false,
       "evidence": [
         "template:pages/partners/index.html",

@@ -80,11 +80,11 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260905frozen1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260905charts1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260905charts2">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260905map1">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260905frozen1">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260905charts2">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -100,7 +100,7 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260826modal1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260905frozen1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260905charts2">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
@@ -589,6 +589,58 @@ controller exists by the time a drawer's x-init runs.
       return Object.assign(axis, opts || {});
     },
 
+    /* One or more measures over time, as lines. The ordered palette gives
+       each series its hue; the legend sits on top and names them. This is
+       the form the hand-drawn SVG trends moved onto (2026-09-05): the IA
+       eight-week activity flow, the team performance trend. */
+    lineTrend: function (seriesCount, opts) {
+      var S = window.EdifyChartSystem;
+      var count = seriesCount || 1;
+      return S.formBase({
+        chart: { type: 'line', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: (count > 1 ? S.comparisonSeries : S.singleSeries).slice(0, Math.max(1, count)),
+        stroke: { width: 2.25, curve: 'straight', lineCap: 'round' },
+        markers: { size: 4, strokeWidth: 2, hover: { size: 6 } },
+        legend: { show: count > 1, position: 'top', horizontalAlign: 'left', fontSize: '12px',
+                  fontWeight: 600, itemMargin: { vertical: 3 },
+                  markers: { width: 9, height: 9, radius: 9 },
+                  labels: { colors: S.ink.legend } },
+        tooltip: { theme: 'dark', shared: true, intersect: false, style: { fontSize: '12px' } },
+      }, opts);
+    },
+
+    /* One share of a whole, as a ring: budget utilised, funding drawn. The
+       value sits in the centre; the ring wears the tone the caller names,
+       because here colour carries meaning (success = on track). This is the
+       form the conic-gradient gauges moved onto (2026-09-05). */
+    gauge: function (tone, label, opts) {
+      var S = window.EdifyChartSystem;
+      var colour = {
+        success: 'var(--edify-success)',
+        warning: 'var(--edify-warn, var(--edify-warning))',
+        danger: 'var(--edify-danger)',
+      }[tone] || 'var(--edify-series-1)';
+      return S.formBase({
+        chart: { type: 'radialBar', toolbar: { show: false }, fontFamily: 'inherit', sparkline: { enabled: true } },
+        colors: [colour],
+        plotOptions: {
+          radialBar: {
+            hollow: { size: '62%' },
+            track: { background: 'var(--edify-border)', strokeWidth: '100%' },
+            dataLabels: {
+              name: { show: Boolean(label), fontSize: '12px', fontWeight: 700, color: S.ink.legend, offsetY: 18 },
+              value: { fontSize: '18px', fontWeight: 700, color: 'var(--edify-text)', offsetY: label ? -6 : 4,
+                       formatter: function (v) { return Math.round(v) + '%'; } },
+            },
+          },
+        },
+        stroke: { lineCap: 'round' },
+        labels: label ? [label] : [],
+        legend: { show: false },
+        tooltip: { enabled: false },
+      }, opts);
+    },
+
     /* FREEZE-01. Build the chart OUTSIDE the main landmark, then move it in.
 
        ApexCharts sizes its text by appending an element and reading its
@@ -657,7 +709,36 @@ controller exists by the time a drawer's x-init runs.
 
       var slot = Math.round(el.getBoundingClientRect().width);
       if (!slot) {
-        /* No measurable slot: the honest fallback is the old path. */
+        /* No measurable slot. Until 2026-09-05 this fell back to rendering in
+           place, and a slot inside a closed <details> — the Reports insight
+           disclosures — has no width at all, so ApexCharts drew a chart of
+           width NaN and the console filled with "translate(NaN, 0)". A chart
+           in a folded panel waits for the fold to open (or for the slot to
+           gain width any other way) and renders then, at the right width.
+           The in-place fallback is kept only for a slot nothing can observe. */
+        var fold = el.closest('details');
+        if (fold && !fold.open) {
+          var waiting = { destroy: function () { waiting.cancelled = true; } };
+          fold.addEventListener('toggle', function onOpen() {
+            fold.removeEventListener('toggle', onOpen);
+            if (waiting.cancelled) { return; }
+            var live = window.EdifyChartSystem.renderDetached(el, options);
+            waiting.destroy = function () { if (live && live.destroy) { live.destroy(); } };
+          });
+          return waiting;
+        }
+        if (typeof ResizeObserver === 'function') {
+          var pending = { destroy: function () { pending.cancelled = true; observer.disconnect(); } };
+          var observer = new ResizeObserver(function (entries) {
+            if (!entries.some(function (entry) { return entry.contentRect.width > 0; })) { return; }
+            observer.disconnect();
+            if (pending.cancelled) { return; }
+            var drawn = window.EdifyChartSystem.renderDetached(el, options);
+            pending.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
+          });
+          observer.observe(el);
+          return pending;
+        }
         var inPlace = new ApexCharts(el, options);
         inPlace.render();
         return inPlace;

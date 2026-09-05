@@ -1293,6 +1293,14 @@ def reports_view(request):
         if total_activities > 0
         else 0,
         "periods": periods,
+        # The trend chart reads the periods as plain rows (2026-09-05).
+        "reports_trend_payload": [
+            {
+                "label": p["chevron_label"],
+                "pct": p["pct"] if p.get("has_target") else None,
+            }
+            for p in periods
+        ],
         "core_cards": core_cards,
         "core_kpi_items": core_kpi_items,
         "matrix_rows": matrix_rows,

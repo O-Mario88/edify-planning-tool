@@ -4258,8 +4258,8 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   padding: 1rem !important;
 }
 
-.edify-report-trend-chart {
-  block-size: clamp(10rem, 14vw, 13rem);
+.edify-report-trend-chart [x-ref="el"] {
+  min-block-size: 13rem;
 }
 
 .edify-report-priority {

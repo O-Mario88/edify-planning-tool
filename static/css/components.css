@@ -3553,6 +3553,16 @@ search:has(.edify-search-submit) input[type="search"] {
   .edify-admin-support-banner a { margin-inline-start: 0; }
 }
 
+/* A chart's SVG keeps the size the chart engine gave it. Icon rules such as
+   `.ia-panel svg { height: 1em }` reach every SVG in a card, and on the IA
+   dashboard they squashed a 240px chart to 17px once it moved inside a card
+   (2026-09-05). `revert` hands the size back to the engine's attributes. */
+main .apexcharts-canvas > svg.apexcharts-svg {
+  inline-size: revert !important;
+  block-size: revert !important;
+  max-inline-size: none !important;
+}
+
 /* ── ApexCharts reference treatment ───────────────────────────────────────
    Series colors stay data-driven, while the hollow points and black tooltip
    mirror the platform's chart reference across line and mixed charts.

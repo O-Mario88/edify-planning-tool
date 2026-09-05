@@ -573,8 +573,7 @@
 
 .pl-funding-donut {
   position: relative;
-  inline-size: clamp(3.75rem, 22cqi, 4.5rem);
-  aspect-ratio: 1;
+  inline-size: clamp(5rem, 28cqi, 6rem);
   flex: none;
 }
 
@@ -3753,58 +3752,8 @@
 .tt-progress-row small { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
 
 .tt-line-chart { margin: 0; }
-.tt-line-chart__viewport {
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-gutter: stable;
-  padding: 0.45rem 0.75rem 0;
-}
-.tt-line-chart svg { display: block; width: 100%; min-width: 34rem; height: auto; }
-.tt-line-chart__grid line {
-  stroke: var(--edify-border);
-  stroke-width: 1;
-  stroke-dasharray: 4 7;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__grid text,
-.tt-line-chart__month {
-  fill: var(--edify-text-subtle);
-  font-family: var(--edify-font-sans);
-  font-size: var(--edify-svg-text-label, var(--edify-text-label-size));
-}
-.tt-line-chart__series,
-.tt-line-chart__glow {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__glow { stroke: var(--edify-accent); stroke-width: 12; opacity: 0.13; }
-.tt-line-chart__series { stroke: url(#tt-trend-line-gradient); stroke-width: 3; }
-.tt-line-chart__halo {
-  fill: var(--edify-accent-light);
-  stroke: var(--edify-accent-border);
-  stroke-width: 2;
-  opacity: 0;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__dot {
-  fill: var(--edify-surface-raised);
-  stroke: var(--edify-accent);
-  stroke-width: 3;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__point.is-selected .tt-line-chart__halo { opacity: 1; }
-.tt-line-chart__point.is-selected .tt-line-chart__dot { fill: var(--edify-accent); stroke: var(--edify-surface-raised); }
-.tt-line-chart__selected-value {
-  fill: var(--edify-accent);
-  font-family: var(--edify-font-sans);
-  font-size: var(--edify-svg-text-title, var(--edify-text-title-size));
-  font-weight: 600;
-  text-anchor: middle;
-}
-.tt-line-chart__month { text-anchor: middle; }
-.tt-line-chart__month.is-selected { fill: var(--edify-accent); font-weight: 600; }
+.tt-line-chart__viewport { padding: 0.45rem 0.75rem 0; }
+.tt-line-chart__viewport [x-ref="el"] { min-height: 16rem; }
 .tt-insight-note { margin: 0; padding: 0 1rem 1rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); line-height: 1.45; }
 
 .tt-lower-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }

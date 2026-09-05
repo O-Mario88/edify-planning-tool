@@ -1500,20 +1500,9 @@ def _ia_dashboard_context(request) -> dict:
         + [row["planned"] for row in weekly_values]
         + [row["verified"] for row in weekly_values]
     )
-    for index, row in enumerate(weekly_values):
-        row["x"] = 42 + index * 92
-        row["planned_y"] = round(184 - (row["planned"] / trend_max * 142), 1)
-        row["verified_y"] = round(184 - (row["verified"] / trend_max * 142), 1)
-    activity_trend = {
-        "weeks": weekly_values,
-        "max": trend_max,
-        "planned_points": " ".join(
-            f'{row["x"]},{row["planned_y"]}' for row in weekly_values
-        ),
-        "verified_points": " ".join(
-            f'{row["x"]},{row["verified_y"]}' for row in weekly_values
-        ),
-    }
+    # The chart is drawn by the chart system from these values (2026-09-05);
+    # the SVG geometry this used to compute is gone with the hand-drawn SVG.
+    activity_trend = {"weeks": weekly_values, "max": trend_max}
 
     # ── Upload intake status ────────────────────────────────────────────────
     last_batch = UploadBatch.objects.order_by("-created_at").first()

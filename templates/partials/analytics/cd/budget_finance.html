@@ -17,13 +17,23 @@ Quarterly instead. {% endcomment %}
   </div>
 
   <div class="flex items-center gap-4 pt-1">
-    {# Conic-gradient utilization donut #}
-    <div class="relative h-[92px] w-[92px] shrink-0 rounded-pill"
-         style="background: conic-gradient(var(--edify-chart-green) 0% {{ budget_finance.utilization_pct }}%, var(--edify-border, var(--edify-border)) {{ budget_finance.utilization_pct }}% 100%);">
-      <div class="absolute inset-[10px] edify-surface rounded-pill flex flex-col items-center justify-center">
-        <span class="text-[18px] font-bold text-slate-800 tabular-nums leading-none">{{ budget_finance.utilization_pct }}%</span>
-        <span class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wide">Utilized</span>
-      </div>
+    {% comment %}Utilisation as a ring through the chart system's gauge form
+    (2026-09-05), in place of a conic gradient.{% endcomment %}
+    {# Sized with utilities the platform ships: an arbitrary 100px utility does not exist, so a slot using it measured 0 and the ring never drew. #}
+    <div class="h-[92px] w-[92px] shrink-0"
+         x-data="{
+           chart: null,
+           init() { this.$nextTick(() => this.draw()); },
+           destroy() { if (this.chart) this.chart.destroy(); },
+           draw() {
+             if (!window.EdifyChartSystem || !this.$refs.el) return;
+             const cfg = window.EdifyChartSystem.gauge('success', 'Utilised');
+             cfg.chart.height = 92;
+             cfg.series = [{{ budget_finance.utilization_pct|default:0 }}];
+             this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+           }
+         }">
+      <div x-ref="el" role="img" aria-label="{{ budget_finance.utilization_pct }} percent of requested funding disbursed"></div>
     </div>
     <div class="flex-1 min-w-0">
       <p class="edify-text-caption font-semibold text-slate-400">Disbursed of Requested</p>
@@ -32,13 +42,26 @@ Quarterly instead. {% endcomment %}
       <p class="text-[13px] font-bold text-slate-600 tabular-nums leading-tight">UGX {{ budget_finance.requested|intcomma }}</p>
       {# quarterly disbursement trend #}
       <p class="edify-text-caption font-semibold text-slate-400 mt-2">Quarterly trend</p>
-      <div class="flex items-end gap-1 h-6 mt-1">
-        {% for v in budget_finance.quarter_vals %}
-        <div class="flex-1 flex flex-col items-center gap-0.5">
-          <div class="min-h-[2px] w-full edify-primary-soft rounded-small" style="height: {% widthratio v budget_finance.requested 24 %}px;"></div>
-          <span class="edify-text-caption font-bold text-slate-400">Q{{ forloop.counter }}</span>
-        </div>
-        {% endfor %}
+      {{ budget_finance.quarter_vals|json_script:"cd-budget-quarters-payload" }}
+      <div class="mt-1"
+           x-data="{
+             chart: null,
+             init() { this.$nextTick(() => this.draw()); },
+             destroy() { if (this.chart) this.chart.destroy(); },
+             draw() {
+               const values = JSON.parse(document.getElementById('cd-budget-quarters-payload').textContent || '[]');
+               if (!window.EdifyChartSystem || !this.$refs.el) return;
+               const cfg = window.EdifyChartSystem.comparisonBar();
+               cfg.chart.height = 96;
+               cfg.chart.sparkline = { enabled: true };
+               cfg.series = [{ name: 'Disbursed (UGX)', data: values }];
+               cfg.xaxis.categories = values.map((v, i) => 'Q' + (i + 1));
+               cfg.dataLabels = { enabled: false };
+               cfg.tooltip.y = { formatter: v => 'UGX ' + Number(v).toLocaleString() };
+               this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+             }
+           }">
+        <div x-ref="el" role="img" aria-label="Disbursement by quarter"></div>
       </div>
     </div>
   </div>

@@ -103,23 +103,44 @@ lives on My Target and inside each team member's row on Team Target
 </div>
 </div>
 
-<!-- Real bar chart: each bar's height is the period's actual %-of-target
-     (or a flat empty bar when no target is configured for that period). -->
-<div class="edify-report-trend-chart w-full flex items-stretch gap-3 px-2">
-{% for period in periods %}
-<div class="flex-1 flex flex-col items-center gap-2">
-<div class="flex-1 w-full flex items-end bg-slate-50 rounded-surface overflow-hidden relative">
-{% if period.has_target %}
-<div class="w-full rounded-t {% if period.pct >= 70 %}bg-emerald-500{% elif period.pct >= 50 %}edify-primary-solid{% else %}bg-rose-500{% endif %}" style="height: {% if period.pct > 100 %}100{% else %}{{ period.pct }}{% endif %}%"></div>
+{% comment %}One column per reporting period, its height the share of that period's
+target achieved, drawn through the chart system (2026-09-05). Colour carries
+the same thresholds the page uses everywhere: green from 70%, blue from 50%,
+red below; a period with no target draws no column. The values follow the
+chart for anyone the chart does not serve.{% endcomment %}
+{{ reports_trend_payload|json_script:"reports-trend-payload" }}
+{% if not donut_total and not periods.0.has_target %}
+<div class="edify-report-trend-chart w-full">
+  <p class="analytics-chart-status" role="status">No FY{{ fy }} targets are configured, so there is no share of target to chart. Set targets in Target Setting to see progress by period here.</p>
+</div>
 {% else %}
-<span class="absolute inset-x-0 bottom-1 text-center edify-text-caption text-slate-300 font-bold">No target</span>
+<div class="edify-report-trend-chart w-full"
+     x-data="{
+       chart: null,
+       init() { this.$nextTick(() => this.draw()); },
+       destroy() { if (this.chart) this.chart.destroy(); },
+       draw() {
+         const periods = JSON.parse(document.getElementById('reports-trend-payload').textContent || '[]');
+         if (!window.EdifyChartSystem || !this.$refs.el) return;
+         const tone = p => p.pct == null ? 'var(--edify-border)' : p.pct >= 70 ? 'var(--edify-success)' : p.pct >= 50 ? 'var(--edify-series-1)' : 'var(--edify-danger)';
+         const cfg = window.EdifyChartSystem.comparisonBar();
+         cfg.chart.height = 220;
+         cfg.series = [{ name: '% of target achieved', data: periods.map(p => p.pct) }];
+         cfg.colors = periods.map(tone);
+         cfg.plotOptions.bar.distributed = true;
+         cfg.legend = { show: false };
+         cfg.xaxis.categories = periods.map(p => p.label);
+         cfg.yaxis = window.EdifyChartSystem.rateAxis('', { opposite: false, max: undefined, forceNiceScale: true });
+         cfg.dataLabels.formatter = (v, o) => (v == null ? '' : window.EdifyChartSystem.barLabelFits(o) ? v + '%' : '');
+         this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+       }
+     }">
+  <div x-ref="el" role="img" aria-label="Share of target achieved per reporting period"></div>
+</div>
 {% endif %}
-</div>
-<span class="edify-text-caption font-semibold text-slate-500 text-center leading-tight">{{ period.chevron_label }}</span>
-<span class="edify-text-caption font-bold text-slate-400">{% if period.has_target %}{{ period.pct }}%{% else %}—{% endif %}</span>
-</div>
-{% endfor %}
-</div>
+<ul class="sr-only" aria-label="Share of target achieved per reporting period">
+{% for period in periods %}<li>{{ period.chevron_label }}: {% if period.has_target %}{{ period.pct }}%{% else %}no target{% endif %}</li>{% endfor %}
+</ul>
 </div>
 
 <!-- Compact decision rail: target health above management priorities. -->
@@ -133,25 +154,26 @@ lives on My Target and inside each team member's row on Team Target
 
 {% if donut_total %}
 <div class="flex flex-col items-center justify-center space-y-4">
-<!-- Simple stacked bar — real counts, no fabricated segments -->
-<div class="flex flex-col items-center gap-2 w-full">
-<span class="text-[24px] font-semibold text-slate-800 leading-none">{{ donut_total }}</span>
-<span class="edify-text-caption font-bold text-slate-500 uppercase tracking-wide">Targets Assessed</span>
-<div class="w-full h-3 rounded-pill overflow-hidden flex bg-slate-100">
-{% widthratio donut_on_track donut_total 100 as on_pct %}
-{% widthratio donut_at_risk donut_total 100 as risk_pct %}
-{% widthratio donut_off_track donut_total 100 as off_pct %}
-<div class="bg-emerald-500 h-full" style="width: {{ on_pct }}%"></div>
-<div class="bg-amber-500 h-full" style="width: {{ risk_pct }}%"></div>
-<div class="bg-rose-500 h-full" style="width: {{ off_pct }}%"></div>
-</div>
-</div>
-
-<div class="edify-text-caption space-y-1.5 font-bold w-full text-slate-600 px-2">
-<div class="flex items-center justify-between"><span class="text-emerald-600">● On Track (&gt;=70%)</span> <span>{{ donut_on_track }} ({{ on_pct }}%)</span></div>
-<div class="flex items-center justify-between"><span class="text-amber-600">● At Risk (50-69%)</span> <span>{{ donut_at_risk }} ({{ risk_pct }}%)</span></div>
-<div class="flex items-center justify-between"><span class="text-rose-600">● Off Track (&lt;50%)</span> <span>{{ donut_off_track }} ({{ off_pct }}%)</span></div>
-</div>
+{% comment %}Targets on track, at risk and off track as a ring through the chart
+system's donut form (2026-09-05): the total in the centre, each state in the
+colour the page gives it everywhere, the legend carrying count and share.{% endcomment %}
+<div class="w-full"
+     x-data="{
+       chart: null,
+       init() { this.$nextTick(() => this.draw()); },
+       destroy() { if (this.chart) this.chart.destroy(); },
+       draw() {
+         if (!window.EdifyChartSystem || !this.$refs.el) return;
+         const cfg = window.EdifyChartSystem.donut('Targets assessed');
+         cfg.chart.height = 220;
+         cfg.series = [{{ donut_on_track }}, {{ donut_at_risk }}, {{ donut_off_track }}];
+         cfg.labels = ['On track (≥70%)', 'At risk (50–69%)', 'Off track (<50%)'];
+         cfg.colors = ['var(--edify-success)', 'var(--edify-warn, var(--edify-warning))', 'var(--edify-danger)'];
+         cfg.legend.position = 'bottom';
+         this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+       }
+     }">
+  <div x-ref="el" role="img" aria-label="{{ donut_total }} targets assessed: {{ donut_on_track }} on track, {{ donut_at_risk }} at risk, {{ donut_off_track }} off track"></div>
 </div>
 
 {% with fy_period=periods|last %}

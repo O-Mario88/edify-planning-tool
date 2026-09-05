@@ -3997,44 +3997,8 @@ html, body {
   gap: 13px;
   margin-top: 15px;
 }
-.partner-status-breakdown__donut {
-  display: grid;
-  width: 112px;
-  height: 112px;
-  place-items: center;
-  border-radius: 50%;
-}
-.partner-status-breakdown__donut::before {
-  content: "";
-  grid-area: 1 / 1;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--surface-1);
-}
-.partner-status-breakdown__donut span {
-  z-index: 1;
-  grid-area: 1 / 1;
-  color: var(--text-secondary);
-  font-size: var(--edify-text-micro-size);
-  font-weight: 600;
-  text-align: center;
-}
-.partner-status-breakdown__donut strong {
-  display: block;
-  color: var(--text-primary);
-  font-size: 18px;
-  line-height: 1.15;
-}
-.partner-status-breakdown dl {
-  display: grid;
-  gap: 9px;
-  margin: 0;
-}
-.partner-status-breakdown dl div {
-  display: grid;
-  gap: 2px;
-}
+/* The conic ring and its legend list left with the hand-drawn chart: the
+   breakdown is a chart-system donut now (2026-09-05). */
 .partner-status-breakdown dt {
   color: var(--text-secondary);
   font-size: var(--edify-text-micro-size);
@@ -4257,14 +4221,6 @@ html, body {
   .partner-status-breakdown {
     grid-template-columns: 96px minmax(0, 1fr);
   }
-  .partner-status-breakdown__donut {
-    width: 92px;
-    height: 92px;
-  }
-  .partner-status-breakdown__donut::before {
-    width: 58px;
-    height: 58px;
-  }
 }
 @media (max-width: 980px) {
   .partner-workspace {
@@ -4389,13 +4345,7 @@ html, body {
   background: var(--brand-primary-soft);
   color: var(--brand-primary-text);
 }
-.partner-identity h2, .partner-activity-card__summary dd, .partner-activity-table td strong, .partner-aside-card h2, .partner-status-breakdown__donut strong, .partner-status-breakdown dd, .partner-reminder-list strong, .partner-upcoming-list strong, .partner-upcoming-list time strong, .partner-empty-state h2 {
-  color: var(--edify-text);
-}
-.partner-identity p, .partner-activity-card__summary dd small, .partner-kpi-card span:not(.partner-kpi-card__icon), .partner-kpi-card small, .partner-activity-table td, .partner-status-breakdown dt, .partner-status-breakdown__donut span, .partner-reminder-list p, .partner-empty-state, .partner-aside-card__blank {
-  color: var(--edify-text-muted);
-}
-.partner-identity p svg, .partner-aside-card__heading svg, .partner-empty-state svg {
+.partner-identity h2, .partner-activity-card__summary dd, .partner-activity-table td strong, .partner-aside-card h2,.partner-identity p, .partner-activity-card__summary dd small, .partner-kpi-card span:not(.partner-kpi-card__icon), .partner-kpi-card small, .partner-activity-table td, .partner-status-breakdown dt,.partner-identity p svg, .partner-aside-card__heading svg, .partner-empty-state svg {
   color: var(--edify-accent-text);
 }
 .partner-activity-card__summary > div, .partner-activity-table th, .partner-activity-table td, .partner-aside-card__link {
@@ -4451,9 +4401,6 @@ html, body {
 .partner-activity-table__action:focus-visible, .partner-aside-card__link:focus-visible {
   outline: none;
   box-shadow: var(--edify-focus-ring);
-}
-.partner-status-breakdown__donut::before {
-  background: var(--edify-card-surface);
 }
 .partner-dot--success {
   background: var(--edify-success);
