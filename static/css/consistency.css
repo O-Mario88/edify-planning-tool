@@ -1307,7 +1307,14 @@ main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
    coloured notice inside <main> — success, warning and error alike — was
    repainted as a plain white card with a transparent border. An error message
    that looks identical to a content card is not an error message. Both live
-   regions are exempt now, matching the drawer rule further down this file. */
+   regions are exempt now, matching the drawer rule further down this file.
+
+   Tiles are exempt for the same reason (2026-09-05). A KPI tile carries its
+   accent gradient by design, and `.edify-interactive-card` — the class a
+   clickable tile adds — matches `[class*="-card"]` here, so this rule was
+   repainting them as plain white surfaces: 71 of the platform's 124 KPI tiles
+   had no gradient, which was every tile that happened to be clickable. A tile
+   that states a number is not a content card. */
 main :is(
   .card:not(.card-alert),
   .card-elevated,
@@ -1354,7 +1361,7 @@ main :is(
   section.rounded-surface.border,
   article.rounded-surface.border,
   aside.rounded-surface.border
-):not([role="alert"]):not([role="status"]) {
+):not([role="alert"]):not([role="status"]):not(.kpi-strip__item):not(.edify-stat-tile) {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
   border-color: var(--edify-card-border) !important;
@@ -1959,6 +1966,12 @@ main :is(
   [role="alert"], [role="dialog"], [role="menu"], [role="listbox"],
   [popover], .drawer-surface, .edify-popup-dialog__surface,
   .platform-filter-bar, .overflow-x-auto, .overflow-auto,
+  /* A tile is not a nested card. It states one number and carries the
+     accent wash every tile on the platform carries, so stripping its
+     surface here left it flat white beside its washed neighbours — which
+     is what "the tile gradient is never implemented system-wide" looked
+     like (owner, 2026-09-05). */
+  .kpi-strip__item, .edify-stat-tile,
   /* A floating overlay inside the drawer, not a nested card: the date
      picker must keep its own opaque surface, border and shadow or the form
      shows through the day grid (2026-09-02). */
@@ -2164,7 +2177,7 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
   div[class*="rounded"][class*="border"],
   section[class*="rounded"][class*="border"],
   article[class*="rounded"][class*="border"]
-) {
+):not(.edify-stat-tile):not(.kpi-strip__item) {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -3575,7 +3588,11 @@ main table tbody > tr:only-child > td[colspan] > :is(
    the template wrote them in.
    ═══════════════════════════════════════════════════════════════════════════ */
 main .edify-stat-tile.edify-stat-tile {
-  --kpi-accent: transparent;
+  /* Neutral, not transparent: a hand-built tile whose utility classes name no
+     colour still belongs to the same family as the component tiles beside it,
+     and `transparent` left it flat white while its neighbours carried a wash
+     (2026-09-05). A tone found in the markup overrides this below. */
+  --kpi-accent: var(--edify-text-muted, #64748b);
   display: flex !important;
   flex-direction: column !important;
   align-items: stretch !important;
@@ -3585,7 +3602,6 @@ main .edify-stat-tile.edify-stat-tile {
   border: 1px solid color-mix(in srgb, var(--edify-border) 82%, transparent) !important;
   border-radius: 0.875rem !important;
   background-color: color-mix(in srgb, var(--edify-surface) 96%, var(--edify-surface-muted)) !important;
-  background-image: none;
   box-shadow: 0 2px 3px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.08) !important;
   color: var(--edify-text);
 }
@@ -3595,7 +3611,7 @@ main .edify-stat-tile.edify-stat-tile--warning { --kpi-accent: var(--edify-warn,
 main .edify-stat-tile.edify-stat-tile--danger { --kpi-accent: var(--edify-danger, #ef4444); }
 main .edify-stat-tile.edify-stat-tile--info { --kpi-accent: var(--edify-accent, #2563eb); }
 
-main .edify-stat-tile.edify-stat-tile[class*="edify-stat-tile--"] {
+main .edify-stat-tile.edify-stat-tile.edify-stat-tile {
   border-color: color-mix(in srgb, var(--kpi-accent) 42%, var(--edify-border)) !important;
   background-image:
     radial-gradient(

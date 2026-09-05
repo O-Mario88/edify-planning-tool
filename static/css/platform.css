@@ -199,8 +199,14 @@ main :where(
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-) {
-  /* Card planes are deliberate workspaces; outlines stay subordinate to data. */
+):not(.kpi-strip__item):not(.edify-stat-tile) {
+  /* Card planes are deliberate workspaces; outlines stay subordinate to data.
+
+     Tiles are not card planes (2026-09-05). A KPI tile paints its accent
+     gradient, and a clickable one carries `.edify-interactive-card`, which
+     matches the `[class*="-card"]` arm above — so this rule repainted it as a
+     plain surface and 71 of the platform's 124 KPI tiles lost their gradient.
+     consistency.css carries the same exemption on its own surface rule. */
   border-color: var(--edify-card-border) !important;
   background-color: var(--edify-card-surface) !important;
   background-image: var(--edify-surface-treatment) !important;
