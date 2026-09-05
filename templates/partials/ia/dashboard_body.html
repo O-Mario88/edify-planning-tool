@@ -223,14 +223,21 @@ layout is the role home above it; the Analytics panel lifts it.
           <section class="ia-group" x-data="{ open: false }">
             <button type="button" class="ia-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="ia-district-group-{{ group.key }}">
               <span class="ia-group__identity"><strong>{{ group.name }}</strong><small>{{ group.region }} · {{ group.count }} district{{ group.count|pluralize }}</small></span>
-              <span class="ia-group__figures"><span>{{ group.achieved }} of {{ group.planned }} achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate }}%"></i></span><b>{{ group.rate }}%</b></span>
+              <span class="ia-group__figures"><span>{{ group.schools_achieved }} of {{ group.schools }} schools achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.schools_pct }}%"></i></span><b>{{ group.schools_pct }}%</b></span>
               <svg class="ia-group__chevron" :class="open && 'is-open'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="ia-district-group-{{ group.key }}" class="ia-group__body" x-show="open" x-cloak>
-              <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
-                <caption class="sr-only">Districts in {{ group.name }}</caption>
-                <thead><tr><th>District</th><th>Planned</th><th>Achieved</th><th>Awaiting IA</th><th>Returned</th><th>Performance</th></tr></thead>
-                <tbody>{% for district in group.districts %}<tr><td><strong>{{ district.name }}</strong><small>{{ district.region }}</small></td><td>{{ district.planned }}</td><td>{{ district.achieved }}</td><td>{{ district.waiting }}</td><td>{{ district.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ district.rate }}%"></i></span><b>{{ district.rate }}%</b></td></tr>{% endfor %}</tbody>
+              {% comment %}Schools first, activities second (owner, 2026-09-05): how many schools
+              the district has, how many of them have planned and achieved work
+              this year, and the share — then the activity counts. Short
+              headers, so nine columns stay readable.{% endcomment %}
+              <div class="ia-monitor-table-wrap"><table class="ia-monitor-table ia-monitor-table--reach">
+                <caption class="sr-only">Districts in {{ group.name }}: schools reached and activities</caption>
+                <thead>
+                  <tr><th rowspan="2">District</th><th colspan="4" class="ia-monitor-table__band">Schools</th><th colspan="5" class="ia-monitor-table__band">Activities</th></tr>
+                  <tr><th># Schools</th><th># Planned</th><th># Achieved</th><th>% Achieved</th><th>Planned</th><th>Achieved</th><th>Awaiting IA</th><th>Returned</th><th>Performance</th></tr>
+                </thead>
+                <tbody>{% for district in group.districts %}<tr><td><strong>{{ district.name }}</strong><small>{{ district.region }}</small></td><td>{{ district.schools }}</td><td>{{ district.schools_planned }}</td><td>{{ district.schools_achieved }}</td><td><b>{{ district.schools_pct }}%</b></td><td>{{ district.planned }}</td><td>{{ district.achieved }}</td><td>{{ district.waiting }}</td><td>{{ district.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ district.rate }}%"></i></span><b>{{ district.rate }}%</b></td></tr>{% endfor %}</tbody>
               </table></div>
             </div>
           </section>

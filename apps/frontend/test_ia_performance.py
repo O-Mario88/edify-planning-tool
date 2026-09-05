@@ -180,6 +180,16 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual(home["region"], self.region.name)
         self.assertEqual(home["name"], "Other districts")  # fixture has no sub-region
         self.assertEqual((home["planned"], home["achieved"]), (1, 1))
+        # School reach (owner, 2026-09-05): schools in the district, schools
+        # with planned work, schools with achieved work, and the share.
+        self.assertEqual(
+            (district["schools_planned"], district["schools_achieved"]), (1, 1)
+        )
+        self.assertGreaterEqual(district["schools"], 1)
+        self.assertEqual(
+            district["schools_pct"], round(1 / district["schools"] * 100)
+        )
+        self.assertEqual(home["schools_achieved"], 1)
         leader_groups = {g["name"]: g for g in response.context["leadership_groups"]}
         team = leader_groups[pl_user.name]
         self.assertEqual([m["name"] for m in team["members"]], [cceo_user.name])

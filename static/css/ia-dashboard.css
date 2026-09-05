@@ -1679,3 +1679,36 @@
   .ia-group__figures { grid-column: 1; }
 }
 
+/* District monitoring carries a schools band and an activities band. The
+   band header sits over its four or five columns; the cells stay compact. */
+.ia-monitor-table--reach { min-width: 58rem; }
+.ia-monitor-table--reach th { white-space: nowrap; }
+.ia-monitor-table--reach thead tr:first-child th[rowspan] { vertical-align: bottom; }
+.ia-monitor-table__band {
+  text-align: center;
+  border-inline-start: 1px solid var(--edify-border);
+  background: color-mix(in oklab, var(--edify-surface-muted) 60%, transparent);
+}
+.ia-monitor-table--reach td:nth-child(2),
+.ia-monitor-table--reach td:nth-child(6),
+.ia-monitor-table--reach thead tr:last-child th:nth-child(1),
+.ia-monitor-table--reach thead tr:last-child th:nth-child(5) { border-inline-start: 1px solid var(--edify-border); }
+
+/* Nine columns are wider than a half-width card; the opened group scrolls
+   them sideways rather than clipping the schools band at "# Planned". */
+.ia-group__body .ia-monitor-table-wrap {
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+/* With schools and activities side by side the district table is nine
+   columns wide; in a half-width card only two of them fit before the scroll.
+   The district card takes the full row and the leadership card follows,
+   so the whole band reads at a glance on a laptop (owner, 2026-09-05). */
+.ia-monitoring-grid > .ia-monitor-table-card:first-child { grid-column: 1 / -1; }
+.ia-monitor-table--reach th,
+.ia-monitor-table--reach td { padding-inline: 0.55rem; }
+.ia-monitor-table--reach td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
+.ia-monitor-table--reach thead tr:last-child th:not(:first-child) { text-align: right; }
+

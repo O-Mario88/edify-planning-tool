@@ -1387,6 +1387,53 @@ def _ia_dashboard_context(request) -> dict:
 
     school_district_rollup = _activity_rollup(performance_qs, "school__district_id")
     event_district_rollup = _activity_rollup(performance_qs, "event_district_id")
+
+    # School reach per district (owner, 2026-09-05): how many schools the
+    # district has, how many of them have planned work this year, how many
+    # have achieved work, and the share — schools, not activities, so a
+    # district that pours ten visits into one school reads as one school.
+    from apps.schools.lifecycle_service import active_schools
+
+    schools_by_district = {
+        row["district_id"]: row["n"]
+        for row in active_schools()
+        .exclude(district_id__isnull=True)
+        .values("district_id")
+        .annotate(n=Count("id"))
+    }
+    school_reach_by_district = {
+        row["school__district_id"]: row
+        for row in performance_qs.exclude(school_id__isnull=True)
+        .values("school__district_id")
+        .annotate(
+            planned_schools=Count("school_id", distinct=True),
+            achieved_schools=Count(
+                "school_id", distinct=True, filter=Q(status__in=ACHIEVED_STATUSES)
+            ),
+        )
+    }
+
+    def _school_reach(district_id):
+        reach = school_reach_by_district.get(district_id, {})
+        schools = schools_by_district.get(district_id, 0)
+        achieved = reach.get("achieved_schools", 0)
+        return {
+            "schools": schools,
+            "schools_planned": reach.get("planned_schools", 0),
+            "schools_achieved": achieved,
+            "schools_pct": round(achieved / schools * 100) if schools else 0,
+        }
+
+    def _merge_school_reach(rows):
+        schools = sum(row["schools"] for row in rows)
+        achieved = sum(row["schools_achieved"] for row in rows)
+        return {
+            "schools": schools,
+            "schools_planned": sum(row["schools_planned"] for row in rows),
+            "schools_achieved": achieved,
+            "schools_pct": round(achieved / schools * 100) if schools else 0,
+        }
+
     district_performance = []
     # Districts fold under their sub-region, the way clusters fold under the
     # person who holds them: one row per sub-region carrying the roll-up,
@@ -1406,6 +1453,7 @@ def _ia_dashboard_context(request) -> dict:
             "region": district.region.name,
             "sub_region": district.sub_region.name if district.sub_region else None,
             **metrics,
+            **_school_reach(district.id),
         }
         district_performance.append(row)
         key = (district.region.name, row["sub_region"] or "")
@@ -1422,6 +1470,7 @@ def _ia_dashboard_context(request) -> dict:
     district_groups = []
     for group in district_groups_by_key.values():
         group.update(_merge_rollups(*group["districts"]))
+        group.update(_merge_school_reach(group["districts"]))
         group["count"] = len(group["districts"])
         district_groups.append(group)
 

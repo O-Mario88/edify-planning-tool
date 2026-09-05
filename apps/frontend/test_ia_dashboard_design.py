@@ -90,6 +90,8 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertIn('aria-controls="ia-district-group-{{ group.key }}"', self.template)
         self.assertIn('aria-controls="ia-leader-group-{{ group.key }}"', self.template)
         self.assertIn("{% for district in group.districts %}", self.template)
+        for header in ("<th># Schools</th>", "<th># Planned</th>", "<th># Achieved</th>", "<th>% Achieved</th>"):
+            self.assertIn(header, self.template)
         self.assertIn("{% for leader in group.members %}", self.template)
         self.assertIn("align-items: start", self.css)
 
