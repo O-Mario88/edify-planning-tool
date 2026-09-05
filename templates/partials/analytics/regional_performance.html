@@ -262,9 +262,9 @@
                   @focus="row.level === 'subregion' && highlight(row.name)"
                   @blur="row.level === 'subregion' && highlight(null)">
                 <td class="py-1.5 pr-1 font-semibold text-slate-700">
-                  <span class="inline-flex min-w-0 items-center gap-1.5">
-                    <span class="h-2 w-2 rounded-pill shrink-0"
-                          :style="`background:${row.colour}`"></span>
+                  <span class="inline-flex min-w-0 items-center gap-2">
+                    <span class="sr-distribution-key shrink-0" aria-hidden="true"
+                          :style="`--sr-key:${row.colour}`"></span>
                     <span class="truncate" x-text="row.name"></span>
                   </span>
                 </td>
@@ -681,6 +681,13 @@ function subregionMap(){
         const lo = pts.reduce((a,[x]) => a+x, 0) / pts.length;
         const la = pts.reduce((a,[,y]) => a+y, 0) / pts.length;
         const t = document.createElementNS(NS,'text');
+        // The centroid is where the name WANTS to sit; keepSubRegionLabelsOnCanvas
+        // moves it only as far as the canvas edge forces. Keeping the home
+        // position on the element makes that clamp idempotent — it re-runs on
+        // every resize and zoom-out and must not walk the label inward a
+        // little further each time.
+        t.dataset.homeX = sx(lo).toFixed(1);
+        t.dataset.homeY = sy(la).toFixed(1);
         t.setAttribute('transform', `translate(${sx(lo).toFixed(1)},${sy(la).toFixed(1)})`);
         t.setAttribute('class','sr-sl');
         t.textContent = name.toUpperCase();
@@ -1290,6 +1297,42 @@ function subregionMap(){
         scale:1,
         labelScales:[0.82, 0.74, 0.68],
         allowOverlapFallback:true,
+      });
+      this.keepSubRegionLabelsOnCanvas();
+    },
+    /* A sub-region name is centred on the mean of its districts' centroids,
+       and for a sub-region lying against the national border that centre is
+       not far enough inside for the whole name: SOUTH WESTERN, the widest of
+       the ten, hung 2px past the left edge of a phone canvas and lost its S.
+       So slide a name inward by exactly the amount it overhangs, and no more —
+       the label still reads as belonging to its own territory.
+
+       This runs with district placement rather than at build time because the
+       overhang depends on rendered text, and the type step changes with the
+       viewport: on a phone these are the only names on the map and they are
+       set larger, which is what pushed the widest one over the edge. */
+    keepSubRegionLabelsOnCanvas(){
+      const layer = this.subLabels;
+      const view = this.$refs.svg?.viewBox?.baseVal;
+      if(!layer || !view?.width) return;
+      const pad = 3;
+      layer.querySelectorAll('text').forEach(label => {
+        const homeX = Number(label.dataset.homeX);
+        const homeY = Number(label.dataset.homeY);
+        if(!Number.isFinite(homeX) || !Number.isFinite(homeY)) return;
+        let box;
+        try{ box = label.getBBox(); }catch{ return; }
+        if(!box.width) return;  // hidden, or webfont not resolved yet
+        let x = homeX, y = homeY;
+        const overLeft = pad - (x + box.x);
+        const overRight = (x + box.x + box.width) - (view.width - pad);
+        if(overLeft > 0) x += overLeft;
+        else if(overRight > 0) x -= overRight;
+        const overTop = pad - (y + box.y);
+        const overBottom = (y + box.y + box.height) - (view.height - pad);
+        if(overTop > 0) y += overTop;
+        else if(overBottom > 0) y -= overBottom;
+        label.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
       });
     },
     resolveSubcountyLabelCollisions(){

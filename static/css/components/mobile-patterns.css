@@ -715,11 +715,11 @@
     display: table-row-group !important;
   }
 
-  [data-mobile-family] .edify-record-table > tbody > tr {
+  [data-mobile-family] .edify-record-table > tbody > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
     display: table-row !important;
   }
 
-  [data-mobile-family] .edify-record-table > tbody > tr > :is(th, td) {
+  [data-mobile-family] .edify-record-table > tbody > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) > :is(th, td):not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
     display: table-cell !important;
   }
 

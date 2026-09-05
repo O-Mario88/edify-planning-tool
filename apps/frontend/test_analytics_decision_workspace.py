@@ -84,11 +84,15 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("table-layout: fixed", layout)
         self.assertIn("padding: 1rem 0.5rem 0", layout)
         self.assertIn("@media (max-width:48rem)", map_template)
-        # District and sub-region identity must remain readable on phones;
-        # collision fitting + text halos handle density without deleting the
-        # place names from the map.
-        self.assertIn("#sr-cam .sr-dl{display:block}", map_template)
-        self.assertIn("#sr-cam .sr-sl{display:block}", map_template)
+        # A phone map carries SUB-REGION names only (owner, 2026-09-05). All
+        # 136 district names at once on a 375px canvas overlap into noise, and
+        # the sub-region is the level the table beside the map is grouped by.
+        # District identity stays one tap away in zoom, tooltip and focus.
+        self.assertIn("#sr-cam .sr-dl{display:none}", map_template)
+        self.assertIn(
+            "#sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em}",
+            map_template,
+        )
         cluster_template = _read(
             "templates/partials/analytics/cluster_performance.html"
         )

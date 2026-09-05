@@ -3892,12 +3892,17 @@ search:has(.edify-search-submit) input[type="search"] {
     letter-spacing:0;stroke:var(--edify-map-label-halo);stroke-width:.2em;
     stroke-linejoin:round;paint-order:stroke fill;
   }
-  /* Place names are operational map content, including on phones. Collision
-     fitting and text halos keep the dense national layer readable without
-     removing district identity from smaller viewports. */
+  /* On a phone the map carries SUB-REGION names only (owner, 2026-09-05:
+     "the map labels on mobile should only show the sub-region ... the screen
+     is too small and looks overcrowded"). All 136 district names at once on a
+     375px canvas overlap into noise, and the sub-region is the level the
+     table beside the map is grouped by anyway. District identity is still one
+     tap away: zoom, the tooltip and the focus panel all name the district.
+     Tracking tightens so the widest name — SOUTH WESTERN, centred on a
+     sub-region that sits against the left edge — stays inside the canvas. */
   @media (max-width:48rem){
-    #sr-cam .sr-dl{display:block}
-    #sr-cam .sr-sl{display:block}
+    #sr-cam .sr-dl{display:none}
+    #sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em}
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
   #sr-cam .sr-boundary-layer > path{

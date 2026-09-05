@@ -93,6 +93,22 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
   word-break: normal !important;
 }
 
+/* Every row and cell below carries a hidden-state guard: a row the page has
+   decided to hide stays hidden.
+
+   These declarations are `!important` because they have to beat the phone
+   card-mode transformation — and an inline style loses to `!important`, so
+   every conditionally-rendered row in an operational table reappeared on a
+   phone. The Analytics distribution table printed "No sub-region data is
+   available." underneath its ten populated rows (owner, 2026-09-05), and the
+   same leak was live in any table with an empty state, a "show more" row or a
+   detail row, because Alpine hides all of them the same way: by writing
+   `display: none` into the element's own style attribute.
+
+   Excepting the hidden state rather than `[x-show]` is deliberate. A row
+   Alpine is SHOWING still needs the real-table display, or it would drop back
+   to a card while its siblings stayed rows. `[x-cloak]` covers the moment
+   before Alpine has evaluated the condition. */
 /* A scroll mode owns table anatomy, not merely overflow. Page-specific mobile
    styles historically converted some tbody/tr/td elements into grids or
    blocks. When one of those rules survived in a cached asset, headings stayed
@@ -122,13 +138,13 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
 
 :is(.edify-workspace, .drawer-body)
   :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden)
-  > :is(thead, tbody, tfoot) > tr {
+  > :is(thead, tbody, tfoot) > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
   display: table-row !important;
 }
 
 :is(.edify-workspace, .drawer-body)
   :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden)
-  > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  > :is(thead, tbody, tfoot) > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) > :is(th, td):not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
   display: table-cell !important;
 }
 

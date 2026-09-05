@@ -3213,7 +3213,7 @@ main table tbody > tr:only-child > td[colspan] > :is(
   }
 
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span) + :is(div, p, span)::before {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span):not(:empty) + :is(div, p, span)::before {
     content: "· ";
     color: var(--edify-text-subtle, var(--edify-text-muted));
   }
@@ -3323,12 +3323,17 @@ main table tbody > tr:only-child > td[colspan] > :is(
     margin-inline-start: 0.375rem;
   }
 
+  /* `:not(:empty)` on the FIRST of the pair: the separator joins two pieces
+     of text ("Sacred Heart · SCH-014"), and an empty element is a colour
+     swatch, a status dot or an icon. Joining a swatch to a name produced
+     "● · Central" in the analytics sub-region table, which is what a middle
+     dot floating before every row name looked like (owner, 2026-09-05). */
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small) + :is(div, p, span, small)::before,
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small) + :is(div, p, span, small)::before,
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row) + :is(div, p, small)::before {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(:empty) + :is(div, p, small)::before {
     content: "· ";
     color: var(--edify-text-subtle, var(--edify-text-muted));
   }

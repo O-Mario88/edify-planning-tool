@@ -779,9 +779,26 @@
     scrollbar-gutter: auto;
   }
 
-  .analytics-geo-card .sr-distribution-scroll table {
-    inline-size: 100%;
+  /* The table fills the card. A nested scroll region was giving it a second,
+     narrower viewport inside the panel — the table measured 256px inside a
+     337px card and scrolled sideways with the whole width sitting unused
+     beside it (owner, 2026-09-05). There is room here; nothing needs to
+     scroll horizontally. */
+  .analytics-geo-card .sr-distribution-scroll table,
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
+    inline-size: 100% !important;
     min-inline-size: 0 !important;
+    table-layout: auto;
+  }
+
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  /* The name column takes whatever the three figure columns leave. */
+  .analytics-geo-card .sr-distribution-col--name {
+    inline-size: auto;
   }
 
   .analytics-geo-card .sr-distribution-scroll :is(th, td) {
@@ -1397,3 +1414,17 @@ main #impact-workspace .impact-group-pagination a {
     justify-content: stretch;
   }
 }
+
+/* The sub-region colour key: the row's tie to the choropleth. It was an 8px
+   dot, and a dot in front of a name reads as list punctuation rather than a
+   legend (owner, 2026-09-05: "the dot before the sub-region name looks
+   weird"). A short rounded rule at the row's cap height carries the same
+   colour and reads as a key beside the name instead of a mark inside it. */
+.sr-distribution-key {
+  inline-size: .1875rem;
+  block-size: .8125rem;
+  border-radius: 999px;
+  background-color: var(--sr-key, var(--edify-border));
+  align-self: center;
+}
+

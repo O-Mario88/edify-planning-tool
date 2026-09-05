@@ -270,12 +270,30 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         )
         self.assertNotIn("declash(){", template)
 
-    def test_mobile_keeps_district_labels_visible(self):
+    def test_mobile_shows_sub_region_names_only_and_keeps_them_on_canvas(self):
+        """A phone gets the ten sub-region names, all of them inside the map.
+
+        Every district name at once on a 375px canvas is unreadable, so the
+        phone map drops to the level the table beside it is grouped by (owner,
+        2026-09-05). The widest of those names, SOUTH WESTERN, is centred on a
+        sub-region that sits against the national border and hung past the
+        left edge until the placement pass clamped it back.
+        """
+
         template = _regional_source()
 
-        self.assertIn("#sr-cam .sr-dl{display:block}", template)
-        self.assertNotIn("#sr-cam .sr-dl{display:none}", template)
+        self.assertIn("#sr-cam .sr-dl{display:none}", template)
+        self.assertIn(
+            "#sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em}",
+            template,
+        )
         self.assertIn("allowOverlapFallback:true,", template)
+        self.assertIn("this.keepSubRegionLabelsOnCanvas();", template)
+        self.assertIn("keepSubRegionLabelsOnCanvas(){", template)
+        # Idempotent: the clamp re-runs on resize and zoom-out, so it measures
+        # from the label's home centroid rather than its last position.
+        self.assertIn("t.dataset.homeX = sx(lo).toFixed(1);", template)
+        self.assertIn("const homeX = Number(label.dataset.homeX);", template)
 
     def test_hover_card_includes_core_graduate(self):
         template = _regional_source()
