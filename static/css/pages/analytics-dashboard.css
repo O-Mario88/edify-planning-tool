@@ -538,12 +538,12 @@
 .analytics-district-row__rank {
   display: grid;
   place-items: center;
-  flex: 0 0 22px;
-  block-size: 22px;
+  flex: 0 0 24px;
+  block-size: 24px;
   border-radius: var(--edify-radius-pill);
   background: var(--edify-surface-muted);
   color: var(--edify-text-muted);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size); /* 12px floor (tablet pass, 2026-09-05) */
   font-weight: 800;
 }
 
@@ -798,8 +798,13 @@
 /* Mobile and tablet keep the geographic legend as one uninterrupted reading
    sequence: map first, the full distribution table immediately below, then
    the explanatory confidence note. The priority rail follows the complete
-   card instead of splitting that sequence. */
-@media (max-width: 64rem) {
+   card instead of splitting that sequence.
+
+   The bound is the side-by-side breakpoint (xl, 80rem), not 64rem: the panel
+   stacks under the map at every width below xl, and between 64rem and 80rem
+   -- a 10-inch tablet -- the stacked table was still sized to its columns,
+   267px inside an 829px panel, half the row empty (owner, 2026-09-05). */
+@media (max-width: 79.99rem) {
   .analytics-geo-card .sr-distribution-panel {
     margin-block-start: .25rem;
     padding: 1rem 0.5rem 0;
@@ -1029,7 +1034,7 @@
   border-radius: var(--edify-radius-control);
   background: var(--edify-primary, var(--edify-accent));
   color: #fff;
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
   white-space: nowrap;
 }

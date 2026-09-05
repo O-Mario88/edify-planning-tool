@@ -9,7 +9,9 @@ class DashboardCardRowContractTest(SimpleTestCase):
     """Keep role dashboards aligned without equal-height blank interiors."""
 
     def _source(self, relative_path):
-        return (Path(settings.BASE_DIR) / relative_path).read_text()
+        from apps.frontend.template_families import read_template
+
+        return read_template(Path(settings.BASE_DIR), relative_path)
 
     def test_shared_card_rows_use_intrinsic_heights(self):
         css = self._source("static/css/pages.css")

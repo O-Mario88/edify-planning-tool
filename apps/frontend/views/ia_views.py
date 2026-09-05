@@ -1755,7 +1755,42 @@ def _ia_dashboard_context(request) -> dict:
 @require_page_permission("ia_dashboard")
 def ia_dashboard_view(request):
     """IA Analytics Dashboard for quality monitoring — all metrics computed live."""
-    return render(request, "pages/ia/analytics_dashboard.html", _ia_dashboard_context(request))
+    from apps.frontend.views.dashboard_view_state import (
+        dashboard_view_tabs,
+        remember_dashboard_view,
+        resolve_dashboard_view,
+    )
+
+    dashboard_view, view_explicit = resolve_dashboard_view(
+        request, role_key="ia", default="map"
+    )
+    context = _ia_dashboard_context(request)
+    context["ia_dashboard_tabs"] = True
+    context["dashboard_view"] = dashboard_view
+    context["dashboard_tabs"] = dashboard_view_tabs(
+        request,
+        active=dashboard_view,
+        panel_id="ia-dashboard-view",
+    view_template="partials/ia/view.html",
+        tabs=[
+            ("map", "Map", "The country map with regional performance and district monitoring"),
+            ("operations", "Operations", "Verification queue, performance, quality and coverage"),
+        ],
+        base_url="/ia/dashboard/",
+        keep=(),
+    )
+    if dashboard_view == "map":
+        from apps.analytics.country_map_context import country_map_context
+        from apps.core.fy import get_operational_fy
+
+        context.update(country_map_context(get_operational_fy()))
+    if request.headers.get("HX-Target") == "ia-dashboard-view-shell":
+        response = render(request, "partials/dashboards/_view_tabs.html", context)
+    else:
+        response = render(request, "pages/ia/analytics_dashboard.html", context)
+    if view_explicit:
+        remember_dashboard_view(response, role_key="ia", view=dashboard_view)
+    return response
 
 
 @require_page_permission("ia_dashboard")

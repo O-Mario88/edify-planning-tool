@@ -229,8 +229,12 @@ class PLAnalyticsTest(TestCase):
         response = self.client.get("/analytics/program-lead", {"fy": FY})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Performance by Sub-Region")
-        self.assertContains(response, "Country-wide system data")
+        # The map moved to the Map view of the home dashboard (owner,
+        # 2026-09-05); the analytics tab opens on its decision cards.
+        self.assertNotContains(response, "Performance by Sub-Region")
+        dashboard = self.client.get("/dashboard", {"fy": FY, "view": "map"})
+        self.assertContains(dashboard, "Performance by Sub-Region")
+        self.assertContains(dashboard, "Country-wide system data")
 
     @override_settings(
         ANALYTICS_DASHBOARD_CACHE_SECONDS=60,

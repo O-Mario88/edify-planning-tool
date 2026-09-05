@@ -128,8 +128,8 @@ class ComposedCardTileContractTest(SimpleTestCase):
         )
         base = _read("templates/base.html")
         # The stylesheet and the script it drives share one cache key.
-        self.assertIn("js/micro-ux.js' %}?v=20260905targets1", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260905targets1", base)
+        self.assertIn("js/micro-ux.js' %}?v=20260905tablet2", base)
+        self.assertIn("mobile-micro-ux.css' %}?v=20260905tablet2", base)
 
 
 class SsaFilterRowContractTest(SimpleTestCase):

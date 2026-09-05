@@ -121,7 +121,7 @@ class CdTrendTilesTest(TestCase):
 
     def test_the_dashboard_renders_the_trend(self):
         self.client.force_login(self.cd)
-        response = self.client.get("/dashboard?fy=2026")
+        response = self.client.get("/dashboard?fy=2026&view=operations")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "vs FY2025")
         self.assertContains(response, "Completed FY2025")

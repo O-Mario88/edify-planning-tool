@@ -268,7 +268,11 @@ class CDAnalyticsTest(TestCase):
         response = self.client.get("/analytics/country-director", {"fy": FY})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Performance by Sub-Region")
+        # The map moved to the Map view of the home dashboard (owner,
+        # 2026-09-05); the analytics tab opens on its decision cards.
+        self.assertNotContains(response, "Performance by Sub-Region")
+        dashboard = self.client.get("/dashboard", {"fy": FY, "view": "map"})
+        self.assertContains(dashboard, "Performance by Sub-Region")
 
     def test_repeated_country_director_tab_visit_reuses_dashboard_snapshot(self):
         """Returning to the overview must not rebuild the whole national view."""

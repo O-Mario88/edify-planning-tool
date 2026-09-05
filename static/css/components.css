@@ -3006,7 +3006,8 @@ svg[data-edify-svg-typography] text {
 }
 
 .edify-donut__unit {
-  font-size: 0.42em;
+  /* Scales with the value but never below the 12px floor (tablet pass). */
+  font-size: max(0.42em, var(--edify-text-micro-size));
   font-weight: 500;
   line-height: 1;
   margin-block-start: 0.25em;

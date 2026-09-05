@@ -103,7 +103,7 @@ a second permanent row beneath it.
 
       <button type="button"
               class="app-sidebar__settings-item max-lg:hidden"
-              @click="collapsed = !collapsed; settingsOpen = false"
+              @click="collapsed = !collapsed; settingsOpen = false; try { localStorage.setItem('edify-sidebar-collapsed', collapsed ? '1' : '0') } catch (e) {}"
               :aria-pressed="collapsed ? 'true' : 'false'">
         <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" :class="collapsed ? 'rotate-180' : ''" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>

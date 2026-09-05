@@ -9,7 +9,9 @@ ROOT = Path(settings.BASE_DIR)
 
 
 def _read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 def _production_frontend_files():
@@ -280,8 +282,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("data-analytics-enterprise", page)
         self.assertIn("css/pages/analytics-dashboard.css", page)
         self.assertIn("analytics-executive-pulse", pulse)
+        # The geography band left for the home dashboards on 2026-09-05.
+        self.assertNotIn("analytics-row--geography", cards)
         for band in (
-            "analytics-row--geography",
             "analytics-row--overview",
             "analytics-row--decision",
             "analytics-impact-band",

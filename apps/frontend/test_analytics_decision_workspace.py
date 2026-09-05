@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _read(relative_path: str) -> str:
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
@@ -17,7 +19,7 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         """The four signals moved out of the overview and above the tablist on
         2026-09-05: they describe the scope the filters ask for, so they are
         the same on every Analytics tab rather than one section's opening row.
-        They still lead the workspace, and geography still leads the panel."""
+        They still lead the workspace; the panel opens on its decision cards."""
         pulse = _read("templates/partials/analytics/executive_pulse.html")
         cards = _read("templates/partials/analytics/kpi_cards.html")
 
@@ -27,19 +29,12 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertLess(
             scope.index("tiles_template"), scope.index("tab_rail.html")
         )
-        self.assertIn("analytics-row--geography", cards)
-        geography = cards.split(
-            'class="analytics-layout-row analytics-row--geography"', 1
-        )[1]
-        geography = geography.split("</div>", 2)[0]
-        self.assertIn("regional_performance.html", geography)
-        self.assertNotIn("target_by_district.html", geography)
+        # The country map moved to the Map view of the home dashboards
+        # (owner, 2026-09-05): the overview opens on its decision cards.
+        self.assertNotIn("regional_performance.html", cards)
+        self.assertNotIn("analytics-row--geography", cards)
         self.assertLess(
-            cards.index("regional_performance.html"),
             cards.index("target_by_district.html"),
-        )
-        self.assertLess(
-            cards.index("regional_performance.html"),
             cards.index("recommended_insights.html"),
         )
         self.assertIn("analytics-evidence-disclosure", cards)

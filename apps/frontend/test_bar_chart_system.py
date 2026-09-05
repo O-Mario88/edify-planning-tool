@@ -7,7 +7,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 class BarChartSystemContractTest(SimpleTestCase):

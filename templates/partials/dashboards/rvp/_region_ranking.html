@@ -1,0 +1,22 @@
+{% comment %}Region Performance Ranking — under the map in the Map view, and in its numbered slot in Operations.{% endcomment %}
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight mb-3">2. Region Performance Ranking</h2>
+          <div class="space-y-2.5">
+            {% for r in regions %}
+            <div>
+              <div class="flex items-center justify-between edify-text-caption">
+                <span class="font-semibold text-slate-700"><span class="text-slate-300 font-bold mr-1.5">{{ r.rank }}</span>{{ r.name }}</span>
+                <span class="flex items-center gap-2">
+                  <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if r.tone == 'success' %}bg-emerald-50 text-emerald-700{% elif r.tone == 'warning' %}bg-amber-50 text-amber-700{% else %}bg-rose-50 text-rose-700{% endif %}">{{ r.status }}</span>
+                  <span class="font-bold tabular-nums text-slate-700">{{ r.score }}</span>
+                </span>
+              </div>
+              <div class="h-[8px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+                <div class="h-full rounded-pill {% if r.tone == 'success' %}bg-emerald-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-400{% endif %}" style="width: {{ r.score }}%"></div>
+              </div>
+              <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.schools }} schools · exec {{ r.exec_rate }}% · verified {{ r.verified_rate }}% · SSA {% if r.ssa is not None %}{{ r.ssa }}/10{% else %}—{% endif %} · SF ID {{ r.sf_rate }}%</p>
+            </div>
+            {% empty %}
+            <p class="edify-text-caption text-slate-400 font-medium py-4">No regions with active schools in scope.</p>
+            {% endfor %}
+          </div>
+          <p class="edify-text-caption text-slate-400 font-medium mt-2">Composite score: execution 35% · verification 20% · verified annual SSA 25% · Activity SF ID compliance 20% — never target % alone.</p>

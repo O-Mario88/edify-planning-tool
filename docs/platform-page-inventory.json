@@ -180,14 +180,14 @@
       "bytes": 2333,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/accounts",
-        "/accounts/",
         "/admin-panel/school-upload-history",
         "/analytics/closure-quality",
         "/analytics/school-closures",
         "/business-transformation",
         "/business-transformation/impact-reports",
-        "/business-transformation/overview"
+        "/business-transformation/overview",
+        "/business-transformation/portfolio",
+        "/country-planning-oversight/"
       ],
       "findings": [],
       "forms": 0,
@@ -237,14 +237,14 @@
       "bytes": 7036,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/accounts",
-        "/accounts/",
         "/admin-ops/incidents/<str:incident_id>",
         "/admin-ops/planning",
         "/admin-ops/support",
         "/admin-ops/team-plans",
         "/admin-panel/data-quality-center",
-        "/analytics/country-director"
+        "/analytics/country-director",
+        "/analytics/program-lead",
+        "/analytics/visit-effectiveness"
       ],
       "findings": [],
       "forms": 0,
@@ -476,9 +476,7 @@
       "accessibility_requirements": [],
       "bytes": 667,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -541,7 +539,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6686,
+      "bytes": 6779,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -759,7 +757,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5148,
+      "bytes": 5117,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -1352,7 +1350,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2960,
+      "bytes": 2758,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1763,14 +1761,14 @@
       "bytes": 4048,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/accounts",
-        "/accounts/",
         "/admin-ops/incidents/<str:incident_id>",
         "/admin-ops/planning",
         "/admin-ops/support",
         "/admin-ops/team-plans",
         "/admin-panel/data-quality-center",
-        "/analytics/country-director"
+        "/analytics/country-director",
+        "/analytics/program-lead",
+        "/analytics/visit-effectiveness"
       ],
       "findings": [],
       "forms": 0,
@@ -1856,7 +1854,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4699,
+      "bytes": 4636,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2170,8 +2168,6 @@
       "bytes": 83767,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/analytics/country-director",
-        "/analytics/program-lead",
         "/projects/analytics"
       ],
       "findings": [],
@@ -3024,7 +3020,6 @@
       "example_pages": [
         "/admin-panel/school-upload-history",
         "/admin-panel/users/<str:user_id>",
-        "/dashboard",
         "/leave/coverage",
         "/leave/coverage/",
         "/leave/policies",
@@ -3054,14 +3049,13 @@
       "bytes": 3225,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/accounts",
-        "/accounts/",
         "/core-schools/<str:school_id>/champion-review",
         "/disbursements",
         "/disbursements/action",
         "/fund-approvals",
         "/fund-approvals/action",
-        "/fund-approvals/invoices/<str:invoice_id>/action"
+        "/fund-approvals/invoices/<str:invoice_id>/action",
+        "/schools/<str:school_id>"
       ],
       "findings": [],
       "forms": 0,
@@ -3551,6 +3545,39 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 2588,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/accounts",
+        "/accounts/",
+        "/dashboard",
+        "/dashboard/cd-approve",
+        "/dashboard/cd-return",
+        "/dashboard/pl-approve",
+        "/ia/dashboard/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " View Tabs",
+      "purpose": "Reusable  view tabs interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "loading",
+        "selected"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/_view_tabs.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 3543,
       "deprecated_alternatives": [],
@@ -3579,7 +3606,6 @@
       "bytes": 2841,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard",
         "/dashboard/planning-progress"
       ],
       "findings": [],
@@ -3602,9 +3628,7 @@
       ],
       "bytes": 1917,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3621,11 +3645,136 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+      "accessibility_requirements": [],
+      "bytes": 332,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
       ],
-      "bytes": 41822,
+      "tables": 0,
+      "template": "partials/dashboards/admin/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 20157,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 3,
+      "template": "partials/dashboards/admin/operations.html",
+      "variants": [
+        "info",
+        "purple",
+        "success",
+        "warning",
+        "{% if item.cls == ",
+        "{% if item.type == "
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 235,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/admin/view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 332,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cceo/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 225,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cceo/view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 12193,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Week",
+      "purpose": "Reusable week interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 3,
+      "template": "partials/dashboards/cceo/week.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2264,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3633,26 +3782,88 @@
         "/dashboard/cd-return"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 2,
+      "forms": 0,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "Body",
       "purpose": "Reusable body interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default",
-        "empty",
-        "open"
+        "default"
       ],
-      "tables": 4,
+      "tables": 0,
       "template": "partials/dashboards/cd/body.html",
       "variants": [
         "executive"
       ]
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6890,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/cd/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 33724,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 3,
+      "template": "partials/dashboards/cd/operations.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
-      "bytes": 25935,
+      "bytes": 244,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/cd/view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 228,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard"
@@ -3663,16 +3874,73 @@
       "kind": "application-partial",
       "name": "Body",
       "purpose": "Reusable body interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/hr/body.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 332,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/hr/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 25935,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty"
       ],
       "tables": 3,
-      "template": "partials/dashboards/hr/body.html",
+      "template": "partials/dashboards/hr/operations.html",
       "variants": [
         "executive"
       ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 229,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/hr/view.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [],
@@ -3702,10 +3970,7 @@
       ],
       "bytes": 1482,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -3721,11 +3986,8 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label",
-        "announced dynamic state"
-      ],
-      "bytes": 12982,
+      "accessibility_requirements": [],
+      "bytes": 3127,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -3753,10 +4015,7 @@
       ],
       "bytes": 3082,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 1,
@@ -3800,10 +4059,7 @@
       ],
       "bytes": 1938,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3819,13 +4075,53 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4020,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/pl/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 10508,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/operations.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 3306,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3846,10 +4142,7 @@
       ],
       "bytes": 2344,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -3937,8 +4230,6 @@
       "bytes": 1772,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve",
         "/dashboard/pl-urgent-schools"
       ],
       "findings": [],
@@ -3953,6 +4244,45 @@
       ],
       "tables": 0,
       "template": "partials/dashboards/pl/urgent_schools_page.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 240,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/pl/view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2012,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Region Ranking",
+      "purpose": "Reusable  region ranking interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rvp/_region_ranking.html",
       "variants": []
     },
     {
@@ -3978,14 +4308,135 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [],
+      "bytes": 644,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rvp/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 36104,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 6,
+      "htmx_controls": 2,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 3,
+      "template": "partials/dashboards/rvp/operations.html",
+      "variants": [
+        "neutral"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 253,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rvp/view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 332,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Map View",
+      "purpose": "Reusable map view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/special_projects/map_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5168,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/special_projects/operations.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 257,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/special_projects/view.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [
         "accessible name and label"
       ],
       "bytes": 5815,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/dashboard",
-        "/dashboard/pl-approve",
         "/dashboard/pl-urgent-schools"
       ],
       "findings": [],
@@ -4445,7 +4896,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 930,
+      "bytes": 434,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -4463,6 +4914,25 @@
       ],
       "tables": 0,
       "template": "partials/finance/accountant_root.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 1246,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Accountant View",
+      "purpose": "Reusable accountant view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/finance/accountant_view.html",
       "variants": [
         "danger",
         "finance",
@@ -4807,8 +5277,6 @@
       "bytes": 11904,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/accounts",
-        "/accounts/",
         "/disbursements",
         "/disbursements/action",
         "/fund-approvals",
@@ -5675,10 +6143,31 @@
       ]
     },
     {
-      "accessibility_requirements": [
-        "accessible name and label"
+      "accessibility_requirements": [],
+      "bytes": 4041,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/ia/dashboard/"
       ],
-      "bytes": 28345,
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Geography Cards",
+      "purpose": "Reusable  geography cards interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "open"
+      ],
+      "tables": 1,
+      "template": "partials/ia/_geography_cards.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 768,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -5689,14 +6178,37 @@
       "kind": "application-partial",
       "name": "Dashboard Body",
       "purpose": "Reusable dashboard body interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/ia/dashboard_body.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 24682,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/ia/dashboard/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Operations",
+      "purpose": "Reusable operations interface primitive",
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
         "empty",
         "open"
       ],
-      "tables": 3,
-      "template": "partials/ia/dashboard_body.html",
+      "tables": 2,
+      "template": "partials/ia/operations.html",
       "variants": [
         "danger",
         "neutral",
@@ -5761,6 +6273,25 @@
       ],
       "tables": 0,
       "template": "partials/ia/partner_return_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 565,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "View",
+      "purpose": "Reusable view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/ia/view.html",
       "variants": []
     },
     {
@@ -9154,6 +9685,29 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 513,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/accounts",
+        "/accounts/",
+        "/dashboard"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Dashboard Map",
+      "purpose": "Reusable dashboard map interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/vendor/dashboard_map.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 93,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -9357,13 +9911,14 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:partials/finance/accountant_root.html",
         "template:partials/finance/accountant_detail.html",
         "template:pages/accounts/dashboard.html",
@@ -9375,7 +9930,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -9418,17 +9975,18 @@
         "disabled": false,
         "empty": false,
         "error": false,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "partials/finance/accountant_root.html",
         "partials/finance/accountant_detail.html",
         "pages/accounts/dashboard.html"
@@ -9444,13 +10002,14 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:partials/finance/accountant_root.html",
         "template:partials/finance/accountant_detail.html",
         "template:pages/accounts/dashboard.html",
@@ -9462,7 +10021,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -9505,17 +10066,18 @@
         "disabled": false,
         "empty": false,
         "error": false,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "partials/finance/accountant_root.html",
         "partials/finance/accountant_detail.html",
         "pages/accounts/dashboard.html"
@@ -27043,13 +27605,14 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.dashboard_view",
       "card_count": 0,
-      "charts": true,
+      "charts": false,
       "drawers": true,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:partials/dashboards/cd/body.html",
         "template:pages/dashboards/cd.html",
         "template:partials/dashboards/pl/body.html",
@@ -27069,20 +27632,16 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
-        "POST /dashboard/cd-return?id={{ r.id }}&fy={{ fy }}",
+        "GET {{ tab.url }}",
         "GET /dashboard",
         "GET /dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}",
-        "GET /rvp/approvals?fy={{ fy }}",
-        "GET {{ r.complete_url }}",
-        "GET {{ r.reschedule_url }}",
-        "GET /dashboard/planning-progress?progress_period={{ tab.period }}"
+        "GET /rvp/approvals?fy={{ fy }}"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 7 strip(s), platform maximum 6",
+      "kpi_count": "runtime-registered; 6 strip(s), platform maximum 6",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": true,
       "page_id": "UI-PAGE-EFB8E1FB3D",
@@ -27115,18 +27674,13 @@
       "route": "/dashboard",
       "route_name": "dashboard",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}",
-        "/rvp/project/{{ p.id }}/decision",
-        "/country-budget/action",
-        "/rvp/annual/{{ a.id }}/action",
-        "/rvp/strategy-note"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27138,17 +27692,18 @@
         "disabled": false,
         "empty": true,
         "error": true,
-        "loading": false
+        "loading": true
       },
       "surface_kind": "partial",
-      "table_pattern": "responsive-record-cards",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 2,
-        "type": "segmented-control"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "partials/dashboards/cd/body.html",
         "pages/dashboards/cd.html",
         "partials/dashboards/pl/body.html",
@@ -27163,15 +27718,10 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
-      "todos": true,
+      "todos": false,
       "typography_exceptions": [
         "text-[12px]",
         "text-[13px]",
-        "text-[14px]",
-        "text-[15px]",
-        "text-[16px]",
-        "text-[18px]",
-        "text-[20px]",
         "text-[22px]"
       ]
     },
@@ -27180,26 +27730,23 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.cd_dashboard_approve_view",
       "card_count": 0,
-      "charts": true,
+      "charts": false,
       "drawers": false,
       "evidence": [
         "template:partials/dashboards/cd/body.html",
         "test:referenced-by-automated-test",
         "permission:cd_analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
-        "POST /dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
       "manual_quality_score": null,
@@ -27224,14 +27771,13 @@
       "route": "/dashboard/cd-approve",
       "route_name": "cd_dashboard_approve",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27241,13 +27787,13 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -27262,12 +27808,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[15px]",
-        "text-[16px]",
-        "text-[20px]",
-        "text-[22px]"
+        "text-[13px]"
       ]
     },
     {
@@ -27275,26 +27816,23 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.cd_dashboard_return_view",
       "card_count": 0,
-      "charts": true,
+      "charts": false,
       "drawers": false,
       "evidence": [
         "template:partials/dashboards/cd/body.html",
         "test:referenced-by-automated-test",
         "permission:cd_analytics"
       ],
-      "filters": "filter controls detected; parent/context review",
+      "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
+      "forms": false,
       "header_variant": "fragment-owned-by-parent",
-      "htmx_endpoints": [
-        "POST /dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}",
-        "POST /dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
-      ],
+      "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
       "manual_quality_score": null,
@@ -27319,14 +27857,13 @@
       "route": "/dashboard/cd-return",
       "route_name": "cd_dashboard_return",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27336,13 +27873,13 @@
       ],
       "state_coverage": {
         "disabled": false,
-        "empty": true,
+        "empty": false,
         "error": true,
         "loading": false
       },
       "surface_kind": "partial",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -27357,12 +27894,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[15px]",
-        "text-[16px]",
-        "text-[20px]",
-        "text-[22px]"
+        "text-[13px]"
       ]
     },
     {
@@ -27427,6 +27959,7 @@
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27464,7 +27997,7 @@
       "backend_module": "apps.frontend.views.dashboard_views",
       "backend_view": "apps.frontend.views.dashboard_views.pl_dashboard_approve_view",
       "card_count": 0,
-      "charts": true,
+      "charts": false,
       "drawers": true,
       "evidence": [
         "template:partials/dashboards/pl/body.html",
@@ -27520,6 +28053,7 @@
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27550,8 +28084,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
-        "text-[15px]"
+        "text-[13px]"
       ]
     },
     {
@@ -27617,6 +28150,7 @@
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27713,6 +28247,7 @@
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27812,6 +28347,7 @@
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -27907,6 +28443,7 @@
         "apps.activities.models",
         "apps.admin_ops.services",
         "apps.core.scoping",
+        "apps.geography.models",
         "apps.projects.models",
         "apps.projects.scoping",
         "apps.schools.models"
@@ -36716,23 +37253,26 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.ia_views",
       "backend_view": "apps.frontend.views.ia_views.ia_dashboard_view",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:pages/ia/analytics_dashboard.html",
         "test:referenced-by-automated-test",
         "permission:ia_dashboard"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": false,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
       "manual_quality_score": null,
@@ -36742,14 +37282,14 @@
       "notifications": false,
       "page_id": "UI-PAGE-9D69AC162C",
       "page_title": "Impact Assessment Dashboard",
-      "page_type": "dashboard",
+      "page_type": "interaction-fragment",
       "per_page_css": [
         "css/ia-dashboard.css",
         "css/pages/analytics-dashboard.css"
       ],
       "permission_key": "ia_dashboard",
       "primary_action": "Review verification queue ( )",
-      "primary_user_decision": "Which priority requires attention next?",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "IA Analytics Dashboard for quality monitoring \u2014 all metrics computed live.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -36782,17 +37322,18 @@
         "disabled": false,
         "empty": true,
         "error": false,
-        "loading": false
+        "loading": true
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/ia/analytics_dashboard.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -63886,6 +64427,7 @@
       "route": "/accounts",
       "route_name": "finance_dashboard",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "partials/finance/accountant_root.html",
         "partials/finance/accountant_detail.html",
         "pages/accounts/dashboard.html"
@@ -63902,6 +64444,7 @@
       "route": "/accounts/",
       "route_name": "",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "partials/finance/accountant_root.html",
         "partials/finance/accountant_detail.html",
         "pages/accounts/dashboard.html"
@@ -74397,6 +74940,7 @@
       "route": "/dashboard",
       "route_name": "dashboard",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "partials/dashboards/cd/body.html",
         "pages/dashboards/cd.html",
         "partials/dashboards/pl/body.html",
@@ -75900,7 +76444,7 @@
     },
     {
       "callback": "apps.frontend.views.ia_views.ia_dashboard_view",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -75909,6 +76453,7 @@
       "route": "/ia/dashboard/",
       "route_name": "ia_dashboard",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/ia/analytics_dashboard.html"
       ]
     },
@@ -80054,22 +80599,22 @@
     "activity_states": 24,
     "all_routes": 1059,
     "api_routes": 359,
-    "component_templates": 380,
-    "full_pages": 241,
+    "component_templates": 408,
+    "full_pages": 240,
     "mobile_contract_pass": 415,
     "nonvisual_actions": 158,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
-      "dashboard": 2,
-      "interaction-fragment": 329,
+      "dashboard": 1,
+      "interaction-fragment": 330,
       "operational-queue": 139,
       "planning-or-creation": 9,
       "record-detail": 24,
       "report": 26
     },
-    "partials_and_drawers": 171,
+    "partials_and_drawers": 172,
     "permission_gated": 580,
     "permission_keys": 112,
     "roles": 14,

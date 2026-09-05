@@ -11,9 +11,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **112**
 - Scheduled jobs: **25**
 - Activity states: **24**
-- Shared component templates: **380**
-- Full pages: **241**
-- Partials and drawers: **171**
+- Shared component templates: **408**
+- Full pages: **240**
+- Partials and drawers: **172**
 - Permission-gated surfaces: **580**
 - Referenced by automated tests: **546**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
@@ -326,7 +326,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-A5A99F0875 | /ia/analytics/export | Ia Verification Analytics Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-A555CE49BA | /ia/attribution/ | Impact Attribution · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2E91310CCB | /ia/compare/ | Evidence Compare · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
-| UI-PAGE-9D69AC162C | /ia/dashboard/ | Impact Assessment Dashboard | dashboard | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9D69AC162C | /ia/dashboard/ | Impact Assessment Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2C691B24CA | /ia/duplicates/ | Duplicate Review · Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-58A731882C | /ia/duplicates/<str:duplicate_id>/action | Ia Duplicate Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-FC9CDB48DF | /ia/history/ | Verification History · Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

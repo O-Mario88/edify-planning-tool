@@ -1,0 +1,18 @@
+{% load frontend_filters kpi_metrics %}
+{% comment %}The Accountant's chosen view: the money movement workspace, or the country map.{% endcomment %}
+{% if dashboard_view == "map" %}
+<div class="space-y-4" data-accountant-map-view>
+  <div class="analytics-layout-row analytics-row--geography">
+    <div class="analytics-card-slot analytics-card-slot--map">
+      {% include "partials/analytics/regional_performance.html" %}
+    </div>
+  </div>
+</div>
+{% else %}
+{% legacy_kpi_item "Pending disbursement" kpis.pending_disb helper="Requests awaiting payment" tone="warning" icon="clock" as pending_kpi %}
+{% legacy_kpi_item "Awaiting approvals" kpis.awaiting_approval helper="Requests in the approval chain" tone="danger" icon="warning" as approval_kpi %}
+{% legacy_kpi_item "Reconciliation rate" kpis.recon_rate helper="Disbursements accounted for" tone="success" icon="check" as reconciliation_kpi %}
+{% legacy_kpi_item "Budget utilization" kpis.budget_util helper="Approved funds used" tone="finance" icon="finance" as utilization_kpi %}
+{% collect_kpi_items pending_kpi approval_kpi reconciliation_kpi utilization_kpi as account_kpis %}
+{% include "partials/finance/fund_workspace.html" with workspace=workspace kpis=account_kpis %}
+{% endif %}

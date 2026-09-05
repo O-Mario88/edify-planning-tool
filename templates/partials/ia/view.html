@@ -1,0 +1,16 @@
+{% comment %}The IA dashboard's chosen view: map or operations.{% endcomment %}
+{% if dashboard_view == "map" %}
+<div class="space-y-4" data-ia-map-view>
+  <div class="analytics-layout-row analytics-row--geography">
+    <div class="analytics-card-slot analytics-card-slot--map">
+      {% include "partials/analytics/regional_performance.html" %}
+    </div>
+  </div>
+
+  <div class="ia-monitoring-grid">
+    {% include "partials/ia/_geography_cards.html" %}
+  </div>
+</div>
+{% else %}
+{% include "partials/ia/operations.html" with show_geography=False %}
+{% endif %}

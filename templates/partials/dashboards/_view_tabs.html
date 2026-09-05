@@ -1,0 +1,46 @@
+{% comment %}
+The dashboard view rail and its panel: Map | Operations (the Accountant's is
+Operations | Map).
+
+Sits under the fixed part of a role's home dashboard — header, KPI strip and
+attention band never move — and a tab swaps only the panel below it, the way
+the Analytics tablist swaps only its panel (owner, 2026-09-05). Every tab is
+a real URL carrying the dashboard's own filters, so a deep link, the back
+button and a tab click all land on the same page.
+
+Context: `dashboard_tabs` from apps.frontend.views.dashboard_view_state
+(panel_id, view_template, active, tabs[].{key,label,description,url,active}).
+{% endcomment %}
+{% if dashboard_tabs %}
+{% comment %}The rail and the panel swap as ONE unit (the shell wrapper): swapping
+the panel alone left the old tab's active class behind, so two tabs painted
+selected after a click (owner, 2026-09-05: "the tab highlight has a bug").{% endcomment %}
+<div id="{{ dashboard_tabs.panel_id }}-shell" data-dashboard-view-shell>
+<nav class="edify-section-nav dashboard-view-nav" aria-label="Dashboard views" data-dashboard-views>
+  <div class="edify-section-nav__inner" role="tablist" aria-label="Dashboard views"
+       x-data
+       @keydown.arrow-right.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const i = tabs.indexOf(document.activeElement); (tabs[i + 1] || tabs[0]).focus()"
+       @keydown.arrow-left.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const i = tabs.indexOf(document.activeElement); (tabs[i - 1] || tabs[tabs.length - 1]).focus()">
+    {% for tab in dashboard_tabs.tabs %}
+    <a href="{{ tab.url }}"
+       id="dashboard-tab-{{ tab.key }}"
+       role="tab"
+       aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
+       aria-controls="{{ dashboard_tabs.panel_id }}"
+       tabindex="{% if tab.active %}0{% else %}-1{% endif %}"
+       class="edify-section-nav__link{% if tab.active %} is-active{% endif %}"
+       title="{{ tab.description }}"
+       hx-get="{{ tab.url }}"
+       hx-target="#{{ dashboard_tabs.panel_id }}-shell"
+       hx-swap="innerHTML"
+       hx-push-url="true"
+       hx-indicator="#{{ dashboard_tabs.panel_id }}-updating">{{ tab.label }}</a>
+    {% endfor %}
+    <span id="{{ dashboard_tabs.panel_id }}-updating" class="htmx-indicator dashboard-view-nav__updating" role="status" aria-live="polite">Updating…</span>
+  </div>
+</nav>
+<div id="{{ dashboard_tabs.panel_id }}" role="tabpanel" aria-labelledby="dashboard-tab-{{ dashboard_tabs.active }}" tabindex="0">
+  {% include dashboard_tabs.view_template %}
+</div>
+</div>
+{% endif %}

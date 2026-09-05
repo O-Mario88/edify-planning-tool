@@ -663,7 +663,7 @@ main table tbody th {
 
 main table th,
 .drawer-body table th {
-  padding: 0.5625rem 0.6875rem !important;
+  padding: 0.5625rem var(--edify-table-cell-padding-inline) !important;
   border-block-end: 1px solid var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
   /* Header text sits ON the muted band: the subtle tone measures 4.24:1
@@ -680,7 +680,7 @@ main table th,
 
 main table td,
 .drawer-body table td {
-  padding: 0.5625rem 0.6875rem !important;
+  padding: 0.5625rem var(--edify-table-cell-padding-inline) !important;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-table-size) !important;
   line-height: 1.4;
@@ -1077,6 +1077,45 @@ main .oversight-entity-tabs__link::after {
 main .edify-section-nav {
   border: 0 !important;
   background: transparent !important;
+}
+
+/* The dashboard view rail (Map | Operations, 2026-09-05) has two tabs. The
+   segmented contract above shares the rail width between tabs, which is
+   right for fourteen Analytics sections and wrong for two: it painted two
+   half-width blue slabs. On a laptop the rail sizes to its labels and sits
+   left, a segmented control; on a phone the two tabs still share the width,
+   where two thumb-sized targets is the better shape. Specificity above the
+   `:where()` contract, so these `!important`s win. */
+main .dashboard-view-nav { border-block-end: 0; }
+@media (min-width: 48rem) {
+  main .dashboard-view-nav .edify-section-nav__inner {
+    display: inline-flex !important;
+    inline-size: max-content;
+    max-inline-size: 100%;
+  }
+  main .dashboard-view-nav .edify-section-nav__link {
+    flex: 0 0 auto !important;
+    min-inline-size: 9.5rem !important;
+  }
+}
+@media (max-width: 48rem) {
+  main .dashboard-view-nav .edify-section-nav__link {
+    flex: 1 1 0 !important;
+    min-inline-size: 0 !important;
+  }
+}
+/* The swap indicator sits over the rail's end rather than in the row, so an
+   invisible "Updating…" never steals width from the tabs. */
+main .dashboard-view-nav { position: relative; }
+main .dashboard-view-nav .dashboard-view-nav__updating {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted);
+  pointer-events: none;
 }
 
 main .edify-section-nav :where(.edify-section-nav__eyebrow, .edify-section-nav__rule, .edify-section-nav__divider) {
@@ -4921,4 +4960,57 @@ main table thead .edify-frozen-cell { z-index: 2; }
 .tt-area-matrix-shell--matrix > .tt-area-matrix th,
 .tt-area-matrix-shell--matrix > .tt-area-matrix td { position: static; width: auto; }
 .tt-area-matrix-shell--matrix > .tt-area-matrix .period-matrix__label { position: sticky; background: var(--edify-frozen-surface-muted); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLET BANDS (owner, 2026-09-05: "optimize the entire platform for 10 and
+   11 inch tablets"). Two bands, because the shell changes at 64rem:
+
+   • Portrait, 48rem–63.999rem (an iPad on end is 810–834px): the phone shell
+     applies — bottom navigation, the role home — but the page is twice a
+     phone's width, so phone-shaped stacks leave half the row empty. These
+     rules let the shell keep its anatomy while the grids inside it use the
+     width: three KPI tiles across, two agenda cards across, four metrics.
+   • Landscape, 64rem–79.99rem (1080–1194px): the desktop shell with the
+     sidebar collapsed to its rail (layouts/shell.html). Grids built for a
+     laptop's 1200px+ workspace drop a column here instead of squeezing.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  /* `!important` because the strip's own container-query bands select with
+     `:has()` chains whose specificity outranks any plain selector here. */
+  main .kpi-strip.kpi-strip--executive .kpi-strip__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  /* Four tiles sit in one row rather than three and an orphan. */
+  main .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  main .kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item:last-child:nth-child(odd) {
+    grid-column: auto !important;
+  }
+  main .mobile-home-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  main .mobile-home-stack > .edify-empty-state {
+    grid-column: 1 / -1;
+  }
+  main .mobile-home-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  main .admin-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  main .admin-quick-grid li:nth-child(2n) { border-inline-end: 0; }
+  /* Directory record cards two across: a phone card is ~120px tall and one
+     per row on an 820px screen halves the list's reading speed. An opened
+     record takes the full row so its disclosure has room. */
+  main .school-record-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: start;
+  }
+  main .school-record-list > .school-record-row { min-inline-size: 0; }
+  main .school-record-list > .school-record-row.is-expanded { grid-column: 1 / -1; }
+}
 

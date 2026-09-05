@@ -3219,6 +3219,61 @@ main table tbody > tr:only-child > td[colspan] > :is(
   }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROW HEIGHT IS PINNED (owner, 2026-09-05: table padding verdict).
+   "32px or less" let a single-line row land anywhere from 29 to 32px,
+   depending on whether a cell held a pill, a badge or plain text; two
+   tables side by side visibly disagreed. A cell is a 32px border box: 5.5px
+   of padding either side of an 18px line, and a 24px control or an 18px
+   badge sits inside the same box. Header cells take the same 32px, so a
+   table is a stack of equal rows from its first line. Horizontal padding is
+   the one token (12px) everywhere.
+   `.edify-table--compact` is the ONE declared denser variant (28px rows,
+   8px inline) for matrices and legends; nothing else on the platform may go
+   below it.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* The pin sits on the ROW: a height on the cell lost to the cell contracts
+   above, a height on the row is a minimum that table layout always honours
+   and never clips a taller cell. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) > tr {
+  block-size: 2rem !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th) {
+  box-sizing: border-box !important;
+  line-height: 1.125rem !important;
+  padding-inline: var(--edify-table-cell-padding-inline) !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).edify-cell.edify-cell:is([data-record-action], .edify-cell--action) {
+  padding-inline: var(--edify-table-cell-padding-inline) !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table.edify-table--compact:not(.sr-only) :is(thead, tbody) > tr {
+  block-size: 1.75rem !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table.edify-table--compact:not(.sr-only) :is(thead, tbody) :is(td, th) {
+  padding-block: 0.3125rem !important;
+  padding-inline: 0.5rem !important;
+  line-height: 1.125rem !important;
+}
+/* The country map's distribution table keeps its own tight columns: it is a
+   legend beside a map, sized to its three figures, not a record table. */
+:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) > tr {
+  block-size: auto !important;
+}
+:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) :is(td, th) {
+  padding-inline: .22rem !important;
+}
+:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) :is(td, th):first-child {
+  padding-inline-start: .08rem !important;
+}
+:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) :is(td, th):last-child {
+  padding-inline-end: .08rem !important;
+}
+
 /* The same one line, whatever the template called its wrapper.
    The rules above only reach a stack that is a direct child of the cell or
    of one wrapper, and only when the wrapper carries `.edify-cell-row`. Role

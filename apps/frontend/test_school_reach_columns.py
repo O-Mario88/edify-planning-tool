@@ -17,8 +17,10 @@ from django.test import SimpleTestCase
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def _read(relative_path: str) -> str:
-    return ROOT.joinpath(relative_path).read_text(encoding="utf-8")
+def _read(relative_path: str):
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 HEADERS = ("# Schools", "# Planned", "# Achieved", "% Achieved")

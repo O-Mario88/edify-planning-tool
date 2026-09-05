@@ -287,7 +287,7 @@ class PLDashboardTest(TestCase):
         self.assertIsNone(supervision["pct"])
 
         self.client.force_login(self.pl_a)
-        response = self.client.get("/dashboard", {"fy": FY})
+        response = self.client.get("/dashboard", {"fy": FY, "view": "operations"})
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "0/0")
         self.assertContains(response, "Not measurable")
@@ -328,7 +328,7 @@ class PLDashboardTest(TestCase):
         self.assertIn("UGX 130,000", drilldown["subtitle"])
 
         self.client.force_login(self.pl_a)
-        dashboard_response = self.client.get("/dashboard", {"fy": FY})
+        dashboard_response = self.client.get("/dashboard", {"fy": FY, "view": "operations"})
         self.assertEqual(dashboard_response.status_code, 200)
         # The professional dashboard presents only the four highest-priority
         # headline KPIs. Monthly funding remains available in the dedicated

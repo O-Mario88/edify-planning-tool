@@ -2879,7 +2879,13 @@
   }
 }
 
-@container pto-panel (min-width: 38rem) {
+@container pto-panel (min-width: 38rem) and (max-width: 53.99rem) {
+  /* A tablet panel: three across, never five cards of 147px. */
+  .pto-balance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container pto-panel (min-width: 54rem) {
   .pto-balance-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }

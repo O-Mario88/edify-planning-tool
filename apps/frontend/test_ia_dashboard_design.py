@@ -6,6 +6,8 @@ from django.test import SimpleTestCase
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+from apps.frontend.template_families import read_template  # noqa: E402
 TEMPLATE = ROOT / "templates" / "pages" / "ia" / "analytics_dashboard.html"
 BODY = ROOT / "templates" / "partials" / "ia" / "dashboard_body.html"
 CSS = ROOT / "static" / "css" / "ia-dashboard.css"
@@ -20,7 +22,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
         # a shared partial when the dashboard also became a tab of the one
         # Analytics page (2026-09-05).
         self.template = "\n".join(
-            (TEMPLATE.read_text(encoding="utf-8"), BODY.read_text(encoding="utf-8"))
+            (TEMPLATE.read_text(encoding="utf-8"), read_template(ROOT, str(BODY.relative_to(ROOT))))
         )
         self.css = CSS.read_text(encoding="utf-8")
 

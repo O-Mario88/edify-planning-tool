@@ -87,7 +87,7 @@ class VerificationSectionTest(TestCase):
 
     def test_the_dashboard_renders_the_section_and_the_cd_may_open_ia_analytics(self):
         self.client.force_login(self.cd)
-        response = self.client.get("/dashboard?fy=2026")
+        response = self.client.get("/dashboard?fy=2026&view=operations")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "data-cd-verification")
         self.assertContains(response, "1 over 30")

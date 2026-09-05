@@ -350,6 +350,25 @@ main #filters-form .school-filter-grid > * {
   }
 }
 
+/* Tablets (owner, 2026-09-05). The directory filter contract above is keyed
+   on #filters-form, so these carry the same weight and sit after it:
+   portrait tablets (48-64rem) take two filters and the clear action per
+   row, landscape tablets (64-80rem) three. Seven tracks at 112-146px each
+   truncated every district name. */
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  /* The form is a two-column grid in the phone shell; the filter grid spans
+     it, otherwise it inherits half the sheet and squeezes its filters. */
+  main #filters-form .school-filter-grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) max-content !important;
+  }
+}
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  main #filters-form .school-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) max-content !important;
+  }
+}
+
 @media (max-width: 63.9375rem) {
   main #messages-page .messages-filter-bar {
     flex-flow: column nowrap !important;

@@ -1,0 +1,2 @@
+{% comment %}The Program Lead's chosen view: map or operations.{% endcomment %}
+{% if dashboard_view == "map" %}{% include "partials/dashboards/pl/map_view.html" %}{% else %}{% include "partials/dashboards/pl/operations.html" %}{% endif %}

@@ -154,7 +154,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             ]
         )
 
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         district = next(
             row
@@ -219,7 +219,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             submitted_to_ia_at=now - timezone.timedelta(hours=2)
         )
 
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         first = response.context["queue_items"][0]
         self.assertEqual(first["id"], str(older.id))
@@ -227,7 +227,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertTrue(first["is_overdue"])
 
     def test_ia_dashboard_sla_is_empty_until_a_real_cycle_is_measured(self):
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["verification_sla"]["pct"])
@@ -284,7 +284,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
                 verified_at=now,
             )
 
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         self.assertEqual(response.context["verification_sla"]["pct"], 50.0)
         self.assertEqual(response.context["verification_sla"]["sample_size"], 2)
@@ -303,7 +303,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             self._pending_activity(school, with_evidence=(i % 2 == 0))
 
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/ia/dashboard/")
+            response = self.client.get("/ia/dashboard/?view=operations")
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(
             len(ctx.captured_queries),
@@ -319,13 +319,13 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         for i in range(5):
             self._pending_activity(self._school(i))
         with CaptureQueriesContext(connection) as ctx_small:
-            self.client.get("/ia/dashboard/")
+            self.client.get("/ia/dashboard/?view=operations")
         small_count = len(ctx_small.captured_queries)
 
         for i in range(5, 60):
             self._pending_activity(self._school(i))
         with CaptureQueriesContext(connection) as ctx_large:
-            self.client.get("/ia/dashboard/")
+            self.client.get("/ia/dashboard/?view=operations")
         large_count = len(ctx_large.captured_queries)
 
         # A threshold branch may add one constant aggregate when the larger
@@ -342,6 +342,15 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
 
 class IAVerificationQueueN1FixTest(IAPerformanceTestBase):
     # ── 3. Query count does not scale with queue size (the real N+1 fix) ────
+    def test_ia_dashboard_map_view_query_count_is_bounded(self):
+        """The Map view adds the cached country map context on top of the
+        operations queries; it must stay a small constant above the budget."""
+        self.client.force_login(self.ia)
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/ia/dashboard/?view=map")
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(len(ctx.captured_queries), 80)
+
     def test_ia_verification_queue_query_count_does_not_scale_with_queue_size(self):
         for i in range(5):
             self._pending_activity(self._school(i), with_evidence=True, with_ssa=True)

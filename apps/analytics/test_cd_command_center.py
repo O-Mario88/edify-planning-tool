@@ -318,7 +318,7 @@ class CDCommandCenterTest(TestCase):
         self.assertNotIn("mscs", ada["areas_by_key"])
 
         self.client.force_login(self.cd)
-        html = self.client.get("/dashboard").content.decode()
+        html = self.client.get("/dashboard?view=operations").content.decode()
         table = html.split("Country Program Leads Performance", 1)[1]
         headers = re.findall(r"<th[^>]*>\s*([^<]+?)\s*</th>", table)[:14]
         self.assertEqual(
@@ -410,7 +410,7 @@ class CDCommandCenterTest(TestCase):
     def test_command_center_renders_over_http(self):
         c = Client()
         c.force_login(self.cd)
-        resp = c.get("/dashboard")
+        resp = c.get("/dashboard?view=operations")
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode()
         for marker in (
