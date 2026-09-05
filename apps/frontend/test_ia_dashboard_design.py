@@ -93,6 +93,9 @@ class IADashboardDesignContractTest(SimpleTestCase):
         for header in ("<th># Schools</th>", "<th># Planned</th>", "<th># Achieved</th>", "<th>% Achieved</th>"):
             self.assertIn(header, self.template)
         self.assertIn("{% for leader in group.members %}", self.template)
+        # The lead's consolidated row heads the same two bands the districts use.
+        self.assertIn('class="ia-monitor-table__lead"', self.template)
+        self.assertEqual(self.template.count('class="ia-monitor-table ia-monitor-table--reach"'), 2)
         self.assertIn("align-items: start", self.css)
 
     def test_reporting_period_sits_below_the_reporting_scope(self):

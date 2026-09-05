@@ -254,14 +254,24 @@ layout is the role home above it; the Analytics panel lifts it.
           <section class="ia-group" x-data="{ open: false }">
             <button type="button" class="ia-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="ia-leader-group-{{ group.key }}">
               <span class="ia-group__identity"><strong>{{ group.name }}</strong><small>{% if group.role %}{{ group.role }} · {{ group.scope }} · {% endif %}{{ group.count }} CCEO{{ group.count|pluralize }}</small></span>
-              <span class="ia-group__figures"><span>{{ group.achieved|default:0 }} of {{ group.planned|default:0 }} achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate|default:0 }}%"></i></span><b>{{ group.rate|default:0 }}%</b></span>
+              <span class="ia-group__figures"><span>{{ group.schools_achieved|default:0 }} of {{ group.schools|default:0 }} schools achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.schools_pct|default:0 }}%"></i></span><b>{{ group.schools_pct|default:0 }}%</b></span>
               <svg class="ia-group__chevron" :class="open && 'is-open'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
             </button>
             <div id="ia-leader-group-{{ group.key }}" class="ia-group__body" x-show="open" x-cloak>
-              <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
-                <caption class="sr-only">CCEOs supervised by {{ group.name }}</caption>
-                <thead><tr><th>CCEO</th><th>Planned</th><th>Achieved</th><th>IA verified</th><th>Returned</th><th>Performance</th></tr></thead>
-                <tbody>{% for leader in group.members %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="6" class="ia-list-empty">No CCEOs supervised yet.</td></tr>{% endfor %}</tbody>
+              {% comment %}The same two bands as District monitoring (owner, 2026-09-05): the
+              lead's own row first, consolidated across the lead and the team, then
+              each CCEO. Schools are counted as sets, so a school two CCEOs both
+              reached is one school in the lead's row.{% endcomment %}
+              <div class="ia-monitor-table-wrap"><table class="ia-monitor-table ia-monitor-table--reach">
+                <caption class="sr-only">{{ group.name }}: consolidated team reach, then each CCEO supervised</caption>
+                <thead>
+                  <tr><th rowspan="2">Leader</th><th colspan="4" class="ia-monitor-table__band">Schools</th><th colspan="5" class="ia-monitor-table__band">Activities</th></tr>
+                  <tr><th># Schools</th><th># Planned</th><th># Achieved</th><th>% Achieved</th><th>Planned</th><th>Achieved</th><th>IA verified</th><th>Returned</th><th>Performance</th></tr>
+                </thead>
+                <tbody>
+                  {% if group.role %}<tr class="ia-monitor-table__lead"><td><strong>{{ group.name }}</strong><small>{{ group.role }} · lead and team, consolidated</small></td><td>{{ group.schools }}</td><td>{{ group.schools_planned }}</td><td>{{ group.schools_achieved }}</td><td><b>{{ group.schools_pct }}%</b></td><td>{{ group.planned }}</td><td>{{ group.achieved }}</td><td>{{ group.verified }}</td><td>{{ group.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate }}%"></i></span><b>{{ group.rate }}%</b></td></tr>{% endif %}
+                  {% for leader in group.members %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.schools }}</td><td>{{ leader.schools_planned }}</td><td>{{ leader.schools_achieved }}</td><td><b>{{ leader.schools_pct }}%</b></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="10" class="ia-list-empty">No CCEOs supervised yet.</td></tr>{% endfor %}
+                </tbody>
               </table></div>
             </div>
           </section>

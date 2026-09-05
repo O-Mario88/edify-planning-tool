@@ -5552,7 +5552,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 294,
+   "line": 304,
    "title": "SSA coverage",
    "heading_level": 3,
    "has_card_key": false,
@@ -5561,7 +5561,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 330,
+   "line": 340,
    "title": "Evidence quality",
    "heading_level": 3,
    "has_card_key": false,
@@ -5570,7 +5570,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 361,
+   "line": 371,
    "title": "Data integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -5579,7 +5579,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 405,
+   "line": 415,
    "title": "Queue ownership",
    "heading_level": 3,
    "has_card_key": false,
@@ -5588,7 +5588,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 440,
+   "line": 450,
    "title": "Recent decisions",
    "heading_level": 3,
    "has_card_key": false,

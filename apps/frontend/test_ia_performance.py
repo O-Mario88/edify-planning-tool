@@ -137,7 +137,11 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         )
         pl = StaffProfile.objects.create(user=pl_user, title="Program Lead")
         StaffSupervisorAssignment.objects.create(supervisor=pl, supervisee=cceo)
-        activity = self._pending_activity(self._school("leadership"))
+        school = self._school("leadership")
+        from apps.accounts.models import StaffSchoolAssignment
+
+        StaffSchoolAssignment.objects.create(staff=cceo, school_id=school.id)
+        activity = self._pending_activity(school)
         activity.responsible_staff_id = cceo.id
         activity.status = "ia_verified"
         activity.ia_verification_status = "confirmed"
@@ -195,6 +199,14 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual([m["name"] for m in team["members"]], [cceo_user.name])
         self.assertEqual(team["count"], 1)
         self.assertNotIn("No Program Lead", leader_groups)
+        # School reach per leader (owner, 2026-09-05): the CCEO's one-school
+        # portfolio, planned and achieved; the lead's row consolidates the
+        # team's reach as sets.
+        for row in (leaders[cceo_user.name], leaders[pl_user.name], team):
+            self.assertEqual(
+                (row["schools"], row["schools_planned"], row["schools_achieved"], row["schools_pct"]),
+                (1, 1, 1, 100),
+            )
 
     def test_dashboard_prioritizes_oldest_queue_work_and_links_to_review(self):
         now = timezone.now()

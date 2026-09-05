@@ -1706,9 +1706,15 @@
    columns wide; in a half-width card only two of them fit before the scroll.
    The district card takes the full row and the leadership card follows,
    so the whole band reads at a glance on a laptop (owner, 2026-09-05). */
-.ia-monitoring-grid > .ia-monitor-table-card:first-child { grid-column: 1 / -1; }
+/* Both monitoring cards carry the nine-column bands now, so both take the
+   full row, districts above leaders. */
+.ia-monitoring-grid > .ia-monitor-table-card { grid-column: 1 / -1; }
 .ia-monitor-table--reach th,
 .ia-monitor-table--reach td { padding-inline: 0.55rem; }
 .ia-monitor-table--reach td:not(:first-child) { text-align: right; font-variant-numeric: tabular-nums; }
 .ia-monitor-table--reach thead tr:last-child th:not(:first-child) { text-align: right; }
+
+/* The lead's consolidated row heads the team table. */
+.ia-monitor-table__lead td { background: color-mix(in oklab, var(--edify-accent) 6%, var(--edify-surface)); font-weight: 600; }
+.ia-monitor-table__lead td:first-child { border-inline-start: 3px solid var(--edify-accent); }
 

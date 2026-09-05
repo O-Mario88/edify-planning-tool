@@ -1388,38 +1388,51 @@ def _ia_dashboard_context(request) -> dict:
     school_district_rollup = _activity_rollup(performance_qs, "school__district_id")
     event_district_rollup = _activity_rollup(performance_qs, "event_district_id")
 
-    # School reach per district (owner, 2026-09-05): how many schools the
-    # district has, how many of them have planned work this year, how many
-    # have achieved work, and the share — schools, not activities, so a
-    # district that pours ten visits into one school reads as one school.
+    # School reach (owner, 2026-09-05), for districts and for leaders alike:
+    # how many schools, how many of them have planned work this year, how many
+    # have achieved work, and the share — schools, not activities, so ten
+    # visits into one school read as one school. Two queries serve every row
+    # on the page: the active schools with their district, and the year's
+    # activities with owner, school, district and status; everything else is
+    # set arithmetic, so the page's query count stays a constant.
+    from apps.accounts.models import StaffSchoolAssignment
     from apps.schools.lifecycle_service import active_schools
 
-    schools_by_district = {
-        row["district_id"]: row["n"]
-        for row in active_schools()
-        .exclude(district_id__isnull=True)
-        .values("district_id")
-        .annotate(n=Count("id"))
-    }
-    school_reach_by_district = {
-        row["school__district_id"]: row
-        for row in performance_qs.exclude(school_id__isnull=True)
-        .values("school__district_id")
-        .annotate(
-            planned_schools=Count("school_id", distinct=True),
-            achieved_schools=Count(
-                "school_id", distinct=True, filter=Q(status__in=ACHIEVED_STATUSES)
-            ),
-        )
-    }
+    active_school_ids = set()
+    schools_by_district: dict = {}
+    for school_id, district_id in active_schools().values_list("id", "district_id"):
+        active_school_ids.add(school_id)
+        if district_id:
+            schools_by_district[district_id] = schools_by_district.get(district_id, 0) + 1
+    planned_schools_by_district: dict = {}
+    achieved_schools_by_district: dict = {}
+    planned_schools_by_owner: dict = {}
+    achieved_schools_by_owner: dict = {}
+    for owner_id, school_id, district_id, status in performance_qs.exclude(
+        school_id__isnull=True
+    ).values_list("responsible_staff_id", "school_id", "school__district_id", "status"):
+        planned_schools_by_owner.setdefault(owner_id, set()).add(school_id)
+        if district_id:
+            planned_schools_by_district.setdefault(district_id, set()).add(school_id)
+        if status in ACHIEVED_STATUSES:
+            achieved_schools_by_owner.setdefault(owner_id, set()).add(school_id)
+            if district_id:
+                achieved_schools_by_district.setdefault(district_id, set()).add(school_id)
+
+    def _reach_from_sets(assigned, planned, achieved):
+        return {
+            "schools": len(assigned),
+            "schools_planned": len(planned),
+            "schools_achieved": len(achieved),
+            "schools_pct": round(len(achieved) / len(assigned) * 100) if assigned else 0,
+        }
 
     def _school_reach(district_id):
-        reach = school_reach_by_district.get(district_id, {})
         schools = schools_by_district.get(district_id, 0)
-        achieved = reach.get("achieved_schools", 0)
+        achieved = len(achieved_schools_by_district.get(district_id, set()))
         return {
             "schools": schools,
-            "schools_planned": reach.get("planned_schools", 0),
+            "schools_planned": len(planned_schools_by_district.get(district_id, set())),
             "schools_achieved": achieved,
             "schools_pct": round(achieved / schools * 100) if schools else 0,
         }
@@ -1516,7 +1529,19 @@ def _ia_dashboard_context(request) -> dict:
             )
             pl_by_supervisee.setdefault(supervisee.id, supervisor_id)
 
+    # School reach per leader (owner, 2026-09-05): the schools in a CCEO's
+    # portfolio, how many of them have planned and achieved work this year,
+    # and the share. A Program Lead's figures are the team's, consolidated as
+    # SETS — a school two CCEOs both touched is one school reached, and the
+    # portfolio is the union of the team's portfolios plus the lead's own.
+    assigned_schools_by_staff: dict = {}
+    for staff_id, school_id in StaffSchoolAssignment.objects.filter(
+        staff_id__in=[staff.id for staff in monitored_staff]
+    ).values_list("staff_id", "school_id"):
+        if school_id in active_school_ids:
+            assigned_schools_by_staff.setdefault(staff_id, set()).add(school_id)
     leadership_performance = []
+    school_sets_by_staff: dict = {}
     for staff in monitored_staff:
         roles = set(staff.user.roles or []) | {staff.user.active_role}
         is_pl = EdifyRole.COUNTRY_PROGRAM_LEAD.value in roles
@@ -1528,6 +1553,17 @@ def _ia_dashboard_context(request) -> dict:
         metrics = _merge_rollups(
             *(owner_rollup.get(owner_id) for owner_id in owner_ids)
         )
+        # Portfolio holders are StaffProfile ids; activity owners may be either
+        # id space, so reach is read across both.
+        portfolio_ids = {staff.id} | (
+            {oid for oid in owner_ids if oid in assigned_schools_by_staff} if is_pl else set()
+        )
+        sets = (
+            set().union(*(assigned_schools_by_staff.get(sid, set()) for sid in portfolio_ids)),
+            set().union(*(planned_schools_by_owner.get(oid, set()) for oid in owner_ids)),
+            set().union(*(achieved_schools_by_owner.get(oid, set()) for oid in owner_ids)),
+        )
+        school_sets_by_staff[staff.id] = sets
         leadership_performance.append(
             {
                 "staff_id": staff.id,
@@ -1536,6 +1572,7 @@ def _ia_dashboard_context(request) -> dict:
                 "scope": "Team portfolio" if is_pl else "Owned activities",
                 "supervisor_id": None if is_pl else pl_by_supervisee.get(staff.id),
                 **metrics,
+                **_reach_from_sets(*sets),
             }
         )
     leadership_performance.sort(
@@ -1564,6 +1601,10 @@ def _ia_dashboard_context(request) -> dict:
         (home or unsupervised)["members"].append(row)
     if unsupervised["members"]:
         unsupervised.update(_merge_rollups(*unsupervised["members"]))
+        member_sets = [school_sets_by_staff[m["staff_id"]] for m in unsupervised["members"]]
+        unsupervised.update(
+            _reach_from_sets(*(set().union(*(sets[i] for sets in member_sets)) for i in range(3)))
+        )
         leadership_groups.append(unsupervised)
     for group in leadership_groups:
         group["count"] = len(group["members"])
