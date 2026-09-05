@@ -711,6 +711,11 @@ class CDDashboardService:
                 "backlog": 0,
                 "planned_budget": 0,
                 "disbursed": 0,
+                # School reach (owner, 2026-09-05): distinct schools with planned
+                # and with achieved work — ten visits into one school read as
+                # one school. Sets while counting, counts when finished.
+                "planned_schools": set(),
+                "achieved_schools": set(),
             }
 
         regions: dict = {}
@@ -756,8 +761,16 @@ class CDDashboardService:
                 b["completed"] += 1 if done else 0
                 b["backlog"] += 1 if overdue else 0
                 b["planned_budget"] += int(a["est_cost_cents"] or 0)
+                b["planned_schools"].add(a["school_id"])
+                if done:
+                    b["achieved_schools"].add(a["school_id"])
 
         def _finish(b):
+            if isinstance(b.get("planned_schools"), set):
+                b["schools_planned"] = len(b["planned_schools"])
+                b["schools_achieved"] = len(b["achieved_schools"])
+                del b["planned_schools"], b["achieved_schools"]
+            b["schools_pct"] = _pct(b.get("schools_achieved", 0), b.get("schools", 0))
             b["achievement"] = _pct(b["completed"], b["planned"])
             b["tone"] = (
                 "danger"
@@ -787,6 +800,8 @@ class CDDashboardService:
                 "backlog": sum(r["backlog"] for r in rows),
                 "planned_budget": sum(r["planned_budget"] for r in rows),
                 "disbursed": sum(r["disbursed"] for r in rows),
+                "schools_planned": sum(r["schools_planned"] for r in rows),
+                "schools_achieved": sum(r["schools_achieved"] for r in rows),
             }
         )
         return {"rows": rows, "totals": totals}

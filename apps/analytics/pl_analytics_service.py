@@ -1127,6 +1127,10 @@ class PLAnalyticsService:
         )
         district_completed: dict = {}
         district_planned: dict = {}
+        # School reach (owner, 2026-09-05): the distinct schools with planned
+        # and with achieved work, from the same rows — no extra query.
+        district_planned_schools: dict = {}
+        district_achieved_schools: dict = {}
         for sid, status in acts.exclude(school_id__isnull=True).values_list(
             "school_id", "status"
         ):
@@ -1134,8 +1138,10 @@ class PLAnalyticsService:
             if did is None:
                 continue
             district_planned[did] = district_planned.get(did, 0) + 1
+            district_planned_schools.setdefault(did, set()).add(sid)
             if status in COMPLETED_STATUSES:
                 district_completed[did] = district_completed.get(did, 0) + 1
+                district_achieved_schools.setdefault(did, set()).add(sid)
 
         district_scores: dict = {}  # district_id -> [average_score, ...]
         district_critical_schools: dict = {}  # district_id -> {school_id, ...}
@@ -1175,6 +1181,12 @@ class PLAnalyticsService:
                     "name": d["district__name"],
                     "pct": pct,
                     "schools": n_schools,
+                    "schools_planned": len(district_planned_schools.get(did, set())),
+                    "schools_achieved": len(district_achieved_schools.get(did, set())),
+                    "schools_pct": _pct(
+                        len(district_achieved_schools.get(did, set())), n_schools
+                    ),
+                    "planned": planned_total,
                     "completed": completed,
                     "critical": critical,
                     "avg_ssa": avg_ssa,

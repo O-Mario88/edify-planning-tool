@@ -179,7 +179,10 @@
       <thead>
         <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
           <th scope="col" class="px-3 py-2 font-semibold">Region / district</th>
-          <th scope="col" class="px-3 py-2 font-semibold text-right">Schools</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right"># Schools</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right"># Planned</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right"># Achieved</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">% Achieved</th>
           <th scope="col" class="px-3 py-2 font-semibold text-right">Planned</th>
           <th scope="col" class="px-3 py-2 font-semibold text-right">Done</th>
           <th scope="col" class="px-3 py-2 font-semibold text-right">Achievement</th>
@@ -193,6 +196,9 @@
         <tr class="border-t edify-border cursor-pointer hover:bg-slate-50" @click="open = !open" :aria-expanded="open.toString()">
           <td class="px-3 py-2.5 font-semibold text-slate-800"><span class="inline-block w-4 text-slate-400" x-text="open ? '−' : '+'">+</span>{{ r.name }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ r.schools|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.schools_planned|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ r.schools_achieved|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums font-bold">{{ r.schools_pct }}%</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ r.planned|intcomma }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ r.completed|intcomma }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums font-bold {% if r.tone == 'danger' %}text-rose-700{% elif r.tone == 'warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ r.achievement }}%</td>
@@ -204,6 +210,9 @@
         <tr class="border-t border-slate-50 bg-slate-50" x-show="open" x-cloak>
           <td class="px-3 py-2 pl-9 text-slate-600"><a href="/analytics/country-director?fy={{ fy }}&district={{ d.id }}" class="hover:underline">{{ d.name }}</a></td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.schools|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_planned|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_achieved|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums font-bold">{{ d.schools_pct }}%</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.planned|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums">{{ d.completed|intcomma }}</td>
           <td class="px-3 py-2 text-right tabular-nums {% if d.tone == 'danger' %}text-rose-700{% elif d.tone == 'warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ d.achievement }}%</td>
@@ -218,6 +227,9 @@
         <tr class="border-t edify-border font-bold text-slate-800">
           <td class="px-3 py-2.5">Country</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.schools|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.schools_planned|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.schools_achieved|intcomma }}</td>
+          <td class="px-3 py-2.5 text-right tabular-nums font-bold">{{ geography.totals.schools_pct }}%</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.planned|intcomma }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.completed|intcomma }}</td>
           <td class="px-3 py-2.5 text-right tabular-nums">{{ geography.totals.achievement }}%</td>

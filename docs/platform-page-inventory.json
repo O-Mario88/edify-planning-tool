@@ -1946,8 +1946,11 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 1792,
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 3699,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1963,7 +1966,7 @@
         "default",
         "empty"
       ],
-      "tables": 0,
+      "tables": 1,
       "template": "partials/analytics/pl/district_performance.html",
       "variants": []
     },
@@ -2354,7 +2357,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5994,
+      "bytes": 6259,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3625,7 +3628,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 40159,
+      "bytes": 41315,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",

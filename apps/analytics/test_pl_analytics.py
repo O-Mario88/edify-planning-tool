@@ -304,6 +304,11 @@ class PLAnalyticsTest(TestCase):
     def test_pl_district_performance_scoped(self):
         d = self._dash(self.pl_a)
         names = {r["name"] for r in d["district_performance"]["rows"]}
+        # School reach travels with every district row (owner, 2026-09-05).
+        for row in d["district_performance"]["rows"]:
+            self.assertLessEqual(row["schools_achieved"], row["schools_planned"])
+            self.assertLessEqual(row["schools_achieved"], row["schools"])
+            self.assertIn("schools_pct", row)
         self.assertEqual(names, {"District A"})
         self.assertNotIn("District B", names)
 

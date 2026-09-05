@@ -4811,7 +4811,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 244,
+   "line": 256,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4820,7 +4820,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 312,
+   "line": 324,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4829,7 +4829,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 347,
+   "line": 359,
    "title": "Verification &amp; Data Quality",
    "heading_level": 2,
    "has_card_key": false,
@@ -4838,7 +4838,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 395,
+   "line": 407,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4847,7 +4847,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 419,
+   "line": 431,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4856,7 +4856,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 468,
+   "line": 480,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4865,7 +4865,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 542,
+   "line": 554,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,

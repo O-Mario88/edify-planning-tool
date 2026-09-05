@@ -57,7 +57,10 @@ and without the counts and the empty state below that read as a broken control
       </summary>
 
       <div class="analytics-priority-group__meta">
-        <span>{{ group.schools }} school{{ group.schools|pluralize }}</span>
+        <span># Schools {{ group.schools }}</span>
+        <span># Planned {{ group.schools_planned }}</span>
+        <span># Achieved {{ group.schools_achieved }}</span>
+        <span>% Achieved {{ group.schools_pct }}%</span>
         <span>{{ group.achieved }}/{{ group.planned }} activities delivered</span>
         {% if group.gap is not None %}<span>{{ group.gap }}% remaining gap</span>{% endif %}
       </div>
@@ -71,7 +74,7 @@ and without the counts and the empty state below that read as a broken control
             <span class="analytics-district-row__rank">{{ forloop.counter }}</span>
             <span>
               <strong>{{ district.name }}</strong>
-              <small>{{ district.schools }} school{{ district.schools|pluralize }} · {{ district.achieved }}/{{ district.planned }} delivered</small>
+              <small># Schools {{ district.schools }} · # Planned {{ district.schools_planned }} · # Achieved {{ district.schools_achieved }} · % Achieved {{ district.schools_pct }}% · {{ district.achieved }}/{{ district.planned }} activities delivered</small>
             </span>
           </div>
           <div class="analytics-district-row__status">

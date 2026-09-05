@@ -1052,7 +1052,7 @@
    "audit_id": "KPI-SOURCE-055",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1094,
+   "line": 1120,
    "label": "Schools without SSA",
    "keys": [
     "color",
@@ -1073,7 +1073,7 @@
    "audit_id": "KPI-SOURCE-056",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1102,
+   "line": 1128,
    "label": "Schools not visited",
    "keys": [
     "color",
@@ -1095,7 +1095,7 @@
    "audit_id": "KPI-SOURCE-057",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1111,
+   "line": 1137,
    "label": "Schools not trained",
    "keys": [
     "color",
@@ -1117,7 +1117,7 @@
    "audit_id": "KPI-SOURCE-058",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1120,
+   "line": 1146,
    "label": "High-risk districts",
    "keys": [
     "color",
@@ -1138,7 +1138,7 @@
    "audit_id": "KPI-SOURCE-059",
    "kind": "breakdown-row",
    "module": "apps/analytics/analytics_dashboard_service.py",
-   "line": 1128,
+   "line": 1154,
    "label": "Clusters needing attention",
    "keys": [
     "color",
@@ -1377,7 +1377,7 @@
    "audit_id": "KPI-SOURCE-071",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1292,
+   "line": 1307,
    "label": null,
    "keys": [
     "amount",
@@ -1397,7 +1397,7 @@
    "audit_id": "KPI-SOURCE-072",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 969,
+   "line": 984,
    "label": null,
    "keys": [
     "count",
@@ -1418,7 +1418,7 @@
    "audit_id": "KPI-SOURCE-073",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1284,
+   "line": 1299,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -1490,7 +1490,7 @@
    "audit_id": "KPI-SOURCE-077",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1659,
+   "line": 1671,
    "label": null,
    "keys": [
     "bar_color",
@@ -1510,7 +1510,7 @@
    "audit_id": "KPI-SOURCE-078",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 2045,
+   "line": 2057,
    "label": null,
    "keys": [
     "delta_pct",
