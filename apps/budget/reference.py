@@ -201,6 +201,13 @@ def ensure_cost_reference(catalogue=None) -> int:
             defaults={
                 "label": label,
                 "unit_cost": default_cost,
+                # A rate never arrives without a Minimum Viable Cost. The
+                # planner's figure comes from this field with no fallback to
+                # the operational rate, so a blank one shows the CCEO and the
+                # Programme Lead a dash while the plan behind it accumulates
+                # the full cost. The approved rate is its own floor until the
+                # CD lowers it in Cost Settings.
+                "approved_minimum": default_cost,
                 "fy": catalogue.fy,
                 "version": 1,
             },

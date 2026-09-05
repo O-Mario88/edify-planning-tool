@@ -218,11 +218,11 @@ class CentralizedCostingTest(APITestCase):
         )
         self.assertTrue(prev["canSchedule"], prev)
         # transport(25000) + breakfast(5000) + lunch(8000) + dinner(12000)
-        # + accom(40000×2). Incidentals joined the visit on 2026-09-04 — a
-        # staff day is one recipe everywhere, and the visit branch used to
-        # write its own copy of the per-diem list without them — so the line
-        # is present here, at this fixture's rate of nothing.
-        expected = 25000 + 5000 + 8000 + 12000 + (40000 * 2)
+        # + accom(40000×2) + incidentals(5000, the seeded optional rate this
+        # fixture leaves in place). Incidentals joined the visit on
+        # 2026-09-04: a staff day is one recipe everywhere, and the visit
+        # branch used to write its own copy of the per-diem list without them.
+        expected = 25000 + 5000 + 8000 + 12000 + (40000 * 2) + 5000
         self.assertEqual(prev["amount"], expected)
         labels = {l["lineItemType"] for l in prev["lines"]}
         self.assertEqual(
