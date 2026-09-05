@@ -8,7 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class HeavyPagePaginationContractTest(SimpleTestCase):
     def test_core_school_health_bounds_each_independent_table(self):
-        source = (ROOT / "templates/pages/core_schools/leadership.html").read_text()
+        # Core Verification became a tab of the one Analytics page on
+        # 2026-09-05, so its tables live in the panel the view renders. The
+        # standalone page includes this same partial — bounding it here bounds
+        # both.
+        source = (
+            ROOT / "templates/partials/analytics/panels/core_school_health.html"
+        ).read_text()
 
         self.assertIn('{% paginate d.stalledSlots "stalled_page"', source)
         self.assertIn("{% for s in stalled_pager.rows %}", source)

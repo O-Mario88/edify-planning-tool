@@ -304,14 +304,36 @@ class ThePageIsReachableTest(ClosureImpactFixture):
     def test_the_filter_swaps_only_the_body(self):
         self.close(self.school("s1", district=self.kampala))
 
+        # The header htmx sends for this form: it targets `#closure-impact-body`.
+        # Naming the target is what keeps the branch from answering a tab click
+        # or a workspace scope change, which are HX requests too.
         response = self._client(self.cd_user).get(
-            "/analytics/school-closures?period=all", headers={"HX-Request": "true"}
+            "/analytics/school-closures?period=all",
+            headers={"HX-Request": "true", "HX-Target": "closure-impact-body"},
         )
 
         body = response.content.decode()
         self.assertEqual(response.status_code, 200)
         self.assertNotIn("<h1", body)
+        self.assertNotIn('role="tablist"', body)
         self.assertIn("Schools lost", body)
+
+    def test_a_tab_click_gets_the_panel_not_the_body(self):
+        """School Closures is a tab of the one Analytics page, so a tab click
+        must answer with the panel — its decision frame, its scope caption and
+        its own controls — rather than the bare body the filter asks for."""
+        self.close(self.school("s1", district=self.kampala))
+
+        response = self._client(self.cd_user).get(
+            "/analytics/school-closures",
+            headers={"HX-Request": "true", "HX-Target": "analytics-panel"},
+        )
+
+        body = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("<h1", body)
+        self.assertIn("Decision and data context", body)
+        self.assertIn("School closure filters", body)
 
 
 class TheTwoClosurePagesStaySeparateTest(ClosureImpactFixture):

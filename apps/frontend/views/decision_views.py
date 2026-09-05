@@ -163,15 +163,28 @@ def declining_schools_view(request):
     """
     from apps.analytics.decline_service import MATERIAL_DROP, declining_schools
 
+    from apps.frontend.views.analytics_render import render_analytics_section
+
     fy = request.GET.get("fy") or get_operational_fy()
     data = declining_schools(request.user, {"fy": fy})
-    return render(
+    return render_analytics_section(
         request,
-        "pages/analytics/declining_schools.html",
+        "partials/analytics/panels/declining_schools.html",
         {
             "d": data,
             "fy_options": [fy, str(int(fy) - 1)],
             "material_drop": MATERIAL_DROP,
+        },
+        section_key="declining_schools",
+        panel_title="Declining Schools",
+        frame={
+            "question": (
+                "Which schools are losing ground fastest, where is decline "
+                "concentrated, and what support failed to arrest it?"
+            ),
+            "evidence": "Schools with two confirmed consecutive SSA cycles",
+            "freshness": "Selected financial year comparison",
+            "confidence": "Confirmed paired assessments",
         },
     )
 
@@ -186,13 +199,26 @@ def core_school_health_view(request):
     """
     from apps.core_schools.leadership_service import core_school_health
 
+    from apps.frontend.views.analytics_render import render_analytics_section
+
     fy = request.GET.get("fy") or get_operational_fy()
-    return render(
+    return render_analytics_section(
         request,
-        "pages/core_schools/leadership.html",
+        "partials/analytics/panels/core_school_health.html",
         {
             "d": core_school_health(request.user, {"fy": fy}),
             "fy_options": [fy, str(int(fy) - 1)],
+        },
+        section_key="core_school_health",
+        panel_title="Core Verification",
+        frame={
+            "question": (
+                "Which core-school packages are off track or stuck at the "
+                "evidence gate, and what must happen next?"
+            ),
+            "evidence": "Package slots, evidence gates and SSA movement",
+            "freshness": "Selected financial year",
+            "confidence": "Verified programme records",
         },
     )
 

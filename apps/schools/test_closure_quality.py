@@ -303,8 +303,12 @@ class ThePageIsReachableTest(ClosureQualityFixture):
     def test_the_period_filter_swaps_only_the_body(self):
         self.close(self.school("s1"))
 
+        # The header htmx sends for this form: it targets `#closure-quality-body`.
+        # Naming the target is what keeps the branch from answering a tab click
+        # or a workspace scope change, which are HX requests too.
         response = self._client(self.ia_user).get(
-            "/analytics/closure-quality?period=fy", headers={"HX-Request": "true"}
+            "/analytics/closure-quality?period=fy",
+            headers={"HX-Request": "true", "HX-Target": "closure-quality-body"},
         )
 
         body = response.content.decode()
@@ -312,7 +316,25 @@ class ThePageIsReachableTest(ClosureQualityFixture):
         # The workspace partial, not the whole page: the header carries the
         # control that fired the request and must survive the swap.
         self.assertNotIn("<h1", body)
+        self.assertNotIn('role="tablist"', body)
         self.assertIn("Closures recorded", body)
+
+    def test_a_tab_click_gets_the_panel_not_the_body(self):
+        """Closure Quality is a tab of the one Analytics page, so a tab click
+        must answer with the panel — its decision frame and its own period
+        control — rather than the bare body the filter asks for."""
+        self.close(self.school("s1"))
+
+        response = self._client(self.ia_user).get(
+            "/analytics/closure-quality",
+            headers={"HX-Request": "true", "HX-Target": "analytics-panel"},
+        )
+
+        body = response.content.decode()
+        self.assertEqual(response.status_code, 200)
+        self.assertNotIn("<h1", body)
+        self.assertIn("Decision and data context", body)
+        self.assertIn("Closure quality filters", body)
 
 
 class TheSummaryMatchesTheListsTest(ClosureQualityFixture):
