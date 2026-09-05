@@ -5678,7 +5678,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 23046,
+      "bytes": 26075,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ia/dashboard/"
@@ -5692,7 +5692,8 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty"
+        "empty",
+        "open"
       ],
       "tables": 3,
       "template": "partials/ia/dashboard_body.html",

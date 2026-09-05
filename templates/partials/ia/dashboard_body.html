@@ -212,20 +212,56 @@ layout is the role home above it; the Analytics panel lifts it.
     </div>
 
     <div class="ia-monitoring-grid">
+      {% comment %}Districts fold under their sub-region and CCEOs under their Program Lead,
+      the way clusters fold under the person who holds them (owner, 2026-09-05):
+      the group row carries the roll-up, and opens into its members. Alpine
+      holds the open state per group, as the cluster list does.{% endcomment %}
       <article class="ia-panel ia-monitor-table-card">
-        <header class="ia-card-heading"><div><h3>District monitoring</h3><p>Every district, including centrally planned activities assigned to it</p></div><span class="ia-count">{{ district_performance|length }}</span></header>
-        <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
-          <thead><tr><th>District</th><th>Planned</th><th>Achieved</th><th>Awaiting IA</th><th>Returned</th><th>Performance</th></tr></thead>
-          <tbody>{% for district in district_performance %}<tr><td><strong>{{ district.name }}</strong><small>{{ district.region }}</small></td><td>{{ district.planned }}</td><td>{{ district.achieved }}</td><td>{{ district.waiting }}</td><td>{{ district.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ district.rate }}%"></i></span><b>{{ district.rate }}%</b></td></tr>{% empty %}<tr><td colspan="6" class="ia-list-empty">No districts configured.</td></tr>{% endfor %}</tbody>
-        </table></div>
+        <header class="ia-card-heading"><div><h3>District monitoring</h3><p>Every district, including centrally planned activities assigned to it, grouped by sub-region</p></div><span class="ia-count">{{ district_performance|length }}</span></header>
+        <div class="ia-groups">
+          {% for group in district_groups %}
+          <section class="ia-group" x-data="{ open: false }">
+            <button type="button" class="ia-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="ia-district-group-{{ group.key }}">
+              <span class="ia-group__identity"><strong>{{ group.name }}</strong><small>{{ group.region }} · {{ group.count }} district{{ group.count|pluralize }}</small></span>
+              <span class="ia-group__figures"><span>{{ group.achieved }} of {{ group.planned }} achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate }}%"></i></span><b>{{ group.rate }}%</b></span>
+              <svg class="ia-group__chevron" :class="open && 'is-open'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="ia-district-group-{{ group.key }}" class="ia-group__body" x-show="open" x-cloak>
+              <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
+                <caption class="sr-only">Districts in {{ group.name }}</caption>
+                <thead><tr><th>District</th><th>Planned</th><th>Achieved</th><th>Awaiting IA</th><th>Returned</th><th>Performance</th></tr></thead>
+                <tbody>{% for district in group.districts %}<tr><td><strong>{{ district.name }}</strong><small>{{ district.region }}</small></td><td>{{ district.planned }}</td><td>{{ district.achieved }}</td><td>{{ district.waiting }}</td><td>{{ district.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ district.rate }}%"></i></span><b>{{ district.rate }}%</b></td></tr>{% endfor %}</tbody>
+              </table></div>
+            </div>
+          </section>
+          {% empty %}
+          <p class="ia-list-empty">No districts configured.</p>
+          {% endfor %}
+        </div>
       </article>
 
       <article class="ia-panel ia-monitor-table-card">
-        <header class="ia-card-heading"><div><h3>CCEO and Program Lead performance</h3><p>Owned activities for CCEOs; supervised team portfolio for Program Leads</p></div><span class="ia-count">{{ leadership_performance|length }}</span></header>
-        <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
-          <thead><tr><th>Leader</th><th>Planned</th><th>Achieved</th><th>IA verified</th><th>Returned</th><th>Performance</th></tr></thead>
-          <tbody>{% for leader in leadership_performance %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="6" class="ia-list-empty">No active CCEOs or Program Leads configured.</td></tr>{% endfor %}</tbody>
-        </table></div>
+        <header class="ia-card-heading"><div><h3>CCEO and Program Lead performance</h3><p>Each Program Lead's team portfolio, opened into the CCEOs they supervise</p></div><span class="ia-count">{{ leadership_performance|length }}</span></header>
+        <div class="ia-groups">
+          {% for group in leadership_groups %}
+          <section class="ia-group" x-data="{ open: false }">
+            <button type="button" class="ia-group__toggle" @click="open = !open" :aria-expanded="open.toString()" aria-controls="ia-leader-group-{{ group.key }}">
+              <span class="ia-group__identity"><strong>{{ group.name }}</strong><small>{% if group.role %}{{ group.role }} · {{ group.scope }} · {% endif %}{{ group.count }} CCEO{{ group.count|pluralize }}</small></span>
+              <span class="ia-group__figures"><span>{{ group.achieved|default:0 }} of {{ group.planned|default:0 }} achieved</span><span class="ia-inline-rate"><i style="--ia-progress: {{ group.rate|default:0 }}%"></i></span><b>{{ group.rate|default:0 }}%</b></span>
+              <svg class="ia-group__chevron" :class="open && 'is-open'" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/></svg>
+            </button>
+            <div id="ia-leader-group-{{ group.key }}" class="ia-group__body" x-show="open" x-cloak>
+              <div class="ia-monitor-table-wrap"><table class="ia-monitor-table">
+                <caption class="sr-only">CCEOs supervised by {{ group.name }}</caption>
+                <thead><tr><th>CCEO</th><th>Planned</th><th>Achieved</th><th>IA verified</th><th>Returned</th><th>Performance</th></tr></thead>
+                <tbody>{% for leader in group.members %}<tr><td><strong>{{ leader.name }}</strong><small>{{ leader.role }} · {{ leader.scope }}</small></td><td>{{ leader.planned }}</td><td>{{ leader.achieved }}</td><td>{{ leader.verified }}</td><td>{{ leader.returned }}</td><td><span class="ia-inline-rate"><i style="--ia-progress: {{ leader.rate }}%"></i></span><b>{{ leader.rate }}%</b></td></tr>{% empty %}<tr><td colspan="6" class="ia-list-empty">No CCEOs supervised yet.</td></tr>{% endfor %}</tbody>
+              </table></div>
+            </div>
+          </section>
+          {% empty %}
+          <p class="ia-list-empty">No active CCEOs or Program Leads configured.</p>
+          {% endfor %}
+        </div>
       </article>
     </div>
   </section>

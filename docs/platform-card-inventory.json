@@ -5534,7 +5534,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 215,
+   "line": 219,
    "title": "District monitoring",
    "heading_level": 3,
    "has_card_key": false,
@@ -5543,7 +5543,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 223,
+   "line": 243,
    "title": "CCEO and Program Lead performance",
    "heading_level": 3,
    "has_card_key": false,
@@ -5552,7 +5552,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 251,
+   "line": 287,
    "title": "SSA coverage",
    "heading_level": 3,
    "has_card_key": false,
@@ -5561,7 +5561,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 287,
+   "line": 323,
    "title": "Evidence quality",
    "heading_level": 3,
    "has_card_key": false,
@@ -5570,7 +5570,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 318,
+   "line": 354,
    "title": "Data integrity",
    "heading_level": 3,
    "has_card_key": false,
@@ -5579,7 +5579,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 362,
+   "line": 398,
    "title": "Queue ownership",
    "heading_level": 3,
    "has_card_key": false,
@@ -5588,7 +5588,7 @@
   },
   {
    "template": "templates/partials/ia/dashboard_body.html",
-   "line": 397,
+   "line": 433,
    "title": "Recent decisions",
    "heading_level": 3,
    "has_card_key": false,

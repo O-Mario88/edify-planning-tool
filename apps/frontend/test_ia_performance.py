@@ -171,6 +171,21 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual(leaders[pl_user.name]["achieved"], 1)
         self.assertEqual(leaders[pl_user.name]["scope"], "Team portfolio")
 
+        # The district sits under its sub-region group, and the CCEO under the
+        # Program Lead who supervises them (owner, 2026-09-05).
+        groups = response.context["district_groups"]
+        home = next(
+            g for g in groups if any(d["name"] == self.district.name for d in g["districts"])
+        )
+        self.assertEqual(home["region"], self.region.name)
+        self.assertEqual(home["name"], "Other districts")  # fixture has no sub-region
+        self.assertEqual((home["planned"], home["achieved"]), (1, 1))
+        leader_groups = {g["name"]: g for g in response.context["leadership_groups"]}
+        team = leader_groups[pl_user.name]
+        self.assertEqual([m["name"] for m in team["members"]], [cceo_user.name])
+        self.assertEqual(team["count"], 1)
+        self.assertNotIn("No Program Lead", leader_groups)
+
     def test_dashboard_prioritizes_oldest_queue_work_and_links_to_review(self):
         now = timezone.now()
         older = self._pending_activity(self._school("oldest"))

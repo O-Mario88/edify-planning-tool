@@ -81,6 +81,16 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertIn("EdifyChartSystem.lineTrend(2)", self.template)
         self.assertIn("district_performance", self.template)
         self.assertIn("leadership_performance", self.template)
+        # Districts fold under their sub-region and CCEOs under their Program
+        # Lead, the way clusters fold under the person who holds them
+        # (owner, 2026-09-05): a toggle per group, opened into its table.
+        self.assertIn("{% for group in district_groups %}", self.template)
+        self.assertIn("{% for group in leadership_groups %}", self.template)
+        self.assertEqual(self.template.count('class="ia-group__toggle"'), 2)
+        self.assertIn('aria-controls="ia-district-group-{{ group.key }}"', self.template)
+        self.assertIn('aria-controls="ia-leader-group-{{ group.key }}"', self.template)
+        self.assertIn("{% for district in group.districts %}", self.template)
+        self.assertIn("{% for leader in group.members %}", self.template)
         self.assertIn("align-items: start", self.css)
 
     def test_reporting_period_sits_below_the_reporting_scope(self):

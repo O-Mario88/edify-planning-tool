@@ -1388,16 +1388,42 @@ def _ia_dashboard_context(request) -> dict:
     school_district_rollup = _activity_rollup(performance_qs, "school__district_id")
     event_district_rollup = _activity_rollup(performance_qs, "event_district_id")
     district_performance = []
-    for district in District.objects.select_related("region").order_by(
-        "region__name", "name"
+    # Districts fold under their sub-region, the way clusters fold under the
+    # person who holds them: one row per sub-region carrying the roll-up,
+    # opened into its districts (owner, 2026-09-05). A district with no
+    # sub-region sits under "Other districts" in its region rather than
+    # vanishing.
+    district_groups_by_key: dict = {}
+    for district in District.objects.select_related("region", "sub_region").order_by(
+        "region__name", "sub_region__name", "name"
     ):
         metrics = _merge_rollups(
             school_district_rollup.get(district.id),
             event_district_rollup.get(district.id),
         )
-        district_performance.append(
-            {"name": district.name, "region": district.region.name, **metrics}
+        row = {
+            "name": district.name,
+            "region": district.region.name,
+            "sub_region": district.sub_region.name if district.sub_region else None,
+            **metrics,
+        }
+        district_performance.append(row)
+        key = (district.region.name, row["sub_region"] or "")
+        group = district_groups_by_key.setdefault(
+            key,
+            {
+                "key": f"{district.region_id}-{district.sub_region_id or 'other'}",
+                "name": row["sub_region"] or "Other districts",
+                "region": district.region.name,
+                "districts": [],
+            },
         )
+        group["districts"].append(row)
+    district_groups = []
+    for group in district_groups_by_key.values():
+        group.update(_merge_rollups(*group["districts"]))
+        group["count"] = len(group["districts"])
+        district_groups.append(group)
 
     school_region_rollup = _activity_rollup(performance_qs, "school__region_id")
     event_region_rollup = _activity_rollup(performance_qs, "event_district__region_id")
@@ -1425,6 +1451,7 @@ def _ia_dashboard_context(request) -> dict:
     ]
     staff_by_id = {staff.id: staff for staff in active_staff_roster}
     team_ids_by_pl = {}
+    pl_by_supervisee: dict = {}
     for supervisor_id, supervisee_id in StaffSupervisorAssignment.objects.filter(
         supervisor_id__in=[
             staff.id
@@ -1438,6 +1465,7 @@ def _ia_dashboard_context(request) -> dict:
             team_ids_by_pl.setdefault(supervisor_id, set()).update(
                 {supervisee.id, supervisee.user_id}
             )
+            pl_by_supervisee.setdefault(supervisee.id, supervisor_id)
 
     leadership_performance = []
     for staff in monitored_staff:
@@ -1453,15 +1481,43 @@ def _ia_dashboard_context(request) -> dict:
         )
         leadership_performance.append(
             {
+                "staff_id": staff.id,
                 "name": staff.user.name,
                 "role": "Program Lead" if is_pl else "CCEO",
                 "scope": "Team portfolio" if is_pl else "Owned activities",
+                "supervisor_id": None if is_pl else pl_by_supervisee.get(staff.id),
                 **metrics,
             }
         )
     leadership_performance.sort(
         key=lambda row: (row["role"] != "Program Lead", row["name"].casefold())
     )
+
+    # CCEOs fold under the Program Lead who supervises them, the way clusters
+    # fold under the person who holds them: the Program Lead's row is the
+    # header, carrying the team portfolio, opened into the team (owner,
+    # 2026-09-05). A CCEO nobody supervises sits under "No Program Lead".
+    leaders_by_id = {
+        row["staff_id"]: row for row in leadership_performance if row["role"] == "Program Lead"
+    }
+    leadership_groups = [
+        {**row, "key": row["staff_id"], "members": []} for row in leaders_by_id.values()
+    ]
+    unsupervised = {"key": "unsupervised", "name": "No Program Lead", "role": None,
+                    "scope": "CCEOs without a supervisor", "members": []}
+    for row in leadership_performance:
+        if row["role"] != "CCEO":
+            continue
+        home = next(
+            (group for group in leadership_groups if group["key"] == row["supervisor_id"]),
+            None,
+        )
+        (home or unsupervised)["members"].append(row)
+    if unsupervised["members"]:
+        unsupervised.update(_merge_rollups(*unsupervised["members"]))
+        leadership_groups.append(unsupervised)
+    for group in leadership_groups:
+        group["count"] = len(group["members"])
 
     # Eight-week planned-versus-IA-verified line chart. SVG coordinates are
     # built server-side from real weekly counts, with text/table equivalents
@@ -1586,8 +1642,10 @@ def _ia_dashboard_context(request) -> dict:
         "recent_activities": recent_activities,
         "field_monitoring": field_monitoring,
         "district_performance": district_performance,
+        "district_groups": district_groups,
         "region_performance": region_performance,
         "leadership_performance": leadership_performance,
+        "leadership_groups": leadership_groups,
         "activity_trend": activity_trend,
         "upload_status": upload_status,
         "returned_open_school_cnt": returned_open_school_cnt,
