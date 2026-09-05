@@ -377,10 +377,44 @@
   white-space: nowrap;
 }
 
+/* The selected filter is unmistakable: accent on accent, not a lighter
+   shade of the rail. And every button carries its count, so a reader can
+   tell "no critical district in this scope" from "the filter did nothing" —
+   with two districts, both critical, all three filters showed the same rows
+   and the card read as broken (owner, 2026-09-05). */
 .analytics-priority-filters button.is-active {
-  color: var(--edify-accent-text);
-  background: var(--edify-surface);
+  color: var(--edify-on-accent);
+  background: var(--edify-accent);
   box-shadow: var(--edify-shadow-sm);
+}
+
+.analytics-priority-filters button b {
+  margin-inline-start: .3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: .7;
+}
+
+.analytics-priority-filters button.is-active b {
+  opacity: 1;
+}
+
+/* What a filter says when nothing matches, instead of an empty card. */
+.analytics-priority-empty {
+  margin-block-start: .65rem;
+  padding: 1rem;
+  border: 1px dashed var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+}
+
+.analytics-priority-empty strong {
+  display: block;
+  margin-block-end: .2rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size, .875rem);
 }
 
 .analytics-priority-groups {
@@ -1426,5 +1460,44 @@ main #impact-workspace .impact-group-pagination a {
   border-radius: 999px;
   background-color: var(--sr-key, var(--edify-border));
   align-self: center;
+}
+
+/* A chart that cannot draw says so where a reader can see it. The status
+   was screen-reader-only, so when the library was missing on the Impact
+   page a sighted reader got a blank 260px box (owner, 2026-09-05). Empty
+   while the chart is fine, so it costs nothing on the normal path. */
+.analytics-chart-status {
+  display: grid;
+  place-items: center;
+  min-block-size: 8rem;
+  padding: 1rem;
+  border: 1px dashed var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.analytics-chart-status:empty {
+  display: none;
+}
+
+/* The toolbar a tab carries when it has actions of its own (SSA's Add SSA
+   Score and Upload Center) or an engine state. */
+.analytics-panel-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* The IA dashboard body hides its desktop sections on phones because the IA
+   PAGE puts a role home in their place. Inside the Analytics workspace there
+   is no role home, so the same body shows everything. */
+@media (max-width: 63.999rem) {
+  .analytics-ia-panel .mobile-home-hide {
+    display: block !important;
+  }
 }
 

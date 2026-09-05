@@ -7,6 +7,7 @@ from django.test import SimpleTestCase
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATE = ROOT / "templates" / "pages" / "ia" / "analytics_dashboard.html"
+BODY = ROOT / "templates" / "partials" / "ia" / "dashboard_body.html"
 CSS = ROOT / "static" / "css" / "ia-dashboard.css"
 QUEUE_TEMPLATE = ROOT / "templates" / "pages" / "ia" / "verification_queue.html"
 QUEUE_TABLE = ROOT / "templates" / "pages" / "ia" / "partials" / "queue_table.html"
@@ -15,7 +16,12 @@ REVIEW_TEMPLATE = ROOT / "templates" / "pages" / "ia" / "review_workspace.html"
 
 class IADashboardDesignContractTest(SimpleTestCase):
     def setUp(self):
-        self.template = TEMPLATE.read_text(encoding="utf-8")
+        # The page and the body it includes, as one document: the body became
+        # a shared partial when the dashboard also became a tab of the one
+        # Analytics page (2026-09-05).
+        self.template = "\n".join(
+            (TEMPLATE.read_text(encoding="utf-8"), BODY.read_text(encoding="utf-8"))
+        )
         self.css = CSS.read_text(encoding="utf-8")
 
     def test_dashboard_has_one_clear_operational_hierarchy(self):

@@ -326,7 +326,14 @@ def _view_templates(callback) -> list[str]:
     if isinstance(template_name, str):
         names.append(template_name)
     names.extend(_templates_rendered_by(original))
-    if names:
+    try:
+        own_source = inspect.getsource(original)
+    except (OSError, TypeError):
+        own_source = ""
+    # A section view may name its own fragment (the shape its filter form asks
+    # for) AND hand the page to the workspace renderer; the page is what a
+    # reader opens, so the delegation is followed whenever it is there.
+    if names and "render_analytics_section(" not in own_source:
         return list(dict.fromkeys(names))
 
     # A view that hands rendering to a helper names no template of its own —

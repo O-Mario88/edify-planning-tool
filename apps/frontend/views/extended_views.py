@@ -1302,7 +1302,24 @@ def reports_view(request):
         "donut_off_track": donut_off_track,
         "priorities": priorities,
     }
-    return render(request, "pages/reports/index.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/reports.html",
+        context,
+        section_key="reports",
+        panel_title="Reports & Performance",
+        frame={
+            "question": (
+                "Are verified results accumulating fast enough to meet the "
+                "approved reporting targets?"
+            ),
+            "evidence": "Verified delivery against approved FY targets",
+            "freshness": "Selected financial year",
+            "confidence": "Official reporting basis",
+        },
+    )
 
 
 @require_page_permission("coverage")

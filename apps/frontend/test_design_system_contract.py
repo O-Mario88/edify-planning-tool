@@ -543,7 +543,7 @@ class DesignSystemContractTest(SimpleTestCase):
 
         headline_summaries = (
             "templates/pages/dashboards/special_projects.html",
-            "templates/pages/reports/index.html",
+            "templates/partials/analytics/panels/reports.html",
             "templates/pages/notifications/index.html",
             "templates/pages/todos/index.html",
             "templates/pages/admin_ops/team_plans.html",

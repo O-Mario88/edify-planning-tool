@@ -761,9 +761,14 @@ def ia_duplicate_action(request, duplicate_id):
     return redirect("/ia/duplicates/")
 
 
-@require_page_permission("ia_dashboard")
-def ia_dashboard_view(request):
-    """IA Analytics Dashboard for quality monitoring — all metrics computed live."""
+def _ia_dashboard_context(request) -> dict:
+    """Everything the IA dashboard shows, computed live, for both of its homes.
+
+    /ia/dashboard/ stays Impact Assessment's own home inside the IA workspace;
+    the Analytics workspace reaches the same dashboard at
+    /analytics/verification-quality, as a tab of the one Analytics page
+    (owner, 2026-09-05).
+    """
     from datetime import timedelta
 
     from django.db.models import Avg, Count
@@ -1607,7 +1612,38 @@ def ia_dashboard_view(request):
             "url": queue_items[0]["review_url"] if queue_items else "/ia/verification/",
         },
     }
-    return render(request, "pages/ia/analytics_dashboard.html", context)
+    return context
+
+
+@require_page_permission("ia_dashboard")
+def ia_dashboard_view(request):
+    """IA Analytics Dashboard for quality monitoring — all metrics computed live."""
+    return render(request, "pages/ia/analytics_dashboard.html", _ia_dashboard_context(request))
+
+
+@require_page_permission("ia_dashboard")
+def verification_quality_section_view(request):
+    """Verification Quality as a tab of the one Analytics page."""
+
+    context = _ia_dashboard_context(request)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/verification_quality.html",
+        context,
+        section_key="verification_quality",
+        panel_title="Verification Quality",
+        frame={
+            "question": (
+                "What must Impact Assessment verify next, where is quality risk "
+                "accumulating, and what is blocking trusted reporting?"
+            ),
+            "evidence": "Verification queues, evidence quality and SSA coverage",
+            "freshness": context["date_range"],
+            "confidence": "Verification-controlled",
+        },
+    )
 
 
 @require_page_permission("ia_notifications")

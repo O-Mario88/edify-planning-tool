@@ -1782,6 +1782,19 @@ urlpatterns = [
         closure_impact_views.closure_impact_view,
         name="closure_impact",
     ),
+    # People and Verification Quality are pages of other modules (HR, IA) with
+    # their own chrome. The Analytics workspace reaches the same content here,
+    # as tabs of the one Analytics page (owner, 2026-09-05).
+    path(
+        "analytics/people",
+        hr_views.people_analytics_section_view,
+        name="people_analytics",
+    ),
+    path(
+        "analytics/verification-quality",
+        ia_views.verification_quality_section_view,
+        name="verification_quality",
+    ),
     path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),
     path("calendar", extended_views.calendar_view, name="calendar"),

@@ -4,10 +4,10 @@
   "templates": 224,
   "distinct_titles": 591,
   "with_card_key": 13,
-  "untitled_surfaces": 986,
+  "untitled_surfaces": 991,
   "untitled_chrome": 219,
-  "untitled_nested": 357,
-  "untitled_headless": 410,
+  "untitled_nested": 358,
+  "untitled_headless": 414,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 21,
   "ambiguous_titles": 1
@@ -37,7 +37,7 @@
    "templates/pages/planning/visit_requests.html"
   ],
   "cumulative progress by time period": [
-   "templates/pages/reports/index.html",
+   "templates/partials/analytics/panels/reports.html",
    "templates/partials/targets/my_body.html",
    "templates/partials/targets/team/body.html"
   ],
@@ -58,8 +58,8 @@
    "templates/pages/messages/new.html"
   ],
   "needs attention": [
-   "templates/pages/ia/analytics_dashboard.html",
-   "templates/partials/analytics/closure_quality_workspace.html"
+   "templates/partials/analytics/closure_quality_workspace.html",
+   "templates/partials/ia/dashboard_body.html"
   ],
   "plan breakdown by period": [
    "templates/partials/my_plan/period_breakdown.html",
@@ -85,8 +85,8 @@
    "templates/partials/debriefs/dashboard_body.html"
   ],
   "regional performance": [
-   "templates/pages/ia/analytics_dashboard.html",
-   "templates/partials/dashboards/cd/body.html"
+   "templates/partials/dashboards/cd/body.html",
+   "templates/partials/ia/dashboard_body.html"
   ],
   "schools needing urgent attention": [
    "templates/pages/dashboards/cceo.html",
@@ -2098,114 +2098,6 @@
    ]
   },
   {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 76,
-   "title": "Verification queue",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "ia-panel ia-queue mobile-home-hide",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 154,
-   "title": "Open queues",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "ia-panel",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 185,
-   "title": "Needs attention",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "ia-panel",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 232,
-   "title": "Eight-week activity flow",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-trend-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 266,
-   "title": "Regional performance",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-region-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 277,
-   "title": "District monitoring",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-monitor-table-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 285,
-   "title": "CCEO and Program Lead performance",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-monitor-table-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 313,
-   "title": "SSA coverage",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-coverage",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 349,
-   "title": "Evidence quality",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-evidence",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 380,
-   "title": "Data integrity",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-integrity",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 424,
-   "title": "Queue ownership",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-workload",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/ia/analytics_dashboard.html",
-   "line": 459,
-   "title": "Recent decisions",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "ia-panel ia-activity",
-   "branch_path": []
-  },
-  {
    "template": "templates/pages/ia/attribution.html",
    "line": 43,
    "title": "Movement by intervention \u00b7 FY to FY",
@@ -3294,42 +3186,6 @@
      0
     ]
    ]
-  },
-  {
-   "template": "templates/pages/reports/index.html",
-   "line": 101,
-   "title": "Cumulative progress by time period",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-report-matrix edify-surface rounded-surface shadow-sm overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/reports/index.html",
-   "line": 175,
-   "title": "Cumulative Progress Trend",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-report-panel edify-report-panel--trend lg:col-span-8 edify-surface p-5 rounded-surface shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/reports/index.html",
-   "line": 206,
-   "title": "Achievement vs Target",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-report-panel edify-report-panel--achievement edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/reports/index.html",
-   "line": 248,
-   "title": "Top Priorities",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-report-panel edify-report-panel--priorities edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4",
-   "branch_path": []
   },
   {
    "template": "templates/pages/schools/detail.html",
@@ -4439,6 +4295,42 @@
    ]
   },
   {
+   "template": "templates/partials/analytics/panels/reports.html",
+   "line": 84,
+   "title": "Cumulative progress by time period",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-report-matrix edify-surface rounded-surface shadow-sm overflow-hidden",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/panels/reports.html",
+   "line": 158,
+   "title": "Cumulative Progress Trend",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-report-panel edify-report-panel--trend lg:col-span-8 edify-surface p-5 rounded-surface shadow-sm space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/panels/reports.html",
+   "line": 189,
+   "title": "Achievement vs Target",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-report-panel edify-report-panel--achievement edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/panels/reports.html",
+   "line": 231,
+   "title": "Top Priorities",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-report-panel edify-report-panel--priorities edify-surface p-5 rounded-surface shadow-sm flex flex-col justify-between space-y-4",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/analytics/pl/activity_tracking.html",
    "line": 2,
    "title": "H. Activity Tracking",
@@ -4548,7 +4440,7 @@
   },
   {
    "template": "templates/partials/analytics/target_by_district.html",
-   "line": 1,
+   "line": 8,
    "title": "District delivery gaps",
    "heading_level": 3,
    "has_card_key": false,
@@ -4906,7 +4798,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 88,
+   "line": 86,
    "title": "Regional Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4915,7 +4807,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 119,
+   "line": 117,
    "title": "Fund Approval &amp; Finance Snapshot",
    "heading_level": 2,
    "has_card_key": false,
@@ -4924,7 +4816,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 171,
+   "line": 169,
    "title": "Delivery, Backlog and Money by Region",
    "heading_level": 2,
    "has_card_key": false,
@@ -4933,7 +4825,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 246,
+   "line": 244,
    "title": "Country Program Leads Performance",
    "heading_level": 2,
    "has_card_key": false,
@@ -4942,7 +4834,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 314,
+   "line": 312,
    "title": "Funded Not Completed",
    "heading_level": 2,
    "has_card_key": false,
@@ -4951,7 +4843,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 349,
+   "line": 347,
    "title": "Verification &amp; Data Quality",
    "heading_level": 2,
    "has_card_key": false,
@@ -4960,7 +4852,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 397,
+   "line": 395,
    "title": "Operational Risk &amp; Backlog",
    "heading_level": 2,
    "has_card_key": false,
@@ -4969,7 +4861,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 421,
+   "line": 419,
    "title": "Cluster SSA Heatmap",
    "heading_level": 2,
    "has_card_key": false,
@@ -4978,7 +4870,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 470,
+   "line": 468,
    "title": "Priority Schools Needing Urgent Attention",
    "heading_level": 2,
    "has_card_key": false,
@@ -4987,7 +4879,7 @@
   },
   {
    "template": "templates/partials/dashboards/cd/body.html",
-   "line": 544,
+   "line": 542,
    "title": "Quick Leadership Actions",
    "heading_level": 2,
    "has_card_key": false,
@@ -5607,6 +5499,114 @@
    "heading_level": 2,
    "has_card_key": false,
    "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 9,
+   "title": "Verification queue",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "ia-panel ia-queue mobile-home-hide",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 87,
+   "title": "Open queues",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "ia-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 118,
+   "title": "Needs attention",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "ia-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 165,
+   "title": "Eight-week activity flow",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-trend-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 199,
+   "title": "Regional performance",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-region-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 210,
+   "title": "District monitoring",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-monitor-table-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 218,
+   "title": "CCEO and Program Lead performance",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-monitor-table-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 246,
+   "title": "SSA coverage",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-coverage",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 282,
+   "title": "Evidence quality",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-evidence",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 313,
+   "title": "Data integrity",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-integrity",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 357,
+   "title": "Queue ownership",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-workload",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ia/dashboard_body.html",
+   "line": 392,
+   "title": "Recent decisions",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "ia-panel ia-activity",
    "branch_path": []
   },
   {

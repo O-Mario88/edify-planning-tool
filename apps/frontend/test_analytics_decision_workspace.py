@@ -54,6 +54,17 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("grouped by sub-region", template)
         self.assertIn("Needs attention", template)
         self.assertIn("View all {{ group.districts|length }} districts", template)
+        # Each filter says how many districts it holds, and a filter that
+        # finds nothing says so — in a scope of two critical districts all
+        # three filters showed the same rows and read as a broken control
+        # (owner, 2026-09-05).
+        self.assertIn("target_by_district_summary", service)
+        for count in ("districts", "attention", "critical"):
+            self.assertIn(
+                "{{ target_by_district_summary.%s|default:0 }}</b>" % count, template
+            )
+        self.assertIn('class="analytics-priority-empty"', template)
+        self.assertIn("No critical district in this scope", template)
 
     def test_map_keeps_original_visual_while_distribution_uses_new_layout(self):
         map_template = "\n".join(
@@ -123,6 +134,32 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn(
             "Admin can inspect every role-specific Overview cockpit", navigation
         )
+
+    def test_every_analytics_tab_renders_through_the_one_workspace(self):
+        """Every tab of the Analytics rail is the same page.
+
+        Six of the fifteen tabs were separate pages with their own header and
+        a different, grouped rail, so the chrome changed as a reader crossed
+        them (owner, 2026-09-05: "rebuild and fix ... to make it enterprise
+        grade"). A tab's view now hands its panel to render_analytics_section,
+        which is the only way the header, filter row, tiles and tablist stay
+        fixed around it.
+        """
+
+        import inspect
+
+        from django.urls import resolve
+
+        from apps.core.navigation import ANALYTICS_SECTIONS
+
+        for section in ANALYTICS_SECTIONS:
+            with self.subTest(section=section["key"]):
+                view = inspect.unwrap(resolve(section["url"]).func)
+                self.assertIn(
+                    "render_analytics_section(",
+                    inspect.getsource(view),
+                    f"{section['url']} does not render through the workspace",
+                )
 
     def test_every_analytics_route_uses_the_enterprise_anatomy(self):
         templates = (
@@ -197,8 +234,10 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
     def test_role_dashboards_prioritize_actions_and_disclose_evidence(self):
         pl = _read("templates/partials/analytics/pl/body.html")
         cd = _read("templates/partials/analytics/cd/body.html")
-        ia = _read("templates/pages/ia/analytics_dashboard.html")
-        reports = _read("templates/pages/reports/index.html")
+        # Both bodies became shared partials when these sections also became
+        # tabs of the one Analytics page (2026-09-05).
+        ia = _read("templates/partials/ia/dashboard_body.html")
+        reports = _read("templates/partials/analytics/panels/reports.html")
 
         self.assertIn("Priority intelligence", pl)
         self.assertEqual(pl.count("data-analytics-disclosure"), 3)

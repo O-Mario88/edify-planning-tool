@@ -1,8 +1,18 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
+{% comment %}
+Impact Analytics became a tab of the one Analytics page on 2026-09-05: the view
+renders `partials/analytics/panels/impact_analytics.html` through
+`render_analytics_section`. This standalone page is kept as the section's own
+frame and includes the very same panel, so the two can never drift apart.
+{% endcomment %}
 
 {% block title %}SSA Contribution Analysis · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260827contribution7">{% endblock %}
+{% comment %}Three charts live on this page. Without this block ApexCharts never loaded here,
+every chart card was a blank 260px box, and the only message went to screen readers
+(owner, 2026-09-05).{% endcomment %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260905charts1">{% endblock %}
 
 {% block shell_content %}
 <section class="sp-page edify-page-canvas" aria-labelledby="impact-analytics-title" data-mobile-family="analytics" data-analytics-enterprise>
@@ -13,10 +23,6 @@
       <h1 id="impact-analytics-title" class="edify-page-title edify-page-header__title">SSA Contribution Analysis</h1>
       <p class="edify-page-header__description">How partner work, SSA-linked trainings, staff activity, cluster meetings, and special projects are associated with score improvement.</p>
     </div>
-    <div class="sp-engine-state" aria-label="Impact engine status">
-      <span aria-hidden="true"></span>
-      Impact engine · confirmed SSA cycles · verified activity windows
-    </div>
     </div>
   </header>
 
@@ -24,6 +30,6 @@
 
   {% include "components/analytics_decision_frame.html" with question="Which programme activities are associated with SSA improvement, for which portfolios, and where is evidence still too weak to act?" evidence="Paired confirmed SSA and verified activity dosage" freshness="Current assessment cohorts" confidence="Association evidence, not causal proof" %}
 
-  {% include "partials/analytics/impact_workspace.html" %}
+  {% include "partials/analytics/panels/impact_analytics.html" %}
 </section>
 {% endblock %}

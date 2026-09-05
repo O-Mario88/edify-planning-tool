@@ -3665,9 +3665,12 @@ main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__helper {
 }
 
 /* A section a role home hides below the desktop breakpoint stays hidden even
-   when it is a filter bar, whose own display rule also asserts !important. */
+   when it is a filter bar, whose own display rule also asserts !important.
+   Except inside the Analytics workspace's Verification Quality tab: that is
+   the IA dashboard body shown WITHOUT its role home, so there is nothing to
+   stand in for the hidden sections and they have to show (2026-09-05). */
 @media (max-width: 63.999rem) {
-  main .mobile-home-hide.mobile-home-hide {
+  main .mobile-home-hide.mobile-home-hide:not(.analytics-ia-panel *) {
     display: none !important;
   }
 }

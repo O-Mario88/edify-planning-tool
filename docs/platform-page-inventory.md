@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **590**
-- All registered routes: **1057**
+- Routed product surfaces: **592**
+- All registered routes: **1059**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **25**
 - Activity states: **24**
-- Shared component templates: **370**
-- Full pages: **232**
-- Partials and drawers: **176**
-- Permission-gated surfaces: **578**
-- Referenced by automated tests: **544**
+- Shared component templates: **379**
+- Full pages: **241**
+- Partials and drawers: **171**
+- Permission-gated surfaces: **580**
+- Referenced by automated tests: **546**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -126,22 +126,24 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-8D0400A928 | /admin-panel/workflow-rules | Workflow Rules | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D2B38D8D70 | /analytics | Overview | dashboard | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6D56DC65A1 | /analytics/ | Overview | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-2ED079648B | /analytics/closure-quality | Closure Quality | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-21F0B4B97B | /analytics/country-director | Overview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-2ED079648B | /analytics/closure-quality | Closure Quality | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-21F0B4B97B | /analytics/country-director | Overview | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8718298CAA | /analytics/country-director/drilldown | Cd Analytics Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F58E426EBA | /analytics/country-director/export | Cd Analytics Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8F013D0E67 | /analytics/country-director/ssa-heatmap | Cd Ssa Heatmap | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D674288529 | /analytics/customize-dashboard | Analytics Customize Dashboard | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E9BCF7A69A | /analytics/drilldown | Analytics Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6976FECD39 | /analytics/export | Analytics Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-B5ED79ABAD | /analytics/program-lead | Overview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-F3AF182F18 | /analytics/people | People Analytics | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B5ED79ABAD | /analytics/program-lead | Overview | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8890670650 | /analytics/program-lead/drilldown | Pl Analytics Drilldown | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5762A28C1E | /analytics/program-lead/export | Pl Analytics Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-5C082E0BC3 | /analytics/publishing | Analytics Publishing Status - Edify Command Center | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-30F6E29C6E | /analytics/publishing/ | Analytics Publishing Status - Edify Command Center | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-5C082E0BC3 | /analytics/publishing | Publishing | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-30F6E29C6E | /analytics/publishing/ | Publishing | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7A183876B6 | /analytics/schedule-report | Analytics Schedule Report | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-32A0E647C0 | /analytics/school-closures | School Closures | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-91505FDFED | /analytics/visit-effectiveness | Visit Effectiveness | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-32A0E647C0 | /analytics/school-closures | School Closures | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-AF1CF4FDC0 | /analytics/verification-quality | Verification Quality | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-91505FDFED | /analytics/visit-effectiveness | Visit Effectiveness | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BB675805DE | /api/analytics/combine-map-boundaries | Combine Map Boundaries | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-86E2200E55 | /api/analytics/map-subcounties | Map Subcounty Metrics | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1BACC71B5F | /budget | Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -176,7 +178,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3EB2E7F348 | /clusters/schedule-meeting-drawer | Schedule Meeting Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-65C7CBA4DB | /clusters/schedule-training-drawer | Schedule Training Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1294570DE0 | /compensation-benefits | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-652212DA21 | /completed-activities | Completed Archive - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-652212DA21 | /completed-activities | Completed Work | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6A7759EFE6 | /completed-activities/<str:activity_id> | Completed Activity Record - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-863319037E | /completed-activities/<str:activity_id>/ | Completed Activity Record - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-49B65EC594 | /compliance-register | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -343,7 +345,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-107DE82212 | /ia/verification/<str:activity_id>/ | IA Review Workspace - Edify | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-374CDD4882 | /ia/verification/<str:activity_id>/return | Ia Return Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-ECFA021F35 | /ia/verification/<str:activity_id>/verify | Ia Verify Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-BD451D2966 | /impact | Impact Analytics | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-BD451D2966 | /impact | Impact Analytics | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-A353C7125C | /leave-requests | Leave Requests | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-7B2C917E1A | /leave/<str:leave_id>/attachment | Leave Attachment | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-ACA849CE31 | /leave/approvals | Leave Approvals Cockpit | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -528,7 +530,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-734A2B48B5 | /quality-checks | Quality Checks | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D604B8E968 | /recovery-plans | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F9822D4383 | /recruitment | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-A50F715D07 | /reports | Reports & Performance | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-A50F715D07 | /reports | Reports | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3A69BCBA57 | /reset-password | Reset password | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FF3BC373EE | /rvp/annual/<str:budget_id>/action | Rvp Annual Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-E363A7D6EE | /rvp/approvals | Rvp Approvals | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -560,7 +562,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-92FF10FD40 | /search | Search | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-100A4132EB | /settings | Settings · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2F5DDB9EA2 | /settings/activity-catalogue/ | Activity Catalogue · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-4A86903104 | /ssa | SSA Performance | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-4A86903104 | /ssa | SSA Performance | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E33623599D | /ssa/export | Ssa Performance Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1B9D56BC39 | /ssa/manual/ | Add SSA Score - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-498447B0C2 | /ssa/manual/schools | Ssa Manual School Options | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

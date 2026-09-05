@@ -783,7 +783,9 @@ ANALYTICS_SECTIONS = [
     {
         "key": "people",
         "label": "People Analytics",
-        "url": "/hr-analytics",
+        # The HR module keeps /hr-analytics with its own chrome; the Analytics
+        # workspace shows the same register as a tab of the one page.
+        "url": "/analytics/people",
         "page_key": "hr_analytics",
         "cluster": "delivery",
         "description": "Workforce, capacity and people investment.",
@@ -791,7 +793,9 @@ ANALYTICS_SECTIONS = [
     {
         "key": "verification_quality",
         "label": "Verification Quality",
-        "url": "/ia/dashboard/",
+        # IA keeps /ia/dashboard/ as its own home; the Analytics workspace shows
+        # the same dashboard as a tab of the one page.
+        "url": "/analytics/verification-quality",
         "page_key": "ia_dashboard",
         "cluster": "delivery",
         "description": "Evidence quality and verification throughput.",

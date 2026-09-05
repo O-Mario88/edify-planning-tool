@@ -204,7 +204,7 @@
         </p>
       </div>
       <div class="h-[260px] w-full" x-ref="chart" role="img" aria-label="Bar chart comparing support intensity with median school score improvement"></div>
-      <p class="sr-only" x-ref="status" aria-live="polite"></p>
+      <p class="analytics-chart-status" x-ref="status" aria-live="polite"></p>
     </div>
 
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
@@ -216,7 +216,7 @@
         </p>
       </div>
       <div class="h-[260px] w-full" x-ref="chart" role="img" aria-label="Scatter chart comparing accepted school spend with mean score improvement"></div>
-      <p class="sr-only" x-ref="status" aria-live="polite"></p>
+      <p class="analytics-chart-status" x-ref="status" aria-live="polite"></p>
     </div>
   </section>
 
@@ -321,7 +321,7 @@
       <div class="w-full overflow-x-auto">
         <div class="min-w-[560px]" x-ref="chart" role="img" aria-label="Heatmap of median score improvement by district and intervention"></div>
       </div>
-      <p class="sr-only" x-ref="status" aria-live="polite"></p>
+      <p class="analytics-chart-status" x-ref="status" aria-live="polite"></p>
       {% else %}
       <p class="text-[12px] text-slate-400 py-6 text-center">No district has enough paired schools yet for a geographic comparison.</p>
       {% endif %}

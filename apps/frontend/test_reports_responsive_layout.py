@@ -10,11 +10,26 @@ def _read(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
+def _reports_source() -> str:
+    """The page and the panel it includes, as one document.
+
+    Reports became a tab of the one Analytics page (2026-09-05): the body lives
+    in the panel and the standalone page is a frame around the same panel.
+    """
+
+    return "\n".join(
+        (
+            _read("templates/pages/reports/index.html"),
+            _read("templates/partials/analytics/panels/reports.html"),
+        )
+    )
+
+
 class ReportsResponsiveLayoutContractTest(SimpleTestCase):
     """Dense reporting views compose to the screen instead of looking zoomed."""
 
     def test_report_canvas_aligns_with_the_topbar_and_uses_canonical_headings(self):
-        template = _read("templates/pages/reports/index.html")
+        template = _reports_source()
         css = _read("static/css/platform.css")
 
         self.assertNotIn("max-w-[1500px]", template)
@@ -45,7 +60,7 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         )
 
     def test_reports_page_has_no_fixed_desktop_rail_or_equal_height_charts(self):
-        template = _read("templates/pages/reports/index.html")
+        template = _reports_source()
 
         for responsive_hook in (
             "edify-report-workspace",

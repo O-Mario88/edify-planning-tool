@@ -210,10 +210,10 @@
     cfg.labels = {{ team_performance.labels|safe }};
     cfg.xaxis.type = 'category';
     cfg.yaxis = [
-      { seriesName: 'Planned', labels: { style: { colors: t.text, fontSize: '12px' } } },
+      window.EdifyChartSystem.countAxis('', { seriesName: 'Planned' }),
       { seriesName: 'Planned', show: false },
       { seriesName: 'Planned', show: false },
-      { opposite: true, max: 100, min: 0, labels: { formatter: v => Math.round(v) + '%', style: { colors: t.text, fontSize: '12px' } } }
+      window.EdifyChartSystem.rateAxis()
     ];
     cfg.tooltip.theme = t.isDark ? 'dark' : 'light';
     cfg.legend.show = false;

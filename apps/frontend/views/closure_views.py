@@ -196,8 +196,24 @@ def completed_activities_view(request):
         .order_by("-updated_at")
     )
 
-    context = {"closed": closed_activities}
-    return render(request, "pages/closure/completed_activities.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/completed_work.html",
+        {"closed": closed_activities},
+        section_key="completed_work",
+        panel_title="Completed Activities ledger",
+        frame={
+            "question": (
+                "Which activities have fully cleared evidence and finance, and "
+                "can be relied on for reporting?"
+            ),
+            "evidence": "Locked closure snapshots and IA status",
+            "freshness": "Live permanent ledger",
+            "confidence": "Audit-preserved records",
+        },
+    )
 
 
 @require_page_permission("planning")
@@ -268,5 +284,21 @@ def analytics_publishing_status_view(request):
         "activity", "activity__school"
     )
 
-    context = {"records": records}
-    return render(request, "pages/analytics/publishing_status.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/publishing_status.html",
+        {"records": records},
+        section_key="publishing",
+        panel_title="Analytics Publishing Status",
+        frame={
+            "question": (
+                "Which verified records have not reached official reporting "
+                "systems, and what is blocking publication?"
+            ),
+            "evidence": "Analytics publishing queue and integration logs",
+            "freshness": "Live pipeline state",
+            "confidence": "System-recorded status",
+        },
+    )

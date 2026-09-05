@@ -12,6 +12,11 @@ would either do nothing (it targeted the overview's container) or repeat the
 controls the panel already has, which is what happened between the first
 conversion and 2026-09-05. Phone users open it only when they need to change
 scope; the controls stay in the DOM so server-owned query state survives.{% endcomment %}
+{% comment %}A tab click swaps this region and pushes the section's URL; the
+document title has to follow, or the browser tab still names the section a
+reader left. htmx applies a <title> found in swapped content.{% endcomment %}
+{% if panel_title %}<title>{{ panel_title }} · Edify</title>{% endif %}
+
 {% if filters_template %}
 <details class="mobile-family-filter" data-mobile-filter-sheet open>
   <summary>

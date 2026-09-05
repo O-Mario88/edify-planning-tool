@@ -3555,8 +3555,16 @@ search:has(.edify-search-submit) input[type="search"] {
 
 /* ── ApexCharts reference treatment ───────────────────────────────────────
    Series colors stay data-driven, while the hollow points and black tooltip
-   mirror the platform's chart reference across line and mixed charts. */
-.apexcharts-canvas .apexcharts-marker {
+   mirror the platform's chart reference across line and mixed charts.
+
+   PLOT points only. ApexCharts draws every legend swatch as a path carrying
+   this same `apexcharts-marker` class, so an unscoped rule painted every
+   legend on the platform surface-on-surface — three blank squares beside
+   "Planned  Achieved  Achievement %" (owner, 2026-09-05). The swatch keeps
+   its series fill; the point on the line stays hollow, and its ring carries
+   the series colour (EdifyChartSystem.renderDetached sets it), which is what
+   makes a hollow point visible on a surface-coloured card at all. */
+.apexcharts-canvas .apexcharts-marker:not(.apexcharts-legend-marker) {
   fill: var(--edify-surface);
   stroke-width: 2px;
 }

@@ -1545,6 +1545,20 @@
    "view": "apps.frontend.views.analytics_views.analytics_export_view"
   },
   {
+   "page_permission": "hr_analytics",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "RegionalVicePresident",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/analytics/people",
+   "route_name": "people_analytics",
+   "view": "apps.frontend.views.hr_views.people_analytics_section_view"
+  },
+  {
    "page_permission": "pl_analytics",
    "required_permissions": [],
    "role_exclusive": false,
@@ -1637,6 +1651,19 @@
    "route": "/analytics/school-closures",
    "route_name": "closure_impact",
    "view": "apps.frontend.views.closure_impact_views.closure_impact_view"
+  },
+  {
+   "page_permission": "ia_dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/analytics/verification-quality",
+   "route_name": "verification_quality",
+   "view": "apps.frontend.views.ia_views.verification_quality_section_view"
   },
   {
    "page_permission": "visit_effectiveness",
@@ -14460,25 +14487,25 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 386,
-  "Admin": 778,
+  "Admin": 780,
   "BusinessTransformationOfficer": 212,
   "CCEO": 477,
-  "CountryDirector": 614,
-  "HumanResources": 264,
-  "ImpactAssessment": 496,
+  "CountryDirector": 616,
+  "HumanResources": 265,
+  "ImpactAssessment": 497,
   "MfiLoanOfficer": 111,
   "MfiPartnerAdmin": 114,
   "PartnerAdmin": 201,
   "PartnerFieldOfficer": 201,
   "Program Lead": 551,
   "ProjectCoordinator": 408,
-  "RegionalVicePresident": 303
+  "RegionalVicePresident": 304
  },
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 872,
-  "routes_total": 1057,
+  "routes_guarded": 874,
+  "routes_total": 1059,
   "routes_unguarded": 185,
   "surfaces_no_role_can_reach": 0
  },

@@ -752,6 +752,17 @@ class AnalyticsDashboardService:
                 group["name"],
             )
         )
+        # The card's filter buttons carry these, so a reader can tell "no
+        # critical district in this scope" from "the filter did nothing" —
+        # with two districts, both critical, the three filters showed the same
+        # rows and the card read as broken (owner, 2026-09-05).
+        target_by_district_summary = {
+            "districts": len(districts_perf),
+            "critical": sum(1 for d in districts_perf if d["status"] == "critical"),
+            "attention": sum(
+                1 for d in districts_perf if d["status"] in ("critical", "watch")
+            ),
+        }
 
         # 8. Regional Performance (Map or list representation)
         regional_perf = []
@@ -1145,6 +1156,7 @@ class AnalyticsDashboardService:
             "ssa_performance": ssa_scores_list,
             "target_by_district": districts_perf,
             "target_by_district_groups": target_by_district_groups,
+            "target_by_district_summary": target_by_district_summary,
             "regional_performance": regional_perf,
             # The geography card is a shared country-level system view for
             # every authorized analytics role. Dashboard KPIs remain scoped;

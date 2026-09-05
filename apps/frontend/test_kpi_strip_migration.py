@@ -59,7 +59,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             # tiles onto components/kpi_strip.html. See
             # test_ia_dashboard_design.test_summary_metrics_use_the_one_approved_kpi_component.
             "templates/pages/notifications/index.html",
-            "templates/pages/reports/index.html",
+            "templates/partials/analytics/panels/reports.html",
             "templates/pages/staff/detail.html",
             "templates/pages/staff/index.html",
             "templates/pages/todos/index.html",

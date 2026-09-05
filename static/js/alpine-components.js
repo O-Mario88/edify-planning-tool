@@ -384,7 +384,10 @@ document.addEventListener('alpine:init', () => {
       this.chart = new window.ApexCharts(this.$refs.chart, this.options(data));
       this.chart.render()
         .then(() => {
-          if (this.$refs.status) this.$refs.status.textContent = 'Chart loaded.';
+          /* Success is silent. The status is the failure surface and it is
+             visible now, so a 'loaded' note would sit under every healthy
+             chart as a dashed box of chatter (owner, 2026-09-05). */
+          if (this.$refs.status) this.$refs.status.textContent = '';
         })
         .catch(() => {
           if (this.$refs.status) this.$refs.status.textContent = 'Chart unavailable; the numeric analysis remains available below.';

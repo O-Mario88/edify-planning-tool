@@ -23,6 +23,7 @@ class FeatureAssetLoadingContractTest(SimpleTestCase):
     def test_chart_workspaces_opt_in_to_apexcharts(self):
         pages = (
             "templates/pages/analytics/index.html",
+            "templates/pages/analytics/impact.html",
             "templates/pages/analytics/cd_analytics.html",
             "templates/pages/analytics/pl_analytics.html",
             "templates/pages/dashboards/cd.html",

@@ -80,7 +80,7 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260902popover1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260905map1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260905charts1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260905map1">
@@ -105,7 +105,7 @@ other page was relying on them.
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260905map1">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260905charts1">{% endblock %}
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260905map1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
@@ -159,7 +159,7 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260828tabs1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260905charts1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
@@ -509,6 +509,15 @@ controller exists by the time a drawer's x-init runs.
         colors: S.mixedSeries.slice(),
         stroke: { width: widths, curve: 'straight', lineCap: 'round' },
         markers: { size: markers, strokeWidth: 2, hover: { size: 6 } },
+        /* Month names never trim. The global `labels.trim` exists for long
+           category names; on a twelve-month axis it measured one three-letter
+           month as too wide and printed "." for May (owner, 2026-09-05). A
+           label that genuinely collides is hidden whole, never shortened. */
+        xaxis: {
+          labels: { trim: false, hideOverlappingLabels: true,
+                    style: { colors: S.ink.axis, fontSize: '12px', fontWeight: 600 } },
+          axisBorder: { show: false }, axisTicks: { show: false },
+        },
         plotOptions: {
           bar: {
             columnWidth: '58%', maxColumnWidth: 24,
@@ -531,6 +540,53 @@ controller exists by the time a drawer's x-init runs.
         tooltip: { theme: 'dark', shared: true, intersect: false,
                    style: { fontSize: '12px' } },
       }, opts);
+    },
+
+    /* ── Axes ──────────────────────────────────────────────────────────────
+       The two axes the mixed form uses everywhere, written once. Seven
+       templates each restated them; the one that forgot `min: 0` drew an
+       achievement axis running to -20% on the Analytics overview, and none
+       of them handled a small count, so an axis for three activities read
+       0.5 / 1.5 / 2.5 (owner, 2026-09-05). Axis text wears the text tokens:
+       identity comes from the mark, never from a coloured title.
+       ------------------------------------------------------------------- */
+
+    /* Whole numbers from zero. ApexCharts picks a nice scale for the range
+       it has, and for a range of three that means half-steps; a count has
+       no half-steps, so a tick that is not a whole number prints nothing. */
+    countAxis: function (title, opts) {
+      var S = window.EdifyChartSystem;
+      var axis = {
+        min: 0,
+        forceNiceScale: true,
+        labels: {
+          formatter: function (v) { return Number.isInteger(v) ? v : ''; },
+          style: { colors: S.ink.axis, fontSize: '12px' },
+        },
+      };
+      if (title) {
+        axis.title = { text: title, style: { color: S.ink.axis, fontSize: '12px', fontWeight: 500 } };
+      }
+      return Object.assign(axis, opts || {});
+    },
+
+    /* A rate against target: 0-100%, on the right, five steps. Fixed at both
+       ends so a flat line at 0% sits on the floor of the chart, a month at
+       100% touches the top, and the same 20% step reads the same on every
+       role's dashboard. */
+    rateAxis: function (title, opts) {
+      var S = window.EdifyChartSystem;
+      var axis = {
+        opposite: true, min: 0, max: 100, tickAmount: 5,
+        labels: {
+          formatter: function (v) { return Math.round(v) + '%'; },
+          style: { colors: S.ink.axis, fontSize: '12px' },
+        },
+      };
+      if (title) {
+        axis.title = { text: title, style: { color: S.ink.axis, fontSize: '12px', fontWeight: 500 } };
+      }
+      return Object.assign(axis, opts || {});
     },
 
     /* FREEZE-01. Build the chart OUTSIDE the main landmark, then move it in.
@@ -577,6 +633,17 @@ controller exists by the time a drawer's x-init runs.
        destroy(); the render itself completes asynchronously, as it always did. */
     renderDetached: function (el, options) {
       if (!el || typeof ApexCharts !== 'function') { return null; }
+
+      /* A point on a line is hollow — components.css fills it with the
+         surface — so its ring has to carry the series colour, or the point is
+         a surface-coloured circle on a surface-coloured card. That is what
+         made the Achievement line look dashed: invisible points punching
+         holes in it. ApexCharts' own default ring is white. A chart that
+         sets strokeColors itself keeps them. */
+      if (options && Array.isArray(options.colors)) {
+        var pointRing = options.markers || (options.markers = {});
+        if (pointRing.strokeColors == null) { pointRing.strokeColors = options.colors.slice(); }
+      }
 
       /* Call sites re-render by calling destroy() and then this again — a
          theme change, a filter, a period switch. destroy() tears down

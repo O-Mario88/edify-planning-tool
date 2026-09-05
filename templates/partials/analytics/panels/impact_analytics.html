@@ -1,0 +1,15 @@
+{% comment %}
+The Impact Analytics tab. Its engine state travels with it; the workspace
+header, the scope filter row, the tiles and the tablist stay fixed above
+(owner, 2026-09-05: one Analytics page, tabs swap only the panel). The
+workspace below keeps its own filter form, which swaps `#impact-workspace` and
+nothing else.
+{% endcomment %}
+<div class="analytics-panel-toolbar">
+  <div class="sp-engine-state" aria-label="Impact engine status">
+    <span aria-hidden="true"></span>
+    Impact engine · confirmed SSA cycles · verified activity windows
+  </div>
+</div>
+
+{% include "partials/analytics/impact_workspace.html" %}
