@@ -117,9 +117,11 @@ def decision_intelligence_view(request):
     )
     budget_insights = _open_first(budget.get("insights", []))
 
-    return render(
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
         request,
-        "pages/decisions/index.html",
+        "partials/analytics/panels/decision_intelligence.html",
         {
             "fy": fy,
             "fy_options": [fy, str(int(fy) - 1)],
@@ -135,6 +137,17 @@ def decision_intelligence_view(request):
             "open_budget": sum(1 for i in budget_insights if i["status"] in UNDECIDED),
             "statuses": REVIEW_CHOICES,
             "undecided": sorted(UNDECIDED),
+        },
+        section_key="decision_intelligence",
+        panel_title="Decision Intelligence",
+        frame={
+            "question": (
+                "What is leadership being asked to decide now, what evidence "
+                "supports it, and what happens if we wait?"
+            ),
+            "evidence": "Rule-generated operational and financial signals",
+            "freshness": "Rescanned for the selected FY",
+            "confidence": "Recommendation requires human decision",
         },
     )
 
@@ -194,10 +207,23 @@ def decision_log_view(request):
     """
     from apps.audit.decision_log_service import decision_log
 
-    return render(
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
         request,
-        "pages/audit/decision_log.html",
+        "partials/analytics/panels/decision_log.html",
         {"log": decision_log(request.user, request.GET.dict())},
+        section_key="decision_log",
+        panel_title="Decision Log",
+        frame={
+            "question": (
+                "What was decided, by whom, on what record, and with what "
+                "stated reason?"
+            ),
+            "evidence": "Tamper-evident audit chain",
+            "freshness": "Selected lookback window",
+            "confidence": "System-recorded history",
+        },
     )
 
 

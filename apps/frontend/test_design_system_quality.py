@@ -268,14 +268,19 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn(".sp-plan-main > .sp-card:nth-of-type(n + 2)", project_plan)
 
     def test_analytics_dashboard_groups_cards_by_content_scale(self):
-        page = _read("templates/pages/analytics/index.html")
+        """Analytics became one page with tabs on 2026-09-05, so the bands are
+        read where they now live: the executive pulse is the workspace's tile
+        strip above the tablist, and the rest is the Overview panel. Same
+        bands, same order, same page — one shell instead of fourteen."""
+        page = _read("templates/pages/analytics/workspace.html")
+        pulse = _read("templates/partials/analytics/executive_pulse.html")
         cards = _read("templates/partials/analytics/kpi_cards.html")
         layout = _read("static/css/pages/analytics-dashboard.css")
 
         self.assertIn("data-analytics-enterprise", page)
         self.assertIn("css/pages/analytics-dashboard.css", page)
+        self.assertIn("analytics-executive-pulse", pulse)
         for band in (
-            "analytics-executive-pulse",
             "analytics-row--geography",
             "analytics-row--overview",
             "analytics-row--decision",
@@ -289,8 +294,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             cards.index("target_by_district.html"),
             cards.index("recommended_insights.html"),
         )
-        self.assertIn("items=executive_kpi_items", cards)
-        self.assertIn("items=additional_kpi_items", cards)
+        self.assertIn("items=executive_kpi_items", pulse)
+        self.assertIn("items=additional_kpi_items", pulse)
         self.assertNotIn("lg:col-span-4 space-y-6", cards)
         self.assertIn("container: analytics-dashboard / inline-size", layout)
         self.assertIn("container: analytics-impact / inline-size", layout)

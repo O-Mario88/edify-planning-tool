@@ -265,9 +265,12 @@ def analytics_export_view(request):
 def pl_analytics_view(request):
     """Program Lead Analytics — the supervised-team decision cockpit.
 
-    Full page on a normal GET; the analytics body partial on an HX-Request so
-    the filter row swaps only `#pl-analytics-body` (charts re-init via Alpine).
-    Everything is scoped to the PL's supervised team by PLAnalyticsService."""
+    This is what Overview means for a Program Lead, so it renders through the
+    Analytics workspace shell like every other section: the header, the scope
+    filters, the tiles and the tablist are written once and stay fixed, and the
+    cockpit is the panel beneath them. Its own filter row still swaps only
+    `#pl-analytics-body` (charts re-init via Alpine). Everything is scoped to
+    the PL's supervised team by PLAnalyticsService."""
     from apps.analytics.pl_analytics_service import PLAnalyticsService
 
     filters = {
@@ -312,9 +315,30 @@ def pl_analytics_view(request):
         **data,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
-    if request.headers.get("HX-Request") == "true":
+    # The filter row's own swap has to name its target. A tab click
+    # (HX-Target: analytics-panel) and a scope change (analytics-scope) are HX
+    # requests too, and answering either with a bare body would replace the
+    # whole workspace with this cockpit's charts.
+    if request.headers.get("HX-Target") == "pl-analytics-body":
         return render(request, "partials/analytics/pl/body.html", context)
-    return render(request, "pages/analytics/pl_analytics.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/pl_overview.html",
+        context,
+        section_key="overview",
+        panel_title="Program Lead Analytics",
+        frame={
+            "question": (
+                "Which schools, clusters and team members need my "
+                "intervention this week?"
+            ),
+            "evidence": "My supervised portfolio and confirmed delivery",
+            "freshness": "Live to the selected period",
+            "confidence": "Role-scoped and verification-aware",
+        },
+    )
 
 
 @require_page_permission("pl_analytics")
@@ -790,10 +814,12 @@ def cd_analytics_view(request):
     """Country Director Analytics — the national leadership cockpit.
 
     Country-wide intelligence across every PL, CCEO, district, region, partner,
-    cluster and school. Full page on a normal GET; the analytics body partial on
-    an HX-Request so the filter row swaps only `#cd-analytics-body`. The CD sees
-    everything but acts only through oversight workflows — CDAnalyticsService
-    never emits field-execution actions."""
+    cluster and school. This is what Overview means for a Country Director, so
+    it renders through the Analytics workspace shell like every other section
+    and the cockpit is the panel; its own filter row still swaps only
+    `#cd-analytics-body`. The CD sees everything but acts only through
+    oversight workflows — CDAnalyticsService never emits field-execution
+    actions."""
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
@@ -854,9 +880,28 @@ def cd_analytics_view(request):
         "heatmap_levels": _heatmap_level_choices(),
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
-    if request.headers.get("HX-Request") == "true":
+    # Named target, for the reason given on the PL cockpit: a tab click and a
+    # scope change are HX requests too, and this branch answers neither.
+    if request.headers.get("HX-Target") == "cd-analytics-body":
         return render(request, "partials/analytics/cd/body.html", context)
-    return render(request, "pages/analytics/cd_analytics.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/cd_overview.html",
+        context,
+        section_key="overview",
+        panel_title="Country Director Analytics",
+        frame={
+            "question": (
+                "Where is country performance off plan, why, and which "
+                "leadership action has the highest leverage?"
+            ),
+            "evidence": "Country delivery, SSA, finance and field risk",
+            "freshness": "Live to the selected period",
+            "confidence": "Country-wide, verification-aware",
+        },
+    )
 
 
 @require_page_permission("cd_analytics")
