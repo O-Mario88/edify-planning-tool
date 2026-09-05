@@ -135,6 +135,16 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
             "Admin can inspect every role-specific Overview cockpit", navigation
         )
 
+    def test_a_bare_htmx_request_gets_a_fragment_not_a_page(self):
+        """HX-Request without HX-Target asked for a fragment: the renderer
+        answers with the scope, never the shell with a <head>."""
+
+        source = _read("apps/frontend/views/analytics_render.py")
+        self.assertIn(
+            'if request.headers.get("HX-Request") == "true" and not target:', source
+        )
+        self.assertIn("return render(request, SCOPE_TEMPLATE, context)", source)
+
     def test_every_analytics_tab_renders_through_the_one_workspace(self):
         """Every tab of the Analytics rail is the same page.
 

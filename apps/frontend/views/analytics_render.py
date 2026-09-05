@@ -85,4 +85,10 @@ def render_analytics_section(
         return render(request, PANEL_TEMPLATE, context)
     if target == "analytics-scope":
         return render(request, SCOPE_TEMPLATE, context)
+    if request.headers.get("HX-Request") == "true" and not target:
+        # An HTMX request that names no target — a boosted link, a
+        # programmatic fetch — still asked for a fragment, not a page with a
+        # <head> and a shell around it. The scope is the largest fragment the
+        # workspace has: the filter row, the tiles, the tablist and the panel.
+        return render(request, SCOPE_TEMPLATE, context)
     return render(request, WORKSPACE_TEMPLATE, context)
