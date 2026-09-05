@@ -38,11 +38,31 @@ def visit_effectiveness_view(request):
         "is_strategic": role in ("CountryDirector", "RegionalVicePresident", "Admin"),
         "debrief_context": _debrief_context(request.user),
     }
-    if request.headers.get("HX-Request") == "true":
+    # This section's own filter form swaps its workspace and nothing else. It
+    # has to name its target: a tab click and a scope change are HX requests
+    # too, and they ask for different shapes.
+    if request.headers.get("HX-Target") == "vfx-workspace":
         return render(
             request, "partials/analytics/visit_effectiveness_workspace.html", context
         )
-    return render(request, "pages/analytics/visit_effectiveness.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/visit_effectiveness.html",
+        context,
+        section_key="visit_effectiveness",
+        panel_title="School Visit Effectiveness",
+        frame={
+            "question": (
+                "Are school visits reaching the right schools with enough "
+                "quality and frequency to support improvement?"
+            ),
+            "evidence": "Delivered visits and comparable confirmed SSA cycles",
+            "freshness": "Current comparison cohort",
+            "confidence": "Association, not attribution",
+        },
+    )
 
 
 def _debrief_context(principal) -> list[dict]:

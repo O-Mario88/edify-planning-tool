@@ -14,10 +14,19 @@ def _read(relative_path: str) -> str:
 
 class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
     def test_overview_leads_with_four_signals_and_geographic_priorities(self):
+        """The four signals moved out of the overview and above the tablist on
+        2026-09-05: they describe the scope the filters ask for, so they are
+        the same on every Analytics tab rather than one section's opening row.
+        They still lead the workspace, and geography still leads the panel."""
+        pulse = _read("templates/partials/analytics/executive_pulse.html")
         cards = _read("templates/partials/analytics/kpi_cards.html")
 
-        self.assertIn("items=executive_kpi_items", cards)
-        self.assertIn("items=additional_kpi_items", cards)
+        self.assertIn("items=executive_kpi_items", pulse)
+        self.assertIn("items=additional_kpi_items", pulse)
+        scope = _read("templates/partials/analytics/scope.html")
+        self.assertLess(
+            scope.index("tiles_template"), scope.index("tab_rail.html")
+        )
         self.assertIn("analytics-row--geography", cards)
         geography = cards.split(
             'class="analytics-layout-row analytics-row--geography"', 1

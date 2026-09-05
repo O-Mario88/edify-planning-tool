@@ -1,0 +1,16 @@
+{% comment %}
+Everything the filter row governs: the tiles, the tablist, the decision frame
+and the panel. The filters swap THIS, so a change of scope updates the tiles
+and the panel together and they can never disagree. A tab swaps only
+`#analytics-panel` inside it, because a tab changes what you are looking at,
+not the scope you are looking through.
+{% endcomment %}
+{% if tiles_template %}{% include tiles_template %}{% endif %}
+
+{% include "partials/analytics/tab_rail.html" %}
+
+<div id="analytics-panel" role="tabpanel"
+     {% if active_section_key %}aria-labelledby="analytics-tab-{{ active_section_key }}"{% endif %}
+     tabindex="0" class="space-y-4">
+{% include "partials/analytics/panel.html" %}
+</div>

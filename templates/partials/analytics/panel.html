@@ -1,0 +1,9 @@
+{% comment %}
+What a tab shows: the decision frame that names the question this panel
+answers, then the panel itself. Both are inside `#analytics-panel`, because
+both change when the tab changes — the frame describes what you are looking
+at, while the tiles above describe the scope you are looking through.
+{% endcomment %}
+{% include "components/analytics_decision_frame.html" with question=frame_question|default:"Where is programme performance healthy, where is it drifting, and what needs leadership attention next?" evidence=frame_evidence|default:"Targets, SSA, activities and geography" freshness=frame_freshness|default:as_of_date confidence=frame_confidence|default:"Qualified by verification coverage" %}
+
+{% include panel_template %}

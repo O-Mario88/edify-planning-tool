@@ -38,6 +38,43 @@ def _analytics_filters(request):
     }
 
 
+def analytics_scope_kpis(request) -> dict:
+    """The workspace tile strip for the scope the filters ask for.
+
+    Every Analytics section renders the same four signals above its tablist,
+    so they are computed once here from the same cached dataset the overview
+    reads rather than recomputed per section.
+    """
+    from apps.analytics.models import DEFAULT_ANALYTICS_CARDS, AnalyticsDashboardPreference
+    from apps.analytics.report_delivery import CARD_CATEGORY
+    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+
+    filters = _analytics_filters(request)
+    fingerprint = hashlib.sha256(
+        json.dumps(filters, sort_keys=True, default=str).encode()
+    ).hexdigest()[:20]
+    data = stampede_safe_get_or_compute(
+        f"analytics-dashboard:v1:{request.user.id}:{request.user.active_role}:"
+        f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:{fingerprint}",
+        lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),
+        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
+    )
+    preference = AnalyticsDashboardPreference.objects.filter(
+        user_id=request.user.id
+    ).first()
+    visible = preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
+    items = [
+        item
+        for item in data.get("kpi_strip_items", [])
+        if CARD_CATEGORY.get(item.get("label"), "reach") in visible
+    ]
+    return {
+        "executive_kpi_items": items[:4],
+        "additional_kpi_items": items[4:],
+        "as_of_date": data.get("as_of_date"),
+    }
+
+
 @require_page_permission("analytics")
 def analytics_dashboard_view(request):
     """GET to render the primary Analytics Dashboard with filters."""
@@ -183,11 +220,19 @@ def analytics_dashboard_view(request):
         },
     }
 
-    # If HTMX request, render only content cards to swap
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/analytics/kpi_cards.html", context)
+    # The workspace renderer decides the shape: a tab click gets the panel, a
+    # filter change gets the tiles and the panel together, a deep link gets the
+    # whole shell around the same panel.
+    from apps.frontend.views.analytics_render import render_analytics_section
 
-    return render(request, "pages/analytics/index.html", context)
+    return render_analytics_section(
+        request,
+        "partials/analytics/kpi_cards.html",
+        context,
+        section_key="overview",
+        panel_title="Analytics",
+        tiles_template="partials/analytics/executive_pulse.html",
+    )
 
 
 @require_page_permission("analytics")

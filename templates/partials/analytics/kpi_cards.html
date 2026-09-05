@@ -4,25 +4,6 @@
      class="analytics-dashboard-stack"
      data-analytics-layout="{{ analytics_layout|default:'grid' }}">
 
-<section class="analytics-executive-pulse" aria-labelledby="analytics-pulse-title">
-  <div class="analytics-band-heading">
-    <div>
-      <p class="analytics-band-eyebrow">Executive pulse</p>
-      <h2 id="analytics-pulse-title">What needs attention now</h2>
-    </div>
-    <p>Four signals selected for delivery, reach, and school improvement.</p>
-  </div>
-  {% include "components/kpi_strip.html" with items=executive_kpi_items variant="executive" %}
-  {% if additional_kpi_items %}
-  <details class="analytics-metrics-disclosure">
-    <summary>
-      <span>View {{ additional_kpi_items|length }} additional metric{{ additional_kpi_items|length|pluralize }}</span>
-      <span aria-hidden="true">⌄</span>
-    </summary>
-    {% include "components/kpi_strip.html" with items=additional_kpi_items variant="supporting" density="compact" %}
-  </details>
-  {% endif %}
-</section>
 
 {% comment %}
   Geography is the primary decision surface and owns the complete row. The

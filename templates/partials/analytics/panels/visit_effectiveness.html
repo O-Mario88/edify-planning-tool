@@ -1,0 +1,27 @@
+{% comment %}
+The Visit Effectiveness tab. Its own two controls travel with it — they filter
+this analysis and nothing else — while the workspace header, the scope filter
+row, the tiles and the tablist stay fixed above (owner, 2026-09-05).
+{% endcomment %}
+<form id="vfx-filters" class="edify-filter-bar" aria-label="Visit effectiveness filters"
+      hx-get="/analytics/visit-effectiveness"
+      hx-target="#vfx-workspace" hx-swap="outerHTML" hx-push-url="true">
+  <div class="flex flex-col min-w-[140px]">
+    <span class="edify-filter-label">Assessment comparison</span>
+    <select name="comparison" aria-label="Assessment comparison"
+            class="h-9 px-3 text-[12px] font-semibold border border-slate-200 rounded-control">
+      <option value="v1">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</option>
+    </select>
+  </div>
+  <div class="flex flex-col min-w-[120px]">
+    <span class="edify-filter-label">School type</span>
+    <select name="school_type" aria-label="School type" hx-trigger="change"
+            class="h-9 px-3 text-[12px] font-semibold border border-slate-200 rounded-control">
+      <option value="" {% if not selected_school_type %}selected{% endif %}>All schools</option>
+      <option value="core" {% if selected_school_type == 'core' %}selected{% endif %}>Core</option>
+      <option value="client" {% if selected_school_type == 'client' %}selected{% endif %}>Client</option>
+    </select>
+  </div>
+</form>
+
+{% include "partials/analytics/visit_effectiveness_workspace.html" %}
