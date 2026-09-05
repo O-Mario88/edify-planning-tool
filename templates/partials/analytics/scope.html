@@ -5,6 +5,24 @@ and the panel together and they can never disagree. A tab swaps only
 `#analytics-panel` inside it, because a tab changes what you are looking at,
 not the scope you are looking through.
 {% endcomment %}
+{% comment %}One filter row, in one place, carrying the controls that actually
+apply to the tab you are on. It sits inside the swapped region so a tab change
+brings its own controls with it — a row that stayed put while the panel changed
+would either do nothing (it targeted the overview's container) or repeat the
+controls the panel already has, which is what happened between the first
+conversion and 2026-09-05. Phone users open it only when they need to change
+scope; the controls stay in the DOM so server-owned query state survives.{% endcomment %}
+{% if filters_template %}
+<details class="mobile-family-filter" data-mobile-filter-sheet open>
+  <summary>
+    <span>Analytics filters</span>
+    <small>Change period, geography, or programme scope</small>
+    <span aria-hidden="true">⌄</span>
+  </summary>
+  <div>{% include filters_template %}</div>
+</details>
+{% endif %}
+
 {% if tiles_template %}{% include tiles_template %}{% endif %}
 
 {% include "partials/analytics/tab_rail.html" %}

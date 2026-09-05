@@ -59,18 +59,6 @@ Context a section view supplies:
 </div>
 <div class="px-4 sm:px-6 pb-5 pt-4 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="analytics" data-analytics-enterprise>
 
-{% comment %}One filter row for the workspace, carrying the controls that apply
-to the panel below it. Phone users open it only when they need to change
-scope; the controls stay in the DOM so server-owned query state survives.{% endcomment %}
-<details class="mobile-family-filter" data-mobile-filter-sheet open>
-  <summary>
-    <span>Analytics filters</span>
-    <small>Change period, geography, or programme scope</small>
-    <span aria-hidden="true">⌄</span>
-  </summary>
-  <div>{% include filters_template|default:"partials/analytics/filters.html" %}</div>
-</details>
-
 <div id="analytics-scope" class="space-y-4">
 {% include "partials/analytics/scope.html" %}
 </div>

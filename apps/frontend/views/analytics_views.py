@@ -232,6 +232,7 @@ def analytics_dashboard_view(request):
         section_key="overview",
         panel_title="Analytics",
         tiles_template="partials/analytics/executive_pulse.html",
+        filters_template="partials/analytics/filters.html",
     )
 
 

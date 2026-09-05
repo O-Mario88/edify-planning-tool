@@ -1,7 +1,11 @@
+{% comment %}The scope filters. `request.path` rather than a hardcoded
+/analytics: the same row serves whichever Analytics tab is open, and the
+section it asks is the section you can see. It swaps `#analytics-scope`, so the
+tiles and the panel move together and can never describe different scopes.{% endcomment %}
 <form id="analytics-filters-form"
-      hx-get="/analytics"
+      hx-get="{{ request.path }}"
       hx-trigger="change delay:100ms, keyup delay:200ms changed"
-      hx-target="#analytics-kpi-and-content-container"
+      hx-target="#analytics-scope"
       hx-push-url="true"
       class="analytics-filter-command edify-filter-bar">
   <div class="analytics-filter-command__primary">

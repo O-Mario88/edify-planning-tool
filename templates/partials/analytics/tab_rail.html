@@ -10,9 +10,11 @@ headers, filters, and tiles for them to stay fixed").
 A tab is an anchor because every section is also a real URL: deep links,
 permissions, the browser's back button and "open in new tab" all keep working,
 and a section reached directly renders the same shell around the same panel.
-`hx-get` turns the click into a panel swap rather than a page load; a section
-whose view does not yet answer with a panel simply navigates, which is what an
-anchor does anyway. `aria-selected` marks the current tab either way.
+`hx-get` turns the click into a swap of `#analytics-scope` — the filter row,
+the tiles, this rail and the panel — rather than a page load; a section whose
+view does not answer with a scope simply navigates, which is what an anchor
+does anyway. `aria-selected` marks the current tab either way. The workspace
+header above the scope never moves.
 {% endcomment %}
 {% if workspace and workspace.sections|length > 1 %}
 <nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
@@ -29,7 +31,7 @@ anchor does anyway. `aria-selected` marks the current tab either way.
    class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
    title="{{ section.description }}"
    hx-get="{{ section.url }}"
-   hx-target="#analytics-panel"
+   hx-target="#analytics-scope"
    hx-swap="innerHTML"
    hx-push-url="true"
    hx-indicator="#analytics-panel-updating">{{ section.label }}</a>
