@@ -26,6 +26,7 @@ class FeatureAssetLoadingContractTest(SimpleTestCase):
             "templates/pages/analytics/impact.html",
             "templates/pages/analytics/cd_analytics.html",
             "templates/pages/analytics/pl_analytics.html",
+            "templates/pages/ssa/performance.html",
             "templates/pages/dashboards/cd.html",
             "templates/pages/dashboards/hr.html",
             "templates/pages/dashboards/pl.html",

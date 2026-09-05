@@ -1657,7 +1657,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 14889,
+      "bytes": 11705,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1670,7 +1670,7 @@
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/analytics/panels/reports.html",
       "variants": [
         "executive"
@@ -1722,7 +1722,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1542,
+      "bytes": 1585,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -8622,7 +8622,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16147,
+      "bytes": 18219,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -8682,6 +8682,35 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 5102,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/my-targets",
+        "/team-planning-oversight/",
+        "/team-targets",
+        "/team-targets/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": " Period Matrix",
+      "purpose": "Reusable  period matrix interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/targets/_period_matrix.html",
+      "variants": [
+        "{% if cell.pct == None %}neutral{% elif cell.pct >= 100 %}success{% elif cell.pct >= 60 %}warning{% else %}danger{% endif %}",
+        "{% if cell.pct == None %}neutral{% elif cell.pct >= 70 %}success{% elif cell.pct >= 50 %}warning{% else %}danger{% endif %}"
+      ]
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 6377,
       "deprecated_alternatives": [],
@@ -8707,14 +8736,14 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 23267,
+      "bytes": 19659,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "My Body",
       "purpose": "Reusable my body interface primitive",
@@ -8722,7 +8751,7 @@
       "states": [
         "default"
       ],
-      "tables": 3,
+      "tables": 2,
       "template": "partials/targets/my_body.html",
       "variants": [
         "executive",
@@ -8813,11 +8842,7 @@
       "accessibility_requirements": [],
       "bytes": 1584,
       "deprecated_alternatives": [],
-      "example_pages": [
-        "/team-planning-oversight/",
-        "/team-targets",
-        "/team-targets/"
-      ],
+      "example_pages": [],
       "findings": [],
       "forms": 0,
       "htmx_controls": 0,
@@ -8837,7 +8862,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 23685,
+      "bytes": 21366,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -8857,16 +8882,16 @@
         "selected",
         "open"
       ],
-      "tables": 4,
+      "tables": 3,
       "template": "partials/targets/team/body.html",
       "variants": [
         "executive",
+        "team",
         "{% if plan.status_key == ",
         "{% if summary_kpis.0.value == ",
         "{{ cell.tone }}",
         "{{ issue.tone }}",
         "{{ partner.tone }}",
-        "{{ period.tone }}",
         "{{ signal.tone }}",
         "{{ staff.tone }}",
         "{{ target.tone }}"
@@ -45567,7 +45592,6 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /my-targets/area-drawer?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}",
         "GET /my-targets"
       ],
       "implementation_status": "existing-routed-surface",
@@ -58365,7 +58389,7 @@
       "backend_module": "apps.frontend.views.ssa_views",
       "backend_view": "apps.frontend.views.ssa_views.ssa_performance_view",
       "card_count": 0,
-      "charts": false,
+      "charts": true,
       "drawers": true,
       "evidence": [
         "template:pages/analytics/workspace.html",
@@ -80027,7 +80051,7 @@
     "activity_states": 24,
     "all_routes": 1059,
     "api_routes": 359,
-    "component_templates": 379,
+    "component_templates": 380,
     "full_pages": 241,
     "mobile_contract_pass": 415,
     "nonvisual_actions": 158,

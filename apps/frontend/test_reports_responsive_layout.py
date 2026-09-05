@@ -42,7 +42,6 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         )
         self.assertIn('id="reports-timeline-title"', template)
         self.assertIn('id="reports-core-targets-title"', template)
-        self.assertIn('id="reports-matrix-title"', template)
         self.assertIn('id="reports-insights-title"', template)
         self.assertIn("edify-report-period__heading", template)
         self.assertIn("edify-report-panel--trend lg:col-span-8", template)
@@ -59,6 +58,21 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
             css,
         )
 
+    def test_the_period_matrix_moved_to_the_target_pages(self):
+        """"Cumulative progress by time period" belongs with the targets it
+        measures: My Target carries it as an accordion, and Team Target inside
+        each team member's row (owner, 2026-09-05)."""
+
+        self.assertNotIn("edify-report-matrix__table", _reports_source())
+        self.assertNotIn("Cumulative progress by time period", _reports_source())
+        shared = _read("templates/partials/targets/_period_matrix.html")
+        self.assertIn("Cumulative progress by time period", shared)
+        for path in (
+            "templates/partials/targets/my_body.html",
+            "templates/partials/targets/team/body.html",
+        ):
+            self.assertIn("partials/targets/_period_matrix.html", _read(path), path)
+
     def test_reports_page_has_no_fixed_desktop_rail_or_equal_height_charts(self):
         template = _reports_source()
 
@@ -66,7 +80,6 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
             "edify-report-workspace",
             "edify-report-timeline",
             "components/kpi_strip.html",
-            "edify-report-matrix__table",
             "edify-report-insight-grid",
             "edify-report-trend-chart",
         ):

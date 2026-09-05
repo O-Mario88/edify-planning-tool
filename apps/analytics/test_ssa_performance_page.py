@@ -237,8 +237,46 @@ class SsaPerformancePageTest(TestCase):
         self.assertEqual(monitor["average_delta"], 1.0)
         self.assertEqual(len(monitor["rows"]), 8)
         self.assertTrue(all(row["delta"] == 1.0 for row in monitor["rows"]))
-        self.assertContains(response, "FY2026 baseline")
-        self.assertContains(response, "FY2027 follow-up")
+        # Named the way the owner reads it: which two years are compared.
+        self.assertContains(response, "SSA performance FY26 vs FY27")
+        self.assertNotContains(response, "FY2026 baseline →")
+
+    def test_trend_by_year_lines_up_interventions_across_and_years_as_lines(self):
+        """Interventions on the axis, scores up it, one line per financial
+        year with the years named in the legend (owner, 2026-09-05)."""
+        from apps.core.enums import SsaIntervention
+        from apps.ssa.models import SsaScore
+
+        current = int(self.fy)
+        for offset, score in ((0, 7.0), (1, 5.0)):
+            record = SsaRecord.objects.create(
+                school=self.own_school,
+                fy=str(current - offset),
+                quarter=self.quarter,
+                date_of_ssa=timezone.now() - timedelta(days=offset * 365),
+                average_score=score,
+                verification_status="confirmed",
+            )
+            for item in SsaIntervention:
+                SsaScore.objects.create(
+                    ssa_record=record, intervention=item.value, score=score
+                )
+
+        client = Client()
+        client.force_login(self.cceo)
+        response = client.get(f"/ssa?fy={self.fy}")
+        chart = response.context["dashboard"]["trend"]["by_intervention"]
+
+        self.assertEqual(chart["categories"], [item.label for item in SsaIntervention])
+        self.assertEqual(
+            [line["name"] for line in chart["series"]],
+            [f"FY{current - 1}", f"FY{current}"],
+        )
+        self.assertEqual(chart["series"][0]["data"], [5.0] * len(SsaIntervention))
+        self.assertEqual(chart["series"][1]["data"], [7.0] * len(SsaIntervention))
+        self.assertContains(response, 'json_script' if False else "sp-trend-payload")
+        self.assertContains(response, "EdifyChartSystem.formBase")
+        self.assertContains(response, "SSA performance trend by year")
 
     def test_export_obeys_role_capability(self):
         self._ssa(self.own_school, 7.0)

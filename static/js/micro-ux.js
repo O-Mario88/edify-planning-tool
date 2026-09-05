@@ -247,6 +247,13 @@
       var tile = numeral.parentElement;
       if (!tile || tile.matches('main, section, article, th, td, li, dd, dt')) return;
       if (tile.closest('[role="tab"], table, .edify-page-header, .kpi-strip, dialog, [role="dialog"], .mobile-role-home')) return;
+      /* The numeral is one PART of a composed card when its block sits inside a
+         surface beside other blocks — the Reports period card: text block on
+         the left, gauge on the right. The card is the tile; painting its text
+         block as a second tile squeezed a gradient box into 90px with the
+         caption wrapping word by word (owner, 2026-09-05). */
+      var host = tile.parentElement;
+      if (host && host.matches('.edify-surface, [class*="rounded-surface"]') && host.children.length > 1) return;
       var kids = Array.from(tile.children);
       if (kids.length < 2 || kids.length > 4) return;
       if (!kids.every(function (kid) { return kid.matches('p, span, h3, h4, h5, div, small, strong'); })) return;

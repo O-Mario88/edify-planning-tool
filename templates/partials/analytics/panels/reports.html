@@ -1,4 +1,3 @@
-{% load table_pagination %}
 {% comment %}
 The Reports tab. Its own financial-year control travels with it; the workspace
 header, the scope filter row, the tiles and the tablist stay fixed above
@@ -74,68 +73,9 @@ header, the scope filter row, the tiles and the tablist stay fixed above
 </section>
 
 
-<!-- ================= TIME PERIOD PROGRESS MATRIX ================= -->
-<details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="reports-period-matrix">
-<summary>
-<span><strong>Detailed period matrix</strong><small>Target and verified achievement for every reporting period</small></span>
-<svg class="analytics-evidence-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
-</summary>
-<div class="analytics-evidence-disclosure__body">
-<section class="edify-report-matrix edify-surface rounded-surface shadow-sm overflow-hidden" aria-labelledby="reports-matrix-title">
-<header class="edify-report-matrix__heading">
-<div>
-<p class="edify-report-section__eyebrow">Period comparison</p>
-<h2 id="reports-matrix-title">Cumulative progress by time period</h2>
-</div>
-<p>Each period rolls forward verified achievement so target gaps remain visible before year end.</p>
-</header>
-
-<div class="edify-report-matrix__scroll overflow-x-auto">
-{% paginate periods "periods_page" as periods_pager %}
-<table class="edify-report-matrix__table w-full text-left edify-text-caption border-collapse">
-<thead>
-<tr class="bg-slate-50 text-slate-500 font-bold border-b ">
-<!-- Headers split -->
-<th class="p-4 font-semibold border-r  w-[200px]" rowspan="2">TARGET AREA</th>
-{% for period in periods_pager.rows %}
-<th class="py-2.5 text-center {% if not forloop.last %}border-r{% endif %} font-bold bg-slate-50/30" colspan="3">{{ period.chevron_label }} <span class="edify-text-caption text-slate-500 block uppercase">{{ period.kind_label }}</span></th>
-{% endfor %}
-</tr>
-<tr class="bg-slate-50 edify-text-caption text-slate-500 border-b  font-bold">
-{% for period in periods %}
-<th class="py-2 px-1 text-center font-bold">Target</th>
-<th class="py-2 px-1 text-center font-bold">Achieved</th>
-<th class="py-2 px-1 text-center {% if not forloop.last %}border-r{% endif %} font-bold"> % </th>
-{% endfor %}
-</tr>
-</thead>
-<tbody class="divide-y divide-slate-100 font-semibold">
-{% for row in matrix_rows %}
-<tr class="hover:bg-slate-50/50 transition-colors">
-<td class="p-4 font-semibold text-slate-800 border-r ">{{ row.area }}</td>
-{% for cell in row.periods %}
-<td class="py-3 px-1 text-center text-slate-500 font-bold">{% if cell.has_target %}{{ cell.target|floatformat:0 }}{% else %}—{% endif %}</td>
-<td class="py-3 px-1 text-center font-semibold">{{ cell.achieved }}</td>
-<td class="py-3 px-1 text-center {% if not forloop.last %}border-r{% endif %} font-semibold {{ cell.pct_class }}">{% if cell.has_target %}{{ cell.pct }}%{% else %}—{% endif %}</td>
-{% endfor %}
-</tr>
-{% endfor %}
-<!-- overall progress summary row -->
-<tr class="bg-slate-50/70 text-slate-800 border-t border-slate-200 text-[12px] font-semibold">
-<td class="p-4 font-semibold uppercase tracking-wider border-r ">Overall Progress</td>
-{% for period in periods %}
-<td class="py-3 px-1 text-center" colspan="2"></td>
-<td class="py-3 px-1 text-center {% if not forloop.last %}border-r{% endif %} font-semibold {{ period.pct_class }} text-[14px]">{% if period.has_target %}{{ period.pct }}%{% else %}—{% endif %}</td>
-{% endfor %}
-</tr>
-</tbody>
-</table>
-{% include "components/table_pager.html" with pager=periods_pager param="periods_page" %}
-</div>
-</section>
-</div>
-</details>
-
+{% comment %}The period-by-period target matrix left this page on 2026-09-05: it belongs with the targets it measures, so it
+lives on My Target and inside each team member's row on Team Target
+(partials/targets/_period_matrix.html).{% endcomment %}
 
 <!-- ================= BOTTOM CHARTS SECTION ================= -->
 <details class="analytics-evidence-disclosure" data-analytics-disclosure data-analytics-id="reports-performance-insights">

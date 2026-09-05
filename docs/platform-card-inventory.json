@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 620,
+  "titled_cards": 618,
   "templates": 224,
   "distinct_titles": 591,
   "with_card_key": 13,
   "untitled_surfaces": 991,
   "untitled_chrome": 219,
-  "untitled_nested": 358,
-  "untitled_headless": 414,
+  "untitled_nested": 359,
+  "untitled_headless": 413,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 21,
+  "titles_in_several_templates": 20,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -35,11 +35,6 @@
   "awaiting your decision": [
    "templates/pages/escalations/index.html",
    "templates/pages/planning/visit_requests.html"
-  ],
-  "cumulative progress by time period": [
-   "templates/partials/analytics/panels/reports.html",
-   "templates/partials/targets/my_body.html",
-   "templates/partials/targets/team/body.html"
   ],
   "danger zone": [
    "templates/pages/admin/user_detail.html",
@@ -4296,16 +4291,7 @@
   },
   {
    "template": "templates/partials/analytics/panels/reports.html",
-   "line": 84,
-   "title": "Cumulative progress by time period",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-report-matrix edify-surface rounded-surface shadow-sm overflow-hidden",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/analytics/panels/reports.html",
-   "line": 158,
+   "line": 98,
    "title": "Cumulative Progress Trend",
    "heading_level": 3,
    "has_card_key": false,
@@ -4314,7 +4300,7 @@
   },
   {
    "template": "templates/partials/analytics/panels/reports.html",
-   "line": 189,
+   "line": 129,
    "title": "Achievement vs Target",
    "heading_level": 3,
    "has_card_key": false,
@@ -4323,7 +4309,7 @@
   },
   {
    "template": "templates/partials/analytics/panels/reports.html",
-   "line": 231,
+   "line": 171,
    "title": "Top Priorities",
    "heading_level": 3,
    "has_card_key": false,
@@ -6581,7 +6567,7 @@
   {
    "template": "templates/partials/ssa/performance_workspace.html",
    "line": 136,
-   "title": "FY baseline \u2192 FY follow-up",
+   "title": "SSA performance FY vs FY",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "sp-card sp-fy-comparison",
@@ -6621,21 +6607,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 101,
-   "title": "Cumulative progress by time period",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": [
-    [
-     10,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/targets/my_body.html",
-   "line": 204,
+   "line": 158,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -6644,7 +6616,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 221,
+   "line": 175,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -6653,7 +6625,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 250,
+   "line": 204,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,
@@ -6703,7 +6675,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 151,
+   "line": 118,
    "title": "Staff requiring support",
    "heading_level": 2,
    "has_card_key": false,
@@ -6712,7 +6684,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 176,
+   "line": 143,
    "title": "Recovery plans",
    "heading_level": 2,
    "has_card_key": false,
@@ -6721,7 +6693,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 200,
+   "line": 167,
    "title": "Validation issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -6730,7 +6702,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 251,
+   "line": 218,
    "title": "Priority progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -6739,7 +6711,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 268,
+   "line": 235,
    "title": "Team performance trend",
    "heading_level": 2,
    "has_card_key": false,
@@ -6748,7 +6720,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 327,
+   "line": 294,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -6757,7 +6729,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 348,
+   "line": 315,
    "title": "Districts most behind",
    "heading_level": 2,
    "has_card_key": false,

@@ -1173,6 +1173,9 @@
 .sp-chart-point { fill: var(--edify-surface-raised); stroke: var(--edify-success); stroke-width: 2.5; }
 .sp-chart-value { fill: var(--edify-text); font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size)); font-weight: 800; }
 .sp-trend figcaption { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); text-align: right; }
+.sp-trend__figure { padding: 4px 8px 10px; }
+.sp-trend__chart { min-height: 340px; }
+.sp-trend__caption { margin: 0; padding-inline: 8px; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); text-align: right; }
 .sp-visually-hidden { position: absolute !important; clip-path: inset(50%) !important; overflow: hidden !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; white-space: nowrap !important; }
 .sp-empty { grid-column: 1 / -1; margin: 18px; color: var(--edify-text-muted); text-align: center; font-size: var(--edify-text-label-size); }
 .sp-empty-state { min-height: 230px; display: grid; place-content: center; gap: 5px; padding: 32px; text-align: center; }
@@ -1187,9 +1190,20 @@
   .sp-insights ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* SSA Performance has three controls, not four: financial year, quarter and
+   district. On the shared four-column grid the actions fell into a fifth,
+   zero-width track and wrapped under the fields; here they close the row
+   (owner, 2026-09-05: "the filters for ssa performance are all in the same
+   row"). Held to one row until the phone breakpoint stacks everything. */
+#ssa-performance-workspace .sp-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+}
+
 @media (max-width: 1024px) {
   .sp-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sp-filter-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  #ssa-performance-workspace .sp-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+  #ssa-performance-workspace .sp-filter-actions { grid-column: auto; }
   .sp-dashboard-grid { grid-template-columns: 1fr; }
   .sp-matrix-card, .sp-urgent-card, .sp-heat-panel, .sp-insights, .sp-fy-comparison, .sp-trend { grid-column: 1; }
   .sp-district-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -3395,8 +3409,15 @@
 .tt-member-row:hover > td.is-current-quarter {
   background: color-mix(in oklab, var(--tt-current-quarter-fill) 76%, var(--edify-accent-light));
 }
-.tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; }
-.tt-member-row:hover > td:first-child { background: var(--edify-accent-light); }
+/* A frozen column is a curtain, not a window. Every other cell in the row
+   wears the 92% surface so the row reads as one band, but the two cells that
+   stay put while the rest scroll under them must be OPAQUE: at 92% the
+   member's name showed the quarter columns sliding through it (owner,
+   2026-09-05: "the frozen first column on the tables should not be
+   transparent"). Hover mixes the accent INTO the surface for the same
+   reason — a translucent accent tint would let the scroll show again. */
+.tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--edify-surface); }
+.tt-member-row:hover > td:first-child { background: color-mix(in oklab, var(--edify-accent) 9%, var(--edify-surface)); }
 .tt-member-row.is-expanded > td:first-child { box-shadow: inset 3px 0 0 var(--edify-accent); }
 
 .tt-member-row > td.tt-matrix__action-cell {
@@ -3407,8 +3428,10 @@
   min-width: 4.75rem;
   padding-inline: 0.55rem;
   border-left: 1px solid var(--edify-border);
+  background: var(--edify-surface);
   text-align: center;
 }
+.tt-member-row:hover > td.tt-matrix__action-cell { background: color-mix(in oklab, var(--edify-accent) 9%, var(--edify-surface)); }
 
 .tt-person {
   display: flex;

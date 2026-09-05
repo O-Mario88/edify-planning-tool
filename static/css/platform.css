@@ -4776,3 +4776,132 @@ main .core-scope-switch [data-edify-tab] {
     grid-column: 1 / -1;
   }
 }
+
+/* ── Disclosure ─────────────────────────────────────────────────────────
+   The platform's accordion: a surface whose summary is a heading with a
+   subtitle and a chevron, the same shape the Analytics evidence disclosures
+   use, available to every page (2026-09-05: My Target's period matrix). */
+main .edify-disclosure {
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+main .edify-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-block-size: 58px;
+  padding: .8rem 1rem;
+  color: var(--edify-text);
+  cursor: pointer;
+  list-style: none;
+}
+
+main .edify-disclosure > summary::-webkit-details-marker { display: none; }
+
+main .edify-disclosure > summary > span:first-child { display: grid; gap: 2px; min-inline-size: 0; }
+
+main .edify-disclosure > summary h2 {
+  margin: 0;
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+main .edify-disclosure > summary small {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+main .edify-disclosure__chevron {
+  flex: 0 0 auto;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  color: var(--edify-text-muted);
+  transition: transform var(--edify-transition-fast);
+}
+
+main .edify-disclosure[open] > summary > .edify-disclosure__chevron { transform: rotate(180deg); }
+
+main .edify-disclosure__body {
+  display: grid;
+  gap: .75rem;
+  padding: 0 1rem 1rem;
+}
+
+/* ── Period matrix ──────────────────────────────────────────────────────
+   Target · achieved · share per reporting period, one row per priority. The
+   first column is frozen, and frozen means opaque: the table scrolls
+   sideways behind it (owner, 2026-09-05). */
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) {
+  border-collapse: collapse;
+  font-size: var(--edify-text-table-size);
+  font-variant-numeric: tabular-nums;
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) th,
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) td {
+  padding: .5rem .55rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--edify-border) 72%, transparent);
+  text-align: center;
+  white-space: nowrap;
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-table-heading-size);
+  font-weight: 700;
+  background: var(--edify-surface-muted);
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th span { display: block; color: var(--edify-text); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th small { display: block; margin-block-start: .1rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 600; }
+.period-matrix__measures th { font-size: var(--edify-text-table-heading-size); text-transform: uppercase; letter-spacing: .04em; }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-inline-size: 12rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--edify-text);
+  background: var(--edify-surface);
+  box-shadow: 1px 0 0 var(--edify-border);
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead .period-matrix__label { z-index: 2; background: var(--edify-surface-muted); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label-sub { color: var(--edify-text-muted); font-weight: 500; font-size: var(--edify-text-micro-size); }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__period { border-inline-start: 1px solid var(--edify-border); }
+.period-matrix__target { color: var(--edify-text-subtle); border-inline-start: 1px solid color-mix(in oklab, var(--edify-border) 60%, transparent); }
+.period-matrix__achieved { font-weight: 600; }
+.period-matrix__share { font-weight: 700; }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="success"] { color: var(--edify-success); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="warning"] { color: var(--edify-warn, var(--edify-warning)); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="danger"] { color: var(--edify-danger); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="neutral"] { color: var(--edify-text-subtle); }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .is-current { background: var(--edify-accent-light); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th.is-current-quarter { background: color-mix(in oklab, var(--edify-accent) 12%, var(--edify-surface-muted)); }
+
+.period-matrix__overall th,
+.period-matrix__overall td { background: var(--edify-surface-muted); font-weight: 700; border-block-start: 1px solid var(--edify-border); }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable { cursor: pointer; }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > td { background: color-mix(in oklab, var(--edify-accent) 6%, var(--edify-surface)); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > .period-matrix__label { background: color-mix(in oklab, var(--edify-accent) 9%, var(--edify-surface)); }
+
+/* Inside a Team Target row the shell scrolls the wide matrix instead of
+   clipping it, and the row's own frozen label stays opaque over it. */
+.tt-area-matrix-shell--matrix { overflow-x: auto; overscroll-behavior-inline: contain; }
+.tt-area-matrix-shell--matrix > .tt-area-matrix { min-width: 0; table-layout: auto; }
+.tt-area-matrix-shell--matrix > .tt-area-matrix th,
+.tt-area-matrix-shell--matrix > .tt-area-matrix td { position: static; width: auto; }
+.tt-area-matrix-shell--matrix > .tt-area-matrix .period-matrix__label { position: sticky; background: var(--edify-surface-muted); }
+

@@ -137,7 +137,7 @@
       <header class="sp-card__header">
         <div>
           <span class="sp-card__eyebrow">Longitudinal improvement</span>
-          <h2 id="sp-fy-comparison-title">FY{{ dashboard.improvement_monitor.baseline_fy }} baseline → FY{{ dashboard.improvement_monitor.comparison_fy }} follow-up</h2>
+          <h2 id="sp-fy-comparison-title">SSA performance FY{{ dashboard.improvement_monitor.baseline_fy|slice:"2:" }} vs FY{{ dashboard.improvement_monitor.comparison_fy|slice:"2:" }}</h2>
         </div>
         <span class="sp-target-chip">
           {% if dashboard.improvement_monitor.average_delta != None %}{{ dashboard.improvement_monitor.average_delta|floatformat:"+2" }} average change{% else %}Awaiting comparable scores{% endif %}
@@ -177,26 +177,58 @@
 
     <section class="sp-card sp-trend" aria-labelledby="sp-trend-title">
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Multi-year progress</span><h2 id="sp-trend-title">SSA performance trend by year</h2></div><span class="sp-target-chip">Target {{ dashboard.engine.target_score }}</span></header>
-      {% if dashboard.trend.has_data %}
-      <figure>
-        <svg viewBox="0 0 900 220" data-edify-svg-typography role="img"
-             aria-labelledby="sp-chart-title sp-chart-desc">
-          <title id="sp-chart-title">Annual average SSA performance trend</title>
-          <desc id="sp-chart-desc">Annual confirmed SSA averages compared with the target score of {{ dashboard.engine.target_score }}.</desc>
-          <g class="sp-chart-grid" aria-hidden="true"><line x1="48" y1="20" x2="852" y2="20"/><line x1="48" y1="59" x2="852" y2="59"/><line x1="48" y1="98" x2="852" y2="98"/><line x1="48" y1="137" x2="852" y2="137"/><line x1="48" y1="176" x2="852" y2="176"/></g>
-          <g class="sp-chart-axis" aria-hidden="true"><text x="8" y="24">10</text><text x="8" y="63">7.5</text><text x="8" y="102">5</text><text x="8" y="141">2.5</text><text x="8" y="180">0</text></g>
-          <line class="sp-chart-target" x1="48" y1="{{ dashboard.trend.target_y }}" x2="852" y2="{{ dashboard.trend.target_y }}"/>
-          <text class="sp-chart-target-label" x="858" y="{{ dashboard.trend.target_y }}">Target</text>
-          {% if dashboard.trend.polyline %}<polyline class="sp-chart-line" points="{{ dashboard.trend.polyline }}"/>{% endif %}
-          {% for point in dashboard.trend.points %}
-          <text class="sp-chart-year" x="{{ point.x }}" y="207" text-anchor="middle">{{ point.label }}</text>
-          {% if point.value != None %}<circle class="sp-chart-point" cx="{{ point.x }}" cy="{{ point.y }}" r="4"/><text class="sp-chart-value" x="{{ point.x }}" y="{{ point.y|add:'-10' }}" text-anchor="middle">{{ point.value }}</text>{% endif %}
-          {% endfor %}
-        </svg>
-        <figcaption>Annual averages use each school’s latest confirmed SSA in that financial year.</figcaption>
-      </figure>
-      <table class="sp-visually-hidden"><caption>Annual SSA average data</caption><thead><tr><th scope="col">Year</th><th scope="col">Average</th></tr></thead><tbody>{% for point in dashboard.trend.points %}<tr><th scope="row">{{ point.label }}</th><td>{% if point.value != None %}{{ point.value }}{% else %}No data{% endif %}</td></tr>{% endfor %}</tbody></table>
-      {% else %}<div class="sp-empty-state"><strong>No confirmed trend data yet</strong><p>Annual performance will appear after SSA records in this scope are confirmed.</p></div>{% endif %}
+      {% comment %}Interventions across the axis, scores up it, one line per financial year
+      with the years in the legend (owner, 2026-09-05). Drawn through the chart
+      system so it wears the platform's ordered palette and the same axes as
+      every other line chart; the hand-drawn SVG it replaces could only show a
+      single line of annual averages.{% endcomment %}
+      {% if dashboard.trend.by_intervention.series %}
+      {{ dashboard.trend.by_intervention|json_script:"sp-trend-payload" }}
+      <div class="sp-trend__figure"
+           x-data="{
+             chart: null,
+             init() { this.$nextTick(() => this.draw()); },
+             destroy() { if (this.chart) this.chart.destroy(); },
+             draw() {
+               const payload = JSON.parse(document.getElementById('sp-trend-payload').textContent || '{}');
+               const S = window.EdifyChartSystem;
+               if (!S || !this.$refs.el) return;
+               const cfg = window.EdifyChartSystem.formBase({
+                 chart: { type: 'line', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
+                 colors: S.comparisonSeries.slice(0, Math.max(1, (payload.series || []).length)),
+                 stroke: { width: 2.25, curve: 'straight', lineCap: 'round' },
+                 markers: { size: 4, strokeWidth: 2, hover: { size: 6 } },
+                 legend: { show: true, position: 'top', horizontalAlign: 'left', fontSize: '12px', fontWeight: 600,
+                           markers: { width: 9, height: 9, radius: 9 }, labels: { colors: S.ink.legend } },
+                 tooltip: { theme: 'dark', shared: true, intersect: false, style: { fontSize: '12px' } },
+               });
+               cfg.series = payload.series || [];
+               /* Room on the left for the first angled name, which otherwise runs
+                  off the canvas. */
+               cfg.grid = { show: false, padding: { left: 64, right: 12, top: 4, bottom: 4 } };
+               cfg.xaxis = { categories: payload.categories || [],
+                             /* Eight intervention names never fit upright; angled, every one
+                                stays whole and readable. */
+                             labels: { trim: false, hideOverlappingLabels: false, rotate: -28, rotateAlways: true,
+                                       style: { colors: S.ink.axis, fontSize: '12px', fontWeight: 600 } },
+                             axisBorder: { show: false }, axisTicks: { show: false } };
+               cfg.yaxis = { min: 0, max: 10, tickAmount: 5,
+                             labels: { formatter: v => Number(v).toFixed(1), style: { colors: S.ink.axis, fontSize: '12px' } } };
+               cfg.annotations = { yaxis: [{ y: payload.target, borderColor: 'var(--edify-success)', strokeDashArray: 5,
+                                             label: { text: 'Target ' + payload.target, position: 'right', textAnchor: 'end', offsetY: -6,
+                                                      style: { color: 'var(--edify-surface-raised)', background: 'var(--edify-success)', fontSize: '12px' } } }] };
+               this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+             }
+           }">
+        <div x-ref="el" class="sp-trend__chart" role="img" aria-label="SSA score by intervention, one line per financial year"></div>
+        <p class="sp-trend__caption">Each year uses every school’s latest confirmed SSA in that financial year. Scores out of 10; the dashed line is the target.</p>
+      </div>
+      <table class="sp-visually-hidden">
+        <caption>SSA score by intervention and financial year</caption>
+        <thead><tr><th scope="col">Intervention</th>{% for line in dashboard.trend.by_intervention.series %}<th scope="col">{{ line.name }}</th>{% endfor %}</tr></thead>
+        <tbody>{% for label in dashboard.trend.by_intervention.categories %}<tr><th scope="row">{{ label }}</th>{% for line in dashboard.trend.by_intervention.series %}<td>{% with value=line.data|slice:forloop.parentloop.counter0|last %}{% if value != None %}{{ value }}{% else %}—{% endif %}{% endwith %}</td>{% endfor %}</tr>{% endfor %}</tbody>
+      </table>
+      {% else %}<div class="sp-empty-state"><strong>No confirmed intervention scores yet</strong><p>The trend appears once SSA records in this scope are confirmed with their intervention scores.</p></div>{% endif %}
     </section>
   </div>
 </div>

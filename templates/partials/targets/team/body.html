@@ -79,46 +79,13 @@
             </tr>
             <tr id="tt-desktop-areas-{{ member.user_id }}" class="tt-area-row" x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
               <td colspan="{{ matrix_heads|length|add:'2' }}">
-                <div class="tt-area-matrix-shell">
-                  <table class="tt-area-matrix">
-                    <caption class="sr-only">{{ member.name }} agreed-priority performance by reporting period</caption>
-                    <colgroup>
-                      <col class="tt-matrix__member-column">
-                      {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
-                      <col class="tt-matrix__action-column">
-                    </colgroup>
-                    <thead>
-                      <tr>
-                        <th scope="col"><span>Priority breakdown</span><small>Validated achievement</small></th>
-                        {% for head in matrix_heads %}
-                        <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
-                          {% if forloop.first %}<span>Monthly</span><small>{{ head.label }} · selected month</small>{% else %}<span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small>{% endif %}
-                        </th>
-                        {% endfor %}
-                        <th scope="col" class="tt-area-matrix__action-spacer"><span class="sr-only">Review</span></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {% for area in member.area_matrix %}
-                      <tr>
-                        <th scope="row">
-                          <span class="tt-area-name">{% include "partials/targets/team/_area_icon.html" with key=area.key only %}<span>{{ area.label }}{% if area.source %}<small>{{ area.source }}</small>{% endif %}</span></span>
-                        </th>
-                        {% for period in area.periods %}
-                        <td{% if forloop.first or period.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if period.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
-                          <span class="tt-area-period">
-                            <span class="tt-area-period__dot" data-tone="{{ period.tone }}" aria-hidden="true"></span>
-                            <strong data-tone="{{ period.tone }}">{% if period.display_pct is not None %}{{ period.display_pct }}%{% else %}—{% endif %}</strong>
-                            <small>{{ period.achieved }} of {{ period.target }}</small>
-                            <span class="sr-only">{{ period.status }}</span>
-                          </span>
-                        </td>
-                        {% endfor %}
-                        <td class="tt-area-matrix__action-spacer" aria-label="No review action"></td>
-                      </tr>
-                      {% endfor %}
-                    </tbody>
-                  </table>
+                {% comment %}Click the member's row to open this, click again to close: the
+                same accordion as the school and cluster lists. What opens is the
+                "Cumulative progress by time period" table — target, achieved and
+                share per period for each of this member's agreed priorities
+                (owner, 2026-09-05).{% endcomment %}
+                <div class="tt-area-matrix-shell tt-area-matrix-shell--matrix">
+                  {% include "partials/targets/_period_matrix.html" with variant="team" rows=member.period_matrix_rows heads=matrix_heads overall=member.period_matrix_overall quarter=quarter owner=member.name %}
                 </div>
               </td>
             </tr>

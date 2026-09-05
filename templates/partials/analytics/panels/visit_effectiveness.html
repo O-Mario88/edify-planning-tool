@@ -10,7 +10,7 @@ row, the tiles and the tablist stay fixed above (owner, 2026-09-05).
     <span class="edify-filter-label">Assessment comparison</span>
     <select name="comparison" aria-label="Assessment comparison"
             class="h-9 px-3 text-[12px] font-semibold border border-slate-200 rounded-control">
-      <option value="v1">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</option>
+      <option value="v1">SSA performance FY{{ d.methodology.baseline_fy|slice:"-2:" }} vs FY{{ d.methodology.followup_fy|slice:"-2:" }}</option>
     </select>
   </div>
   <div class="flex flex-col min-w-[120px]">

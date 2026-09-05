@@ -203,9 +203,41 @@ def _trend(school_ids: list[str], selected_fy: str) -> dict:
     polyline = " ".join(
         f'{point["x"]},{point["y"]}' for point in points if point["y"] is not None
     )
+
+    # The chart the owner asked for (2026-09-05): interventions across the
+    # axis, scores up it, one line per financial year so the years can be read
+    # against each other — the shape of the question "did Leadership move
+    # between FY26 and FY27?", which a single line of annual averages cannot
+    # answer. Same records as the averages above: the latest confirmed record
+    # per school per year, so both tell one story.
+    score_maps = _scores_by_record([row["id"] for row in rows])
+    by_year_intervention: dict[str, dict[str, list[float]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
+    for row in rows:
+        for code, score in score_maps.get(row["id"], {}).items():
+            by_year_intervention[row["fy"]][code].append(score)
+    series = [
+        {
+            "name": f"FY{year}",
+            "data": [
+                _round(_average(by_year_intervention[year].get(item.value, [])))
+                for item in SsaIntervention
+            ],
+        }
+        for year in years
+        if year in by_year_intervention
+    ]
+    by_intervention = {
+        "categories": [item.label for item in SsaIntervention],
+        "series": series,
+        "target": TARGET_SCORE,
+    }
+
     return {
         "points": points,
         "polyline": polyline,
+        "by_intervention": by_intervention,
         "target_y": round(
             plot_bottom - (TARGET_SCORE / 10.0) * (plot_bottom - plot_top), 1
         ),

@@ -244,4 +244,5 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("Leadership priorities", cd)
         self.assertEqual(cd.count("data-analytics-disclosure"), 4)
         self.assertEqual(ia.count("data-analytics-disclosure"), 3)
-        self.assertEqual(reports.count("data-analytics-disclosure"), 2)
+        # One disclosure since the period matrix moved to the target pages.
+        self.assertEqual(reports.count("data-analytics-disclosure"), 1)
