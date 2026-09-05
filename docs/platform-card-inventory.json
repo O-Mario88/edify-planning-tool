@@ -4,10 +4,10 @@
   "templates": 224,
   "distinct_titles": 591,
   "with_card_key": 13,
-  "untitled_surfaces": 968,
+  "untitled_surfaces": 986,
   "untitled_chrome": 219,
-  "untitled_nested": 368,
-  "untitled_headless": 381,
+  "untitled_nested": 357,
+  "untitled_headless": 410,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 21,
   "ambiguous_titles": 1
@@ -642,56 +642,6 @@
    "branch_path": []
   },
   {
-   "template": "templates/pages/analytics/declining_schools.html",
-   "line": 62,
-   "title": "Which interventions are failing",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4",
-   "branch_path": [
-    [
-     1,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/analytics/declining_schools.html",
-   "line": 100,
-   "title": "Schools losing ground",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     8,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/analytics/declining_schools.html",
-   "line": 149,
-   "title": "Where the decline is concentrated",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     8,
-     1
-    ]
-   ]
-  },
-  {
    "template": "templates/pages/budget/index.html",
    "line": 52,
    "title": "Monthly Breakdown",
@@ -1064,60 +1014,6 @@
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
    "branch_path": []
-  },
-  {
-   "template": "templates/pages/core_schools/leadership.html",
-   "line": 71,
-   "title": "Stuck at the completion gate",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     11,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/core_schools/leadership.html",
-   "line": 106,
-   "title": "Package progress",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     12,
-     0
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/core_schools/leadership.html",
-   "line": 153,
-   "title": "By district",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": [
-    [
-     1,
-     1
-    ],
-    [
-     12,
-     1
-    ]
-   ]
   },
   {
    "template": "templates/pages/cost_settings/index.html",
@@ -1655,24 +1551,6 @@
      1
     ]
    ]
-  },
-  {
-   "template": "templates/pages/decisions/index.html",
-   "line": 58,
-   "title": "Operational decisions",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border {% if budget_snapshot.amountAtRisk %}border-amber-200 bg-amber-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/decisions/index.html",
-   "line": 85,
-   "title": "Financial decisions",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
-   "branch_path": []
   },
   {
    "template": "templates/pages/districts/detail.html",
@@ -4434,6 +4312,128 @@
    "branch_path": [
     [
      2,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/panels/core_school_health.html",
+   "line": 65,
+   "title": "Stuck at the completion gate",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     1,
+     1
+    ],
+    [
+     11,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/panels/core_school_health.html",
+   "line": 100,
+   "title": "Package progress",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     1,
+     1
+    ],
+    [
+     12,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/panels/core_school_health.html",
+   "line": 147,
+   "title": "By district",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     1,
+     1
+    ],
+    [
+     12,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/panels/decision_intelligence.html",
+   "line": 48,
+   "title": "Operational decisions",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border {% if budget_snapshot.amountAtRisk %}border-amber-200 bg-amber-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/panels/decision_intelligence.html",
+   "line": 75,
+   "title": "Financial decisions",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/analytics/panels/declining_schools.html",
+   "line": 55,
+   "title": "Which interventions are failing",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] p-4",
+   "branch_path": [
+    [
+     1,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/panels/declining_schools.html",
+   "line": 93,
+   "title": "Schools losing ground",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     1,
+     1
+    ],
+    [
+     8,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/analytics/panels/declining_schools.html",
+   "line": 142,
+   "title": "Where the decline is concentrated",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm",
+   "branch_path": [
+    [
+     1,
+     1
+    ],
+    [
+     8,
      1
     ]
    ]

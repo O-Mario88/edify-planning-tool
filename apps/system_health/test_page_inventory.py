@@ -15,7 +15,9 @@ from apps.system_health.page_inventory import (
     APPROVED_PAGE_TYPES,
     TEMPLATE_ROOT,
     _iter_patterns,
+    _surface_kind,
     _template_findings,
+    _view_templates,
     build_page_inventory,
     component_catalogue_as_markdown,
     inventory_as_markdown,
@@ -253,3 +255,45 @@ class PageInventoryTest(SimpleTestCase):
             for finding in _template_findings(source, name):
                 outstanding.append((name, finding.key))
         self.assertEqual(outstanding, [])
+
+    def test_a_delegating_view_is_credited_with_the_page_its_renderer_serves(self):
+        """The scanner follows one hop of delegation and leads with the page.
+
+        The Analytics workspace views hand rendering to a helper imported
+        inside the function body, and that helper keeps its template names in
+        module constants. Neither is visible to a scan of the view's own
+        source, so every Analytics section resolved to no template, was filed
+        as a non-visual action, and dropped out of responsive, theme and
+        accessibility coverage — the platform's main analytics page reported
+        as if it had no interface (2026-09-05).
+        """
+
+        from apps.frontend.views.analytics_views import analytics_dashboard_view
+        from apps.frontend.views.decision_views import core_school_health_view
+
+        for view in (analytics_dashboard_view, core_school_health_view):
+            templates = _view_templates(view)
+            # The page a plain GET returns leads; the HTMX fragments follow.
+            self.assertEqual(templates[0], "pages/analytics/workspace.html", view)
+            self.assertIn("partials/analytics/scope.html", templates)
+            self.assertIn("partials/analytics/panel.html", templates)
+            self.assertEqual(
+                _surface_kind("/analytics", "analytics_dashboard", templates), "page"
+            )
+
+        # A drawer is a drawer whichever template its source happens to name
+        # first — the primary-template rule decides page against partial only.
+        self.assertEqual(
+            _surface_kind(
+                "/analytics/customize-dashboard",
+                "analytics_customize_dashboard",
+                [
+                    "partials/schools/toast_success.html",
+                    "partials/analytics/customize_dashboard_drawer.html",
+                ],
+            ),
+            "drawer",
+        )
+        # A view that renders nothing of its own and delegates to nothing
+        # visual is still an action.
+        self.assertEqual(_surface_kind("/dashboard/cd-approve", "cd_approve", []), "action")
