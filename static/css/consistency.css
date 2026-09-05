@@ -135,9 +135,14 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
  * base form contract uses), the hit area grows to 44px while symmetric
  * negative margins keep the visual position unchanged. */
 @media (max-width: 48rem), (pointer: coarse) {
-  main a.edify-primary-text,
-  main a[class*="edify-chart-blue"][href],
-  main a[class*="edify-text-caption"][href],
+  /* `:not(:is(td, th) *)`: a record row is the 32px target, so growing a
+     link inside a cell to 44px only grows the row (2026-09-05 sweep — the
+     Projects list ran 42px rows on a phone because its name link carries
+     `.edify-primary-text`, and this class selector outranks the `main table
+     td > a` compensation two rules below). */
+  main a.edify-primary-text:not(:is(td, th) *),
+  main a[class*="edify-chart-blue"][href]:not(:is(td, th) *),
+  main a[class*="edify-text-caption"][href]:not(:is(td, th) *),
   .hcos-breadcrumbs a,
   .admin-command__breadcrumbs a,
   .admin-panel__header > a,
@@ -3422,8 +3427,11 @@ main table tbody > tr:only-child > td[colspan] > :is(
 /* Shapes the platform-wide sweep found (2026-09-03): a selection checkbox
    label, an avatar sitting directly in a cell, form controls inside a cell,
    the special-projects action stack and status pills, and the SSA matrix
-   blocks. All close at 32px. */
-@media (min-width: 768px) {
+   blocks. All close at 32px — at EVERY width since 2026-09-05, for the same
+   reason as the row rhythm above: a record table is still a table on a
+   phone, and gating this at 768px left a control in a cell at its native
+   height there while the row around it was told to close at 32px. */
+@media all {
   :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell .edify-table-choice,
   :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell .edify-cell-control {
     min-block-size: 0 !important;

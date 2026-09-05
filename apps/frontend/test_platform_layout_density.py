@@ -103,6 +103,19 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
             with self.subTest(path=path):
                 self.assertIn(":not(:is(td, th) *)", _read(path))
 
+    def test_a_control_in_a_cell_is_sized_at_every_width(self):
+        """A platform-wide sweep of 63 pages across five roles (2026-09-05)
+        found the last two gaps at phone width: the in-cell control block was
+        gated at 768px, so a control kept its native height on a phone while
+        the row was told to close at 32px, and the card-header touch rule
+        grew a `.edify-primary-text` link inside a cell to 44px, outranking
+        the `main table td > a` compensation by specificity."""
+        css = _read("static/css/consistency.css")
+        block = css.split("Shapes the platform-wide sweep found", 1)[1][:900]
+        self.assertIn("@media all {", block)
+        self.assertIn(".edify-cell-control", block)
+        self.assertIn("main a.edify-primary-text:not(:is(td, th) *)", css)
+
     def test_the_cell_markers_the_rhythm_needs_are_applied(self):
         """consistency.css may not use `:has()` (the bridge contract), so the
         cell markers it hangs these rules on come from micro-ux.js."""
