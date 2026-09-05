@@ -887,10 +887,15 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/my_plan/index.html")
 
     def test_analytics_dashboard_view_renders(self):
+        """Analytics became one page with tabs on 2026-09-05: every section
+        renders `pages/analytics/workspace.html` around its own panel, and the
+        overview's panel is still the KPI-and-content container."""
         self.client.force_login(self.cceo_user)
         response = self.client.get("/analytics")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/analytics/index.html")
+        self.assertTemplateUsed(response, "pages/analytics/workspace.html")
+        self.assertTemplateUsed(response, "partials/analytics/kpi_cards.html")
+        self.assertTemplateUsed(response, "partials/analytics/tab_rail.html")
 
     @override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=30)
     def test_analytics_snapshot_is_reused_within_the_ttl(self):
