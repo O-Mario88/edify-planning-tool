@@ -1306,8 +1306,8 @@ function subregionMap(){
         let index = 0;
         const step = () => {
           if(token !== this._placementToken){ resolve(false); return; }
-          const budgetEnd = performance.now() + 6;
-          while(index < labels.length && performance.now() < budgetEnd){
+          const sliceEnd = performance.now() + 6;
+          while(index < labels.length && performance.now() < sliceEnd){
             placeOne(labels[index++]);
           }
           if(index < labels.length) schedule(step);
