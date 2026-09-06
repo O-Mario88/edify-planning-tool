@@ -5062,6 +5062,13 @@ main table thead .edify-frozen-cell { z-index: 2; }
   main :is(button, a.btn, a[class*="btn"], a[class*="button"]):not(.rounded-pill):not(.rounded-full):not([class*="pill"]):not([role="tab"]):not(.edify-section-nav__link):not(.edify-section-nav__cluster) {
     border-radius: var(--edify-radius-sm) !important;
   }
+  /* A single-line button written with `py-2` measured 34px beside the
+     platform's 32px; card-like tile buttons (`w-full`) keep their height. */
+  main button.py-2:not(.w-full):not([class*="pill"]):not(.rounded-full) {
+    block-size: 2rem !important;
+    min-block-size: 2rem !important;
+    padding-block: 0 !important;
+  }
   /* The leave workspace's panels take the platform card padding. */
   main :is(article, section).pto-panel {
     padding: 1.25rem !important;
