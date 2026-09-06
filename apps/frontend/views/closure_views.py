@@ -115,7 +115,7 @@ def closure_readiness_queue_view(request):
         # calls `evaluate()` internally, so the previous shape — a refresh
         # loop, then `is_eligible` inside the bucketing loop — derived every
         # checklist twice, each inside its own transaction.
-        checklist, _blockers = ClosureEligibilityService.evaluate(a)
+        checklist = ClosureEligibilityService.evaluate_for_listing(a)
         if checklist is None:
             continue
 

@@ -1128,11 +1128,11 @@ function subregionMap(){
     },
     placeBoundaryLabels({
       labelLayer, pathLayer, pinLayer, key, scale=1,
-      labelScales=[1], allowOverlapFallback=false,
+      labelScales=[1], allowOverlapFallback=false, sync=false,
     }){
       const labels = [...(labelLayer?.querySelectorAll('text') || [])];
       const paths = [...(pathLayer?.querySelectorAll('path:not(.sr-boundary-lift)') || [])];
-      if(!labels.length || !paths.length) return;
+      if(!labels.length || !paths.length) return Promise.resolve(false);
 
       const pathByName = new Map(paths.map(path => [path.dataset[key], path]));
       const pathAreaByName = new Map(paths.map(path => {
@@ -1156,7 +1156,7 @@ function subregionMap(){
         a.textContent.length - b.textContent.length
       );
 
-      labels.forEach(label => {
+      const placeOne = label => {
         label.style.opacity = '';
         const path = pathByName.get(label.dataset[key]);
         const baseX = Number(label.dataset.labelX);
@@ -1286,10 +1286,38 @@ function subregionMap(){
         label.dataset.labelScale = labelScale.toFixed(2);
         label.dataset.labelPlacement = placement;
         placed.push(rect);
+      };
+
+      /* 136 district names, each tested against every placed rectangle and
+         its boundary, ran as one 450ms main-thread task on every dashboard
+         open (2026-09-06). Placement now works in ~6ms slices between frames,
+         so the page stays responsive while names settle; a newer placement
+         run cancels an older one. Sub-county layers are small and stay
+         synchronous so their collision pass can follow immediately. */
+      if(sync){
+        labels.forEach(placeOne);
+        return Promise.resolve(true);
+      }
+      const token = (this._placementToken = (this._placementToken || 0) + 1);
+      const schedule = fn => (window.requestIdleCallback
+        ? window.requestIdleCallback(fn, {timeout:120})
+        : window.requestAnimationFrame(fn));
+      return new Promise(resolve => {
+        let index = 0;
+        const step = () => {
+          if(token !== this._placementToken){ resolve(false); return; }
+          const budgetEnd = performance.now() + 6;
+          while(index < labels.length && performance.now() < budgetEnd){
+            placeOne(labels[index++]);
+          }
+          if(index < labels.length) schedule(step);
+          else resolve(true);
+        };
+        schedule(step);
       });
     },
     placeDistrictLabels(){
-      this.placeBoundaryLabels({
+      return this.placeBoundaryLabels({
         labelLayer:this.labels,
         pathLayer:this.districtShapes,
         pinLayer:this.pinLayer,
@@ -1297,8 +1325,10 @@ function subregionMap(){
         scale:1,
         labelScales:[0.82, 0.74, 0.68],
         allowOverlapFallback:true,
+      }).then(completed => {
+        if(completed) this.keepSubRegionLabelsOnCanvas();
+        return completed;
       });
-      this.keepSubRegionLabelsOnCanvas();
     },
     /* A sub-region name is centred on the mean of its districts' centroids,
        and for a sub-region lying against the national border that centre is
@@ -1344,6 +1374,7 @@ function subregionMap(){
         scale:this.zoomScale || 1,
         labelScales:[1, 0.9, 0.82],
         allowOverlapFallback:true,
+        sync:true,
       });
     },
     clearSubcounties(){

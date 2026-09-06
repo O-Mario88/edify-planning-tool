@@ -5033,6 +5033,26 @@ main table thead .edify-frozen-cell { z-index: 2; }
     flex-wrap: wrap !important;
     overflow-x: visible !important;
   }
+  /* One control height on a desktop (owner, 2026-09-06: measured selects at
+     36-40px beside 32px buttons, HR and leave buttons at 42px). Filter
+     controls and the two page-family buttons take the platform's 32px. */
+  main :is(
+    .platform-filter-bar, .edify-filter-bar, #filters-form, #core-filters-form,
+    #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters,
+    #debrief-filters, #visits-filters, #trainings-filters, #pd-filters, #spp-filters,
+    #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters,
+    #cluster-filters, [data-component="filter-toolbar"], .school-filters-form
+  ) :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) {
+    min-block-size: 2rem !important;
+    block-size: 2rem !important;
+    padding-block: 0 !important;
+  }
+  main :is(.hcos-button, .pto-button) {
+    min-block-size: 2rem !important;
+    block-size: 2rem !important;
+    padding-block: 0 !important;
+    border-radius: var(--edify-radius-sm) !important;
+  }
   /* A tablist that lives in a narrow side column wraps its tabs rather than
      scrolling them (the work plan's view switcher sat in a 255px column). */
   main nav[data-edify-tablist].self-start {

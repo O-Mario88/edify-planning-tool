@@ -109,9 +109,15 @@
          page stylesheet with a class selector cannot out-rank the rhythm. */
       cell.classList.add('edify-cell');
       /* A child the page hides at this width (a phone-only label) is not a
-         line of the row; marking it would show it again. */
-      Array.from(cell.children).forEach(function (child) {
-        child.classList.toggle('edify-cell-hidden', window.getComputedStyle(child).display === 'none');
+         line of the row; marking it would show it again. Read every child's
+         display BEFORE any class is written: a computed-style read after a
+         class write forces a layout, and doing that per cell child made a
+         thirty-row table a 400ms main-thread task (2026-09-06). */
+      var hiddenChildren = Array.from(cell.children).map(function (child) {
+        return window.getComputedStyle(child).display === 'none';
+      });
+      Array.from(cell.children).forEach(function (child, index) {
+        child.classList.toggle('edify-cell-hidden', hiddenChildren[index]);
       });
       Array.from(cell.children).forEach(function (child) {
         if (child.matches('div.rounded-pill, div.rounded-full')) child.classList.add('edify-cell-mark');

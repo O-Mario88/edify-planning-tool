@@ -375,15 +375,18 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
 # ── Recipients ───────────────────────────────────────────────────────────────
 
 
-def _serialize_user(u: User) -> dict:
+def _serialize_user(u: User, district_names: dict | None = None) -> dict:
     meta = ""
     try:
         sp = getattr(u, "staff_profile", None)
         if sp and sp.primary_district_id:
-            from apps.geography.models import District
+            if district_names is None:
+                from apps.geography.models import District
 
-            d = District.objects.filter(id=sp.primary_district_id).first()
-            meta = d.name if d else ""
+                d = District.objects.filter(id=sp.primary_district_id).first()
+                meta = d.name if d else ""
+            else:
+                meta = district_names.get(sp.primary_district_id, "")
         partner = getattr(u, "partner", None)
         if partner:
             meta = partner.name
@@ -399,13 +402,20 @@ def _serialize_user(u: User) -> dict:
 
 def recipients(principal) -> list[dict]:
     """Composable recipients for the caller (by role policy)."""
-    users = User.objects.filter(deleted_at__isnull=True, status="active").exclude(
-        id=principal.user_id if hasattr(principal, "user_id") else principal.id
+    users = (
+        User.objects.filter(deleted_at__isnull=True, status="active")
+        .exclude(id=principal.user_id if hasattr(principal, "user_id") else principal.id)
+        # The profile and partner rows travel with each user, and district
+        # names come once: this list cost two queries per recipient (2026-09-06).
+        .select_related("staff_profile", "partner")
     )
     allowed = [
         u for u in users if RolePermissionService.can_message_recipient(principal, u)
     ]
-    return [_serialize_user(u) for u in allowed[:100]]
+    from apps.geography.models import District
+
+    district_names = dict(District.objects.values_list("id", "name"))
+    return [_serialize_user(u, district_names) for u in allowed[:100]]
 
 
 def suggested_recipients(

@@ -32,8 +32,11 @@ def _latest_confirmed_scores(school_ids, fy):
     """{school_id: {intervention: score}} from the latest confirmed SSA in fy."""
     from apps.ssa.models import SsaRecord, SsaScore
 
-    latest = {}
-    for rec in (
+    # Plain values, and the record→school map inverted once: the previous
+    # shape built 16,000 score instances and searched the latest-record dict
+    # for each of them (2.3 million comparisons, 1.5s a page, 2026-09-06).
+    latest: dict = {}
+    for school_id, record_id in (
         SsaRecord.objects.filter(
             school_id__in=school_ids,
             fy=fy,
@@ -41,13 +44,15 @@ def _latest_confirmed_scores(school_ids, fy):
             deleted_at__isnull=True,
         )
         .order_by("school_id", "-date_of_ssa")
-        .only("id", "school_id", "date_of_ssa")
+        .values_list("school_id", "id")
     ):
-        latest.setdefault(rec.school_id, rec.id)
+        latest.setdefault(school_id, record_id)
+    school_by_record = {record_id: school_id for school_id, record_id in latest.items()}
     scores = defaultdict(dict)
-    for sc in SsaScore.objects.filter(ssa_record_id__in=list(latest.values())):
-        school_id = next(s for s, r in latest.items() if r == sc.ssa_record_id)
-        scores[school_id][sc.intervention] = sc.score
+    for record_id, intervention, score in SsaScore.objects.filter(
+        ssa_record_id__in=list(school_by_record)
+    ).values_list("ssa_record_id", "intervention", "score"):
+        scores[school_by_record[record_id]][intervention] = score
     return scores
 
 

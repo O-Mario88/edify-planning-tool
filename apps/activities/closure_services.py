@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
@@ -217,6 +219,23 @@ class ClosureEligibilityService:
                 )
 
             return checklist, blockers
+
+    #: A checklist evaluated this recently is reused by list pages. The
+    #: readiness queue evaluated every open activity on every load — twelve
+    #: writes and reads each, 5,445 queries and 2.7 seconds at 450 activities
+    #: (2026-09-06). Actions on an activity still evaluate it afresh.
+    LIST_FRESHNESS = timedelta(minutes=15)
+
+    @staticmethod
+    def evaluate_for_listing(activity: Activity) -> ClosureChecklist | None:
+        """The activity's checklist, re-derived only when it is stale."""
+        checklist = getattr(activity, "closure_checklist", None)
+        if checklist is not None and checklist.last_evaluated_at >= (
+            timezone.now() - ClosureEligibilityService.LIST_FRESHNESS
+        ):
+            return checklist
+        checklist, _blockers = ClosureEligibilityService.evaluate(activity)
+        return checklist
 
     @staticmethod
     def _core_requirements_met(checklist: ClosureChecklist) -> bool:

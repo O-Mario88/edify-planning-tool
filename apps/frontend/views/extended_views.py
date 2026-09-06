@@ -890,27 +890,38 @@ def districts_list_view(request):
     """Districts list — geographic view."""
     search = request.GET.get("q", "").strip()
     fy = get_operational_fy()
-    districts = District.objects.all().order_by("name")
+    # One query for every district: two per district (a school count and an
+    # SSA average) made this page 417 queries at 136 districts (2026-09-06).
+    districts = (
+        District.objects.select_related("region")
+        .annotate(
+            school_count=Count(
+                "schools", filter=Q(schools__deleted_at__isnull=True), distinct=True
+            ),
+            avg_ssa=Avg(
+                "schools__ssa_records__average_score",
+                filter=Q(
+                    schools__ssa_records__fy=fy,
+                    schools__ssa_records__deleted_at__isnull=True,
+                    schools__deleted_at__isnull=True,
+                ),
+            ),
+        )
+        .order_by("name")
+    )
     if search:
         districts = districts.filter(name__icontains=search)
 
-    district_data = []
-    for d in districts:
-        schools = School.objects.filter(district=d, deleted_at__isnull=True)
-        school_count = schools.count()
-        avg_ssa = SsaRecord.objects.filter(
-            school__district=d, fy=fy, deleted_at__isnull=True
-        ).aggregate(avg=Avg("average_score"))["avg"]
-
-        district_data.append(
-            {
-                "id": d.id,
-                "name": d.name,
-                "region": d.region.name if d.region else "—",
-                "school_count": school_count,
-                "avg_ssa": round(avg_ssa, 2) if avg_ssa else None,
-            }
-        )
+    district_data = [
+        {
+            "id": d.id,
+            "name": d.name,
+            "region": d.region.name if d.region else "—",
+            "school_count": d.school_count,
+            "avg_ssa": round(d.avg_ssa, 2) if d.avg_ssa else None,
+        }
+        for d in districts
+    ]
 
     context = {
         "districts": district_data,

@@ -291,7 +291,7 @@ def troubleshooting(request):
 @require_page_permission("help")
 def glossary(request):
     query = request.GET.get("q", "").strip()
-    terms = HelpGlossaryTerm.objects.all()
+    terms = HelpGlossaryTerm.objects.select_related("article")
     if query:
         terms = terms.filter(term__icontains=query) | terms.filter(
             definition__icontains=query
