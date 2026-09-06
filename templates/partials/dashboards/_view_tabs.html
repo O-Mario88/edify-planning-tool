@@ -15,7 +15,11 @@ Context: `dashboard_tabs` from apps.frontend.views.dashboard_view_state
 {% comment %}The rail and the panel swap as ONE unit (the shell wrapper): swapping
 the panel alone left the old tab's active class behind, so two tabs painted
 selected after a click (owner, 2026-09-05: "the tab highlight has a bug").{% endcomment %}
-<div id="{{ dashboard_tabs.panel_id }}-shell" data-dashboard-view-shell>
+{% comment %}A tab click asks for the shell's CONTENT (`dashboard_tabs_inner`), and
+htmx swaps it into the shell that is already on the page: swapping the shell
+itself (outerHTML) detached the element htmx was still tracking and threw
+on every click (2026-09-06).{% endcomment %}
+{% if not dashboard_tabs_inner %}<div id="{{ dashboard_tabs.panel_id }}-shell" data-dashboard-view-shell>{% endif %}
 <nav class="edify-section-nav dashboard-view-nav" aria-label="Dashboard views" data-dashboard-views>
   <div class="edify-section-nav__inner" role="tablist" aria-label="Dashboard views"
        x-data
@@ -42,5 +46,5 @@ selected after a click (owner, 2026-09-05: "the tab highlight has a bug").{% end
 <div id="{{ dashboard_tabs.panel_id }}" role="tabpanel" aria-labelledby="dashboard-tab-{{ dashboard_tabs.active }}" tabindex="0">
   {% include dashboard_tabs.view_template %}
 </div>
-</div>
+{% if not dashboard_tabs_inner %}</div>{% endif %}
 {% endif %}

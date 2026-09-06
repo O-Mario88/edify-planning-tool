@@ -1785,7 +1785,7 @@ def ia_dashboard_view(request):
 
         context.update(country_map_context(get_operational_fy()))
     if request.headers.get("HX-Target") == "ia-dashboard-view-shell":
-        response = render(request, "partials/dashboards/_view_tabs.html", context)
+        response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
     else:
         response = render(request, "pages/ia/analytics_dashboard.html", context)
     if view_explicit:

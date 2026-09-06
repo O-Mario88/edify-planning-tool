@@ -252,7 +252,12 @@ class DashboardViewRenderTest(TestCase):
 
     def test_a_tab_click_swaps_the_rail_and_the_view_together(self):
         """The rail travels with the panel, so the highlight can never lag:
-        swapping the panel alone left both tabs painted selected."""
+        swapping the panel alone left both tabs painted selected.
+
+        The response is the shell's CONTENT — rail and panel, no shell
+        wrapper — swapped into the shell already on the page. A response
+        that carried the wrapper nested a new shell inside the old one on
+        every click (2026-09-06)."""
         for user, url, target, active in (
             (self.cd, "/dashboard?view=operations", "cd-dashboard-view", "operations"),
             (self.pl, "/dashboard?view=map", "pl-dashboard-view", "map"),
@@ -267,7 +272,7 @@ class DashboardViewRenderTest(TestCase):
                 self.assertEqual(response.status_code, 200)
                 html = response.content.decode()
                 self.assertNotIn("<html", html)
-                self.assertIn(f'id="{target}-shell"', html)
+                self.assertNotIn(f'id="{target}-shell"', html)
                 self.assertIn("data-dashboard-views", html)
                 selected = re.findall(r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"', html)
                 self.assertEqual(selected, [active])

@@ -37,3 +37,13 @@ the performance pass for the snippet.
 - `chart_cost.py` — re-renders the Country Director performance chart with
   option variants and times each; data labels on three column series were
   ~260ms of a ~410ms render.
+
+## No wraps, no sideways scroll
+
+- `wrap_inventory.py [roles…]` — every role page at 1440px: rails that
+  wrap or clip, tables that scroll their region, rows taller than the
+  32px rhythm, page errors. A clean run prints nothing but the pages that
+  carry a "More" menu or a fitted table. This is the acceptance check for
+  the owner's 2026-09-06 rule: tables fit by truncating text columns
+  (micro-ux `fitTables`), rails fit by moving tabs into "More"
+  (`fitRails`); nothing wraps and nothing scrolls sideways on a desktop.

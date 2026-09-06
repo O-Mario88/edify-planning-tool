@@ -5073,33 +5073,23 @@ main table thead .edify-frozen-cell { z-index: 2; }
   main :is(article, section).pto-panel {
     padding: 1.25rem !important;
   }
-  /* A tablist that lives in a narrow side column wraps its tabs rather than
-     scrolling them (the work plan's view switcher sat in a 255px column). */
-  main nav[data-edify-tablist].self-start {
-    flex-wrap: wrap !important;
-    overflow-x: visible !important;
+  /* A rail is one row, never two and never a sideways scroll (owner,
+     2026-09-06: "make sure the wraps are removed and use more space"). It
+     takes the full width it is given; the tabs that still do not fit move
+     into a "More" menu at its end (micro-ux.js fitRails), the active tab
+     always staying in the rail. Tabs size to their labels. */
+  main :is(
+    [role="tablist"], .edify-tab-container, [data-edify-tablist], .messages-inbox-tabs,
+    .pto-tabs, .sp-period-tabs, .spp-tabs, .tt-segmented, .oversight-entity-tabs,
+    .edify-section-nav__clusters, .edify-section-nav__inner, .fund-requesters__strip
+  ) {
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    inline-size: 100%;
+    max-inline-size: 100%;
   }
-  /* Section rails and the fund requester strip take a second row on a
-     desktop instead of scrolling sideways (owner, 2026-09-06): fourteen
-     Analytics tabs in 1118px scrolled behind a hidden bar, hiding the last
-     five. Tabs size to their labels so a second row reads as a row of tabs,
-     not a second segmented control of different widths. */
-  main :is(.edify-section-nav__inner, .edify-section-nav__clusters, .fund-requesters__strip) {
-    flex-wrap: wrap !important;
-    overflow-x: visible !important;
-    row-gap: 0.25rem;
-  }
-  main :is(.edify-section-nav__inner, .edify-section-nav__clusters) :is(.edify-section-nav__link, .edify-section-nav__cluster) {
-    flex: 0 0 auto !important;
-  }
-  /* The team-member request strip (one pill per requester) wraps as well:
-     twenty-odd pills scrolled 2,675px behind a hidden bar. */
-  main nav[data-edify-tablist].overflow-x-auto {
-    flex-wrap: wrap !important;
-    overflow-x: visible !important;
-    row-gap: 0.375rem;
-  }
-  main nav[data-edify-tablist].overflow-x-auto > :is(a, button) {
+  main :is(.edify-section-nav__inner, .edify-section-nav__clusters, .fund-requesters__strip, nav[data-edify-tablist])
+    > :is(a, button, [role="tab"]) {
     flex: 0 0 auto !important;
   }
 }

@@ -262,8 +262,13 @@ class SegmentedTabsTest(SimpleTestCase):
         )[1].split('main :is(\n  [role="tab"]', 1)[0]
         self.assertIn("padding: 0 !important;", rail_contract)
         self.assertIn("min-block-size: 2rem !important;", rail_contract)
-        self.assertIn("block-size: 2rem !important;", rail_contract)
-        self.assertIn("height: 2rem !important;", rail_contract)
+        # 32px is the rail's floor, not a pin: a rail pinned to 2rem clipped
+        # its second row out of sight (2026-09-06). One row still measures
+        # 32px because each segment is 30px inside the rail's 1px borders.
+        self.assertIn("block-size: auto !important;", rail_contract)
+        self.assertIn("height: auto !important;", rail_contract)
+        self.assertNotIn("\n  block-size: 2rem !important;", rail_contract)
+        self.assertIn("block-size: calc(2rem - 2px) !important;", rail_contract)
 
         segment = self.css.split('main :is(\n  [role="tab"]', 1)[1][:1200]
         self.assertIn("align-self: stretch !important;", segment)

@@ -107,13 +107,19 @@
 
             {% for wk in row.weeks %}
             <td class="px-4 py-4 text-center">
-              <div
-                class="inline-flex flex-col items-center justify-center p-3 rounded-surface text-white shadow-sm w-full max-w-[120px] transition hover:scale-105"
-                style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-chart-red){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
-              >
-                <span class="text-[12px] font-extrabold">{{ wk.status }}</span>
-                <span class="edify-text-caption opacity-90 font-bold mt-1">{{ wk.act_count }} activities</span>
-              </div>
+              {% comment %}
+                One line per week: the status as the platform pill, then the
+                activity count as a figure. "0 activities" spelled out under a
+                stacked label made each week 166px wide and pushed two of eight
+                weeks off a 1440px desktop (owner, 2026-09-06: no wraps, no
+                sideways scroll). The count keeps its full wording for
+                assistive tech and on hover.
+              {% endcomment %}
+              <span class="pill font-bold text-white whitespace-nowrap"
+                    style="background-color: {% if wk.status == 'Available' %}var(--edify-chart-green){% elif wk.status == 'On Leave' %}var(--edify-chart-blue){% elif wk.status == 'Blocked' %}var(--edify-chart-red){% elif wk.status == 'Conference Week' %}var(--edify-chart-purple){% else %}var(--edify-chart-amber){% endif %};"
+              >{{ wk.status }}</span>
+              <span class="edify-text-caption font-bold tabular-nums text-slate-500 whitespace-nowrap"
+                    title="{{ wk.act_count }} activit{{ wk.act_count|pluralize:'y,ies' }}">{{ wk.act_count }}<span class="sr-only"> activit{{ wk.act_count|pluralize:'y,ies' }}</span></span>
             </td>
             {% endfor %}
           </tr>

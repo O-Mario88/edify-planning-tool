@@ -342,7 +342,7 @@ def dashboard_view(request):
 
             context.update(country_map_context(fy))
         if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", context)
+            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
         elif request.headers.get("HX-Request") == "true":
             response = render(request, "partials/dashboards/cd/body.html", context)
         else:
@@ -416,7 +416,7 @@ def dashboard_view(request):
             context.update(country_map_context(fy))
             context.update(_pl_map_context(request.user, fy, filters))
         if request.headers.get("HX-Target") == "pl-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", context)
+            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
         elif request.headers.get("HX-Request") == "true":
             response = render(request, "partials/dashboards/pl/body.html", context)
         else:
@@ -473,7 +473,7 @@ def dashboard_view(request):
 
             context.update(country_map_context(fy))
         if request.headers.get("HX-Target") == "rvp-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", context)
+            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
         else:
             response = render(request, "pages/dashboards/rvp.html", context)
         if view_explicit:
@@ -560,7 +560,7 @@ def dashboard_view(request):
 
             context.update(country_map_context(context.get("fy") or get_operational_fy()))
         if request.headers.get("HX-Target") == "hr-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", context)
+            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
         elif request.headers.get("HX-Request") == "true":
             response = render(request, "partials/dashboards/hr/body.html", context)
         else:
@@ -909,7 +909,7 @@ def dashboard_view(request):
 
             context.update(country_map_context(context.get("fy") or get_operational_fy()))
         if request.headers.get("HX-Target") == "cceo-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", context)
+            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
         else:
             response = render(request, "pages/dashboards/cceo.html", context)
         if view_explicit:
@@ -1047,7 +1047,7 @@ def dashboard_view(request):
 
             context.update(country_map_context(context.get("fy") or get_operational_fy()))
         if request.headers.get("HX-Target") == "projects-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", context)
+            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
         else:
             response = render(request, "pages/dashboards/special_projects.html", context)
         if view_explicit:
@@ -1269,7 +1269,7 @@ def dashboard_view(request):
 
         context.update(country_map_context(context.get("fy") or get_operational_fy()))
     if request.headers.get("HX-Target") == "admin-dashboard-view-shell":
-        response = render(request, "partials/dashboards/_view_tabs.html", context)
+        response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
     else:
         response = render(request, "pages/dashboards/main.html", context)
     if view_explicit:

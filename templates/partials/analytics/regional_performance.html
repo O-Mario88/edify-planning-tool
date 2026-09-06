@@ -1305,7 +1305,9 @@ function subregionMap(){
       return new Promise(resolve => {
         let index = 0;
         const step = () => {
-          if(token !== this._placementToken){ resolve(false); return; }
+          /* A newer placement, or a map that has since been swapped out of
+             the page (the dashboard's Map | Operations rail), ends this one. */
+          if(token !== this._placementToken || !this.$refs.svg || !this.$refs.svg.isConnected){ resolve(false); return; }
           const sliceEnd = performance.now() + 6;
           while(index < labels.length && performance.now() < sliceEnd){
             placeOne(labels[index++]);
