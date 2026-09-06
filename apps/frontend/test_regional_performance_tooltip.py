@@ -4,11 +4,20 @@ from .test_design_system_quality import _read
 
 
 def _regional_source():
-    """Return component behavior and its shared stylesheet as one contract."""
+    """Return component behavior and its shared stylesheet as one contract.
+
+    The map is one component in two files: the markup, and the Alpine factory
+    that drives it. The factory was moved out of the markup on 2026-09-06 so it
+    could load in the document head — a dashboard view swapped in by htmx runs
+    Alpine before an inline script inside the swapped fragment, so the map was
+    undefined on every swap. The contract is unchanged, so both halves are read
+    together rather than each assertion having to know which file it lives in.
+    """
 
     return "\n".join(
         (
             _read("templates/partials/analytics/regional_performance.html"),
+            _read("templates/partials/analytics/_regional_performance_script.html"),
             _read("static/css/components.css"),
         )
     )

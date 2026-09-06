@@ -704,7 +704,7 @@ controller exists by the time a drawer's x-init runs.
         if (lazy.cancelled) { return; }
         var schedule = window.requestIdleCallback || function (fn) { window.setTimeout(fn, 0); };
         schedule(function () {
-          if (lazy.cancelled) { return; }
+          if (lazy.cancelled || !el.isConnected) { return; }
           var drawn = system._renderDetachedNow(el, options);
           lazy.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
         });
@@ -751,7 +751,7 @@ controller exists by the time a drawer's x-init runs.
           var waiting = { destroy: function () { waiting.cancelled = true; } };
           fold.addEventListener('toggle', function onOpen() {
             fold.removeEventListener('toggle', onOpen);
-            if (waiting.cancelled) { return; }
+            if (waiting.cancelled || !el.isConnected) { return; }
             var live = window.EdifyChartSystem._renderDetachedNow(el, options);
             waiting.destroy = function () { if (live && live.destroy) { live.destroy(); } };
           });
@@ -762,7 +762,7 @@ controller exists by the time a drawer's x-init runs.
           var observer = new ResizeObserver(function (entries) {
             if (!entries.some(function (entry) { return entry.contentRect.width > 0; })) { return; }
             observer.disconnect();
-            if (pending.cancelled) { return; }
+            if (pending.cancelled || !el.isConnected) { return; }
             var drawn = window.EdifyChartSystem._renderDetachedNow(el, options);
             pending.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
           });
@@ -770,6 +770,7 @@ controller exists by the time a drawer's x-init runs.
           return pending;
         }
         var inPlace = new ApexCharts(el, options);
+        window.EdifyChartSystem._live.push({ el: el, chart: inPlace });
         inPlace.render();
         return inPlace;
       }
@@ -788,6 +789,20 @@ controller exists by the time a drawer's x-init runs.
       document.body.appendChild(holder);
 
       var settle = function () {
+        /* The slot can leave the document while the render is still running —
+           a dashboard view tab swapped away mid-render is the common case.
+           Moving the finished chart into a slot that is no longer in the
+           document leaves ApexCharts alive with its resize handler and its
+           animation timers pointing at geometry that no longer measures, and
+           the next tick writes width="NaN" and translate(NaN, 0) into the SVG.
+           A chart whose slot is gone has nothing to draw into, so it is torn
+           down here instead of being handed a detached parent. */
+        if (!el.isConnected) {
+          holder.remove();
+          window.EdifyChartSystem._forget(chart);
+          try { chart.destroy(); } catch (e) {}
+          return;
+        }
         holder.style.position = '';
         holder.style.left = '';
         holder.style.top = '';
@@ -797,6 +812,11 @@ controller exists by the time a drawer's x-init runs.
       };
 
       var chart = new ApexCharts(stage, options);
+      /* Tracked so the sweep below can destroy it if its slot leaves the
+         document later — most call sites hold the chart only to destroy it on
+         re-render, and several have no teardown at all, so a swapped-away view
+         would otherwise leave a live chart behind for every visit. */
+      window.EdifyChartSystem._live.push({ el: el, chart: chart });
       /* Both arms move the chart in: a failed render must not leave the panel
          empty AND the holder stranded off-screen under body, where it would be
          invisible to the user and to any check that looks inside the slot.
@@ -816,6 +836,79 @@ controller exists by the time a drawer's x-init runs.
 
       return chart;
     },
+
+    /* Live charts, so one sweep can tear down the ones whose slot has gone.
+       Object.freeze is shallow: the array stays writable. */
+    _live: [],
+
+    _forget: function (chart) {
+      for (var i = this._live.length - 1; i >= 0; i--) {
+        if (this._live[i].chart === chart) { this._live.splice(i, 1); }
+      }
+    },
+
+    _drop: function (index) {
+      var record = this._live[index];
+      this._live.splice(index, 1);
+      try { record.chart.destroy(); } catch (e) {}
+    },
+
+    /* Destroy every chart inside a subtree that is about to be replaced.
+
+       ApexCharts watches its own parent with a ResizeObserver
+       (redrawOnParentResize, on by default) and redraws when that parent
+       changes size. Removing the parent IS a size change: the observer fires
+       on the next frame with a zero rect, ApexCharts recomputes its geometry
+       from an element that no longer measures, and writes width="NaN" and
+       translate(NaN, 0) into an SVG nobody can see. On a dashboard view tab
+       that is one console error per swap.
+
+       That observer fires at the end of the frame that removed the panel,
+       which is BEFORE htmx settles, so tearing the chart down after the swap
+       loses the race about half the time. Doing it before the swap does not
+       race: the chart is gone before anything can observe its removal. */
+    destroyInside: function (root) {
+      if (!root) { return; }
+      for (var i = this._live.length - 1; i >= 0; i--) {
+        var el = this._live[i].el;
+        if (el && (el === root || root.contains(el))) { this._drop(i); }
+      }
+    },
+
+    /* Backstop for slots removed by something other than an htmx swap — an
+       Alpine x-if, a drawer closing, a component tearing down its own DOM. */
+    sweepDetached: function () {
+      for (var i = this._live.length - 1; i >= 0; i--) {
+        var el = this._live[i].el;
+        if (!el || !el.isConnected) { this._drop(i); }
+      }
+    },
+  });
+
+  document.addEventListener('htmx:beforeSwap', function (e) {
+    var detail = e.detail;
+    /* shouldSwap is false for hx-swap="none" and for responses htmx refuses:
+       nothing is replaced, so nothing should be torn down. */
+    if (!detail || detail.shouldSwap === false) { return; }
+    /* Only the swap styles that DISCARD what is in the target. An append
+       (beforeend, afterbegin) or a sibling insert leaves the existing content
+       — and its charts — in place; destroying those would blank a chart that
+       is still on screen, e.g. a list that loads its next page below itself. */
+    var spec = (detail.swapOverride || '').trim();
+    if (!spec) {
+      var elt = detail.requestConfig && detail.requestConfig.elt;
+      var holder = elt && elt.closest ? elt.closest('[hx-swap], [data-hx-swap]') : null;
+      spec = holder
+        ? (holder.getAttribute('hx-swap') || holder.getAttribute('data-hx-swap') || '')
+        : '';
+    }
+    var style = (spec.split(/\s+/)[0] || 'innerHTML').toLowerCase();
+    if (style === 'innerhtml' || style === 'outerhtml' || style === 'delete') {
+      window.EdifyChartSystem.destroyInside(detail.target);
+    }
+  });
+  document.addEventListener('htmx:afterSettle', function () {
+    window.EdifyChartSystem.sweepDetached();
   });
 
   /* ApexCharts merges window.Apex into every chart it creates, which makes this

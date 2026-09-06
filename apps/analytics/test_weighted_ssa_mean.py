@@ -198,9 +198,16 @@ class CombineBoundariesEndpointTests(TestCase):
 
         from django.conf import settings
 
-        source = (
-            pathlib.Path(settings.BASE_DIR)
-            / "templates/partials/analytics/regional_performance.html"
-        ).read_text()
+        # The map is one component in two files since 2026-09-06 — markup, and
+        # the Alpine factory that had to move to the head so a swapped-in
+        # dashboard view still defines it. Both halves are read, or the
+        # arithmetic could come back in whichever half is not looked at.
+        root = pathlib.Path(settings.BASE_DIR) / "templates/partials/analytics"
+        source = "\n".join(
+            (
+                (root / "regional_performance.html").read_text(),
+                (root / "_regional_performance_script.html").read_text(),
+            )
+        )
         self.assertNotIn("weightedAverage", source)
         self.assertIn("fetchCombinedBoundaries", source)

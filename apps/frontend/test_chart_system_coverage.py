@@ -89,3 +89,53 @@ class ChartSystemCoverageTest(SimpleTestCase):
         ):
             with self.subTest(page=page):
                 self.assertIn('include "partials/vendor/apexcharts.html"', _read(page))
+
+
+class ChartTeardownTest(SimpleTestCase):
+    """A chart dies with the panel that held it.
+
+    ApexCharts watches its own parent with a ResizeObserver, so removing the
+    panel reads to it as a resize to nothing: it recomputes geometry from an
+    element that no longer measures and writes width="NaN" into the SVG. On a
+    dashboard view tab that was a console error on roughly half of all swaps
+    (2026-09-06). The observer fires before htmx settles, so the teardown has
+    to happen before the swap, not after it.
+    """
+
+    def setUp(self):
+        self.base = _read("templates/base.html")
+
+    def test_every_chart_is_tracked_when_it_is_created(self):
+        self.assertIn("_live: []", self.base)
+        self.assertIn(
+            "window.EdifyChartSystem._live.push({ el: el, chart: chart });", self.base
+        )
+
+    def test_a_replacing_swap_destroys_the_charts_it_discards(self):
+        self.assertIn("destroyInside: function (root)", self.base)
+        self.assertIn("htmx:beforeSwap", self.base)
+        self.assertIn(
+            "window.EdifyChartSystem.destroyInside(detail.target);", self.base
+        )
+        # Only the styles that discard the target's content.
+        self.assertIn(
+            "if (style === 'innerhtml' || style === 'outerhtml' || style === 'delete') {",
+            self.base,
+        )
+
+    def test_an_appending_swap_leaves_its_charts_alone(self):
+        """beforeend/afterbegin keep what is already there — and its charts."""
+        start = self.base.index("_live: []")
+        handler = self.base[self.base.index("htmx:beforeSwap", start) :]
+        handler = handler[: handler.index("htmx:afterSettle")]
+        for style in ("beforeend", "afterbegin", "beforebegin", "afterend"):
+            with self.subTest(style=style):
+                self.assertNotIn("'" + style + "'", handler)
+
+    def test_a_slot_that_leaves_mid_render_is_not_settled_into(self):
+        self.assertIn("if (!el.isConnected) {", self.base)
+        self.assertIn("window.EdifyChartSystem._forget(chart);", self.base)
+
+    def test_the_settle_sweep_stays_as_the_backstop(self):
+        self.assertIn("sweepDetached: function ()", self.base)
+        self.assertIn("window.EdifyChartSystem.sweepDetached();", self.base)
