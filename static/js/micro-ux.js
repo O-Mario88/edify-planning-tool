@@ -1498,6 +1498,54 @@
     });
   }
 
+  /* A field that holds a value says so.
+
+     The owner's reference field (2026-09-06) is white when empty and tinted
+     once it has something in it, which is what lets a reader find the empty
+     boxes on a long form without reading a word. CSS can almost do this alone
+     — `:not(:placeholder-shown)` — but only where there IS a placeholder, and
+     a field without one is indistinguishable from a filled field to that
+     selector. Half the platform's inputs have no placeholder, so the tint
+     landed on some filled fields and not others, side by side.
+
+     One attribute, kept honest by delegated listeners, covers every field the
+     same way. It is an attribute rather than a class so it cannot collide with
+     the utility classes templates already carry. */
+  function markFilled(field) {
+    if (!field || field.disabled) return;
+    var type = (field.getAttribute('type') || '').toLowerCase();
+    if (type === 'checkbox' || type === 'radio' || type === 'hidden' ||
+        type === 'submit' || type === 'button' || type === 'reset' ||
+        type === 'file' || type === 'range') return;
+    var value = field.value;
+    if (field.tagName === 'SELECT') {
+      /* A select always has a value, so "filled" means a real choice rather
+         than the leading All/blank option every filter starts on. */
+      var blank = value === '' || value === 'All' || value === 'all';
+      field.toggleAttribute('data-edify-filled', !blank);
+      return;
+    }
+    field.toggleAttribute('data-edify-filled', String(value).trim() !== '');
+  }
+
+  function markFilledFields(root) {
+    var scope = root === document ? document : root;
+    if (!scope.querySelectorAll) return;
+    scope.querySelectorAll('input, select, textarea').forEach(markFilled);
+  }
+
+  if (!window.__edifyFilledFieldsBound) {
+    window.__edifyFilledFieldsBound = true;
+    ['input', 'change'].forEach(function (event) {
+      document.addEventListener(event, function (e) {
+        var el = e.target;
+        if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) {
+          markFilled(el);
+        }
+      }, true);
+    });
+  }
+
   function enhanceCritical(root) {
     /* Writers first, readers last. The marker pass rewrites every cell; a
        style read after it re-resolves that whole subtree (40-90ms on a
@@ -1508,6 +1556,7 @@
     enhanceStructuralMarkers(root);
     enhanceFormLabels(root);
     normalizeActionButtonTypes(root);
+    markFilledFields(root);
     hideEmptyFilters(root);
     enhanceTabs(root);
   }

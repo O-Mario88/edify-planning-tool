@@ -559,7 +559,13 @@ main table tbody tr:hover,
   --edify-action-button-radius: var(--radius-control);
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+/* `input` here means a BUTTON that happens to be an input — submit, reset,
+   button, image. It used to mean every input, so a text field carrying
+   `border-slate-200 rounded-control` was painted with the quiet-button border
+   and came out pale blue in the middle of a form (owner's reference field,
+   2026-09-06). A data-entry field takes the field contract at the end of this
+   file instead. */
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
@@ -573,7 +579,7 @@ main table tbody tr:hover,
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
@@ -585,7 +591,7 @@ main table tbody tr:hover,
   box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--brand-primary) 50%, transparent) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-ghost, .btn-secondary, .btn-premium-secondary,
   .edify-action-button.secondary, .school-record-action--assign,
   .premium-button-secondary, .premium-button-outline, .btn-smooth,
@@ -600,7 +606,7 @@ main table tbody tr:hover,
   box-shadow: none !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-ghost, .btn-secondary, .btn-premium-secondary,
   .edify-action-button.secondary, .school-record-action--assign,
   .premium-button-secondary, .premium-button-outline, .btn-smooth,
@@ -631,7 +637,7 @@ main table tbody tr:hover,
  * blue-outline treatments here, so a page cannot create a fourth button
  * appearance just by using an older template. Compact navigation, tabs and
  * rich-text formatting controls deliberately keep their compact geometry. */
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
   .fc-button-primary,
   [class~="bg-slate-700"], [class~="bg-slate-800"], [class~="bg-slate-900"],
@@ -645,7 +651,7 @@ main table tbody tr:hover,
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
   .fc-button-primary,
   [class~="bg-slate-700"], [class~="bg-slate-800"], [class~="bg-slate-900"],
@@ -656,7 +662,7 @@ main table tbody tr:hover,
   border-color: var(--brand-primary-hover) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
   .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
   .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
@@ -683,7 +689,7 @@ main table tbody tr:hover,
   box-shadow: none !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
   .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
   .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
@@ -1978,6 +1984,13 @@ main :is(
   [role="alert"], [role="dialog"], [role="menu"], [role="listbox"],
   [popover], .drawer-surface, .edify-popup-dialog__surface,
   .platform-filter-bar, .overflow-x-auto, .overflow-auto,
+  /* A form control is not a nested card, which this rule's own preamble
+     already says — but a `<select class="edify-surface rounded-control
+     border">` matched the generic entries above and was flattened to a
+     square, borderless box. The Activity Catalogue's review queue had a
+     dozen of them (2026-09-06). Fields take the field contract at the end
+     of this file. */
+  input, select, textarea,
   /* A tile is not a nested card. It states one number and carries the
      accent wash every tile on the platform carries, so stripping its
      surface here left it flat white beside its washed neighbours — which
@@ -3956,4 +3969,94 @@ main .school-filter-grid > div {
   min-inline-size: 0 !important;
   max-inline-size: none !important;
 }
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE INPUT FIELD (owner, 2026-09-06, from a reference screenshot)
+
+   The reference field is a rounded, quietly bordered box on white, with grey
+   placeholder text and a warm tint once it holds a value. The owner asked for
+   that field "condensed to fit" this platform — so the proportions carry over
+   and the sizes do not: the reference draws a ~48px field with a ~14px radius,
+   and the platform's control is 32px on a desktop and 44px on a phone, which
+   is why the radius moved to 10px in the shared token rather than to 14px
+   here. Fields and the rectangular buttons beside them resolve to that same
+   token, so a row never mixes two corner treatments.
+
+   Every rule below repeats the same long selector rather than a shorter one.
+   That is deliberate: each `:not([type=…])` adds specificity, so a base rule
+   written this way outranks a state rule written as `:is(input, textarea):focus`
+   — the states silently lost to the resting look, which is exactly what
+   happened the first time this was written. Same shape everywhere, and the
+   later rule wins as intended.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* The tint for a field that holds a value. The reference uses a warm cream;
+     this is the platform's own surface moved the same distance from white, so
+     it reads identically in the light theme and stays legible in the blue and
+     dark ones, where a cream would be a hole in the page. */
+  --edify-field-filled: color-mix(in srgb, var(--edify-accent) 6%, var(--edify-surface-raised));
+  --edify-field-border: color-mix(in srgb, var(--edify-border-strong) 78%, transparent);
+}
+
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+  border: 1px solid var(--edify-field-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background-color: var(--edify-surface-raised) !important;
+  color: var(--edify-text) !important;
+}
+
+/* A field that holds something looks different from one that does not. This is
+   the reference's cream fill, and it is why that screenshot reads at a glance:
+   the eye finds the empty fields without reading a word.
+
+   `data-edify-filled` is stamped by micro-ux on input, on change, and on every
+   field it enhances. CSS can nearly do this alone — `:placeholder-shown` — but
+   only where there IS a placeholder, and to that selector a field without one
+   looks filled when it is empty. On a form mixing both kinds the tint landed
+   on some boxes and not others, side by side. The attribute treats every field
+   the same, a select included, where "filled" means a real choice rather than
+   the leading All option every filter starts on. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled],
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled] {
+  border-color: var(--edify-border-strong) !important;
+  background-color: var(--edify-field-filled) !important;
+}
+
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea)::placeholder,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea)::placeholder {
+  color: var(--edify-text-subtle) !important;
+  opacity: 1;
+}
+
+/* Focus keeps the platform's ring: the reference does not show a focus state,
+   and the ring is what carries the accessibility contract. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible) {
+  border-color: var(--edify-accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-accent) 18%, transparent) !important;
+  outline: 0 !important;
+}
+
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled {
+  border-color: var(--edify-field-border) !important;
+  background-color: var(--edify-surface-muted) !important;
+  color: var(--edify-text-disabled) !important;
+}
+
+/* A field that failed validation says so on its own edge, not only in a message
+   below it. `:user-invalid` waits until the person has actually interacted, so
+   an untouched required field is not painted red on arrival. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid {
+  border-color: var(--edify-danger, #b42318) !important;
+}
+
+/* A textarea is the same field, taller — the reference's address box. */
+main textarea,
+.drawer-surface textarea {
+  padding-block: 0.55rem !important;
+  line-height: 1.45 !important;
 }

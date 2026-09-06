@@ -363,7 +363,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         for declaration in (
             "--radius-surface: 12px",
-            "--radius-control: 8px",
+            "--radius-control: 10px",
             "--radius-overlay: 16px",
         ):
             self.assertIn(

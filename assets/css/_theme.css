@@ -71,7 +71,14 @@
      them here brings the whole platform into spec in one place — do not
      reintroduce per-component radius values. */
   --radius-surface: 12px;
-  --radius-control: 8px;
+  /* 10px, not 8px. The owner's reference input (2026-09-06) is a visibly
+     rounded field, and this token is what every field and every rectangular
+     button on the platform resolves to — so raising it here keeps fields and
+     the buttons beside them in step, which a field-only radius would break.
+     Proportion, not a fixed number: the reference draws a ~48px field with a
+     ~14px radius, and 10px on the platform's 32px desktop control is the same
+     ratio, condensed. */
+  --radius-control: 10px;
   --radius-overlay: 16px;
   --radius-small: 6px;
   --radius-pill: 9999px;
