@@ -204,19 +204,19 @@
   box-sizing: border-box;
   min-inline-size: 0;
   overflow: hidden;
-  padding-inline: .22rem !important;
+  padding-inline: .5rem !important;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .analytics-geo-card .sr-distribution-table :is(th, td):first-child {
   overflow: hidden;
-  padding-inline-start: .08rem !important;
+  padding-inline-start: .25rem !important;
   text-overflow: ellipsis;
 }
 
 .analytics-geo-card .sr-distribution-table :is(th, td):last-child {
-  padding-inline-end: .08rem !important;
+  padding-inline-end: .25rem !important;
 }
 
 .analytics-geo-card .sr-distribution-table td:first-child > span {
@@ -675,6 +675,19 @@
 @media (min-width: 80rem) {
   .analytics-geo-card .sr-map-viewport {
     max-inline-size: 60rem;
+  }
+  /* Beside the map the panel is 286px: 12px of side padding leaves the
+     table 262px, and a FIXED layout keeps the four columns inside it — an
+     automatic layout summed the columns to 275px and clipped the SSA
+     figures at the panel edge (owner, 2026-09-06). */
+  .analytics-geo-card .sr-distribution-panel {
+    padding-inline: 0.75rem !important;
+  }
+  .analytics-geo-card .sr-distribution-table,
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
+    table-layout: fixed !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
   }
 }
 

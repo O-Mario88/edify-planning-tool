@@ -3259,19 +3259,31 @@ main table tbody > tr:only-child > td[colspan] > :is(
   padding-inline: 0.5rem !important;
   line-height: 1.125rem !important;
 }
-/* The country map's distribution table keeps its own tight columns: it is a
-   legend beside a map, sized to its three figures, not a record table. */
-:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) > tr {
+/* The country map's distribution table is a legend beside the map, sized to
+   its three figure columns in a 286px side panel: 8px between columns and
+   4px at the outer edges, so "5.91/10" still fits its 62px column and the
+   last column never clips at the panel edge (owner, 2026-09-06: "everything
+   seems to be at the real edge"). Stacked under the map, below 80rem, it is
+   a full-width table and takes the normal 12px token like every other. The
+   selector matches the row contract's weight so these win. */
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) > tr {
   block-size: auto !important;
 }
-:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) :is(td, th) {
-  padding-inline: .22rem !important;
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th) {
+  padding-inline: 0.5rem !important;
 }
-:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) :is(td, th):first-child {
-  padding-inline-start: .08rem !important;
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):first-child {
+  padding-inline-start: 0.25rem !important;
 }
-:is(main, .drawer-body) table.sr-distribution-table :is(thead, tbody) :is(td, th):last-child {
-  padding-inline-end: .08rem !important;
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):last-child {
+  padding-inline-end: 0.25rem !important;
+}
+@media (max-width: 79.99rem) {
+  :is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th),
+  :is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):first-child,
+  :is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):last-child {
+    padding-inline: var(--edify-table-cell-padding-inline) !important;
+  }
 }
 
 /* The same one line, whatever the template called its wrapper.
