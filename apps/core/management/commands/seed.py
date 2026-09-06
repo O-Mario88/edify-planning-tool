@@ -748,28 +748,12 @@ class Command(BaseCommand):
                 )
         self.stdout.write("  sample MFI tenancy: Demo Lending Partner (local only)")
 
-        rate_card = {
-            "primary_transport_per_day": 50000,
-            "primary_lunch_per_day": 12000,
-            "secondary_transport_per_day": 80000,
-            "secondary_lunch_per_day": 12000,
-            "secondary_breakfast_per_day": 8000,
-            "secondary_overnight_dinner_per_day": 12000,
-            "secondary_accommodation_per_night": 40000,
-            "secondary_incidentals_per_day": 5000,
-            "group_training_facilitation_fee": 50000,
-            "group_training_venue_cost": 30000,
-            "group_training_participant_meal_cost_per_head": 5000,
-            "cluster_meeting_participant_meal_cost_per_head": 10000,
-            "partner_visit_lump_sum": 40000,
-            "partner_training_lump_sum": 16000,
-        }
-        friendly_labels = {
-            "cluster_meeting_participant_meal_cost_per_head": "Participant snacks",
-            "group_training_participant_meal_cost_per_head": "Participant meals",
-            "group_training_facilitation_fee": "Facilitation fee",
-            "group_training_venue_cost": "Venue fee",
-        }
+        # The 2026-09-06 Country Cost Catalogue: the registry is the one
+        # source of keys, labels, units and defaults.
+        from apps.budget.reference import CANONICAL_RATES, RATE_UNITS
+
+        rate_card = {key: cost for key, _label, cost in CANONICAL_RATES}
+        friendly_labels = {key: label for key, label, _cost in CANONICAL_RATES}
         # get_or_create, never update_or_create: the CD's Cost Catalogue is
         # the authoritative rate card, and a reseed must not silently reset a
         # rate the CD changed (no version bump, no CostSettingHistory row —
@@ -788,6 +772,7 @@ class Command(BaseCommand):
             CostSetting.objects.create(
                 key=key,
                 label=friendly_labels.get(key, key.replace("_", " ").title()),
+                unit=RATE_UNITS.get(key, "unit"),
                 unit_cost=cost,
                 catalogue=seed_catalogue,
             )

@@ -667,11 +667,15 @@ def cost_settings_view(request):
 
     cost_items = []
     if active_catalogue:
-        cost_items = list(
-            CostSetting.objects.filter(
-                catalogue=active_catalogue,
-                key__in=CANONICAL_RATE_KEYS,
-            ).order_by("label")
+        from apps.budget.reference import CANONICAL_RATES
+        from apps.budget.services import visible_rates
+
+        # The registry's order — activity rates, partner rates, session
+        # components, travel — then the costs added for one activity.
+        order = {key: index for index, (key, _label, _cost) in enumerate(CANONICAL_RATES)}
+        cost_items = sorted(
+            visible_rates(active_catalogue).select_related("catalogue_item"),
+            key=lambda item: (order.get(item.key, len(order)), item.label.lower()),
         )
         reference_by_key = {}
         if reference_catalogue:
@@ -698,12 +702,14 @@ def cost_settings_view(request):
         "fy_options": fy_options(),
         "selected_fy": fy,
         "catalogues": catalogues,
+        "add_open": bool(request.GET.get("add")),
         "active_catalogue": active_catalogue,
         "cost_items": cost_items,
         "activity_cost_coverage": activity_cost_coverage(
             governed_activities, active_catalogue
         ),
         "governed_activity_count": len(governed_activities),
+        "linkable_activities": governed_activities,
         "fy": fy,
         "can_initialize": request.user.active_role == "CountryDirector",
         "can_manage_rates": request.user.active_role == "CountryDirector",
@@ -1087,13 +1093,9 @@ def cost_setting_row_view(request, key):
     if catalogue is None:
         return HttpResponse("No active CD Cost Catalogue", status=409)
 
-    setting = get_object_or_404(
-        CostSetting.objects.filter(
-            catalogue=catalogue,
-            key__in=CANONICAL_RATE_KEYS,
-        ),
-        key=key,
-    )
+    from apps.budget.services import visible_rates
+
+    setting = get_object_or_404(visible_rates(catalogue).select_related("catalogue_item"), key=key)
     mode = request.GET.get("mode", "view")
 
     if request.method == "POST":
@@ -1164,6 +1166,39 @@ def cost_setting_row_view(request, key):
         "can_manage_rates": request.user.active_role == "CountryDirector",
     }
     return render(request, "partials/cost_settings/cost_setting_row.html", context)
+
+
+@require_page_permission("cost_settings")
+def add_linked_cost_view(request):
+    """Add new cost (owner, 2026-09-06): a cost the Country Director adds is
+    linked to one activity and priced on every schedule of it."""
+    from django.contrib import messages
+    from django.http import HttpResponse
+    from django.shortcuts import redirect
+    from apps.budget import services as budget_services
+    from apps.core.exceptions import BadRequest
+
+    if request.user.active_role != "CountryDirector":
+        return HttpResponse("Forbidden", status=403)
+    if request.method != "POST":
+        return redirect("/cost-settings")
+    try:
+        result = budget_services.add_linked_cost(
+            {
+                "catalogueItemId": request.POST.get("catalogue_item"),
+                "label": request.POST.get("label"),
+                "unitCost": request.POST.get("unit_cost"),
+                "approvedMinimum": request.POST.get("approved_minimum") or None,
+                "reason": request.POST.get("reason"),
+                "fy": request.POST.get("fy") or None,
+            },
+            request.user,
+        )
+    except BadRequest as exc:
+        messages.error(request, str(exc.detail))
+        return redirect("/cost-settings?add=1")
+    messages.success(request, f"{result['label']} added to the Cost Catalogue.")
+    return redirect(f"/cost-settings#cost-setting-row-{result['key']}")
 
 
 @require_page_permission("cost_settings")

@@ -24,11 +24,11 @@ from .services import remove_school, schedule_visits
 
 PRIMARY_RATES = [
     ("primary_transport_per_day", 280000),
-    ("primary_lunch_per_day", 30000),
+    ("lunch_per_day", 30000),
 ]
 SECONDARY_RATES = [
     ("secondary_transport_per_day", 330000),
-    ("secondary_lunch_per_day", 30000),
+    ("lunch_per_day", 30000),
     ("secondary_accommodation_per_night", 150000),
     ("secondary_overnight_dinner_per_day", 50000),
 ]
@@ -81,7 +81,7 @@ class DailyVisitBatchTestCase(TestCase):
             update_fields=["required_school_visits_per_day", "is_active"]
         )
         for key, cost in (
-            PRIMARY_RATES + SECONDARY_RATES + [("partner_visit_lump_sum", 40000)]
+            PRIMARY_RATES + SECONDARY_RATES + [("client_partner_visit", 40000)]
         ):
             CostSetting.objects.update_or_create(
                 key=key,
@@ -188,7 +188,8 @@ class DailyVisitBatchTestCase(TestCase):
         act = Activity.objects.get(id=result["activities"][0]["id"])
         self.assertEqual(act.est_cost_cents, expected_pool)
         lines = list(ActivityScheduleCostLine.objects.filter(activity=act))
-        self.assertEqual(len(lines), 2)  # transport + lunch
+        # transport + lunch, plus the visit's own Client Staff Visit rate (0)
+        self.assertEqual(len(lines), 3)
         self.assertEqual(sum(l.amount for l in lines), expected_pool)
 
     # ── 1a. §12 mandated arithmetic: secondary 5-school split = 112,000 each ──
@@ -209,7 +210,7 @@ class DailyVisitBatchTestCase(TestCase):
 
         rates = {
             "secondary_transport_per_day": 330000,
-            "secondary_lunch_per_day": 30000,
+            "lunch_per_day": 30000,
             "secondary_accommodation_per_night": 150000,
             "secondary_overnight_dinner_per_day": 50000,
         }
@@ -530,7 +531,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
             line.amount
             for a in day_activities
             for line in a.schedule_cost_lines.filter(
-                cost_setting_key="primary_lunch_per_day"
+                cost_setting_key="lunch_per_day"
             )
         )
         self.assertEqual(lunch_total, 30000)
@@ -554,8 +555,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         from django.db import transaction
 
         for key, rate in [
-            ("group_training_participant_meal_cost_per_head", 5000),
-            ("cluster_meeting_participant_meal_cost_per_head", 3000),
+            ("tot_trainings_meals", 5000),
             ("group_training_venue_cost", 70000),
             ("group_training_facilitation_fee", 60000),
         ]:
@@ -605,7 +605,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             approved_minimum=100001
         )
-        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+        CostSetting.objects.filter(key="lunch_per_day").update(
             approved_minimum=10001
         )
         result = self._schedule(
@@ -655,14 +655,13 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
                 cost_setting_key="group_training_facilitation_fee"
             ).exists()
         )
-        self.assertEqual(
-            training.schedule_cost_lines.get(
-                cost_setting_key="group_training_participant_meal_cost_per_head"
-            ).amount,
-            60000,
+        # A cluster training feeds nobody in the 2026-09-06 catalogue: only a
+        # TOT training carries the meals rate.
+        self.assertFalse(
+            training.schedule_cost_lines.filter(cost_setting_key="tot_trainings_meals").exists()
         )
         self.assertEqual(
-            sum(activities.values_list("est_cost_cents", flat=True)), 676000
+            sum(activities.values_list("est_cost_cents", flat=True)), 580000
         )
         # Transport may be paid directly to a vendor: request only staff-payable lines.
         from apps.fund_requests.fundable import vendor_direct_filter
@@ -677,7 +676,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         self.assertEqual(request.total_amount, payable)
         self.assertEqual(
             TransportPayment.objects.get(batch_id=result["batchId"]).amount + payable,
-            676000,
+            580000,
         )
 
     def test_participant_edit_reprices_session_but_does_not_duplicate_daily_pool(self):
@@ -690,12 +689,11 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         result = patch_activity(
             training.id, {"expectedParticipants": 20}, self.principal
         )
-        self.assertEqual(result["estCostCents"], 155000 + 100000 + 60000 + 70000)
-        self.assertEqual(
-            training.schedule_cost_lines.get(
-                cost_setting_key="group_training_participant_meal_cost_per_head"
-            ).amount,
-            100000,
+        # Facilitation, venue and the shared staff day; no meals at a cluster
+        # training (2026-09-06 catalogue), so the headcount changes nothing.
+        self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000)
+        self.assertFalse(
+            training.schedule_cost_lines.filter(cost_setting_key="tot_trainings_meals").exists()
         )
         self.assertEqual(
             ActivityScheduleCostLine.objects.filter(
@@ -742,7 +740,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             approved_minimum=100000
         )
-        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+        CostSetting.objects.filter(key="lunch_per_day").update(
             approved_minimum=20000
         )
         self._schedule(
@@ -771,7 +769,6 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         from django.db.models import Sum
         from apps.budget.costing_service import planned_minimum_amounts
 
-        CostSetting.objects.filter(key="secondary_incidentals_per_day").delete()
 
         CostSetting.objects.update_or_create(
             key="secondary_breakfast_per_day",
@@ -836,11 +833,14 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         current = ActivityCostSnapshot.objects.filter(
             activity_id__in=ids, is_current=True
         )
+        # Only the shared daily lines carry an allocation; a visit's own rate
+        # line does not.
         self.assertTrue(
             all(
                 line.get("dailyAllocation", {}).get("count") == 2
                 for snapshot in current
                 for line in snapshot.operational_breakdown
+                if line.get("dailyAllocation")
             )
         )
 
@@ -850,7 +850,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             unit_cost=0, approved_minimum=5
         )
-        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+        CostSetting.objects.filter(key="lunch_per_day").update(
             unit_cost=0, approved_minimum=2
         )
         result = self._schedule(
@@ -875,7 +875,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             approved_minimum=100000
         )
-        CostSetting.objects.filter(key="primary_lunch_per_day").update(
+        CostSetting.objects.filter(key="lunch_per_day").update(
             approved_minimum=20000
         )
         self._schedule(
@@ -896,7 +896,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(response.context["success"])
-        self.assertEqual(response.context["preview"]["amount"], 135001)
+        self.assertEqual(response.context["preview"]["amount"], 105001)
         self.assertContains(response, "3 planned activities")
         self.assertNotContains(response, "280,000")
 

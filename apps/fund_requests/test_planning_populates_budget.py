@@ -123,7 +123,7 @@ class PlanningPopulatesTheBudgetTest(TestCase):
         )
         for key, cost in (
             ("primary_transport_per_day", TRANSPORT),
-            ("primary_lunch_per_day", LUNCH),
+            ("lunch_per_day", LUNCH),
         ):
             CostSetting.objects.update_or_create(
                 key=key,
@@ -168,9 +168,10 @@ class PlanningPopulatesTheBudgetTest(TestCase):
             self.assertEqual(line.currency, "UGX")
             self.assertEqual(line.responsible_user, self.user.id)
 
-        # 2. The advance ledger mirrors the lines, awaiting the owner's choice.
+        # 2. The advance ledger mirrors the lines worth money, awaiting the
+        #    owner's choice (the visit's own rate is 0 until the CD sets it).
         advances = AdvanceRequest.objects.filter(activity=activity)
-        self.assertEqual(advances.count(), len(lines))
+        self.assertEqual(advances.count(), len([l for l in lines if l.amount]))
         self.assertEqual(
             set(advances.values_list("status", flat=True)),
             {"pending_responsible_confirmation"},
@@ -185,7 +186,9 @@ class PlanningPopulatesTheBudgetTest(TestCase):
         )
         self.assertEqual(wfr.status, "pending_responsible_confirmation")
         self.assertEqual(wfr.total_amount, ADVANCE_POOL)
-        staff_lines = [l for l in lines if l.line_item_type != "transport"]
+        # Lunch only: transport is vendor-direct, and the visit's own rate is
+        # 0 until the Country Director sets it (a zero line funds nothing).
+        staff_lines = [l for l in lines if l.line_item_type != "transport" and l.amount]
         self.assertEqual(wfr.lines.count(), len(staff_lines))
 
         # 4. The monthly draft fund request auto-generated too.
@@ -268,7 +271,7 @@ class WeeklyAdvanceCompilesThePlanTest(TestCase):
         )
         for key, cost in (
             ("primary_transport_per_day", TRANSPORT),
-            ("primary_lunch_per_day", LUNCH),
+            ("lunch_per_day", LUNCH),
         ):
             CostSetting.objects.update_or_create(
                 key=key,

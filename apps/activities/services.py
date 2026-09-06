@@ -790,6 +790,7 @@ def _costing_input(activity: Activity, data: dict) -> dict:
 
     return {
         "activityType": activity.activity_type,
+        "catalogueItemId": activity.catalogue_item_id,
         "costingProfile": activity.costing_profile_snapshot,
         "deliveryType": activity.delivery_type,
         "teachersAttended": value("teachersAttended", activity.teachers_attended),
@@ -2090,6 +2091,7 @@ def create(
                 "costingProfile": (
                     catalogue_item.costing_profile if catalogue_item else None
                 ),
+                "catalogueItemId": catalogue_item.id if catalogue_item else None,
                 "deliveryType": "partner" if is_partner else "staff",
                 "districtType": data.get("districtType"),
                 "teachersAttended": data.get("teachersAttended"),

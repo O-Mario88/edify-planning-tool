@@ -77,15 +77,42 @@ def _rate_card(
     if catalogue is None:
         return {}, {}
 
+    from apps.budget.reference import RATE_ALIASES
+    from apps.budget.services import pricing_rates
+
+    rows = {setting.key: setting for setting in pricing_rates(catalogue)}
+    # A row still under a renamed key answers for the new key; the old key
+    # itself is not offered (the page and the API stay canonical).
+    for key, old_keys in RATE_ALIASES.items():
+        if key in rows:
+            continue
+        for old in old_keys:
+            if old in rows:
+                rows[key] = rows[old]
+                break
     settings = {
-        setting.key: setting
-        for setting in CostSetting.objects.filter(
-            catalogue=catalogue,
-            key__in=CANONICAL_RATE_KEYS,
-        )
+        key: setting
+        for key, setting in rows.items()
+        if key in CANONICAL_RATE_KEYS or setting.catalogue_item_id
     }
     rates = {key: s.unit_cost for key, s in settings.items()}
     return rates, settings
+
+
+def _with_linked_rates(input: dict, settings: dict) -> dict:
+    """The costs the Country Director added for this activity's catalogue
+    item, handed to the recipe as (key, label) pairs."""
+    item_id = input.get("catalogueItemId")
+    if not item_id:
+        return input
+    linked = [
+        (setting.key, setting.label)
+        for setting in settings.values()
+        if setting.catalogue_item_id and str(setting.catalogue_item_id) == str(item_id)
+    ]
+    if not linked:
+        return input
+    return {**input, "linkedRates": linked}
 
 
 # Human label for each catalogue rate key, for clear blocker messages.
@@ -126,20 +153,68 @@ _KEY_LABEL = {
     "programme_transport_per_day": "Programme transport (per day)",
     "programme_materials_per_participant": "Programme materials",
     "programme_accommodation_per_night": "Programme accommodation (per night)",
+    # The 2026-09-06 catalogue.
+    "client_staff_visit": "Client Staff Visit",
+    "core_staff_visit": "Core Staff Visit",
+    "ssa_support": "SSA Support",
+    "onetest": "OneTest",
+    "client_partner_visit": "Client Partner Visit",
+    "core_partner_visit": "Core Partner Visit",
+    "partner_meetings": "Partner Meetings",
+    "cluster_meetings_trainings": "Cluster Meetings/ Trainings",
+    "tot_trainings": "TOT trainings",
+    "tot_trainings_meals": "TOT trainings - Meals",
+    "student_conference": "Student Conference",
+    "proprietor_conference": "Proprietor Conference",
+    "printing_training_materials": "Printing training materials",
+    "photocopying_training_materials": "Photocopying training materials",
+    "lunch_per_day": "Lunch",
 }
 
 
+# Activity Catalogue costing profile -> (activity type the recipe prices as,
+# costing kind). The kind picks the activity's own rate in the 2026-09-06
+# catalogue: a core-school visit carries Core Staff/Partner Visit, a OneTest
+# visit carries OneTest, a TOT training carries TOT trainings and its meals,
+# a conference carries Student or Proprietor Conference.
+_COSTING_PROFILES: dict[str, tuple[str, str | None]] = {
+    "IN_SCHOOL_TRAINING": ("in_school_training", None),
+    "CLUSTER_TRAINING": ("cluster_training", None),
+    "CLUSTER_MEETING": ("cluster_meeting", None),
+    "ONLINE_TRAINING": ("training", None),
+    "STAFF_SCHOOL_VISIT": ("school_visit", None),
+    "CORE_SCHOOL_VISIT": ("school_visit", "core"),
+    "ONETEST": ("school_visit", "onetest"),
+    "ADMIN_PARTNER_MEETING": ("partner_activity", None),
+    "SSA_DATA_GATHERING": ("baseline_ssa_visit", None),
+    "GROUP_YOUTH_CAMP": ("training", None),
+    "TOT_TRAINING": ("training", "tot"),
+    "PROGRAMME_EVENT": ("programme_event", None),
+    "STUDENT_CONFERENCE": ("programme_event", "student_conference"),
+    "PROPRIETOR_CONFERENCE": ("programme_event", "proprietor_conference"),
+    "FIELD_TRAVEL": ("field_event", None),
+}
 _COSTING_PROFILE_ACTIVITY_TYPE = {
-    "IN_SCHOOL_TRAINING": "in_school_training",
-    "CLUSTER_TRAINING": "cluster_training",
-    "CLUSTER_MEETING": "cluster_meeting",
-    "ONLINE_TRAINING": "training",
-    "STAFF_SCHOOL_VISIT": "school_visit",
-    "ADMIN_PARTNER_MEETING": "partner_activity",
-    "SSA_DATA_GATHERING": "baseline_ssa_visit",
-    "GROUP_YOUTH_CAMP": "training",
-    "PROGRAMME_EVENT": "programme_event",
-    "FIELD_TRAVEL": "field_event",
+    profile: activity_type for profile, (activity_type, _kind) in _COSTING_PROFILES.items()
+}
+COSTING_PROFILE_CHOICES = tuple(_COSTING_PROFILES)
+# What a person calls each recipe, for the catalogue's New activity form.
+COSTING_PROFILE_LABELS = {
+    "IN_SCHOOL_TRAINING": "In-school training (a visit day)",
+    "CLUSTER_TRAINING": "Cluster training (session + room + facilitator)",
+    "CLUSTER_MEETING": "Cluster meeting (session + room)",
+    "ONLINE_TRAINING": "Online training (room + facilitator)",
+    "STAFF_SCHOOL_VISIT": "Client school visit (visit day + Client Staff Visit)",
+    "CORE_SCHOOL_VISIT": "Core school visit (visit day + Core Staff Visit)",
+    "ONETEST": "OneTest (visit day + OneTest)",
+    "ADMIN_PARTNER_MEETING": "Partner meeting (Partner Meetings)",
+    "SSA_DATA_GATHERING": "SSA data gathering (visit day + SSA Support)",
+    "GROUP_YOUTH_CAMP": "Youth camp (room + facilitator)",
+    "TOT_TRAINING": "TOT training (session + meals + room + facilitator)",
+    "PROGRAMME_EVENT": "Programme event (room + facilitator)",
+    "STUDENT_CONFERENCE": "Student conference (event + room + facilitator)",
+    "PROPRIETOR_CONFERENCE": "Proprietor conference (event + room + facilitator)",
+    "FIELD_TRAVEL": "Field travel (per-diems per day away)",
 }
 
 
@@ -148,13 +223,17 @@ def _profiled_input(input: dict) -> dict:
     profile = input.get("costingProfile")
     if not profile:
         return input
-    activity_type = _COSTING_PROFILE_ACTIVITY_TYPE.get(profile)
-    if not activity_type:
+    resolved = _COSTING_PROFILES.get(profile)
+    if not resolved:
         raise BadRequest(
             f"Unknown Activity Catalogue costing profile '{profile}'. "
             "Country Director configuration must be repaired before scheduling."
         )
-    return {**input, "activityType": activity_type}
+    activity_type, kind = resolved
+    profiled = {**input, "activityType": activity_type}
+    if kind:
+        profiled["costingKind"] = kind
+    return profiled
 
 
 def _missing_label(key: str) -> str:
@@ -197,6 +276,7 @@ def calculate_dual(input: dict) -> dict:
     )
     operational_rates, operational_settings = _rate_card(operational_card)
     reference_rates, _reference_settings = _rate_card(reference_card)
+    input = _with_linked_rates(input, operational_settings)
     operational = cost_for_activity(input, operational_rates)
     reference = (
         cost_for_activity(input, reference_rates)
@@ -302,6 +382,7 @@ def minimum_cost(input: dict, catalogue: CostCatalogue | None) -> ActivityCost:
     The catalogue may be a frozen snapshot's card, preserving its rate version.
     """
     _, settings = _rate_card(catalogue)
+    input = _with_linked_rates(_profiled_input(input), settings)
     return cost_for_activity(
         _profiled_input(input),
         {key: row.approved_minimum for key, row in settings.items()},
@@ -550,13 +631,14 @@ def activity_cost_coverage(items, catalogue: CostCatalogue | None = None) -> lis
             {
                 "activityType": item.workflow_kind,
                 "costingProfile": item.costing_profile,
+                "catalogueItemId": item.id,
                 "deliveryType": "staff",
                 "districtType": "primary",
                 "expectedParticipants": 1,
                 "days": 1,
             }
         )
-        cost = cost_for_activity(profiled, rates)
+        cost = cost_for_activity(_with_linked_rates(profiled, _by_key), rates)
         mappings = [m for m in item.intervention_mappings.all() if m.active]
         intervention = next(
             (m.get_intervention_display() for m in mappings if m.is_primary),
@@ -614,8 +696,17 @@ def _line_item_type(key: str) -> str:
     participant_meals / lump_sum …) for itemized budget reporting."""
     if "school_visit_cost_per_school" in key:
         return "school_visit"
-    if key == "group_training_participant_meal_cost_per_head":
+    if key in ("group_training_participant_meal_cost_per_head", "tot_trainings_meals"):
         return "participant_meals"
+    if key in ("printing_training_materials", "photocopying_training_materials"):
+        return "materials"
+    if key in ("client_partner_visit", "core_partner_visit", "partner_meetings"):
+        return "lump_sum"
+    if key in (
+        "client_staff_visit", "core_staff_visit", "ssa_support", "onetest",
+        "cluster_meetings_trainings", "tot_trainings", "student_conference", "proprietor_conference",
+    ):
+        return "activity_rate"
     if key == "group_training_venue_cost":
         return "venue"
     if key == "group_training_facilitation_fee":
@@ -629,7 +720,7 @@ def _line_item_type(key: str) -> str:
     # below wouldn't catch lunch/accommodation/dinner/breakfast variants.
     if key in ("primary_transport_per_day", "secondary_transport_per_day"):
         return "transport"
-    if key in ("primary_lunch_per_day", "secondary_lunch_per_day"):
+    if key in ("primary_lunch_per_day", "secondary_lunch_per_day", "lunch_per_day"):
         return "lunch"
     if key == "secondary_accommodation_per_night":
         return "accommodation"
@@ -722,6 +813,10 @@ def _programme_period_specs(cost, activity, planned_date):
         # boundary booked all three staff days into the first month.
         "primary_transport_per_day",
         "primary_lunch_per_day",
+        "lunch_per_day",
+        "tot_trainings_meals",
+        "printing_training_materials",
+        "photocopying_training_materials",
         "secondary_transport_per_day",
         "secondary_lunch_per_day",
         "secondary_accommodation_per_night",

@@ -122,11 +122,11 @@ class DualRateCardSecurityTest(APITestCase):
         reference = self._publish_reference_copy_for_test()
         operational = active_catalogue(self.fy)
         component_rates = {
-            "group_training_participant_meal_cost_per_head": (12_000, 22_000),
+            "tot_trainings_meals": (12_000, 22_000),
             "group_training_facilitation_fee": (30_000, 50_000),
             "group_training_venue_cost": (40_000, 70_000),
             "primary_transport_per_day": (20_000, 35_000),
-            "primary_lunch_per_day": (8_000, 12_000),
+            "lunch_per_day": (8_000, 12_000),
         }
         for key, (operational_rate, reference_rate) in component_rates.items():
             CostSetting.objects.filter(catalogue=operational, key=key).update(
@@ -140,7 +140,8 @@ class DualRateCardSecurityTest(APITestCase):
         response = self.client.post(
             "/api/budget/costing/management-preview",
             {
-                "activityType": "cluster_training",
+                "activityType": "training",
+                "costingProfile": "TOT_TRAINING",
                 "deliveryType": "staff",
                 "expectedParticipants": 10,
                 "days": 1,
@@ -154,17 +155,19 @@ class DualRateCardSecurityTest(APITestCase):
         }
         reference_lines = {line["key"]: line for line in payload["referenceBreakdown"]}
         self.assertEqual(
-            operational_lines["group_training_participant_meal_cost_per_head"][
+            operational_lines["tot_trainings_meals"][
                 "amount"
             ],
             120_000,
         )
         self.assertEqual(
-            reference_lines["group_training_participant_meal_cost_per_head"]["amount"],
+            reference_lines["tot_trainings_meals"]["amount"],
             220_000,
         )
         self.assertEqual(payload["operationalCost"], 218_000)
-        self.assertEqual(payload["referenceCost"], 387_000)
+        # The reference copy adds 100 to every operational line, including
+        # the TOT rate, printing and photocopying at their 0 defaults.
+        self.assertEqual(payload["referenceCost"], 387_300)
 
     def test_management_preview_is_forbidden_to_field_staff(self):
         self._as(self.cceo)
@@ -197,7 +200,7 @@ class DualRateCardSecurityTest(APITestCase):
     def test_operational_rate_edit_publishes_new_version_and_preserves_old(self):
         old_card = active_catalogue(self.fy)
         old_line = CostSetting.objects.get(
-            catalogue=old_card, key="primary_lunch_per_day"
+            catalogue=old_card, key="lunch_per_day"
         )
         old_amount = old_line.unit_cost
         principal = SimpleNamespace(
@@ -219,7 +222,7 @@ class DualRateCardSecurityTest(APITestCase):
         new_card = active_catalogue(self.fy)
         self.assertEqual(
             CostSetting.objects.get(
-                catalogue=old_card, key="primary_lunch_per_day"
+                catalogue=old_card, key="lunch_per_day"
             ).unit_cost,
             old_amount,
         )

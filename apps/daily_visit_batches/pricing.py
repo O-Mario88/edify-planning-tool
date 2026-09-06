@@ -53,30 +53,31 @@ DAY_POOL_EXTRA_TYPES = {
 # per-diem pool share).
 POOL_PLUS_RECIPE_TYPES = DAY_POOL_EXTRA_TYPES - {"field_event", "in_school_training"}
 
+# The 2026-09-06 catalogue: transport by district, one Lunch, and in a
+# secondary district the overnight set — Dinner, Accommodation per night and
+# Breakfast. (Incidentals left the catalogue with the owner's list.)
 REQUIRED_KEYS = {
-    "primary": ["primary_transport_per_day", "primary_lunch_per_day"],
+    "primary": ["primary_transport_per_day", "lunch_per_day"],
     "secondary": [
         "secondary_transport_per_day",
-        "secondary_lunch_per_day",
+        "lunch_per_day",
         "secondary_accommodation_per_night",
         "secondary_overnight_dinner_per_day",
     ],
 }
 OPTIONAL_KEYS = {
     "primary": [],
-    "secondary": ["secondary_breakfast_per_day", "secondary_incidentals_per_day"],
+    "secondary": ["secondary_breakfast_per_day"],
 }
 
-# Human labels for the new cost-component keys, used on ActivityScheduleCostLine.label.
+# Human labels for the cost-component keys, used on ActivityScheduleCostLine.label.
 KEY_LABELS = {
-    "primary_transport_per_day": "Transport (shared, primary district)",
-    "primary_lunch_per_day": "Lunch (shared, primary district)",
-    "secondary_transport_per_day": "Transport (shared, secondary district)",
-    "secondary_lunch_per_day": "Lunch (shared, secondary district)",
-    "secondary_accommodation_per_night": "Accommodation (shared, secondary district)",
-    "secondary_overnight_dinner_per_day": "Overnight dinner (shared, secondary district)",
-    "secondary_breakfast_per_day": "Breakfast (shared, secondary district)",
-    "secondary_incidentals_per_day": "Incidentals (shared, secondary district)",
+    "primary_transport_per_day": "Transport Primary District",
+    "secondary_transport_per_day": "Transport Secondary District",
+    "lunch_per_day": "Lunch",
+    "secondary_accommodation_per_night": "Accommodation",
+    "secondary_overnight_dinner_per_day": "Dinner",
+    "secondary_breakfast_per_day": "Breakfast",
 }
 
 
@@ -84,6 +85,9 @@ def compute_daily_pool(rates: dict[str, int], district_type: str) -> dict[str, i
     """Return {key: unit_rate} for every required key, plus optional keys the
     CD has configured. Raises BadRequest naming the exact missing key(s) if
     any REQUIRED key is absent from the active Cost Catalogue."""
+    from apps.budget.reference import with_rate_aliases
+
+    rates = with_rate_aliases(rates)
     missing = [k for k in REQUIRED_KEYS[district_type] if k not in rates]
     if missing:
         raise BadRequest(

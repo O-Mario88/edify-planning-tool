@@ -41,14 +41,21 @@ from apps.projects.models import Project
 # person running it. The dedicated programme-event rate family was retired on
 # 2026-09-04 as a duplicate of exactly this (owner: "remove all duplicate
 # costs").
+# Since the owner's catalogue of 2026-09-06 a student conference is a group
+# session with its own Student Conference rate, the room and the facilitator
+# per day, printing and photocopying of materials, and the staff day; only a
+# TOT training feeds its participants. The conference rate and the two
+# materials rates default to 0 until the Country Director sets them.
 VENUE = 30_000
-MEAL = 5_000
 FACILITATION = 50_000
 TRANSPORT_PER_DAY = 50_000
 LUNCH_PER_DAY = 12_000
 STAFF_DAY = TRANSPORT_PER_DAY + LUNCH_PER_DAY
 
-THREE_DAY_TOTAL = 3 * VENUE + 40 * 3 * MEAL + 3 * FACILITATION + 3 * STAFF_DAY
+THREE_DAY_TOTAL = 3 * VENUE + 3 * FACILITATION + 3 * STAFF_DAY
+# One line per component: the conference rate, venue, facilitation, printing,
+# photocopying, transport and lunch.
+COMPONENT_LINES = 7
 
 FY = "2026"  # Aug/Sep 2026 both sit in operational FY2026 (Oct 1 boundary)
 
@@ -164,9 +171,9 @@ class ProgrammeActivityCreateTest(_ProgrammeFixture):
         lines = list(a.schedule_cost_lines.all())
         # One line per component, no month suffixes for a single-month span:
         # venue, meals, facilitation and the staff day's transport + lunch.
-        self.assertEqual(len(lines), 5)
+        self.assertEqual(len(lines), COMPONENT_LINES)
         self.assertFalse(any("#m" in ln.cost_setting_key for ln in lines))
-        # 3 days × (venue + facilitation + staff day) + 40 × 3 meals
+        # 3 days × (venue + facilitation + staff day)
         self.assertEqual(a.est_cost_cents, THREE_DAY_TOTAL)
         self.assertEqual(sum(ln.amount for ln in lines), a.est_cost_cents)
 
@@ -301,21 +308,25 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         self.assertEqual(sum(ln.amount for ln in lines), total)
 
         by_key = {ln.cost_setting_key: ln.amount for ln in lines}
+        self.maxDiff = None
         self.assertEqual(
             by_key,
             {
+                # The event's own rate and the materials rates are one line
+                # each (a 0 amount has nothing to split across months).
+                "student_conference": 0,
+                "printing_training_materials": 0,
+                "photocopying_training_materials": 0,
                 # August hosts 1 of the 3 service days.
                 "group_training_venue_cost#m202608": VENUE,
-                "group_training_participant_meal_cost_per_head#m202608": 40 * MEAL,
                 "group_training_facilitation_fee#m202608": FACILITATION,
                 "primary_transport_per_day#m202608": TRANSPORT_PER_DAY,
-                "primary_lunch_per_day#m202608": LUNCH_PER_DAY,
+                "lunch_per_day#m202608": LUNCH_PER_DAY,
                 # September hosts the other 2.
                 "group_training_venue_cost#m202609": 2 * VENUE,
-                "group_training_participant_meal_cost_per_head#m202609": 80 * MEAL,
                 "group_training_facilitation_fee#m202609": 2 * FACILITATION,
                 "primary_transport_per_day#m202609": 2 * TRANSPORT_PER_DAY,
-                "primary_lunch_per_day#m202609": 2 * LUNCH_PER_DAY,
+                "lunch_per_day#m202609": 2 * LUNCH_PER_DAY,
             },
         )
 
@@ -323,11 +334,11 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         september = [ln for ln in lines if ln.month == 9]
         self.assertEqual(
             sum(ln.amount for ln in august),
-            VENUE + 40 * MEAL + FACILITATION + STAFF_DAY,
+            VENUE + FACILITATION + STAFF_DAY,
         )
         self.assertEqual(
             sum(ln.amount for ln in september),
-            2 * (VENUE + FACILITATION + STAFF_DAY) + 80 * MEAL,
+            2 * (VENUE + FACILITATION + STAFF_DAY),
         )
         # The two months re-sum to the whole: a cross-period activity never
         # costs less than the same activity inside one month.
@@ -372,7 +383,7 @@ class ProgrammeCostingTest(_ProgrammeFixture):
         keys = [ln.cost_setting_key for ln in a.schedule_cost_lines.all()]
         self.assertEqual(len(keys), len(set(keys)))
         self.assertFalse(any("#m" in k for k in keys))
-        self.assertEqual(len(keys), 5)
+        self.assertEqual(len(keys), COMPONENT_LINES)
 
     def test_no_silent_zero_cost(self):
         CostSetting.objects.filter(key="group_training_venue_cost").delete()
@@ -559,7 +570,9 @@ class ProgrammeFundingFlowTest(_ProgrammeFixture):
 
     def test_budget_flow_creates_advances_and_weekly_draft(self):
         a = self._cross_month_activity()
-        lines = list(a.schedule_cost_lines.all())
+        # A line worth nothing (the conference rate and the materials at their
+        # 0 defaults) funds nothing: no advance, no weekly line.
+        lines = list(a.schedule_cost_lines.exclude(amount=0))
         advances = AdvanceRequest.objects.filter(activity=a)
         self.assertEqual(advances.count(), len(lines))
         for adv in advances:
@@ -643,9 +656,9 @@ class ProgrammeFundingFlowTest(_ProgrammeFixture):
         self.assertEqual(a.status, "rescheduled")
 
         lines = list(a.schedule_cost_lines.all())
-        # Re-priced as a single-month event: 5 unsuffixed component lines,
-        # all attributed to September, same total.
-        self.assertEqual(len(lines), 5)
+        # Re-priced as a single-month event: unsuffixed component lines, all
+        # attributed to September, same total.
+        self.assertEqual(len(lines), COMPONENT_LINES)
         self.assertFalse(any("#m" in ln.cost_setting_key for ln in lines))
         self.assertTrue(all(ln.month == 9 for ln in lines))
         self.assertTrue(all(ln.planned_date == date(2026, 9, 14) for ln in lines))

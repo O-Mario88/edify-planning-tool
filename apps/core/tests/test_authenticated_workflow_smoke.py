@@ -80,7 +80,7 @@ class AuthenticatedWorkflowSmokeTest(APITestCase):
             defaults={"label": "Primary transport", "unit_cost": 10000},
         )
         CostSetting.objects.update_or_create(
-            key="primary_lunch_per_day",
+            key="lunch_per_day",
             defaults={"label": "Primary lunch", "unit_cost": 5000},
         )
 

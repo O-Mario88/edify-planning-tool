@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **592**
-- All registered routes: **1059**
+- Routed product surfaces: **593**
+- All registered routes: **1061**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
@@ -14,9 +14,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Shared component templates: **408**
 - Full pages: **240**
 - Partials and drawers: **172**
-- Permission-gated surfaces: **580**
-- Referenced by automated tests: **546**
-- Findings: critical **0**, high **0**, medium **0**, low **0**
+- Permission-gated surfaces: **581**
+- Referenced by automated tests: **547**
+- Findings: critical **0**, high **0**, medium **1**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
 
@@ -201,7 +201,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-1B92F939B0 | /core-schools/schedule-visit/action | Core Schedule Visit Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-E1FE532B4B | /core-schools/strategy-playbook | Core Strategy Playbook Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B2C7B8534B | /cost-intelligence | Cost Intelligence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-AD648BAC50 | /cost-settings | Cost Catalogue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-AD648BAC50 | /cost-settings | Cost Catalogue | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 1 | referenced by automated test |
+| UI-PAGE-355BFF3F2B | /cost-settings/add | Cost Settings Add | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-6B5ACDE957 | /cost-settings/initialize-default | Initialize Default Catalogue | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B40AF5ED77 | /cost-settings/row/<str:key> | Cost Setting Row | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-172950D3EF | /country-budget | Country Budget | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

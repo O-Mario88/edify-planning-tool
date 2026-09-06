@@ -1044,7 +1044,7 @@
   },
   {
    "template": "templates/pages/cost_settings/index.html",
-   "line": 107,
+   "line": 145,
    "title": "All approved budget activities",
    "heading_level": 2,
    "has_card_key": false,
@@ -3089,14 +3089,14 @@
   },
   {
    "template": "templates/pages/settings/activity_catalogue.html",
-   "line": 50,
+   "line": 120,
    "title": "Catalogue Mapping Review",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "card p-4",
    "branch_path": [
     [
-     5,
+     9,
      0
     ]
    ]

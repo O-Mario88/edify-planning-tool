@@ -13,7 +13,6 @@ from django.core.management.base import BaseCommand
 
 from apps.activities.models import Activity, ActivityScheduleCostLine
 from apps.budget.costing import (
-    CLUSTER_MEETING_SNACK_RATE_KEY,
     CLUSTER_MEETING_TYPES,
     CLUSTER_TRAINING_TYPES,
     GROUP_TRAINING_RATE_KEYS,
@@ -22,7 +21,7 @@ from apps.core.exceptions import BadRequest
 
 
 _HISTORIC_PARTICIPANT_KEYS = {
-    CLUSTER_MEETING_SNACK_RATE_KEY,
+    "cluster_meeting_participant_meal_cost_per_head",
     "group_training_participant_meal_cost_per_head",
     "cluster_meeting_cost",
     "meals_per_participant",
@@ -85,8 +84,11 @@ class Command(BaseCommand):
         dry_run = options["dry_run"]
         for activity in queryset:
             lines = list(ActivityScheduleCostLine.objects.filter(activity=activity))
+            # The 2026-09-06 catalogue: a cluster meeting is the room, a
+            # cluster training the room and the facilitator; neither feeds
+            # participants (only TOT trainings do).
             expected_keys = (
-                {CLUSTER_MEETING_SNACK_RATE_KEY}
+                {"group_training_venue_cost"}
                 if activity.activity_type in CLUSTER_MEETING_TYPES
                 else set(GROUP_TRAINING_RATE_KEYS)
             )

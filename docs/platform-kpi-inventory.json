@@ -1790,7 +1790,7 @@
    "audit_id": "KPI-SOURCE-092",
    "kind": "breakdown-row",
    "module": "apps/budget/costing_service.py",
-   "line": 595,
+   "line": 677,
    "label": null,
    "keys": [
     "amount",
@@ -1834,7 +1834,7 @@
    "audit_id": "KPI-SOURCE-094",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 433,
+   "line": 513,
    "label": null,
    "keys": [
     "amount",
@@ -1854,7 +1854,7 @@
    "audit_id": "KPI-SOURCE-095",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 627,
+   "line": 707,
    "label": "Week of {\u2026}",
    "keys": [
     "amount",
@@ -1876,7 +1876,7 @@
    "audit_id": "KPI-SOURCE-096",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 1855,
+   "line": 1935,
    "label": null,
    "keys": [
     "amount",
@@ -1897,7 +1897,7 @@
    "audit_id": "KPI-SOURCE-097",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 323,
+   "line": 403,
    "label": null,
    "keys": [
     "amount",
@@ -1918,7 +1918,7 @@
    "audit_id": "KPI-SOURCE-098",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 586,
+   "line": 666,
    "label": null,
    "keys": [
     "amount",
@@ -1939,7 +1939,7 @@
    "audit_id": "KPI-SOURCE-099",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 777,
+   "line": 857,
    "label": null,
    "keys": [
     "amount",
@@ -1957,7 +1957,7 @@
    "audit_id": "KPI-SOURCE-100",
    "kind": "breakdown-row",
    "module": "apps/budget/services.py",
-   "line": 789,
+   "line": 869,
    "label": null,
    "keys": [
     "amount",
@@ -1976,7 +1976,7 @@
    "audit_id": "KPI-SOURCE-101",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1066,
+   "line": 1146,
    "label": null,
    "keys": [
     "activity_ids",
@@ -1998,7 +1998,7 @@
    "audit_id": "KPI-SOURCE-102",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1182,
+   "line": 1262,
    "label": null,
    "keys": [
     "activity_count",
@@ -2021,7 +2021,7 @@
    "audit_id": "KPI-SOURCE-103",
    "kind": "other",
    "module": "apps/budget/services.py",
-   "line": 1124,
+   "line": 1204,
    "label": "Country Admin Plan",
    "keys": [
     "activity_ids",
@@ -2578,7 +2578,7 @@
    "audit_id": "KPI-SOURCE-130",
    "kind": "other",
    "module": "apps/frontend/views/finance_views.py",
-   "line": 1274,
+   "line": 1309,
    "label": "Search submitted budgets by month, FY or status",
    "keys": [
     "action",

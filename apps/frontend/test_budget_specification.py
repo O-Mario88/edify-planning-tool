@@ -54,17 +54,20 @@ class BudgetSpecificationTest(TestCase):
         card = active_catalogue("2026")
         for key, operational, minimum in (
             ("primary_transport_per_day", 56000, 14000),
-            ("primary_lunch_per_day", 30000, 10000),
-            ("group_training_participant_meal_cost_per_head", 12000, 3000),
+            ("lunch_per_day", 30000, 10000),
+            ("tot_trainings_meals", 12000, 3000),
             ("group_training_facilitation_fee", 30000, 5000),
             ("group_training_venue_cost", 40000, 10000),
         ):
             CostSetting.objects.filter(catalogue=card, key=key).update(
                 unit_cost=operational, approved_minimum=minimum
             )
+        # A TOT training: the one session that feeds its participants
+        # (owner's catalogue, 2026-09-06).
         return {
             "fy": "2026",
             "activityType": "training",
+            "costingProfile": "TOT_TRAINING",
             "expectedParticipants": 10,
             "days": 1,
             "deliveryType": "staff",
@@ -92,9 +95,10 @@ class BudgetSpecificationTest(TestCase):
     ):
         act, payload = self.planned_training()
         minimal = preview(payload, minimum=True)
-        # Generic training carries participant meals, facilitation, a venue
-        # and the staff member's daily transport/lunch — the same recipe as a
-        # cluster training (owner, 2026-09-02).
+        # A TOT training carries participant meals, facilitation, a venue,
+        # its materials and the staff member's daily transport/lunch; at the
+        # minimum rates above that is 14,000 + 10,000 + 10 × 3,000 + 5,000 +
+        # 10,000 (the TOT rate and the materials default to 0).
         self.assertEqual(minimal["amount"], 69000)
         self.assertFalse(minimal["costMissing"])
         self.assertNotIn("operationalCost", minimal)
@@ -150,7 +154,7 @@ class BudgetSpecificationTest(TestCase):
     def test_cd_edits_both_rates_and_preserves_previous_published_version(self):
         payload = self.configure_training()
         old = active_catalogue("2026")
-        key = "group_training_participant_meal_cost_per_head"
+        key = "tot_trainings_meals"
         upsert_cost_setting(
             {
                 "key": key,
@@ -190,7 +194,7 @@ class BudgetSpecificationTest(TestCase):
     def test_cost_settings_form_has_two_prices_and_saves_minimum(self):
         self.configure_training()
         self.client.force_login(self.cd)
-        key = "group_training_participant_meal_cost_per_head"
+        key = "tot_trainings_meals"
         response = self.client.get("/cost-settings")
         self.assertEqual(response.status_code, 200)
         self.assertNotContains(response, "Regional standard (UGX)")

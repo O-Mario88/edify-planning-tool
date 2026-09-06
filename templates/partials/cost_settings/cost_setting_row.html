@@ -4,6 +4,7 @@
 <tr id="cost-setting-row-{{ c.key }}" class="edify-primary-soft-alpha-50">
 <td class="px-4 py-3 font-bold text-slate-800 align-middle">
 {{ c.label }}
+<span class="block edify-text-caption text-slate-500 mt-0.5">{{ c.unit }}{% if c.catalogue_item_id %} · linked to {{ c.catalogue_item.display_name }}{% endif %}</span>
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
 <td class="px-4 py-3 align-middle" colspan="3">
@@ -105,6 +106,7 @@ Change history{% if history %} · {{ history|length }}{% endif %}
 <tr id="cost-setting-row-{{ c.key }}" class="hover:bg-slate-50/60 transition-colors">
 <td class="px-4 py-3 font-bold text-slate-800 align-middle" data-record-title>
 {{ c.label }}
+<span class="block edify-text-caption text-slate-500 mt-0.5">{{ c.unit }}{% if c.catalogue_item_id %} · linked to {{ c.catalogue_item.display_name }}{% endif %}</span>
 <span class="block edify-text-caption text-slate-400 font-mono mt-0.5">Key: {{ c.key }} · Ver: {{ c.version }}</span>
 </td>
 {% comment %}

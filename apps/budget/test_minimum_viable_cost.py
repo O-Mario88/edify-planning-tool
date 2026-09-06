@@ -40,7 +40,9 @@ class EveryLiveRateHasAMinimumTest(TestCase):
 class ThePlannerSeesANumberTest(TestCase):
     CASES = (
         ({"activityType": "school_visit", "districtType": "primary"}, 62_000),
-        ({"activityType": "school_visit", "districtType": "secondary"}, 157_000),
+        # 2026-09-06 catalogue: no incidentals row, so the secondary day is
+        # transport + lunch + dinner + accommodation + breakfast.
+        ({"activityType": "school_visit", "districtType": "secondary"}, 152_000),
         ({"activityType": "core_visit", "districtType": "primary"}, 62_000),
         ({"activityType": "baseline_ssa_visit", "districtType": "primary"}, 62_000),
         (
@@ -49,7 +51,10 @@ class ThePlannerSeesANumberTest(TestCase):
                 "districtType": "primary",
                 "expectedParticipants": 20,
             },
-            242_000,
+            # Facilitation + venue + the staff day. Only a TOT training feeds
+            # its participants (owner's list, 2026-09-06); the cluster
+            # session's own rate and the materials default to 0.
+            142_000,
         ),
     )
 
@@ -68,11 +73,11 @@ class ThePlannerSeesANumberTest(TestCase):
 
         catalogue = active_catalogue()
         CostSetting.objects.filter(
-            catalogue=catalogue, key="primary_lunch_per_day"
+            catalogue=catalogue, key="lunch_per_day"
         ).delete()
         ensure_cost_reference(catalogue)
         restored = CostSetting.objects.get(
-            catalogue=catalogue, key="primary_lunch_per_day"
+            catalogue=catalogue, key="lunch_per_day"
         )
         self.assertIsNotNone(restored.approved_minimum)
         self.assertEqual(restored.approved_minimum, restored.unit_cost)

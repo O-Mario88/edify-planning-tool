@@ -233,7 +233,7 @@ class PlanningToMyPlanFlowTest(TestCase):
             },
         )
         CostSetting.objects.update_or_create(
-            key="primary_lunch_per_day",
+            key="lunch_per_day",
             defaults={
                 "label": "Lunch",
                 "unit_cost": 10_000,

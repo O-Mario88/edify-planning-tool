@@ -74,6 +74,11 @@ urlpatterns = [
         name="activity_catalogue",
     ),
     path(
+        "settings/activity-catalogue/new",
+        catalogue_views.activity_catalogue_create_action,
+        name="activity_catalogue_create",
+    ),
+    path(
         "settings/activity-catalogue/<str:item_id>/lifecycle",
         catalogue_views.activity_catalogue_lifecycle_action,
         name="activity_catalogue_lifecycle",
@@ -2201,6 +2206,11 @@ urlpatterns = [
         "cost-settings/row/<str:key>",
         finance_views.cost_setting_row_view,
         name="cost_setting_row",
+    ),
+    path(
+        "cost-settings/add",
+        finance_views.add_linked_cost_view,
+        name="cost_settings_add",
     ),
     path(
         "cost-settings/initialize-default",

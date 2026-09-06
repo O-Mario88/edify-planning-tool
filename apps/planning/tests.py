@@ -158,7 +158,7 @@ class PlanningReadinessTestCase(TestCase):
         in a secondary one (owner, 2026-09-04)."""
         from apps.budget.costing import cost_for_activity
 
-        rates = {"primary_transport_per_day": 50000, "primary_lunch_per_day": 12000}
+        rates = {"primary_transport_per_day": 50000, "lunch_per_day": 12000}
         a = {
             "activityType": "baseline_ssa_visit",
             "deliveryType": "staff",
@@ -168,7 +168,7 @@ class PlanningReadinessTestCase(TestCase):
         self.assertEqual(cost.amount, 62000)
         self.assertEqual(
             [line.key for line in cost.lines],
-            ["primary_transport_per_day", "primary_lunch_per_day"],
+            ["primary_transport_per_day", "lunch_per_day"],
         )
 
     def test_core_visit_is_priced_as_the_school_visit_it_is(self):
@@ -198,7 +198,7 @@ class PlanningReadinessTestCase(TestCase):
     def test_partner_visit_rate_basis_per_activity(self):
         from apps.budget.costing import cost_for_activity
 
-        rates = {"partner_visit_lump_sum": 45000}
+        rates = {"client_partner_visit": 45000}
         a = {"activityType": "school_visit", "deliveryType": "partner"}
         cost = cost_for_activity(a, rates)
         self.assertEqual(cost.amount, 45000)

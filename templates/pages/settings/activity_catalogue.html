@@ -10,7 +10,77 @@
       <h1 class="edify-page-title">Activity Catalogue</h1>
       <p>Approved responses to SSA-identified need. Historical Activities retain the version and operational profiles used when they were scheduled.</p>
     </div>
+    {% if can_manage %}
+    <div class="edify-page-header__controls">
+      <a href="#new-activity" class="btn btn-primary h-8" data-new-activity-toggle>New activity</a>
+    </div>
+    {% endif %}
   </header>
+
+  {% if can_manage %}
+  {% comment %}
+    New activity (owner, 2026-09-06): the first choice is whether this is a
+    school activity or a non-school activity; everything the platform needs
+    beyond the type, delivery, cost recipe and intervention is derived the
+    way the governed seed rows are, so the new item schedules, prices and
+    verifies like any other.
+  {% endcomment %}
+  <details id="new-activity" class="card p-4" {% if new_open %}open{% endif %} data-new-activity>
+    <summary class="cursor-pointer text-base font-semibold">New activity</summary>
+    <form method="post" action="/settings/activity-catalogue/new" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {% csrf_token %}
+      <label class="flex flex-col gap-1 text-sm sm:col-span-2 lg:col-span-3">
+        <span class="font-semibold">Activity name</span>
+        <input name="name" required maxlength="255" class="h-8 rounded-control border border-[var(--edify-border)] px-3 text-[13px]" placeholder="e.g. OneTest Diagnostic Visit">
+      </label>
+      <fieldset class="flex flex-col gap-1 text-sm">
+        <legend class="font-semibold">Kind</legend>
+        {% for value, label in activity_kinds %}
+        <label class="inline-flex items-center gap-2"><input type="radio" name="kind" value="{{ value }}" {% if forloop.first %}checked{% endif %} required> {{ label }}</label>
+        {% endfor %}
+      </fieldset>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="font-semibold">Activity type</span>
+        <select name="activity_type" required class="h-8 rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+          {% for value, label in activity_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="font-semibold">Delivery</span>
+        <select name="delivery_method" required class="h-8 rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+          {% for value, label in delivery_methods %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="font-semibold">Cost recipe</span>
+        <select name="costing_profile" required class="h-8 rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+          {% for value, label in costing_profiles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="font-semibold">Intervention <span class="font-normal text-[var(--edify-text-muted)]">(optional)</span></span>
+        <select name="intervention" class="h-8 rounded-control border border-[var(--edify-border)] px-2 text-[13px]">
+          <option value="">None</option>
+          {% for value, label in interventions %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+        </select>
+      </label>
+      <label class="flex flex-col gap-1 text-sm">
+        <span class="font-semibold">Target audience</span>
+        <input name="target_audience" maxlength="128" class="h-8 rounded-control border border-[var(--edify-border)] px-3 text-[13px]" placeholder="School staff">
+      </label>
+      <div class="flex flex-col gap-1 text-sm">
+        <span class="font-semibold">Options</span>
+        <label class="inline-flex items-center gap-2"><input type="checkbox" name="participant_counts" value="1"> Counts participants</label>
+        <label class="inline-flex items-center gap-2"><input type="checkbox" name="multi_day" value="1"> Can run over several days</label>
+      </div>
+      <label class="flex flex-col gap-1 text-sm sm:col-span-2 lg:col-span-3">
+        <span class="font-semibold">Why this activity is being added</span>
+        <input name="reason" required maxlength="512" class="h-8 rounded-control border border-[var(--edify-border)] px-3 text-[13px]">
+      </label>
+      <div class="sm:col-span-2 lg:col-span-3"><button type="submit" class="btn btn-primary h-8">Add activity</button></div>
+    </form>
+  </details>
+  {% endif %}
 
   <form method="get" class="edify-filter-bar" aria-label="Catalogue filters">
     <label class="text-sm font-semibold">Intervention
@@ -81,7 +151,7 @@
 
   <section class="space-y-3" aria-label="Catalogue items">
     {% for item in items %}
-    <article class="card p-4">
+    <article class="card p-4" id="item-{{ item.id }}">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div class="flex flex-wrap items-center gap-2">

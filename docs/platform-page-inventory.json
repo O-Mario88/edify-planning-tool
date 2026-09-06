@@ -3524,7 +3524,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 6611,
+      "bytes": 6949,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
@@ -25904,7 +25904,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.2,
       "backend_module": "apps.frontend.views.finance_views",
       "backend_view": "apps.frontend.views.finance_views.cost_settings_view",
       "card_count": 0,
@@ -25916,8 +25916,16 @@
         "permission:cost_settings"
       ],
       "filters": "canvas-level shared filter bar",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "finding_id": "UI-FINDING-CECF1D37DA",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
@@ -25933,10 +25941,10 @@
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "cost_settings",
-      "primary_action": "Initialize Default Catalogue",
+      "primary_action": "Add cost",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Governed operational/reference cost control for finance leadership.",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Use the semantic card, elevated or muted surface token.",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -25947,6 +25955,7 @@
       "search": "shared topbar search or none",
       "secondary_actions": [
         "/cost-settings",
+        "/cost-settings/add",
         "/cost-settings/initialize-default"
       ],
       "services_and_models": [
@@ -25986,12 +25995,94 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]",
         "text-[16px]",
         "text-[18px]",
         "text-[20px]",
         "text-[36px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.finance_views",
+      "backend_view": "apps.frontend.views.finance_views.add_linked_cost_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:cost_settings"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-355BFF3F2B",
+      "page_title": "Cost Settings Add",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "cost_settings",
+      "primary_action": "Cost Settings Add",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Add new cost (owner, 2026-09-06): a cost the Country Director adds is linked to one activity and priced on every schedule of it.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD"
+      ],
+      "route": "/cost-settings/add",
+      "route_name": "cost_settings_add",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.budget.models",
+        "apps.budget.services",
+        "apps.fund_requests.models",
+        "apps.geography.models",
+        "apps.partners.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -58878,7 +58969,7 @@
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "",
-      "primary_action": "Apply filters",
+      "primary_action": "New activity",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Operate activity catalogue within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -58888,6 +58979,7 @@
       "route_name": "activity_catalogue",
       "search": "shared topbar search or none",
       "secondary_actions": [
+        "/settings/activity-catalogue/new",
         "/settings/activity-catalogue/reviews/{{ review.id }}/resolve",
         "/settings/activity-catalogue/{{ item.id }}/lifecycle"
       ],
@@ -58922,7 +59014,9 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -74686,6 +74780,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.finance_views.add_linked_cost_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "cost_settings",
+      "required_permissions": [],
+      "route": "/cost-settings/add",
+      "route_name": "cost_settings_add",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.finance_views.initialize_default_catalogue_view",
       "kind": "action",
       "methods": [
@@ -79716,6 +79822,18 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.catalogue_views.activity_catalogue_create_action",
+      "kind": "mutation-or-action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/settings/activity-catalogue/new",
+      "route_name": "activity_catalogue_create",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.catalogue_views.activity_catalogue_review_resolve_action",
       "kind": "platform-route",
       "methods": [
@@ -80597,37 +80715,37 @@
   "summary": {
     "accessibility_contract_pass": 415,
     "activity_states": 24,
-    "all_routes": 1059,
+    "all_routes": 1061,
     "api_routes": 359,
     "component_templates": 408,
     "full_pages": 240,
     "mobile_contract_pass": 415,
-    "nonvisual_actions": 158,
+    "nonvisual_actions": 159,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 330,
+      "interaction-fragment": 331,
       "operational-queue": 139,
       "planning-or-creation": 9,
       "record-detail": 24,
       "report": 26
     },
     "partials_and_drawers": 172,
-    "permission_gated": 580,
+    "permission_gated": 581,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 592,
+    "routed_surfaces": 593,
     "scheduled_jobs": 25,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
-      "medium": 0
+      "medium": 1
     },
     "tablet_contract_pass": 415,
-    "test_referenced": 546,
+    "test_referenced": 547,
     "theme_contract_pass": 415
   }
 }

@@ -1916,6 +1916,7 @@
    ],
    "role_exclusive": false,
    "roles": [
+    "CountryDirector",
     "Admin"
    ],
    "route": "/api/activity-catalogue(?:/|)<str:item_id>/lifecycle",
@@ -7681,6 +7682,18 @@
    "route": "/cost-settings",
    "route_name": "cost_settings",
    "view": "apps.frontend.views.finance_views.cost_settings_view"
+  },
+  {
+   "page_permission": "cost_settings",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "Admin"
+   ],
+   "route": "/cost-settings/add",
+   "route_name": "cost_settings_add",
+   "view": "apps.frontend.views.finance_views.add_linked_cost_view"
   },
   {
    "page_permission": "cost_settings",
@@ -14487,10 +14500,10 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 386,
-  "Admin": 780,
+  "Admin": 781,
   "BusinessTransformationOfficer": 212,
   "CCEO": 477,
-  "CountryDirector": 616,
+  "CountryDirector": 618,
   "HumanResources": 265,
   "ImpactAssessment": 497,
   "MfiLoanOfficer": 111,
@@ -14504,9 +14517,9 @@
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 874,
-  "routes_total": 1059,
-  "routes_unguarded": 185,
+  "routes_guarded": 875,
+  "routes_total": 1061,
+  "routes_unguarded": 186,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -15713,6 +15726,13 @@
    "route": "/settings/activity-catalogue/<str:item_id>/lifecycle",
    "route_name": "activity_catalogue_lifecycle",
    "view": "apps.frontend.views.catalogue_views.activity_catalogue_lifecycle_action"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/settings/activity-catalogue/new",
+   "route_name": "activity_catalogue_create",
+   "view": "apps.frontend.views.catalogue_views.activity_catalogue_create_action"
   },
   {
    "page_permission": "",

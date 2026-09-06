@@ -134,6 +134,17 @@ class CostSetting(TimeStampedModel):
         null=True,
         blank=True,
     )
+    # A cost the Country Director added for ONE activity (owner, 2026-09-06:
+    # "the cd can add more cost using add new cost but the cost needs to be
+    # linked to an activity"). Every scheduled activity of that catalogue
+    # item carries this rate as a line; the canonical rates carry no link.
+    catalogue_item = models.ForeignKey(
+        "activity_catalogue.ActivityCatalogueItem",
+        on_delete=models.PROTECT,
+        related_name="linked_costs",
+        null=True,
+        blank=True,
+    )
 
     class Meta:
         db_table = "cost_setting"

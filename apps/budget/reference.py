@@ -16,53 +16,136 @@ decision, and a deploy must not quietly reset it to the default.
 
 from __future__ import annotations
 
-# Daily Visit Batch pools (migration 0005). key, label, default UGX.
-DAILY_BATCH_RATES: tuple[tuple[str, str, int], ...] = (
-    ("primary_transport_per_day", "Primary district daily transport pool", 50000),
-    ("primary_lunch_per_day", "Primary district daily lunch pool", 12000),
-    ("secondary_transport_per_day", "Secondary district daily transport pool", 80000),
-    ("secondary_lunch_per_day", "Secondary district daily lunch pool", 12000),
-    (
-        "secondary_accommodation_per_night",
-        "Secondary district accommodation per night",
-        40000,
-    ),
-    (
-        "secondary_overnight_dinner_per_day",
-        "Secondary district overnight dinner",
-        12000,
-    ),
-    ("secondary_breakfast_per_day", "Secondary district breakfast (optional)", 8000),
-    (
-        "secondary_incidentals_per_day",
-        "Secondary district incidentals (optional)",
-        5000,
-    ),
+# The Country Cost Catalogue (owner, 2026-09-06: "these are the list of
+# activities to put in the cost catalog; remove the ones you have now").
+# Twenty-two rows in four groups: the per-activity rates, the partner rates,
+# the group-session components and the travel per-diems. A key is the stable
+# handle the recipes read (`apps/budget/costing.py`); the label is what the
+# Country Director sees. Where the owner's list renamed a rate the platform
+# already priced with, the key is kept and only the label changed, so every
+# saved cost line and every test that seeds the old key still reads.
+# key, label, default UGX.
+ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
+    ("client_staff_visit", "Client Staff Visit", 0),
+    ("core_staff_visit", "Core Staff Visit", 0),
+    ("ssa_support", "SSA Support", 0),
+    ("onetest", "OneTest", 0),
+)
+PARTNER_RATES: tuple[tuple[str, str, int], ...] = (
+    ("client_partner_visit", "Client Partner Visit", 40000),
+    ("core_partner_visit", "Core Partner Visit", 40000),
+    ("partner_meetings", "Partner Meetings", 40000),
+)
+GROUP_SESSION_RATES: tuple[tuple[str, str, int], ...] = (
+    ("cluster_meetings_trainings", "Cluster Meetings/ Trainings", 0),
+    ("tot_trainings", "TOT trainings", 0),
+    ("tot_trainings_meals", "TOT trainings - Meals", 5000),
+    ("student_conference", "Student Conference", 0),
+    ("proprietor_conference", "Proprietor Conference", 0),
+    ("printing_training_materials", "Printing training materials", 0),
+    ("photocopying_training_materials", "Photocopying training materials", 0),
+    ("group_training_venue_cost", "Venue Fee", 30000),
+    ("group_training_facilitation_fee", "Facilitation Fee", 50000),
+)
+TRAVEL_RATES: tuple[tuple[str, str, int], ...] = (
+    ("primary_transport_per_day", "Transport Primary District", 50000),
+    ("secondary_transport_per_day", "Transport Secondary District", 80000),
+    ("lunch_per_day", "Lunch", 12000),
+    ("secondary_breakfast_per_day", "Breakfast", 8000),
+    ("secondary_overnight_dinner_per_day", "Dinner", 12000),
+    ("secondary_accommodation_per_night", "Accommodation", 40000),
 )
 
-# Cluster meeting and group training recipe (migration 0007).
-CLUSTER_ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
-    ("cluster_meeting_participant_meal_cost_per_head", "Participant snacks", 10000),
-    ("group_training_participant_meal_cost_per_head", "Participant meals", 5000),
-    ("group_training_facilitation_fee", "Facilitation fee", 50000),
-    ("group_training_venue_cost", "Venue fee", 30000),
-)
+# The basis each rate is charged on, shown under its label on Cost Settings.
+RATE_UNITS: dict[str, str] = {
+    "client_staff_visit": "per visit",
+    "core_staff_visit": "per visit",
+    "ssa_support": "per activity",
+    "onetest": "per activity",
+    "client_partner_visit": "per visit",
+    "core_partner_visit": "per visit",
+    "partner_meetings": "per meeting",
+    "cluster_meetings_trainings": "per session",
+    "tot_trainings": "per training",
+    "tot_trainings_meals": "per participant per day",
+    "student_conference": "per event",
+    "proprietor_conference": "per event",
+    "printing_training_materials": "per session",
+    "photocopying_training_materials": "per session",
+    "group_training_venue_cost": "per day",
+    "group_training_facilitation_fee": "per day",
+    "primary_transport_per_day": "per day",
+    "secondary_transport_per_day": "per day",
+    "lunch_per_day": "per day",
+    "secondary_breakfast_per_day": "per day away",
+    "secondary_overnight_dinner_per_day": "per day away",
+    "secondary_accommodation_per_night": "per night",
+}
 
-# Activity-specific rates that do not overlap the visit-day pools or the
-# cluster/training recipe.  Keeping these in the same registry means the
-# catalogue initializer, post-migrate restore, API and management page all
-# agree on the exact editable surface.
-DIRECT_ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
-    (
-        "partner_training_lump_sum",
-        "Partner training/facilitation rate",
-        16000,
-    ),
-    ("partner_visit_lump_sum", "Partner visit rate", 40000),
-)
-
-CANONICAL_RATES = DAILY_BATCH_RATES + CLUSTER_ACTIVITY_RATES + DIRECT_ACTIVITY_RATES
+CANONICAL_RATES = ACTIVITY_RATES + PARTNER_RATES + GROUP_SESSION_RATES + TRAVEL_RATES
 CANONICAL_RATE_KEYS = frozenset(key for key, _label, _cost in CANONICAL_RATES)
+RATE_LABELS: dict[str, str] = {key: label for key, label, _cost in CANONICAL_RATES}
+
+# Rates the owner's list ADDED. A recipe adds one of these only when the rate
+# card carries it: a card seeded before the list (a test's, an older
+# catalogue's) prices exactly as it did, and the live catalogue, which
+# always carries them, adds them at whatever the Country Director set.
+OPTIONAL_RATE_KEYS = frozenset(
+    {
+        "client_staff_visit",
+        "core_staff_visit",
+        "ssa_support",
+        "onetest",
+        "cluster_meetings_trainings",
+        "tot_trainings",
+        "student_conference",
+        "proprietor_conference",
+        "printing_training_materials",
+        "photocopying_training_materials",
+    }
+)
+
+# Keys the owner's list renamed. A rate card that still carries the old key
+# (a saved snapshot's, a test's) answers for the new one.
+RATE_ALIASES: dict[str, tuple[str, ...]] = {
+    "lunch_per_day": ("primary_lunch_per_day", "secondary_lunch_per_day"),
+    "client_partner_visit": ("partner_visit_lump_sum",),
+    "core_partner_visit": ("partner_visit_lump_sum",),
+    "partner_meetings": ("partner_visit_lump_sum",),
+    "tot_trainings_meals": ("group_training_participant_meal_cost_per_head",),
+}
+
+
+def with_rate_aliases(rates):
+    """A rate card that answers renamed keys from the rows it still carries."""
+    if not rates:
+        return rates
+    resolved = dict(rates)
+    for key, old_keys in RATE_ALIASES.items():
+        if key in resolved:
+            continue
+        for old in old_keys:
+            if old in rates:
+                resolved[key] = rates[old]
+                break
+    return resolved
+
+
+# Keys the 2026-09-06 list replaced. `secondary_lunch_per_day` was a second
+# lunch; `secondary_incidentals_per_day` and the cluster snack rate have no
+# row in the owner's list; the partner lumps became the partner rates; the
+# group meal rate became the TOT meals rate.
+RENAMED_COST_SETTING_KEYS = frozenset(
+    {
+        "primary_lunch_per_day",
+        "secondary_lunch_per_day",
+        "secondary_incidentals_per_day",
+        "cluster_meeting_participant_meal_cost_per_head",
+        "group_training_participant_meal_cost_per_head",
+        "partner_visit_lump_sum",
+        "partner_training_lump_sum",
+    }
+)
 
 # These keys remain in old schedule snapshots and, on upgraded installations,
 # may remain as CostSetting rows for audit.  They are not editable or used for
@@ -121,6 +204,7 @@ RETIRED_COST_SETTING_KEYS = (
     LEGACY_VISIT_COST_KEYS
     | LEGACY_CLUSTER_ACTIVITY_COST_KEYS
     | DUPLICATE_COST_SETTING_KEYS
+    | RENAMED_COST_SETTING_KEYS
 )
 
 
@@ -210,6 +294,7 @@ def ensure_cost_reference(catalogue=None) -> int:
                 "approved_minimum": default_cost,
                 "fy": catalogue.fy,
                 "version": 1,
+                "unit": RATE_UNITS.get(key, "unit"),
             },
         )
         created += int(was_created)

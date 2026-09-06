@@ -72,6 +72,44 @@
 {% endif %}
 
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+{% if can_manage_rates %}
+{% comment %}
+  Add new cost (owner, 2026-09-06): every cost the Country Director adds is
+  linked to one activity of the Activity Catalogue, and every schedule of
+  that activity carries it as a line.
+{% endcomment %}
+<details id="add-cost" class="mb-4 rounded-surface border border-slate-200 bg-white p-4" {% if add_open %}open{% endif %}>
+  <summary class="cursor-pointer text-[13px] font-bold text-slate-800">Add new cost</summary>
+  <form method="post" action="/cost-settings/add" class="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+    {% csrf_token %}
+    <input type="hidden" name="fy" value="{{ selected_fy }}">
+    <label class="flex flex-col gap-1 text-[13px] sm:col-span-2">
+      <span class="font-semibold">Activity this cost belongs to</span>
+      <select name="catalogue_item" required class="h-8 rounded-control border border-slate-200 px-2 text-[13px]">
+        <option value="">Choose an activity</option>
+        {% for activity in linkable_activities %}<option value="{{ activity.id }}">{{ activity.display_name }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1 text-[13px] sm:col-span-2">
+      <span class="font-semibold">Cost name</span>
+      <input name="label" required maxlength="120" class="h-8 rounded-control border border-slate-200 px-3 text-[13px]" placeholder="e.g. Diagnostic kit">
+    </label>
+    <label class="flex flex-col gap-1 text-[13px]">
+      <span class="font-semibold">Country operational (UGX)</span>
+      <input name="unit_cost" type="number" min="0" step="1" required class="h-8 rounded-control border border-slate-200 px-3 text-[13px]">
+    </label>
+    <label class="flex flex-col gap-1 text-[13px]">
+      <span class="font-semibold">Minimum viable (UGX)</span>
+      <input name="approved_minimum" type="number" min="0" step="1" class="h-8 rounded-control border border-slate-200 px-3 text-[13px]">
+    </label>
+    <label class="flex flex-col gap-1 text-[13px] sm:col-span-2">
+      <span class="font-semibold">Reason</span>
+      <input name="reason" required maxlength="512" class="h-8 rounded-control border border-slate-200 px-3 text-[13px]">
+    </label>
+    <div class="sm:col-span-2 lg:col-span-4"><button type="submit" class="btn btn-primary h-8">Add cost</button></div>
+  </form>
+</details>
+{% endif %}
 {% if cost_items %}
 {% paginate cost_items "cost_items_page" as cost_items_pager %}
 <table class="edify-data-table edify-record-table">

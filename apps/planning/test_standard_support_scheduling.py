@@ -803,7 +803,7 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
         from apps.budget.costing import cost_for_activity
 
         rates = {
-            "group_training_participant_meal_cost_per_head": 12000,
+            "tot_trainings_meals": 12000,
             "group_training_facilitation_fee": 150000,
             "group_training_venue_cost": 200000,
         }
@@ -812,9 +812,12 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
         some = self.train(projectId=self.literacy.id, schoolsInvited=3)
         activity = Activity.objects.get(id=some["id"])
 
+        # The headcount prices the session that feeds people: a TOT training
+        # (owner's catalogue, 2026-09-06).
         priced = cost_for_activity(
             {
-                "activityType": "cluster_training",
+                "activityType": "training",
+                "costingKind": "tot",
                 "expectedParticipants": activity.expected_participants,
             },
             rates,

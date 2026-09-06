@@ -5,6 +5,8 @@ from django.http import HttpResponseForbidden
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_http_methods
 
+from apps.activity_catalogue.authoring import ACTIVITY_KINDS
+from apps.budget.costing_service import COSTING_PROFILE_CHOICES, COSTING_PROFILE_LABELS
 from apps.activity_catalogue.models import (
     ActivityCatalogueItem,
     ActivityCatalogueReviewQueue,
@@ -75,8 +77,48 @@ def activity_catalogue_page(request):
                 else []
             ),
             "filters": request.GET,
+            "activity_kinds": ACTIVITY_KINDS,
+            "costing_profiles": [
+                (profile, COSTING_PROFILE_LABELS.get(profile, profile.replace("_", " ").capitalize()))
+                for profile in COSTING_PROFILE_CHOICES
+            ],
+            "new_open": bool(request.GET.get("new")),
         },
     )
+
+
+@require_http_methods(["POST"])
+@_catalogue_permission(Permission.ACTIVITY_CATALOGUE_MANAGE.value)
+def activity_catalogue_create_action(request):
+    """The New activity form (owner, 2026-09-06): a school or a non-school
+    activity, typed, delivered and costed like a governed one."""
+    from django.contrib import messages
+
+    from apps.activity_catalogue.authoring import create_catalogue_item
+    from apps.core.exceptions import BadRequest
+
+    try:
+        item = create_catalogue_item(
+            {
+                "name": request.POST.get("name"),
+                "kind": request.POST.get("kind"),
+                "activityType": request.POST.get("activity_type"),
+                "deliveryMethod": request.POST.get("delivery_method"),
+                "costingProfile": request.POST.get("costing_profile"),
+                "intervention": request.POST.get("intervention"),
+                "targetAudience": request.POST.get("target_audience"),
+                "participantCounts": bool(request.POST.get("participant_counts")),
+                "multiDay": bool(request.POST.get("multi_day")),
+                "description": request.POST.get("description"),
+                "reason": request.POST.get("reason"),
+            },
+            actor_id=getattr(request.user, "user_id", None) or str(request.user.id),
+        )
+    except BadRequest as exc:
+        messages.error(request, str(exc.detail))
+        return redirect("/settings/activity-catalogue/?new=1")
+    messages.success(request, f"{item.display_name} added to the Activity Catalogue.")
+    return redirect(f"/settings/activity-catalogue/?status=active#item-{item.id}")
 
 
 @require_http_methods(["POST"])

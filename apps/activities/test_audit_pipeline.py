@@ -79,13 +79,16 @@ class OneActivityOneCostOneChannelTest(_PipelineFixture):
             self.assertEqual(line.unit_cost * line.quantity, line.total_cost)
         # exactly one weekly draft carries the STAFF-PAYABLE lines (school-
         # visit transport is vendor-direct and never enters the advance)
-        staff_lines = [l for l in lines if l.line_item_type != "transport"]
+        # A line worth nothing (the visit's own rate at its 0 default) funds
+        # nothing: no weekly line, no advance.
+        funded = [l for l in lines if l.total_cost]
+        staff_lines = [l for l in funded if l.line_item_type != "transport"]
         wfr_lines = WeeklyFundRequestLine.objects.filter(
             activity_budget_line__activity=activity
         )
         self.assertEqual(wfr_lines.count(), len(staff_lines))
         self.assertEqual(
-            AdvanceRequest.objects.filter(activity=activity).count(), len(lines)
+            AdvanceRequest.objects.filter(activity=activity).count(), len(funded)
         )
 
     def test_missing_rate_blocks_scheduling_with_no_partial_state(self):
