@@ -104,23 +104,50 @@
     /* A cell whose direct children are two or more stacked blocks (a name
        over an id, a value over a caption) is marked so consistency.css can
        lay them on one 32px line. Flex and grid wrappers keep their layout. */
-    elementsWithin(root, 'main table tbody td, main table tbody th, .drawer-body table tbody td, .drawer-body table tbody th').forEach(function (cell) {
-      /* Every cell carries the marker the row rhythm hangs its rules on, so a
-         page stylesheet with a class selector cannot out-rank the rhythm. */
-      cell.classList.add('edify-cell');
+    var cells = Array.from(elementsWithin(root, 'main table tbody td, main table tbody th, .drawer-body table tbody td, .drawer-body table tbody th'));
+    /* READ PHASE. Every computed-style question this pass asks is answered
+       here, before a single class is written. A style read after a class
+       write re-resolves style for the changed subtree — 40-90ms on a
+       dashboard with four thousand rules — and asking it per cell made the
+       Country Director operations view a 400ms task (2026-09-06). Reading
+       first costs one resolution for the whole pass. */
+    var reads = new Map();
+    cells.forEach(function (cell) {
       /* A child the page hides at this width (a phone-only label) is not a
-         line of the row; marking it would show it again. Read every child's
-         display BEFORE any class is written: a computed-style read after a
-         class write forces a layout, and doing that per cell child made a
-         thirty-row table a 400ms main-thread task (2026-09-06). */
-      var hiddenChildren = Array.from(cell.children).map(function (child) {
-        /* Only a child that carries a hiding or responsive display class can
-           be hidden at this width; everything else skips the style read. */
+         line of the row; marking it would show it again. Only a child that
+         carries a hiding or responsive display class can be hidden. */
+      var hidden = Array.from(cell.children).map(function (child) {
         if (child.hidden || child.hasAttribute('x-cloak')) return true;
         var classes = child.className && typeof child.className === 'string' ? child.className : '';
         if (!/(^|\s)(hidden|max-\w+:hidden|\w+:hidden|\w+:block|\w+:flex|\w+:inline\S*)(\s|$)/.test(classes)) return false;
         return window.getComputedStyle(child).display === 'none';
       });
+      /* Chips a page stylesheet draws as inline-flex (a score, a status, a
+         badge) take the 18px pill line. Colour dots carry no text. */
+      var inlineFlexChips = [];
+      cell.querySelectorAll('span, strong, b, em, small, a, div').forEach(function (chip) {
+        if (chip.textContent.trim() === '') return;
+        if (chip.matches('div') && chip.querySelector('div, p, table, form, ul, a, button')) return;
+        if (window.getComputedStyle(chip).display === 'inline-flex') inlineFlexChips.push(chip);
+      });
+      /* A plain inline link in a cell is text, not a 24px control. */
+      var inlineAnchors = Array.from(cell.querySelectorAll('a')).filter(function (anchor) {
+        return window.getComputedStyle(anchor).display === 'inline';
+      });
+      reads.set(cell, {
+        hidden: hidden,
+        flex: window.getComputedStyle(cell).display === 'flex',
+        inlineFlexChips: inlineFlexChips,
+        inlineAnchors: inlineAnchors
+      });
+    });
+    /* WRITE PHASE. */
+    cells.forEach(function (cell) {
+      var read = reads.get(cell);
+      /* Every cell carries the marker the row rhythm hangs its rules on, so a
+         page stylesheet with a class selector cannot out-rank the rhythm. */
+      cell.classList.add('edify-cell');
+      var hiddenChildren = read.hidden;
       Array.from(cell.children).forEach(function (child, index) {
         child.classList.toggle('edify-cell-hidden', hiddenChildren[index]);
       });
@@ -147,16 +174,12 @@
       });
       /* A cell laid out as a flex box is still a table cell: its children
          sit side by side on the one line. */
-      var flexCell = window.getComputedStyle(cell).display === 'flex' ||
+      var flexCell = read.flex ||
         Array.from(cell.classList).some(function (name) { return /^(?:[a-z-]+:)?(?:inline-)?flex$/.test(name); });
       if (flexCell) cell.classList.add('edify-cell-flex');
-      /* Chips a page stylesheet draws as inline-flex (a score, a status, a
-         badge) take the 18px pill line. Colour dots carry no text. */
-      cell.querySelectorAll('span, strong, b, em, small, a, div').forEach(function (chip) {
+      read.inlineFlexChips.forEach(function (chip) {
         if (chip.matches('.edify-cell-row, .edify-cell-inline-row, .rounded-control, .btn, .edify-cell-pill, .edify-cell-stackchip')) return;
-        if (chip.textContent.trim() === '') return;
-        if (chip.matches('div') && chip.querySelector('div, p, table, form, ul, a, button')) return;
-        if (window.getComputedStyle(chip).display === 'inline-flex') chip.classList.add('edify-cell-pill');
+        chip.classList.add('edify-cell-pill');
       });
       /* A stacked tile in a cell (a heatmap value over its caption) reads
          as one 20px chip on the row line. */
@@ -199,7 +222,7 @@
       });
       /* Every control in a cell is 24px tall, whatever the page gives it. */
       cell.querySelectorAll('button, label.edify-table-choice, select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), a').forEach(function (control) {
-        if (control.matches('a') && window.getComputedStyle(control).display === 'inline') return;
+        if (control.matches('a') && read.inlineAnchors.indexOf(control) !== -1) return;
         if (control.matches('.edify-cell-pill, .edify-cell-row')) return;
         control.classList.add('edify-cell-control');
       });
@@ -596,7 +619,8 @@
   }
 
   function enhanceTabList(tablist) {
-    enhanceTabReveal(tablist);
+    /* Revealing the active tab measures the strip; measured after paint. */
+    afterPaint(function () { if (tablist.isConnected) enhanceTabReveal(tablist); });
     if (tablist.dataset.edifyTabsReady === 'true') return;
     tablist.dataset.edifyTabsReady = 'true';
   }
@@ -865,12 +889,24 @@
   }
 
   function enhanceCritical(root) {
+    /* Writers first, readers last. The marker pass rewrites every cell; a
+       style read after it re-resolves that whole subtree (40-90ms on a
+       dashboard), so the passes that measure — tab reveal, dialog
+       visibility, table fit — run after every pass that only writes, and
+       the page pays that resolution once (2026-09-06). */
     enhanceTables(root);
     enhanceStructuralMarkers(root);
-    enhanceTabs(root);
-    enhanceCustomDialogs(root);
     enhanceFormLabels(root);
     normalizeActionButtonTypes(root);
+    enhanceTabs(root);
+  }
+
+  /* Runs `callback` in the task after the next frame paints. By then the
+     browser has resolved style and layout for that paint, so a pass that
+     only measures (tab reveal, dialog visibility, table fit) reads for free
+     instead of forcing its own resolution ahead of the paint. */
+  function afterPaint(callback) {
+    window.requestAnimationFrame(function () { window.setTimeout(callback, 0); });
   }
 
   function runWhenIdle(callback) {
@@ -899,8 +935,16 @@
   function enhance(root) {
     enhanceCritical(root);
     scheduleAudit(root);
-    /* Last, once every table has its region and its cells: fit or scroll. */
-    fitTables(root);
+    /* The measuring passes wait for the paint the writes above produce:
+       dialog visibility, then — once every table has its region and its
+       cells — fit or scroll. A table that needs fitting scrolls for one
+       frame; the page no longer resolves style three times before it
+       first paints (2026-09-06). */
+    afterPaint(function () {
+      if (root !== document && !root.isConnected) return;
+      enhanceCustomDialogs(root);
+      fitTables(root);
+    });
   }
 
   function scheduleMutationScan(mutations) {
@@ -922,18 +966,25 @@
       var dialogRoots = Array.from(pendingDialogRoots);
       pendingEnhanceRoots.clear();
       pendingDialogRoots.clear();
-      enhanceRoots.forEach(function (root) {
-        if (root.isConnected) enhance(root);
-      });
+      /* Dialog visibility is a read; enhance() writes. Reading first means
+         this frame resolves style once for what the mutations dirtied,
+         instead of once for the mutations and again for our own writes
+         (a chart's arrival cost two ~100ms resolutions, 2026-09-06). A
+         dialog that arrived in this frame is still checked, by enhance(). */
       dialogRoots.forEach(function (root) {
         if (root.isConnected) enhanceCustomDialogs(root);
+      });
+      enhanceRoots.forEach(function (root) {
+        if (root.isConnected) enhance(root);
       });
       /* A removed dialog will not appear in a surviving mutation root. */
       Array.from(activeDialogs).forEach(deactivateDialog);
     });
   }
 
+  var fontsReadyAtEnhance = false;
   document.addEventListener('DOMContentLoaded', function () {
+    fontsReadyAtEnhance = Boolean(document.fonts && document.fonts.status === 'loaded');
     enhance(document);
     var observer = new MutationObserver(scheduleMutationScan);
     observer.observe(document.body, {
@@ -945,7 +996,13 @@
   });
 
   document.addEventListener('htmx:afterSettle', function (event) { enhance(event.target); });
-  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitTables(document); });
+  /* Web fonts that arrive after the first fit change every column width, so
+     the tables are fitted again; fonts that were already in when the page
+     was enhanced were measured then, and a second pass would only force
+     another style resolution. */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
+    if (!fontsReadyAtEnhance) fitTables(document);
+  });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);
   });
