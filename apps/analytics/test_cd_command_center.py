@@ -24,6 +24,7 @@ from apps.accounts.models import (
     StaffTargetProfile,
 )
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.clusters.models import Cluster
 from apps.analytics.cd_dashboard_service import CDDashboardService as S
 from apps.core.rbac import EdifyRole
 from apps.core_schools.models import CorePlan
@@ -71,6 +72,15 @@ class CDCommandCenterTest(TestCase):
         StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=self.sch_a.id)
         StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=self.sch_a2.id)
         StaffSchoolAssignment.objects.create(staff=self.b1_sp, school_id=self.sch_b.id)
+
+        # The SSA heatmap is a CLUSTER heatmap, so the fixture needs a cluster
+        # with genuine membership — two schools, one of them assessed.
+        self.cluster_a = Cluster.objects.create(
+            name="Cluster Alpha", region=self.region_a, district=self.dist_a
+        )
+        School.objects.filter(id__in=[self.sch_a.id, self.sch_a2.id]).update(
+            cluster_id=self.cluster_a.id
+        )
 
         self._ssa(self.sch_a, FY, 7.5, {"leadership": 7.0, "enrolment": 6.0})
 
@@ -358,12 +368,16 @@ class CDCommandCenterTest(TestCase):
             d["ssa_matrix"]["codes"],
             ["CB", "WOG", "FH", "Lship", "GR", "LE", "TE", "Erlm't"],
         )
-        central = next(
-            r for r in d["ssa_matrix"]["rows"] if r["label"] == "Central Region"
-        )
-        self.assertEqual(len(central["cells"]), 8)
+        # Clusters only: the card is titled "Cluster SSA Heatmap" and the
+        # Country Director reads geography on the map and the region table.
+        labels = [r["label"] for r in d["ssa_matrix"]["rows"]]
+        self.assertEqual(labels, ["Cluster Alpha"])
+        self.assertNotIn("Central Region", labels)
+        self.assertTrue(all(r["kind"] == "cluster" for r in d["ssa_matrix"]["rows"]))
+        alpha = d["ssa_matrix"]["rows"][0]
+        self.assertEqual(len(alpha["cells"]), 8)
         lship_idx = d["ssa_matrix"]["codes"].index("Lship")
-        self.assertEqual(central["cells"][lship_idx]["score"], 7.0)
+        self.assertEqual(alpha["cells"][lship_idx]["score"], 7.0)
 
     # 10 ─ priority schools from real workflow gaps
     def test_cd_priority_school_list_generated_from_real_workflow_gaps(self):

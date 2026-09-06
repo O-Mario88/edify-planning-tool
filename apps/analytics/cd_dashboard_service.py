@@ -1120,9 +1120,18 @@ class CDDashboardService:
     # ── School & SSA intelligence (mandate §13 — all 8 interventions) ────────
     @staticmethod
     def ssa_matrix(cd, acts) -> dict:
-        """Region rows (plus clusters with genuine school membership) ×
-        the eight backend SSA interventions, latest verified annual cycle."""
-        from apps.geography.models import Region
+        """Cluster rows × the eight backend SSA interventions, latest verified
+        annual cycle.
+
+        Clusters only. This carried a region row per region above the cluster
+        rows, so a card headed "Cluster SSA Heatmap" opened on geography the
+        Country Director already reads on the map and in the region table, and
+        the clusters it exists to compare started below the fold (owner,
+        2026-09-06: "It should ONLY fetch Cluster SSA performance not the
+        regional or sub-region"). Dropping the region rows also drops the two
+        queries that built them. The Program Lead's twin,
+        ProgramLeadDashboardService.ssa_cluster_matrix, was always cluster-only.
+        """
         from apps.ssa.models import SsaRecord, SsaScore
 
         latest, _prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
@@ -1175,23 +1184,7 @@ class CDDashboardService:
                 "overall_tone": ssa_band(overall)[2],
             }
 
-        school_region = dict(
-            School.objects.filter(id__in=cd.school_ref)
-            .exclude(region__isnull=True)
-            .values_list("id", "region_id")
-        )
-        region_ids = sorted({r for r in school_region.values()})
-        region_names = dict(Region.objects.filter(id__in=region_ids).values_list("id", "name"))
         rows = []
-        for rid in region_ids:
-            row = matrix_row(
-                region_names.get(rid) or "Region",
-                {sid_ for sid_, r in school_region.items() if r == rid},
-                "region",
-                rid,
-            )
-            if row:
-                rows.append(row)
         # Clusters with genuine membership only — never fabricated groupings.
         names, membership = CDAnalyticsService._cluster_membership(cd, acts)
         for cid, sids in sorted(membership.items()):

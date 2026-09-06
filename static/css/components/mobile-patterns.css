@@ -846,3 +846,70 @@
     border-color: var(--edify-text-muted);
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════
+   TAB RAILS AND FILTER PANELS ON A PHONE (owner, 2026-09-06, with a
+   screenshot of the School Directory).
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 63.999rem) {
+  /* 1. No scrollbar under a rail.
+
+     A rail that does not fit scrolls sideways — that is the platform rule and
+     it stays. What it must not do is scroll behind the global 6px scrollbar:
+     the directory rail measured 734px of tabs in a 320px box, so the reader
+     saw two and a half tabs and a grey track. */
+  main :is([role="tablist"], .edify-section-nav__inner, [data-edify-rail]) {
+    scrollbar-width: none !important;
+    -ms-overflow-style: none !important;
+  }
+
+  main :is([role="tablist"], .edify-section-nav__inner, [data-edify-rail])::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  /* 2. Say that it scrolls, instead — a soft shadow on whichever edge still
+     has tabs beyond it.
+
+     Four layers, in the order the technique needs: two covers painted in the
+     rail's own surface that travel WITH the content (`local`), and two
+     shadows pinned to the box (`scroll`). Sitting at the left end, the left
+     cover is parked over the left shadow and hides it; scroll right and the
+     cover travels away, uncovering the shadow. A rail whose tabs all fit
+     never scrolls, so both covers stay parked and neither shadow is ever
+     seen. No JS, no scroll listener, and still correct after htmx swaps the
+     rail. !important because interactions.css sets the `background`
+     shorthand, which would otherwise reset the image. */
+  main :is([role="tablist"], .edify-section-nav__inner, [data-edify-rail]):is(
+    .overflow-x-auto, .overflow-auto, .edify-section-nav__inner, [data-edify-rail]
+  ) {
+    background-image:
+      linear-gradient(to right, var(--edify-surface) 30%, transparent),
+      linear-gradient(to left, var(--edify-surface) 30%, transparent),
+      linear-gradient(to right, rgb(15 23 42 / 0.16), transparent),
+      linear-gradient(to left, rgb(15 23 42 / 0.16), transparent) !important;
+    background-position: left center, right center, left center, right center !important;
+    background-size: 2rem 100%, 2rem 100%, 0.75rem 100%, 0.75rem 100% !important;
+    background-repeat: no-repeat !important;
+    background-attachment: local, local, scroll, scroll !important;
+  }
+
+  /* 4. "More filters" is a panel on a desktop and a row on a phone.
+
+     The work plan's extra four filters hang in an absolutely positioned
+     280px panel off the toolbar's inline end. On a phone the toolbar is a
+     two-up grid, so the panel resolved against one narrow cell and drew its
+     four selects 54px wide — narrower than the word "Responsible". In the
+     flow, spanning the panel, they are full width like every other filter. */
+  .work-plan-filter-popover {
+    position: static !important;
+    inline-size: 100% !important;
+    max-inline-size: none !important;
+    margin-block-start: 0.5rem;
+  }
+
+  [data-component="filter-toolbar"] > details:has(.work-plan-filter-popover) {
+    flex: 1 0 100%;
+    grid-column: 1 / -1;
+    min-inline-size: 0;
+  }
+}

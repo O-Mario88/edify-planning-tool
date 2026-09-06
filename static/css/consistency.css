@@ -1029,10 +1029,22 @@ main :is(
   #cluster-filters,
   [data-component="filter-toolbar"]
 ):not(.edify-has-work-plan-filter-popover) {
-  overflow-x: auto;
-  overflow-y: visible;
-  overscroll-behavior-inline: contain;
-  scroll-padding-inline: 0.25rem;
+  /* Filters WRAP; they do not scroll sideways.
+
+     This asked for "scroll sideways, never clip vertically" as
+     `overflow-x: auto; overflow-y: visible`, which CSS does not allow: when
+     one axis is a scrolling value the other computes to `auto` too. So every
+     filter panel on the platform became a VERTICAL scroll box. On a phone the
+     School Directory panel was 220px tall over 233px of content — the last
+     row and Clear Filters sat behind a scrollbar the owner photographed
+     (2026-09-06).
+
+     Sideways scrolling was the wrong goal anyway. A filter the reader cannot
+     see is a filter they will not use, and on a phone two thirds of the row
+     is off-screen with nothing to say so. Wrapping shows every field at every
+     width, and `overflow: visible` keeps native select popups unclipped. */
+  flex-wrap: wrap !important;
+  overflow: visible;
 }
 
 main :is(
@@ -3868,4 +3880,80 @@ main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__helper {
     > :is(.edify-cell-mark, .edify-cell-pill, .rounded-pill, .rounded-full, img, svg) {
     flex: 0 0 auto !important;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FILTER PANELS ON A PHONE (owner, 2026-09-06, with a screenshot).
+
+   The toolbar contract above is a desktop contract: one row, left to right,
+   scrolling sideways when the viewport cannot hold it. On a phone that row is
+   two thirds off-screen with nothing to say so, and a filter nobody can see
+   is a filter nobody will use. The row wraps instead — which is already what
+   platform.css does from the desktop shell up, so this makes one behaviour
+   at every width rather than two.
+
+   Wrapping, not a grid: several of these "bars" wrap another grid or form
+   rather than holding the fields themselves (the School Directory below is
+   one), and forcing a two-up grid on those nests a grid inside a grid and
+   halves every field. Wrapping makes no assumption about what is inside.
+
+   It lives at the end of this file because the contract it overrides is in
+   this file and names `#filters-form` inside its `:is()`, which makes that
+   selector ID-specific — a rule in any earlier stylesheet loses to it however
+   it is written.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 63.999rem) {
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) {
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+}
+
+/* components.css turns every `#filters-form` into a two-up grid of fields on a
+   phone, which is right where the fields are the form's own children. The
+   School Directory's child is `.school-filter-grid`, already the two-up grid,
+   so that made a grid of grids: the outer one handed the inner one a single
+   170px column, the inner one split it into two 80px cells, and six fields
+   drew 112px wide on top of each other with every label truncated ("FY 20…",
+   "Choos…"). The form lays out as a block; the grid inside keeps its job. */
+main #filters-form.school-filters-form {
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+main .school-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+}
+
+main .school-filter-grid > div {
+  min-inline-size: 0 !important;
+  max-inline-size: none !important;
+}
 }

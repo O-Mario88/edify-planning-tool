@@ -340,7 +340,7 @@ Program Leads table, verification, risk, field intelligence and actions.
           <table class="w-full edify-text-caption border-separate border-spacing-y-1 min-w-[520px]">
             <thead>
               <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
-                <th class="text-left font-bold pl-1 pb-0.5">Region / Cluster</th>
+                <th class="text-left font-bold pl-1 pb-0.5">Cluster</th>
                 {% for c in ssa_matrix.codes %}<th class="text-center font-bold pb-0.5 px-0.5">{{ c }}</th>{% endfor %}
                 <th class="text-center font-bold pb-0.5 pr-1">Overall</th>
               </tr>
@@ -348,7 +348,7 @@ Program Leads table, verification, risk, field intelligence and actions.
             <tbody>
               {% for row in ssa_matrix.rows %}
               <tr>
-                <td class="text-left font-semibold text-slate-700 pl-1 whitespace-nowrap max-w-[130px] truncate">{{ row.label }}{% if row.kind == 'cluster' %} <span class="text-slate-400 edify-text-caption">cluster</span>{% endif %}</td>
+                <td class="text-left font-semibold text-slate-700 pl-1 whitespace-nowrap max-w-[130px] truncate">{{ row.label }}</td>
                 {% for cell in row.cells %}
                 <td class="text-center font-bold tabular-nums px-0.5 py-1
                   {% if cell.tone == 'success' %}bg-emerald-100 text-emerald-800

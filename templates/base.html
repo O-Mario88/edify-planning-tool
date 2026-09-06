@@ -83,7 +83,7 @@ live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260906desk4">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260905map1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260906mob1">
 <link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260906desk4">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
@@ -100,12 +100,12 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260826modal1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260906desk11">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260906mob1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260906desk5">{% endblock %}
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260906mob1">{% endblock %}
 <link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260906desk6">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on

@@ -5026,8 +5026,19 @@ main table thead .edify-frozen-cell { z-index: 2; }
    so — filter rows wrap, and legends wrap.
    ═══════════════════════════════════════════════════════════════════════ */
 @media (min-width: 64rem) {
+  /* 100%, not 0.
+
+     Zeroing the minimum did cancel the `min-w-[1120px]` utilities, which was
+     the point — but tables here are `inline-size: max-content` (set in
+     mobile-micro-ux.css so a wide ledger can scroll), and max-content with no
+     minimum shrinks a table to exactly its text. Measured on a 1440px screen:
+     the Cluster SSA Heatmap drew 607px of table in a 1041px card and Priority
+     Schools 738px, each leaving a third of its card empty (owner, 2026-09-06:
+     "should fill up the entire row"). A minimum of 100% fills the card, and a
+     table whose content genuinely needs more is still max-content, so a wide
+     ledger scrolls exactly as before. */
   main :is(.edify-table-scroll-region, .overflow-x-auto, .overflow-auto) > table {
-    min-inline-size: 0 !important;
+    min-inline-size: 100% !important;
   }
   main :is(#filters-form, #cd-analytics-filters, #pl-analytics-filters, #analytics-filters-form, .edify-filter-bar, .platform-filter-bar, [data-component="filter-toolbar"]):not(.school-filters-form) {
     flex-wrap: wrap !important;
