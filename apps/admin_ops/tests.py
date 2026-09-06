@@ -827,6 +827,14 @@ class AdminOpsHealthTests(AdminOpsTestBase):
         return {c["key"]: c for c in admin_ops_health()["checks"]}
 
     def test_health_is_green_on_a_healthy_platform(self):
+        # The seeded maintenance schedule carries fixed first-due dates; on a
+        # healthy platform the generation job has advanced them, so a test
+        # that asserts health brings them to today rather than failing once
+        # the calendar passes the seed (2026-09-06).
+        from apps.admin_ops.models import MaintenanceTemplate
+        from django.utils import timezone as _tz
+
+        MaintenanceTemplate.objects.update(next_due_date=_tz.localdate())
         for check in self._checks().values():
             with self.subTest(check["key"]):
                 self.assertEqual(check["severity"], "ok")
