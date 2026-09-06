@@ -689,6 +689,16 @@
     inline-size: 100% !important;
     min-inline-size: 0 !important;
   }
+  /* Nothing here can scroll sideways: the table is fixed at the panel's
+     width, so the "fit" wrapper's sideways scroll region is clipped, and the
+     vertical scrollbar that appears once the list passes its height cap
+     keeps a stable gutter instead of stealing width from a 100% table and
+     spilling it into a horizontal scrollbar (owner, 2026-09-06). */
+  .analytics-geo-card .sr-distribution-scroll,
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
+    overflow-x: clip !important;
+    scrollbar-gutter: stable;
+  }
 }
 
 @container analytics-dashboard (max-width: 51.99rem) {
