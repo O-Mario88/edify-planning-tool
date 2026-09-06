@@ -5053,6 +5053,19 @@ main table thead .edify-frozen-cell { z-index: 2; }
     padding-block: 0 !important;
     border-radius: var(--edify-radius-sm) !important;
   }
+  /* One corner radius for every field and every rectangular button: the
+     audit measured 12px (`rounded-xl`) on 82 controls beside 8px on 425.
+     Pills keep their own shape. */
+  main :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"])) {
+    border-radius: var(--edify-radius-sm) !important;
+  }
+  main :is(button, a.btn, a[class*="btn"], a[class*="button"]):not(.rounded-pill):not(.rounded-full):not([class*="pill"]):not([role="tab"]):not(.edify-section-nav__link):not(.edify-section-nav__cluster) {
+    border-radius: var(--edify-radius-sm) !important;
+  }
+  /* The leave workspace's panels take the platform card padding. */
+  main :is(article, section).pto-panel {
+    padding: 1.25rem !important;
+  }
   /* A tablist that lives in a narrow side column wraps its tabs rather than
      scrolling them (the work plan's view switcher sat in a 255px column). */
   main nav[data-edify-tablist].self-start {
