@@ -114,6 +114,11 @@
          class write forces a layout, and doing that per cell child made a
          thirty-row table a 400ms main-thread task (2026-09-06). */
       var hiddenChildren = Array.from(cell.children).map(function (child) {
+        /* Only a child that carries a hiding or responsive display class can
+           be hidden at this width; everything else skips the style read. */
+        if (child.hidden || child.hasAttribute('x-cloak')) return true;
+        var classes = child.className && typeof child.className === 'string' ? child.className : '';
+        if (!/(^|\s)(hidden|max-\w+:hidden|\w+:hidden|\w+:block|\w+:flex|\w+:inline\S*)(\s|$)/.test(classes)) return false;
         return window.getComputedStyle(child).display === 'none';
       });
       Array.from(cell.children).forEach(function (child, index) {
@@ -496,7 +501,26 @@
   }
 
   function fitTables(root) {
-    (root.querySelectorAll ? root : document).querySelectorAll('main table').forEach(fitTableToRegion);
+    /* Two phases — measure every table, then write — so the pass forces one
+       layout rather than one per table (2026-09-06). */
+    if (!desktopShell.matches) return;
+    var tables = Array.from((root.querySelectorAll ? root : document).querySelectorAll('main table'));
+    var candidates = [];
+    tables.forEach(function (table) {
+      if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
+      var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
+      if (!region) return;
+      table.classList.remove('edify-table--fit');
+      candidates.push({ table: table, region: region });
+    });
+    var overflowing = candidates.filter(function (c) {
+      var width = c.table.scrollWidth, room = c.region.clientWidth;
+      return width > room + 1 && width <= room * FIT_RATIO;
+    });
+    overflowing.forEach(function (c) { c.table.classList.add('edify-table--fit'); });
+    overflowing.forEach(function (c) {
+      if (c.table.scrollWidth > c.region.clientWidth + 1) c.table.classList.remove('edify-table--fit');
+    });
   }
 
   var fitTimer = null;

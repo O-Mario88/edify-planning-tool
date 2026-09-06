@@ -5079,4 +5079,27 @@ main table thead .edify-frozen-cell { z-index: 2; }
     flex-wrap: wrap !important;
     overflow-x: visible !important;
   }
+  /* Section rails and the fund requester strip take a second row on a
+     desktop instead of scrolling sideways (owner, 2026-09-06): fourteen
+     Analytics tabs in 1118px scrolled behind a hidden bar, hiding the last
+     five. Tabs size to their labels so a second row reads as a row of tabs,
+     not a second segmented control of different widths. */
+  main :is(.edify-section-nav__inner, .edify-section-nav__clusters, .fund-requesters__strip) {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    row-gap: 0.25rem;
+  }
+  main :is(.edify-section-nav__inner, .edify-section-nav__clusters) :is(.edify-section-nav__link, .edify-section-nav__cluster) {
+    flex: 0 0 auto !important;
+  }
+  /* The team-member request strip (one pill per requester) wraps as well:
+     twenty-odd pills scrolled 2,675px behind a hidden bar. */
+  main nav[data-edify-tablist].overflow-x-auto {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+    row-gap: 0.375rem;
+  }
+  main nav[data-edify-tablist].overflow-x-auto > :is(a, button) {
+    flex: 0 0 auto !important;
+  }
 }

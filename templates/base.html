@@ -80,11 +80,11 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260905frozen1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260906desk3">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260906desk4">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260905map1">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260906desk3">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260906desk4">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -100,13 +100,13 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260826modal1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260906desk8">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260906desk10">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
 {% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260906desk4">{% endblock %}
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260906desk3">
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260906desk4">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
@@ -217,7 +217,7 @@ controller exists by the time a drawer's x-init runs.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260906desk3"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260906desk4"></script>
 <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
@@ -685,6 +685,36 @@ controller exists by the time a drawer's x-init runs.
        destroy(); the render itself completes asynchronously, as it always did. */
     renderDetached: function (el, options) {
       if (!el || typeof ApexCharts !== 'function') { return null; }
+      /* Below the fold, a chart waits until it is about to scroll into view,
+         and charts that become visible together are drawn one per idle
+         slice: a dashboard with six charts rendered them all in one
+         150-280ms task at load (2026-09-06). A chart already on screen
+         renders at once, as before. */
+      var system = this;
+      var rect = el.getBoundingClientRect();
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      var nearViewport = rect.bottom > -200 && rect.top < viewportHeight + 200;
+      if (nearViewport || typeof IntersectionObserver !== 'function') {
+        return system._renderDetachedNow(el, options);
+      }
+      var lazy = { destroy: function () { lazy.cancelled = true; observer.disconnect(); } };
+      var observer = new IntersectionObserver(function (entries) {
+        if (!entries.some(function (entry) { return entry.isIntersecting; })) { return; }
+        observer.disconnect();
+        if (lazy.cancelled) { return; }
+        var schedule = window.requestIdleCallback || function (fn) { window.setTimeout(fn, 0); };
+        schedule(function () {
+          if (lazy.cancelled) { return; }
+          var drawn = system._renderDetachedNow(el, options);
+          lazy.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
+        });
+      }, { rootMargin: '200px 0px' });
+      observer.observe(el);
+      return lazy;
+    },
+
+    _renderDetachedNow: function (el, options) {
+      if (!el || typeof ApexCharts !== 'function') { return null; }
 
       /* A point on a line is hollow — components.css fills it with the
          surface — so its ring has to carry the series colour, or the point is
@@ -722,7 +752,7 @@ controller exists by the time a drawer's x-init runs.
           fold.addEventListener('toggle', function onOpen() {
             fold.removeEventListener('toggle', onOpen);
             if (waiting.cancelled) { return; }
-            var live = window.EdifyChartSystem.renderDetached(el, options);
+            var live = window.EdifyChartSystem._renderDetachedNow(el, options);
             waiting.destroy = function () { if (live && live.destroy) { live.destroy(); } };
           });
           return waiting;
@@ -733,7 +763,7 @@ controller exists by the time a drawer's x-init runs.
             if (!entries.some(function (entry) { return entry.contentRect.width > 0; })) { return; }
             observer.disconnect();
             if (pending.cancelled) { return; }
-            var drawn = window.EdifyChartSystem.renderDetached(el, options);
+            var drawn = window.EdifyChartSystem._renderDetachedNow(el, options);
             pending.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
           });
           observer.observe(el);
