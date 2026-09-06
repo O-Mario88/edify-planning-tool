@@ -801,6 +801,11 @@ def _cd_filters(request):
     return {
         "pl": request.GET.get("pl"),
         "cceo": request.GET.get("cceo"),
+        # The Region select has been on this filter row all along and the
+        # service has always supported it (cd_analytics_service scopes schools
+        # by region_id), but it was never put in the dict — so choosing a
+        # region did nothing at all (2026-09-06).
+        "region": request.GET.get("region"),
         "district": request.GET.get("district"),
         "cluster": request.GET.get("cluster"),
         "partner": request.GET.get("partner"),

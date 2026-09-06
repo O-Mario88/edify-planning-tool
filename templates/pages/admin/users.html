@@ -143,11 +143,14 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
 {% endif %}
 
 <!-- User Filters Bar -->
-<form method="get" action="/admin-panel/users" class="edify-filter-bar mb-4" aria-label="User filters">
+<form id="admin-users-filters" method="get" action="/admin-panel/users" class="edify-filter-bar mb-4" aria-label="User filters">
   <div class="flex items-center gap-3">
-    {% if search %}
-    <input type="hidden" name="user_query" value="{{ search }}">
-    {% endif %}
+    {% comment %}No hidden copy of the search: the top-bar input is bound to
+    this form through topbar_search.attach_to, so choosing a role or a status
+    submits the live search with it. It used to be carried here as
+    `user_query`, a name that appears in no Python file — the view reads `q` —
+    so every filter change silently threw the search away (2026-09-06).
+    {% endcomment %}
     <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600">
       <span>Role:</span>
       <select name="role" x-data @change="$el.form.requestSubmit()" class="edify-surface rounded-control border border-slate-200 px-2.5 py-1 text-[12px] font-medium shadow-xs edify-focus-surface edify-primary-focus focus:outline-none">

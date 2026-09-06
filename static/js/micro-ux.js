@@ -1439,6 +1439,65 @@
     window.setTimeout(function () { target.textContent = message; }, 40);
   }
 
+  /* A filter that offers nothing to choose is not shown.
+
+     The 2026-09-06 filter audit measured every select on every filtered page
+     and found controls that cannot narrow anything: Notifications' Category
+     renders only the categories that user actually has, so it is empty for
+     most people; the Accountant's District select came back with no options
+     at all; School scope, Cluster and Sub-county each offered a single value
+     on their page. A dropdown that opens on one line is a control the reader
+     has to read, consider and dismiss for nothing, and the owner asked for
+     the filter rows to carry only what matters.
+
+     Only genuinely empty controls go: fewer than two options AND nothing
+     currently applied. A select narrowed to one option BY an active filter
+     stays, because hiding it would strand the reader with a filter they can
+     no longer see or clear. The field is hidden, never removed, so it still
+     posts its value and the server sees the same form either way. */
+  var FILTER_CONTAINERS = [
+    '.platform-filter-bar', '.edify-filter-bar', '.school-filters-form',
+    '.school-filter-canvas', '.sp-filter-panel', '.spp-filter-panel',
+    '.spa-filter-panel', '.tt-filter-panel', '[data-component="filter-toolbar"]',
+    '#filters-form', '#core-filters-form', '#analytics-filters-form',
+    '#pl-analytics-filters', '#cd-analytics-filters', '#cluster-filters',
+    '#project-filters', '#debrief-filters', '#visits-filters', '#trainings-filters',
+    '#pd-filters', '#spp-filters', '#spa-filters', '#sp-plan-filters',
+    '#pl-dashboard-filters', '#cb-filters'
+  ].join(', ');
+
+  function filterFieldShell(select) {
+    /* The label, its caption and the select travel together. Walk up while
+       the parent holds nothing but this control, and stop at the bar. */
+    var node = select;
+    var parent = node.parentElement;
+    while (parent && !parent.matches(FILTER_CONTAINERS)) {
+      if (parent.querySelectorAll('select, input:not([type="hidden"]), button, a').length > 1) break;
+      node = parent;
+      parent = node.parentElement;
+    }
+    return node;
+  }
+
+  function hideEmptyFilters(root) {
+    var scope = root === document ? document : root;
+    var bars = scope.querySelectorAll ? scope.querySelectorAll(FILTER_CONTAINERS) : [];
+    bars.forEach(function (bar) {
+      bar.querySelectorAll('select[name]').forEach(function (select) {
+        var applied = select.value && select.value !== 'all' && select.value !== 'All';
+        var empty = select.options.length < 2 && !applied;
+        var shell = filterFieldShell(select);
+        if (empty) {
+          shell.hidden = true;
+          shell.setAttribute('data-edify-filter-empty', '');
+        } else if (shell.hasAttribute('data-edify-filter-empty')) {
+          shell.hidden = false;
+          shell.removeAttribute('data-edify-filter-empty');
+        }
+      });
+    });
+  }
+
   function enhanceCritical(root) {
     /* Writers first, readers last. The marker pass rewrites every cell; a
        style read after it re-resolves that whole subtree (40-90ms on a
@@ -1449,6 +1508,7 @@
     enhanceStructuralMarkers(root);
     enhanceFormLabels(root);
     normalizeActionButtonTypes(root);
+    hideEmptyFilters(root);
     enhanceTabs(root);
   }
 

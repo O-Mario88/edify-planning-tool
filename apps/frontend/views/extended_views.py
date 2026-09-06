@@ -1688,8 +1688,13 @@ def admin_users_view(request):
         "partner_interventions": partner_interventions,
         "topbar_search": {
             "placeholder": "Search users by name, email, or role…",
+            "name": "q",
             "value": search,
             "action": reverse("frontend:admin_users"),
+            # Bound to the filter form, so a role or status change submits the
+            # live search with it rather than dropping it.
+            "attach_to": "admin-users-filters",
+            "autosubmit": True,
         },
     }
     return render(request, "pages/admin/users.html", context)

@@ -102,6 +102,21 @@ class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption fon
 <input type="hidden" name="tab" value="{{ active_tab }}">
 {% if priority_allocation_id %}<input type="hidden" name="priority_allocation" value="{{ priority_allocation_id }}">{% endif %}
 
+{% comment %}Fiscal year and SSA status were honoured by the view and offered
+by its context all along (`fy_options`, `ssa_statuses`) but never drawn, so the
+page was silently locked to the operational year and could not be narrowed to
+the schools whose assessment is outstanding — which is the question planning
+starts from (2026-09-06 filter audit).{% endcomment %}
+<!-- Fiscal year -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">FY</span>
+<select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer">
+{% for option in fy_options %}
+<option value="{{ option }}" {% if selected_fy == option %}selected{% endif %}>FY {{ option }}</option>
+{% endfor %}
+</select>
+</div>
+
 <!-- Quarter -->
 <div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
 <span class="text-slate-400">Quarter</span>
@@ -141,6 +156,16 @@ class="flex flex-wrap lg:flex-nowrap items-center gap-2.5 edify-text-caption fon
 <option value="All">All Readiness</option>
 {% for val, label in readiness_choices %}
 <option value="{{ val }}" {% if selected_readiness == val %}selected{% endif %}>{{ label }}</option>
+{% endfor %}
+</select>
+</div>
+<!-- SSA status -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">SSA</span>
+<select aria-label="SSA status" name="ssa_status" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[120px]">
+<option value="All">All SSA</option>
+{% for val, label in ssa_statuses %}
+<option value="{{ val }}" {% if selected_ssa_status == val %}selected{% endif %}>{{ label }}</option>
 {% endfor %}
 </select>
 </div>
