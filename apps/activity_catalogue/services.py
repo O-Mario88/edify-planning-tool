@@ -954,7 +954,11 @@ def resolve_review(review, *, item, actor_id: str, note: str):
     return review
 
 
+@transaction.atomic
 def transition_item(item, *, status: str, actor_id: str, reason: str):
+    """Move an item through its lifecycle. Atomic: the row lock below needs
+    a transaction, and the lifecycle door raised on every save without one
+    (found by the 2026-09-06 UI pass)."""
     reason = (reason or "").strip()
     if not reason:
         raise BadRequest("A lifecycle change reason is required.")

@@ -22,7 +22,7 @@ EXTRA = {
     "pl": ["/dashboard?view=map", "/dashboard?view=operations", "/analytics/program-lead"],
     "ia": ["/ia/dashboard/?view=map", "/ia/dashboard/?view=operations"],
     "accountant": ["/accounts", "/accounts?view=map"],
-    "superuser": ["/dashboard?view=map", "/analytics/ssa-performance", "/analytics/people", "/reports", "/targets"],
+    "superuser": ["/dashboard?view=map", "/analytics/verification-quality", "/analytics/people", "/reports", "/team-targets"],
 }
 INIT = """
 window.__edifyLong = []; window.__edifyErrors = [];

@@ -711,6 +711,35 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 69973,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/accounts",
+        "/accounts/",
+        "/dashboard",
+        "/ia/dashboard/"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Regional Performance Script",
+      "purpose": "Reusable  regional performance script interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "loading",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/analytics/_regional_performance_script.html",
+      "variants": []
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 4151,
       "deprecated_alternatives": [],
@@ -2165,7 +2194,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 85353,
+      "bytes": 16000,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -2181,7 +2210,6 @@
         "default",
         "loading",
         "empty",
-        "error",
         "open"
       ],
       "tables": 1,
@@ -9685,12 +9713,13 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 513,
+      "bytes": 582,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
         "/accounts/",
-        "/dashboard"
+        "/dashboard",
+        "/ia/dashboard/"
       ],
       "findings": [],
       "forms": 0,
@@ -80717,7 +80746,7 @@
     "activity_states": 24,
     "all_routes": 1061,
     "api_routes": 359,
-    "component_templates": 408,
+    "component_templates": 409,
     "full_pages": 240,
     "mobile_contract_pass": 415,
     "nonvisual_actions": 159,

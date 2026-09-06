@@ -77,3 +77,44 @@ class CreateCatalogueItemTest(TestCase):
         item = self._create(name="Numeracy Support Visit", intervention="christlike_behaviour")
         mapping = item.intervention_mappings.get(is_primary=True)
         self.assertEqual(mapping.intervention, "christlike_behaviour")
+
+
+class LifecycleDoorTest(TestCase):
+    """The lifecycle form on the catalogue page posts a status change.
+
+    The 2026-09-06 UI pass found every such post raising: the transition
+    service took a row lock outside a transaction."""
+
+    def test_the_country_director_can_retire_an_activity_through_the_page(self):
+        from django.test import Client
+
+        from apps.accounts.models import User
+
+        cd = User.objects.create(
+            id="cd_life",
+            email="cd.life@edify.org",
+            name="CD Life",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
+        )
+        item = create_catalogue_item(
+            {
+                "name": "Lifecycle Door Visit",
+                "kind": "school",
+                "activityType": "school_visit",
+                "deliveryMethod": "school_visit",
+                "costingProfile": "STAFF_SCHOOL_VISIT",
+                "reason": "door test",
+            },
+            actor_id=cd.id,
+        )
+        client = Client()
+        client.force_login(cd)
+        response = client.post(
+            f"/settings/activity-catalogue/{item.id}/lifecycle",
+            {"status": "inactive", "reason": "no longer offered"},
+        )
+        self.assertEqual(response.status_code, 302, response.content[:200])
+        item.refresh_from_db()
+        self.assertEqual(item.status, "inactive")
+        self.assertEqual(item.versions.count(), 2)
