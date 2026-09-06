@@ -24,7 +24,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -40,7 +40,26 @@ User = get_user_model()
 FY = "2026"
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "ia-performance-budget",
+        }
+    }
+)
 class IAPerformanceTestBase(TestCase):
+    """Query budgets, measured against a cache this process owns.
+
+    Dev points the cache at a real Redis, so every parallel test worker shared
+    one — and several query-budget suites call cache.clear(). A clear landing
+    between this suite's two measurements made the second one cold and the
+    scale-invariance comparison read a cache miss as a per-row regression
+    (2026-09-06). What is being measured is the view's query shape, not how
+    the cache is deployed, so the budgets get a cache of their own; the shared
+    backing is covered by apps/core/test_throttle_shared_backing.py.
+    """
+
     def setUp(self):
         self.region = Region.objects.create(name="IA Region")
         self.district = District.objects.create(name="IA District", region=self.region)

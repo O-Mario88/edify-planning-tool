@@ -29,7 +29,7 @@ import datetime
 
 from django.core.cache import cache
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -68,8 +68,21 @@ CEILINGS = {
 FLAT = ("/dashboard", "/today", "/planning")
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "cceo-query-budget",
+        }
+    }
+)
 class CceoQueryBudgetTests(TestCase):
-    """Ceilings and shapes for the CCEO's daily pages."""
+    """Ceilings and shapes for the CCEO's daily pages.
+
+    On a cache this process owns: dev's cache is a real Redis shared by every
+    parallel test worker, and this suite's own cache.clear() was reaching into
+    other suites' measurements (2026-09-06).
+    """
 
     ACTIVITIES = 6
 

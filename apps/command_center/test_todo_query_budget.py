@@ -57,8 +57,23 @@ def _user(key, role):
     return user
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "todo-query-budget",
+        }
+    }
+)
 class TodoQueryBudgetTests(TestCase):
-    """A ceiling, never a target."""
+    """A ceiling, never a target.
+
+    Measured against a cache this process owns. Dev points the cache at a real
+    Redis that every parallel test worker shares, and the other query-budget
+    suites clear it — a clear from CceoQueryBudgetTests landing mid-measurement
+    made this one count cache misses and fail (2026-09-06). The budget is about
+    the query shape, not about how the cache is deployed.
+    """
 
     #: Measured at 55 for a Country Director against this fixture after the
     #: series-priming fix (was ~120 before). The headroom covers a handful of
