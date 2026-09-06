@@ -459,6 +459,46 @@
     makeScrollRegion(table, label);
   }
 
+  /* A table that is only a little wider than its region fits instead of
+     scrolling (owner, 2026-09-06: a 1440px desktop showed sideways scroll on
+     tables whose content would have fitted). From the desktop shell up, a
+     table up to 40% wider than its region takes `edify-table--fit` — 8px
+     cell padding and wrapping headings — and is measured again; one that is
+     still wider keeps its scroll, because its content really is wider. */
+  var FIT_RATIO = 1.4;
+  var desktopShell = window.matchMedia('(min-width: 64rem)');
+
+  function scrollAncestor(table) {
+    var node = table.parentElement;
+    while (node && node !== document.body) {
+      var overflow = window.getComputedStyle(node).overflowX;
+      if (overflow === 'auto' || overflow === 'scroll') return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  function fitTableToRegion(table) {
+    var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
+    if (!region || !desktopShell.matches) return;
+    if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
+    table.classList.remove('edify-table--fit');
+    if (table.scrollWidth <= region.clientWidth + 1) return;
+    if (table.scrollWidth > region.clientWidth * FIT_RATIO) return;
+    table.classList.add('edify-table--fit');
+    if (table.scrollWidth > region.clientWidth + 1) table.classList.remove('edify-table--fit');
+  }
+
+  function fitTables(root) {
+    (root.querySelectorAll ? root : document).querySelectorAll('main table').forEach(fitTableToRegion);
+  }
+
+  var fitTimer = null;
+  window.addEventListener('resize', function () {
+    window.clearTimeout(fitTimer);
+    fitTimer = window.setTimeout(function () { fitTables(document); }, 150);
+  }, { passive: true });
+
   function enhanceTables(root) {
     if (root.matches && root.matches('table')) enhanceTable(root);
     root.querySelectorAll('table').forEach(enhanceTable);
@@ -829,6 +869,8 @@
   function enhance(root) {
     enhanceCritical(root);
     scheduleAudit(root);
+    /* Last, once every table has its region and its cells: fit or scroll. */
+    fitTables(root);
   }
 
   function scheduleMutationScan(mutations) {
@@ -873,6 +915,7 @@
   });
 
   document.addEventListener('htmx:afterSettle', function (event) { enhance(event.target); });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () { fitTables(document); });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);
   });

@@ -3741,3 +3741,43 @@ main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__helper {
     display: none !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   A TABLE THAT ALMOST FITS, FITS (owner, 2026-09-06).
+   micro-ux.js measures every table against its scroll region from the
+   desktop shell up; one that is at most 40% wider takes `edify-table--fit`
+   and is measured again. Fitted: 8px cell padding, and headings and cells
+   may wrap onto a second line — both wrapping properties, because the
+   contracts above pin `text-wrap` as well as `white-space`. These sit after
+   those contracts and outrank them, so a fitted table really does wrap; a
+   table that is still wider keeps its scroll, because its content is.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 64rem) {
+  :is(main, .drawer-body) table.edify-table--fit:not(.sr-only):not(.edify-visually-hidden) {
+    table-layout: auto !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+  :is(main, .drawer-body) table.edify-table--fit:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(th, td) {
+    padding-inline: 0.5rem !important;
+    min-inline-size: 0 !important;
+    white-space: normal !important;
+    text-wrap: pretty !important;
+    overflow-wrap: anywhere;
+  }
+  :is(main, .drawer-body) table.edify-table--fit:not(.sr-only):not(.edify-visually-hidden) thead th {
+    text-wrap: wrap !important;
+    line-height: 1.15 !important;
+    vertical-align: bottom;
+  }
+  /* The first column is the row's label: it keeps 9rem before figures and
+     headings give way, so "Program Lead 1" is not the cell that wraps. */
+  :is(main, .drawer-body) table.edify-table--fit:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) > tr > :is(th, td):first-child {
+    min-inline-size: 9rem !important;
+  }
+  :is(main, .drawer-body) table.edify-table--fit:not(.sr-only):not(.edify-visually-hidden) tbody :is(th, td)
+    :is(span, a, p, small, div):not(.edify-status-badge):not(.pill):not(.rounded-pill):not([class*="badge"]) {
+    white-space: normal !important;
+    text-wrap: pretty !important;
+  }
+}

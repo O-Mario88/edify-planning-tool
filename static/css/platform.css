@@ -1181,16 +1181,17 @@ main .apexcharts-canvas:has(
   .apexcharts-line-series
 ) .apexcharts-legend {
   display: flex !important;
-  flex-flow: row nowrap !important;
+  /* One row while it fits; a second row when it does not. It used to scroll
+     sideways behind a hidden scrollbar, which on a 1440px desktop hid the
+     last series of a five-series legend (owner, 2026-09-06). */
+  flex-flow: row wrap !important;
   align-items: center !important;
   align-content: center !important;
   justify-content: flex-start !important;
-  gap: 0 clamp(0.5rem, 1vw, 0.75rem) !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  overscroll-behavior-inline: contain;
+  gap: 0.125rem clamp(0.5rem, 1vw, 0.75rem) !important;
+  overflow: visible !important;
+  max-block-size: none !important;
   padding: 0.125rem 0.125rem 0.375rem !important;
-  scrollbar-width: none;
 }
 
 main .apexcharts-canvas:has(
@@ -5014,3 +5015,28 @@ main table thead .edify-frozen-cell { z-index: 2; }
   main .school-record-list > .school-record-row.is-expanded { grid-column: 1 / -1; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+   NO SIDEWAYS SCROLL WHERE THERE IS ROOM (owner, 2026-09-06).
+   A 1440px desktop showed horizontal scrollbars on tables whose content
+   would have fitted: `min-w-[1120px]`-style utilities pinned a table wider
+   than its card, filter rows refused to wrap, and a chart legend clipped
+   its series. From the desktop shell up, a table inside a scroll region
+   sizes to its content — a wide ledger still scrolls, because its content
+   is wider, but a table that fits no longer scrolls because a utility said
+   so — filter rows wrap, and legends wrap.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 64rem) {
+  main :is(.edify-table-scroll-region, .overflow-x-auto, .overflow-auto) > table {
+    min-inline-size: 0 !important;
+  }
+  main :is(#filters-form, #cd-analytics-filters, #pl-analytics-filters, #analytics-filters-form, .edify-filter-bar, .platform-filter-bar, [data-component="filter-toolbar"]):not(.school-filters-form) {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+  /* A tablist that lives in a narrow side column wraps its tabs rather than
+     scrolling them (the work plan's view switcher sat in a 255px column). */
+  main nav[data-edify-tablist].self-start {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+}

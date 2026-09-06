@@ -1017,7 +1017,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("Define metric", detail)
         self.assertIn("Allocate approved target", detail)
         self.assertIn("overflow-x: auto", pages)
-        self.assertIn("min-inline-size: 74rem", pages)
+        self.assertIn("min-inline-size: min(58rem, 100%)", pages)
         self.assertIn("var(--edify-text-micro-size)", pages)
 
     def test_program_lead_urgent_schools_card_uses_compact_server_pagination(self):
@@ -1363,9 +1363,10 @@ class ChartLegendRailGuardTest(SimpleTestCase):
             "The shared legend rule must cover both comparison bars and trends.",
         )
         self.assertIn(
-            "flex-flow: row nowrap !important;",
+            "flex-flow: row wrap !important;",
             css,
-            "Chart legends must read left-to-right instead of stacking series.",
+            "Chart legends read left-to-right and take a second row only when "
+            "the first is full (2026-09-06); they no longer scroll sideways.",
         )
         self.assertIn(
             "justify-content: flex-start !important;",

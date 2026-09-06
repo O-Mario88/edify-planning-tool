@@ -4698,7 +4698,9 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 }
 
 .priority-record-grid {
-  min-inline-size: 74rem;
+  /* Floors sum to 57.25rem so a 1440px desktop shows all nine columns
+     without a sideways scroll (owner, 2026-09-06); narrower screens scroll. */
+  min-inline-size: min(58rem, 100%);
   background: var(--edify-surface, #fff);
 }
 
@@ -4706,11 +4708,11 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   display: grid;
   grid-template-columns:
     3rem
-    minmax(20rem, 1.65fr)
-    minmax(13rem, 0.95fr)
-    minmax(14rem, 1.1fr)
-    10rem
-    repeat(3, 4.5rem)
+    minmax(12rem, 1.65fr)
+    minmax(9rem, 0.95fr)
+    minmax(10rem, 1.1fr)
+    8rem
+    repeat(3, 4rem)
     3.25rem;
   align-items: stretch;
 }
