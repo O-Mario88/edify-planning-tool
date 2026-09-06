@@ -46,6 +46,9 @@ from apps.analytics.pl_analytics_service import (
     ssa_band,
 )
 from apps.analytics.pl_dashboard_service import SF_ID_OVERDUE_DAYS, _requires_sf_id
+from apps.core.activity_types import TRAINING_TYPES as _SF_TRAINING_TYPES, VISIT_TYPES as _SF_VISIT_TYPES
+
+SF_ID_ACTIVITY_TYPES = tuple(_SF_VISIT_TYPES) + tuple(_SF_TRAINING_TYPES)
 
 REGION_BEHIND_THRESHOLD = 60  # attention trigger: region achievement below this
 HIGH_RISK_PL_BANDS = ("High Risk", "Critical")
@@ -104,6 +107,13 @@ class CDDashboardService:
 
     @staticmethod
     def get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
+        from apps.core.request_cache import scoped
+
+        with scoped():
+            return CDDashboardService._get_dashboard(user, fy=fy, month=month)
+
+    @staticmethod
+    def _get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
         fy = fy or get_operational_fy()
         cd = resolve_cd_scope(fy, month=month, country=country_for(user))
         acts = _country_activities(cd)
@@ -232,9 +242,26 @@ class CDDashboardService:
         prior = None
         if prior_fy:
             prior_cd = resolve_cd_scope(prior_fy, month=cd.month, country=cd.country)
-            prior = CDDashboardService._tile_numbers(
-                prior_cd, _country_activities(prior_cd), prior_fy, user
+            # The prior year's tiles change rarely and cost a full second
+            # scope plus every KPI query: cached for ten minutes per prior
+            # FY, month and country (2026-09-06).
+            from django.core.cache import cache as _cache
+            from django.db.models import Max
+
+            # The key carries the prior year's activity count and latest
+            # edit, so a back-dated correction (or a fresh dataset) is never
+            # served last period's tiles.
+            prior_acts = _country_activities(prior_cd)
+            _version = prior_acts.aggregate(n=Count("id"), latest=Max("updated_at"))
+            _prior_key = (
+                "cd-dashboard:prior-tiles:v2:"
+                f"{prior_fy}:{cd.month or ''}:{cd.country or ''}:"
+                f"{_version['n']}:{int(_version['latest'].timestamp()) if _version['latest'] else 0}"
             )
+            prior = _cache.get(_prior_key)
+            if prior is None:
+                prior = CDDashboardService._tile_numbers(prior_cd, prior_acts, prior_fy, user)
+                _cache.set(_prior_key, prior, 600)
         vs = f"vs FY{prior_fy}" if prior_fy else ""
         trend = CDDashboardService._trend
 
@@ -841,15 +868,18 @@ class CDDashboardService:
                 if c["user_id"]:
                     ids.add(c["user_id"])
                 school_ids |= c["school_ids"]
-            team_acts = acts.filter(
-                Q(responsible_staff_id__in=ids) | Q(school_id__in=school_ids)
+            # Counted in Python from the request's one activity pass: five
+            # queries per lead made this table twenty queries (2026-09-06).
+            team_rows = CDAnalyticsService._team_rows(cd, acts, ids, school_ids)
+            planned = len(team_rows)
+            verified = sum(1 for row in team_rows if row[3] in VERIFIED_STATUSES)
+            sf_pending = sum(
+                1
+                for row in team_rows
+                if row[3] in COMPLETED_STATUSES
+                and row[4] in SF_ID_ACTIVITY_TYPES
+                and not (row[5] or "").strip()
             )
-            planned = team_acts.count()
-            verified = team_acts.filter(status__in=VERIFIED_STATUSES).count()
-            sf_req = _requires_sf_id(team_acts)
-            sf_pending = sf_req.filter(
-                Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")
-            ).count()
             label, tone = band.get(b["risk"], (b["risk"], "neutral"))
             rows.append(
                 {
@@ -1100,29 +1130,42 @@ class CDDashboardService:
         if not latest:
             return {"rows": [], "codes": codes, "latest_fy": None}
 
+        # Every confirmed latest-FY record and every score for the scoped
+        # schools in two queries; each row then averages in Python. Three
+        # queries per row (records, scores, overall) made this eighteen
+        # queries for three rows (2026-09-06).
+        record_school: dict = {}
+        record_avg: dict = {}
+        for rid_, sid_, avg_ in SsaRecord.objects.filter(
+            school_id__in=cd.school_ref, verification_status="confirmed", fy=latest
+        ).values_list("id", "school_id", "average_score"):
+            record_school[rid_] = sid_
+            record_avg[rid_] = avg_
+        scores_by_record: dict = {}
+        if record_school:
+            for rid_, code_, score_ in SsaScore.objects.filter(
+                ssa_record_id__in=list(record_school)
+            ).values_list("ssa_record_id", "intervention", "score"):
+                scores_by_record.setdefault(rid_, []).append((code_, score_))
+
+        def _mean(values):
+            values = [v for v in values if v is not None]
+            return (sum(values) / len(values)) if values else None
+
         def matrix_row(label, school_ids, kind, rid=""):
-            rids = list(
-                SsaRecord.objects.filter(
-                    school_id__in=school_ids, verification_status="confirmed", fy=latest
-                ).values_list("id", flat=True)
-            )
+            school_ids = set(school_ids)
+            rids = [r for r, sid_ in record_school.items() if sid_ in school_ids]
             if not rids:
                 return None
-            by = {
-                r["intervention"]: r["a"]
-                for r in SsaScore.objects.filter(ssa_record_id__in=rids)
-                .values("intervention")
-                .annotate(a=Avg("score"))
-            }
+            by_code: dict = {}
+            for r in rids:
+                for code_, score_ in scores_by_record.get(r, ()):
+                    by_code.setdefault(code_, []).append(score_)
             cells = []
             for v, _label, _code in SSA_INTERVENTIONS:
-                score = _ssa_score(by.get(v))
+                score = _ssa_score(_mean(by_code.get(v, [])))
                 cells.append({"score": score, "tone": ssa_band(score)[2]})
-            overall = _ssa_score(
-                SsaRecord.objects.filter(id__in=rids).aggregate(a=Avg("average_score"))[
-                    "a"
-                ]
-            )
+            overall = _ssa_score(_mean(record_avg[r] for r in rids))
             return {
                 "label": label,
                 "kind": kind,
@@ -1132,21 +1175,18 @@ class CDDashboardService:
                 "overall_tone": ssa_band(overall)[2],
             }
 
-        schools = School.objects.filter(id__in=cd.school_ref)
+        school_region = dict(
+            School.objects.filter(id__in=cd.school_ref)
+            .exclude(region__isnull=True)
+            .values_list("id", "region_id")
+        )
+        region_ids = sorted({r for r in school_region.values()})
+        region_names = dict(Region.objects.filter(id__in=region_ids).values_list("id", "name"))
         rows = []
-        for rid in (
-            schools.exclude(region__isnull=True)
-            .order_by("region_id")
-            .values_list("region_id", flat=True)
-            .distinct()
-        ):
-            name = (
-                Region.objects.filter(id=rid).values_list("name", flat=True).first()
-                or "Region"
-            )
+        for rid in region_ids:
             row = matrix_row(
-                name,
-                set(schools.filter(region_id=rid).values_list("id", flat=True)),
+                region_names.get(rid) or "Region",
+                {sid_ for sid_, r in school_region.items() if r == rid},
                 "region",
                 rid,
             )

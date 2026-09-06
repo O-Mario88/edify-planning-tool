@@ -3436,6 +3436,13 @@ def _business_transformation_todos(principal, role, today):
 
 def get_todos(principal) -> dict:
     """The full derived To-Do queue for a principal, sorted by priority then due."""
+    from apps.core.request_cache import scoped
+
+    with scoped():
+        return _get_todos(principal)
+
+
+def _get_todos(principal) -> dict:
     role = getattr(principal, "active_role", None)
     scope = resolve_user_scope(principal)
     today = timezone.now().date()

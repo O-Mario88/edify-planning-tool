@@ -444,10 +444,19 @@ class CDAnalyticsService:
     # ── PL / CCEO helpers ────────────────────────────────────────────────────
     @staticmethod
     def _pls():
+        from apps.core.request_cache import memoize
+
+        # Memoised per request: eight KPI tiles each asked for the roster
+        # (2026-09-06).
         return list(
-            User.objects.filter(
-                roles__contains=["Program Lead"], deleted_at__isnull=True
-            ).order_by("name")
+            memoize(
+                "cd_analytics:_pls",
+                lambda: list(
+                    User.objects.filter(
+                        roles__contains=["Program Lead"], deleted_at__isnull=True
+                    ).order_by("name")
+                ),
+            )
         )
 
     @staticmethod
@@ -477,6 +486,15 @@ class CDAnalyticsService:
         uid = getattr(pl_user, "id", None)
         if cd is not None and uid in cd.pl_cceos:
             return cd.pl_cceos[uid]
+        # Inside a request, resolve EVERY lead on the first singular call and
+        # serve the rest from the per-lead memo: the KPI strip asked for four
+        # leads one at a time before anything had primed them (2026-09-06).
+        from apps.core.request_cache import store
+
+        if store() is not None and uid is not None:
+            batch = CDAnalyticsService._pl_cceos_batch(CDAnalyticsService._pls(), cd)
+            if uid in batch:
+                return batch[uid]
 
         # cd participates in the key: the same PL yields a different school set
         # under a different scope, and returning one for the other would be a
@@ -494,7 +512,25 @@ class CDAnalyticsService:
         return CDAnalyticsService._pl_cceos_batch([pl_user], cd).get(uid) or []
 
     @staticmethod
-    def _pl_cceos_batch(pl_users, cd=None) -> dict:
+    def _pl_cceos_batch(pl_users, cd=None):
+        """Memoised per request: the KPI strip, the leads table and the
+        attention band each asked for the same PL→CCEO map (2026-09-06)."""
+        from apps.core.request_cache import store
+
+        users = list(pl_users)
+        ids = [getattr(u, "id", u) for u in users]
+        bucket = store()
+        if bucket is None:
+            return CDAnalyticsService._pl_cceos_batch_uncached(users, cd)
+        scope = (getattr(cd, "fy", None), getattr(cd, "month", None), len(getattr(cd, "school_ids", ()) or ()))
+        known = bucket.setdefault(("cd_analytics:_pl_cceos_batch", scope), {})
+        missing = [u for u, pl_id in zip(users, ids) if pl_id not in known]
+        if missing:
+            known.update(CDAnalyticsService._pl_cceos_batch_uncached(missing, cd))
+        return {pl_id: known.get(pl_id, []) for pl_id in ids}
+
+    @staticmethod
+    def _pl_cceos_batch_uncached(pl_users, cd=None) -> dict:
         """{Programme Lead user id: supervised-CCEO rows} for several PLs at once.
 
         The single definition of the answer — `_pl_cceos_uncached` asks this
@@ -874,6 +910,76 @@ class CDAnalyticsService:
         }
 
     @staticmethod
+    def _activity_rows(cd, acts) -> list:
+        """The scoped activities as plain rows, once per request, so the
+        per-lead tables count in Python instead of five queries per lead
+        (2026-09-06)."""
+        from apps.core.request_cache import memoize
+
+        key = ("cd_analytics:_activity_rows", cd.fy, cd.month, len(cd.school_ids))
+        return memoize(
+            key,
+            lambda: list(
+                acts.values_list(
+                    "id", "school_id", "responsible_staff_id", "status",
+                    "activity_type", "salesforce_activity_id",
+                )
+            ),
+        )
+
+    @staticmethod
+    def _team_rows(cd, acts, ids, school_ids) -> list:
+        ids = set(ids)
+        school_ids = set(school_ids)
+        return [
+            row
+            for row in CDAnalyticsService._activity_rows(cd, acts)
+            if row[2] in ids or row[1] in school_ids
+        ]
+
+    @staticmethod
+    def _pl_budget_by_user(cd_fy, uids) -> dict:
+        """Requested and disbursed per responsible user in one grouped query,
+        memoised per request; `_pl_budget` sums its team from it."""
+        from apps.core.request_cache import store
+        from apps.fund_requests.models import AdvanceRequest
+
+        wanted = {u for u in uids if u}
+        bucket = store()
+        known = bucket.setdefault(("cd_analytics:_pl_budget_by_user", cd_fy), {}) if bucket is not None else {}
+        missing = wanted - known.keys()
+        if missing:
+            for row in (
+                AdvanceRequest.objects.filter(activity__fy=cd_fy, responsible_user_id__in=missing)
+                .values("responsible_user_id")
+                .annotate(requested=Sum("amount"), disbursed=Sum("disbursed_amount"))
+            ):
+                known[row["responsible_user_id"]] = (int(row["requested"] or 0), int(row["disbursed"] or 0))
+            for u in missing:
+                known.setdefault(u, (0, 0))
+        return {u: known.get(u, (0, 0)) for u in wanted}
+
+    @staticmethod
+    def _users_by_id(user_ids) -> list:
+        """User rows for a set of ids, memoised PER USER for the request: the
+        28 rosters a CD render resolves are subsets of the same people, so
+        each person is loaded once and only unseen ids reach the database."""
+        from apps.core.request_cache import store
+
+        wanted = {u for u in user_ids if u}
+        bucket = store()
+        if bucket is None:
+            return list(User.objects.filter(id__in=wanted))
+        known = bucket.setdefault("cd_analytics:_users_by_id", {})
+        missing = wanted - known.keys()
+        if missing:
+            for user in User.objects.filter(id__in=missing):
+                known[user.id] = user
+            for user_id in missing:
+                known.setdefault(user_id, None)
+        return [known[u] for u in wanted if known.get(u) is not None]
+
+    @staticmethod
     def _staff_user_ids(staff_ids) -> frozenset:
         """StaffProfile ids → the User ids behind them, memoised per staff id.
 
@@ -991,7 +1097,7 @@ class CDAnalyticsService:
         users = None
         if areas is None:
             # See _prime_target_series: agreed areas, never the catalogue.
-            users = list(User.objects.filter(id__in=resolved_user_ids))
+            users = CDAnalyticsService._users_by_id(resolved_user_ids)
             areas = agreed_target_areas(users, fy)
         if not areas:
             # Nobody in scope has agreed a measurable priority. Reporting 0 of
@@ -1150,16 +1256,29 @@ class CDAnalyticsService:
         """
         from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 
+        from apps.core.request_cache import memoize
+
         qs = CDAnalyticsService._advance_qs(cd)
-        requested = int(qs.aggregate(s=Sum("amount"))["s"] or 0)
-        disbursed = int(qs.aggregate(s=Sum("disbursed_amount"))["s"] or 0)
-        envelopes = MonthlyWorkPlanBudget.objects.filter(
-            fy=cd.fy,
-            status__in=("approved_by_rvp", "sent_to_accountant", "disbursed", "closed"),
+        # One aggregate for both sums, memoised per request with the envelope:
+        # four KPI tiles each ran these three sums (2026-09-06).
+        memo_key = ("cd_analytics:budget_utilisation", cd.fy, cd.month, tuple(sorted(cd.school_ids))[:50], len(cd.school_ids))
+        sums = memoize(
+            memo_key,
+            lambda: qs.aggregate(requested=Sum("amount"), disbursed=Sum("disbursed_amount")),
         )
-        if cd.month:
-            envelopes = envelopes.filter(month_key__endswith=f"-{int(cd.month):02d}")
-        approved = int(envelopes.aggregate(s=Sum("total_amount"))["s"] or 0)
+        requested = int(sums["requested"] or 0)
+        disbursed = int(sums["disbursed"] or 0)
+
+        def _approved():
+            envelopes = MonthlyWorkPlanBudget.objects.filter(
+                fy=cd.fy,
+                status__in=("approved_by_rvp", "sent_to_accountant", "disbursed", "closed"),
+            )
+            if cd.month:
+                envelopes = envelopes.filter(month_key__endswith=f"-{int(cd.month):02d}")
+            return int(envelopes.aggregate(s=Sum("total_amount"))["s"] or 0)
+
+        approved = memoize(("cd_analytics:approved_envelope", cd.fy, cd.month), _approved)
         if approved:
             return {
                 "pct": _pct(disbursed, approved),
@@ -1842,6 +1961,22 @@ class CDAnalyticsService:
     def pl_oversight(cd, acts):
         latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         rows = []
+        # Warm the per-request memos ONCE for every team before the per-lead
+        # loop: each lead's roster is a different subset of the same people,
+        # so resolving staff ids, users, profile ids and agreed areas inside
+        # the loop cost four rounds of each (2026-09-06).
+        pls = CDAnalyticsService._pls()
+        teams = CDAnalyticsService._pl_cceos_batch(pls, cd)
+        all_staff = {c["staff_id"] for members in teams.values() for c in members if c.get("staff_id")}
+        all_user_ids = set(CDAnalyticsService._staff_user_ids(all_staff))
+        all_user_ids |= {c["user_id"] for members in teams.values() for c in members if c.get("user_id")}
+        if all_user_ids:
+            from apps.accounts.models import attach_staff_profile_ids
+            from apps.targets.my_targets import priority_target_areas_for_users
+
+            roster = CDAnalyticsService._users_by_id(all_user_ids)
+            attach_staff_profile_ids(roster)
+            priority_target_areas_for_users(roster, cd.fy)
         for pl in CDAnalyticsService._pls():
             cceos = CDAnalyticsService._pl_cceos(pl, cd)
             all_school_ids = set()
@@ -1871,20 +2006,14 @@ class CDAnalyticsService:
                 resp_ids.add(c["staff_id"])
                 if c["user_id"]:
                     resp_ids.add(c["user_id"])
-            backlog = (
-                acts.filter(
-                    Q(responsible_staff_id__in=resp_ids)
-                    | Q(school_id__in=all_school_ids)
-                )
-                .filter(
-                    status__in=[
-                        "returned_by_pl",
+            _pending_statuses = {"returned_by_pl",
                         "returned_by_ia",
                         "salesforce_id_required",
-                        "awaiting_ia_verification",
-                    ]
-                )
-                .count()
+                        "awaiting_ia_verification",}
+            backlog = sum(
+                1
+                for row in CDAnalyticsService._team_rows(cd, acts, resp_ids, all_school_ids)
+                if row[3] in _pending_statuses
             )
             budget_util = CDAnalyticsService._pl_budget(cceos, cd.fy)
             risk = CDAnalyticsService._pl_risk(
@@ -1918,11 +2047,9 @@ class CDAnalyticsService:
         uids = [c["user_id"] for c in cceos if c["user_id"]]
         if not uids:
             return 0
-        qs = AdvanceRequest.objects.filter(
-            activity__fy=fy, responsible_user_id__in=uids
-        )
-        requested = int(qs.aggregate(s=Sum("amount"))["s"] or 0)
-        disbursed = int(qs.aggregate(s=Sum("disbursed_amount"))["s"] or 0)
+        per_user = CDAnalyticsService._pl_budget_by_user(fy, uids)
+        requested = sum(r for r, _ in per_user.values())
+        disbursed = sum(d for _, d in per_user.values())
         return _pct(disbursed, requested)
 
     @staticmethod
