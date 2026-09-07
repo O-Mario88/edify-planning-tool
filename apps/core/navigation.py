@@ -2246,7 +2246,12 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
     # Verification is the whole job; SSA is its second queue.
     IA: ("dashboard", "ia_verification_queue", "ssa", "messages"),
     # Finance operates queues, not dashboards.
-    ACCOUNTANT: ("dashboard", "weekly_fund_request", "finance_partner_payments", "messages"),
+    ACCOUNTANT: (
+        "dashboard",
+        "weekly_fund_request",
+        "finance_partner_payments",
+        "messages",
+    ),
     # People work: the directory and the approvals that block others.
     HR: ("dashboard", "staff", "leave_approvals", "messages"),
     # Leadership decides on budget and reads the evidence.

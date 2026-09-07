@@ -559,9 +559,11 @@ class TeamTargetsPageTest(TestCase):
         expanded = html[row_start:row_end]
         self.assertIn('class="tt-area-matrix"', expanded)
         self.assertIn("Cumulative progress by time period", expanded)
-        self.assertIn("Grace One agreed-priority performance by reporting period", expanded)
+        self.assertIn(
+            "Grace One agreed-priority performance by reporting period", expanded
+        )
         for measure in ("Target", "Achieved", "%"):
-            self.assertIn(f'>{measure}</th>', expanded)
+            self.assertIn(f">{measure}</th>", expanded)
         self.assertIn("School Visits", expanded)
         self.assertIn("Overall progress", expanded)
         # The row still opens and closes from the row itself and from its

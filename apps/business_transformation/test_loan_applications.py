@@ -85,9 +85,7 @@ class LoanApplicationWorkflowTests(TestCase):
         )
         cls.cd, cls.cd_profile = staff(EdifyRole.COUNTRY_DIRECTOR, "loan-cd")
         cls.ia, cls.ia_profile = staff(EdifyRole.IMPACT_ASSESSMENT, "loan-ia")
-        cls.rvp, cls.rvp_profile = staff(
-            EdifyRole.REGIONAL_VICE_PRESIDENT, "loan-rvp"
-        )
+        cls.rvp, cls.rvp_profile = staff(EdifyRole.REGIONAL_VICE_PRESIDENT, "loan-rvp")
         cls.school.account_owner_id = cls.cceo_profile.id
         cls.school.account_owner_name_raw = cls.cceo.name
         cls.school.save(update_fields=["account_owner_id", "account_owner_name_raw"])
@@ -219,7 +217,9 @@ class LoanApplicationWorkflowTests(TestCase):
                 {
                     "status": LoanApplicationStatus.APPROVED,
                     "note": "Attempted to skip review and lender referral.",
-                    "nextFollowUpOn": (timezone.localdate() + timedelta(days=2)).isoformat(),
+                    "nextFollowUpOn": (
+                        timezone.localdate() + timedelta(days=2)
+                    ).isoformat(),
                 },
                 self.cceo,
             )
@@ -270,7 +270,8 @@ class LoanApplicationWorkflowTests(TestCase):
                 self.school
                 if frequency == "monthly"
                 else School.objects.create(
-                    school_id="UG-LOAN-TERMLY", name="Termly School",
+                    school_id="UG-LOAN-TERMLY",
+                    name="Termly School",
                     account_owner_id=self.cceo_profile.id,
                 )
             )
@@ -279,9 +280,9 @@ class LoanApplicationWorkflowTests(TestCase):
             )
             disbursed_on = today
             for _ in range(months):
-                disbursed_on = (disbursed_on.replace(day=1) - timedelta(days=1)).replace(
-                    day=min(today.day, 28)
-                )
+                disbursed_on = (
+                    disbursed_on.replace(day=1) - timedelta(days=1)
+                ).replace(day=min(today.day, 28))
             MfiLoan.objects.create(
                 mfi=self.mfi,
                 school=school,
@@ -315,7 +316,7 @@ class LoanApplicationWorkflowTests(TestCase):
             year=report_date.year, month=report_date.month, day=report_date.day
         )
         self._application(
-            applicant_name="=HYPERLINK(\"https://invalid\",\"Open\")",
+            applicant_name='=HYPERLINK("https://invalid","Open")',
             submitted_at=submitted_at,
         )
         self._application(

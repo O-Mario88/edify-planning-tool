@@ -198,7 +198,9 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         # Program Lead who supervises them (owner, 2026-09-05).
         groups = response.context["district_groups"]
         home = next(
-            g for g in groups if any(d["name"] == self.district.name for d in g["districts"])
+            g
+            for g in groups
+            if any(d["name"] == self.district.name for d in g["districts"])
         )
         self.assertEqual(home["region"], self.region.name)
         self.assertEqual(home["name"], "Other districts")  # fixture has no sub-region
@@ -209,9 +211,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             (district["schools_planned"], district["schools_achieved"]), (1, 1)
         )
         self.assertGreaterEqual(district["schools"], 1)
-        self.assertEqual(
-            district["schools_pct"], round(1 / district["schools"] * 100)
-        )
+        self.assertEqual(district["schools_pct"], round(1 / district["schools"] * 100))
         self.assertEqual(home["schools_achieved"], 1)
         leader_groups = {g["name"]: g for g in response.context["leadership_groups"]}
         team = leader_groups[pl_user.name]
@@ -223,7 +223,12 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         # team's reach as sets.
         for row in (leaders[cceo_user.name], leaders[pl_user.name], team):
             self.assertEqual(
-                (row["schools"], row["schools_planned"], row["schools_achieved"], row["schools_pct"]),
+                (
+                    row["schools"],
+                    row["schools_planned"],
+                    row["schools_achieved"],
+                    row["schools_pct"],
+                ),
                 (1, 1, 1, 100),
             )
 

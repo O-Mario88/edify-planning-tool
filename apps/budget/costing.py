@@ -217,8 +217,16 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         if rate_key:
             add_rate(rate_key)
         if meals:
-            add(RATE_LABELS[TOT_MEALS_RATE_KEY], TOT_MEALS_RATE_KEY, _participants_of(a, 0) * days)
-        add(RATE_LABELS["group_training_facilitation_fee"], "group_training_facilitation_fee", days)
+            add(
+                RATE_LABELS[TOT_MEALS_RATE_KEY],
+                TOT_MEALS_RATE_KEY,
+                _participants_of(a, 0) * days,
+            )
+        add(
+            RATE_LABELS["group_training_facilitation_fee"],
+            "group_training_facilitation_fee",
+            days,
+        )
         add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
         add_materials(days)
         add_staff_day(days)
@@ -303,7 +311,10 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         else:
             add_group_session(_days_of(a), None)
     elif activity_type in ("partner_activity", "project_activity"):
-        add(f"{RATE_LABELS['partner_meetings']} [Rate basis: per meeting]", "partner_meetings")
+        add(
+            f"{RATE_LABELS['partner_meetings']} [Rate basis: per meeting]",
+            "partner_meetings",
+        )
     else:
         # ssa_activity and anything else: a staff visit day plus its rate.
         add_rate(staff_visit_rate_key())

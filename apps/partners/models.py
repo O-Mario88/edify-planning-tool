@@ -441,7 +441,9 @@ class PartnerMember(TimeStampedModel):
     )
     name = models.CharField(max_length=255)
     role = models.CharField(
-        max_length=16, choices=PartnerMemberRole.choices, default=PartnerMemberRole.STAFF
+        max_length=16,
+        choices=PartnerMemberRole.choices,
+        default=PartnerMemberRole.STAFF,
     )
     title = models.CharField(max_length=128, blank=True, default="")
     phone = models.CharField(max_length=64, blank=True, default="")

@@ -47,7 +47,7 @@ class ScrollMemoryTest(SimpleTestCase):
         """Two elements carry that class — the mobile sidebar's, which is in
         the markup on every page at zero height, and the desktop one.
         `querySelector` returns the mobile one, which never scrolls."""
-        self.assertIn("querySelectorAll(\".app-sidebar__nav-container\")", self.js)
+        self.assertIn('querySelectorAll(".app-sidebar__nav-container")', self.js)
         self.assertIn("clientHeight > 0", self.js)
 
     def test_the_workspace_is_keyed_by_path_not_by_query(self):
@@ -102,7 +102,9 @@ class LaunchScreenTest(SimpleTestCase):
 
     def test_it_leaves_when_the_app_is_ready_not_after_a_set_time(self):
         self.assertIn("function openWhenReady()", self.partial)
-        self.assertIn('addEventListener("load", openWhenReady)'.replace('"', "'"), self.partial)
+        self.assertIn(
+            'addEventListener("load", openWhenReady)'.replace('"', "'"), self.partial
+        )
         self.assertNotIn("var HOLD =", self.partial)
 
     def test_it_still_cannot_strand_the_reader(self):
@@ -131,12 +133,16 @@ class CollapsedRailBrandTest(SimpleTestCase):
 
     def setUp(self):
         self.css = _read("static/css/components/sidebar.css")
-        self.band = self.css[self.css.index("The collapsed brand on a 10 or 11 inch tablet") :]
+        self.band = self.css[
+            self.css.index("The collapsed brand on a 10 or 11 inch tablet") :
+        ]
 
     def test_the_rule_is_scoped_to_the_landscape_tablet_band(self):
         """That band, and only it: the desktop rail keeps the mark it has."""
         self.assertIn("@media (min-width: 64rem) and (max-width: 79.99rem)", self.band)
-        self.assertIn(".app-sidebar--collapsed .app-sidebar__brand-logo-compact", self.band)
+        self.assertIn(
+            ".app-sidebar--collapsed .app-sidebar__brand-logo-compact", self.band
+        )
 
     def test_the_mark_is_whole_rather_than_cropped(self):
         self.assertIn("overflow: visible;", self.band)
@@ -260,13 +266,21 @@ class TabsDoNotStretchTest(SimpleTestCase):
     def test_tabs_stop_sharing_the_spare_rail_width(self):
         """`flex: 1 0 auto` drew two Batch Payments tabs at 530px and 588px and
         four /staff tabs between 231px and 309px."""
-        block = self.platform[self.platform.index("Tabs size to their labels; the rail keeps the rest as track") :]
+        block = self.platform[
+            self.platform.index(
+                "Tabs size to their labels; the rail keeps the rest as track"
+            ) :
+        ]
         self.assertIn("@media (min-width: 48rem)", block)
         self.assertIn("flex: 0 0 auto !important;", block)
 
     def test_a_phone_still_shares_the_rail(self):
         """There the tabs sharing the width is what makes them thumb-sized."""
-        block = self.platform[self.platform.index("Tabs size to their labels; the rail keeps the rest as track") :]
+        block = self.platform[
+            self.platform.index(
+                "Tabs size to their labels; the rail keeps the rest as track"
+            ) :
+        ]
         head = block[: block.index("@media (min-width: 48rem)")]
         self.assertIn("phone", head.lower())
         # The base contract, which phones fall back to, still grows its tabs.
@@ -277,7 +291,12 @@ class TabsDoNotStretchTest(SimpleTestCase):
         outer corners and the last one's puts a rounded corner in the middle of
         the bar against a square edge — identical widths reading as different
         shapes."""
-        block = self.interactions[self.interactions.index("A rail is a track of equal chips") :]
+        block = self.interactions[
+            self.interactions.index("A rail is a track of equal chips") :
+        ]
         self.assertIn("@media (min-width: 48rem)", block)
-        self.assertIn("border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;", block)
+        self.assertIn(
+            "border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;",
+            block,
+        )
         self.assertIn("padding: 3px !important;", block)

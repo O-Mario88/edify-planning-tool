@@ -215,7 +215,9 @@ class WeeklyFundRequestsTest(APITestCase):
         cm_lines = ActivityScheduleCostLine.objects.filter(activity_id=cm["id"])
         self.assertEqual(cm_lines.count(), 6)
         self.assertEqual(sum(l.amount for l in cm_lines), 262000)
-        self.assertEqual(cm_lines.get(cost_setting_key="group_training_venue_cost").amount, 200000)
+        self.assertEqual(
+            cm_lines.get(cost_setting_key="group_training_venue_cost").amount, 200000
+        )
 
         # 3. Schedule a Group Training (15 participants: venue=200000,
         # facilitation=150000, materials 0, staff day 62000). Total = 412,000
@@ -286,7 +288,9 @@ class WeeklyFundRequestsTest(APITestCase):
         )
         self.assertEqual(len(detail_res["lines"]), payable.count())
         descriptions = {line["description"] for line in detail_res["lines"]}
-        self.assertTrue({"Facilitation Fee", "Venue Fee", "Lunch"}.issubset(descriptions))
+        self.assertTrue(
+            {"Facilitation Fee", "Venue Fee", "Lunch"}.issubset(descriptions)
+        )
 
         # 6. CCEO submits — the request routes to their PL for approval;
         # submission alone must NOT put it in the accountant's queue.

@@ -165,13 +165,13 @@ class CostReferenceTest(TestCase):
         rate.catalogue = None
         rate.save(update_fields=["catalogue", "updated_at"])
 
-        result = preview(
-            {"activityType": "core_training", "expectedParticipants": 20}
-        )
+        result = preview({"activityType": "core_training", "expectedParticipants": 20})
 
         self.assertIn(key, result["missingItems"])
         self.assertIn(key, [line["key"] for line in result["lines"]])
-        self.assertNotIn("core_school_training", [line["key"] for line in result["lines"]])
+        self.assertNotIn(
+            "core_school_training", [line["key"] for line in result["lines"]]
+        )
         self.assertFalse(result["canSchedule"])
 
     def test_cost_catalogue_projects_coverage_for_all_governed_activities(self):

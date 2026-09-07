@@ -231,9 +231,9 @@ def attach_staff_profile_ids(users) -> list:
     missing = [u for u in users if not hasattr(u, "_staff_profile_id_cache")]
     if missing:
         found = dict(
-            StaffProfile.objects.filter(user_id__in=[u.id for u in missing]).values_list(
-                "user_id", "id"
-            )
+            StaffProfile.objects.filter(
+                user_id__in=[u.id for u in missing]
+            ).values_list("user_id", "id")
         )
         for u in missing:
             u._staff_profile_id_cache = found.get(u.id)

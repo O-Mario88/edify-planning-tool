@@ -102,7 +102,9 @@ def list_cost_settings(principal, query: dict) -> dict:
             "fy": c.fy,
             "version": c.version,
             "catalogueItemId": c.catalogue_item_id,
-            "catalogueItemName": c.catalogue_item.display_name if c.catalogue_item_id else None,
+            "catalogueItemName": c.catalogue_item.display_name
+            if c.catalogue_item_id
+            else None,
         }
         for c in qs
     ]
@@ -129,7 +131,11 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     # A cost added for one activity is keyed "activity:<code>:<name>" and
     # carries the item; it is as editable as a canonical rate.
     linked_item = data.get("catalogueItem")
-    if key not in CANONICAL_RATE_KEYS and linked_item is None and not key.startswith("activity:"):
+    if (
+        key not in CANONICAL_RATE_KEYS
+        and linked_item is None
+        and not key.startswith("activity:")
+    ):
         raise BadRequest(
             "Unknown cost item. Cost settings must be registered in the "
             "canonical Cost Catalogue or added for an activity before they can be edited."

@@ -127,9 +127,7 @@ class LoginPortfolioStatsTest(TestCase):
 
     def test_work_at_a_closed_school_counts_for_nothing(self):
         self._activity(school=self.closed, kind=ActivityType.SCHOOL_VISIT)
-        self._activity(
-            kind=ActivityType.CLUSTER_TRAINING, attended=[self.closed.id]
-        )
+        self._activity(kind=ActivityType.CLUSTER_TRAINING, attended=[self.closed.id])
         stats = self._stats()
         self.assertEqual(stats["stat_portfolio"], "4")
         self.assertEqual(stats["stat_schools_visited"], "0")

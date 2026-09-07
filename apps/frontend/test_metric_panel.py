@@ -170,8 +170,10 @@ class MetricPanelTest(SimpleTestCase):
             '.edify-metric--lead[data-tone="warning"] .edify-metric__mark { color: var(--edify-warning-text); }',
             css,
         )
-        self.assertIn('class="edify-metric edify-metric--lead" data-tone="warning"',
-                      _read("templates/partials/analytics/cd/impact_summary.html"))
+        self.assertIn(
+            'class="edify-metric edify-metric--lead" data-tone="warning"',
+            _read("templates/partials/analytics/cd/impact_summary.html"),
+        )
 
     def test_the_prose_normaliser_leaves_component_type_alone(self):
         """consistency.css flattens every <p> in a page to body size. A
@@ -181,7 +183,11 @@ class MetricPanelTest(SimpleTestCase):
         normaliser names the parts it must not touch."""
 
         css = _read("static/css/consistency.css")
-        rule = css[css.index(":is(p, li, dd, .edify-profile-body, .edify-section__description):not(") :]
+        rule = css[
+            css.index(
+                ":is(p, li, dd, .edify-profile-body, .edify-section__description):not("
+            ) :
+        ]
         rule = rule[: rule.index("{")]
         for part in (
             ".edify-metric__value",

@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.core.cache import cache
-from django.db.models import Sum
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -61,9 +60,7 @@ def _login_stats():
     # The denominator. Active means the row exists and the school is operating,
     # so a school that has closed leaves both halves of every fraction — it is
     # not reached and it is not part of the portfolio to be reached.
-    portfolio_ids = set(
-        active_schools().values_list("id", flat=True)
-    )
+    portfolio_ids = set(active_schools().values_list("id", flat=True))
     portfolio = len(portfolio_ids)
 
     completed = (

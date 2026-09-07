@@ -764,9 +764,7 @@ def planning_dashboard_view(request):
         "can_schedule": _may_open_schedule_drawer(request.user),
         # Cluster meetings and trainings are the cluster owner's programme;
         # the request-only country roles schedule school visits only.
-        "can_plan_clusters": RolePermissionService.can_schedule_activity(
-            request.user
-        ),
+        "can_plan_clusters": RolePermissionService.can_schedule_activity(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
         "planning_priority": planning_priority,
         "priority_allocation_id": priority_allocation_id,

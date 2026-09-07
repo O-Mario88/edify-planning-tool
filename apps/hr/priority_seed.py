@@ -182,16 +182,36 @@ ACTIVITY_MAPPINGS.update(
         "GOVERNANCE_SCHOOL_VISITS": ["STANDARD_SCHOOL_VISIT"],
         "COUNTRY_OPERATION_VISITS": ["STANDARD_DONOR_VISIT"],
         # SSA coverage: the visit that collects it, per school family
-        "CORE_SSA_COVERAGE": ["STANDARD_SCHOOL_VISIT_SSA_COLLECTION", "ASA_SSA_DATA_GATHERING"],
-        "CLIENT_SSA_COVERAGE": ["STANDARD_SCHOOL_VISIT_SSA_COLLECTION", "ASA_SSA_DATA_GATHERING"],
+        "CORE_SSA_COVERAGE": [
+            "STANDARD_SCHOOL_VISIT_SSA_COLLECTION",
+            "ASA_SSA_DATA_GATHERING",
+        ],
+        "CLIENT_SSA_COVERAGE": [
+            "STANDARD_SCHOOL_VISIT_SSA_COLLECTION",
+            "ASA_SSA_DATA_GATHERING",
+        ],
         # Clusters
         "CLUSTER_COVERAGE": ["STANDARD_CLUSTER_MEETING", "STANDARD_CLUSTER_TRAINING"],
         # Trainings
-        "CORE_SCHOOL_TRAINING": ["STANDARD_IN_SCHOOL_TRAINING", "STANDARD_CLUSTER_TRAINING"],
-        "CLIENT_SCHOOL_TRAINING": ["STANDARD_IN_SCHOOL_TRAINING", "STANDARD_CLUSTER_TRAINING"],
+        "CORE_SCHOOL_TRAINING": [
+            "STANDARD_IN_SCHOOL_TRAINING",
+            "STANDARD_CLUSTER_TRAINING",
+        ],
+        "CLIENT_SCHOOL_TRAINING": [
+            "STANDARD_IN_SCHOOL_TRAINING",
+            "STANDARD_CLUSTER_TRAINING",
+        ],
         "SCHOOLS_TRAINED": ["STANDARD_IN_SCHOOL_TRAINING", "STANDARD_CLUSTER_TRAINING"],
-        "TEACHERS_TRAINED": ["STANDARD_IN_SCHOOL_TRAINING", "STANDARD_CLUSTER_TRAINING"],
-        "LEADERS_TRAINED": ["SCHOOL_LEADERSHIP", "TEACHER_LEADERSHIP_CONFERENCE", "CORE_SCHOOL_ORIENTATION", "NEW_SCHOOL_ORIENTATION"],
+        "TEACHERS_TRAINED": [
+            "STANDARD_IN_SCHOOL_TRAINING",
+            "STANDARD_CLUSTER_TRAINING",
+        ],
+        "LEADERS_TRAINED": [
+            "SCHOOL_LEADERSHIP",
+            "TEACHER_LEADERSHIP_CONFERENCE",
+            "CORE_SCHOOL_ORIENTATION",
+            "NEW_SCHOOL_ORIENTATION",
+        ],
         "DC_TRAINING": ["DISCIPLESHIP_DYNAMICS"],
         "SAFEGUARDING_TRAINING": ["STANDARD_IN_SCHOOL_TRAINING"],
         # Meetings and events
@@ -217,11 +237,23 @@ ACTIVITY_RULE_OPTIONS = {
     "SCHOOL_VISITS": {"counting_basis": "ACTIVITIES_DELIVERED"},
     "GOVERNANCE_SCHOOL_VISITS": {"counting_basis": "ACTIVITIES_DELIVERED"},
     "COUNTRY_OPERATION_VISITS": {"counting_basis": "ACTIVITIES_DELIVERED"},
-    "CORE_SSA_COVERAGE": {"counting_basis": "UNIQUE_SCHOOLS_SUPPORTED", "school_type": "core"},
-    "CLIENT_SSA_COVERAGE": {"counting_basis": "UNIQUE_SCHOOLS_SUPPORTED", "school_type": "client"},
+    "CORE_SSA_COVERAGE": {
+        "counting_basis": "UNIQUE_SCHOOLS_SUPPORTED",
+        "school_type": "core",
+    },
+    "CLIENT_SSA_COVERAGE": {
+        "counting_basis": "UNIQUE_SCHOOLS_SUPPORTED",
+        "school_type": "client",
+    },
     "CLUSTER_COVERAGE": {"counting_basis": "ACTIVITIES_DELIVERED"},
-    "CORE_SCHOOL_TRAINING": {"counting_basis": "UNIQUE_SCHOOLS_TRAINED", "school_type": "core"},
-    "CLIENT_SCHOOL_TRAINING": {"counting_basis": "UNIQUE_SCHOOLS_TRAINED", "school_type": "client"},
+    "CORE_SCHOOL_TRAINING": {
+        "counting_basis": "UNIQUE_SCHOOLS_TRAINED",
+        "school_type": "core",
+    },
+    "CLIENT_SCHOOL_TRAINING": {
+        "counting_basis": "UNIQUE_SCHOOLS_TRAINED",
+        "school_type": "client",
+    },
     "SCHOOLS_TRAINED": {"counting_basis": "UNIQUE_SCHOOLS_TRAINED"},
     "TEACHERS_TRAINED": {"counting_basis": "TEACHERS_TRAINED"},
     "LEADERS_TRAINED": {"counting_basis": "SCHOOL_LEADERS_TRAINED"},

@@ -72,12 +72,8 @@ class ThePlannerSeesANumberTest(TestCase):
         from apps.budget.reference import ensure_cost_reference
 
         catalogue = active_catalogue()
-        CostSetting.objects.filter(
-            catalogue=catalogue, key="lunch_per_day"
-        ).delete()
+        CostSetting.objects.filter(catalogue=catalogue, key="lunch_per_day").delete()
         ensure_cost_reference(catalogue)
-        restored = CostSetting.objects.get(
-            catalogue=catalogue, key="lunch_per_day"
-        )
+        restored = CostSetting.objects.get(catalogue=catalogue, key="lunch_per_day")
         self.assertIsNotNone(restored.approved_minimum)
         self.assertEqual(restored.approved_minimum, restored.unit_cost)

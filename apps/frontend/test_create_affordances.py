@@ -54,7 +54,9 @@ class CostSettingEditIsADrawerTest(SimpleTestCase):
         self.assertTrue(_opens_drawer(self.row, "Edit"), self.row[:400])
 
     def test_the_drawer_is_a_drawer(self):
-        self.assertIn('{% extends "components/drawers/base_drawer.html" %}', self.drawer)
+        self.assertIn(
+            '{% extends "components/drawers/base_drawer.html" %}', self.drawer
+        )
         self.assertIn('class="drawer-footer"', self.drawer)
 
     def test_the_drawer_asks_for_the_prices_and_the_reason(self):

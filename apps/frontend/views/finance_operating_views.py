@@ -392,7 +392,7 @@ def accountant_dashboard_view(request):
         request,
         active=dashboard_view,
         panel_id="accountant-dashboard-view",
-    view_template="partials/finance/accountant_view.html",
+        view_template="partials/finance/accountant_view.html",
         tabs=[
             ("operations", "Operations", "Money movement: disburse, reconcile, chase"),
             ("map", "Map", "The country map and its distribution table"),
@@ -405,7 +405,11 @@ def accountant_dashboard_view(request):
 
         context.update(country_map_context(fy))
     if request.headers.get("HX-Target") == "accountant-dashboard-view-shell":
-        response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
     elif request.headers.get("HX-Target") == "accounts-root":
         response = render(request, "partials/finance/accountant_root.html", context)
     elif request.headers.get("HX-Request") == "true" and request.GET.get("selected"):

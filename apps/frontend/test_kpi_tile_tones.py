@@ -70,9 +70,7 @@ def _tones_in_use() -> dict[str, str]:
 class KpiTileToneContractTest(SimpleTestCase):
     def test_every_tone_in_use_has_an_accent(self):
         css = (ROOT / "static" / "css" / "components.css").read_text(encoding="utf-8")
-        accented = set(
-            re.findall(r"\.kpi-strip__item--([a-z-]+)\s*(?:,|\{)", css)
-        )
+        accented = set(re.findall(r"\.kpi-strip__item--([a-z-]+)\s*(?:,|\{)", css))
         tones = _tones_in_use()
         self.assertTrue(tones, "the scan found no KPI tones — the builders moved")
         for tone, source in sorted(tones.items()):

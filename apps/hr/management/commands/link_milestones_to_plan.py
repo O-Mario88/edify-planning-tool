@@ -56,7 +56,9 @@ class Command(BaseCommand):
                 actor_id=options["actor_id"], dry_run=options["dry_run"]
             )
         if not options["skip_activities"]:
-            report["activities"] = link_activities_to_catalogue(dry_run=options["dry_run"])
+            report["activities"] = link_activities_to_catalogue(
+                dry_run=options["dry_run"]
+            )
         self.stdout.write(json.dumps(report, indent=2, sort_keys=True))
 
 

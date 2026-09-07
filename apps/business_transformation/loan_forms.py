@@ -53,15 +53,17 @@ class PublicLoanApplicationForm(forms.ModelForm):
             "requested_amount": forms.NumberInput(
                 attrs={"min": "1", "step": "1000", "inputmode": "decimal"}
             ),
-            "requested_term_months": forms.NumberInput(attrs={"min": "1", "max": "120"}),
+            "requested_term_months": forms.NumberInput(
+                attrs={"min": "1", "max": "120"}
+            ),
             "intended_use": forms.Textarea(attrs={"rows": 4}),
         }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields["purpose"].queryset = LoanPurpose.objects.filter(active=True).order_by(
-            "label"
-        )
+        self.fields["purpose"].queryset = LoanPurpose.objects.filter(
+            active=True
+        ).order_by("label")
         self.fields["preferred_mfi"].queryset = MfiOrganization.objects.filter(
             active=True, deleted_at__isnull=True
         ).order_by("name")
@@ -76,7 +78,9 @@ class PublicLoanApplicationForm(forms.ModelForm):
         school_id = (cleaned.get("school_id") or "").strip()
         school_name = (cleaned.get("school_name") or "").strip()
         school = School.objects.filter(
-            school_id__iexact=school_id, name__iexact=school_name, deleted_at__isnull=True
+            school_id__iexact=school_id,
+            name__iexact=school_name,
+            deleted_at__isnull=True,
         ).first()
         if not school:
             self.add_error(
@@ -111,5 +115,7 @@ class PublicLoanApplicationForm(forms.ModelForm):
     def clean_requested_term_months(self):
         value = self.cleaned_data.get("requested_term_months")
         if value is not None and value > 120:
-            raise forms.ValidationError("The requested loan term cannot exceed 120 months.")
+            raise forms.ValidationError(
+                "The requested loan term cannot exceed 120 months."
+            )
         return value

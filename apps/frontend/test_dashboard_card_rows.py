@@ -130,11 +130,17 @@ class DashboardCardRowContractTest(SimpleTestCase):
         columns = service.split("PL_AREA_COLUMNS = (", 1)[1].split(")\n", 1)[0]
         self.assertEqual(
             re.findall(r'\("(\w+)", "([^"]+)"\)', columns),
-            [("mscs", "MSCS"), ("school_visits", "School Visit"),
-             ("cluster_trainings", "Training"), ("ssa_completed", "SSA Completed"),
-             ("cluster_meetings", "Cluster Meetings")],
+            [
+                ("mscs", "MSCS"),
+                ("school_visits", "School Visit"),
+                ("cluster_trainings", "Training"),
+                ("ssa_completed", "SSA Completed"),
+                ("cluster_meetings", "Cluster Meetings"),
+            ],
         )
-        self.assertEqual(dashboard.count("{% for key, label in pl_performance.area_columns %}"), 2)
+        self.assertEqual(
+            dashboard.count("{% for key, label in pl_performance.area_columns %}"), 2
+        )
         self.assertIn("r.areas_by_key|get_item:key", dashboard)
         self.assertNotIn("Supervised CCEO Areas", dashboard)
         self.assertIn("CCEO Area Results", oversight)

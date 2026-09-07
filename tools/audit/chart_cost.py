@@ -1,7 +1,9 @@
 """Re-render the CD performance chart with option variants and time each."""
+
 import json
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+
 OUT = Path(__file__).resolve().parent / "out"
 keys = json.loads((OUT / "sessions.json").read_text())
 PROBE = r"""
@@ -32,10 +34,26 @@ async (variant) => {
 }
 """
 with sync_playwright() as p:
-    b = p.chromium.launch(); ctx = b.new_context(viewport={"width": 1440, "height": 900})
-    ctx.add_cookies([{"name": "sessionid", "value": keys["cd"], "domain": "localhost", "path": "/"}])
-    page = ctx.new_page(); page.goto("http://localhost:8000/dashboard?view=operations", wait_until="load"); page.wait_for_timeout(2500)
-    for v in ("as-is", "no-animations", "no-datalabels", "labels-one-series", "no-markers", "no-tooltip-legend", "as-is"):
+    b = p.chromium.launch()
+    ctx = b.new_context(viewport={"width": 1440, "height": 900})
+    ctx.add_cookies(
+        [{"name": "sessionid", "value": keys["cd"], "domain": "localhost", "path": "/"}]
+    )
+    page = ctx.new_page()
+    page.goto("http://localhost:8000/dashboard?view=operations", wait_until="load")
+    page.wait_for_timeout(2500)
+    for v in (
+        "as-is",
+        "no-animations",
+        "no-datalabels",
+        "labels-one-series",
+        "no-markers",
+        "no-tooltip-legend",
+        "as-is",
+    ):
         r = page.evaluate(PROBE, v)
-        print(f"{v:20s} min {r['min']:4d}ms  runs={r['times']}  texts={r['texts']} points={r['points']} series={r['series']}" + (f"  anim={r['anim']} dl={r['dl']}" if v == 'as-is' else ""))
+        print(
+            f"{v:20s} min {r['min']:4d}ms  runs={r['times']}  texts={r['texts']} points={r['points']} series={r['series']}"
+            + (f"  anim={r['anim']} dl={r['dl']}" if v == "as-is" else "")
+        )
     b.close()

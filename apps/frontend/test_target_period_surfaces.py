@@ -17,7 +17,7 @@ def _read(relative_path: str) -> str:
 
 
 class FrozenColumnContractTest(SimpleTestCase):
-    """"The frozen first column on the tables should not be transparent."
+    """ "The frozen first column on the tables should not be transparent."
 
     A sticky column is a curtain the rest of the row scrolls behind. It is
     opaque in every theme only when painted over the page background, because
@@ -48,14 +48,21 @@ class FrozenColumnContractTest(SimpleTestCase):
         area = pages.split(".tt-matrix .tt-area-matrix th:first-child {", 1)[1][:300]
         self.assertIn("background: var(--edify-frozen-surface-muted);", area)
         platform = _read("static/css/platform.css")
-        label = platform.split(":is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label {", 1)[1][:400]
+        label = platform.split(
+            ":is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label {",
+            1,
+        )[1][:400]
         self.assertIn("position: sticky;", label)
         self.assertIn("background: var(--edify-frozen-surface);", label)
         self.assertIn("main table .edify-frozen-cell {", platform)
-        report = platform.split(".edify-report-matrix__table :is(th, td):first-child {", 1)[1][:300]
+        report = platform.split(
+            ".edify-report-matrix__table :is(th, td):first-child {", 1
+        )[1][:300]
         self.assertIn("background: var(--edify-frozen-surface);", report)
         analytics = _read("static/css/pages/analytics-dashboard.css")
-        impact = analytics.split('.impact-analysis-table tbody th[scope="row"] {', 1)[1][:300]
+        impact = analytics.split('.impact-analysis-table tbody th[scope="row"] {', 1)[
+            1
+        ][:300]
         self.assertIn("background: var(--edify-frozen-surface);", impact)
 
     def test_no_template_freezes_a_cell_with_a_bare_utility(self):
@@ -83,7 +90,7 @@ class PeriodMatrixContractTest(SimpleTestCase):
             self.assertIn(measure, shared)
         my_body = _read("templates/partials/targets/my_body.html")
         team_body = _read("templates/partials/targets/team/body.html")
-        self.assertIn('with rows=matrix_rows heads=matrix_heads', my_body)
+        self.assertIn("with rows=matrix_rows heads=matrix_heads", my_body)
         self.assertIn('with variant="team" rows=member.period_matrix_rows', team_body)
         # The team member's dict carries the normalised rows the partial reads.
         service = _read("apps/targets/team_targets.py")
@@ -95,22 +102,36 @@ class PeriodMatrixContractTest(SimpleTestCase):
         # The table leads the page; the six period cards it replaces are gone,
         # and the no-priorities state stands where the table would.
         self.assertNotIn("target-period-progression", my_body)
-        self.assertLess(my_body.index("_period_matrix.html"), my_body.index("strategic_priority_overview.html"))
+        self.assertLess(
+            my_body.index("_period_matrix.html"),
+            my_body.index("strategic_priority_overview.html"),
+        )
         self.assertEqual(my_body.count("no-performance-priorities-title"), 2)
         section = my_body.split("Operational agreements + approved strategic", 1)[1]
         self.assertIn('<details class="edify-disclosure" open>', section)
-        self.assertIn('<h2 id="my-cumulative-progress-title">Cumulative progress by time period</h2>', section)
+        self.assertIn(
+            '<h2 id="my-cumulative-progress-title">Cumulative progress by time period</h2>',
+            section,
+        )
         self.assertIn('class="edify-disclosure__chevron"', section)
         platform = _read("static/css/platform.css")
         self.assertIn("main .edify-disclosure > summary {", platform)
-        self.assertIn("main .edify-disclosure[open] > summary > .edify-disclosure__chevron { transform: rotate(180deg); }", platform)
+        self.assertIn(
+            "main .edify-disclosure[open] > summary > .edify-disclosure__chevron { transform: rotate(180deg); }",
+            platform,
+        )
 
     def test_the_team_row_scrolls_the_wide_matrix_instead_of_clipping_it(self):
         team_body = _read("templates/partials/targets/team/body.html")
-        self.assertIn('class="tt-area-matrix-shell tt-area-matrix-shell--matrix"', team_body)
+        self.assertIn(
+            'class="tt-area-matrix-shell tt-area-matrix-shell--matrix"', team_body
+        )
         platform = _read("static/css/platform.css")
         self.assertIn(".tt-area-matrix-shell--matrix { overflow-x: auto;", platform)
-        self.assertIn(":is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) th,", platform)
+        self.assertIn(
+            ":is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) th,",
+            platform,
+        )
 
 
 class ComposedCardTileContractTest(SimpleTestCase):
@@ -135,9 +156,7 @@ class ComposedCardTileContractTest(SimpleTestCase):
         import re
 
         keys = {
-            asset: re.search(
-                re.escape(asset) + r"' %\}\?v=([0-9a-z]+)", base
-            )
+            asset: re.search(re.escape(asset) + r"' %\}\?v=([0-9a-z]+)", base)
             for asset in ("js/micro-ux.js", "mobile-micro-ux.css")
         }
         self.assertTrue(all(keys.values()), keys)
@@ -160,7 +179,10 @@ class SsaFilterRowContractTest(SimpleTestCase):
             "#ssa-performance-workspace .sp-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }",
             tablet,
         )
-        self.assertIn("#ssa-performance-workspace .sp-filter-actions { grid-column: auto; }", tablet)
+        self.assertIn(
+            "#ssa-performance-workspace .sp-filter-actions { grid-column: auto; }",
+            tablet,
+        )
 
 
 class YearComparisonWordingTest(SimpleTestCase):

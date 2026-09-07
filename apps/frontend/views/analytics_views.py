@@ -45,7 +45,10 @@ def analytics_scope_kpis(request) -> dict:
     so they are computed once here from the same cached dataset the overview
     reads rather than recomputed per section.
     """
-    from apps.analytics.models import DEFAULT_ANALYTICS_CARDS, AnalyticsDashboardPreference
+    from apps.analytics.models import (
+        DEFAULT_ANALYTICS_CARDS,
+        AnalyticsDashboardPreference,
+    )
     from apps.analytics.report_delivery import CARD_CATEGORY
     from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
 

@@ -9,7 +9,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("partners", "0018_partnerassignment_uniq_live_partner_support_slot"),
     ]

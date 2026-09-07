@@ -1356,9 +1356,7 @@ class FrontendViewsTestCase(TestCase):
             f"/cost-settings/row/{breakfast_setting.key}?mode=edit"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, "partials/cost_settings/edit_drawer.html"
-        )
+        self.assertTemplateUsed(response, "partials/cost_settings/edit_drawer.html")
         self.assertContains(response, 'name="unit_cost"')
 
         # 3. Post cost update

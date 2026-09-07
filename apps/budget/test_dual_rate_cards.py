@@ -155,9 +155,7 @@ class DualRateCardSecurityTest(APITestCase):
         }
         reference_lines = {line["key"]: line for line in payload["referenceBreakdown"]}
         self.assertEqual(
-            operational_lines["tot_trainings_meals"][
-                "amount"
-            ],
+            operational_lines["tot_trainings_meals"]["amount"],
             120_000,
         )
         self.assertEqual(
@@ -199,9 +197,7 @@ class DualRateCardSecurityTest(APITestCase):
 
     def test_operational_rate_edit_publishes_new_version_and_preserves_old(self):
         old_card = active_catalogue(self.fy)
-        old_line = CostSetting.objects.get(
-            catalogue=old_card, key="lunch_per_day"
-        )
+        old_line = CostSetting.objects.get(catalogue=old_card, key="lunch_per_day")
         old_amount = old_line.unit_cost
         principal = SimpleNamespace(
             active_role=EdifyRole.COUNTRY_DIRECTOR.value,
@@ -221,9 +217,7 @@ class DualRateCardSecurityTest(APITestCase):
         old_card.refresh_from_db()
         new_card = active_catalogue(self.fy)
         self.assertEqual(
-            CostSetting.objects.get(
-                catalogue=old_card, key="lunch_per_day"
-            ).unit_cost,
+            CostSetting.objects.get(catalogue=old_card, key="lunch_per_day").unit_cost,
             old_amount,
         )
         self.assertEqual(old_line.unit_cost, old_amount + 500)

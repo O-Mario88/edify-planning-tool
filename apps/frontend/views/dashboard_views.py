@@ -21,6 +21,11 @@ from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
 from apps.core.activity_types import VISIT_TYPES
 from apps.core.metrics import MetricValue, render_kpi_item
+from apps.frontend.views.dashboard_view_state import (
+    dashboard_view_tabs,
+    remember_dashboard_view,
+    resolve_dashboard_view,
+)
 
 
 def _export_hr_dashboard_csv(data, *, fy, month, country, department):
@@ -203,13 +208,6 @@ def _build_agenda_item(activity, today):
     return item
 
 
-from apps.frontend.views.dashboard_view_state import (
-    dashboard_view_tabs,
-    remember_dashboard_view,
-    resolve_dashboard_view,
-)
-
-
 def _pl_map_context(user, fy, filters) -> dict:
     """The district table under the Program Lead's map: the same district
     performance rows PL Analytics shows, with each district's region."""
@@ -217,16 +215,22 @@ def _pl_map_context(user, fy, filters) -> dict:
     from apps.geography.models import District
 
     pls = resolve_pl_scope(user, filters)
-    rows = list(PLAnalyticsService.district_performance(pls, fy, None, filters).get("rows") or [])
+    rows = list(
+        PLAnalyticsService.district_performance(pls, fy, None, filters).get("rows")
+        or []
+    )
     regions = {
         d["id"]: d["region__name"]
-        for d in District.objects.filter(id__in=[r["id"] for r in rows if r.get("id")]).values(
-            "id", "region__name"
-        )
+        for d in District.objects.filter(
+            id__in=[r["id"] for r in rows if r.get("id")]
+        ).values("id", "region__name")
     }
     table_rows = [{**r, "region": regions.get(r.get("id"))} for r in rows]
     table_rows.sort(
-        key=lambda r: (r.get("pct") if r.get("pct") is not None else -1, r.get("name") or "")
+        key=lambda r: (
+            r.get("pct") if r.get("pct") is not None else -1,
+            r.get("name") or "",
+        )
     )
     return {"pl_map_rows": table_rows}
 
@@ -331,10 +335,14 @@ def dashboard_view(request):
             request,
             active=dashboard_view,
             panel_id="cd-dashboard-view",
-        view_template="partials/dashboards/cd/view.html",
+            view_template="partials/dashboards/cd/view.html",
             tabs=[
                 ("map", "Map", "The country shaded by delivery, backlog or money"),
-                ("operations", "Operations", "Performance, Program Leads, verification and risk"),
+                (
+                    "operations",
+                    "Operations",
+                    "Performance, Program Leads, verification and risk",
+                ),
             ],
         )
         if dashboard_view == "map":
@@ -342,7 +350,11 @@ def dashboard_view(request):
 
             context.update(country_map_context(fy))
         if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
         elif request.headers.get("HX-Request") == "true":
             response = render(request, "partials/dashboards/cd/body.html", context)
         else:
@@ -404,10 +416,14 @@ def dashboard_view(request):
             request,
             active=dashboard_view,
             panel_id="pl-dashboard-view",
-        view_template="partials/dashboards/pl/view.html",
+            view_template="partials/dashboards/pl/view.html",
             tabs=[
                 ("map", "Map", "Your region's districts shaded by team delivery"),
-                ("operations", "Operations", "Team performance, CCEOs, SSA, funding and actions"),
+                (
+                    "operations",
+                    "Operations",
+                    "Team performance, CCEOs, SSA, funding and actions",
+                ),
             ],
         )
         if dashboard_view == "map":
@@ -416,7 +432,11 @@ def dashboard_view(request):
             context.update(country_map_context(fy))
             context.update(_pl_map_context(request.user, fy, filters))
         if request.headers.get("HX-Target") == "pl-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
         elif request.headers.get("HX-Request") == "true":
             response = render(request, "partials/dashboards/pl/body.html", context)
         else:
@@ -461,10 +481,14 @@ def dashboard_view(request):
             request,
             active=dashboard_view,
             panel_id="rvp-dashboard-view",
-        view_template="partials/dashboards/rvp/view.html",
+            view_template="partials/dashboards/rvp/view.html",
             tabs=[
                 ("map", "Map", "The country map and the region ranking"),
-                ("operations", "Operations", "Budgets, directors, projects, approvals and notes"),
+                (
+                    "operations",
+                    "Operations",
+                    "Budgets, directors, projects, approvals and notes",
+                ),
             ],
             keep=("fy",),
         )
@@ -473,7 +497,11 @@ def dashboard_view(request):
 
             context.update(country_map_context(fy))
         if request.headers.get("HX-Target") == "rvp-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
         else:
             response = render(request, "pages/dashboards/rvp.html", context)
         if view_explicit:
@@ -551,16 +579,29 @@ def dashboard_view(request):
             active=dashboard_view,
             panel_id="hr-dashboard-view",
             view_template="partials/dashboards/hr/view.html",
-            tabs=[("operations", "Operations", "People, policy compliance and workforce planning"), ("map", "Map", "The country map and its distribution table")],
-            keep=('fy', 'month', 'country', 'department'),
+            tabs=[
+                (
+                    "operations",
+                    "Operations",
+                    "People, policy compliance and workforce planning",
+                ),
+                ("map", "Map", "The country map and its distribution table"),
+            ],
+            keep=("fy", "month", "country", "department"),
         )
         if dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context
             from apps.core.fy import get_operational_fy
 
-            context.update(country_map_context(context.get("fy") or get_operational_fy()))
+            context.update(
+                country_map_context(context.get("fy") or get_operational_fy())
+            )
         if request.headers.get("HX-Target") == "hr-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
         elif request.headers.get("HX-Request") == "true":
             response = render(request, "partials/dashboards/hr/body.html", context)
         else:
@@ -900,16 +941,29 @@ def dashboard_view(request):
             active=dashboard_view,
             panel_id="cceo-dashboard-view",
             view_template="partials/dashboards/cceo/view.html",
-            tabs=[("operations", "Week", "Urgent schools, this week's plan and overdue work"), ("map", "Map", "The country map and its distribution table")],
+            tabs=[
+                (
+                    "operations",
+                    "Week",
+                    "Urgent schools, this week's plan and overdue work",
+                ),
+                ("map", "Map", "The country map and its distribution table"),
+            ],
             keep=(),
         )
         if dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context
             from apps.core.fy import get_operational_fy
 
-            context.update(country_map_context(context.get("fy") or get_operational_fy()))
+            context.update(
+                country_map_context(context.get("fy") or get_operational_fy())
+            )
         if request.headers.get("HX-Target") == "cceo-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
         else:
             response = render(request, "pages/dashboards/cceo.html", context)
         if view_explicit:
@@ -1038,18 +1092,29 @@ def dashboard_view(request):
             active=dashboard_view,
             panel_id="projects-dashboard-view",
             view_template="partials/dashboards/special_projects/view.html",
-            tabs=[("operations", "Operations", "Portfolio, impact, partners and actions"), ("map", "Map", "The country map and its distribution table")],
+            tabs=[
+                ("operations", "Operations", "Portfolio, impact, partners and actions"),
+                ("map", "Map", "The country map and its distribution table"),
+            ],
             keep=(),
         )
         if dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context
             from apps.core.fy import get_operational_fy
 
-            context.update(country_map_context(context.get("fy") or get_operational_fy()))
+            context.update(
+                country_map_context(context.get("fy") or get_operational_fy())
+            )
         if request.headers.get("HX-Target") == "projects-dashboard-view-shell":
-            response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
         else:
-            response = render(request, "pages/dashboards/special_projects.html", context)
+            response = render(
+                request, "pages/dashboards/special_projects.html", context
+            )
         if view_explicit:
             remember_dashboard_view(response, role_key="projects", view=dashboard_view)
         return response
@@ -1260,7 +1325,10 @@ def dashboard_view(request):
         active=dashboard_view,
         panel_id="admin-dashboard-view",
         view_template="partials/dashboards/admin/view.html",
-        tabs=[("operations", "Operations", "Platform operations and business overview"), ("map", "Map", "The country map and its distribution table")],
+        tabs=[
+            ("operations", "Operations", "Platform operations and business overview"),
+            ("map", "Map", "The country map and its distribution table"),
+        ],
         keep=(),
     )
     if dashboard_view == "map":
@@ -1269,7 +1337,11 @@ def dashboard_view(request):
 
         context.update(country_map_context(context.get("fy") or get_operational_fy()))
     if request.headers.get("HX-Target") == "admin-dashboard-view-shell":
-        response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
     else:
         response = render(request, "pages/dashboards/main.html", context)
     if view_explicit:

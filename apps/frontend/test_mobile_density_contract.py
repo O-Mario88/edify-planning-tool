@@ -1,5 +1,4 @@
 import re
-import re
 from pathlib import Path
 
 from django.test import SimpleTestCase

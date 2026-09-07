@@ -38,11 +38,15 @@ ROOT = Path(settings.BASE_DIR)
 ACCOUNTANT_CARD = ROOT / "templates" / "pages" / "accounts" / "dashboard.html"
 # The queue's title and prose are built by the view since the page moved onto
 # the shared fund workspace (2026-09-03); the template keeps the link.
-ACCOUNTANT_WORKSPACE = ROOT / "apps" / "frontend" / "views" / "finance_operating_views.py"
+ACCOUNTANT_WORKSPACE = (
+    ROOT / "apps" / "frontend" / "views" / "finance_operating_views.py"
+)
 DISBURSEMENTS_CARD = ROOT / "templates" / "partials" / "disbursements" / "root.html"
 # The Disbursements page renders the shared fund workspace; its queue title is
 # built by the service (2026-09-04).
-DISBURSEMENTS_WORKSPACE = ROOT / "apps" / "fund_requests" / "disbursement_dashboard_service.py"
+DISBURSEMENTS_WORKSPACE = (
+    ROOT / "apps" / "fund_requests" / "disbursement_dashboard_service.py"
+)
 
 OVERVIEW_KEYS = (
     "waiting_for_approval",

@@ -59,39 +59,66 @@ class MilestonePlanProgressTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.cycle = StrategicPriorityCycle.objects.create(
-            financial_year="2026", title="FY2026", scope_type="country", country_id="Uganda"
+            financial_year="2026",
+            title="FY2026",
+            scope_type="country",
+            country_id="Uganda",
         )
         cls.priority = StrategicPriority.objects.create(
-            cycle=cls.cycle, fy="2026", level="country", country_id="Uganda",
-            title="Program Quality", sequence=1,
+            cycle=cls.cycle,
+            fy="2026",
+            level="country",
+            country_id="Uganda",
+            title="Program Quality",
+            sequence=1,
         )
         cls.visit_item = ActivityCatalogueItem.objects.create(
-            stable_code="PLAN-VISIT", source_name="School visit", display_name="School visit",
-            activity_type="school_visit", delivery_method="school_visit",
-            workflow_kind="school_visit", status="active",
+            stable_code="PLAN-VISIT",
+            source_name="School visit",
+            display_name="School visit",
+            activity_type="school_visit",
+            delivery_method="school_visit",
+            workflow_kind="school_visit",
+            status="active",
             # An active item must be costable and evidenced.
-            costing_profile="SCHOOL_VISIT", evidence_profile="VISIT_REPORT",
+            costing_profile="SCHOOL_VISIT",
+            evidence_profile="VISIT_REPORT",
             salesforce_record_type="SCHOOL_VISIT",
         )
         cls.meeting_item = ActivityCatalogueItem.objects.create(
-            stable_code="PLAN-MEET", source_name="Cluster meeting", display_name="Cluster meeting",
-            activity_type="cluster_meeting", delivery_method="cluster_meeting",
-            workflow_kind="cluster_meeting", status="active",
-            costing_profile="CLUSTER_MEETING", evidence_profile="MEETING_MINUTES",
+            stable_code="PLAN-MEET",
+            source_name="Cluster meeting",
+            display_name="Cluster meeting",
+            activity_type="cluster_meeting",
+            delivery_method="cluster_meeting",
+            workflow_kind="cluster_meeting",
+            status="active",
+            costing_profile="CLUSTER_MEETING",
+            evidence_profile="MEETING_MINUTES",
             salesforce_record_type="CLUSTER_MEETING",
         )
         cls.schools_ms = _milestone(
-            cls.cycle, cls.priority, code="M-SCHOOLS", title="Schools supported", target="10"
+            cls.cycle,
+            cls.priority,
+            code="M-SCHOOLS",
+            title="Schools supported",
+            target="10",
         )
         MilestoneActivityRule.objects.create(
-            milestone=cls.schools_ms, catalogue_item=cls.visit_item,
+            milestone=cls.schools_ms,
+            catalogue_item=cls.visit_item,
             counting_basis="UNIQUE_SCHOOLS_SUPPORTED",
         )
         cls.meetings_ms = _milestone(
-            cls.cycle, cls.priority, code="M-MEET", title="Cluster meetings held", target="4"
+            cls.cycle,
+            cls.priority,
+            code="M-MEET",
+            title="Cluster meetings held",
+            target="4",
         )
         MilestoneActivityRule.objects.create(
-            milestone=cls.meetings_ms, catalogue_item=cls.meeting_item,
+            milestone=cls.meetings_ms,
+            catalogue_item=cls.meeting_item,
             counting_basis="ACTIVITIES_COMPLETED",
         )
         cls.unlinked_ms = _milestone(
@@ -102,17 +129,22 @@ class MilestonePlanProgressTest(TestCase):
 
     def _visit(self, school, status, fy="2026"):
         return Activity.objects.create(
-            activity_type="school_visit", status=status, school=school,
-            catalogue_item=self.visit_item, fy=fy,
+            activity_type="school_visit",
+            status=status,
+            school=school,
+            catalogue_item=self.visit_item,
+            fy=fy,
         )
 
     def test_planned_and_completed_count_distinct_schools_against_the_target(self):
         self._visit(self.a, "scheduled")
-        self._visit(self.a, "completed")          # same school, done
+        self._visit(self.a, "completed")  # same school, done
         self._visit(self.b, "planned")
-        self._visit(self.b, "cancelled")          # neither planned nor done
+        self._visit(self.b, "cancelled")  # neither planned nor done
 
-        out = milestone_plan_progress([self.schools_ms, self.meetings_ms, self.unlinked_ms])
+        out = milestone_plan_progress(
+            [self.schools_ms, self.meetings_ms, self.unlinked_ms]
+        )
         row = out[self.schools_ms.id]
         self.assertEqual(row["unit"], "schools")
         # A and B are planned; A is completed. Distinct schools, not visits.
@@ -126,12 +158,16 @@ class MilestonePlanProgressTest(TestCase):
     def test_a_cluster_meeting_with_no_school_counts(self):
         """Non-school work is in the plan too."""
         Activity.objects.create(
-            activity_type="cluster_meeting", status="completed",
-            catalogue_item=self.meeting_item, fy="2026",
+            activity_type="cluster_meeting",
+            status="completed",
+            catalogue_item=self.meeting_item,
+            fy="2026",
         )
         Activity.objects.create(
-            activity_type="cluster_meeting", status="scheduled",
-            catalogue_item=self.meeting_item, fy="2026",
+            activity_type="cluster_meeting",
+            status="scheduled",
+            catalogue_item=self.meeting_item,
+            fy="2026",
         )
         row = milestone_plan_progress([self.meetings_ms])[self.meetings_ms.id]
         self.assertEqual(row["unit"], "activities")
@@ -177,7 +213,10 @@ class MilestonePlanProgressTest(TestCase):
         from django.utils import timezone
 
         MilestoneProgressCredit.objects.create(
-            rule=rule, activity=done, credited_value=Decimal("1"), credited_at=timezone.now()
+            rule=rule,
+            activity=done,
+            credited_value=Decimal("1"),
+            credited_at=timezone.now(),
         )
         row = milestone_plan_progress([self.schools_ms])[self.schools_ms.id]
         self.assertEqual(row["verified"], Decimal("1"))
@@ -190,16 +229,20 @@ class MilestonePlanProgressTest(TestCase):
 
     def test_another_year_does_not_count(self):
         self._visit(self.a, "completed", fy="2025")
-        row = milestone_plan_progress([self.schools_ms], fy="2026").get(self.schools_ms.id)
+        row = milestone_plan_progress([self.schools_ms], fy="2026").get(
+            self.schools_ms.id
+        )
         self.assertEqual(row["completed"], 0)
 
     def test_the_priority_setting_page_draws_a_meter_per_row(self):
         self._visit(self.a, "completed")
         User = get_user_model()
         cd = User.objects.create_user(
-            email="meter-cd@edify.test", name="Meter CD",
+            email="meter-cd@edify.test",
+            name="Meter CD",
             roles=[EdifyRole.COUNTRY_DIRECTOR.value],
-            active_role=EdifyRole.COUNTRY_DIRECTOR.value, password="StrongPassphrase!23",
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="StrongPassphrase!23",
         )
         self.client.force_login(cd)
         response = self.client.get("/strategic-priorities?fy=2026")
@@ -237,7 +280,9 @@ class LinkMilestonesToPlanTest(TestCase):
 
     def test_shape_of_work_milestones_get_rules_on_the_standard_items(self):
         visits = self._rules("SCHOOL_VISITS")
-        self.assertIn("STANDARD_SCHOOL_VISIT", [r.catalogue_item.stable_code for r in visits])
+        self.assertIn(
+            "STANDARD_SCHOOL_VISIT", [r.catalogue_item.stable_code for r in visits]
+        )
         self.assertTrue(all(r.counting_basis == "ACTIVITIES_DELIVERED" for r in visits))
         # No intervention gate: a visit counts whatever focus its planner named.
         self.assertTrue(all(r.target_intervention == "" for r in visits))
@@ -245,7 +290,9 @@ class LinkMilestonesToPlanTest(TestCase):
         core_ssa = self._rules("CORE_SSA_COVERAGE")
         self.assertTrue(core_ssa)
         self.assertTrue(all(r.school_type == "core" for r in core_ssa))
-        self.assertTrue(all(r.counting_basis == "UNIQUE_SCHOOLS_SUPPORTED" for r in core_ssa))
+        self.assertTrue(
+            all(r.counting_basis == "UNIQUE_SCHOOLS_SUPPORTED" for r in core_ssa)
+        )
 
         clusters = self._rules("CLUSTER_COVERAGE")
         self.assertEqual(
@@ -269,21 +316,32 @@ class LinkMilestonesToPlanTest(TestCase):
     def _activities(self):
         school = School.objects.create(name="Link School", school_id="LINK-1")
         visit = Activity.objects.create(
-            activity_type="school_visit", status="completed", school=school, fy="2027",
+            activity_type="school_visit",
+            status="completed",
+            school=school,
+            fy="2027",
             planned_date=timezone.localdate(),
         )
         meeting = Activity.objects.create(
-            activity_type="cluster_meeting", status="scheduled", fy="2027",
+            activity_type="cluster_meeting",
+            status="scheduled",
+            fy="2027",
             planned_date=timezone.localdate(),
         )
         ssa = Activity.objects.create(
-            activity_type="ssa_activity", status="completed", school=school, fy="2027",
+            activity_type="ssa_activity",
+            status="completed",
+            school=school,
+            fy="2027",
             planned_date=timezone.localdate(),
         )
         # "training" has five governed titles and no standard one: ambiguous,
         # and the resolver refuses to guess.
         training = Activity.objects.create(
-            activity_type="training", status="completed", school=school, fy="2027",
+            activity_type="training",
+            status="completed",
+            school=school,
+            fy="2027",
             planned_date=timezone.localdate(),
         )
         return school, visit, meeting, ssa, training
@@ -305,7 +363,10 @@ class LinkMilestonesToPlanTest(TestCase):
             activity.refresh_from_db()
             self.assertEqual(activity.catalogue_item.stable_code, code)
             # Stamped through the same service the drawer uses.
-            self.assertEqual(activity.delivery_method_snapshot, activity.catalogue_item.delivery_method)
+            self.assertEqual(
+                activity.delivery_method_snapshot,
+                activity.catalogue_item.delivery_method,
+            )
             self.assertIsNotNone(activity.catalogue_version)
         training.refresh_from_db()
         self.assertIsNone(training.catalogue_item)
@@ -320,13 +381,22 @@ class LinkMilestonesToPlanTest(TestCase):
 
         school = School.objects.create(name="Partner School", school_id="LINK-P")
         partner = Partner.objects.create(name="Link Partner", active_status=True)
-        item = ActivityCatalogueItem.objects.get(stable_code="STANDARD_SCHOOL_VISIT_SSA_COLLECTION")
+        item = ActivityCatalogueItem.objects.get(
+            stable_code="STANDARD_SCHOOL_VISIT_SSA_COLLECTION"
+        )
         activity = Activity.objects.create(
-            activity_type="partner_activity", status="completed", school=school, fy="2027",
-            planned_date=timezone.localdate(), delivery_type="partner",
+            activity_type="partner_activity",
+            status="completed",
+            school=school,
+            fy="2027",
+            planned_date=timezone.localdate(),
+            delivery_type="partner",
         )
         PartnerAssignment.objects.create(
-            school=school, partner=partner, catalogue_item=item, scheduled_activity=activity,
+            school=school,
+            partner=partner,
+            catalogue_item=item,
+            scheduled_activity=activity,
             status="scheduled",
         )
         link_activities_to_catalogue()
@@ -360,16 +430,28 @@ class LinkMilestonesToPlanTest(TestCase):
         self.assertEqual((row["completed"], row["planned"]), (2, 0))
         self.assertIsNone(row["pct"])
         clusters = PriorityMilestone.objects.get(code="CLUSTER_COVERAGE")
-        self.assertEqual(milestone_plan_progress([clusters], fy="2027")[clusters.id]["planned"], 1)
+        self.assertEqual(
+            milestone_plan_progress([clusters], fy="2027")[clusters.id]["planned"], 1
+        )
 
     def test_the_meter_shows_counts_until_a_target_exists(self):
         from django.template.loader import render_to_string
 
         html = render_to_string(
             "components/meter.html",
-            {"progress": {"unit": "activities", "target": None, "planned": 3, "completed": 148,
-                          "verified": 0, "pct": None, "planned_pct": None, "classification": None},
-             "meta": True},
+            {
+                "progress": {
+                    "unit": "activities",
+                    "target": None,
+                    "planned": 3,
+                    "completed": 148,
+                    "verified": 0,
+                    "pct": None,
+                    "planned_pct": None,
+                    "classification": None,
+                },
+                "meta": True,
+            },
         )
         self.assertIn("148 done · 3 planned</span>", html)
         self.assertIn("no target yet — define the metric to get a percentage", html)

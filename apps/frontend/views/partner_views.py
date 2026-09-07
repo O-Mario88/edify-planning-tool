@@ -631,7 +631,6 @@ def partner_detail_view(request, partner_id):
     )
     from apps.core.navigation import get_user_role_slug
     from apps.core.scoping import resolve_user_scope
-    from apps.partners.models import PartnerMember
     from apps.ssa.services import get_ssa_progress_by_fy
 
     # The whole history, not a window of it: this is the record.
@@ -727,7 +726,13 @@ def partner_detail_view(request, partner_id):
             return
         row = support.setdefault(
             school_id,
-            {"visits": 0, "visits_done": 0, "trainings": 0, "trainings_done": 0, "last": None},
+            {
+                "visits": 0,
+                "visits_done": 0,
+                "trainings": 0,
+                "trainings_done": 0,
+                "last": None,
+            },
         )
         row[kind] += 1
         if a.status in COMPLETED_WORK_STATUSES:
@@ -736,7 +741,13 @@ def partner_detail_view(request, partner_id):
             row["last"] = a.planned_date
 
     for a in activities:
-        kind = "visits" if a.activity_type in VISIT_TYPES else "trainings" if a.activity_type in TRAINING_TYPES else None
+        kind = (
+            "visits"
+            if a.activity_type in VISIT_TYPES
+            else "trainings"
+            if a.activity_type in TRAINING_TYPES
+            else None
+        )
         if not kind:
             continue
         touch(a.school_id, a, kind)
@@ -748,8 +759,9 @@ def partner_detail_view(request, partner_id):
     if support:
         schools_by_id = {
             s.id: s
-            for s in School.objects.filter(id__in=support.keys(), deleted_at__isnull=True)
-            .select_related("district")
+            for s in School.objects.filter(
+                id__in=support.keys(), deleted_at__isnull=True
+            ).select_related("district")
         }
         latest: dict[str, list] = {}
         for rec in (
@@ -787,7 +799,9 @@ def partner_detail_view(request, partner_id):
                     "ssa_status": school.get_current_fy_ssa_status_display(),
                 }
             )
-        supported_schools.sort(key=lambda r: (r["last"] is None, r["last"] and -r["last"].toordinal()))
+        supported_schools.sort(
+            key=lambda r: (r["last"] is None, r["last"] and -r["last"].toordinal())
+        )
 
     role_slug = get_user_role_slug(request.user)
     scope = resolve_user_scope(request.user)
@@ -812,7 +826,9 @@ def partner_detail_view(request, partner_id):
         "kinds": sorted(kinds.items(), key=lambda kv: -kv[1]),
         "total": len(activities),
         "members": members,
-        "named_on_deliveries": sorted(named_on_deliveries.items(), key=lambda kv: -kv[1]),
+        "named_on_deliveries": sorted(
+            named_on_deliveries.items(), key=lambda kv: -kv[1]
+        ),
         "school_count": partner_schools.count(),
         "partner_progress": partner_progress,
         "supported_schools": supported_schools,
@@ -875,12 +891,22 @@ def partner_edit_drawer_view(request, partner_id):
         }
         if country_side:
             if not name:
-                return render(request, "partials/partners/edit_drawer.html", drawer_context("Organisation name is required."))
+                return render(
+                    request,
+                    "partials/partners/edit_drawer.html",
+                    drawer_context("Organisation name is required."),
+                )
             payload["name"] = name
             payload["regionName"] = (request.POST.get("region_name") or "").strip()
             intervention = (request.POST.get("ssa_intervention") or "").strip()
-            if intervention and intervention not in {v for v, _ in SsaIntervention.choices}:
-                return render(request, "partials/partners/edit_drawer.html", drawer_context("Choose a valid SSA intervention."))
+            if intervention and intervention not in {
+                v for v, _ in SsaIntervention.choices
+            }:
+                return render(
+                    request,
+                    "partials/partners/edit_drawer.html",
+                    drawer_context("Choose a valid SSA intervention."),
+                )
         try:
             update_partner(partner.id, payload, request.user)
             if country_side and intervention:
@@ -889,7 +915,11 @@ def partner_edit_drawer_view(request, partner_id):
                 partner.ssa_intervention = intervention
                 partner.save(update_fields=["ssa_intervention", "updated_at"])
         except (BadRequest, Forbidden, NotFoundError) as exc:
-            return render(request, "partials/partners/edit_drawer.html", drawer_context(str(getattr(exc, "detail", exc))))
+            return render(
+                request,
+                "partials/partners/edit_drawer.html",
+                drawer_context(str(getattr(exc, "detail", exc))),
+            )
         return HttpResponse("<script>window.location.reload();</script>")
 
     return render(request, "partials/partners/edit_drawer.html", drawer_context())
@@ -901,7 +931,6 @@ def partner_status_action(request, partner_id):
     has, for the reader who is already on the organisation's page."""
 
     from django.contrib import messages
-    from django.views.decorators.http import require_POST
 
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
     from apps.partners.services import set_partner_status
@@ -947,7 +976,9 @@ def partner_member_action(request, partner_id):
         return HttpResponseForbidden("POST required.")
     try:
         if (request.POST.get("action") or "") == "remove":
-            remove_member(partner_id, (request.POST.get("member_id") or "").strip(), request.user)
+            remove_member(
+                partner_id, (request.POST.get("member_id") or "").strip(), request.user
+            )
             messages.success(request, "Removed from the roster.")
         else:
             member = add_member(partner_id, request.POST.dict(), request.user)
@@ -956,7 +987,9 @@ def partner_member_action(request, partner_id):
         messages.error(request, str(getattr(exc, "detail", exc)))
     if request.headers.get("HX-Request") == "true":
         response = HttpResponse(status=204)
-        response["HX-Redirect"] = reverse("frontend:partner_detail", kwargs={"partner_id": partner_id})
+        response["HX-Redirect"] = reverse(
+            "frontend:partner_detail", kwargs={"partner_id": partner_id}
+        )
         return response
     return redirect("frontend:partner_detail", partner_id=partner_id)
 

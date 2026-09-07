@@ -35,19 +35,46 @@ ACTIVITY_KINDS = (
 
 # The workflow the platform runs for a catalogue type delivered a given way.
 _WORKFLOW = {
-    (CatalogueActivityType.SCHOOL_VISIT, DeliveryMethod.SCHOOL_VISIT): ActivityType.SCHOOL_VISIT,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.IN_SCHOOL_TRAINING): ActivityType.IN_SCHOOL_TRAINING,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.CLUSTER_TRAINING): ActivityType.CLUSTER_TRAINING,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.CLUSTER_MEETING): ActivityType.CLUSTER_MEETING,
+    (
+        CatalogueActivityType.SCHOOL_VISIT,
+        DeliveryMethod.SCHOOL_VISIT,
+    ): ActivityType.SCHOOL_VISIT,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.IN_SCHOOL_TRAINING,
+    ): ActivityType.IN_SCHOOL_TRAINING,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.CLUSTER_TRAINING,
+    ): ActivityType.CLUSTER_TRAINING,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.CLUSTER_MEETING,
+    ): ActivityType.CLUSTER_MEETING,
     (CatalogueActivityType.TRAINING, DeliveryMethod.ONLINE): ActivityType.TRAINING,
     (CatalogueActivityType.TRAINING, DeliveryMethod.GROUP): ActivityType.TRAINING,
-    (CatalogueActivityType.TRAINING, DeliveryMethod.PROGRAMME_EVENT): ActivityType.PROGRAMME_EVENT,
-    (CatalogueActivityType.YOUTH_CAMP, DeliveryMethod.GROUP): ActivityType.PROGRAMME_EVENT,
-    (CatalogueActivityType.PROGRAMME_EVENT, DeliveryMethod.GROUP): ActivityType.PROGRAMME_EVENT,
-    (CatalogueActivityType.PROGRAMME_EVENT, DeliveryMethod.PROGRAMME_EVENT): ActivityType.PROGRAMME_EVENT,
+    (
+        CatalogueActivityType.TRAINING,
+        DeliveryMethod.PROGRAMME_EVENT,
+    ): ActivityType.PROGRAMME_EVENT,
+    (
+        CatalogueActivityType.YOUTH_CAMP,
+        DeliveryMethod.GROUP,
+    ): ActivityType.PROGRAMME_EVENT,
+    (
+        CatalogueActivityType.PROGRAMME_EVENT,
+        DeliveryMethod.GROUP,
+    ): ActivityType.PROGRAMME_EVENT,
+    (
+        CatalogueActivityType.PROGRAMME_EVENT,
+        DeliveryMethod.PROGRAMME_EVENT,
+    ): ActivityType.PROGRAMME_EVENT,
     (CatalogueActivityType.FIELD_EVENT, DeliveryMethod.GROUP): ActivityType.FIELD_EVENT,
     (CatalogueActivityType.ADMIN, DeliveryMethod.ADMIN): ActivityType.PARTNER_ACTIVITY,
-    (CatalogueActivityType.ADMIN, DeliveryMethod.CLUSTER_MEETING): ActivityType.PARTNER_ACTIVITY,
+    (
+        CatalogueActivityType.ADMIN,
+        DeliveryMethod.CLUSTER_MEETING,
+    ): ActivityType.PARTNER_ACTIVITY,
 }
 
 # Evidence and Salesforce record by catalogue type: what the seed rows use.
@@ -90,7 +117,9 @@ def create_catalogue_item(data: dict, *, actor_id: str) -> ActivityCatalogueItem
         raise BadRequest("An activity with this name already exists.")
     kind = data.get("kind")
     if kind not in {k for k, _ in ACTIVITY_KINDS}:
-        raise BadRequest("Say whether this is a school activity or a non-school activity.")
+        raise BadRequest(
+            "Say whether this is a school activity or a non-school activity."
+        )
     activity_type = data.get("activityType")
     if activity_type not in CatalogueActivityType.values:
         raise BadRequest("Choose the activity type.")
@@ -112,7 +141,10 @@ def create_catalogue_item(data: dict, *, actor_id: str) -> ActivityCatalogueItem
 
     school = kind == "school"
     evidence, record_type, prefix = _EVIDENCE[activity_type]
-    cluster = delivery in (DeliveryMethod.CLUSTER_TRAINING, DeliveryMethod.CLUSTER_MEETING)
+    cluster = delivery in (
+        DeliveryMethod.CLUSTER_TRAINING,
+        DeliveryMethod.CLUSTER_MEETING,
+    )
     row = _item(
         stable_code_for(name),
         name,
@@ -123,7 +155,9 @@ def create_catalogue_item(data: dict, *, actor_id: str) -> ActivityCatalogueItem
         # A mapping row without an intervention is an administrative one;
         # the table's shape constraint says so.
         mapping_mode=MappingMode.FIXED if intervention else MappingMode.ADMINISTRATIVE,
-        target_audience=str(data.get("targetAudience") or ("School staff" if school else "Programme")),
+        target_audience=str(
+            data.get("targetAudience") or ("School staff" if school else "Programme")
+        ),
         evidence_profile=evidence,
         salesforce_record_type=record_type,
         salesforce_expected_prefix=prefix,
@@ -134,7 +168,8 @@ def create_catalogue_item(data: dict, *, actor_id: str) -> ActivityCatalogueItem
         cluster=cluster,
         project=school,
         requires_ssa=False,
-        non_school=not school or delivery in (DeliveryMethod.GROUP, DeliveryMethod.PROGRAMME_EVENT),
+        non_school=not school
+        or delivery in (DeliveryMethod.GROUP, DeliveryMethod.PROGRAMME_EVENT),
         multi_day=bool(data.get("multiDay")),
         participant_counts=bool(data.get("participantCounts")),
         support_objective="SSA_INTERVENTION_SUPPORT" if intervention else "",

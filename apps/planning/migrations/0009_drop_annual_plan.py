@@ -4,20 +4,19 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('planning', '0008_alter_annualplanactivity_activity_type'),
+        ("planning", "0008_alter_annualplanactivity_activity_type"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='annualplanactivity',
-            name='annual_plan',
+            model_name="annualplanactivity",
+            name="annual_plan",
         ),
         migrations.DeleteModel(
-            name='AnnualPlan',
+            name="AnnualPlan",
         ),
         migrations.DeleteModel(
-            name='AnnualPlanActivity',
+            name="AnnualPlanActivity",
         ),
     ]

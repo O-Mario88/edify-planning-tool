@@ -530,9 +530,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         lunch_total = sum(
             line.amount
             for a in day_activities
-            for line in a.schedule_cost_lines.filter(
-                cost_setting_key="lunch_per_day"
-            )
+            for line in a.schedule_cost_lines.filter(cost_setting_key="lunch_per_day")
         )
         self.assertEqual(lunch_total, 30000)
 
@@ -605,9 +603,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             approved_minimum=100001
         )
-        CostSetting.objects.filter(key="lunch_per_day").update(
-            approved_minimum=10001
-        )
+        CostSetting.objects.filter(key="lunch_per_day").update(approved_minimum=10001)
         result = self._schedule(
             ["BATCH-P-1", "BATCH-P-2", "BATCH-P-3"], date(2026, 8, 10)
         )
@@ -658,7 +654,9 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         # A cluster training feeds nobody in the 2026-09-06 catalogue: only a
         # TOT training carries the meals rate.
         self.assertFalse(
-            training.schedule_cost_lines.filter(cost_setting_key="tot_trainings_meals").exists()
+            training.schedule_cost_lines.filter(
+                cost_setting_key="tot_trainings_meals"
+            ).exists()
         )
         self.assertEqual(
             sum(activities.values_list("est_cost_cents", flat=True)), 580000
@@ -693,7 +691,9 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         # training (2026-09-06 catalogue), so the headcount changes nothing.
         self.assertEqual(result["estCostCents"], 155000 + 60000 + 70000)
         self.assertFalse(
-            training.schedule_cost_lines.filter(cost_setting_key="tot_trainings_meals").exists()
+            training.schedule_cost_lines.filter(
+                cost_setting_key="tot_trainings_meals"
+            ).exists()
         )
         self.assertEqual(
             ActivityScheduleCostLine.objects.filter(
@@ -740,9 +740,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             approved_minimum=100000
         )
-        CostSetting.objects.filter(key="lunch_per_day").update(
-            approved_minimum=20000
-        )
+        CostSetting.objects.filter(key="lunch_per_day").update(approved_minimum=20000)
         self._schedule(
             ["BATCH-P-1", "BATCH-P-2"], date(2026, 8, 10), reason="Two visits"
         )
@@ -768,7 +766,6 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
     def test_secondary_daily_components_are_charged_once_across_schools(self):
         from django.db.models import Sum
         from apps.budget.costing_service import planned_minimum_amounts
-
 
         CostSetting.objects.update_or_create(
             key="secondary_breakfast_per_day",
@@ -875,9 +872,7 @@ class OneMissionCostPerDayTest(DailyVisitBatchTestCase):
         CostSetting.objects.filter(key="primary_transport_per_day").update(
             approved_minimum=100000
         )
-        CostSetting.objects.filter(key="lunch_per_day").update(
-            approved_minimum=20000
-        )
+        CostSetting.objects.filter(key="lunch_per_day").update(approved_minimum=20000)
         self._schedule(
             ["BATCH-P-1", "BATCH-P-2"], date(2026, 8, 10), reason="Two visits"
         )

@@ -224,9 +224,7 @@ def _link_activity_rules(milestone, milestone_code, source_text, report) -> None
     """
     mapped_codes = ACTIVITY_MAPPINGS.get(milestone_code, [])
     for stable_code in mapped_codes:
-        item = ActivityCatalogueItem.objects.filter(
-            stable_code=stable_code
-        ).first()
+        item = ActivityCatalogueItem.objects.filter(stable_code=stable_code).first()
         if item is None:
             ActivityCatalogueReviewQueue.objects.get_or_create(
                 review_kind="missing_activity_catalogue_mapping",

@@ -1,7 +1,10 @@
 """Full-document style recalc cost, per stylesheet, plus universal-bucket selector counts."""
-import json, sys
+
+import json
+import sys
 from pathlib import Path
 from playwright.sync_api import sync_playwright
+
 OUT = Path(__file__).resolve().parent / "out"
 role, url = sys.argv[1], sys.argv[2]
 keys = json.loads((OUT / "sessions.json").read_text())
@@ -28,10 +31,19 @@ PROBE = r"""
 })()
 """
 with sync_playwright() as p:
-    b = p.chromium.launch(); ctx = b.new_context(viewport={"width": 1440, "height": 900})
-    ctx.add_cookies([{"name": "sessionid", "value": keys[role], "domain": "localhost", "path": "/"}])
-    page = ctx.new_page(); page.goto("http://localhost:8000" + url, wait_until="load"); page.wait_for_timeout(2500)
-    r = page.evaluate(PROBE); b.close()
+    b = p.chromium.launch()
+    ctx = b.new_context(viewport={"width": 1440, "height": 900})
+    ctx.add_cookies(
+        [{"name": "sessionid", "value": keys[role], "domain": "localhost", "path": "/"}]
+    )
+    page = ctx.new_page()
+    page.goto("http://localhost:8000" + url, wait_until="load")
+    page.wait_for_timeout(2500)
+    r = page.evaluate(PROBE)
+    b.close()
 print(f"full-document recalc: {r['base']}ms over {r['elements']} elements")
 print("  saved(ms) selectors universal-rightmost sheet")
-for row in r["rows"]: print(f"  {row['saved']:7.1f} {row['rules']:6d} {row['universal']:6d}   {row['sheet']}")
+for row in r["rows"]:
+    print(
+        f"  {row['saved']:7.1f} {row['rules']:6d} {row['universal']:6d}   {row['sheet']}"
+    )

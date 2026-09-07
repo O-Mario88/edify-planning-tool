@@ -85,10 +85,17 @@ def _disbursement_voucher(ctx):
     for stage in selected.get("chain", []):
         writer.writerow([stage["label"], stage["state"].replace("_", " ")])
     writer.writerow([])
-    writer.writerow(["Activity category", "Planned qty", "Unit cost (UGX)", "Total (UGX)"])
+    writer.writerow(
+        ["Activity category", "Planned qty", "Unit cost (UGX)", "Total (UGX)"]
+    )
     for row in selected.get("breakdown", []):
         writer.writerow(
-            [row["category"], row.get("qty") or "", row.get("unit_cost") or "", int(row["raw_total"] or 0)]
+            [
+                row["category"],
+                row.get("qty") or "",
+                row.get("unit_cost") or "",
+                int(row["raw_total"] or 0),
+            ]
         )
     writer.writerow(["Total", "", "", int(selected["raw_amount"] or 0)])
     if selected.get("disburse_reference"):
@@ -120,7 +127,9 @@ def disbursements_view(request):
             f'attachment; filename="disbursements-{ctx["fy"]}-{ctx["month"]:02d}.csv"'
         )
         writer = csv.writer(response)
-        writer.writerow(["Requester", "Fund type", "Reference", "Amount (UGX)", "Status"])
+        writer.writerow(
+            ["Requester", "Fund type", "Reference", "Amount (UGX)", "Status"]
+        )
         for item in ctx["queue"]:
             writer.writerow(
                 [
@@ -672,7 +681,9 @@ def cost_settings_view(request):
 
         # The registry's order — activity rates, partner rates, session
         # components, travel — then the costs added for one activity.
-        order = {key: index for index, (key, _label, _cost) in enumerate(CANONICAL_RATES)}
+        order = {
+            key: index for index, (key, _label, _cost) in enumerate(CANONICAL_RATES)
+        }
         cost_items = sorted(
             visible_rates(active_catalogue).select_related("catalogue_item"),
             key=lambda item: (order.get(item.key, len(order)), item.label.lower()),
@@ -1084,7 +1095,6 @@ def cost_setting_row_view(request, key):
     from apps.budget.models import CostSetting, RateCardKind
     from apps.budget import services as budget_services
     from apps.budget.costing_service import active_catalogue
-    from apps.budget.reference import CANONICAL_RATE_KEYS
 
     if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
@@ -1095,7 +1105,9 @@ def cost_setting_row_view(request, key):
 
     from apps.budget.services import visible_rates
 
-    setting = get_object_or_404(visible_rates(catalogue).select_related("catalogue_item"), key=key)
+    setting = get_object_or_404(
+        visible_rates(catalogue).select_related("catalogue_item"), key=key
+    )
     mode = request.GET.get("mode", "view")
 
     if request.method == "POST":
@@ -1127,9 +1139,7 @@ def cost_setting_row_view(request, key):
                 # page header names the catalogue. Swapping one row back would
                 # leave the rest of the page quietly stale, so the drawer
                 # closes and the page re-reads itself.
-                closing = HttpResponse(
-                    "<script>window.location.reload();</script>"
-                )
+                closing = HttpResponse("<script>window.location.reload();</script>")
                 closing["HX-Trigger"] = "close-drawer"
                 return closing
         except ValueError:

@@ -542,13 +542,17 @@ class ImpactPageTest(TestCase):
 
         # The section's own filter form names its workspace as the target and
         # gets just that fragment back.
-        res = client.get("/impact", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="impact-workspace")
+        res = client.get(
+            "/impact", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="impact-workspace"
+        )
         self.assertEqual(res.status_code, 200)
         self.assertTemplateUsed(res, "partials/analytics/impact_workspace.html")
         self.assertTemplateNotUsed(res, "pages/analytics/workspace.html")
 
         # A tab click asks for the scope and gets the tiles, tablist and panel.
-        res = client.get("/impact", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="analytics-scope")
+        res = client.get(
+            "/impact", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="analytics-scope"
+        )
         self.assertEqual(res.status_code, 200)
         self.assertTemplateUsed(res, "partials/analytics/scope.html")
         self.assertTemplateUsed(res, "partials/analytics/panels/impact_analytics.html")

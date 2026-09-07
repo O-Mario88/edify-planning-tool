@@ -14,15 +14,28 @@ from playwright.sync_api import sync_playwright
 BASE = "http://localhost:8000"
 SCRATCH = Path(__file__).resolve().parent / "out"
 EMAILS = {
-    "superuser": "edwin.omario@gmail.com", "cd": "cd@edify.org", "pl": "pl1@edify.org",
-    "ia": "ia@edify.org", "accountant": "accountant@edify.org",
+    "superuser": "edwin.omario@gmail.com",
+    "cd": "cd@edify.org",
+    "pl": "pl1@edify.org",
+    "ia": "ia@edify.org",
+    "accountant": "accountant@edify.org",
 }
 EXTRA = {
     "cd": ["/dashboard?view=map", "/dashboard?view=operations"],
-    "pl": ["/dashboard?view=map", "/dashboard?view=operations", "/analytics/program-lead"],
+    "pl": [
+        "/dashboard?view=map",
+        "/dashboard?view=operations",
+        "/analytics/program-lead",
+    ],
     "ia": ["/ia/dashboard/?view=map", "/ia/dashboard/?view=operations"],
     "accountant": ["/accounts", "/accounts?view=map"],
-    "superuser": ["/dashboard?view=map", "/analytics/verification-quality", "/analytics/people", "/reports", "/team-targets"],
+    "superuser": [
+        "/dashboard?view=map",
+        "/analytics/verification-quality",
+        "/analytics/people",
+        "/reports",
+        "/team-targets",
+    ],
 }
 INIT = """
 window.__edifyLong = []; window.__edifyErrors = [];
@@ -43,18 +56,40 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for role in wanted:
-            pages = list(dict.fromkeys(EXTRA.get(role, []) + urls.get(EMAILS[role], [])))
+            pages = list(
+                dict.fromkeys(EXTRA.get(role, []) + urls.get(EMAILS[role], []))
+            )
             ctx = browser.new_context(viewport={"width": 1440, "height": 900})
-            ctx.add_cookies([{"name": "sessionid", "value": keys[role], "domain": "localhost", "path": "/"}])
+            ctx.add_cookies(
+                [
+                    {
+                        "name": "sessionid",
+                        "value": keys[role],
+                        "domain": "localhost",
+                        "path": "/",
+                    }
+                ]
+            )
             ctx.add_init_script(INIT)
             page = ctx.new_page()
             page.set_default_timeout(25000)
             console = []
             failed = []
-            page.on("console", lambda m: console.append((m.type, m.text[:200])) if m.type in ("error", "warning") else None)
-            page.on("response", lambda r: failed.append((r.status, r.url.replace(BASE, "")[:120])) if r.status >= 400 else None)
+            page.on(
+                "console",
+                lambda m: console.append((m.type, m.text[:200]))
+                if m.type in ("error", "warning")
+                else None,
+            )
+            page.on(
+                "response",
+                lambda r: failed.append((r.status, r.url.replace(BASE, "")[:120]))
+                if r.status >= 400
+                else None,
+            )
             for url in pages:
-                console.clear(); failed.clear()
+                console.clear()
+                failed.clear()
                 rec = {"role": role, "url": url}
                 try:
                     page.goto(BASE + url, wait_until="load")
@@ -70,14 +105,29 @@ def main():
                     rec["error"] = str(exc)[:200]
                 results.append(rec)
                 flag = ""
-                if rec.get("console"): flag += " CONSOLE"
-                if rec.get("failed"): flag += " FAILED"
-                if any(d >= 100 for d in rec.get("long", [])): flag += " LONGTASK"
-                if (rec.get("dcl") or 0) > 1500: flag += " SLOW"
-                print(role, url, rec.get("ttfb"), rec.get("dcl"), rec.get("load"), "long=" + str(sorted(rec.get("long", []), reverse=True)[:3]), flag, flush=True)
+                if rec.get("console"):
+                    flag += " CONSOLE"
+                if rec.get("failed"):
+                    flag += " FAILED"
+                if any(d >= 100 for d in rec.get("long", [])):
+                    flag += " LONGTASK"
+                if (rec.get("dcl") or 0) > 1500:
+                    flag += " SLOW"
+                print(
+                    role,
+                    url,
+                    rec.get("ttfb"),
+                    rec.get("dcl"),
+                    rec.get("load"),
+                    "long=" + str(sorted(rec.get("long", []), reverse=True)[:3]),
+                    flag,
+                    flush=True,
+                )
             ctx.close()
         browser.close()
-    (SCRATCH / ("browser_audit_%s.json" % "_".join(wanted))).write_text(json.dumps(results, indent=1))
+    (SCRATCH / ("browser_audit_%s.json" % "_".join(wanted))).write_text(
+        json.dumps(results, indent=1)
+    )
     print("done", len(results))
 
 

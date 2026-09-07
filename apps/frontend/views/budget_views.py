@@ -757,7 +757,9 @@ def _build_fund_requests_context(request):
     ]
 
     # 4. Weekly Fund Request details
-    _self_heal_weekly_request(user, activities_qs, selected_week_start, selected_week_end)
+    _self_heal_weekly_request(
+        user, activities_qs, selected_week_start, selected_week_end
+    )
     active_wfr = wfr_qs.filter(week_start_date=selected_week_start).first()
     weekly_lines = []
     weekly_total = 0

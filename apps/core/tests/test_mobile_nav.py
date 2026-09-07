@@ -251,7 +251,9 @@ class MobileNavLabelTests(SimpleTestCase):
             for section in sections
             for item in section["items"]
         }
-        self.assertEqual(sidebar_labels["weekly_fund_request"], "Weekly Advance Request")
+        self.assertEqual(
+            sidebar_labels["weekly_fund_request"], "Weekly Advance Request"
+        )
 
     def test_short_labels_stay_short_enough_for_a_tab(self):
         # ~10 characters is what fits a fifth of a 360px screen at 11px before

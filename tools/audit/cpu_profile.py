@@ -18,7 +18,16 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         ctx = browser.new_context(viewport={"width": 1440, "height": 900})
-        ctx.add_cookies([{"name": "sessionid", "value": keys[role], "domain": "localhost", "path": "/"}])
+        ctx.add_cookies(
+            [
+                {
+                    "name": "sessionid",
+                    "value": keys[role],
+                    "domain": "localhost",
+                    "path": "/",
+                }
+            ]
+        )
         page = ctx.new_page()
         for url in pages:
             cdp = ctx.new_cdp_session(page)
@@ -35,13 +44,22 @@ def main():
             samples = profile.get("samples", [])
             for sample, delta in zip(samples, deltas):
                 n = nodes[sample]["callFrame"]
-                key = (n["functionName"] or "(anonymous)", n["url"].split("/")[-1].split("?")[0][:40], n.get("lineNumber", 0))
+                key = (
+                    n["functionName"] or "(anonymous)",
+                    n["url"].split("/")[-1].split("?")[0][:40],
+                    n.get("lineNumber", 0),
+                )
                 self_time[key] += delta / 1000.0
             total = sum(self_time.values())
             top = sorted(self_time.items(), key=lambda kv: -kv[1])[:12]
             print(f"\n### {url} sampled {total:.0f}ms")
             for (fn, src, line), ms in top:
-                if ms < 15 or fn in ("(root)", "(idle)", "(program)", "(garbage collector)"):
+                if ms < 15 or fn in (
+                    "(root)",
+                    "(idle)",
+                    "(program)",
+                    "(garbage collector)",
+                ):
                     continue
                 print(f"  {ms:6.0f}ms  {fn}  [{src}:{line}]")
         browser.close()

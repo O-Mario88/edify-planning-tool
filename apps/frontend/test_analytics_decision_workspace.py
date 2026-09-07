@@ -26,9 +26,7 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         self.assertIn("items=executive_kpi_items", pulse)
         self.assertIn("items=additional_kpi_items", pulse)
         scope = _read("templates/partials/analytics/scope.html")
-        self.assertLess(
-            scope.index("tiles_template"), scope.index("tab_rail.html")
-        )
+        self.assertLess(scope.index("tiles_template"), scope.index("tab_rail.html"))
         # The country map moved to the Map view of the home dashboards
         # (owner, 2026-09-05): the overview opens on its decision cards.
         self.assertNotIn("regional_performance.html", cards)

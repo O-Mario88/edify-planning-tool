@@ -9,7 +9,6 @@ plain card surfaces, and a tile with no tone had no accent to paint with.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -28,7 +27,9 @@ class EveryTileHasAnAccentTest(SimpleTestCase):
         variable and the tile came out white."""
         css = _read("static/css/components.css")
         block = css.split(".kpi-strip__item {", 1)[1]
-        self.assertIn("--kpi-accent", css.split("Every tile, not only a toned one", 1)[1][:400])
+        self.assertIn(
+            "--kpi-accent", css.split("Every tile, not only a toned one", 1)[1][:400]
+        )
         self.assertIn("border-color: color-mix(in srgb, var(--kpi-accent)", block)
 
     def test_the_hand_built_tile_defaults_to_neutral_not_transparent(self):

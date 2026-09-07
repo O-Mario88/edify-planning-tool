@@ -934,20 +934,20 @@ class CorePlanningService:
         # instead of two per school (2026-09-06).
         assigned_partner_by_school = {}
         for school_id, partner_id in (
-            PartnerAssignment.objects.filter(school_id__in=school_ids, status="assigned")
+            PartnerAssignment.objects.filter(
+                school_id__in=school_ids, status="assigned"
+            )
             .order_by("school_id", "-created_at")
             .values_list("school_id", "partner_id")
         ):
             assigned_partner_by_school.setdefault(school_id, partner_id)
         latest_confirmed_ssa_by_school = {}
-        for rec in (
-            SsaRecord.objects.filter(
-                school_id__in=school_ids,
-                fy=fy,
-                deleted_at__isnull=True,
-                verification_status="confirmed",
-            ).order_by("school_id", "-date_of_ssa", "-created_at")
-        ):
+        for rec in SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            fy=fy,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        ).order_by("school_id", "-date_of_ssa", "-created_at"):
             latest_confirmed_ssa_by_school.setdefault(rec.school_id, rec)
 
         queue_data = []
@@ -972,7 +972,9 @@ class CorePlanningService:
             # Check Partner Assignment
             assigned_partner_id = assigned_partner_by_school.get(s.id)
             if assigned_partner_id:
-                assigned_partner_name = partner_map.get(assigned_partner_id, "Partner Owner")
+                assigned_partner_name = partner_map.get(
+                    assigned_partner_id, "Partner Owner"
+                )
 
             is_clustered = s.cluster_id is not None and s.cluster_id != ""
 

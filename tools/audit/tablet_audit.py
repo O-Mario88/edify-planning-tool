@@ -8,8 +8,6 @@ under 40px tall inside main.
 """
 
 import json
-import sys
-import time
 from pathlib import Path
 
 from playwright.sync_api import sync_playwright
@@ -30,13 +28,28 @@ EMAILS = {
 }
 EXTRA = {
     "cd": ["/dashboard?view=map", "/dashboard?view=operations"],
-    "pl": ["/dashboard?view=map", "/dashboard?view=operations", "/analytics/program-lead"],
-    "ia": ["/ia/dashboard/?view=map", "/ia/dashboard/?view=operations", "/analytics/verification-quality"],
+    "pl": [
+        "/dashboard?view=map",
+        "/dashboard?view=operations",
+        "/analytics/program-lead",
+    ],
+    "ia": [
+        "/ia/dashboard/?view=map",
+        "/ia/dashboard/?view=operations",
+        "/analytics/verification-quality",
+    ],
     "accountant": ["/accounts", "/accounts?view=map"],
     "superuser": [
-        "/analytics/ssa-performance", "/analytics/visit-effectiveness", "/analytics/impact",
-        "/analytics/declining-schools", "/analytics/people", "/analytics/closure-quality",
-        "/analytics/publishing-status", "/reports", "/targets", "/target-distribution/team",
+        "/analytics/ssa-performance",
+        "/analytics/visit-effectiveness",
+        "/analytics/impact",
+        "/analytics/declining-schools",
+        "/analytics/people",
+        "/analytics/closure-quality",
+        "/analytics/publishing-status",
+        "/reports",
+        "/targets",
+        "/target-distribution/team",
     ],
 }
 VIEWPORTS = {"portrait": (820, 1180), "landscape": (1180, 820)}
@@ -82,10 +95,26 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for role, key in SESSIONS.items():
-            pages = list(dict.fromkeys(urls.get(EMAILS[role], []) + EXTRA.get(role, [])))
+            pages = list(
+                dict.fromkeys(urls.get(EMAILS[role], []) + EXTRA.get(role, []))
+            )
             for name, (w, h) in VIEWPORTS.items():
-                ctx = browser.new_context(viewport={"width": w, "height": h}, device_scale_factor=1, has_touch=True, is_mobile=False)
-                ctx.add_cookies([{"name": "sessionid", "value": key, "domain": "localhost", "path": "/"}])
+                ctx = browser.new_context(
+                    viewport={"width": w, "height": h},
+                    device_scale_factor=1,
+                    has_touch=True,
+                    is_mobile=False,
+                )
+                ctx.add_cookies(
+                    [
+                        {
+                            "name": "sessionid",
+                            "value": key,
+                            "domain": "localhost",
+                            "path": "/",
+                        }
+                    ]
+                )
                 page = ctx.new_page()
                 page.set_default_timeout(20000)
                 for url in pages:
@@ -100,13 +129,26 @@ def main():
                         else:
                             rec.update(page.evaluate(PROBE))
                             rec["overflow"] = rec["sw"] > w + 2
-                            shot = SHOTS / f"{role}__{name}__{url.strip('/').replace('/', '_').replace('?', '_').replace('=', '-') or 'root'}.png"
+                            shot = (
+                                SHOTS
+                                / f"{role}__{name}__{url.strip('/').replace('/', '_').replace('?', '_').replace('=', '-') or 'root'}.png"
+                            )
                             page.screenshot(path=str(shot), full_page=False)
                             rec["shot"] = shot.name
                     except Exception as exc:  # noqa: BLE001
                         rec["error"] = str(exc)[:200]
                     results.append(rec)
-                    print(role, name, url, rec.get("status"), "OVERFLOW" if rec.get("overflow") else "", len(rec.get("wide", [])), len(rec.get("narrowTables", [])), len(rec.get("denseGrids", [])), flush=True)
+                    print(
+                        role,
+                        name,
+                        url,
+                        rec.get("status"),
+                        "OVERFLOW" if rec.get("overflow") else "",
+                        len(rec.get("wide", [])),
+                        len(rec.get("narrowTables", [])),
+                        len(rec.get("denseGrids", [])),
+                        flush=True,
+                    )
                 ctx.close()
         browser.close()
     (SCRATCH / "tablet_audit.json").write_text(json.dumps(results, indent=1))
@@ -128,7 +170,9 @@ def main():
         if r.get("shortTargets", 0) > 5:
             issues.append(f"{r['shortTargets']} targets under 36px")
         if issues:
-            lines.append(f"- **{r['role']} {r['viewport']} {r['url']}** — " + " | ".join(issues))
+            lines.append(
+                f"- **{r['role']} {r['viewport']} {r['url']}** — " + " | ".join(issues)
+            )
     (SCRATCH / "tablet_audit.md").write_text("\n".join(lines))
     print("done", len(results), "pages")
 

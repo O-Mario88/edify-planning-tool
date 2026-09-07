@@ -50,7 +50,9 @@ def forwards(apps, schema_editor):
     CostSetting = apps.get_model("budget", "CostSetting")
     active = list(CostCatalogue.objects.filter(is_active=True))
     for card in active:
-        for extra in CostCatalogue.objects.filter(country=card.country, fy=card.fy, kind="reference"):
+        for extra in CostCatalogue.objects.filter(
+            country=card.country, fy=card.fy, kind="reference"
+        ):
             if extra not in active:
                 active.append(extra)
     labels = {key: label for key, label, _cost in CANONICAL_RATES}

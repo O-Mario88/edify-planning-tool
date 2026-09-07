@@ -15,7 +15,13 @@ from playwright.sync_api import sync_playwright
 
 BASE = "http://localhost:8000"
 SCRATCH = Path(__file__).resolve().parent / "out"
-EMAILS = {"superuser": "edwin.omario@gmail.com", "cd": "cd@edify.org", "pl": "pl1@edify.org", "ia": "ia@edify.org", "accountant": "accountant@edify.org"}
+EMAILS = {
+    "superuser": "edwin.omario@gmail.com",
+    "cd": "cd@edify.org",
+    "pl": "pl1@edify.org",
+    "ia": "ia@edify.org",
+    "accountant": "accountant@edify.org",
+}
 
 PROBE = r"""
 (() => {
@@ -47,37 +53,66 @@ def main():
         for role in wanted:
             pages = list(dict.fromkeys(urls.get(EMAILS[role], [])))
             ctx = browser.new_context(viewport={"width": 1440, "height": 900})
-            ctx.add_cookies([{"name": "sessionid", "value": keys[role], "domain": "localhost", "path": "/"}])
-            page = ctx.new_page(); page.set_default_timeout(25000)
+            ctx.add_cookies(
+                [
+                    {
+                        "name": "sessionid",
+                        "value": keys[role],
+                        "domain": "localhost",
+                        "path": "/",
+                    }
+                ]
+            )
+            page = ctx.new_page()
+            page.set_default_timeout(25000)
             for url in pages:
                 try:
-                    page.goto(BASE + url, wait_until="domcontentloaded"); page.wait_for_timeout(1200)
+                    page.goto(BASE + url, wait_until="domcontentloaded")
+                    page.wait_for_timeout(1200)
                     if "/login" in page.url or "/policy-agreement" in page.url:
                         continue
-                    r = page.evaluate(PROBE); r.update({"role": role, "url": url}); results.append(r)
+                    r = page.evaluate(PROBE)
+                    r.update({"role": role, "url": url})
+                    results.append(r)
                 except Exception as exc:  # noqa: BLE001
                     results.append({"role": role, "url": url, "error": str(exc)[:120]})
             ctx.close()
         browser.close()
-    (SCRATCH / ("ui_audit_%s.json" % "_".join(wanted))).write_text(json.dumps(results, indent=1))
+    (SCRATCH / ("ui_audit_%s.json" % "_".join(wanted))).write_text(
+        json.dumps(results, indent=1)
+    )
     ok = [r for r in results if "controls" in r]
-    heights = Counter(); fonts = Counter(); radii = Counter(); hfs = defaultdict(Counter); cpad = Counter(); crad = Counter()
+    heights = Counter()
+    fonts = Counter()
+    radii = Counter()
+    hfs = defaultdict(Counter)
+    cpad = Counter()
+    crad = Counter()
     odd_pages = defaultdict(list)
     for r in ok:
         for c in r["controls"]:
-            heights[(c["kind"], c["h"])] += 1; fonts[c["fs"]] += 1; radii[c["radius"]] += 1
+            heights[(c["kind"], c["h"])] += 1
+            fonts[c["fs"]] += 1
+            radii[c["radius"]] += 1
             if c["kind"].startswith("button") or c["kind"].startswith("a"):
-                if c["h"] not in (28, 30, 32, 36, 40, 44): odd_pages[r["url"]].append(f"{c['sel']} h={c['h']} '{c['text']}'")
-        for h in r["headings"]: hfs[h["tag"]][h["fs"]] += 1
-        for c in r["cards"]: cpad[c["pad"]] += 1; crad[c["radius"]] += 1
+                if c["h"] not in (28, 30, 32, 36, 40, 44):
+                    odd_pages[r["url"]].append(f"{c['sel']} h={c['h']} '{c['text']}'")
+        for h in r["headings"]:
+            hfs[h["tag"]][h["fs"]] += 1
+        for c in r["cards"]:
+            cpad[c["pad"]] += 1
+            crad[c["radius"]] += 1
     print("pages", len(ok))
     print("control heights:", sorted(heights.items(), key=lambda kv: -kv[1])[:24])
     print("control font sizes:", fonts.most_common(8))
     print("control radii:", radii.most_common(6))
-    for tag in ("h1", "h2", "h3"): print(tag, hfs[tag].most_common(6))
-    print("card padding:", cpad.most_common(8)); print("card radii:", crad.most_common(6))
+    for tag in ("h1", "h2", "h3"):
+        print(tag, hfs[tag].most_common(6))
+    print("card padding:", cpad.most_common(8))
+    print("card radii:", crad.most_common(6))
     print("\npages with off-scale button heights:", len(odd_pages))
-    for url, items in list(odd_pages.items())[:25]: print(" ", url, "|", " ; ".join(items[:3]))
+    for url, items in list(odd_pages.items())[:25]:
+        print(" ", url, "|", " ; ".join(items[:3]))
 
 
 if __name__ == "__main__":

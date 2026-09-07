@@ -45,9 +45,7 @@ class FieldTravelCostingTest(TestCase):
             RATES,
         )
         lines = _line_map(cost)
-        self.assertEqual(
-            set(lines), {"primary_transport_per_day", "lunch_per_day"}
-        )
+        self.assertEqual(set(lines), {"primary_transport_per_day", "lunch_per_day"})
         self.assertEqual(cost.amount, 35_000)
 
     def test_day_trip_to_another_district_is_transport_and_lunch(self):
@@ -283,7 +281,5 @@ class FieldEventEndToEndTest(TestCase):
         )
         activity = Activity.objects.get(id=result["id"])
         lines = {l.cost_setting_key: l for l in activity.schedule_cost_lines.all()}
-        self.assertEqual(
-            set(lines), {"primary_transport_per_day", "lunch_per_day"}
-        )
+        self.assertEqual(set(lines), {"primary_transport_per_day", "lunch_per_day"})
         self.assertEqual(activity.est_cost_cents, 35_000)

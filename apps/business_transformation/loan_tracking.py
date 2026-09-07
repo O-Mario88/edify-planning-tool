@@ -430,7 +430,9 @@ def send_repayment_follow_up_reminders(today: date | None = None) -> int:
             else f"overdue:{due_date.isoformat()}:w{abs(days_until) // 7}"
         )
         for recipient in application_recipients(loan.school):
-            if not _claim_delivery("repayment_follow_up", str(loan.id), stage, recipient):
+            if not _claim_delivery(
+                "repayment_follow_up", str(loan.id), stage, recipient
+            ):
                 continue
             timing = (
                 f"due in {days_until} day(s)"
@@ -478,12 +480,8 @@ def monthly_report_summary(start: date, end: date, principal) -> dict:
         value_date__gte=start,
         value_date__lt=end,
     ).aggregate(
-        payments=Sum(
-            "amount", filter=Q(kind=RepaymentTransactionKind.PAYMENT)
-        ),
-        reversals=Sum(
-            "amount", filter=Q(kind=RepaymentTransactionKind.REVERSAL)
-        ),
+        payments=Sum("amount", filter=Q(kind=RepaymentTransactionKind.PAYMENT)),
+        reversals=Sum("amount", filter=Q(kind=RepaymentTransactionKind.REVERSAL)),
     )
     return {
         "applications": applications.count(),

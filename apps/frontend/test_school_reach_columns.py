@@ -41,10 +41,22 @@ class SchoolReachColumnsTest(SimpleTestCase):
 
     def test_every_district_builder_counts_schools_not_activities(self):
         for path, marker in (
-            ("apps/frontend/views/ia_views.py", '"schools_planned": len(planned_schools_by_district'),
-            ("apps/analytics/cd_dashboard_service.py", 'b["planned_schools"].add(a["school_id"])'),
-            ("apps/analytics/pl_analytics_service.py", 'district_planned_schools.setdefault(did, set()).add(sid)'),
-            ("apps/analytics/analytics_dashboard_service.py", 'planned_schools=Count("school_id", distinct=True)'),
+            (
+                "apps/frontend/views/ia_views.py",
+                '"schools_planned": len(planned_schools_by_district',
+            ),
+            (
+                "apps/analytics/cd_dashboard_service.py",
+                'b["planned_schools"].add(a["school_id"])',
+            ),
+            (
+                "apps/analytics/pl_analytics_service.py",
+                "district_planned_schools.setdefault(did, set()).add(sid)",
+            ),
+            (
+                "apps/analytics/analytics_dashboard_service.py",
+                'planned_schools=Count("school_id", distinct=True)',
+            ),
         ):
             with self.subTest(path=path):
                 source = _read(path)
@@ -54,5 +66,7 @@ class SchoolReachColumnsTest(SimpleTestCase):
     def test_the_program_lead_list_became_a_table_that_still_opens_the_drawer(self):
         source = _read("templates/partials/analytics/pl/district_performance.html")
         self.assertIn('class="w-full text-left text-[12px] pl-district-table"', source)
-        self.assertIn("/analytics/program-lead/drilldown?drill=district&id={{ d.id }}", source)
-        self.assertIn('hx-trigger="click, keyup[key==\'Enter\']"', source)
+        self.assertIn(
+            "/analytics/program-lead/drilldown?drill=district&id={{ d.id }}", source
+        )
+        self.assertIn("hx-trigger=\"click, keyup[key=='Enter']\"", source)

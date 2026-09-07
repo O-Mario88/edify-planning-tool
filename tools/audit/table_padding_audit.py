@@ -10,15 +10,25 @@ BASE = "http://localhost:8000"
 SCRATCH = Path(__file__).resolve().parent / "out"
 SESSIONS = json.loads((SCRATCH / "sessions.json").read_text())
 EMAILS = {
-    "superuser": "edwin.omario@gmail.com", "cd": "cd@edify.org", "pl": "pl1@edify.org",
-    "ia": "ia@edify.org", "accountant": "accountant@edify.org", "cceo": "cceo19@edify.org",
+    "superuser": "edwin.omario@gmail.com",
+    "cd": "cd@edify.org",
+    "pl": "pl1@edify.org",
+    "ia": "ia@edify.org",
+    "accountant": "accountant@edify.org",
+    "cceo": "cceo19@edify.org",
 }
 EXTRA = {
     "cd": ["/dashboard?view=map", "/dashboard?view=operations"],
     "pl": ["/dashboard?view=operations", "/analytics/program-lead"],
     "ia": ["/ia/dashboard/?view=map", "/ia/dashboard/?view=operations"],
     "accountant": ["/accounts"],
-    "superuser": ["/analytics/ssa-performance", "/analytics/people", "/reports", "/targets", "/target-distribution/team"],
+    "superuser": [
+        "/analytics/ssa-performance",
+        "/analytics/people",
+        "/reports",
+        "/targets",
+        "/target-distribution/team",
+    ],
 }
 
 PROBE = r"""
@@ -55,13 +65,26 @@ def main():
     with sync_playwright() as p:
         browser = p.chromium.launch()
         for role, key in SESSIONS.items():
-            pages = list(dict.fromkeys(urls.get(EMAILS[role], []) + EXTRA.get(role, [])))
+            pages = list(
+                dict.fromkeys(urls.get(EMAILS[role], []) + EXTRA.get(role, []))
+            )
             ctx = browser.new_context(viewport={"width": 1440, "height": 900})
-            ctx.add_cookies([{"name": "sessionid", "value": key, "domain": "localhost", "path": "/"}])
-            page = ctx.new_page(); page.set_default_timeout(20000)
+            ctx.add_cookies(
+                [
+                    {
+                        "name": "sessionid",
+                        "value": key,
+                        "domain": "localhost",
+                        "path": "/",
+                    }
+                ]
+            )
+            page = ctx.new_page()
+            page.set_default_timeout(20000)
             for url in pages:
                 try:
-                    page.goto(BASE + url, wait_until="domcontentloaded"); page.wait_for_timeout(900)
+                    page.goto(BASE + url, wait_until="domcontentloaded")
+                    page.wait_for_timeout(900)
                     if "/login" in page.url or "/policy-agreement" in page.url:
                         continue
                     for t in page.evaluate(PROBE):
@@ -75,13 +98,27 @@ def main():
     print("tables measured", len(ok), "on", len({r["url"] for r in ok}), "pages")
     print("td padding schemes:", Counter(r["tdPad"] for r in ok).most_common(12))
     print("th padding schemes:", Counter(r["thPad"] for r in ok).most_common(8))
-    print("row heights:", Counter(min(r["rowH"]) if r["rowH"] else None for r in ok).most_common(12))
+    print(
+        "row heights:",
+        Counter(min(r["rowH"]) if r["rowH"] else None for r in ok).most_common(12),
+    )
     print("body font:", Counter(r["font"] for r in ok).most_common(6))
-    print("head font/transform:", Counter((r["thFont"], r["thUpper"]) for r in ok).most_common(6))
+    print(
+        "head font/transform:",
+        Counter((r["thFont"], r["thUpper"]) for r in ok).most_common(6),
+    )
     narrow = [r for r in ok if r["parent"] > 480 and r["width"] < r["parent"] * 0.7]
-    print("tables under 70% of parent:", len(narrow), [(r["url"], r["table"], r["width"], r["parent"]) for r in narrow[:8]])
+    print(
+        "tables under 70% of parent:",
+        len(narrow),
+        [(r["url"], r["table"], r["width"], r["parent"]) for r in narrow[:8]],
+    )
     wide = [r for r in ok if r["width"] > r["parent"] + 2 and not r["scroller"]]
-    print("tables overflowing without a scroll region:", len(wide), [(r["url"], r["table"]) for r in wide[:8]])
+    print(
+        "tables overflowing without a scroll region:",
+        len(wide),
+        [(r["url"], r["table"]) for r in wide[:8]],
+    )
 
 
 if __name__ == "__main__":

@@ -140,7 +140,7 @@ class ConfirmAccountabilityActionTest(TestCase):
         )
         resp = self.client.get(sel["voucher_url"])
         self.assertEqual(resp.status_code, 200)
-        self.assertIn("attachment; filename=\"voucher-wfr-", resp["Content-Disposition"])
+        self.assertIn('attachment; filename="voucher-wfr-', resp["Content-Disposition"])
         body = resp.content.decode()
         self.assertIn("Payment voucher,Cara CCEO", body)
         self.assertIn("Approval chain,State", body)

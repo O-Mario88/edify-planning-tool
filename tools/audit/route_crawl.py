@@ -53,7 +53,9 @@ def sample_ids():
         "school_id": first("schools", "School"),
         "cluster_id": first("clusters", "Cluster"),
         "staff_id": first("accounts", "StaffProfile"),
-        "user_id": str(User.objects.order_by("id").values_list("id", flat=True).first()),
+        "user_id": str(
+            User.objects.order_by("id").values_list("id", flat=True).first()
+        ),
         "district_id": first("geography", "District"),
         "region_id": first("geography", "Region"),
         "partner_id": first("partners", "Partner"),
@@ -90,7 +92,11 @@ def fill(route, ids):
 
 def main():
     SCRATCH.mkdir(exist_ok=True)
-    inventory = json.loads(Path(__file__).resolve().parents[2] / "docs" / "platform-page-inventory.json".read_text())
+    inventory = json.loads(
+        Path(__file__).resolve().parents[2]
+        / "docs"
+        / "platform-page-inventory.json".read_text()
+    )
     routes = sorted({p["route"] for p in inventory["pages"] if p.get("route")})
     ids = sample_ids()
     results, skipped = [], []
@@ -117,18 +123,38 @@ def main():
                 rec["status"] = response.status_code
                 if response.status_code == 500:
                     body = response.content.decode(errors="replace")
-                    m = re.search(r"Exception Value:</th>\s*<td><pre>(.*?)</pre>", body, re.S) or re.search(r"<title>(.*?)</title>", body, re.S)
+                    m = re.search(
+                        r"Exception Value:</th>\s*<td><pre>(.*?)</pre>", body, re.S
+                    ) or re.search(r"<title>(.*?)</title>", body, re.S)
                     rec["error"] = (m.group(1) if m else body[:200]).strip()[:300]
                 elif response.status_code in (301, 302):
                     rec["location"] = response.get("Location", "")
             except Exception as exc:  # noqa: BLE001
                 rec["status"] = "EXC"
-                rec["error"] = "".join(traceback.format_exception_only(type(exc), exc))[:300]
+                rec["error"] = "".join(traceback.format_exception_only(type(exc), exc))[
+                    :300
+                ]
                 rec["trace"] = traceback.format_exc()[-1500:]
             results.append(rec)
-            print(role, rec["status"], rec.get("ms"), rec.get("queries"), url, (rec.get("error") or "")[:80], flush=True)
-    (SCRATCH / ("route_crawl_%s.json" % "_".join(wanted))).write_text(json.dumps({"results": results, "skipped": skipped}, indent=1))
-    print("done", len(results), "requests;", len(skipped), "routes skipped for unknown parameters")
+            print(
+                role,
+                rec["status"],
+                rec.get("ms"),
+                rec.get("queries"),
+                url,
+                (rec.get("error") or "")[:80],
+                flush=True,
+            )
+    (SCRATCH / ("route_crawl_%s.json" % "_".join(wanted))).write_text(
+        json.dumps({"results": results, "skipped": skipped}, indent=1)
+    )
+    print(
+        "done",
+        len(results),
+        "requests;",
+        len(skipped),
+        "routes skipped for unknown parameters",
+    )
 
 
 if __name__ == "__main__":

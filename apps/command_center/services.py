@@ -138,7 +138,11 @@ def alerts_summary(principal) -> dict:
         urgent=Count("id", filter=Q(severity="urgent")),
         high=Count("id", filter=Q(severity="high")),
     )
-    return {"total": counts["total"] or 0, "urgent": counts["urgent"] or 0, "high": counts["high"] or 0}
+    return {
+        "total": counts["total"] or 0,
+        "urgent": counts["urgent"] or 0,
+        "high": counts["high"] or 0,
+    }
 
 
 def dismiss(alert_id: str, data: dict, principal) -> dict:

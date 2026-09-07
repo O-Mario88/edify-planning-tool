@@ -296,4 +296,6 @@ class PageInventoryTest(SimpleTestCase):
         )
         # A view that renders nothing of its own and delegates to nothing
         # visual is still an action.
-        self.assertEqual(_surface_kind("/dashboard/cd-approve", "cd_approve", []), "action")
+        self.assertEqual(
+            _surface_kind("/dashboard/cd-approve", "cd_approve", []), "action"
+        )

@@ -59,7 +59,7 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         )
 
     def test_the_period_matrix_moved_to_the_target_pages(self):
-        """"Cumulative progress by time period" belongs with the targets it
+        """ "Cumulative progress by time period" belongs with the targets it
         measures: My Target carries it as an accordion, and Team Target inside
         each team member's row (owner, 2026-09-05)."""
 

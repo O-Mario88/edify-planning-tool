@@ -197,16 +197,10 @@ def priority_configuration_page(request):
         "staff": staff,
         "teams": staff.filter(id__in=supervisor_ids),
         "countries": sorted(
-            {
-                country
-                for country in staff.values_list("country", flat=True)
-                if country
-            }
+            {country for country in staff.values_list("country", flat=True) if country}
         ),
         "projects": scoped_projects(request.user),
-        "can_define": has_permission(
-            request.user, Permission.MILESTONES_DEFINE.value
-        ),
+        "can_define": has_permission(request.user, Permission.MILESTONES_DEFINE.value),
         "can_approve": has_permission(
             request.user, Permission.STRATEGIC_PRIORITIES_APPROVE.value
         ),

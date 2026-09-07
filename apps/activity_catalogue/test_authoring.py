@@ -71,10 +71,16 @@ class CreateCatalogueItemTest(TestCase):
         ):
             with self.subTest(bad=bad), self.assertRaises(BadRequest):
                 self._create(**bad)
-        self.assertFalse(ActivityCatalogueItem.objects.filter(display_name="OneTest Diagnostic Visit").exists())
+        self.assertFalse(
+            ActivityCatalogueItem.objects.filter(
+                display_name="OneTest Diagnostic Visit"
+            ).exists()
+        )
 
     def test_an_intervention_gives_the_item_a_primary_mapping(self):
-        item = self._create(name="Numeracy Support Visit", intervention="christlike_behaviour")
+        item = self._create(
+            name="Numeracy Support Visit", intervention="christlike_behaviour"
+        )
         mapping = item.intervention_mappings.get(is_primary=True)
         self.assertEqual(mapping.intervention, "christlike_behaviour")
 

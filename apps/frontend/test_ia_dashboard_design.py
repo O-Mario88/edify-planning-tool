@@ -8,6 +8,7 @@ from django.test import SimpleTestCase
 ROOT = Path(__file__).resolve().parents[2]
 
 from apps.frontend.template_families import read_template  # noqa: E402
+
 TEMPLATE = ROOT / "templates" / "pages" / "ia" / "analytics_dashboard.html"
 BODY = ROOT / "templates" / "partials" / "ia" / "dashboard_body.html"
 CSS = ROOT / "static" / "css" / "ia-dashboard.css"
@@ -22,7 +23,10 @@ class IADashboardDesignContractTest(SimpleTestCase):
         # a shared partial when the dashboard also became a tab of the one
         # Analytics page (2026-09-05).
         self.template = "\n".join(
-            (TEMPLATE.read_text(encoding="utf-8"), read_template(ROOT, str(BODY.relative_to(ROOT))))
+            (
+                TEMPLATE.read_text(encoding="utf-8"),
+                read_template(ROOT, str(BODY.relative_to(ROOT))),
+            )
         )
         self.css = CSS.read_text(encoding="utf-8")
 
@@ -89,15 +93,24 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertIn("{% for group in district_groups %}", self.template)
         self.assertIn("{% for group in leadership_groups %}", self.template)
         self.assertEqual(self.template.count('class="ia-group__toggle"'), 2)
-        self.assertIn('aria-controls="ia-district-group-{{ group.key }}"', self.template)
+        self.assertIn(
+            'aria-controls="ia-district-group-{{ group.key }}"', self.template
+        )
         self.assertIn('aria-controls="ia-leader-group-{{ group.key }}"', self.template)
         self.assertIn("{% for district in group.districts %}", self.template)
-        for header in ("<th># Schools</th>", "<th># Planned</th>", "<th># Achieved</th>", "<th>% Achieved</th>"):
+        for header in (
+            "<th># Schools</th>",
+            "<th># Planned</th>",
+            "<th># Achieved</th>",
+            "<th>% Achieved</th>",
+        ):
             self.assertIn(header, self.template)
         self.assertIn("{% for leader in group.members %}", self.template)
         # The lead's consolidated row heads the same two bands the districts use.
         self.assertIn('class="ia-monitor-table__lead"', self.template)
-        self.assertEqual(self.template.count('class="ia-monitor-table ia-monitor-table--reach"'), 2)
+        self.assertEqual(
+            self.template.count('class="ia-monitor-table ia-monitor-table--reach"'), 2
+        )
         self.assertIn("align-items: start", self.css)
 
     def test_reporting_period_sits_below_the_reporting_scope(self):

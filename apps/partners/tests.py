@@ -168,7 +168,9 @@ class PartnerDirectoryManagementTests(TestCase):
         )
         # A removed organisation is a row whose Status says so (owner,
         # 2026-09-07: "active, inactive, deleted"), not a row that vanished.
-        gone = Partner.objects.create(name="Gone Directory Partner", active_status=False)
+        gone = Partner.objects.create(
+            name="Gone Directory Partner", active_status=False
+        )
         gone.soft_delete()
 
         for principal in (self.admin, self.cd):
@@ -180,7 +182,9 @@ class PartnerDirectoryManagementTests(TestCase):
             self.assertContains(response, "Gone Directory Partner")
             self.assertContains(response, ">Deleted<")
             self.assertContains(response, ">Active<")
-            self.assertNotContains(response, 'aria-label="Activate Gone Directory Partner"')
+            self.assertNotContains(
+                response, 'aria-label="Activate Gone Directory Partner"'
+            )
             self.assertContains(response, "Add Partner")
             # Two actions per row (owner, 2026-09-07): the lifecycle toggle,
             # and — for the Admin alone — permanent deletion. The soft
@@ -249,25 +253,31 @@ class PartnerLifecycleTests(TestCase):
     def setUp(self):
         User = get_user_model()
         self.admin = User.objects.create_user(
-            email="lifecycle-admin@edify.test", name="Lifecycle Admin",
-            roles=[EdifyRole.ADMIN.value], active_role=EdifyRole.ADMIN.value,
+            email="lifecycle-admin@edify.test",
+            name="Lifecycle Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
             password="StrongPassphrase!23",
         )
         self.cd = User.objects.create_user(
-            email="lifecycle-cd@edify.test", name="Lifecycle CD",
+            email="lifecycle-cd@edify.test",
+            name="Lifecycle CD",
             roles=[EdifyRole.COUNTRY_DIRECTOR.value],
             active_role=EdifyRole.COUNTRY_DIRECTOR.value,
             password="StrongPassphrase!23",
         )
         self.hr = User.objects.create_user(
-            email="lifecycle-hr@edify.test", name="Lifecycle HR",
+            email="lifecycle-hr@edify.test",
+            name="Lifecycle HR",
             roles=[EdifyRole.HUMAN_RESOURCES.value],
             active_role=EdifyRole.HUMAN_RESOURCES.value,
             password="StrongPassphrase!23",
         )
 
     def test_a_new_organisation_starts_inactive(self):
-        created = onboard({"name": "Fresh Partner", "expertiseAreas": "Literacy, EdTech"}, self.cd)
+        created = onboard(
+            {"name": "Fresh Partner", "expertiseAreas": "Literacy, EdTech"}, self.cd
+        )
         partner = Partner.objects.get(id=created["id"])
         self.assertFalse(partner.active_status)
         self.assertEqual(partner.expertise_areas, ["Literacy", "EdTech"])
@@ -283,7 +293,9 @@ class PartnerLifecycleTests(TestCase):
         partner.refresh_from_db()
         self.assertFalse(partner.active_status)
         actions = set(
-            AuditLog.objects.filter(subject_id=partner.id).values_list("action", flat=True)
+            AuditLog.objects.filter(subject_id=partner.id).values_list(
+                "action", flat=True
+            )
         )
         self.assertIn("partner.activated", actions)
         self.assertIn("partner.deactivated", actions)
@@ -312,7 +324,8 @@ class PartnerLifecycleTests(TestCase):
 
         self.client.force_login(self.cd)
         self.client.post(
-            "/admin-panel/users", {"action": "activate_partner", "partner_id": partner.id}
+            "/admin-panel/users",
+            {"action": "activate_partner", "partner_id": partner.id},
         )
         partner.refresh_from_db()
         self.assertTrue(partner.active_status)
@@ -354,15 +367,22 @@ class PartnerLifecycleTests(TestCase):
         partner = Partner.objects.create(name="Profiled Partner", active_status=True)
         school = School.objects.create(name="History School", school_id="HS-001")
         Activity.objects.create(
-            activity_type="training", status="completed", school=school,
-            assigned_partner_id=partner.id, delivery_contact_name="Grace Nakato",
+            activity_type="training",
+            status="completed",
+            school=school,
+            assigned_partner_id=partner.id,
+            delivery_contact_name="Grace Nakato",
         )
         Activity.objects.create(
-            activity_type="school_visit", status="assigned_to_partner", school=school,
+            activity_type="school_visit",
+            status="assigned_to_partner",
+            school=school,
             assigned_partner_id=partner.id,
         )
         Activity.objects.create(
-            activity_type="school_visit", status="cancelled", school=school,
+            activity_type="school_visit",
+            status="cancelled",
+            school=school,
             assigned_partner_id=partner.id,
         )
         add_member(partner.id, {"name": "Paul Okello", "role": "staff"}, self.cd)
@@ -394,40 +414,60 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
 
         User = get_user_model()
         self.cd = User.objects.create_user(
-            email="support-cd@edify.test", name="Support CD",
+            email="support-cd@edify.test",
+            name="Support CD",
             roles=[EdifyRole.COUNTRY_DIRECTOR.value],
-            active_role=EdifyRole.COUNTRY_DIRECTOR.value, password="StrongPassphrase!23",
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="StrongPassphrase!23",
         )
         self.partner_user = User.objects.create_user(
-            email="own-org@partner.test", name="Own Org Login",
-            roles=[EdifyRole.PARTNER_ADMIN.value], active_role=EdifyRole.PARTNER_ADMIN.value,
+            email="own-org@partner.test",
+            name="Own Org Login",
+            roles=[EdifyRole.PARTNER_ADMIN.value],
+            active_role=EdifyRole.PARTNER_ADMIN.value,
             password="StrongPassphrase!23",
         )
         self.partner = Partner.objects.create(
-            name="Supporting Partner", active_status=True, region_name="Central",
+            name="Supporting Partner",
+            active_status=True,
+            region_name="Central",
             user=self.partner_user,
         )
         self.other = Partner.objects.create(name="Other Partner", active_status=True)
-        self.school = School.objects.create(name="Supported School", school_id="SUP-001")
+        self.school = School.objects.create(
+            name="Supported School", school_id="SUP-001"
+        )
         Activity.objects.create(
-            activity_type="school_visit", status="completed", school=self.school,
+            activity_type="school_visit",
+            status="completed",
+            school=self.school,
             assigned_partner_id=self.partner.id,
         )
         Activity.objects.create(
-            activity_type="school_visit", status="assigned_to_partner", school=self.school,
+            activity_type="school_visit",
+            status="assigned_to_partner",
+            school=self.school,
             assigned_partner_id=self.partner.id,
         )
         Activity.objects.create(
-            activity_type="training", status="completed", school=self.school,
+            activity_type="training",
+            status="completed",
+            school=self.school,
             assigned_partner_id=self.partner.id,
         )
         SsaRecord.objects.create(
-            school=self.school, fy="2025", average_score=5.0,
-            date_of_ssa=datetime(2025, 3, 1, tzinfo=dt_tz.utc), verification_status="confirmed",
+            school=self.school,
+            fy="2025",
+            average_score=5.0,
+            date_of_ssa=datetime(2025, 3, 1, tzinfo=dt_tz.utc),
+            verification_status="confirmed",
         )
         SsaRecord.objects.create(
-            school=self.school, fy="2026", average_score=6.5,
-            date_of_ssa=datetime(2026, 3, 1, tzinfo=dt_tz.utc), verification_status="confirmed",
+            school=self.school,
+            fy="2026",
+            average_score=6.5,
+            date_of_ssa=datetime(2026, 3, 1, tzinfo=dt_tz.utc),
+            verification_status="confirmed",
         )
 
     def test_the_profile_lists_supported_schools_with_counts_and_performance(self):
@@ -456,9 +496,15 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
 
         response = self.client.post(
             f"/partners/{self.partner.id}/edit-drawer",
-            {"contact_person": "Grace N", "phone": "0700 111 222", "email": "grace@partner.test",
-             "expertise": "Literacy, Numeracy", "notes": "Works in Wakiso",
-             "region_name": "Northern", "name": "Renamed By Partner"},
+            {
+                "contact_person": "Grace N",
+                "phone": "0700 111 222",
+                "email": "grace@partner.test",
+                "expertise": "Literacy, Numeracy",
+                "notes": "Works in Wakiso",
+                "region_name": "Northern",
+                "name": "Renamed By Partner",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.partner.refresh_from_db()
@@ -477,9 +523,16 @@ class PartnerSupportedSchoolsAndBioTests(TestCase):
         self.assertContains(response, 'name="region_name"')
         response = self.client.post(
             f"/partners/{self.partner.id}/edit-drawer",
-            {"name": "Supporting Partner Ltd", "region_name": "Northern",
-             "ssa_intervention": "christlike_behaviour", "contact_person": "Grace N",
-             "phone": "", "email": "", "expertise": "", "notes": ""},
+            {
+                "name": "Supporting Partner Ltd",
+                "region_name": "Northern",
+                "ssa_intervention": "christlike_behaviour",
+                "contact_person": "Grace N",
+                "phone": "",
+                "email": "",
+                "expertise": "",
+                "notes": "",
+            },
         )
         self.assertEqual(response.status_code, 200)
         self.partner.refresh_from_db()

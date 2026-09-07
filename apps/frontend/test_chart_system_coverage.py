@@ -8,7 +8,6 @@ forms were added for them — lineTrend and gauge — and this suite is what kee
 a hand-drawn chart from coming back.
 """
 
-import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -58,12 +57,17 @@ class ChartSystemCoverageTest(SimpleTestCase):
         offenders = []
         for path in ROOT.joinpath("templates").rglob("*.html"):
             source = path.read_text(encoding="utf-8")
-            for marker in ("<polyline", "conic-gradient(", "tt-line-chart__series", "ia-line-chart__series"):
+            for marker in (
+                "<polyline",
+                "conic-gradient(",
+                "tt-line-chart__series",
+                "ia-line-chart__series",
+            ):
                 if marker in source:
                     offenders.append(f"{path.relative_to(ROOT)}: {marker}")
         self.assertEqual(offenders, [])
         reports = _read("templates/partials/analytics/panels/reports.html")
-        self.assertNotIn("style=\"height: {% if period.pct", reports)
+        self.assertNotIn('style="height: {% if period.pct', reports)
         self.assertNotIn("Simple stacked bar", reports)
 
     def test_the_reports_trend_reads_plain_rows_from_the_view(self):
@@ -77,7 +81,9 @@ class ChartSystemCoverageTest(SimpleTestCase):
     def test_the_ia_view_no_longer_computes_svg_geometry(self):
         view = _read("apps/frontend/views/ia_views.py")
         self.assertNotIn("planned_points", view)
-        self.assertIn('activity_trend = {"weeks": weekly_values, "max": trend_max}', view)
+        self.assertIn(
+            'activity_trend = {"weeks": weekly_values, "max": trend_max}', view
+        )
 
     def test_pages_that_draw_charts_load_the_library(self):
         for page in (

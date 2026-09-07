@@ -67,8 +67,6 @@ def _hours(start, end):
     return round((end - start).total_seconds() / 3600, 1)
 
 
-
-
 def verification_analytics(principal, window_days: int | None = None) -> dict:
     scope = resolve_user_scope(principal)
     window_days = int(window_days or DEFAULT_WINDOW_DAYS)

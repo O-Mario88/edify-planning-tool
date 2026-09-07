@@ -66,7 +66,10 @@ class FloatingDrawerShapeTest(SimpleTestCase):
         self.assertIn("margin: auto !important;", self.final)
 
     def test_every_drawer_type_resolves_to_the_same_card(self):
-        for variant in (".drawer-surface.type-center", ".drawer-surface.type-right_top"):
+        for variant in (
+            ".drawer-surface.type-center",
+            ".drawer-surface.type-right_top",
+        ):
             with self.subTest(variant=variant):
                 self.assertIn(variant, self.final)
 
@@ -165,6 +168,8 @@ class DrawerMotionTest(SimpleTestCase):
         self.assertIn("100svh", self.final)
 
     def test_reduced_motion_removes_the_movement_not_the_drawer(self):
-        block = self.final[self.final.index("@media (prefers-reduced-motion: reduce)") :]
+        block = self.final[
+            self.final.index("@media (prefers-reduced-motion: reduce)") :
+        ]
         self.assertIn("transition-duration: 1ms !important;", block)
         self.assertIn("transform: none !important;", block)

@@ -49,18 +49,14 @@ class KpiPanelAnatomyTest(SimpleTestCase):
         knowing which it is."""
 
         css = _read("static/css/components.css")
-        item = css[
-            css.index(".kpi-strip.kpi-strip--executive .kpi-strip__item {") :
-        ]
+        item = css[css.index(".kpi-strip.kpi-strip--executive .kpi-strip__item {") :]
         item = item[: item.index("\n}")]
         self.assertIn("border-inline-start: 1px solid var(--edify-kpi-divider);", item)
         self.assertIn("border-block-start: 1px solid var(--edify-kpi-divider);", item)
         self.assertIn("margin-inline-start: -1px;", item)
         self.assertIn("margin-block-start: -1px;", item)
 
-        grid = css[
-            css.index(".kpi-strip.kpi-strip--executive .kpi-strip__grid {") :
-        ]
+        grid = css[css.index(".kpi-strip.kpi-strip--executive .kpi-strip__grid {") :]
         grid = grid[: grid.index("\n}")]
         self.assertIn("gap: 0;", grid)
         self.assertIn("overflow: clip;", grid)
@@ -85,9 +81,7 @@ class KpiPanelAnatomyTest(SimpleTestCase):
 
     def test_the_label_is_small_caps_and_the_caption_is_one_line(self):
         css = _read("static/css/components.css")
-        label = css[
-            css.index(".kpi-strip.kpi-strip--executive .kpi-strip__label {") :
-        ]
+        label = css[css.index(".kpi-strip.kpi-strip--executive .kpi-strip__label {") :]
         label = label[: label.index("\n}")]
         self.assertIn("text-transform: uppercase;", label)
         self.assertIn("font-size: var(--edify-text-micro-size);", label)
@@ -131,7 +125,7 @@ class KpiPanelAnatomyTest(SimpleTestCase):
 
 class KpiPanelThemeTest(SimpleTestCase):
     def test_the_chrome_is_tokens_so_each_theme_keeps_its_own_colour(self):
-        """"The blue color you see should only apply on blue mode the rest of
+        """ "The blue color you see should only apply on blue mode the rest of
         the modes should retain their themes." So the panel names tokens, and
         each theme answers with its own values."""
 
@@ -161,6 +155,6 @@ class KpiPanelThemeTest(SimpleTestCase):
         self.assertIn("background-color: transparent !important;", dark)
         self.assertIn("box-shadow: none !important;", dark)
         self.assertIn(
-            ':is(.theme-blue, .theme-dark) .kpi-strip.kpi-strip--executive .kpi-strip__item {',
+            ":is(.theme-blue, .theme-dark) .kpi-strip.kpi-strip--executive .kpi-strip__item {",
             css,
         )

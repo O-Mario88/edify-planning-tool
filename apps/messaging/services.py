@@ -404,7 +404,9 @@ def recipients(principal) -> list[dict]:
     """Composable recipients for the caller (by role policy)."""
     users = (
         User.objects.filter(deleted_at__isnull=True, status="active")
-        .exclude(id=principal.user_id if hasattr(principal, "user_id") else principal.id)
+        .exclude(
+            id=principal.user_id if hasattr(principal, "user_id") else principal.id
+        )
         # The profile and partner rows travel with each user, and district
         # names come once: this list cost two queries per recipient (2026-09-06).
         .select_related("staff_profile", "partner")

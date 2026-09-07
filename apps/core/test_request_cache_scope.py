@@ -40,7 +40,9 @@ class ScopedMemoTest(SimpleTestCase):
         request_cache.begin()
         request_cache.memoize("held", lambda: "before")
         with request_cache.scoped():
-            self.assertEqual(request_cache.memoize("held", lambda: "recomputed"), "before")
+            self.assertEqual(
+                request_cache.memoize("held", lambda: "recomputed"), "before"
+            )
         self.assertIsNotNone(request_cache.store())
         self.assertEqual(request_cache.memoize("held", lambda: "recomputed"), "before")
 

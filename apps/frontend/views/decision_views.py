@@ -23,7 +23,6 @@ found everywhere else.
 from __future__ import annotations
 
 from django.contrib import messages
-from django.shortcuts import render
 
 from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError

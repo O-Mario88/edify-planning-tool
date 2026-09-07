@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from django.db import transaction
 from django.db.models import Q
@@ -10,6 +11,9 @@ from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundE
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
 from .models import Partner, PartnerAssignment
+
+if TYPE_CHECKING:
+    from .models import PartnerMember
 
 
 # Core package slot types are governed by the nine-slot CorePlan (a partner
@@ -337,9 +341,10 @@ def set_partner_status(partner_id: str, active: bool, principal) -> dict:
 def _is_admin(principal) -> bool:
     from apps.core.navigation import get_user_role_slug
 
-    return bool(getattr(principal, "is_superuser", False)) or get_user_role_slug(
-        principal
-    ) == "ADMIN"
+    return (
+        bool(getattr(principal, "is_superuser", False))
+        or get_user_role_slug(principal) == "ADMIN"
+    )
 
 
 def partner_history_counts(partner: Partner) -> dict:
@@ -349,7 +354,9 @@ def partner_history_counts(partner: Partner) -> dict:
 
     return {
         "assignments": PartnerAssignment.objects.filter(partner=partner).count(),
-        "activities": Activity.all_objects.filter(assigned_partner_id=partner.id).count()
+        "activities": Activity.all_objects.filter(
+            assigned_partner_id=partner.id
+        ).count()
         if hasattr(Activity, "all_objects")
         else Activity.objects.filter(assigned_partner_id=partner.id).count(),
         "holds": partner.holds.count() if hasattr(partner, "holds") else 0,
@@ -413,9 +420,7 @@ def add_member(partner_id: str, data: dict, principal) -> "PartnerMember":
         raise NotFoundError("Partner organisation not found.")
     scope = resolve_user_scope(principal)
     if not (
-        _is_admin(principal)
-        or scope.country_scope
-        or partner.id in scope.partner_ids
+        _is_admin(principal) or scope.country_scope or partner.id in scope.partner_ids
     ):
         raise Forbidden("You may only manage the roster of a partner in your scope.")
     name = (data.get("name") or "").strip()

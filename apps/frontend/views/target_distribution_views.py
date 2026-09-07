@@ -185,7 +185,11 @@ def target_distribution_page(request):
         # verified against target for every master milestone, from the
         # activities that match its rules — not only from approved allocations.
         "plan_progress": milestone_plan_progress(
-            [row["milestone"] for group in workspace["groups"] for row in group["milestones"]],
+            [
+                row["milestone"]
+                for group in workspace["groups"]
+                for row in group["milestones"]
+            ],
             fy=fy,
         ),
         "is_cd": _is_cd(request),

@@ -121,13 +121,16 @@ class ServiceWorkerTest(TestCase):
             "whitenoise.storage.CompressedManifestStaticFilesStorage",
             "django.contrib.staticfiles.storage.StaticFilesStorage",
         ):
-            with self.subTest(backend=backend), override_settings(
-                STORAGES={
-                    "default": {
-                        "BACKEND": "django.core.files.storage.FileSystemStorage"
-                    },
-                    "staticfiles": {"BACKEND": backend},
-                }
+            with (
+                self.subTest(backend=backend),
+                override_settings(
+                    STORAGES={
+                        "default": {
+                            "BACKEND": "django.core.files.storage.FileSystemStorage"
+                        },
+                        "staticfiles": {"BACKEND": backend},
+                    }
+                ),
             ):
                 body = self.client.get("/sw.js").content.decode()
             self.assertIn("const OFFLINE_URL = '/offline';", body)
@@ -388,8 +391,13 @@ class FieldOutboxWiringTest(SimpleTestCase):
         self.assertIn("var DB_NAME = 'edify-outbox';", js)
         self.assertIn("var SYNC_TAG = 'edify-outbox';", js)
         for route in (
-            "start", "complete", "evidence", "attendance", "ssa-upload",
-            "salesforce-id", "submit",
+            "start",
+            "complete",
+            "evidence",
+            "attendance",
+            "ssa-upload",
+            "salesforce-id",
+            "submit",
         ):
             self.assertIn(route, js)
         self.assertIn("/^\\/my-plan\\/[^/]+\\/(complete|accountability)$/", js)

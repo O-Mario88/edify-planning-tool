@@ -274,7 +274,7 @@ class SsaPerformancePageTest(TestCase):
         )
         self.assertEqual(chart["series"][0]["data"], [5.0] * len(SsaIntervention))
         self.assertEqual(chart["series"][1]["data"], [7.0] * len(SsaIntervention))
-        self.assertContains(response, 'json_script' if False else "sp-trend-payload")
+        self.assertContains(response, "json_script" if False else "sp-trend-payload")
         self.assertContains(response, "EdifyChartSystem.formBase")
         self.assertContains(response, "SSA performance trend by year")
 

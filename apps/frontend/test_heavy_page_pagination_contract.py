@@ -27,9 +27,7 @@ class HeavyPagePaginationContractTest(SimpleTestCase):
         # The page became the Priority Setting TAB of the Priorities page on
         # 2026-09-07; the markup this bounds moved into the view the rail
         # swaps, and the page around it is now the rail and nothing else.
-        source = (
-            ROOT / "templates/partials/priorities/setting_view.html"
-        ).read_text()
+        source = (ROOT / "templates/partials/priorities/setting_view.html").read_text()
 
         self.assertIn('{% paginate milestone_rows "milestones_page" 10', source)
         self.assertIn("{% for item in milestones_pager.rows %}", source)

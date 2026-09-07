@@ -5,16 +5,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activity_catalogue', '0013_costing_profiles_2026_09_06'),
-        ('budget', '0016_country_cost_catalogue_2026_09_06'),
+        ("activity_catalogue", "0013_costing_profiles_2026_09_06"),
+        ("budget", "0016_country_cost_catalogue_2026_09_06"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='costsetting',
-            name='catalogue_item',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.PROTECT, related_name='linked_costs', to='activity_catalogue.activitycatalogueitem'),
+            model_name="costsetting",
+            name="catalogue_item",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.PROTECT,
+                related_name="linked_costs",
+                to="activity_catalogue.activitycatalogueitem",
+            ),
         ),
     ]

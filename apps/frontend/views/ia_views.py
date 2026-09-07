@@ -1403,7 +1403,9 @@ def _ia_dashboard_context(request) -> dict:
     for school_id, district_id in active_schools().values_list("id", "district_id"):
         active_school_ids.add(school_id)
         if district_id:
-            schools_by_district[district_id] = schools_by_district.get(district_id, 0) + 1
+            schools_by_district[district_id] = (
+                schools_by_district.get(district_id, 0) + 1
+            )
     planned_schools_by_district: dict = {}
     achieved_schools_by_district: dict = {}
     planned_schools_by_owner: dict = {}
@@ -1417,14 +1419,18 @@ def _ia_dashboard_context(request) -> dict:
         if status in ACHIEVED_STATUSES:
             achieved_schools_by_owner.setdefault(owner_id, set()).add(school_id)
             if district_id:
-                achieved_schools_by_district.setdefault(district_id, set()).add(school_id)
+                achieved_schools_by_district.setdefault(district_id, set()).add(
+                    school_id
+                )
 
     def _reach_from_sets(assigned, planned, achieved):
         return {
             "schools": len(assigned),
             "schools_planned": len(planned),
             "schools_achieved": len(achieved),
-            "schools_pct": round(len(achieved) / len(assigned) * 100) if assigned else 0,
+            "schools_pct": round(len(achieved) / len(assigned) * 100)
+            if assigned
+            else 0,
         }
 
     def _school_reach(district_id):
@@ -1556,12 +1562,20 @@ def _ia_dashboard_context(request) -> dict:
         # Portfolio holders are StaffProfile ids; activity owners may be either
         # id space, so reach is read across both.
         portfolio_ids = {staff.id} | (
-            {oid for oid in owner_ids if oid in assigned_schools_by_staff} if is_pl else set()
+            {oid for oid in owner_ids if oid in assigned_schools_by_staff}
+            if is_pl
+            else set()
         )
         sets = (
-            set().union(*(assigned_schools_by_staff.get(sid, set()) for sid in portfolio_ids)),
-            set().union(*(planned_schools_by_owner.get(oid, set()) for oid in owner_ids)),
-            set().union(*(achieved_schools_by_owner.get(oid, set()) for oid in owner_ids)),
+            set().union(
+                *(assigned_schools_by_staff.get(sid, set()) for sid in portfolio_ids)
+            ),
+            set().union(
+                *(planned_schools_by_owner.get(oid, set()) for oid in owner_ids)
+            ),
+            set().union(
+                *(achieved_schools_by_owner.get(oid, set()) for oid in owner_ids)
+            ),
         )
         school_sets_by_staff[staff.id] = sets
         leadership_performance.append(
@@ -1584,26 +1598,41 @@ def _ia_dashboard_context(request) -> dict:
     # header, carrying the team portfolio, opened into the team (owner,
     # 2026-09-05). A CCEO nobody supervises sits under "No Program Lead".
     leaders_by_id = {
-        row["staff_id"]: row for row in leadership_performance if row["role"] == "Program Lead"
+        row["staff_id"]: row
+        for row in leadership_performance
+        if row["role"] == "Program Lead"
     }
     leadership_groups = [
         {**row, "key": row["staff_id"], "members": []} for row in leaders_by_id.values()
     ]
-    unsupervised = {"key": "unsupervised", "name": "No Program Lead", "role": None,
-                    "scope": "CCEOs without a supervisor", "members": []}
+    unsupervised = {
+        "key": "unsupervised",
+        "name": "No Program Lead",
+        "role": None,
+        "scope": "CCEOs without a supervisor",
+        "members": [],
+    }
     for row in leadership_performance:
         if row["role"] != "CCEO":
             continue
         home = next(
-            (group for group in leadership_groups if group["key"] == row["supervisor_id"]),
+            (
+                group
+                for group in leadership_groups
+                if group["key"] == row["supervisor_id"]
+            ),
             None,
         )
         (home or unsupervised)["members"].append(row)
     if unsupervised["members"]:
         unsupervised.update(_merge_rollups(*unsupervised["members"]))
-        member_sets = [school_sets_by_staff[m["staff_id"]] for m in unsupervised["members"]]
+        member_sets = [
+            school_sets_by_staff[m["staff_id"]] for m in unsupervised["members"]
+        ]
         unsupervised.update(
-            _reach_from_sets(*(set().union(*(sets[i] for sets in member_sets)) for i in range(3)))
+            _reach_from_sets(
+                *(set().union(*(sets[i] for sets in member_sets)) for i in range(3))
+            )
         )
         leadership_groups.append(unsupervised)
     for group in leadership_groups:
@@ -1771,10 +1800,18 @@ def ia_dashboard_view(request):
         request,
         active=dashboard_view,
         panel_id="ia-dashboard-view",
-    view_template="partials/ia/view.html",
+        view_template="partials/ia/view.html",
         tabs=[
-            ("map", "Map", "The country map with regional performance and district monitoring"),
-            ("operations", "Operations", "Verification queue, performance, quality and coverage"),
+            (
+                "map",
+                "Map",
+                "The country map with regional performance and district monitoring",
+            ),
+            (
+                "operations",
+                "Operations",
+                "Verification queue, performance, quality and coverage",
+            ),
         ],
         base_url="/ia/dashboard/",
         keep=(),
@@ -1785,7 +1822,11 @@ def ia_dashboard_view(request):
 
         context.update(country_map_context(get_operational_fy()))
     if request.headers.get("HX-Target") == "ia-dashboard-view-shell":
-        response = render(request, "partials/dashboards/_view_tabs.html", {**context, "dashboard_tabs_inner": True})
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
     else:
         response = render(request, "pages/ia/analytics_dashboard.html", context)
     if view_explicit:

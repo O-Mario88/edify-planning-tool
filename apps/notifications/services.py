@@ -387,7 +387,9 @@ class NotificationLinkResolver:
             label = "View Activity"
 
         elif event_type == "activity_submitted_for_verification":
-            route = f"/ia/verification/{context_id}/" if context_id else "/ia/verification/"
+            route = (
+                f"/ia/verification/{context_id}/" if context_id else "/ia/verification/"
+            )
             label = "Verify Activity"
 
         elif event_type == "ia_verification_digest":

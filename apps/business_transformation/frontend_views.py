@@ -267,7 +267,10 @@ def _csv_safe(value) -> str:
 
 
 def _xlsx_row(values):
-    return [_spreadsheet_safe(value) if isinstance(value, str) else value for value in values]
+    return [
+        _spreadsheet_safe(value) if isinstance(value, str) else value
+        for value in values
+    ]
 
 
 @require_GET
@@ -475,23 +478,27 @@ def loan_excel_export_action(request):
         chunk_size=500
     ):
         applications_sheet.append(
-            _xlsx_row([
-                str(application.id),
-                application.submitted_at.date(),
-                application.school.school_id,
-                application.school.name,
-                application.school.district.name if application.school.district else "",
-                application.school.account_owner_name_raw or "",
-                application.applicant_name,
-                application.applicant_phone,
-                application.purpose.label,
-                application.preferred_mfi.name if application.preferred_mfi else "",
-                application.requested_amount,
-                application.requested_term_months,
-                application.get_repayment_frequency_display(),
-                application.get_status_display(),
-                application.next_follow_up_on,
-            ])
+            _xlsx_row(
+                [
+                    str(application.id),
+                    application.submitted_at.date(),
+                    application.school.school_id,
+                    application.school.name,
+                    application.school.district.name
+                    if application.school.district
+                    else "",
+                    application.school.account_owner_name_raw or "",
+                    application.applicant_name,
+                    application.applicant_phone,
+                    application.purpose.label,
+                    application.preferred_mfi.name if application.preferred_mfi else "",
+                    application.requested_amount,
+                    application.requested_term_months,
+                    application.get_repayment_frequency_display(),
+                    application.get_status_display(),
+                    application.next_follow_up_on,
+                ]
+            )
         )
 
     loans_sheet = workbook.create_sheet("Processed loans")
@@ -510,22 +517,26 @@ def loan_excel_export_action(request):
         "Last repayment update",
     ]
     loans_sheet.append(loan_headers)
-    for loan in services.loan_export_rows(request.user, filters).iterator(chunk_size=500):
+    for loan in services.loan_export_rows(request.user, filters).iterator(
+        chunk_size=500
+    ):
         loans_sheet.append(
-            _xlsx_row([
-                loan.mfi.name,
-                loan.school.school_id,
-                loan.school.name,
-                loan.purpose.label,
-                loan.external_loan_reference,
-                loan.get_status_display(),
-                loan.approved_amount,
-                loan.disbursed_amount,
-                loan.disbursement_date,
-                loan.term_months,
-                loan.repayment_frequency,
-                loan.last_repayment_data_date,
-            ])
+            _xlsx_row(
+                [
+                    loan.mfi.name,
+                    loan.school.school_id,
+                    loan.school.name,
+                    loan.purpose.label,
+                    loan.external_loan_reference,
+                    loan.get_status_display(),
+                    loan.approved_amount,
+                    loan.disbursed_amount,
+                    loan.disbursement_date,
+                    loan.term_months,
+                    loan.repayment_frequency,
+                    loan.last_repayment_data_date,
+                ]
+            )
         )
 
     repayments_sheet = workbook.create_sheet("Repayments")
@@ -586,7 +597,9 @@ def loan_excel_export_action(request):
             cell.font = Font(color="FFFFFF", bold=True)
             cell.fill = header_fill
         for column in sheet.columns:
-            width = min(36, max(12, max(len(str(cell.value or "")) for cell in column) + 2))
+            width = min(
+                36, max(12, max(len(str(cell.value or "")) for cell in column) + 2)
+            )
             sheet.column_dimensions[column[0].column_letter].width = width
 
     response = HttpResponse(

@@ -79,7 +79,12 @@ def activity_catalogue_page(request):
             "filters": request.GET,
             "activity_kinds": ACTIVITY_KINDS,
             "costing_profiles": [
-                (profile, COSTING_PROFILE_LABELS.get(profile, profile.replace("_", " ").capitalize()))
+                (
+                    profile,
+                    COSTING_PROFILE_LABELS.get(
+                        profile, profile.replace("_", " ").capitalize()
+                    ),
+                )
                 for profile in COSTING_PROFILE_CHOICES
             ],
             "new_open": bool(request.GET.get("new")),

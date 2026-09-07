@@ -368,7 +368,11 @@ class CentralizedCostingTest(APITestCase):
         that feeds people cannot be funded without knowing how many."""
         _seed_rates(tot_trainings_meals=5000)
         prev = self._preview(
-            {"activityType": "training", "costingProfile": "TOT_TRAINING", "deliveryType": "staff"}
+            {
+                "activityType": "training",
+                "costingProfile": "TOT_TRAINING",
+                "deliveryType": "staff",
+            }
         )
         self.assertFalse(prev["canSchedule"], prev)
         self.assertIn("expectedParticipants", prev["missingItems"])

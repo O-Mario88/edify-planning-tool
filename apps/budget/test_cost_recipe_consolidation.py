@@ -61,7 +61,9 @@ RATES = {
 # Transport + lunch; the secondary district adds dinner, a night and breakfast.
 PRIMARY_STAFF_DAY = 62_000
 SECONDARY_STAFF_DAY = 152_000
-MATERIALS = RATES["printing_training_materials"] + RATES["photocopying_training_materials"]
+MATERIALS = (
+    RATES["printing_training_materials"] + RATES["photocopying_training_materials"]
+)
 ROOM = RATES["group_training_facilitation_fee"] + RATES["group_training_venue_cost"]
 
 
@@ -90,7 +92,9 @@ class SchoolMissionsSharePriceTest(SimpleTestCase):
         for activity_type in self.CLIENT:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="primary")
-                self.assertEqual(cost.amount, PRIMARY_STAFF_DAY + RATES["client_staff_visit"])
+                self.assertEqual(
+                    cost.amount, PRIMARY_STAFF_DAY + RATES["client_staff_visit"]
+                )
                 self.assertIn("client_staff_visit", _keys(cost))
                 self.assertFalse(cost.cost_missing)
 
@@ -98,8 +102,12 @@ class SchoolMissionsSharePriceTest(SimpleTestCase):
         for activity_type in self.CORE:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="primary")
-                self.assertEqual(cost.amount, PRIMARY_STAFF_DAY + RATES["core_staff_visit"])
-        by_profile = _cost(activityType="school_visit", districtType="primary", costingKind="core")
+                self.assertEqual(
+                    cost.amount, PRIMARY_STAFF_DAY + RATES["core_staff_visit"]
+                )
+        by_profile = _cost(
+            activityType="school_visit", districtType="primary", costingKind="core"
+        )
         self.assertIn("core_staff_visit", _keys(by_profile))
         self.assertNotIn("client_staff_visit", _keys(by_profile))
 
@@ -110,14 +118,18 @@ class SchoolMissionsSharePriceTest(SimpleTestCase):
                 self.assertEqual(cost.amount, PRIMARY_STAFF_DAY + RATES["ssa_support"])
 
     def test_a_onetest_visit_carries_the_onetest_rate(self):
-        cost = _cost(activityType="school_visit", districtType="primary", costingKind="onetest")
+        cost = _cost(
+            activityType="school_visit", districtType="primary", costingKind="onetest"
+        )
         self.assertEqual(cost.amount, PRIMARY_STAFF_DAY + RATES["onetest"])
 
     def test_a_secondary_district_mission_carries_the_full_per_diem(self):
         for activity_type in self.CLIENT:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="secondary")
-                self.assertEqual(cost.amount, SECONDARY_STAFF_DAY + RATES["client_staff_visit"])
+                self.assertEqual(
+                    cost.amount, SECONDARY_STAFF_DAY + RATES["client_staff_visit"]
+                )
                 self.assertEqual(
                     sorted(k for k in _keys(cost) if k != "client_staff_visit"),
                     sorted(
@@ -175,8 +187,14 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
     def test_a_cluster_training_carries_the_cluster_rate(self):
         for activity_type in ("cluster_training", "cluster_training_ssa_collection"):
             with self.subTest(activity_type=activity_type):
-                cost = _cost(activityType=activity_type, districtType="primary", expectedParticipants=20)
-                self.assertEqual(cost.amount, self._session(1, RATES["cluster_meetings_trainings"]))
+                cost = _cost(
+                    activityType=activity_type,
+                    districtType="primary",
+                    expectedParticipants=20,
+                )
+                self.assertEqual(
+                    cost.amount, self._session(1, RATES["cluster_meetings_trainings"])
+                )
 
     def test_a_tot_training_feeds_its_participants(self):
         cost = _cost(
@@ -188,7 +206,9 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
         )
         self.assertEqual(
             cost.amount,
-            self._session(2, RATES["tot_trainings"], 20 * 2 * RATES["tot_trainings_meals"]),
+            self._session(
+                2, RATES["tot_trainings"], 20 * 2 * RATES["tot_trainings_meals"]
+            ),
         )
 
     def test_a_tot_training_without_a_headcount_cannot_be_funded(self):
@@ -211,7 +231,9 @@ class GroupSessionsSharePriceTest(SimpleTestCase):
             districtType="primary",
             costingKind="proprietor_conference",
         )
-        self.assertEqual(proprietor.amount, self._session(1, RATES["proprietor_conference"]))
+        self.assertEqual(
+            proprietor.amount, self._session(1, RATES["proprietor_conference"])
+        )
 
 
 class PartnerWorkSharesOneRateTest(SimpleTestCase):
@@ -225,14 +247,24 @@ class PartnerWorkSharesOneRateTest(SimpleTestCase):
                 self.assertEqual(_keys(cost), ["client_partner_visit"])
 
     def test_partner_work_at_a_core_school_carries_the_core_partner_rate(self):
-        cost = cost_for_activity({"activityType": "core_visit", "deliveryType": "partner"}, RATES)
+        cost = cost_for_activity(
+            {"activityType": "core_visit", "deliveryType": "partner"}, RATES
+        )
         self.assertEqual(_keys(cost), ["core_partner_visit"])
 
     def test_partner_meetings_and_partner_run_trainings_carry_the_meetings_rate(self):
         for activity in (
-            {"activityType": "project_activity", "deliveryType": "partner", "projectId": "p1"},
+            {
+                "activityType": "project_activity",
+                "deliveryType": "partner",
+                "projectId": "p1",
+            },
             {"activityType": "partner_activity", "deliveryType": "staff"},
-            {"activityType": "training", "deliveryType": "partner", "expectedParticipants": 20},
+            {
+                "activityType": "training",
+                "deliveryType": "partner",
+                "expectedParticipants": 20,
+            },
         ):
             with self.subTest(activity=activity):
                 cost = cost_for_activity(activity, RATES)
@@ -282,14 +314,20 @@ class AnOlderCardStillPricesTest(SimpleTestCase):
 
     def test_a_visit_day_reads_lunch_from_the_old_row(self):
         cost = cost_for_activity(
-            {"activityType": "school_visit", "deliveryType": "staff", "districtType": "secondary"},
+            {
+                "activityType": "school_visit",
+                "deliveryType": "staff",
+                "districtType": "secondary",
+            },
             self.OLD,
         )
         self.assertEqual(cost.amount, SECONDARY_STAFF_DAY)
         self.assertFalse(cost.cost_missing)
 
     def test_partner_work_reads_the_old_lump_sum(self):
-        cost = cost_for_activity({"activityType": "school_visit", "deliveryType": "partner"}, self.OLD)
+        cost = cost_for_activity(
+            {"activityType": "school_visit", "deliveryType": "partner"}, self.OLD
+        )
         self.assertEqual(cost.amount, 40_000)
         self.assertEqual(_keys(cost), ["client_partner_visit"])
 

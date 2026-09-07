@@ -24,7 +24,9 @@ def normalize_alias(value: str) -> str:
 
 
 @transaction.atomic
-def install_item(source_row: dict, *, actor_id: str, status: str = CatalogueStatus.ACTIVE):
+def install_item(
+    source_row: dict, *, actor_id: str, status: str = CatalogueStatus.ACTIVE
+):
     """Install ONE catalogue row (a seed row or a Country Director's new
     activity): the item, its primary mapping when it names an intervention,
     its eligibility rule and its aliases. Returns (item, outcome counts)."""
@@ -128,6 +130,7 @@ def _install_rules_and_aliases(item, code):
             normalized_alias=normalize_alias(source_alias),
             defaults={"catalogue_item": item, "source_alias": source_alias},
         )
+
 
 @transaction.atomic
 def seed_activity_catalogue(*, actor_id: str = "system", dry_run: bool = False) -> dict:

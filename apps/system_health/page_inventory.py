@@ -648,7 +648,10 @@ def _surface_kind(route: str, route_name: str, templates: list[str]) -> str:
     # anatomy: the Analytics workspace reported no page header and no cards
     # because the header and cards live in the page it was no longer
     # credited with rendering.
-    if "partial" in f"{route} {route_name}".lower() or "/partials/" in f"/{templates[0]}":
+    if (
+        "partial" in f"{route} {route_name}".lower()
+        or "/partials/" in f"/{templates[0]}"
+    ):
         return "partial"
     if any(word in value for word in ("export", "download", "print")):
         return "export"

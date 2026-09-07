@@ -28,6 +28,8 @@ def _read(relative_path: str) -> str:
     from apps.frontend.template_families import read_template
 
     return read_template(ROOT, relative_path)
+
+
 TEMPLATE = ROOT / "templates" / "pages" / "dashboards" / "cceo.html"
 
 

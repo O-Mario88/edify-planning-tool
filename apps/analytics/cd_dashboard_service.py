@@ -20,7 +20,7 @@ from apps.core.metrics import render_precomputed_metric_for_source
 from datetime import date, timedelta
 
 from django.utils import timezone
-from django.db.models import Avg, Count, Q, Sum
+from django.db.models import Count, Q, Sum
 
 from apps.accounts.models import User
 from apps.core.fy import get_operational_fy
@@ -46,7 +46,10 @@ from apps.analytics.pl_analytics_service import (
     ssa_band,
 )
 from apps.analytics.pl_dashboard_service import SF_ID_OVERDUE_DAYS, _requires_sf_id
-from apps.core.activity_types import TRAINING_TYPES as _SF_TRAINING_TYPES, VISIT_TYPES as _SF_VISIT_TYPES
+from apps.core.activity_types import (
+    TRAINING_TYPES as _SF_TRAINING_TYPES,
+    VISIT_TYPES as _SF_VISIT_TYPES,
+)
 
 SF_ID_ACTIVITY_TYPES = tuple(_SF_VISIT_TYPES) + tuple(_SF_TRAINING_TYPES)
 
@@ -260,7 +263,9 @@ class CDDashboardService:
             )
             prior = _cache.get(_prior_key)
             if prior is None:
-                prior = CDDashboardService._tile_numbers(prior_cd, prior_acts, prior_fy, user)
+                prior = CDDashboardService._tile_numbers(
+                    prior_cd, prior_acts, prior_fy, user
+                )
                 _cache.set(_prior_key, prior, 600)
         vs = f"vs FY{prior_fy}" if prior_fy else ""
         trend = CDDashboardService._trend
@@ -897,7 +902,10 @@ class CDDashboardService:
                     # 2026-09-05), so each is looked up by key, not position.
                     "areas_by_key": {
                         area["key"]: area
-                        for area in [*b["areas"], *([b["mscs"]] if b.get("mscs") else [])]
+                        for area in [
+                            *b["areas"],
+                            *([b["mscs"]] if b.get("mscs") else []),
+                        ]
                     },
                     "staff": len(cceos),
                     "planned": planned,

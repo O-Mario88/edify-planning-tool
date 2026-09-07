@@ -195,7 +195,8 @@ _COSTING_PROFILES: dict[str, tuple[str, str | None]] = {
     "FIELD_TRAVEL": ("field_event", None),
 }
 _COSTING_PROFILE_ACTIVITY_TYPE = {
-    profile: activity_type for profile, (activity_type, _kind) in _COSTING_PROFILES.items()
+    profile: activity_type
+    for profile, (activity_type, _kind) in _COSTING_PROFILES.items()
 }
 COSTING_PROFILE_CHOICES = tuple(_COSTING_PROFILES)
 # What a person calls each recipe, for the catalogue's New activity form.
@@ -703,8 +704,14 @@ def _line_item_type(key: str) -> str:
     if key in ("client_partner_visit", "core_partner_visit", "partner_meetings"):
         return "lump_sum"
     if key in (
-        "client_staff_visit", "core_staff_visit", "ssa_support", "onetest",
-        "cluster_meetings_trainings", "tot_trainings", "student_conference", "proprietor_conference",
+        "client_staff_visit",
+        "core_staff_visit",
+        "ssa_support",
+        "onetest",
+        "cluster_meetings_trainings",
+        "tot_trainings",
+        "student_conference",
+        "proprietor_conference",
     ):
         return "activity_rate"
     if key == "group_training_venue_cost":

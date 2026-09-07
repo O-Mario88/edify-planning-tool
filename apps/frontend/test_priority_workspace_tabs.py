@@ -91,7 +91,9 @@ class PriorityWorkspaceTabTest(TestCase):
         }
         for role, (url, expected) in cases.items():
             with self.subTest(role=role):
-                self.client.force_login(_user(role, f"{role.replace(' ', '')}@tab.test"))
+                self.client.force_login(
+                    _user(role, f"{role.replace(' ', '')}@tab.test")
+                )
                 response = self.client.get(f"{url}?fy=2027")
                 self.assertEqual(response.status_code, 200)
                 self.assertEqual(self._tabs(response.content.decode()), expected)
@@ -99,7 +101,9 @@ class PriorityWorkspaceTabTest(TestCase):
     def test_the_setting_view_opens_for_the_roles_the_owner_added(self):
         for role in ("ImpactAssessment", "Program Lead"):
             with self.subTest(role=role):
-                self.client.force_login(_user(role, f"{role.replace(' ', '')}@set.test"))
+                self.client.force_login(
+                    _user(role, f"{role.replace(' ', '')}@set.test")
+                )
                 response = self.client.get("/strategic-priorities?fy=2027")
                 self.assertEqual(response.status_code, 200)
                 self.assertIn("Priority Setting Dashboard", response.content.decode())
@@ -166,13 +170,16 @@ class PriorityWorkspaceMarkupTest(SimpleTestCase):
         for page, view in pages.items():
             with self.subTest(page=page):
                 source = _read(page)
-                self.assertIn('{% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs.html" %}', source)
+                self.assertIn(
+                    '{% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs.html" %}',
+                    source,
+                )
                 self.assertIn(f'{{% include "partials/priorities/{view}" %}}', source)
                 # Both assets travel with every host page: a tab press swaps the
                 # panel, not the document head, so a view entered from another
                 # tab would otherwise arrive unstyled and unbound.
-                self.assertIn('partials/priorities/_workspace_css.html', source)
-                self.assertIn('partials/priorities/_workspace_scripts.html', source)
+                self.assertIn("partials/priorities/_workspace_css.html", source)
+                self.assertIn("partials/priorities/_workspace_scripts.html", source)
 
     def test_each_view_carries_its_own_wrapper_inside_the_panel(self):
         """The stylesheet hooks are scoped to these classes, and the panel is
@@ -203,9 +210,16 @@ class PriorityWorkspaceMarkupTest(SimpleTestCase):
 
         source = _read("templates/partials/priorities/_workspace_scripts.html")
         self.assertIn("document.addEventListener('htmx:afterSettle', bind);", source)
-        self.assertIn("document.addEventListener('htmx:afterSettle', bindTeam);", source)
-        self.assertIn("const dialogEl = () => document.getElementById('team-allocation-dialog');", source)
-        self.assertIn("const distributionDialogEl = () => el('ia-distribution-dialog');", source)
+        self.assertIn(
+            "document.addEventListener('htmx:afterSettle', bindTeam);", source
+        )
+        self.assertIn(
+            "const dialogEl = () => document.getElementById('team-allocation-dialog');",
+            source,
+        )
+        self.assertIn(
+            "const distributionDialogEl = () => el('ia-distribution-dialog');", source
+        )
         # Bound once per element, so a second settle does not double a click.
         self.assertIn("if (!node || node.dataset.iaBound === type) return;", source)
         self.assertIn("if (!node || node.dataset.teamBound === type) return;", source)
@@ -226,7 +240,9 @@ class PriorityWorkspaceMarkupTest(SimpleTestCase):
         real routes, so the path is what names the view."""
 
         source = _read("static/js/view-panels.js")
-        self.assertIn('return parsed.searchParams.get("view") || parsed.pathname;', source)
+        self.assertIn(
+            'return parsed.searchParams.get("view") || parsed.pathname;', source
+        )
 
 
 class PriorityPlanMeterMarkupTest(SimpleTestCase):
@@ -242,7 +258,9 @@ class PriorityPlanMeterMarkupTest(SimpleTestCase):
             "templates/partials/priorities/master_view.html",
         ):
             with self.subTest(view=view):
-                self.assertIn('{% include "components/meter.html" with progress=', _read(view))
+                self.assertIn(
+                    '{% include "components/meter.html" with progress=', _read(view)
+                )
         self.assertIn(
             '{% include "components/meter.html" with progress=item.progress meta=True %}',
             _read("templates/partials/hr/priority_milestone_detail.html"),

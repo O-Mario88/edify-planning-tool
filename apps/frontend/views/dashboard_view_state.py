@@ -20,14 +20,20 @@ VIEW_COOKIE_MAX_AGE = 60 * 60 * 24 * 365
 
 
 def resolve_dashboard_view(
-    request, *, role_key: str, default: str, allowed: tuple[str, ...] = ("map", "operations")
+    request,
+    *,
+    role_key: str,
+    default: str,
+    allowed: tuple[str, ...] = ("map", "operations"),
 ) -> tuple[str, bool]:
     """Return ``(view, explicit)``: the view to render, and whether the request
     named it (so the response should remember it)."""
     asked = (request.GET.get("view") or "").strip().lower()
     if asked in allowed:
         return asked, True
-    remembered = (request.COOKIES.get(f"{VIEW_COOKIE_PREFIX}{role_key}") or "").strip().lower()
+    remembered = (
+        (request.COOKIES.get(f"{VIEW_COOKIE_PREFIX}{role_key}") or "").strip().lower()
+    )
     if remembered in allowed:
         return remembered, False
     return default, False
@@ -69,4 +75,9 @@ def dashboard_view_tabs(
                 "active": key == active,
             }
         )
-    return {"panel_id": panel_id, "view_template": view_template, "active": active, "tabs": out}
+    return {
+        "panel_id": panel_id,
+        "view_template": view_template,
+        "active": active,
+        "tabs": out,
+    }

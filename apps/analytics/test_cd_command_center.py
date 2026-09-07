@@ -322,8 +322,16 @@ class CDCommandCenterTest(TestCase):
         d = self._dash()
         ada = next(r for r in d["pl_performance"]["rows"] if r["name"] == "PL Ada")
         self.assertEqual(ada["areas_by_key"]["school_visits"]["pct"], 50)
-        self.assertEqual([k for k, _ in d["pl_performance"]["area_columns"]],
-                         ["mscs", "school_visits", "cluster_trainings", "ssa_completed", "cluster_meetings"])
+        self.assertEqual(
+            [k for k, _ in d["pl_performance"]["area_columns"]],
+            [
+                "mscs",
+                "school_visits",
+                "cluster_trainings",
+                "ssa_completed",
+                "cluster_meetings",
+            ],
+        )
         self.assertNotIn("ssa_completed", ada["areas_by_key"])
         self.assertNotIn("mscs", ada["areas_by_key"])
 
@@ -333,9 +341,22 @@ class CDCommandCenterTest(TestCase):
         headers = re.findall(r"<th[^>]*>\s*([^<]+?)\s*</th>", table)[:14]
         self.assertEqual(
             headers,
-            ["Lead", "Region", "Target %", "MSCS", "School Visit", "Training",
-             "SSA Completed", "Cluster Meetings", "Staff", "Planned", "Verified",
-             "SF Pending", "Backlog", "Risk"],
+            [
+                "Lead",
+                "Region",
+                "Target %",
+                "MSCS",
+                "School Visit",
+                "Training",
+                "SSA Completed",
+                "Cluster Meetings",
+                "Staff",
+                "Planned",
+                "Verified",
+                "SF Pending",
+                "Backlog",
+                "Risk",
+            ],
         )
         row = table.split("PL Ada", 1)[1].split("</tr>", 1)[0]
         cells = [

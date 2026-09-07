@@ -72,7 +72,8 @@ class DashboardViewSourceTest(TestCase):
         ia_page = _read("templates/pages/ia/analytics_dashboard.html")
         ia_body = _read("templates/partials/ia/dashboard_body.html")
         self.assertLess(
-            ia_page.index("Verification workload"), ia_page.index("partials/ia/dashboard_body.html")
+            ia_page.index("Verification workload"),
+            ia_page.index("partials/ia/dashboard_body.html"),
         )
         self.assertIn(RAIL_INCLUDE, ia_body)
 
@@ -109,10 +110,14 @@ class DashboardViewSourceTest(TestCase):
         cceo = _read("templates/pages/dashboards/cceo.html")
         self.assertLess(cceo.index("Week at a glance"), cceo.index(RAIL_INCLUDE))
 
-    def test_the_verification_quality_tab_keeps_district_monitoring_without_a_rail(self):
+    def test_the_verification_quality_tab_keeps_district_monitoring_without_a_rail(
+        self,
+    ):
         body = _read("templates/partials/ia/dashboard_body.html")
         self.assertIn("{% if ia_dashboard_tabs %}", body)
-        self.assertIn('include "partials/ia/operations.html" with show_geography=True', body)
+        self.assertIn(
+            'include "partials/ia/operations.html" with show_geography=True', body
+        )
         operations = _read("templates/partials/ia/operations.html")
         self.assertIn(
             '{% if show_geography %}{% include "partials/ia/_geography_cards.html" %}{% endif %}',
@@ -139,10 +144,18 @@ class DashboardViewSourceTest(TestCase):
             "templates/pages/accounts/dashboard.html",
         ):
             with self.subTest(page=page):
-                self.assertIn('include "partials/vendor/dashboard_map.html"', _read(page))
-        self.assertIn("css/pages/analytics-dashboard.css", _read("templates/partials/vendor/dashboard_map.html"))
+                self.assertIn(
+                    'include "partials/vendor/dashboard_map.html"', _read(page)
+                )
+        self.assertIn(
+            "css/pages/analytics-dashboard.css",
+            _read("templates/partials/vendor/dashboard_map.html"),
+        )
         # The IA page already loads it as an Analytics-family page.
-        self.assertIn("css/pages/analytics-dashboard.css", _read("templates/pages/ia/analytics_dashboard.html"))
+        self.assertIn(
+            "css/pages/analytics-dashboard.css",
+            _read("templates/pages/ia/analytics_dashboard.html"),
+        )
 
 
 class DashboardViewRenderTest(TestCase):
@@ -204,7 +217,10 @@ class DashboardViewRenderTest(TestCase):
                 html = response.content.decode()
                 self.assertIn("data-dashboard-views", html)
                 self.assertNotIn("subregionMap()", html)
-                selected = re.findall(r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"', html)
+                selected = re.findall(
+                    r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"',
+                    html,
+                )
                 self.assertEqual(selected, ["operations"])
                 self.assertLess(html.index(f">{first}</a>"), html.index(">Map</a>"))
                 html = self._get(user, "/dashboard?view=map").content.decode()
@@ -232,9 +248,13 @@ class DashboardViewRenderTest(TestCase):
         html = self._get(self.cd, "/dashboard?view=map").content.decode()
         self.assertLess(html.index("subregionMap()"), html.index("data-cd-geography"))
         html = self._get(self.rvp, "/dashboard?view=map").content.decode()
-        self.assertLess(html.index("subregionMap()"), html.index("Region Performance Ranking"))
+        self.assertLess(
+            html.index("subregionMap()"), html.index("Region Performance Ranking")
+        )
         html = self._get(self.ia, "/ia/dashboard/?view=map").content.decode()
-        self.assertLess(html.index("subregionMap()"), html.index("District monitoring</h3>"))
+        self.assertLess(
+            html.index("subregionMap()"), html.index("District monitoring</h3>")
+        )
 
     def test_a_chosen_view_is_remembered_per_role(self):
         response = self._get(self.cd, "/dashboard?view=operations")
@@ -261,7 +281,12 @@ class DashboardViewRenderTest(TestCase):
         for user, url, target, active in (
             (self.cd, "/dashboard?view=operations", "cd-dashboard-view", "operations"),
             (self.pl, "/dashboard?view=map", "pl-dashboard-view", "map"),
-            (self.rvp, "/dashboard?view=operations", "rvp-dashboard-view", "operations"),
+            (
+                self.rvp,
+                "/dashboard?view=operations",
+                "rvp-dashboard-view",
+                "operations",
+            ),
             (self.ia, "/ia/dashboard/?view=map", "ia-dashboard-view", "map"),
             (self.accountant, "/accounts?view=map", "accountant-dashboard-view", "map"),
         ):
@@ -274,7 +299,10 @@ class DashboardViewRenderTest(TestCase):
                 self.assertNotIn("<html", html)
                 self.assertNotIn(f'id="{target}-shell"', html)
                 self.assertIn("data-dashboard-views", html)
-                selected = re.findall(r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"', html)
+                selected = re.findall(
+                    r'id="dashboard-tab-(\w+)"\s+role="tab"\s+aria-selected="true"',
+                    html,
+                )
                 self.assertEqual(selected, [active])
                 self.assertIn(f'id="{target}" role="tabpanel"', html)
 

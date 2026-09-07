@@ -312,4 +312,3 @@ class ChartDefectRegressionTest(SimpleTestCase):
         self.assertIn('class="analytics-chart-status" x-ref="status"', workspace)
         css = _read("static/css/pages/analytics-dashboard.css")
         self.assertIn(".analytics-chart-status:empty {", css)
-
