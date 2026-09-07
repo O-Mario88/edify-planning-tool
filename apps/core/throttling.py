@@ -239,7 +239,7 @@ def reset_throttle_state(keys: Iterable[str] = ()) -> None:
             # Delete the current and previous bucket for each key: a test that
             # resets mid-window must not be tripped by the count it just made.
             for k in keys:
-                for window_s in (60, 600):
+                for window_s in (60, 600, 3600):
                     now_bucket = int(time.time() // window_s)
                     cache.delete_many(
                         [
