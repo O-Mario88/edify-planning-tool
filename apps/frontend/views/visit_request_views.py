@@ -106,7 +106,7 @@ def visit_request_decide(request, activity_id, decision):
             success=False,
             reason="Attempted to decide a visit request for a school they do not own.",
         )
-        return HttpResponseForbidden(str(exc))
+        return HttpResponseForbidden("You are not allowed to perform this action.")
     except (BadRequest, NotFoundError) as exc:
         messages.error(request, str(exc))
     return redirect(visit_requests.QUEUE_URL)
