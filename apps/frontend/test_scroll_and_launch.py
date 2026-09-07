@@ -151,3 +151,51 @@ class CollapsedRailBrandTest(SimpleTestCase):
         it or a tablet gets the desktop crop back."""
         shell = _read("templates/layouts/shell.html")
         self.assertIn("(min-width: 64rem) and (max-width: 79.99rem)", shell)
+
+
+class DashboardViewRailTest(SimpleTestCase):
+    """Map | Operations: where the bar sits, and how soon it answers.
+
+    The owner reported both together on 2026-09-07 — "very slow to respond,
+    and the tabs are not professionally placed where they are supposed to be",
+    on every role. Measured: a swap costs the server 300-700ms because the view
+    rebuilds the whole dashboard whatever panel it is about to render, and the
+    rail showed no sign of the press until that landed.
+    """
+
+    def setUp(self):
+        self.markup = _read("templates/partials/dashboards/_view_tabs.html")
+        self.css = _read("static/css/platform.css")
+
+    def test_the_bar_spans_the_content_column(self):
+        """It was shrunk to `max-content` to stop two tabs becoming two
+        half-width slabs, which left a 306px control adrift at the left of a
+        1120px column. Analytics solves both at once: a full-width bar whose
+        tabs keep their own width."""
+        band = self.css[self.css.index("The dashboard view rail (Map | Operations") :]
+        band = band[: band.index("@media (max-width: 48rem)")]
+        self.assertIn("inline-size: 100% !important;", band)
+        self.assertNotIn("max-content", band)
+
+    def test_the_tabs_do_not_stretch_to_fill_it(self):
+        band = self.css[self.css.index("The dashboard view rail (Map | Operations") :]
+        self.assertIn("flex: 0 0 auto !important;", band)
+        self.assertIn("min-inline-size: 9.5rem !important;", band)
+
+    def test_the_panel_is_not_welded_to_the_bar(self):
+        """The gap belongs to the shell that holds both — every role's panel
+        brings its own spacing, and one owner cannot double up."""
+        self.assertIn("main [data-dashboard-view-shell]", self.css)
+
+    def test_the_tab_answers_the_press_before_the_server_does(self):
+        self.assertIn("other.classList.toggle('is-active', chosen)", self.markup)
+        self.assertIn("data-server-active", self.markup)
+
+    def test_a_failed_swap_puts_the_rail_back(self):
+        self.assertIn("@htmx:response-error.window", self.markup)
+
+    def test_the_last_press_wins(self):
+        """Each tab is its own element, so htmx ran their requests
+        independently: press one then the other and whichever response landed
+        last decided what you were looking at."""
+        self.assertIn('hx-sync="closest [data-dashboard-views]:replace"', self.markup)

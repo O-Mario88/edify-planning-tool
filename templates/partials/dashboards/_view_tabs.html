@@ -20,8 +20,31 @@ htmx swaps it into the shell that is already on the page: swapping the shell
 itself (outerHTML) detached the element htmx was still tracking and threw
 on every click (2026-09-06).{% endcomment %}
 {% if not dashboard_tabs_inner %}<div id="{{ dashboard_tabs.panel_id }}-shell" data-dashboard-view-shell>{% endif %}
+{% comment %}The tab answers the press, not the server. Fetching a view takes
+about half a second of dashboard on the server, and until the response landed
+the rail showed no sign of having been clicked at all — so the tabs read as
+slow whatever the response time was (owner, 2026-09-07). The clicked tab takes
+the selected state immediately; htmx swaps the server's version of the same
+rail a moment later, and an error puts the old one back.{% endcomment %}
 <nav class="edify-section-nav dashboard-view-nav" aria-label="Dashboard views" data-dashboard-views>
   <div class="edify-section-nav__inner" role="tablist" aria-label="Dashboard views"
+       @click="
+         const tab = $event.target.closest('[role=tab]');
+         if (!tab) return;
+         [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+           const chosen = other === tab;
+           other.classList.toggle('is-active', chosen);
+           other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+           other.setAttribute('tabindex', chosen ? '0' : '-1');
+         });
+       "
+       @htmx:response-error.window="
+         [...$el.querySelectorAll('[role=tab]')].forEach((other) => {
+           const chosen = other.dataset.serverActive === 'true';
+           other.classList.toggle('is-active', chosen);
+           other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+         });
+       "
        x-data
        @keydown.arrow-right.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const i = tabs.indexOf(document.activeElement); (tabs[i + 1] || tabs[0]).focus()"
        @keydown.arrow-left.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const i = tabs.indexOf(document.activeElement); (tabs[i - 1] || tabs[tabs.length - 1]).focus()">
@@ -30,6 +53,7 @@ on every click (2026-09-06).{% endcomment %}
        id="dashboard-tab-{{ tab.key }}"
        role="tab"
        aria-selected="{% if tab.active %}true{% else %}false{% endif %}"
+       data-server-active="{% if tab.active %}true{% else %}false{% endif %}"
        aria-controls="{{ dashboard_tabs.panel_id }}"
        tabindex="{% if tab.active %}0{% else %}-1{% endif %}"
        class="edify-section-nav__link{% if tab.active %} is-active{% endif %}"
@@ -37,6 +61,13 @@ on every click (2026-09-06).{% endcomment %}
        hx-get="{{ tab.url }}"
        hx-target="#{{ dashboard_tabs.panel_id }}-shell"
        hx-swap="innerHTML"
+       {% comment %}The last press wins. Each tab is its own element, so htmx
+       treated their requests as unrelated and let both run — press Operations
+       and then Map while the first is still out, and whichever response lands
+       last decides what you are looking at, which on a half-second fetch is
+       easy to do. `replace` on the rail aborts the request in flight and
+       issues the new one (2026-09-07).{% endcomment %}
+       hx-sync="closest [data-dashboard-views]:replace"
        hx-push-url="true"
        hx-indicator="#{{ dashboard_tabs.panel_id }}-updating">{{ tab.label }}</a>
     {% endfor %}

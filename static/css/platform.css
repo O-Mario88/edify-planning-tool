@@ -1079,23 +1079,45 @@ main .edify-section-nav {
   background: transparent !important;
 }
 
-/* The dashboard view rail (Map | Operations, 2026-09-05) has two tabs. The
-   segmented contract above shares the rail width between tabs, which is
+/* The dashboard view rail (Map | Operations, 2026-09-05) has two tabs.
+
+   The segmented contract shares the rail's width between its tabs, which is
    right for fourteen Analytics sections and wrong for two: it painted two
-   half-width blue slabs. On a laptop the rail sizes to its labels and sits
-   left, a segmented control; on a phone the two tabs still share the width,
-   where two thumb-sized targets is the better shape. Specificity above the
-   `:where()` contract, so these `!important`s win. */
+   half-width blue slabs. The answer to that was to shrink the whole rail to
+   its labels — which fixed the slabs and created a different problem. A 306px
+   control adrift at the left of a 1120px column, hard against the panel below
+   it, reads as two buttons dropped on the page rather than as the tab bar for
+   the content underneath (owner, 2026-09-07: "the tabs are not professionally
+   placed where they are supposed to be").
+
+   Both are avoidable at once, and Analytics already shows how: the BAR spans
+   the content column, and the TABS keep their own width at its left. Eight
+   sections there occupy 112px each of a 1120px bar and the remainder stays as
+   track — nothing stretches, and the bar still reads as one object belonging
+   to the panel it switches. Specificity above the `:where()` contract, so
+   these `!important`s win. */
 main .dashboard-view-nav { border-block-end: 0; }
 @media (min-width: 48rem) {
   main .dashboard-view-nav .edify-section-nav__inner {
-    display: inline-flex !important;
-    inline-size: max-content;
+    display: flex !important;
+    inline-size: 100% !important;
     max-inline-size: 100%;
   }
+  /* `0 0 auto` is what keeps two tabs from becoming two half-width slabs when
+     the bar is full width. */
   main .dashboard-view-nav .edify-section-nav__link {
     flex: 0 0 auto !important;
     min-inline-size: 9.5rem !important;
+  }
+  /* The bar is a bar, not a lid: the panel it switches needs room to read as
+     the thing below it rather than as something it is welded to. The gap goes
+     on the shell that holds both, not on the nav — every role's panel brings
+     its own spacing (the IA's leaves 3px, the CD's 12px), and one gap owned by
+     the container is the same on all of them and cannot double up. */
+  main [data-dashboard-view-shell] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
   }
 }
 @media (max-width: 48rem) {
