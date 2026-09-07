@@ -21,16 +21,20 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
   <!-- 2. HR Action Center -->
   <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
     <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">2. HR Action Center</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+    {% comment %}One panel, five queues, hairlines between them (owner,
+    2026-09-07). Each queue reads as a metric — how many are waiting — with the
+    work itself underneath, so the header is the panel's label/value pair and
+    the rows and their buttons stay exactly as they were.
+
+    Zero keeps a tone here, unlike the KPI tray: this is a queue, and empty is
+    the good state rather than the absence of a measurement.{% endcomment %}
+    <div class="edify-metric-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
       {% for g in action_center %}
-      <div class="rounded-surface border p-3 space-y-2 edify-surface-muted edify-border">
-        <div class="flex items-center justify-between">
-          <span class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ g.label }}</span>
-          <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-black tabular-nums shrink-0
-            {% if g.count %}bg-amber-500/10 text-amber-400 border border-amber-500/20{% else %}bg-emerald-500/10 text-emerald-400 border border-emerald-500/20{% endif %}">{{ g.count }}</span>
-        </div>
+      <div class="edify-metric" data-tone="{% if g.count %}warning{% else %}success{% endif %}">
+        <p class="edify-metric__label" title="{{ g.label }}">{{ g.label }}</p>
+        <p class="edify-metric__value">{{ g.count }}</p>
         {% if g.items %}
-        <div class="space-y-1.5">
+        <div class="edify-metric__body space-y-1.5">
           {% for it in g.items %}
           <div class="flex items-center justify-between gap-1.5 edify-text-caption">
             <div class="min-w-0">
@@ -50,9 +54,9 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
           </div>
           {% endfor %}
         </div>
-        {% if g.count > 3 %}<p class="edify-text-caption text-slate-400 font-semibold">+{{ g.count|add:"-3" }} more</p>{% endif %}
+        {% if g.count > 3 %}<p class="edify-metric__meta">+{{ g.count|add:"-3" }} more</p>{% endif %}
         {% if g.key != 'ready_signoff' %}
-        <form method="post" action="/cpd-learning/action" class="pt-1">
+        <form method="post" action="/cpd-learning/action" class="edify-metric__body pt-1">
           {% csrf_token %}
           <input type="hidden" name="action" value="bulk_send_reminders">
           <input type="hidden" name="bucket" value="{{ g.key }}">
@@ -61,7 +65,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
         </form>
         {% endif %}
         {% else %}
-        <p class="edify-text-caption text-slate-400 font-semibold py-2">Nothing here right now.</p>
+        <p class="edify-metric__meta edify-metric__body">Nothing here right now.</p>
         {% endif %}
       </div>
       {% endfor %}

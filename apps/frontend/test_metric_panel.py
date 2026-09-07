@@ -37,6 +37,7 @@ CONVERTED = (
     "templates/partials/dashboards/cd/operations.html",
     "templates/partials/dashboards/pl/operations.html",
     "templates/partials/analytics/pl/activity_tracking.html",
+    "templates/partials/hr/pd_dashboard/body.html",
     "templates/partials/finance/country_budget/root.html",  # orphaned
     "templates/partials/finance/country_budget/execution.html",  # orphaned
     "templates/partials/todos/command_center.html",  # orphaned
@@ -158,3 +159,72 @@ class MetricPanelTest(SimpleTestCase):
                 self.assertGreater(cells, 0)
                 self.assertGreaterEqual(source.count("edify-metric__label"), 1)
                 self.assertGreaterEqual(source.count("edify-metric__value"), 1)
+
+
+class HrActionCentreTest(SimpleTestCase):
+    """The one grid that is a metric AND a workqueue.
+
+    Each of the five queues states how many are waiting and then lists the
+    first few with the button that clears them. Folding it onto the panel had
+    to keep the second half working: the header became the label/value pair,
+    and the rows, their forms and the bulk action stayed exactly where they
+    were. The dev database has every queue empty, so this renders a populated
+    one — the empty case is the one you see by accident, and the populated case
+    is the one that breaks.
+    """
+
+    def _render(self):
+        from django.template.loader import render_to_string
+
+        return render_to_string(
+            "partials/hr/pd_dashboard/body.html",
+            {
+                "fy": "2026",
+                "country": "Uganda",
+                "action_center": [
+                    {
+                        "key": "not_started",
+                        "label": "Not yet started",
+                        "count": 5,
+                        "items": [
+                            {
+                                "staff_name": "Alice N",
+                                "course_name": "Safeguarding",
+                                "due_label": "Due 12 Sep",
+                                "action": "remind",
+                                "action_label": "Remind",
+                                "id": "r1",
+                            }
+                        ],
+                    },
+                    {
+                        "key": "ready_signoff",
+                        "label": "Ready for HR sign-off",
+                        "count": 0,
+                        "items": [],
+                    },
+                ],
+            },
+        )
+
+    def test_a_populated_queue_keeps_its_rows_and_its_buttons(self):
+        html = self._render()
+        section = html[html.index("HR Action Center") :]
+
+        self.assertIn("edify-metric-panel", section)
+        self.assertEqual(section.count('class="edify-metric"'), 2)
+        self.assertIn("Alice N", section)
+        self.assertIn("Safeguarding", section)
+        # The row's own action and the bulk one below it.
+        self.assertIn("Remind All (5)", section)
+        self.assertIn('value="bulk_send_reminders"', section)
+
+    def test_an_empty_queue_is_the_good_state_and_says_so(self):
+        """Zero keeps a tone here, unlike the KPI tray: this is a queue, and
+        empty means the work is done rather than the metric being unmeasured."""
+
+        section = self._render()
+        section = section[section.index("HR Action Center") :]
+        self.assertIn('data-tone="warning"', section)
+        self.assertIn('data-tone="success"', section)
+        self.assertIn("Nothing here right now.", section)

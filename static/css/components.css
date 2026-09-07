@@ -4609,3 +4609,11 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* Work that belongs to a metric, under it: the HR Action Center's queues each
+   state how many are waiting and then list the first few with the button that
+   clears them. The metric is the header; this is what it is a header for, and
+   it gets a little air so the rows do not sit on the number. */
+.edify-metric__body {
+  margin-block-start: 0.45rem;
+}
