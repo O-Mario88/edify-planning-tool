@@ -209,4 +209,40 @@
 </details>
 
 {% endif %}
+
+{% if visit_feedback_review %}
+<section class="edify-surface rounded-surface border border-slate-200 overflow-hidden" aria-labelledby="visit-feedback-review-title">
+  <div class="px-4 py-3 border-b border-slate-200">
+    <h2 id="visit-feedback-review-title" class="text-[14px] font-semibold edify-text">Recent school visit feedback</h2>
+    <p class="text-[12px] edify-text-muted mt-0.5">Field findings and reported improvements for IA, CD, PL and RVP decision review.</p>
+  </div>
+  <div class="divide-y divide-slate-100">
+    {% for item in visit_feedback_review %}
+    <article class="p-4 space-y-3">
+      <div class="flex flex-wrap items-start justify-between gap-2">
+        <div>
+          <p class="text-[13px] font-bold edify-text">
+            {% if item.can_link_school %}<a class="edify-primary-text hover:underline" href="/schools/{{ item.school_id }}">{{ item.school_name }}</a>{% else %}{{ item.school_name }}{% endif %}
+          </p>
+          <p class="edify-text-caption edify-text-muted font-semibold">{{ item.location|default:"Location not recorded" }} · {{ item.activity.get_activity_type_display }} · {{ item.activity_date|date:"j M Y"|default:"Date not recorded" }}</p>
+        </div>
+        {% if item.related_activity %}
+        <span class="inline-flex items-center rounded-pill bg-slate-100 px-2.5 py-1 edify-text-caption font-bold text-slate-600">Related to {{ item.related_activity.get_activity_type_display }}{% if item.related_activity.planned_date %} · {{ item.related_activity.planned_date|date:"j M Y" }}{% endif %}</span>
+        {% endif %}
+      </div>
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-wider edify-text-muted">Finding</p>
+        <p class="mt-1 text-[12px] font-medium leading-relaxed edify-text">{{ item.feedback.finding|linebreaksbr }}</p>
+      </div>
+      <div>
+        <p class="edify-text-caption font-bold uppercase tracking-wider edify-text-muted">Improvement since the last visit</p>
+        <ul class="mt-1.5 list-disc space-y-1 pl-5 text-[12px] font-medium edify-text">
+          {% for improvement in item.feedback.improvements %}<li>{{ improvement }}</li>{% endfor %}
+        </ul>
+      </div>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endif %}
 </div>

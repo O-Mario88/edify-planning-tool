@@ -124,6 +124,18 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="loan_tracking_notifications",
+        description="Reminds staff about due loan applications and repayments, and delivers the prior-month report to RVPs.",
+        cron="daily 07:15 Africa/Nairobi",
+        cron_kwargs={"hour": 7, "minute": 15},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note="LoanTrackingDeliveryLog permanently dedupes each recipient, subject, and reminder/report period.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="school_action_sweep",
         description=(
             "Closes delegated school actions whose underlying condition has "

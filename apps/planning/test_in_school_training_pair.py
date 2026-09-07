@@ -10,6 +10,7 @@ from apps.activities.models import (
     Activity,
     ActivitySalesforceReference,
     ActivityScheduleCostLine,
+    SchoolVisitFeedback,
 )
 from apps.activities.services import (
     _apply_schedule_cost_snapshot as apply_real_cost_snapshot,
@@ -199,6 +200,11 @@ class InSchoolTrainingPairTest(StandardSupportBase):
                 "visitSalesforceId": "SVE-PAIR-1001",
                 "teachersAttended": 4,
                 "leadersAttended": 1,
+                "feedbackFinding": "School leaders applied the training content.",
+                "schoolImprovements": [
+                    "Lesson observations now happen weekly",
+                    "Teacher attendance has improved",
+                ],
             },
             self.user,
         )
@@ -214,6 +220,11 @@ class InSchoolTrainingPairTest(StandardSupportBase):
             ).count(),
             2,
         )
+        feedback = SchoolVisitFeedback.objects.get(activity=visit)
+        self.assertEqual(
+            feedback.finding, "School leaders applied the training content."
+        )
+        self.assertEqual(len(feedback.improvements), 2)
 
     def test_invalid_visit_id_rolls_back_training_salesforce_reservation(self):
         training, visit = self._scheduled_pair_ready_for_completion()
@@ -254,4 +265,6 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertIn('name="visit_salesforce_id"', html)
         self.assertIn('name="training_evidence_file"', html)
         self.assertIn('name="visit_evidence_file"', html)
+        self.assertIn('name="feedback_finding"', html)
+        self.assertIn('name="school_improvements"', html)
         self.assertIn("Submit Training + Visit", html)

@@ -393,7 +393,22 @@ def pd_reminders_job():
     run_tracked_job("pd_reminders", _do_pd_reminders)
 
 
-# ── 7. Field Debrief recurring-issue detection ───────────────────────────────
+# ── 7. Loan application and repayment follow-ups ─────────────────────────────
+def _do_loan_tracking_notifications() -> int:
+    from apps.business_transformation.loan_tracking import (
+        run_loan_tracking_notifications,
+    )
+
+    return run_loan_tracking_notifications()
+
+
+def loan_tracking_notifications_job():
+    if not _enabled():
+        return
+    run_tracked_job("loan_tracking_notifications", _do_loan_tracking_notifications)
+
+
+# ── 8. Field Debrief recurring-issue detection ───────────────────────────────
 def _do_field_debrief_recurring_issues() -> int:
     from apps.debriefs.insight_service import RecurringIssueDetectionService
 
@@ -576,6 +591,7 @@ __all__ = [
     "daily_digest_job",
     "target_ledger_sync_job",
     "pd_reminders_job",
+    "loan_tracking_notifications_job",
     "field_debrief_recurring_issues_job",
     "analytics_report_delivery_job",
     "escalation_sla_sweep_job",

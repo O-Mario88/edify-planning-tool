@@ -138,6 +138,39 @@ class MilestonePlanProgressTest(TestCase):
         self.assertEqual((row["planned"], row["completed"]), (1, 1))
         self.assertEqual(row["pct"], 25.0)
 
+    def test_participant_milestones_count_people_not_activity_rows(self):
+        teachers = _milestone(
+            self.cycle,
+            self.priority,
+            code="M-TEACHERS",
+            title="Teachers trained",
+            target="20",
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=teachers,
+            catalogue_item=self.meeting_item,
+            counting_basis="TEACHERS_TRAINED",
+        )
+        Activity.objects.create(
+            activity_type="cluster_meeting",
+            status="scheduled",
+            catalogue_item=self.meeting_item,
+            fy="2026",
+            expected_participants=8,
+        )
+        Activity.objects.create(
+            activity_type="cluster_meeting",
+            status="completed",
+            catalogue_item=self.meeting_item,
+            fy="2026",
+            teachers_attended=5,
+        )
+
+        row = milestone_plan_progress([teachers])[teachers.id]
+        self.assertEqual(row["unit"], "teachers")
+        self.assertEqual((row["planned"], row["completed"]), (8, 5))
+        self.assertEqual(row["pct"], 25.0)
+
     def test_verified_credits_ride_along(self):
         done = self._visit(self.a, "ia_verified")
         rule = self.schools_ms.activity_rules.first()

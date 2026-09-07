@@ -121,6 +121,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     },
     "loans": {
         BUSINESS_TRANSFORMATION,
+        CCEO,
         CD,
         IA,
         RVP,
@@ -1437,7 +1438,7 @@ SIDEBAR_ITEMS = [
                 "label": "Loans",
                 "url": "/loans",
                 "page_key": "loans",
-                "visible_to": {BUSINESS_TRANSFORMATION, CD, IA, RVP},
+                "visible_to": {BUSINESS_TRANSFORMATION, CCEO, CD, IA, RVP},
             },
             {
                 "label": "Business Accounting & Finance",

@@ -386,29 +386,37 @@ class="h-4 w-4 edify-primary-text rounded-control border-slate-300 edify-primary
 </div>
 
 <hr class="border-slate-100">
-{% comment %}What the officer saw. The activity has carried outcome and
-observation fields since the actuals rule (§9.2), and complete() stores them,
-but only the partner workroom ever posted them -- the officer who generates
-most of the evidence had nowhere to write what happened at the school.{% endcomment %}
-<div class="space-y-2.5">
+{% if requires_school_feedback %}
+<div class="space-y-3">
 <h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
 <span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">{% if is_paired_in_school_training %}4{% else %}3{% endif %}</span>
-What you observed
+School visit feedback
 </h4>
-<p class="edify-text-caption text-slate-500 font-semibold leading-normal">A short record for IA verification and the school's file. Plain words: what was delivered, what you saw, what needs following up.</p>
-<label class="block">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Outcome</span>
-<textarea name="actual_outcome" rows="2" maxlength="1000" placeholder="e.g. Reviewed Term 2 budget with the head teacher; fee collection plan agreed." class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualOutcome|default:"" }}</textarea>
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">This feedback is saved to the school profile and linked to this visit{% if is_paired_in_school_training %} and its paired training{% endif %}.</p>
+<label class="block" for="feedback_finding">
+<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">Finding <span class="normal-case tracking-normal font-medium">(what you found on the ground)</span> <span class="text-rose-500">*</span></span>
+<textarea id="feedback_finding" name="feedback_finding" rows="4" maxlength="3000" required placeholder="Describe what you observed at the school." class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.feedbackFinding|default:"" }}</textarea>
 </label>
-<label class="block">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Observations</span>
-<textarea name="actual_observations" rows="3" maxlength="2000" placeholder="e.g. Two classrooms without desks; attendance register up to date; parents' meeting scheduled." class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualObservations|default:"" }}</textarea>
-</label>
-<label class="block">
-<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Follow-up needed <span class="normal-case tracking-normal font-medium">(optional)</span></span>
-<input type="text" name="follow_up_note" maxlength="500" value="{{ act.followUpNote|default:"" }}" placeholder="e.g. Bring the SSA scoring sheet on the next visit." class="w-full h-9 mt-1 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">
+<label class="block" for="school_improvements">
+<span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-500">How has the school improved from the last visit? <span class="text-rose-500">*</span></span>
+<textarea id="school_improvements" name="school_improvements" rows="4" maxlength="10000" required placeholder="List one improvement per line&#10;Attendance records are now updated weekly&#10;Two classrooms received new desks" class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.schoolImprovementsText|default:"" }}</textarea>
+<span class="mt-1 block edify-text-caption font-medium text-slate-400">Enter one improvement per line. These will appear as a list on the school profile.</span>
 </label>
 </div>
+{% else %}
+{% comment %}Non-visit activities retain their generic actuals fields. Visit
+feedback has a dedicated record above so it can be listed on School 360.{% endcomment %}
+<div class="space-y-2.5">
+<h4 class="text-[14px] font-semibold text-slate-800 flex items-center gap-1.5">
+<span class="inline-flex items-center justify-center w-5 h-5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption">3</span>
+What you observed
+</h4>
+<p class="edify-text-caption text-slate-500 font-semibold leading-normal">A short record for IA verification and the activity file.</p>
+<label class="block"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Outcome</span><textarea name="actual_outcome" rows="2" maxlength="1000" class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualOutcome|default:"" }}</textarea></label>
+<label class="block"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Observations</span><textarea name="actual_observations" rows="3" maxlength="2000" class="w-full mt-1 px-2.5 py-2 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus">{{ act.actualObservations|default:"" }}</textarea></label>
+<label class="block"><span class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Follow-up needed <span class="normal-case tracking-normal font-medium">(optional)</span></span><input type="text" name="follow_up_note" maxlength="500" value="{{ act.followUpNote|default:"" }}" class="w-full h-9 mt-1 px-2.5 rounded-control border border-slate-200 bg-slate-50 edify-text-caption font-semibold text-slate-700 focus:outline-none focus:ring-2 edify-primary-focus"></label>
+</div>
+{% endif %}
 
 <!-- Drawer Footer (Sticky Actions) -->
 <div class="drawer-footer">

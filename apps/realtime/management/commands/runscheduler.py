@@ -63,6 +63,7 @@ class Command(BaseCommand):
             "activity_reminders": jobs.activity_reminders_job,
             "target_ledger_sync": jobs.target_ledger_sync_job,
             "pd_reminders": jobs.pd_reminders_job,
+            "loan_tracking_notifications": jobs.loan_tracking_notifications_job,
             "field_debrief_recurring_issues": jobs.field_debrief_recurring_issues_job,
             "weekly_debrief_reports": jobs.weekly_debrief_reports_job,
             "daily_debrief_reminders": jobs.daily_debrief_reminders_job,

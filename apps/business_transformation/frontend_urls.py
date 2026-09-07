@@ -4,6 +4,21 @@ from . import frontend_views
 
 
 urlpatterns = [
+    path(
+        "loan-applications/apply",
+        frontend_views.public_loan_application_page,
+        name="public_loan_application",
+    ),
+    path(
+        "loan-applications/export.csv",
+        frontend_views.loan_application_export_action,
+        name="loan_application_export",
+    ),
+    path(
+        "loan-applications/<str:application_id>/follow-up",
+        frontend_views.loan_application_follow_up_action,
+        name="loan_application_follow_up",
+    ),
     path("mfi-portal", frontend_views.mfi_portal_page, name="mfi_portal"),
     path(
         "mfi-portal/<str:section>",
@@ -13,6 +28,11 @@ urlpatterns = [
     path("loans", frontend_views.loan_page, name="loans"),
     path("loans/<str:loan_id>/drawer", frontend_views.loan_drawer, name="loan_drawer"),
     path("loans/export.csv", frontend_views.loan_export_action, name="loan_export"),
+    path(
+        "loans/export.xlsx",
+        frontend_views.loan_excel_export_action,
+        name="loan_excel_export",
+    ),
     path("loans/save", frontend_views.loan_save_action, name="loan_save"),
     path(
         "loans/<str:loan_id>/salesforce-confirmation",

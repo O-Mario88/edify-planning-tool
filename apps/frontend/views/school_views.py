@@ -1427,6 +1427,35 @@ def school_detail_view(request, school_id):
 
     business_transformation = school_profile_context(request.user, school)
 
+    # Visit feedback stays on the activity that produced it. School 360 reads
+    # that same record and adds the existing follow-up/pair lineage so the
+    # finding is never detached from the visit or training it describes.
+    from apps.activities.models import Activity, SchoolVisitFeedback
+
+    visit_feedback = list(
+        SchoolVisitFeedback.objects.filter(
+            activity__school=school, activity__deleted_at__isnull=True
+        )
+        .select_related("activity", "activity__follow_up_of_activity")
+        .order_by("-created_at")[:20]
+    )
+    paired_trainings = {
+        training.paired_school_visit_id: training
+        for training in Activity.objects.filter(
+            paired_school_visit_id__in=[item.activity_id for item in visit_feedback],
+            deleted_at__isnull=True,
+        )
+    }
+    for feedback in visit_feedback:
+        activity = feedback.activity
+        paired_training = paired_trainings.get(activity.id)
+        feedback.related_activity = paired_training or activity.follow_up_of_activity
+        feedback.activity_date = (
+            activity.actual_delivery_date
+            or activity.planned_date
+            or (activity.scheduled_date.date() if activity.scheduled_date else None)
+        )
+
     context = {
         "school": school,
         "partner_support": partner_support,
@@ -1436,6 +1465,7 @@ def school_detail_view(request, school_id):
         "historical_ssas": historical_ssas,
         "ssa_progress_history": ssa_progress_history,
         "activities": activities,
+        "visit_feedback": visit_feedback,
         "impact_data": impact_data,
         "quality_gauge": quality_gauge,
         # Deletion is Admin-only (enforced server-side by delete_school; this

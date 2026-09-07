@@ -3,7 +3,7 @@ GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
 
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
 import csv
 from collections import defaultdict
 
@@ -1626,6 +1626,7 @@ def partner_activity_workroom_view(request, activity_id):
                 cluster_id=a.cluster_id, deleted_at__isnull=True
             ).order_by("name")
         )
+    visit_feedback = getattr(a, "school_visit_feedback", None)
     context = {
         "a": a,
         "assignment": assignment,
@@ -1635,6 +1636,8 @@ def partner_activity_workroom_view(request, activity_id):
         "evidence_is_optional": evidence_optional(a),
         "state": state,
         "is_training_kind": sf_kind_for_activity(a) == "training",
+        "is_visit_kind": a.activity_type in VISIT_TYPES,
+        "visit_feedback": visit_feedback,
         "member_schools": member_schools,
         "attended_ids": set(a.attended_school_ids or []),
         "back_url": "/my-plan",
@@ -1697,6 +1700,18 @@ def partner_activity_submit_action(request, activity_id):
                 "actualOutcome": request.POST.get("actual_outcome") or "",
                 "actualObservations": request.POST.get("actual_observations") or "",
                 "followUpNote": request.POST.get("follow_up_note") or "",
+                **(
+                    {
+                        "feedbackFinding": request.POST.get(
+                            "feedback_finding", ""
+                        ).strip(),
+                        "schoolImprovements": request.POST.get(
+                            "school_improvements", ""
+                        ).splitlines(),
+                    }
+                    if a.activity_type in VISIT_TYPES
+                    else {}
+                ),
             },
             request.user,
         )

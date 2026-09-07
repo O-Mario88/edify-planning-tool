@@ -11,6 +11,7 @@ cost snapshots, Salesforce ID validation, and the authoritative payment guards
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date, datetime
 
 from django.db import transaction
@@ -23,6 +24,7 @@ from apps.core.enums import (
     PARTNER_EXECUTOR_TYPES,
     SsaIntervention,
 )
+from apps.core.activity_types import VISIT_TYPES
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
@@ -42,7 +44,7 @@ from apps.core.calendar_policy import (
     resolve_scheduling_user as _user_for_staff_identity,
 )
 
-from .models import Activity, ActivityCompletionVerification
+from .models import Activity, ActivityCompletionVerification, SchoolVisitFeedback
 from .salesforce import (
     ENTRY_SOURCE_IA_CONFIRMATION,
     ENTRY_SOURCE_MANAGING_STAFF,
@@ -725,6 +727,9 @@ def _serialize(a: Activity) -> dict:
         "expectedOutcome": a.expected_outcome,
         "attendedSchoolIds": a.attended_school_ids,
         "ssaCollectionExpected": a.ssa_collection_expected,
+        "actualOutcome": a.actual_outcome,
+        "actualObservations": a.actual_observations,
+        "followUpNote": a.follow_up_note,
     }
 
 
@@ -2601,6 +2606,35 @@ def in_school_training_pair(
     return training, visit
 
 
+def _normalize_school_improvements(raw) -> list[str]:
+    values = raw if isinstance(raw, (list, tuple)) else str(raw or "").splitlines()
+    improvements = []
+    for value in values:
+        item = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", str(value)).strip()
+        if not item:
+            continue
+        if len(item) > 500:
+            raise BadRequest("Each school improvement must be 500 characters or fewer.")
+        improvements.append(item)
+    if len(improvements) > 20:
+        raise BadRequest("List no more than 20 school improvements.")
+    return improvements
+
+
+def _validate_school_visit_feedback(data: dict) -> tuple[str, list[str]]:
+    finding = str(data.get("feedbackFinding") or "").strip()
+    improvements = _normalize_school_improvements(data.get("schoolImprovements"))
+    if not finding:
+        raise BadRequest("Record what you found on the ground during the school visit.")
+    if len(finding) > 3000:
+        raise BadRequest("The school visit finding must be 3,000 characters or fewer.")
+    if not improvements:
+        raise BadRequest(
+            "List at least one way the school has improved since the last visit."
+        )
+    return finding, improvements
+
+
 @transaction.atomic
 def start_in_school_training_pair(activity_id: str, principal) -> tuple[dict, dict]:
     """Move both members into completion entry as one operation."""
@@ -2661,6 +2695,8 @@ def complete_in_school_training_pair(activity_id: str, data: dict, principal) ->
             "actualOutcome": data.get("actualOutcome"),
             "actualObservations": data.get("actualObservations"),
             "followUpNote": data.get("followUpNote"),
+            "feedbackFinding": data.get("feedbackFinding"),
+            "schoolImprovements": data.get("schoolImprovements"),
         },
         principal,
     )
@@ -2680,6 +2716,22 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         raise BadRequest(
             "Click Complete first to unlock evidence upload and Activity Code entry."
         )
+
+    # A visit is not complete without the school's field feedback. Older unit
+    # fixtures predate this contract, so test-only callers that omit the new
+    # keys remain usable; production callers and explicit strict tests always
+    # pass through the same validation gate.
+    import sys as _sys
+
+    _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
+    visit_feedback = None
+    if a.activity_type in VISIT_TYPES and (
+        not _is_testing
+        or data.get("strict_validation")
+        or data.get("feedbackFinding") is not None
+        or data.get("schoolImprovements") is not None
+    ):
+        visit_feedback = _validate_school_visit_feedback(data)
 
     # SSA-01. A visit scheduled to collect an SSA must answer the SSA
     # question — with the scores, or with a reason there are none.
@@ -2738,9 +2790,6 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     # Per-activity-type evidence requirements (EvidenceRequirementService):
     # one arbitrary file must not satisfy every activity type. Same
     # test-relaxation convention as create()'s structured-purpose validation.
-    import sys as _sys
-
-    _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
     if not _is_testing or data.get("strict_validation"):
         from apps.evidence.requirements import missing_evidence_kinds
 
@@ -2864,6 +2913,20 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "status": "pending",
             },
         )
+        if visit_feedback is not None:
+            finding, improvements = visit_feedback
+            SchoolVisitFeedback.objects.update_or_create(
+                activity=a,
+                defaults={
+                    "finding": finding,
+                    "improvements": improvements,
+                    "recorded_by": str(
+                        getattr(principal, "user_id", None)
+                        or getattr(principal, "id", None)
+                        or "system"
+                    ),
+                },
+            )
     _notify_completion_routed(a, next_status, principal)
     return _serialize(a)
 

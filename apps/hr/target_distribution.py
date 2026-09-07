@@ -1385,7 +1385,7 @@ def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, d
     from apps.activities.models import Activity
     from apps.core.activity_types import COMPLETED_WORK_STATUSES
 
-    from .milestone_progress import SCHOOL_BASES
+    from .milestone_progress import LEADER_BASES, SCHOOL_BASES, TEACHER_BASES
     from .models import MilestoneActivityRule, MilestoneProgressCredit
 
     milestones = list(milestones)
@@ -1429,16 +1429,43 @@ def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, d
             unit = "schools"
 
             def measure(qs):
-                return qs.exclude(school__isnull=True).values("school_id").distinct().count()
+                return (
+                    qs.exclude(school__isnull=True)
+                    .values("school_id")
+                    .distinct()
+                    .count()
+                )
 
+            planned = measure(planned_q)
+            completed = measure(completed_q)
+        elif bases & TEACHER_BASES:
+            unit = "teachers"
+            planned = sum(
+                value or 0
+                for value in planned_q.values_list("expected_participants", flat=True)
+            )
+            completed = sum(
+                value or 0
+                for value in completed_q.values_list("teachers_attended", flat=True)
+            )
+        elif bases & LEADER_BASES:
+            unit = "leaders"
+            planned = sum(
+                value or 0
+                for value in planned_q.values_list("expected_participants", flat=True)
+            )
+            completed = sum(
+                value or 0
+                for value in completed_q.values_list("leaders_attended", flat=True)
+            )
         else:
             unit = "activities"
 
             def measure(qs):
                 return qs.count()
 
-        planned = measure(planned_q)
-        completed = measure(completed_q)
+            planned = measure(planned_q)
+            completed = measure(completed_q)
         verified = verified_by_milestone.get(mid, Decimal("0"))
         target = milestone.target_value
         target_f = float(target) if target is not None else None

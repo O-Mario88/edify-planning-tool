@@ -183,6 +183,15 @@ class NotificationLinkResolver:
                 return "/target-distribution", "Open Target Distribution"
             return "/my-targets", "View My Targets"
 
+        if event_type == "bt.loan_report.monthly":
+            month = context_id or ""
+            return f"/loans?report_month={month}", "Open Monthly Loan Report"
+
+        if event_type.startswith("bt.loan_application") or event_type.startswith(
+            "bt.loan_repayment"
+        ):
+            return "/loans", "Open Loan Tracking"
+
         if event_type.startswith("bt."):
             return "/business-transformation", "Open Uganda Portfolio"
 

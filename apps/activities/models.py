@@ -521,6 +521,27 @@ class Activity(SoftDeleteModel):
             )
 
 
+class SchoolVisitFeedback(TimeStampedModel):
+    """Structured school feedback captured while completing a visit.
+
+    The activity is the source of school, date, visit type, follow-up lineage,
+    and any paired training. Keeping the feedback attached to that record
+    avoids a second copy on School that could drift away from what happened.
+    """
+
+    id = CuidField()
+    activity = models.OneToOneField(
+        Activity, on_delete=models.PROTECT, related_name="school_visit_feedback"
+    )
+    finding = models.TextField()
+    improvements = models.JSONField(default=list)
+    recorded_by = models.CharField(max_length=30)
+
+    class Meta:
+        db_table = "school_visit_feedback"
+        ordering = ["-created_at"]
+
+
 class ActivityScheduleCostLine(TimeStampedModel):
     """Persisted cost breakdown for a scheduled activity — sourced from
     CostSetting at schedule time so fund requests reconcile to the catalogue.

@@ -1,0 +1,6 @@
+<label for="{{ field.id_for_label }}" class="block">
+  <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">{{ field.label }}</span>
+  {{ field }}
+  {% if field.help_text %}<span class="mt-1 block text-xs text-[var(--edify-text-muted)]">{{ field.help_text }}</span>{% endif %}
+  {% if field.errors %}<span class="mt-1 block text-xs text-red-700">{{ field.errors|striptags }}</span>{% endif %}
+</label>
