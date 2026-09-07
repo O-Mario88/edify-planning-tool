@@ -293,8 +293,18 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
 
         self.assertIn("#sr-cam .sr-dl{display:none}", template)
         self.assertIn(
-            "#sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em}",
+            "#sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em;",
             template,
+        )
+        # And at the plain type step. The names were enlarged on 2026-09-07 to
+        # separate them from the district labels they share the map with; here
+        # there are no district labels, and the same multiplier on a third of
+        # the canvas runs WEST NILE into ACHOLI.
+        phone = template[template.index("@media (max-width:48rem){") :]
+        phone = phone[: phone.index("#sr-cam .sr-school-pins")]
+        self.assertIn(
+            "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))",
+            phone,
         )
         self.assertIn("allowOverlapFallback:true,", template)
         self.assertIn("this.keepSubRegionLabelsOnCanvas();", template)
@@ -351,7 +361,11 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
             "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))",
             template,
         )
-        self.assertIn("stroke-width:.16em", template)
+        # The halo is measured in em, so it grows with whatever step the label
+        # is drawn at. It widened from .16em to .18em when the sub-region names
+        # were enlarged on 2026-09-07: a heavier glyph needs more outline to
+        # stay clear of a dark choropleth band underneath it.
+        self.assertIn("stroke-width:.18em", template)
         self.assertNotIn("stroke-width:2.2px", template)
 
     def test_subcounty_markers_refresh_after_school_geography_changes(self):

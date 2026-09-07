@@ -28,7 +28,7 @@
       <h3 class="text-card-title flex items-center gap-1.5">
         <span x-text="`Performance by ${distributionLevel()}`">Performance by Sub-Region</span>
         <span class="edify-text-caption text-slate-400 cursor-help"
-              title="Click a district to zoom; Esc or click outside to return">ⓘ</span>
+              title="Click a sub-region name to open it, or a district to zoom; Esc or click outside to return">ⓘ</span>
       </h3>
       <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">
         UBOS boundaries · sub-county detail on district zoom ·
@@ -39,8 +39,11 @@
     </div>
     <div class="flex w-full flex-col items-start gap-1.5 sm:w-auto sm:items-end sm:shrink-0">
       <div class="flex items-center gap-2">
+        {% comment %}The sub-region names became controls on 2026-09-07, so the
+        hint names them: they are the larger labels, and the level most readers
+        want first.{% endcomment %}
         <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
-           x-show="!focused" x-transition.opacity>Click a district to zoom</p>
+           x-show="!focused" x-transition.opacity>Click a sub-region name, or a district, to zoom</p>
         <p class="edify-text-caption font-semibold text-slate-400 hidden sm:block"
            x-show="focusedDistrict && !focusedSubcounty"
            x-transition.opacity>Click a sub-county to zoom further</p>

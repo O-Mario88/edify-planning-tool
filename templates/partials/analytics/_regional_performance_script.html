@@ -400,6 +400,28 @@ window.subregionMap = function (){
         t.setAttribute('transform', `translate(${sx(lo).toFixed(1)},${sy(la).toFixed(1)})`);
         t.setAttribute('class','sr-sl');
         t.textContent = name.toUpperCase();
+        // The name is the way into its sub-region (owner, 2026-09-07). The
+        // districts under it have been clickable since the map was built and
+        // the distribution table beside it already calls focusSub(); the label
+        // sitting over them was the one thing that named a sub-region and did
+        // nothing when pressed. Same target, same keys, same escape as a
+        // district: Enter or Space activates, and pressing the sub-region you
+        // are already in returns to the country (focusSub toggles).
+        t.dataset.sub = name;
+        t.setAttribute('role','button');
+        t.setAttribute('tabindex','0');
+        t.setAttribute('aria-label', `Zoom to ${name} sub-region`);
+        t.addEventListener('click', event => {
+          event.stopPropagation();
+          this.focusSub(name);
+        });
+        t.addEventListener('keydown', event => {
+          if(event.key === 'Enter' || event.key === ' '){
+            event.preventDefault();
+            event.stopPropagation();
+            this.focusSub(name);
+          }
+        });
         subLabels.appendChild(t);
       });
       cam.appendChild(subLabels);

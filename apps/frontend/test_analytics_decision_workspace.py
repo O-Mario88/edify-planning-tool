@@ -95,9 +95,17 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
         # the sub-region is the level the table beside the map is grouped by.
         # District identity stays one tap away in zoom, tooltip and focus.
         self.assertIn("#sr-cam .sr-dl{display:none}", map_template)
+        # At the plain type step, too. The names were enlarged on 2026-09-07 so
+        # a reader could tell them from the district labels they share the map
+        # with; a phone has no district labels and a third of the canvas, where
+        # the same multiplier only crowds the names into each other.
         self.assertIn(
-            "#sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em}",
+            "#sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em;",
             map_template,
+        )
+        self.assertIn(
+            "font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))",
+            map_template[map_template.index("@media (max-width:48rem){") :],
         )
         cluster_template = _read(
             "templates/partials/analytics/cluster_performance.html"

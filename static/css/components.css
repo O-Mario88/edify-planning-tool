@@ -3900,11 +3900,30 @@ main .apexcharts-canvas > svg.apexcharts-svg {
      falls — across two district fills, over a boundary, or on a dark choropleth
      band. paint-order draws the stroke behind the fill; without it the outline
      eats inward and the text just reads heavier instead of haloed. */
-  #sr-cam .sr-sl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
+  /* A sub-region name is a heading over the districts it covers, and it is the
+     control that opens them: it carries half again the district labels' size
+     so the two levels are told apart at a glance, and it takes pointer events
+     (`#sr-cam text` turns them off for every other label) so it can be pressed
+     (owner, 2026-09-07). The halo thickens with the type — a stroke measured in
+     `em` grows with the glyph, but a heavier weight needs more of it to stay
+     clear of a dark choropleth band underneath. */
+  #sr-cam .sr-sl{font-size:calc(var(--edify-svg-text-micro,var(--edify-text-micro-size)) * 1.55);
                  font-weight:var(--edify-text-display-weight);fill:var(--edify-accent);
                  letter-spacing:.04em;
-                 stroke:var(--edify-on-accent);stroke-width:.16em;stroke-linejoin:round;
-                 paint-order:stroke fill}
+                 stroke:var(--edify-on-accent);stroke-width:.18em;stroke-linejoin:round;
+                 paint-order:stroke fill;
+                 pointer-events:auto;cursor:pointer;
+                 transition:fill .15s ease,opacity .15s ease}
+  /* `--edify-accent-hover` is the platform's darker step for this same accent,
+     the one every primary button moves to on hover. `--edify-primary` is NOT:
+     it resolves to the identical #0e5da3, so a name that used it changed
+     nothing under the pointer. */
+  #sr-cam .sr-sl:hover,
+  #sr-cam .sr-sl:focus-visible{fill:var(--edify-accent-hover);outline:none}
+  /* The keyboard ring goes on the glyphs, not on a box around them: an SVG
+     text node's focus outline is drawn at its bounding box and the camera
+     magnifies it on zoom. */
+  #sr-cam .sr-sl:focus-visible{stroke:var(--edify-accent);stroke-width:.3em}
   #sr-cam .sr-scl{
     font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
     font-weight:var(--edify-text-label-weight);fill:var(--edify-map-label);
@@ -3921,7 +3940,14 @@ main .apexcharts-canvas > svg.apexcharts-svg {
      sub-region that sits against the left edge — stays inside the canvas. */
   @media (max-width:48rem){
     #sr-cam .sr-dl{display:none}
-    #sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em}
+    /* Back to the plain type step here. The enlargement above is there to tell
+       a sub-region name apart from a district name; on a phone there are no
+       district names to tell it apart from, and the canvas is a third as wide,
+       so the same multiplier only runs WEST NILE into ACHOLI and pushes SOUTH
+       WESTERN off the edge. These stay tappable — the base rule's pointer
+       events and cursor are untouched. */
+    #sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em;
+                   font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))}
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
   #sr-cam .sr-boundary-layer > path{
