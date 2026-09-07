@@ -11,6 +11,12 @@ from .models import Notification
 
 logger = logging.getLogger("edify.notifications")
 
+
+def _sanitize_for_log(value: object) -> str:
+    """Return a single-line representation safe for text logs."""
+    return str(value).replace("\r", "\\r").replace("\n", "\\n")
+
+
 # ── SMS money alerts ───────────────────────────────────────────────────────
 # The in-app rail only reaches a person who is on the platform. The decisions
 # that move a field officer's money — approved, returned, disbursed, cleared —
@@ -115,7 +121,10 @@ def _weekly_request_id_for_advance(advance_id: str | None) -> str | None:
             .first()
         )
     except Exception:  # noqa: BLE001
-        logger.exception("weekly request lookup failed for advance %s", advance_id)
+        logger.exception(
+            "weekly request lookup failed for advance %s",
+            _sanitize_for_log(advance_id),
+        )
         return None
 
 
