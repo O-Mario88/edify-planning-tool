@@ -1326,18 +1326,12 @@ main .apexcharts-canvas:has(
   line-height: 1.2 !important;
 }
 
-/* The existing empty-state component becomes a guided, quiet surface. */
-main .edify-empty-state {
-  min-block-size: 10rem;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 0.5rem;
-  border: 1px dashed var(--edify-border-strong);
-  border-radius: var(--edify-radius-lg);
-  background: var(--edify-surface-muted);
-  color: var(--edify-text-muted);
-}
+/* The empty-state component is defined once, in components.css — container
+   and parts together. It used to be declared here as well (a grid, dashed,
+   muted, 10rem tall) and a third time at the top of components.css (dashed,
+   muted, no parts), so an empty state took its container from one file and its
+   anatomy from another, and neither knew about the mark or the message
+   (2026-09-07). The values that rule carried are kept there. */
 
 /* ── Page command patterns. ────────────────────────────────────────────── */
 main .platform-page-header {

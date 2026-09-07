@@ -32,9 +32,12 @@
       <form method="post" action="/my-professional-development/request/{{ instance.id }}/action" class="space-y-2">
         {% csrf_token %}<input type="hidden" name="action" value="hr_approve">
         {% if instance.is_exception %}
-        <label class="flex items-start gap-2 edify-text-caption font-semibold text-amber-800 bg-amber-50 border border-amber-100 rounded-surface p-2.5">
-          <input type="checkbox" name="exception" value="true" required class="mt-0.5">
-          I acknowledge and approve this funding exception (requested amount exceeds the employee's remaining PD fund).
+        {% comment %}A note the approver has to agree with, so the control
+        lives inside it rather than the note being repeated as a tinted label
+        (owner, 2026-09-07). Same tone, same tokens, on every theme.{% endcomment %}
+        <label class="edify-note edify-note--control" data-tone="warning">
+          <input type="checkbox" name="exception" value="true" required>
+          <span class="edify-note__body">I acknowledge and approve this funding exception (requested amount exceeds the employee's remaining PD fund).</span>
         </label>
         {% endif %}
         <button type="submit" class="w-full h-8 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white text-[12px] font-bold transition-colors">Approve Request</button>
@@ -122,9 +125,9 @@
     <input type="hidden" name="fy" value="{{ instance.fy|default:fy }}">
 
     {% if instance.status == 'returned_by_supervisor' or instance.status == 'returned_by_hr' %}
-    <div class="rounded-surface bg-rose-50 border border-rose-100 p-3">
-      <p class="edify-text-caption font-bold text-rose-800">Returned for correction</p>
-      <p class="edify-text-caption text-rose-700 mt-0.5">{% firstof instance.supervisor_note instance.hr_note %}</p>
+    <div class="edify-note" data-tone="danger">
+      <p class="edify-note__title">Returned for correction</p>
+      <p class="edify-note__body">{% firstof instance.supervisor_note instance.hr_note %}</p>
     </div>
     {% endif %}
 

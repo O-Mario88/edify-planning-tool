@@ -1364,15 +1364,6 @@ select:not([multiple]):not(.select-native) {
   background-size: 16px 16px;
 }
 
-/* Empty State component */
-.edify-empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  background-color: var(--edify-surface-muted);
-  border-radius: var(--edify-radius-md);
-  border: 1px dashed var(--edify-border);
-}
-
 /* Layout & Grid Helpers (Tailwind Fallbacks) */
 @media (min-width: 1024px) {
   .lg\:grid-cols-9 {
@@ -4616,4 +4607,123 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
    it gets a little air so the rows do not sit on the number. */
 .edify-metric__body {
   margin-block-start: 0.45rem;
+}
+
+
+/* ═══ NOTHING HERE, AND WHY ════════════════════════════════════════════════
+   (owner, 2026-09-07, after the metric panels: "now do the same for the empty
+   states and prose notes".)
+
+   Two shapes that are not metrics and were hand-rolled anyway.
+
+   An EMPTY STATE is a centred column: a quiet mark, the sentence, and
+   optionally what to do about it. Fifteen pages had written the same one out
+   in Tailwind utilities, down to the same glyph; they share one include now.
+
+   A NOTE is a sentence the page needs to say beside the data — an amount that
+   could not be attributed, a quarter too young to forecast, a request returned
+   for correction. It keeps a tone, because those sentences are not all the
+   same kind of news, but it carries it the way everything else here does: a
+   rule down the inline edge and a wash mixed from the tone token, rather than
+   a flat `bg-amber-50` that only exists on one theme. */
+/* One definition. There were two: this component was declared near the top of
+   the file as a dashed muted panel with no parts, and again here with parts
+   and no panel, so an empty state got the container from one and its anatomy
+   from the other. The dashed panel is kept — it is the platform's established
+   way of saying "this area has nothing in it, and that is not an error". */
+.edify-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-block-size: 10rem;
+  padding: clamp(1.75rem, 1.4rem + 1.6cqi, 2.75rem) 1.5rem;
+  border: 1px dashed var(--edify-border-strong);
+  border-radius: var(--edify-radius-lg);
+  background-color: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  text-align: center;
+}
+
+.edify-empty-state__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border: 1px solid var(--edify-kpi-divider);
+  border-radius: var(--edify-radius-md);
+  background-color: color-mix(in srgb, var(--edify-text-muted) 5%, var(--edify-surface));
+  color: var(--edify-text-subtle);
+}
+
+.edify-empty-state__mark svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.edify-empty-state__message {
+  max-inline-size: 34rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.edify-empty-state__hint {
+  max-inline-size: 34rem;
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+/* THE NOTE. Neutral by default; `data-tone` says what kind of news it is. */
+.edify-note {
+  --edify-note-tone: var(--edify-text-muted);
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--edify-note-tone) 28%, transparent);
+  border-inline-start: 3px solid color-mix(in srgb, var(--edify-note-tone) 62%, transparent);
+  border-radius: var(--edify-radius-sm);
+  background-color: color-mix(in srgb, var(--edify-note-tone) 7%, var(--edify-surface));
+}
+
+.edify-note[data-tone="warning"] { --edify-note-tone: var(--edify-warning-text); }
+.edify-note[data-tone="danger"] { --edify-note-tone: var(--edify-danger-text); }
+.edify-note[data-tone="success"] { --edify-note-tone: var(--edify-success-text); }
+.edify-note[data-tone="info"] { --edify-note-tone: var(--edify-accent); }
+
+.edify-note__title {
+  color: var(--edify-note-tone);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.edify-note__body {
+  margin-block-start: 0.15rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* A note the reader has to agree with: the control sits inside it, on the same
+   line as the sentence, and the whole note is the click target. */
+.edify-note--control {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.edify-note--control > input {
+  flex: 0 0 auto;
+  margin-block-start: 0.15rem;
+}
+
+.edify-note--control .edify-note__body {
+  margin-block-start: 0;
 }

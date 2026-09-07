@@ -127,9 +127,24 @@ class ComposedCardTileContractTest(SimpleTestCase):
             js,
         )
         base = _read("templates/base.html")
-        # The stylesheet and the script it drives share one cache key.
-        self.assertIn("js/micro-ux.js' %}?v=20260906field1", base)
-        self.assertIn("mobile-micro-ux.css' %}?v=20260906field1", base)
+        # The stylesheet and the script it drives share one cache key. Asserted
+        # as a PAIRING rather than a literal: pinning the value here meant every
+        # bump of either asset edited this test, which is how it came to be
+        # asserting a key two changes old (2026-09-07). The two other tests that
+        # hold this contract already compare them to each other.
+        import re
+
+        keys = {
+            asset: re.search(
+                re.escape(asset) + r"' %\}\?v=([0-9a-z]+)", base
+            )
+            for asset in ("js/micro-ux.js", "mobile-micro-ux.css")
+        }
+        self.assertTrue(all(keys.values()), keys)
+        self.assertEqual(
+            keys["js/micro-ux.js"].group(1),
+            keys["mobile-micro-ux.css"].group(1),
+        )
 
 
 class SsaFilterRowContractTest(SimpleTestCase):

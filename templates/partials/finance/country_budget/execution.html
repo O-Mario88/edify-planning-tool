@@ -50,9 +50,9 @@ says so rather than showing a zero that reads as a fact.
   </div>
 
   {% if reconciliation.unattributedCount %}
-  <div class="mt-2 rounded-surface bg-amber-50 border border-amber-100 p-2.5">
-    <p class="edify-text-caption font-bold text-amber-800">{{ reconciliation.unattributed_fmt }} moved this month could not be attributed to a country</p>
-    <p class="edify-text-caption font-semibold text-amber-700 mt-0.5">{{ reconciliation.unattributedCount }} advance{{ reconciliation.unattributedCount|pluralize }} whose owner has no country recorded. Excluded from the figures above — shown here so it is not silently lost.</p>
+  <div class="edify-note mt-2" data-tone="warning">
+    <p class="edify-note__title">{{ reconciliation.unattributed_fmt }} moved this month could not be attributed to a country</p>
+    <p class="edify-note__body">{{ reconciliation.unattributedCount }} advance{{ reconciliation.unattributedCount|pluralize }} whose owner has no country recorded. Excluded from the figures above — shown here so it is not silently lost.</p>
   </div>
   {% endif %}
 </div>
@@ -112,8 +112,8 @@ was invisible to the people accountable for it.
     <p class="edify-text-caption font-semibold text-slate-500 mt-0.5 tabular-nums">{{ forecast.daysRemaining }} day{{ forecast.daysRemaining|pluralize }} remaining</p>
   </div>
   {% else %}
-  <div class="mt-2 rounded-surface bg-slate-50 border border-slate-100 p-2.5">
-    <p class="edify-text-caption font-semibold text-slate-500">Too early in the quarter to project a run rate — a projection before day {{ forecast.minForecastDays }} multiplies a single payment into a false alarm. Spend to date is shown above.</p>
+  <div class="edify-note mt-2">
+    <p class="edify-note__body">Too early in the quarter to project a run rate — a projection before day {{ forecast.minForecastDays }} multiplies a single payment into a false alarm. Spend to date is shown above.</p>
   </div>
   {% endif %}
 </div>

@@ -247,14 +247,21 @@
       if (hasText) {
         Array.from(cell.children).forEach(function (child) {
           if (child.matches('p, div, span.block, small') &&
-              !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .edify-cell-hidden')) {
+              !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .edify-cell-hidden, .edify-empty-state')) {
             child.classList.add('edify-cell-line', 'edify-cell-follows');
           }
         });
       }
-      /* A single wrapper holding two or more lines: its lines sit inline too. */
+      /* A single wrapper holding two or more lines: its lines sit inline too.
+
+         `.edify-empty-state` is excluded for the same reason `.flex` is: it
+         states its own layout. The guard is by CLASS, not by computed style,
+         so when the hand-rolled empty states became a component on 2026-09-07
+         they stopped carrying `flex flex-col` and started being flattened —
+         the mark and the sentence landed on one line, joined by a middle dot,
+         with the icon squashed out of its square. */
       if (cell.children.length === 1 && cell.firstElementChild.matches('div, p') &&
-          !cell.firstElementChild.matches('.flex, .grid, .inline-flex, form')) {
+          !cell.firstElementChild.matches('.flex, .grid, .inline-flex, form, .edify-empty-state')) {
         var inner = Array.from(cell.firstElementChild.children).filter(function (child) {
           return child.matches('a, span, p, small, div, time, strong') &&
             !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge');

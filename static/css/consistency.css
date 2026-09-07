@@ -3418,24 +3418,31 @@ main table tbody > tr:only-child > td[colspan] > :is(
    menus over the sidebar — and the open one measured itself while inline,
    which put it off the right edge of the window. `.row-menu` is excluded for
    the same reason one level up: the trigger and its list are a positioning
-   context, not a stacked pair of text lines. */
+   context, not a stacked pair of text lines.
+
+   `.edify-empty-state` is excluded for a third reason: it is not a record at
+   all. An empty row's guidance is a mark above a sentence, and flattening it
+   put the icon and the message on one line joined by a middle dot — "▢ · No
+   requests found" (owner, 2026-09-07). The component states its own layout;
+   this rule is about cells that hold a record.
+   */
 @media all {
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(.edify-cell-row):not(.row-menu):not([x-show]),
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row):not(.edify-empty-state) > :is(div, p, span, small):not(.edify-cell-row):not(.row-menu):not([x-show]),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
     table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):not(.row-menu):not([x-show]),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row) + :is(div, p, small):not(.row-menu):not([x-show]) {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(.edify-empty-state) + :is(div, p, small):not(.row-menu):not([x-show]) {
     display: inline !important;
     margin-block: 0 !important;
   }
 
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small) + :is(div, p, span, small),
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row):not(.edify-empty-state) > :is(div, p, span, small) + :is(div, p, span, small),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
     table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small) + :is(div, p, span, small),
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row) + :is(div, p, small) {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(.edify-empty-state) + :is(div, p, small) {
     margin-inline-start: 0.375rem;
   }
 
@@ -3445,11 +3452,11 @@ main table tbody > tr:only-child > td[colspan] > :is(
      "● · Central" in the analytics sub-region table, which is what a middle
      dot floating before every row name looked like (owner, 2026-09-05). */
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row):not(.edify-empty-state) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
     table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
   :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(:empty) + :is(div, p, small)::before {
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(.edify-empty-state):not(:empty) + :is(div, p, small)::before {
     content: "· ";
     color: var(--edify-text-subtle, var(--edify-text-muted));
   }

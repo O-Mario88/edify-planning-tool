@@ -43,8 +43,8 @@
         <input type="text" name="reference" required placeholder="e.g. TXN-2026-00184, bank slip no."
                class="w-full h-10 px-3 rounded-control border border-slate-200 text-[13px] font-semibold bg-slate-50 edify-focus-surface focus:border-emerald-400 focus:outline-none">
       </div>
-      <div class="rounded-surface bg-slate-50 border border-slate-100 p-3">
-        <p class="edify-text-caption font-semibold text-slate-500 leading-relaxed">On disbursement, the requester is notified to confirm receipt, the plan enters reconciliation tracking, and the action is audited. Execution, evidence, IA verification, and accountability still follow.</p>
+      <div class="edify-note">
+        <p class="edify-note__body">On disbursement, the requester is notified to confirm receipt, the plan enters reconciliation tracking, and the action is audited. Execution, evidence, IA verification, and accountability still follow.</p>
       </div>
       <div class="flex items-center justify-end gap-2 pt-1">
         <button type="button" @click="$dispatch('close-drawer')" class="h-8 px-4 rounded-control border border-slate-200 edify-surface hover:bg-slate-50 text-[12px] font-bold text-slate-600 transition-colors">Cancel</button>

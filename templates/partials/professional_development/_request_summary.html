@@ -32,9 +32,9 @@
   </div>
   <p class="edify-text-caption font-semibold text-slate-600">{{ instance.get_funding_type_display }}</p>
   {% if instance.is_exception %}
-  <div class="rounded-surface bg-amber-50 border border-amber-100 p-2.5">
-    <p class="edify-text-caption font-bold text-amber-800">Funding exception requested</p>
-    <p class="edify-text-caption text-amber-700 mt-0.5">{{ instance.exception_reason|default:"No reason provided." }}</p>
+  <div class="edify-note" data-tone="warning">
+    <p class="edify-note__title">Funding exception requested</p>
+    <p class="edify-note__body">{{ instance.exception_reason|default:"No reason provided." }}</p>
   </div>
   {% endif %}
 </div>
