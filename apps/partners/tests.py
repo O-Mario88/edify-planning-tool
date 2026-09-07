@@ -378,3 +378,111 @@ class PartnerLifecycleTests(TestCase):
         self.assertContains(response, "Grace Nakato")
         self.assertContains(response, "Activity history")
         self.assertContains(response, f'href="/schools/{school.id}"')
+
+
+class PartnerSupportedSchoolsAndBioTests(TestCase):
+    """The schools a partner supports, with performance; and the partner's own
+    hand on its bio (owner, 2026-09-07).
+    """
+
+    def setUp(self):
+        from datetime import datetime, timezone as dt_tz
+
+        from apps.activities.models import Activity
+        from apps.schools.models import School
+        from apps.ssa.models import SsaRecord
+
+        User = get_user_model()
+        self.cd = User.objects.create_user(
+            email="support-cd@edify.test", name="Support CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value, password="StrongPassphrase!23",
+        )
+        self.partner_user = User.objects.create_user(
+            email="own-org@partner.test", name="Own Org Login",
+            roles=[EdifyRole.PARTNER_ADMIN.value], active_role=EdifyRole.PARTNER_ADMIN.value,
+            password="StrongPassphrase!23",
+        )
+        self.partner = Partner.objects.create(
+            name="Supporting Partner", active_status=True, region_name="Central",
+            user=self.partner_user,
+        )
+        self.other = Partner.objects.create(name="Other Partner", active_status=True)
+        self.school = School.objects.create(name="Supported School", school_id="SUP-001")
+        Activity.objects.create(
+            activity_type="school_visit", status="completed", school=self.school,
+            assigned_partner_id=self.partner.id,
+        )
+        Activity.objects.create(
+            activity_type="school_visit", status="assigned_to_partner", school=self.school,
+            assigned_partner_id=self.partner.id,
+        )
+        Activity.objects.create(
+            activity_type="training", status="completed", school=self.school,
+            assigned_partner_id=self.partner.id,
+        )
+        SsaRecord.objects.create(
+            school=self.school, fy="2025", average_score=5.0,
+            date_of_ssa=datetime(2025, 3, 1, tzinfo=dt_tz.utc), verification_status="confirmed",
+        )
+        SsaRecord.objects.create(
+            school=self.school, fy="2026", average_score=6.5,
+            date_of_ssa=datetime(2026, 3, 1, tzinfo=dt_tz.utc), verification_status="confirmed",
+        )
+
+    def test_the_profile_lists_supported_schools_with_counts_and_performance(self):
+        self.client.force_login(self.cd)
+        response = self.client.get(f"/partners/{self.partner.id}")
+        self.assertEqual(response.status_code, 200)
+        rows = response.context["supported_schools"]
+        self.assertEqual(len(rows), 1)
+        row = rows[0]
+        self.assertEqual(row["school"].id, self.school.id)
+        self.assertEqual((row["visits_done"], row["visits"]), (1, 2))
+        self.assertEqual((row["trainings_done"], row["trainings"]), (1, 1))
+        # Latest confirmed SSA, and the move since the one before it.
+        self.assertEqual(row["score"], 6.5)
+        self.assertEqual(row["delta"], 1.5)
+        self.assertContains(response, "Schools supported")
+        self.assertContains(response, f'href="/schools/{self.school.id}"')
+
+    def test_the_partner_edits_its_own_bio_but_not_its_region(self):
+        self.client.force_login(self.partner_user)
+        response = self.client.get(f"/partners/{self.partner.id}/edit-drawer")
+        self.assertEqual(response.status_code, 200)
+        # Region and intervention are Edify's call: shown, not editable.
+        self.assertNotContains(response, 'name="region_name"')
+        self.assertContains(response, "set by Edify")
+
+        response = self.client.post(
+            f"/partners/{self.partner.id}/edit-drawer",
+            {"contact_person": "Grace N", "phone": "0700 111 222", "email": "grace@partner.test",
+             "expertise": "Literacy, Numeracy", "notes": "Works in Wakiso",
+             "region_name": "Northern", "name": "Renamed By Partner"},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.partner.refresh_from_db()
+        self.assertEqual(self.partner.contact_person, "Grace N")
+        self.assertEqual(self.partner.expertise_areas, ["Literacy", "Numeracy"])
+        self.assertEqual(self.partner.region_name, "Central")
+        self.assertEqual(self.partner.name, "Supporting Partner")
+
+        # Another organisation's drawer is not theirs to open.
+        response = self.client.get(f"/partners/{self.other.id}/edit-drawer")
+        self.assertEqual(response.status_code, 403)
+
+    def test_the_country_director_edits_region_and_name(self):
+        self.client.force_login(self.cd)
+        response = self.client.get(f"/partners/{self.partner.id}/edit-drawer")
+        self.assertContains(response, 'name="region_name"')
+        response = self.client.post(
+            f"/partners/{self.partner.id}/edit-drawer",
+            {"name": "Supporting Partner Ltd", "region_name": "Northern",
+             "ssa_intervention": "christlike_behaviour", "contact_person": "Grace N",
+             "phone": "", "email": "", "expertise": "", "notes": ""},
+        )
+        self.assertEqual(response.status_code, 200)
+        self.partner.refresh_from_db()
+        self.assertEqual(self.partner.name, "Supporting Partner Ltd")
+        self.assertEqual(self.partner.region_name, "Northern")
+        self.assertEqual(self.partner.ssa_intervention, "christlike_behaviour")

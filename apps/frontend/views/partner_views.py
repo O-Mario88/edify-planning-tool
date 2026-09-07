@@ -711,8 +711,93 @@ def partner_detail_view(request, partner_id):
     )
     partner_progress = get_ssa_progress_by_fy(partner_schools)
 
+    # The schools this organisation supports — every portfolio school it has
+    # visited or trained (owner, 2026-09-07: "so that we can track all the
+    # schools supported by the partner and how they are performing"). A
+    # cluster training names its attendees in `attended_school_ids`, so both
+    # halves are read, as the sign-in strip does. Performance is the school's
+    # latest CONFIRMED SSA and the one before it; the delta is what "how they
+    # are performing" means to a supervisor.
+    from apps.ssa.models import SsaRecord
+
+    support: dict[str, dict] = {}
+
+    def touch(school_id, a, kind):
+        if not school_id:
+            return
+        row = support.setdefault(
+            school_id,
+            {"visits": 0, "visits_done": 0, "trainings": 0, "trainings_done": 0, "last": None},
+        )
+        row[kind] += 1
+        if a.status in COMPLETED_WORK_STATUSES:
+            row[kind + "_done"] += 1
+        if a.planned_date and (row["last"] is None or a.planned_date > row["last"]):
+            row["last"] = a.planned_date
+
+    for a in activities:
+        kind = "visits" if a.activity_type in VISIT_TYPES else "trainings" if a.activity_type in TRAINING_TYPES else None
+        if not kind:
+            continue
+        touch(a.school_id, a, kind)
+        for sid in a.attended_school_ids or []:
+            if sid != a.school_id:
+                touch(sid, a, kind)
+
+    supported_schools = []
+    if support:
+        schools_by_id = {
+            s.id: s
+            for s in School.objects.filter(id__in=support.keys(), deleted_at__isnull=True)
+            .select_related("district")
+        }
+        latest: dict[str, list] = {}
+        for rec in (
+            SsaRecord.objects.filter(
+                school_id__in=schools_by_id.keys(),
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            )
+            .order_by("school_id", "-date_of_ssa")
+            .values_list("school_id", "average_score", "date_of_ssa")
+        ):
+            bucket = latest.setdefault(rec[0], [])
+            if len(bucket) < 2:
+                bucket.append(rec)
+        for sid, row in support.items():
+            school = schools_by_id.get(sid)
+            if school is None:
+                continue
+            scores = latest.get(sid, [])
+            current = scores[0][1] if scores else None
+            previous = scores[1][1] if len(scores) > 1 else None
+            delta = (
+                round(current - previous, 1)
+                if current is not None and previous is not None
+                else None
+            )
+            supported_schools.append(
+                {
+                    "school": school,
+                    "district": school.district.name if school.district_id else "",
+                    **row,
+                    "score": current,
+                    "score_date": scores[0][2] if scores else None,
+                    "delta": delta,
+                    "ssa_status": school.get_current_fy_ssa_status_display(),
+                }
+            )
+        supported_schools.sort(key=lambda r: (r["last"] is None, r["last"] and -r["last"].toordinal()))
+
     role_slug = get_user_role_slug(request.user)
     scope = resolve_user_scope(request.user)
+    # The organisation edits its own bio (owner, 2026-09-07); the roles that
+    # run the directory edit any. Same rule services.update() enforces.
+    can_edit = (
+        request.user.is_superuser
+        or scope.country_scope
+        or partner.id in scope.partner_ids
+    )
     can_manage_roster = (
         request.user.is_superuser
         or scope.country_scope
@@ -730,6 +815,8 @@ def partner_detail_view(request, partner_id):
         "named_on_deliveries": sorted(named_on_deliveries.items(), key=lambda kv: -kv[1]),
         "school_count": partner_schools.count(),
         "partner_progress": partner_progress,
+        "supported_schools": supported_schools,
+        "can_edit": can_edit,
         "can_manage_roster": can_manage_roster,
         "can_manage_status": can_manage_status,
         # Kept for the older template contract.
@@ -737,6 +824,75 @@ def partner_detail_view(request, partner_id):
         "completed": counts["completed"],
     }
     return render(request, "pages/partners/detail.html", context)
+
+
+@require_page_permission("partner_detail")
+def partner_edit_drawer_view(request, partner_id):
+    """Edit an organisation's details — its own login may (owner, 2026-09-07:
+    "the partner should be able to edit their bio data"), and so may the roles
+    that run the directory. Region and SSA intervention are Edify's call, so
+    they are editable only from the country-scoped side.
+
+    Same contract as the school edit drawer: the form posts back to itself, a
+    rejected submit re-renders the drawer with the reason, and a saved one
+    reloads the profile.
+    """
+
+    from apps.core.enums import SsaIntervention
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.core.scoping import resolve_user_scope
+    from apps.partners.services import update as update_partner
+
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+    scope = resolve_user_scope(request.user)
+    country_side = bool(request.user.is_superuser or scope.country_scope)
+    if not (country_side or partner.id in scope.partner_ids):
+        return HttpResponseForbidden("You may only edit your own partner organisation.")
+
+    def drawer_context(validation_error=None):
+        return {
+            "partner": partner,
+            "country_side": country_side,
+            "regions": Region.objects.order_by("name"),
+            "interventions": SsaIntervention.choices,
+            "validation_error": validation_error,
+        }
+
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()
+        contact = (request.POST.get("contact_person") or "").strip()
+        email = (request.POST.get("email") or "").strip().lower()
+        phone = (request.POST.get("phone") or "").strip()
+        notes = (request.POST.get("notes") or "").strip()
+        expertise = (request.POST.get("expertise") or "").strip()
+        intervention = ""
+        payload = {
+            "contactPerson": contact,
+            "email": email,
+            "phone": phone,
+            "notes": notes,
+            "expertiseAreas": [x.strip() for x in expertise.split(",") if x.strip()],
+        }
+        if country_side:
+            if not name:
+                return render(request, "partials/partners/edit_drawer.html", drawer_context("Organisation name is required."))
+            payload["name"] = name
+            payload["regionName"] = (request.POST.get("region_name") or "").strip()
+            intervention = (request.POST.get("ssa_intervention") or "").strip()
+            if intervention and intervention not in {v for v, _ in SsaIntervention.choices}:
+                return render(request, "partials/partners/edit_drawer.html", drawer_context("Choose a valid SSA intervention."))
+        try:
+            update_partner(partner.id, payload, request.user)
+            if country_side and intervention:
+                # `update()` does not carry the intervention; it is set here,
+                # on the country side only.
+                partner.ssa_intervention = intervention
+                partner.save(update_fields=["ssa_intervention", "updated_at"])
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            return render(request, "partials/partners/edit_drawer.html", drawer_context(str(getattr(exc, "detail", exc))))
+        return HttpResponse("<script>window.location.reload();</script>")
+
+    return render(request, "partials/partners/edit_drawer.html", drawer_context())
 
 
 @require_page_permission("partner_detail")
