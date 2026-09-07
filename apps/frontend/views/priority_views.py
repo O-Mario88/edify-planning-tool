@@ -50,12 +50,21 @@ def priority_configuration_page(request):
     from apps.core.permissions import render_access_denied
     from apps.frontend.views.hr_views import (
         _STRATEGY_AUTHORS,
-        _STRATEGY_VIEWERS,
         _requested_fy,
+    )
+    from apps.frontend.views.priority_workspace import (
+        PRIORITY_SETTING_VIEWERS,
+        priority_workspace_tabs,
+        wants_panel_only,
     )
 
     role = getattr(request.user, "active_role", "")
-    if role not in _STRATEGY_VIEWERS:
+    # Priority Setting is now a TAB of the Priorities page, so its readers are
+    # the page's readers: the strategy authors and validators as before, plus
+    # Impact Assessment and the Program Leads the owner added on 2026-09-07.
+    # Read only — can_author below still names who may act, and every action
+    # keeps its own permission decorator.
+    if role not in PRIORITY_SETTING_VIEWERS:
         return render_access_denied(
             request,
             "Strategic priorities are set by the RVP and Country Director and "
@@ -143,56 +152,66 @@ def priority_configuration_page(request):
     if fy not in cycle_years:
         cycle_years.append(fy)
 
-    return render(
+    context = {
+        "cycle": cycle,
+        "fy": fy,
+        # Same meaning as the page this replaced: RVP/CD author strategy;
+        # Admin/HR reach the page to validate coverage only.
+        "can_author": role in _STRATEGY_AUTHORS,
+        "priorities": priorities,
+        "group_rows": group_rows,
+        # The configuration template paginates this flattened collection.
+        # Keeping the priority beside each milestone avoids eagerly
+        # rendering every nested definition/allocation form in the cycle.
+        "milestone_rows": milestone_rows,
+        "cycle_years": cycle_years,
+        "milestone_count": milestone_count,
+        "needs_definition_count": needs_definition_count,
+        "defined_count": defined_count,
+        "approved_count": approved_count,
+        "pending_approval_count": milestone_count - approved_count,
+        "allocation_count": allocation_count,
+        "undefined": (
+            PriorityMilestone.objects.filter(
+                priority__cycle=cycle, requires_definition=True
+            )
+            if cycle
+            else []
+        ),
+        "staff": staff,
+        "teams": staff.filter(id__in=supervisor_ids),
+        "countries": sorted(
+            {
+                country
+                for country in staff.values_list("country", flat=True)
+                if country
+            }
+        ),
+        "projects": scoped_projects(request.user),
+        "can_define": has_permission(
+            request.user, Permission.MILESTONES_DEFINE.value
+        ),
+        "can_approve": has_permission(
+            request.user, Permission.STRATEGIC_PRIORITIES_APPROVE.value
+        ),
+        "can_allocate": has_permission(
+            request.user, Permission.MILESTONES_ALLOCATE.value
+        ),
+    }
+    context["dashboard_tabs"] = priority_workspace_tabs(
         request,
-        "pages/hr/priority_configuration.html",
-        {
-            "cycle": cycle,
-            "fy": fy,
-            # Same meaning as the page this replaced: RVP/CD author strategy;
-            # Admin/HR reach the page to validate coverage only.
-            "can_author": role in _STRATEGY_AUTHORS,
-            "priorities": priorities,
-            "group_rows": group_rows,
-            # The configuration template paginates this flattened collection.
-            # Keeping the priority beside each milestone avoids eagerly
-            # rendering every nested definition/allocation form in the cycle.
-            "milestone_rows": milestone_rows,
-            "cycle_years": cycle_years,
-            "milestone_count": milestone_count,
-            "needs_definition_count": needs_definition_count,
-            "defined_count": defined_count,
-            "approved_count": approved_count,
-            "pending_approval_count": milestone_count - approved_count,
-            "allocation_count": allocation_count,
-            "undefined": (
-                PriorityMilestone.objects.filter(
-                    priority__cycle=cycle, requires_definition=True
-                )
-                if cycle
-                else []
-            ),
-            "staff": staff,
-            "teams": staff.filter(id__in=supervisor_ids),
-            "countries": sorted(
-                {
-                    country
-                    for country in staff.values_list("country", flat=True)
-                    if country
-                }
-            ),
-            "projects": scoped_projects(request.user),
-            "can_define": has_permission(
-                request.user, Permission.MILESTONES_DEFINE.value
-            ),
-            "can_approve": has_permission(
-                request.user, Permission.STRATEGIC_PRIORITIES_APPROVE.value
-            ),
-            "can_allocate": has_permission(
-                request.user, Permission.MILESTONES_ALLOCATE.value
-            ),
-        },
+        active="setting",
+        view_template="partials/priorities/setting_view.html",
     )
+    # A tab press asks for the rail and the panel together, to swap into the
+    # shell already on the page — the same contract the dashboard views use.
+    if context["dashboard_tabs"] and wants_panel_only(request):
+        return render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    return render(request, "pages/hr/priority_configuration.html", context)
 
 
 @require_POST

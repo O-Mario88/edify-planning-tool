@@ -24,7 +24,12 @@ class HeavyPagePaginationContractTest(SimpleTestCase):
         self.assertIn("{% for r in districts_pager.rows %}", source)
 
     def test_strategic_priorities_bounds_the_expensive_nested_forms(self):
-        source = (ROOT / "templates/pages/hr/priority_configuration.html").read_text()
+        # The page became the Priority Setting TAB of the Priorities page on
+        # 2026-09-07; the markup this bounds moved into the view the rail
+        # swaps, and the page around it is now the rail and nothing else.
+        source = (
+            ROOT / "templates/partials/priorities/setting_view.html"
+        ).read_text()
 
         self.assertIn('{% paginate milestone_rows "milestones_page" 10', source)
         self.assertIn("{% for item in milestones_pager.rows %}", source)

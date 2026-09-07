@@ -524,7 +524,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The RVP and CD author here; HR gets read access because the coverage
     # report — which published priorities reached nobody — is theirs to act on,
     # and it lives nowhere else.
-    "strategic_priorities": {RVP, CD, HR, ADMIN},
+    # Priority Setting is a TAB of the Priorities page (owner, 2026-09-07),
+    # so its readers are the page's readers. IA runs the distribution and
+    # needs the source beside it; a PL reads the priorities their own
+    # allocation comes from. Acting on a milestone still needs the define,
+    # approve or allocate permission, which neither role gains here.
+    "strategic_priorities": {RVP, CD, HR, ADMIN, IA, PL},
     # The Today workbench (roadmap Phase 5): the field roles' one primary
     # daily surface — route, next action, waiting-on-you, exceptions, the
     # proposed week, day completion.
@@ -1506,27 +1511,17 @@ SIDEBAR_ITEMS = [
                 # performance agreement. /priorities is the one canonical
                 # priority page, and two things called a priority dashboard is
                 # how two pages end up answering the same question differently.
+                # Priority Setting used to override this slot for the RVP and
+                # the CD, which gave them two priority links in two different
+                # groups — the second one filed under MY PERFORMANCE, which is
+                # not what it is. It is a tab of the Priorities page now
+                # (owner, 2026-09-07: "they should be one page separated by
+                # tabs… the idea is to reduce to many menu links"), so this
+                # slot is the personal agreement for everyone, and the pair of
+                # entries that existed to undo the override is one entry again.
                 "label": "My Performance Agreement",
                 "url": "/my-performance",
                 "page_key": "my_performance",
-                # Regional and country strategy authors enter the governed
-                # source-priority workspace from the familiar dashboard slot.
-                # Their personal agreement remains available as the sibling
-                # item below, so strategy ownership does not erase it.
-                "role_urls": {
-                    RVP: "/strategic-priorities",
-                    CD: "/strategic-priorities",
-                },
-                "role_labels": {
-                    RVP: "Priority Setting",
-                    CD: "Priority Setting",
-                },
-            },
-            {
-                "label": "My Performance Agreement",
-                "url": "/my-performance",
-                "page_key": "my_performance",
-                "visible_to": {RVP, CD},
             },
             {
                 "label": "My Targets",
@@ -1850,25 +1845,14 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "PERFORMANCE",
         "items": [
-            {
-                "label": "Strategic Priorities",
-                "url": "/strategic-priorities",
-                "page_key": "strategic_priorities",
-                # RVP/CD reach the same authoring workspace from their primary
-                # performance group; keep this validation/configuration entry
-                # for the support roles that do not receive that override.
-                "visible_to": {HR, ADMIN},
-            },
             # §12's workspace is no longer a second sidebar entry: for IA, CD
             # and Admin the Priorities item above IS the distribution
             # workspace. The /target-distribution route, its permission and
             # its page key all remain — only the duplicate link is gone.
-            {
-                # §13 — the PL's one distribution among supervised CCEOs.
-                "label": "Team Target Distribution",
-                "url": "/target-distribution/team",
-                "page_key": "team_target_distribution",
-            },
+            #
+            # §13's — a Program Lead's own distribution among supervised CCEOs
+            # — went the same way on 2026-09-07: it is the "My Team" tab of the
+            # Priorities page. Route, permission and page key unchanged.
             {
                 "label": "Performance Cycle",
                 "url": "/hr/performance-cycle",

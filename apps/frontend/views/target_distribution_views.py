@@ -23,6 +23,10 @@ from django.utils import timezone
 
 from apps.core.permissions import has_permission, require_page_permission
 from apps.core.rbac import EdifyRole, Permission
+from apps.frontend.views.priority_workspace import (
+    priority_workspace_tabs,
+    wants_panel_only,
+)
 
 
 def _permission(permission):
@@ -173,45 +177,53 @@ def target_distribution_page(request):
             )
         elif import_batches:
             selected_import_batch = import_batches[0]
-    return render(
-        request,
-        "pages/hr/target_distribution.html",
-        {
-            **workspace,
-            "cycle_years": cycle_years,
-            "is_cd": _is_cd(request),
-            "can_distribute": _is_ia_distributor(request),
-            "can_import": can_import,
-            "import_batches": import_batches,
-            "selected_import_batch": selected_import_batch,
-            "today": timezone.localdate().isoformat(),
-            # One search: the top bar binds this page's milestone search and
-            # carries the active filters, per the consolidation contract.
-            "topbar_search": {
-                "placeholder": "Search milestones, activities…",
-                "label": "Search master milestones and activities",
-                "name": "q",
-                "value": selected["q"],
-                "action": "/target-distribution",
-                "hidden": [
-                    {"name": "fy", "value": fy},
-                    {"name": "tab", "value": selected["tab"]},
-                    {"name": "priority", "value": selected["priority"]},
-                    {"name": "portfolio", "value": selected["portfolio"]},
-                    {"name": "status", "value": selected["status"]},
-                ],
-            },
-            "selected": selected,
-            "page_obj": page_obj,
-            "master_row_count": paginator.count,
-            "page_query": query.urlencode(),
-            "distribution_groups": distribution_groups,
-            "distribution_options": distribution_options,
-            "next_distribution": next_distribution,
-            "next_confirmation": next_confirmation,
-            "active_filter_count": active_filter_count,
+    context = {
+        **workspace,
+        "cycle_years": cycle_years,
+        "is_cd": _is_cd(request),
+        "can_distribute": _is_ia_distributor(request),
+        "can_import": can_import,
+        "import_batches": import_batches,
+        "selected_import_batch": selected_import_batch,
+        "today": timezone.localdate().isoformat(),
+        # One search: the top bar binds this page's milestone search and
+        # carries the active filters, per the consolidation contract.
+        "topbar_search": {
+            "placeholder": "Search milestones, activities…",
+            "label": "Search master milestones and activities",
+            "name": "q",
+            "value": selected["q"],
+            "action": "/target-distribution",
+            "hidden": [
+                {"name": "fy", "value": fy},
+                {"name": "tab", "value": selected["tab"]},
+                {"name": "priority", "value": selected["priority"]},
+                {"name": "portfolio", "value": selected["portfolio"]},
+                {"name": "status", "value": selected["status"]},
+            ],
         },
+        "selected": selected,
+        "page_obj": page_obj,
+        "master_row_count": paginator.count,
+        "page_query": query.urlencode(),
+        "distribution_groups": distribution_groups,
+        "distribution_options": distribution_options,
+        "next_distribution": next_distribution,
+        "next_confirmation": next_confirmation,
+        "active_filter_count": active_filter_count,
+    }
+    context["dashboard_tabs"] = priority_workspace_tabs(
+        request,
+        active="distribution",
+        view_template="partials/priorities/distribution_view.html",
     )
+    if context["dashboard_tabs"] and wants_panel_only(request):
+        return render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    return render(request, "pages/hr/target_distribution.html", context)
 
 
 @require_page_permission("target_distribution")
@@ -349,19 +361,27 @@ def team_distribution_page(request):
         (row for row in workspace["rows"] if not row["allLocked"]),
         workspace["rows"][0] if workspace["rows"] else None,
     )
-    return render(
+    context = {
+        **workspace,
+        "cycle_years": cycle_years,
+        "today": timezone.localdate().isoformat(),
+        "next_team_distribution": next_team_distribution,
+        "can_allocate": has_permission(
+            request.user, Permission.MILESTONES_ALLOCATE.value
+        ),
+    }
+    context["dashboard_tabs"] = priority_workspace_tabs(
         request,
-        "pages/hr/team_target_distribution.html",
-        {
-            **workspace,
-            "cycle_years": cycle_years,
-            "today": timezone.localdate().isoformat(),
-            "next_team_distribution": next_team_distribution,
-            "can_allocate": has_permission(
-                request.user, Permission.MILESTONES_ALLOCATE.value
-            ),
-        },
+        active="team",
+        view_template="partials/priorities/team_view.html",
     )
+    if context["dashboard_tabs"] and wants_panel_only(request):
+        return render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    return render(request, "pages/hr/team_target_distribution.html", context)
 
 
 def _quarters_from_post(request) -> dict:
@@ -892,16 +912,24 @@ def priorities_master_page(request):
         total_rows += len(rows)
         groups.append({"priority": priority, "rows": rows})
 
-    return render(
+    context = {
+        "fy": fy,
+        "groups": groups,
+        "total_rows": total_rows,
+        "is_scoped_viewer": is_scoped_viewer,
+        "viewer_role": role,
+        "fy_options": fy_options(),
+        "use_dark_sidebar": True,
+    }
+    context["dashboard_tabs"] = priority_workspace_tabs(
         request,
-        "pages/hr/priorities_master.html",
-        {
-            "fy": fy,
-            "groups": groups,
-            "total_rows": total_rows,
-            "is_scoped_viewer": is_scoped_viewer,
-            "viewer_role": role,
-            "fy_options": fy_options(),
-            "use_dark_sidebar": True,
-        },
+        active="distribution",
+        view_template="partials/priorities/master_view.html",
     )
+    if context["dashboard_tabs"] and wants_panel_only(request):
+        return render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    return render(request, "pages/hr/priorities_master.html", context)

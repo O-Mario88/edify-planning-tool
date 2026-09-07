@@ -67,7 +67,12 @@
      changes only when the shell does. */
   function viewOf(url) {
     try {
-      return new URL(url, window.location.origin).searchParams.get("view");
+      var parsed = new URL(url, window.location.origin);
+      /* A dashboard's views are one path with `?view=`; the Priorities page's
+         two views are two real routes (owner, 2026-09-07), so the path names
+         the view when the parameter does not. Either way a view has one name,
+         which is all the map below needs. */
+      return parsed.searchParams.get("view") || parsed.pathname;
     } catch (error) {
       return null;
     }

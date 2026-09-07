@@ -1,0 +1,166 @@
+{% comment %}
+Every script the Priorities page's views need, on every page that can host
+the tab rail.
+
+A tab press swaps only the PANEL (owner, 2026-09-07: one page, tabs), so a
+script that lived in the page one view happened to be entered from was
+simply absent once the reader arrived from another tab — the dialogs on
+Target Distribution did nothing for a Program Lead who came from My Team.
+Loading all of them everywhere is the whole fix: each one binds a single
+delegated listener on `document` and looks its elements up when it needs
+them, so a view it is not looking at costs nothing and finds nothing.
+{% endcomment %}
+{% load static %}
+<script defer src="{% static 'js/target-distribution.js' %}?v=20260824envelope1"></script>
+<script>
+(() => {
+  /* Priorities is one page with two tabs (owner, 2026-09-07), and a tab press
+     replaces this view's whole panel. So every element is looked up when it is
+     USED, never captured once at load: a reference taken here would point at a
+     detached node the moment the reader visited Priority Setting and came back.
+     This script itself stays outside the panel — it binds a delegated listener
+     on `document`, and a second copy would fire every click twice. */
+  const el = (id) => document.getElementById(id);
+  const distributionDialogEl = () => el('ia-distribution-dialog');
+  const distributionBodyEl = () => el('ia-distribution-form-body');
+  const groupSelectEl = () => el('ia-distribution-group');
+  const milestoneSelectEl = () => el('ia-distribution-milestone');
+  const placeholder = '<div class="ia-dialog__placeholder"><div><strong>Loading governed allocation…</strong><p>Calculating portfolio demand, team capacity, availability and current workload.</p></div></div>';
+  let distributionRequest;
+
+  const filterMilestones = () => {
+    const groupSelect = groupSelectEl(), milestoneSelect = milestoneSelectEl();
+    if (!groupSelect || !milestoneSelect) return;
+    const group = groupSelect.value;
+    for (const option of milestoneSelect.options) {
+      if (!option.value) continue;
+      const matches = !group || option.dataset.priority === group;
+      option.hidden = !matches;
+      option.disabled = !matches;
+    }
+    if (milestoneSelect.selectedOptions[0]?.disabled) milestoneSelect.value = '';
+  };
+
+  const loadDistribution = async (milestoneId) => {
+    const distributionBody = distributionBodyEl();
+    if (!distributionBody || !milestoneId) return;
+    distributionRequest?.abort();
+    distributionRequest = new AbortController();
+    distributionBody.innerHTML = placeholder;
+    try {
+      const response = await fetch(`/target-distribution/form?milestone=${encodeURIComponent(milestoneId)}`, {headers: {'HX-Request': 'true'}, signal: distributionRequest.signal});
+      const html = await response.text();
+      if (!response.ok) throw new Error(html || 'The allocation workspace could not be loaded.');
+      distributionBody.innerHTML = html;
+      
+    } catch (error) {
+      if (error.name === 'AbortError') return;
+      distributionBody.innerHTML = `<div class="ia-dialog__placeholder"><div><strong>Unable to load this milestone</strong><p>${escapeHtml(error.message)}</p></div></div>`;
+    }
+  };
+
+  const openDistribution = (button) => {
+    const distributionDialog = distributionDialogEl();
+    if (!distributionDialog) return;
+    distributionDialog.showModal();
+    const milestoneId = button.dataset.milestone || '';
+    const priority = button.dataset.priority || '';
+    const groupSelect = groupSelectEl(), milestoneSelect = milestoneSelectEl();
+    if (priority && groupSelect) groupSelect.value = priority;
+    filterMilestones();
+    if (milestoneId && milestoneSelect) {
+      milestoneSelect.value = milestoneId;
+      loadDistribution(milestoneId);
+    }
+  };
+
+  // The live balance moved into static/js/target-distribution.js: the drawer
+  // recomputes the remaining figure on every keystroke, and the engine still
+  // reconciles server-side on save and approve.
+
+  const escapeHtml = (value) => String(value).replace(/[&<>'"]/g, (character) => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[character]));
+
+  document.addEventListener('click', (event) => {
+    const opener = event.target.closest('[data-open-distribution]');
+    if (opener && !opener.disabled) openDistribution(opener);
+    const closer = event.target.closest('[data-dialog-close]');
+    if (closer) closer.closest('dialog')?.close();
+    const confirmOpener = event.target.closest('[data-open-confirm]');
+    if (confirmOpener) {
+      const dialog = document.getElementById('ia-confirm-dialog');
+      document.getElementById('confirm-milestone-id').value = confirmOpener.dataset.milestone || '';
+      document.getElementById('confirm-target').value = confirmOpener.dataset.target || '';
+      document.getElementById('confirm-core').value = confirmOpener.dataset.core || '';
+      document.getElementById('confirm-client').value = confirmOpener.dataset.client || '';
+      document.getElementById('confirm-participants').value = confirmOpener.dataset.participants || '';
+      document.getElementById('confirm-method').value = confirmOpener.dataset.method || 'non_scoreable';
+      document.getElementById('confirm-note').value = confirmOpener.dataset.note || '';
+      dialog?.showModal();
+    }
+  });
+  /* The listeners that must sit ON an element rather than on `document`.
+     They are re-applied after a tab swap because the elements they were on
+     have been replaced, and each element is stamped so a second settle does
+     not bind it twice. */
+  const bind = () => {
+    const once = (node, type, handler) => {
+      if (!node || node.dataset.iaBound === type) return;
+      node.dataset.iaBound = type;
+      node.addEventListener(type, handler);
+    };
+    const financialYearSelect = el('ia-master-fy');
+    once(financialYearSelect, 'change', () => financialYearSelect.form?.submit());
+    once(groupSelectEl(), 'change', filterMilestones);
+    once(milestoneSelectEl(), 'change', () => loadDistribution(milestoneSelectEl().value));
+    for (const dialog of document.querySelectorAll('.ia-dialog')) {
+      once(dialog, 'click', (event) => { if (event.target === dialog) dialog.close(); });
+    }
+  };
+  bind();
+  document.addEventListener('htmx:afterSettle', bind);
+})();
+</script>
+<script>
+(() => {
+  /* Looked up when used, never captured: a tab press replaces this view's
+     whole panel, so a reference taken at load would point at a detached node
+     the moment the reader visited another tab and came back. */
+  const dialogEl = () => document.getElementById('team-allocation-dialog');
+  // Live balance behaviour lives in static/js/target-distribution.js.
+
+  const openAllocation = (button) => {
+    const dialog = dialogEl();
+    const body = document.getElementById('team-allocation-dialog-body');
+    const title = document.getElementById('team-allocation-dialog-title');
+    const subtitle = dialog?.querySelector('[data-team-dialog-subtitle]');
+    const template = document.getElementById(button.dataset.teamAllocationOpen || '');
+    if (!dialog || !body || !template) return;
+    body.replaceChildren(template.content.cloneNode(true));
+    title.textContent = button.dataset.teamTitle || 'Team priority distribution';
+    subtitle.textContent = `${button.dataset.teamGroup || 'Assigned priority'} · Received from IA · PL + CCEOs`;
+    dialog.showModal();
+  };
+
+  document.addEventListener('click', (event) => {
+    const opener = event.target.closest('[data-team-allocation-open]');
+    if (opener) openAllocation(opener);
+    if (event.target.closest('[data-team-dialog-close]')) dialogEl()?.close();
+  });
+
+  /* Re-applied after a tab swap, because the elements these sit on have been
+     replaced; each is stamped so a second settle does not bind it twice. */
+  const bindTeam = () => {
+    const once = (node, type, handler) => {
+      if (!node || node.dataset.teamBound === type) return;
+      node.dataset.teamBound = type;
+      node.addEventListener(type, handler);
+    };
+    const dialog = dialogEl();
+    once(dialog, 'click', (event) => { if (event.target === dialog) dialog.close(); });
+    const fy = document.getElementById('team-distribution-fy');
+    once(fy, 'change', () => fy.form?.submit());
+  };
+  bindTeam();
+  document.addEventListener('htmx:afterSettle', bindTeam);
+})();
+</script>

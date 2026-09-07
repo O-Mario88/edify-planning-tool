@@ -992,7 +992,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("overflow-x: clip", pages)
 
     def test_priority_milestones_use_the_compact_reference_record_grid(self):
-        dashboard = _read("templates/pages/hr/priority_configuration.html")
+        # Priority Setting is a tab of the Priorities page since
+        # 2026-09-07: the record grid lives in the view the rail swaps.
+        dashboard = _read("templates/partials/priorities/setting_view.html")
         detail = _read("templates/partials/hr/priority_milestone_detail.html")
         pages = _read("static/css/pages.css")
 
