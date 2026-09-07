@@ -2342,8 +2342,18 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   letter-spacing: var(--edify-text-title-tracking) !important;
 }
 
+/* The parts of a component that state their own type are not prose. A
+   metric's number, its small-caps label and its caption, a note's title and
+   body, an empty state's sentence — all of them are written as <p>, and this
+   rule was flattening every one to body size, so a metric panel's number and
+   its label both measured 13px and the label's caps read heavier than the
+   figure (2026-09-07). The tray escaped only because it uses <span>. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  :is(p, li, dd, .edify-profile-body, .edify-section__description) {
+  :is(p, li, dd, .edify-profile-body, .edify-section__description):not(
+    .edify-metric__value, .edify-metric__label, .edify-metric__meta, .edify-metric__unit,
+    .edify-note__title, .edify-note__body,
+    .edify-empty-state__message, .edify-empty-state__hint
+  ) {
   font-family: var(--edify-font-sans) !important;
   font-size: var(--edify-text-body-size) !important;
   font-weight: var(--edify-text-body-weight);

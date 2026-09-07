@@ -41,12 +41,21 @@ CONVERTED = (
     "templates/partials/finance/country_budget/root.html",  # orphaned
     "templates/partials/finance/country_budget/execution.html",  # orphaned
     "templates/partials/todos/command_center.html",  # orphaned
+    # The icon-led tiles (owner, 2026-09-07: "fold in those tiles too"): three
+    # impact summaries whose tinted boxes each carried a filled icon chip.
+    "templates/partials/analytics/cd/impact_summary.html",
+    "templates/partials/analytics/pl/impact_summary.html",
+    "templates/partials/analytics/impact_summary.html",
 )
 
-# A metric drawn as a tinted rectangle: the shape that was removed.
+# A metric drawn as a tinted rectangle: the shape that was removed. The
+# opacity suffixes are optional because the impact summaries wrote theirs as
+# `bg-violet-50/50 border border-violet-100/60`, and the accent-coloured one
+# reached for the primary-soft utilities instead of a Tailwind colour.
 TINTED_BOX = re.compile(
-    r"rounded-surface bg-(amber|emerald|rose|slate|sky|indigo|violet|blue|teal)-50"
-    r" border border-\1-100"
+    r"rounded-surface (?:bg-(amber|emerald|rose|slate|sky|indigo|violet|blue|teal)-50(?:/\d+)?"
+    r" border border-\1-100(?:/\d+)?"
+    r"|edify-primary-soft-alpha-50 border edify-primary-border-alpha-60)"
 )
 
 
@@ -145,6 +154,45 @@ class MetricPanelTest(SimpleTestCase):
                     if "tabular-nums" in body or "edify-kpi-label" in body:
                         offenders.append(line.strip()[:120])
                 self.assertEqual(offenders, [])
+
+    def test_a_metric_can_lead_with_its_mark_beside_it(self):
+        """One number wide enough to sit next to its icon — the CD's Champion
+        strip — composes like the KPI tray: the mark centred against both text
+        rows, on the metric's own tone."""
+
+        css = _read("static/css/components.css")
+        lead = css[css.index(".edify-metric--lead {") :]
+        lead = lead[: lead.index("\n}")]
+        self.assertIn("grid-template-columns: auto minmax(0, 1fr);", lead)
+        self.assertIn('"mark value"', lead)
+        self.assertIn('"mark label"', lead)
+        self.assertIn(
+            '.edify-metric--lead[data-tone="warning"] .edify-metric__mark { color: var(--edify-warning-text); }',
+            css,
+        )
+        self.assertIn('class="edify-metric edify-metric--lead" data-tone="warning"',
+                      _read("templates/partials/analytics/cd/impact_summary.html"))
+
+    def test_the_prose_normaliser_leaves_component_type_alone(self):
+        """consistency.css flattens every <p> in a page to body size. A
+        metric's number, label and caption are <p> too, and were being
+        flattened with the rest: the number and its small-caps label both
+        measured 13px, and the caps read heavier than the figure. The
+        normaliser names the parts it must not touch."""
+
+        css = _read("static/css/consistency.css")
+        rule = css[css.index(":is(p, li, dd, .edify-profile-body, .edify-section__description):not(") :]
+        rule = rule[: rule.index("{")]
+        for part in (
+            ".edify-metric__value",
+            ".edify-metric__label",
+            ".edify-metric__meta",
+            ".edify-note__title",
+            ".edify-note__body",
+            ".edify-empty-state__message",
+        ):
+            with self.subTest(part=part):
+                self.assertIn(part, rule)
 
     def test_every_metric_names_its_parts(self):
         """A cell without a label or a value is not a metric, and the panel's

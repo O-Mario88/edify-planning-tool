@@ -4550,6 +4550,13 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   white-space: normal;
 }
 
+/* Stacked under a mark, the number has to lead the small-caps label under it;
+   at the panel's default step the caps read heavier than the figure. */
+.edify-metric--marked .edify-metric__value,
+.edify-metric--lead .edify-metric__value {
+  font-size: 1.25rem;
+}
+
 /* A metric that carries a share of its own target draws it under the caption.
    The track and the fill are the platform's chart tokens, so a bar inside a
    metric and a bar inside a chart are the same bar. */
@@ -4727,3 +4734,39 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 .edify-note--control .edify-note__body {
   margin-block-start: 0;
 }
+
+/* A single metric with its mark beside it rather than above — the CD's
+   "Champion school candidates" strip, one number wide enough to sit next to
+   its icon (owner, 2026-09-07: fold the icon-led tiles in too). The mark is
+   centred against both text rows, the same composition the KPI tray uses. */
+.edify-metric--lead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "mark value"
+    "mark label";
+  align-items: center;
+  column-gap: 0.7rem;
+}
+
+.edify-metric--lead .edify-metric__mark {
+  grid-area: mark;
+  align-self: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  color: var(--edify-note-tone, var(--edify-accent));
+}
+
+.edify-metric--lead .edify-metric__value {
+  grid-area: value;
+  margin-block-start: 0;
+}
+
+.edify-metric--lead .edify-metric__label {
+  grid-area: label;
+  white-space: normal;
+}
+
+.edify-metric--lead[data-tone="warning"] .edify-metric__mark { color: var(--edify-warning-text); }
+.edify-metric--lead[data-tone="danger"] .edify-metric__mark { color: var(--edify-danger-text); }
+.edify-metric--lead[data-tone="success"] .edify-metric__mark { color: var(--edify-success-text); }
