@@ -23,7 +23,7 @@ it to be counted.
 from datetime import timedelta
 
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 
 from apps.activities.models import Activity
@@ -34,6 +34,18 @@ from apps.schools.models import School
 from apps.ssa.models import SsaRecord
 
 
+# A per-process cache, so this suite writes nothing to the Redis the dev server
+# reads. Its four-school fixture was being cached as the real sign-in page's
+# figures — "0 of 4" on /login for five minutes after every run — and its
+# `cache.clear()` was signing every dev session out (2026-09-07).
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "login-portfolio-stats",
+        }
+    }
+)
 class LoginPortfolioStatsTest(TestCase):
     @classmethod
     def setUpTestData(cls):

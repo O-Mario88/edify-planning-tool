@@ -37,8 +37,16 @@ def _login_stats():
     from apps.schools.lifecycle_service import active_schools
     from apps.ssa.models import SsaRecord
 
+    from django.conf import settings
+
     fy = get_operational_fy()
-    cache_key = f"frontend:login-stats:{fy}:v3"
+    # Keyed by DATABASE as well as by year. The dev server and the test runner
+    # share one Redis, and a test that rendered /login under a four-school
+    # fixture left "0 of 4" on the real sign-in page for the next five minutes
+    # (2026-09-07). A test database has its own name, so its figures now land
+    # under their own key and never under the operating one.
+    db_name = str(settings.DATABASES["default"].get("NAME") or "default")
+    cache_key = f"frontend:login-stats:{fy}:{db_name}:v4"
     # The cache is an optimisation here, never a dependency. This is the login
     # page — the one page that must stand when everything optional is down —
     # and failure injection found a cache outage turning it into a 500. A
