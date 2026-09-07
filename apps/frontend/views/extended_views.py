@@ -1674,7 +1674,10 @@ def admin_users_view(request):
             .order_by(F("deleted_at").asc(nulls_first=True), "-active_status", "name")
         )
         for partner in partners:
-            partner.status = (
+            # Presentation state only. Do not assign to the model's workflow
+            # `status` name: the production-readiness scanner correctly treats
+            # direct workflow-state writes in views as unsafe.
+            partner.presentation_status = (
                 "deleted"
                 if partner.deleted_at
                 else "active"

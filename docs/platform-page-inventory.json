@@ -177,17 +177,17 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2333,
+      "bytes": 1750,
       "deprecated_alternatives": [],
       "example_pages": [
-        "/admin-panel/school-upload-history",
-        "/analytics/closure-quality",
-        "/analytics/school-closures",
-        "/business-transformation",
-        "/business-transformation/impact-reports",
-        "/business-transformation/overview",
-        "/business-transformation/portfolio",
-        "/country-planning-oversight/"
+        "/accounts/accountability",
+        "/accounts/accountability/",
+        "/accounts/advances",
+        "/accounts/advances/",
+        "/accounts/approval-history",
+        "/accounts/approval-history/",
+        "/accounts/audit-log",
+        "/accounts/audit-log/"
       ],
       "findings": [],
       "forms": 0,
@@ -203,8 +203,31 @@
       "tables": 0,
       "template": "components/empty_state.html",
       "variants": [
-        "success"
+        "{{ tone }}"
       ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 423,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/loan-applications/apply"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Form Field",
+      "purpose": "Reusable form field interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/form_field.html",
+      "variants": []
     },
     {
       "accessibility_requirements": [
@@ -234,7 +257,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7036,
+      "bytes": 7885,
       "deprecated_alternatives": [],
       "example_pages": [
         "/admin-ops/incidents/<str:incident_id>",
@@ -259,6 +282,33 @@
       "tables": 0,
       "template": "components/kpi_strip.html",
       "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2845,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/priorities",
+        "/strategic-priorities",
+        "/target-distribution"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "shared-component",
+      "name": "Meter",
+      "purpose": "Reusable meter interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "components/meter.html",
+      "variants": [
+        "{{ progress.classification.tone|default:"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -715,7 +765,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 69973,
+      "bytes": 71049,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -945,7 +995,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3448,
+      "bytes": 2991,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -962,7 +1012,9 @@
       ],
       "tables": 0,
       "template": "partials/analytics/cd/impact_summary.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -1332,7 +1384,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2619,
+      "bytes": 2137,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1347,7 +1399,10 @@
       ],
       "tables": 0,
       "template": "partials/analytics/impact_summary.html",
-      "variants": []
+      "variants": [
+        "info",
+        "success"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -1493,7 +1548,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3523,
+      "bytes": 3113,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1661,7 +1716,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3063,
+      "bytes": 2653,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1749,7 +1804,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1585,
+      "bytes": 1756,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -1860,7 +1915,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1368,
+      "bytes": 901,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2038,7 +2093,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2534,
+      "bytes": 2092,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -2194,7 +2249,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16000,
+      "bytes": 16252,
       "deprecated_alternatives": [],
       "example_pages": [
         "/projects/analytics"
@@ -2398,8 +2453,10 @@
       "variants": []
     },
     {
-      "accessibility_requirements": [],
-      "bytes": 14573,
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 16834,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/visit-effectiveness"
@@ -2658,6 +2715,29 @@
       ],
       "tables": 0,
       "template": "partials/calendar/event.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 4414,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/settings/activity-catalogue/new"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "New Activity Drawer",
+      "purpose": "Reusable new activity drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/catalogue/new_activity_drawer.html",
       "variants": []
     },
     {
@@ -3453,7 +3533,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6038,
+      "bytes": 6182,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3549,18 +3629,38 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label",
-        "keyboard focus visibility"
+        "accessible name and label"
       ],
-      "bytes": 6949,
+      "bytes": 2569,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cost-settings/add"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Add Drawer",
+      "purpose": "Reusable add drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/cost_settings/add_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 2275,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cost-settings",
         "/cost-settings/row/<str:key>"
       ],
       "findings": [],
-      "forms": 1,
-      "htmx_controls": 3,
+      "forms": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Cost Setting Row",
       "purpose": "Reusable cost setting row interface primitive",
@@ -3568,8 +3668,34 @@
       "states": [
         "default"
       ],
-      "tables": 1,
+      "tables": 0,
       "template": "partials/cost_settings/cost_setting_row.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 6440,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/cost-settings/row/<str:key>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Edit Drawer",
+      "purpose": "Reusable edit drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 1,
+      "template": "partials/cost_settings/edit_drawer.html",
       "variants": []
     },
     {
@@ -3578,7 +3704,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 2956,
+      "bytes": 4751,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -3587,7 +3713,8 @@
         "/dashboard/cd-approve",
         "/dashboard/cd-return",
         "/dashboard/pl-approve",
-        "/ia/dashboard/"
+        "/ia/dashboard/",
+        "/priorities"
       ],
       "findings": [],
       "forms": 0,
@@ -3599,6 +3726,7 @@
       "states": [
         "default",
         "loading",
+        "error",
         "selected"
       ],
       "tables": 0,
@@ -3695,7 +3823,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 20157,
+      "bytes": 20222,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3852,7 +3980,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 33724,
+      "bytes": 33053,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3868,7 +3996,10 @@
       ],
       "tables": 3,
       "template": "partials/dashboards/cd/operations.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -4128,7 +4259,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10508,
+      "bytes": 10524,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -4143,7 +4274,9 @@
       ],
       "tables": 0,
       "template": "partials/dashboards/pl/operations.html",
-      "variants": []
+      "variants": [
+        "{% if c.pct >= 80 %}success{% elif c.pct >= 60 %}warning{% else %}danger{% endif %}"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -4684,7 +4817,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5063,
+      "bytes": 4971,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -5052,7 +5185,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 9475,
+      "bytes": 8951,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/action"
@@ -5069,7 +5202,12 @@
       ],
       "tables": 0,
       "template": "partials/finance/country_budget/execution.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "info",
+        "success",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -5126,7 +5264,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 28727,
+      "bytes": 28345,
       "deprecated_alternatives": [],
       "example_pages": [
         "/country-budget/action"
@@ -5151,6 +5289,7 @@
         "md",
         "purple",
         "sm",
+        "success",
         "warning"
       ]
     },
@@ -5988,7 +6127,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 24813,
+      "bytes": 24938,
       "deprecated_alternatives": [],
       "example_pages": [
         "/cpd-learning"
@@ -6007,7 +6146,8 @@
       "tables": 1,
       "template": "partials/hr/pd_dashboard/body.html",
       "variants": [
-        "executive"
+        "executive",
+        "{% if g.count %}warning{% else %}success{% endif %}"
       ]
     },
     {
@@ -6064,7 +6204,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 12169,
+      "bytes": 12449,
       "deprecated_alternatives": [],
       "example_pages": [
         "/strategic-priorities"
@@ -6870,7 +7010,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2795,
+      "bytes": 2930,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -6892,7 +7032,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 3150,
+      "bytes": 3285,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan"
@@ -6917,7 +7057,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 22405,
+      "bytes": 23997,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/complete",
@@ -7580,7 +7720,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 19385,
+      "bytes": 19661,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner-oversight/"
@@ -7738,7 +7878,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5151,
+      "bytes": 5664,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partners/create"
@@ -7756,6 +7896,58 @@
       ],
       "tables": 0,
       "template": "partials/partners/create_partner_drawer.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 5227,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/edit-drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Edit Drawer",
+      "purpose": "Reusable edit drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/partners/edit_drawer.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2898,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/partners/<str:partner_id>/members/drawer"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 1,
+      "kind": "application-partial",
+      "name": "Member Drawer",
+      "purpose": "Reusable member drawer interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/partners/member_drawer.html",
       "variants": []
     },
     {
@@ -7989,7 +8181,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5447,
+      "bytes": 5588,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -8087,7 +8279,181 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 7017,
+      "bytes": 519,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/priorities",
+        "/strategic-priorities",
+        "/target-distribution",
+        "/target-distribution/team"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Workspace Css",
+      "purpose": "Reusable  workspace css interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/priorities/_workspace_css.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 8367,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/priorities",
+        "/strategic-priorities",
+        "/target-distribution",
+        "/target-distribution/team"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": " Workspace Scripts",
+      "purpose": "Reusable  workspace scripts interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "loading",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/priorities/_workspace_scripts.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 31934,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/target-distribution"
+      ],
+      "findings": [],
+      "forms": 4,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Distribution View",
+      "purpose": "Reusable distribution view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty",
+        "error",
+        "disabled"
+      ],
+      "tables": 1,
+      "template": "partials/priorities/distribution_view.html",
+      "variants": [
+        "{% if message.tags == ",
+        "{% if row.displayStatus == ",
+        "{% if row.progress.quartersAchieved %}success{% else %}neutral{% endif %}",
+        "{{ next_confirmation.milestone.id }}",
+        "{{ next_distribution.milestone.id }}",
+        "{{ row.milestone.id }}",
+        "{{ row.progress.classification.tone|default:",
+        "{{ row.statusTone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 6186,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/priorities"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Master View",
+      "purpose": "Reusable master view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 1,
+      "template": "partials/priorities/master_view.html",
+      "variants": []
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility",
+        "announced dynamic state"
+      ],
+      "bytes": 14505,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/strategic-priorities"
+      ],
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Setting View",
+      "purpose": "Reusable setting view interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "error",
+        "disabled"
+      ],
+      "tables": 0,
+      "template": "partials/priorities/setting_view.html",
+      "variants": [
+        "executive",
+        "info",
+        "primary",
+        "success",
+        "warning"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "announced dynamic state"
+      ],
+      "bytes": 14450,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/target-distribution/team"
+      ],
+      "findings": [],
+      "forms": 2,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Team View",
+      "purpose": "Reusable team view interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "error"
+      ],
+      "tables": 0,
+      "template": "partials/priorities/team_view.html",
+      "variants": [
+        "{% if member.allocation.quarter_status == ",
+        "{% if message.tags == ",
+        "{% if row.allLocked %}success{% elif row.state.balanced %}info{% elif row.state.rows %}warning{% else %}primary{% endif %}",
+        "{{ row.statusTone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
+      "bytes": 6940,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development/request"
@@ -8104,7 +8470,9 @@
       ],
       "tables": 0,
       "template": "partials/professional_development/_request_summary.html",
-      "variants": []
+      "variants": [
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -8183,7 +8551,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 36379,
+      "bytes": 36490,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-professional-development/request"
@@ -8203,7 +8571,10 @@
       ],
       "tables": 0,
       "template": "partials/professional_development/request_form.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -8638,7 +9009,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 11318,
+      "bytes": 12996,
       "deprecated_alternatives": [],
       "example_pages": [
         "/",
@@ -8840,7 +9211,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5903,
+      "bytes": 6047,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -9622,7 +9993,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 2997,
+      "bytes": 2794,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9638,7 +10009,11 @@
       ],
       "tables": 0,
       "template": "partials/todos/command_center.html",
-      "variants": []
+      "variants": [
+        "danger",
+        "info",
+        "warning"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9907,7 +10282,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.targets.models"
+        "apps.ssa.models"
       ],
       "shared_layout": [
         "layouts/login.html"
@@ -9940,7 +10315,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "card_count": 0,
@@ -10003,7 +10378,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": true
       },
       "surface_kind": "partial",
@@ -10031,7 +10406,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.accountant_dashboard_view",
       "card_count": 0,
@@ -10094,7 +10469,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": true
       },
       "surface_kind": "partial",
@@ -18548,7 +18923,7 @@
       "backend_view": "apps.frontend.views.extended_views.admin_users_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/admin/users.html",
         "test:referenced-by-automated-test",
@@ -18559,7 +18934,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /partners/create"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -18586,8 +18963,8 @@
       "route_name": "admin_users",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/admin-panel/users",
-        "{% url "
+        "{% url ",
+        "/admin-panel/users"
       ],
       "services_and_models": [
         "apps.accounts.models",
@@ -20675,6 +21052,8 @@
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [
+        "apps.activities.models",
+        "apps.core.scoping",
         "apps.debriefs.models"
       ],
       "shared_layout": [
@@ -20706,6 +21085,7 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
+        "text-[13px]",
         "text-[14px]",
         "text-[18px]"
       ]
@@ -22195,7 +22575,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.targets.models"
+        "apps.ssa.models"
       ],
       "shared_layout": [
         "layouts/auth.html"
@@ -25933,31 +26313,25 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.2,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.finance_views",
       "backend_view": "apps.frontend.views.finance_views.cost_settings_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/cost_settings/index.html",
         "test:referenced-by-automated-test",
         "permission:cost_settings"
       ],
       "filters": "canvas-level shared filter bar",
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "finding_id": "UI-FINDING-CECF1D37DA",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /cost-settings/add?fy={{ selected_fy }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -25970,10 +26344,10 @@
       "page_type": "administration-or-configuration",
       "per_page_css": [],
       "permission_key": "cost_settings",
-      "primary_action": "Add cost",
+      "primary_action": "Add new cost",
       "primary_user_decision": "What governed configuration change is required?",
       "purpose": "Governed operational/reference cost control for finance leadership.",
-      "remediation": "Use the semantic card, elevated or muted surface token.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -25984,7 +26358,6 @@
       "search": "shared topbar search or none",
       "secondary_actions": [
         "/cost-settings",
-        "/cost-settings/add",
         "/cost-settings/initialize-default"
       ],
       "services_and_models": [
@@ -26024,7 +26397,6 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[13px]",
         "text-[14px]",
         "text-[16px]",
         "text-[18px]",
@@ -26033,7 +26405,7 @@
       ]
     },
     {
-      "accessibility_status": "not-applicable-nonvisual",
+      "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
@@ -26042,21 +26414,22 @@
       "backend_view": "apps.frontend.views.finance_views.add_linked_cost_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
+        "template:partials/cost_settings/add_drawer.html",
         "test:referenced-by-automated-test",
         "permission:cost_settings"
       ],
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
-      "header_variant": "not-applicable-nonvisual-action",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
-      "mobile_status": "not-applicable-nonvisual",
+      "mobile_status": "pass-automated-contract",
       "modals": false,
       "module": "frontend",
       "notifications": false,
@@ -26065,11 +26438,11 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cost_settings",
-      "primary_action": "Cost Settings Add",
+      "primary_action": "Add cost",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Add new cost (owner, 2026-09-06): a cost the Country Director adds is linked to one activity and priced on every schedule of it.",
       "remediation": "No automated remediation outstanding",
-      "responsive_state": "manual-review-required",
+      "responsive_state": "detected",
       "role_access": [
         "ADMIN",
         "CD"
@@ -26077,7 +26450,9 @@
       "route": "/cost-settings/add",
       "route_name": "cost_settings_add",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/cost-settings/add"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -26090,7 +26465,7 @@
         "apps.partners.models"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -26098,20 +26473,24 @@
         "error": false,
         "loading": false
       },
-      "surface_kind": "action",
+      "surface_kind": "drawer",
       "table_pattern": "none",
       "tables": false,
-      "tablet_status": "not-applicable-nonvisual",
+      "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
         "type": "none"
       },
-      "templates": [],
+      "templates": [
+        "partials/cost_settings/add_drawer.html"
+      ],
       "test_status": "referenced-by-automated-test",
-      "theme_state": "not-applicable-nonvisual",
-      "theme_status": "not-applicable-nonvisual",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": []
+      "typography_exceptions": [
+        "text-[13px]"
+      ]
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -26199,13 +26578,14 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.finance_views",
       "backend_view": "apps.frontend.views.finance_views.cost_setting_row_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
+        "template:partials/cost_settings/edit_drawer.html",
         "template:partials/cost_settings/cost_setting_row.html",
         "test:referenced-by-automated-test",
         "permission:cost_settings"
@@ -26217,7 +26597,6 @@
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
         "POST /cost-settings/row/{{ c.key }}",
-        "GET /cost-settings/row/{{ c.key }}?mode=view",
         "GET /cost-settings/row/{{ c.key }}?mode=edit"
       ],
       "implementation_status": "existing-routed-surface",
@@ -26232,7 +26611,7 @@
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "cost_settings",
-      "primary_action": "Save",
+      "primary_action": "Save rate",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate cost setting row within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
@@ -26259,15 +26638,15 @@
         "apps.partners.models"
       ],
       "shared_layout": [
-        "standalone-document-or-fragment"
+        "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
-      "surface_kind": "partial",
+      "surface_kind": "drawer",
       "table_pattern": "shared-table-container-or-parent-fragment",
       "tables": true,
       "tablet_status": "pass-automated-contract",
@@ -26276,6 +26655,7 @@
         "type": "none"
       },
       "templates": [
+        "partials/cost_settings/edit_drawer.html",
         "partials/cost_settings/cost_setting_row.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -26283,7 +26663,8 @@
       "theme_status": "pass-automated-contract",
       "todos": false,
       "typography_exceptions": [
-        "text-[12px]"
+        "text-[12px]",
+        "text-[13px]"
       ]
     },
     {
@@ -26550,7 +26931,6 @@
         "text-[12px]",
         "text-[13px]",
         "text-[14px]",
-        "text-[15px]",
         "text-[16px]",
         "text-[20px]"
       ]
@@ -37291,7 +37671,7 @@
       "drawers": false,
       "evidence": [
         "template:pages/ia/compare_evidence.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:ia_compare"
       ],
       "filters": "none",
@@ -37358,7 +37738,7 @@
       "templates": [
         "pages/ia/compare_evidence.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -37373,7 +37753,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.8,
       "backend_module": "apps.frontend.views.ia_views",
       "backend_view": "apps.frontend.views.ia_views.ia_dashboard_view",
       "card_count": 0,
@@ -37441,7 +37821,7 @@
       "state_coverage": {
         "disabled": false,
         "empty": true,
-        "error": false,
+        "error": true,
         "loading": true
       },
       "surface_kind": "partial",
@@ -41308,6 +41688,229 @@
       ]
     },
     {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_application_follow_up_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:loans"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "business_transformation",
+      "notifications": false,
+      "page_id": "UI-PAGE-C173B02ED1",
+      "page_title": "Loan Application Follow Up",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "loans",
+      "primary_action": "Loan Application Follow Up",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate loan application follow up within the business transformation workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "RVP"
+      ],
+      "route": "/loan-applications/<str:application_id>/follow-up",
+      "route_name": "loan_application_follow_up",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.public_loan_application_page",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/business_transformation/loan_application_public.html",
+        "test:referenced-by-automated-test",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "semantic-standalone-header",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "business_transformation",
+      "notifications": false,
+      "page_id": "UI-PAGE-85BE1B44E4",
+      "page_title": "School loan application",
+      "page_type": "operational-queue",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "Submit loan application",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "Operate public loan application within the business transformation workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [],
+      "route": "/loan-applications/apply",
+      "route_name": "public_loan_application",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "base.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/business_transformation/loan_application_public.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_application_export_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:loans"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "business_transformation",
+      "notifications": false,
+      "page_id": "UI-PAGE-256886A981",
+      "page_title": "Loan Application Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "loans",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Operate loan application export within the business transformation workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "RVP"
+      ],
+      "route": "/loan-applications/export.csv",
+      "route_name": "loan_application_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
       "accessibility_status": "pass-automated-contract",
       "api_endpoints": [],
       "app": "business_transformation",
@@ -41343,13 +41946,14 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "loans",
-      "primary_action": "Complete View",
+      "primary_action": "Open form",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Operate loans within the business transformation workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41361,6 +41965,7 @@
       "search": "shared topbar search or none",
       "secondary_actions": [
         "/loans",
+        "/loan-applications/{{ application.id }}/follow-up",
         "/loans/save",
         "/loans/repayment-snapshots"
       ],
@@ -41432,6 +42037,7 @@
       "responsive_state": "detected",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41512,6 +42118,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41587,6 +42194,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41662,6 +42270,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41737,6 +42346,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41812,6 +42422,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41820,6 +42431,82 @@
       ],
       "route": "/loans/export.csv",
       "route_name": "loan_export",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "export",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "business_transformation",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.business_transformation.frontend_views",
+      "backend_view": "apps.business_transformation.frontend_views.loan_excel_export_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:loans"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "inherited-or-manual-review",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "business_transformation",
+      "notifications": false,
+      "page_id": "UI-PAGE-DEE6379D64",
+      "page_title": "Loan Excel Export",
+      "page_type": "report",
+      "per_page_css": [],
+      "permission_key": "loans",
+      "primary_action": "Review or export report",
+      "primary_user_decision": "What evidence should be reviewed or exported?",
+      "purpose": "Operate loan excel export within the business transformation workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "RVP"
+      ],
+      "route": "/loans/export.xlsx",
+      "route_name": "loan_excel_export",
       "search": "shared topbar search or none",
       "secondary_actions": [],
       "services_and_models": [],
@@ -41887,6 +42574,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -41962,6 +42650,7 @@
       "responsive_state": "manual-review-required",
       "role_access": [
         "BUSINESS_TRANSFORMATION",
+        "CCEO",
         "CD",
         "IA",
         "MFI_ADMIN",
@@ -42047,7 +42736,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.targets.models"
+        "apps.ssa.models"
       ],
       "shared_layout": [
         "layouts/login.html"
@@ -42125,7 +42814,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.targets.models"
+        "apps.ssa.models"
       ],
       "shared_layout": [
         "layouts/login.html"
@@ -48571,6 +49260,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -48668,6 +49358,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -48760,6 +49451,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -48845,6 +49537,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -48934,6 +49627,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49028,6 +49722,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49121,6 +49816,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49215,6 +49911,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49305,6 +50002,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49395,6 +50093,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49486,6 +50185,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49576,6 +50276,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49667,6 +50368,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49760,6 +50462,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49850,6 +50553,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -49941,6 +50645,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -50031,6 +50736,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -50117,6 +50823,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -50204,6 +50911,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -50301,6 +51009,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -50341,7 +51050,7 @@
       "backend_view": "apps.frontend.views.partner_views.partner_detail_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/partners/detail.html",
         "test:referenced-by-automated-test",
@@ -50350,9 +51059,13 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /partners/{{ partner.id }}/edit-drawer",
+        "GET /partners/{{ partner.id }}/members/drawer",
+        "GET /partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -50367,7 +51080,7 @@
       "permission_key": "partner_detail",
       "primary_action": "Review record",
       "primary_user_decision": "What is the correct next action for this record?",
-      "purpose": "Partner detail \u2014 schools, activities, performance.",
+      "purpose": "A partner organisation's profile \u2014 the school profile's shape, for the organisation that delivers to schools (owner, 2026-09-07).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -50388,7 +51101,10 @@
       "route": "/partners/<str:partner_id>",
       "route_name": "partner_detail",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/partners/{{ partner.id }}/status",
+        "/partners/{{ partner.id }}/members"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
@@ -50402,6 +51118,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -50414,8 +51131,8 @@
         "loading": false
       },
       "surface_kind": "page",
-      "table_pattern": "none",
-      "tables": false,
+      "table_pattern": "shared-table-container-or-parent-fragment",
+      "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
         "count": 0,
@@ -50430,11 +51147,416 @@
       "todos": false,
       "typography_exceptions": [
         "text-[12px]",
-        "text-[14px]",
-        "text-[20px]",
-        "text-[22px]",
-        "text-[28px]"
+        "text-[15px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.7,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_edit_drawer_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/partners/edit_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:partner_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /partners/{{ partner.id }}/edit-drawer"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-E3651EDE84",
+      "page_title": "Partner Edit Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "partner_detail",
+      "primary_action": "Save details",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Edit an organisation's details \u2014 its own login may (owner, 2026-09-07: \"the partner should be able to edit their bio data\"), and so may the roles that run the directory. Region and SSA intervention are Edify's call, so they are editable only from the country-scoped side.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/partners/<str:partner_id>/edit-drawer",
+      "route_name": "partner_edit_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/partners/{{ partner.id }}/edit-drawer"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/partners/edit_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_member_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:partner_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D79E38D41C",
+      "page_title": "Partner Member Action",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "partner_detail",
+      "primary_action": "Partner Member Action",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Add a person to the roster, or remove one (`action=remove`).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/partners/<str:partner_id>/members",
+      "route_name": "partner_member_action",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_member_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/partners/member_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:partner_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "POST /partners/{{ partner.id }}/members"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4E3422B820",
+      "page_title": "Partner Member Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "partner_detail",
+      "primary_action": "Add to roster",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The Add to roster drawer.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/partners/<str:partner_id>/members/drawer",
+      "route_name": "partner_member_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/partners/{{ partner.id }}/members"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": true,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/partners/member_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": [
+        "text-[12px]",
+        "text-[13px]"
+      ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.partner_views",
+      "backend_view": "apps.frontend.views.partner_views.partner_status_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:partner_detail"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-748EB16E46",
+      "page_title": "Partner Status",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "partner_detail",
+      "primary_action": "Partner Status",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Activate or deactivate from the profile \u2014 the same toggle the directory has, for the reader who is already on the organisation's page.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "MFI_ADMIN",
+        "MFI_OFFICER",
+        "PARTNER",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RVP"
+      ],
+      "route": "/partners/<str:partner_id>/status",
+      "route_name": "partner_status",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.activities.services",
+        "apps.activity_catalogue.services",
+        "apps.audit.services",
+        "apps.clusters.models",
+        "apps.core.scoping",
+        "apps.evidence.models",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.partners.services",
+        "apps.schools.models",
+        "apps.ssa.models",
+        "apps.ssa.services"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -50509,6 +51631,7 @@
         "apps.partners.models",
         "apps.partners.services",
         "apps.schools.models",
+        "apps.ssa.models",
         "apps.ssa.services"
       ],
       "shared_layout": [
@@ -53564,23 +54687,26 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.priorities_master_page",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/priorities_master.html",
         "test:referenced-by-automated-test",
         "permission:priorities_master"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -53589,12 +54715,12 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-B337BA86BF",
-      "page_title": "Priorities \u00b7 Edify",
-      "page_type": "operational-queue",
+      "page_title": "Priorities",
+      "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "priorities_master",
-      "primary_action": "Open next queue record",
-      "primary_user_decision": "Which queued record should be handled next?",
+      "primary_action": "Priorities Master",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "The Uganda Master Priority Plan, in the source's own four columns: Priorities \u00b7 Milestones \u00b7 Activities \u00b7 Targets (\u00a79 canonical content).",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
@@ -53622,29 +54748,26 @@
       "state_coverage": {
         "disabled": false,
         "empty": false,
-        "error": false,
-        "loading": false
+        "error": true,
+        "loading": true
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/priorities_master.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[15px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -53745,7 +54868,7 @@
       "drawers": true,
       "evidence": [
         "template:partials/hr/ssa_mapping_drawer.html",
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:priorities_master"
       ],
       "filters": "none",
@@ -53812,7 +54935,7 @@
       "templates": [
         "partials/hr/ssa_mapping_drawer.html"
       ],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -53835,7 +54958,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:priorities_master"
       ],
       "filters": "none",
@@ -53896,7 +55019,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -53914,7 +55037,7 @@
       "charts": false,
       "drawers": false,
       "evidence": [
-        "test:coverage-review-required",
+        "test:referenced-by-automated-test",
         "permission:priorities_master"
       ],
       "filters": "none",
@@ -53976,7 +55099,7 @@
         "type": "none"
       },
       "templates": [],
-      "test_status": "coverage-review-required",
+      "test_status": "referenced-by-automated-test",
       "theme_state": "not-applicable-nonvisual",
       "theme_status": "not-applicable-nonvisual",
       "todos": false,
@@ -56158,7 +57281,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
-        "apps.targets.models"
+        "apps.ssa.models"
       ],
       "shared_layout": [
         "layouts/login.html"
@@ -56508,7 +57631,7 @@
       "backend_view": "apps.frontend.views.school_views.school_directory_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:partials/schools/table.html",
         "template:partials/schools/htmx_response.html",
@@ -56522,8 +57645,8 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /schools",
-        "GET /schools/sub-counties"
+        "GET /schools/create-drawer",
+        "GET /schools"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -56556,11 +57679,11 @@
       "secondary_actions": [
         "/schools/bulk-assign-cluster",
         "/schools/bulk-assign-project",
-        "/schools/bulk-match-staff",
-        "/schools/add-school"
+        "/schools/bulk-match-staff"
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -56607,7 +57730,6 @@
         "text-[13px]",
         "text-[14px]",
         "text-[15px]",
-        "text-[16px]",
         "text-[18px]"
       ]
     },
@@ -56672,6 +57794,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -56779,6 +57902,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -56886,6 +58010,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -56984,6 +58109,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57076,6 +58202,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57173,6 +58300,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57267,6 +58395,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57365,6 +58494,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57461,6 +58591,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57552,6 +58683,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57643,6 +58775,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57734,6 +58867,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57825,6 +58959,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -57916,6 +59051,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58017,6 +59153,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58115,6 +59252,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58215,6 +59353,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58312,6 +59451,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58407,6 +59547,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58505,6 +59646,7 @@
       ],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58597,6 +59739,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58685,6 +59828,7 @@
       "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
+        "apps.activities.models",
         "apps.analytics.services",
         "apps.audit.services",
         "apps.business_transformation.services",
@@ -58974,7 +60118,7 @@
       "backend_view": "apps.frontend.views.catalogue_views.activity_catalogue_page",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/settings/activity_catalogue.html",
         "test:referenced-by-automated-test",
@@ -58985,7 +60129,9 @@
       "fix_status": "fixed",
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET /settings/activity-catalogue/new"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
@@ -59008,7 +60154,6 @@
       "route_name": "activity_catalogue",
       "search": "shared topbar search or none",
       "secondary_actions": [
-        "/settings/activity-catalogue/new",
         "/settings/activity-catalogue/reviews/{{ review.id }}/resolve",
         "/settings/activity-catalogue/{{ item.id }}/lifecycle"
       ],
@@ -59017,7 +60162,8 @@
         "apps.activity_catalogue.models",
         "apps.activity_catalogue.services",
         "apps.partners.models",
-        "apps.projects.scoping"
+        "apps.projects.scoping",
+        "apps.ssa.models"
       ],
       "shared_layout": [
         "layouts/shell.html"
@@ -59040,6 +60186,86 @@
         "pages/settings/activity_catalogue.html"
       ],
       "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": false,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.catalogue_views",
+      "backend_view": "apps.frontend.views.catalogue_views.activity_catalogue_create_action",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/catalogue/new_activity_drawer.html",
+        "test:coverage-review-required",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-99CE4E6D5D",
+      "page_title": "Activity Catalogue Create",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "Add activity",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "The New activity form (owner, 2026-09-06): a school or a non-school activity, typed, delivered and costed like a governed one.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [],
+      "route": "/settings/activity-catalogue/new",
+      "route_name": "activity_catalogue_create",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "/settings/activity-catalogue/new"
+      ],
+      "services_and_models": [
+        "apps.activities.models",
+        "apps.activity_catalogue.models",
+        "apps.activity_catalogue.services",
+        "apps.partners.models",
+        "apps.projects.scoping",
+        "apps.ssa.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/catalogue/new_activity_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
@@ -60140,18 +61366,21 @@
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/priority_configuration.html",
         "test:referenced-by-automated-test",
         "permission:strategic_priorities"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "runtime-registered; 1 strip(s), platform maximum 6",
+      "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -60159,27 +61388,26 @@
       "notifications": false,
       "page_id": "UI-PAGE-37C6B437D7",
       "page_title": "Priority Setting Dashboard \u00b7 Edify",
-      "page_type": "administration-or-configuration",
+      "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "strategic_priorities",
-      "primary_action": "Approve FY cycle",
-      "primary_user_decision": "What governed configuration change is required?",
-      "purpose": "Turn the FY2027 regional direction into measurable, approved and allocated priorities. Source wording stays intact until an authorized owner completes the definition.",
+      "primary_action": "Strategic Priorities",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate strategic priorities within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
         "CD",
         "HR",
+        "IA",
+        "PL",
         "RVP"
       ],
       "route": "/strategic-priorities",
       "route_name": "strategic_priorities",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/strategic-priorities",
-        "/strategic-priorities/cycles/{{ cycle.id }}/approve"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.hr.models",
@@ -60189,32 +61417,28 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": false,
         "error": true,
-        "loading": false
+        "loading": true
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/priority_configuration.html"
       ],
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[16px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -60258,6 +61482,8 @@
         "ADMIN",
         "CD",
         "HR",
+        "IA",
+        "PL",
         "RVP"
       ],
       "route": "/strategic-priorities/action",
@@ -60656,40 +61882,41 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 10.0,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.target_distribution_page",
       "card_count": 0,
       "charts": false,
-      "drawers": true,
+      "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/target_distribution.html",
         "test:referenced-by-automated-test",
         "permission:target_distribution"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-8F0C3311A9",
-      "page_title": "Uganda Master Priority Plan \u00b7 Edify",
-      "page_type": "operational-queue",
-      "per_page_css": [
-        "css/pages/ia-master.css"
-      ],
+      "page_title": "Priorities",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "target_distribution",
-      "primary_action": "Publish FY master",
-      "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "The governed country plan for moving every confirmed field target from Impact Assessment to Program Leads and onward to accountable CCEOs.",
+      "primary_action": "Target Distribution",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate priorities within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -60700,10 +61927,7 @@
       "route": "/target-distribution",
       "route_name": "target_distribution",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/target-distribution",
-        "/target-distribution/action"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.hr.models"
@@ -60712,20 +61936,21 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": true,
-        "empty": true,
+        "disabled": false,
+        "empty": false,
         "error": true,
         "loading": true
       },
-      "surface_kind": "page",
-      "table_pattern": "shared-table-container-or-parent-fragment",
-      "tables": true,
+      "surface_kind": "partial",
+      "table_pattern": "none",
+      "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 7,
-        "type": "segmented-control"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/target_distribution.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -61119,41 +62344,41 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.target_distribution_views",
       "backend_view": "apps.frontend.views.target_distribution_views.team_distribution_page",
       "card_count": 0,
       "charts": false,
       "drawers": false,
       "evidence": [
+        "template:partials/dashboards/_view_tabs.html",
         "template:pages/hr/team_target_distribution.html",
         "test:referenced-by-automated-test",
         "permission:team_target_distribution"
       ],
-      "filters": "canvas-level shared filter bar",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
-      "forms": true,
-      "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "forms": false,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [
+        "GET {{ tab.url }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
-      "modals": true,
+      "modals": false,
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-A9FF05F38F",
       "page_title": "Team Priority Distribution \u00b7 Edify",
-      "page_type": "operational-queue",
-      "per_page_css": [
-        "css/pages/ia-master.css",
-        "css/pages/team-target-distribution.css"
-      ],
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
       "permission_key": "team_target_distribution",
-      "primary_action": "Approve spread",
-      "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Every figure below is exactly what Impact Assessment approved for your team. Allocate it across yourself and your supervised CCEOs, then monitor quarterly spread and delivery without changing the received target. Inspect approved team targets and delivery. Only the responsible Program Lead can allocate targets or approve quarterly spreads.",
+      "primary_action": "Team Target Distribution",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate team target distribution within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -61163,10 +62388,7 @@
       "route": "/target-distribution/team",
       "route_name": "team_target_distribution",
       "search": "shared topbar search or none",
-      "secondary_actions": [
-        "/target-distribution/team",
-        "/target-distribution/team/action"
-      ],
+      "secondary_actions": [],
       "services_and_models": [
         "apps.accounts.models",
         "apps.hr.models"
@@ -61178,17 +62400,18 @@
         "disabled": false,
         "empty": false,
         "error": true,
-        "loading": false
+        "loading": true
       },
-      "surface_kind": "page",
+      "surface_kind": "partial",
       "table_pattern": "none",
       "tables": false,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 1,
+        "type": "in-page-tabs"
       },
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/team_target_distribution.html"
       ],
       "test_status": "referenced-by-automated-test",
@@ -64250,6 +65473,21 @@
         "max_interval_minutes": 1800,
         "max_retries": 2,
         "name": "pd_reminders",
+        "retryable": true
+      },
+      {
+        "cron": "daily 07:15 Africa/Nairobi",
+        "cron_kwargs": {
+          "hour": 7,
+          "minute": 15
+        },
+        "description": "Reminds staff about due loan applications and repayments, and delivers the prior-month report to RVPs.",
+        "expected_runtime_seconds": 60,
+        "idempotency_note": "LoanTrackingDeliveryLog permanently dedupes each recipient, subject, and reminder/report period.",
+        "idempotent": true,
+        "max_interval_minutes": 1800,
+        "max_retries": 2,
+        "name": "loan_tracking_notifications",
         "retryable": true
       },
       {
@@ -74810,7 +76048,7 @@
     },
     {
       "callback": "apps.frontend.views.finance_views.add_linked_cost_view",
-      "kind": "action",
+      "kind": "drawer",
       "methods": [
         "GET"
       ],
@@ -74818,7 +76056,9 @@
       "required_permissions": [],
       "route": "/cost-settings/add",
       "route_name": "cost_settings_add",
-      "templates": []
+      "templates": [
+        "partials/cost_settings/add_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.finance_views.initialize_default_catalogue_view",
@@ -74834,7 +76074,7 @@
     },
     {
       "callback": "apps.frontend.views.finance_views.cost_setting_row_view",
-      "kind": "partial",
+      "kind": "drawer",
       "methods": [
         "GET",
         "POST"
@@ -74844,6 +76084,7 @@
       "route": "/cost-settings/row/<str:key>",
       "route_name": "cost_setting_row",
       "templates": [
+        "partials/cost_settings/edit_drawer.html",
         "partials/cost_settings/cost_setting_row.html"
       ]
     },
@@ -77200,6 +78441,45 @@
       ]
     },
     {
+      "callback": "apps.business_transformation.frontend_views.loan_application_follow_up_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loan-applications/<str:application_id>/follow-up",
+      "route_name": "loan_application_follow_up",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.public_loan_application_page",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/loan-applications/apply",
+      "route_name": "public_loan_application",
+      "templates": [
+        "pages/business_transformation/loan_application_public.html"
+      ]
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.loan_application_export_action",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loan-applications/export.csv",
+      "route_name": "loan_application_export",
+      "templates": []
+    },
+    {
       "callback": "apps.business_transformation.frontend_views.loan_page",
       "kind": "page",
       "methods": [
@@ -77285,6 +78565,18 @@
       "required_permissions": [],
       "route": "/loans/export.csv",
       "route_name": "loan_export",
+      "templates": []
+    },
+    {
+      "callback": "apps.business_transformation.frontend_views.loan_excel_export_action",
+      "kind": "export",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "loans",
+      "required_permissions": [],
+      "route": "/loans/export.xlsx",
+      "route_name": "loan_excel_export",
       "templates": []
     },
     {
@@ -78598,6 +79890,59 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.partner_views.partner_edit_drawer_view",
+      "kind": "drawer",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "partner_detail",
+      "required_permissions": [],
+      "route": "/partners/<str:partner_id>/edit-drawer",
+      "route_name": "partner_edit_drawer",
+      "templates": [
+        "partials/partners/edit_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.partner_views.partner_member_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_detail",
+      "required_permissions": [],
+      "route": "/partners/<str:partner_id>/members",
+      "route_name": "partner_member_action",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.partner_views.partner_member_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_detail",
+      "required_permissions": [],
+      "route": "/partners/<str:partner_id>/members/drawer",
+      "route_name": "partner_member_drawer",
+      "templates": [
+        "partials/partners/member_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.partner_views.partner_status_action",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "partner_detail",
+      "required_permissions": [],
+      "route": "/partners/<str:partner_id>/status",
+      "route_name": "partner_status",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.partner_views.create_partner_view",
       "kind": "drawer",
       "methods": [
@@ -79060,7 +80405,7 @@
     },
     {
       "callback": "apps.frontend.views.target_distribution_views.priorities_master_page",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -79069,6 +80414,7 @@
       "route": "/priorities",
       "route_name": "priorities_master",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/priorities_master.html"
       ]
     },
@@ -79852,7 +81198,7 @@
     },
     {
       "callback": "apps.frontend.views.catalogue_views.activity_catalogue_create_action",
-      "kind": "mutation-or-action",
+      "kind": "drawer",
       "methods": [
         "GET"
       ],
@@ -79860,7 +81206,9 @@
       "required_permissions": [],
       "route": "/settings/activity-catalogue/new",
       "route_name": "activity_catalogue_create",
-      "templates": []
+      "templates": [
+        "partials/catalogue/new_activity_drawer.html"
+      ]
     },
     {
       "callback": "apps.frontend.views.catalogue_views.activity_catalogue_review_resolve_action",
@@ -80060,7 +81408,7 @@
     },
     {
       "callback": "apps.frontend.views.priority_views.priority_configuration_page",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -80069,6 +81417,7 @@
       "route": "/strategic-priorities",
       "route_name": "strategic_priorities",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/priority_configuration.html"
       ]
     },
@@ -80200,7 +81549,7 @@
     },
     {
       "callback": "apps.frontend.views.target_distribution_views.target_distribution_page",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -80209,6 +81558,7 @@
       "route": "/target-distribution",
       "route_name": "target_distribution",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/target_distribution.html"
       ]
     },
@@ -80276,7 +81626,7 @@
     },
     {
       "callback": "apps.frontend.views.target_distribution_views.team_distribution_page",
-      "kind": "page",
+      "kind": "partial",
       "methods": [
         "GET"
       ],
@@ -80285,6 +81635,7 @@
       "route": "/target-distribution/team",
       "route_name": "team_target_distribution",
       "templates": [
+        "partials/dashboards/_view_tabs.html",
         "pages/hr/team_target_distribution.html"
       ]
     },
@@ -80742,39 +82093,39 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 415,
+    "accessibility_contract_pass": 420,
     "activity_states": 24,
-    "all_routes": 1061,
+    "all_routes": 1069,
     "api_routes": 359,
-    "component_templates": 409,
-    "full_pages": 240,
-    "mobile_contract_pass": 415,
-    "nonvisual_actions": 159,
+    "component_templates": 422,
+    "full_pages": 237,
+    "mobile_contract_pass": 420,
+    "nonvisual_actions": 161,
     "page_types": {
-      "administration-or-configuration": 25,
+      "administration-or-configuration": 24,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 331,
-      "operational-queue": 139,
+      "interaction-fragment": 341,
+      "operational-queue": 137,
       "planning-or-creation": 9,
       "record-detail": 24,
-      "report": 26
+      "report": 28
     },
-    "partials_and_drawers": 172,
-    "permission_gated": 581,
+    "partials_and_drawers": 180,
+    "permission_gated": 588,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 593,
-    "scheduled_jobs": 25,
+    "routed_surfaces": 602,
+    "scheduled_jobs": 26,
     "severity_counts": {
       "critical": 0,
       "high": 0,
       "low": 0,
-      "medium": 1
+      "medium": 0
     },
-    "tablet_contract_pass": 415,
-    "test_referenced": 547,
-    "theme_contract_pass": 415
+    "tablet_contract_pass": 420,
+    "test_referenced": 559,
+    "theme_contract_pass": 420
   }
 }

@@ -2352,7 +2352,7 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   :is(p, li, dd, .edify-profile-body, .edify-section__description):not(
     .edify-metric__value, .edify-metric__label, .edify-metric__meta, .edify-metric__unit,
     .edify-note__title, .edify-note__body,
-    .edify-empty-state__message, .edify-empty-state__hint
+    .edify-empty-state__title, .edify-empty-state__message, .edify-empty-state__hint
   ) {
   font-family: var(--edify-font-sans) !important;
   font-size: var(--edify-text-body-size) !important;

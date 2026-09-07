@@ -31,8 +31,8 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-14` | Team Oversight and Send School to | ✓ | 1 | 41 | 14 | 0 | 0 | 2 | 3 | 10 |
 | `journey-15` | Financial Health | ✓ | 1 | 44 | 17 | 2 | 4 | 1 | 6 | 14 |
 | `journey-16` | Government Requirements | ✓ | 1 | 43 | 17 | 2 | 4 | 1 | 5 | 14 |
-| `journey-17` | Loan | ✓ | 1 | 36 | 25 | 11 | 7 | 3 | 17 | 22 |
-| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 37 | 21 | 9 | 6 | 1 | 9 | 18 |
+| `journey-17` | Loan | ✓ | 1 | 37 | 25 | 11 | 7 | 3 | 17 | 22 |
+| `journey-18` | Repeat borrower and student reach | ✓ | 1 | 38 | 21 | 9 | 6 | 1 | 9 | 18 |
 | `journey-19` | Cross-role security | ✓ | 4 | 33 | 11 | 2 | 2 | 0 | 1 | 49 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
@@ -373,7 +373,7 @@ Steps: Funding Facility → MFI loan entry → Enrolment → Purpose → Disburs
 | Permissions checked | `businessTransformation.allocation.manage`, `businessTransformation.disbursement.write`, `businessTransformation.facility.approve`, `businessTransformation.facility.manage`, `businessTransformation.facility.transfer`, `businessTransformation.ia.validate`, `businessTransformation.loan.write`, `businessTransformation.referral.manage`, `businessTransformation.repayment.write`, `businessTransformation.salesforce.confirm`, `businessTransformation.sensitive.view` |
 | Page gates checked | `business_transformation_reports` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py`, `apps/business_transformation/lending_ledger.py`, `apps/business_transformation/models.py`, `apps/business_transformation/services.py`, `apps/clusters/eligibility.py` _+26 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py`, `apps/business_transformation/lending_ledger.py`, `apps/business_transformation/models.py`, `apps/business_transformation/services.py`, `apps/clusters/eligibility.py` _+27 more_ |
 | Models written | `accounts.User`, `audit.AuditLog`, `business_transformation.EnrolmentSnapshot`, `business_transformation.FinanceReferral`, `business_transformation.FundingFacility`, `business_transformation.FundingFacilityAllocation`, `business_transformation.FundingFacilityTranche`, `business_transformation.LoanDisbursement`, `business_transformation.LoanImpactAssessment`, `business_transformation.LoanPurposeAllocation`, `business_transformation.LoanRepaymentInstallment`, `business_transformation.LoanStatusHistory` _+13 more_ |
 | Notifications raised | `bt.loan.disbursed`, `bt.loan.salesforce_confirmed`, `bt.loan.submitted` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+9 more_ |
@@ -393,7 +393,7 @@ Steps: Second loan → Loan count increases → Unique school does not duplicate
 | Permissions checked | `businessTransformation.allocation.manage`, `businessTransformation.case.manage`, `businessTransformation.disbursement.write`, `businessTransformation.facility.approve`, `businessTransformation.facility.manage`, `businessTransformation.facility.transfer`, `businessTransformation.ia.validate`, `businessTransformation.loan.write`, `businessTransformation.mfi.manage` |
 | Page gates checked | `business_transformation` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py`, `apps/business_transformation/lending_ledger.py`, `apps/business_transformation/models.py`, `apps/business_transformation/services.py`, `apps/clusters/eligibility.py` _+27 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/business_transformation/frontend_views.py`, `apps/business_transformation/lending_impact.py`, `apps/business_transformation/lending_ledger.py`, `apps/business_transformation/models.py`, `apps/business_transformation/services.py`, `apps/clusters/eligibility.py` _+28 more_ |
 | Models written | `accounts.User`, `audit.AuditLog`, `business_transformation.EnrolmentSnapshot`, `business_transformation.FundingFacility`, `business_transformation.FundingFacilityAllocation`, `business_transformation.FundingFacilityTranche`, `business_transformation.LoanDisbursement`, `business_transformation.LoanImpactAssessment`, `business_transformation.LoanPurpose`, `business_transformation.LoanPurposeAllocation`, `business_transformation.LoanStatusHistory`, `business_transformation.LoanVerificationRequirement` _+9 more_ |
 | Notifications raised | `bt.loan.disbursed` |
 | Audit actions (evidence) | `bt.facility.allocated`, `bt.facility.approved`, `bt.facility.created`, `bt.facility.tranche_confirmed`, `bt.loan.disbursement_posted`, `bt.loan.enrolment_reported`, `bt.loan.enrolment_verified`, `bt.loan.purpose_plan_created` _+1 more_ |

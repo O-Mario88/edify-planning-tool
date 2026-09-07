@@ -10467,6 +10467,41 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer"
+   ],
+   "route": "/loan-applications/<str:application_id>/follow-up",
+   "route_name": "loan_application_follow_up",
+   "view": "apps.business_transformation.frontend_views.loan_application_follow_up_action"
+  },
+  {
+   "page_permission": "loans",
+   "required_permissions": [],
+   "role_exclusive": true,
+   "roles": [
+    "CCEO",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer"
+   ],
+   "route": "/loan-applications/export.csv",
+   "route_name": "loan_application_export",
+   "view": "apps.business_transformation.frontend_views.loan_application_export_action"
+  },
+  {
+   "page_permission": "loans",
+   "required_permissions": [],
+   "role_exclusive": true,
+   "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10483,6 +10518,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10499,6 +10535,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10515,6 +10552,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10531,6 +10569,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10547,6 +10586,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10563,6 +10603,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10579,6 +10620,24 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer"
+   ],
+   "route": "/loans/export.xlsx",
+   "route_name": "loan_excel_export",
+   "view": "apps.business_transformation.frontend_views.loan_excel_export_action"
+  },
+  {
+   "page_permission": "loans",
+   "required_permissions": [],
+   "role_exclusive": true,
+   "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -10595,6 +10654,7 @@
    "required_permissions": [],
    "role_exclusive": true,
    "roles": [
+    "CCEO",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -12214,6 +12274,102 @@
    "route": "/partners/<str:partner_id>",
    "route_name": "partner_detail",
    "view": "apps.frontend.views.partner_views.partner_detail_view"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partners/<str:partner_id>/edit-drawer",
+   "route_name": "partner_edit_drawer",
+   "view": "apps.frontend.views.partner_views.partner_edit_drawer_view"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partners/<str:partner_id>/members",
+   "route_name": "partner_member_action",
+   "view": "apps.frontend.views.partner_views.partner_member_action"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partners/<str:partner_id>/members/drawer",
+   "route_name": "partner_member_drawer",
+   "view": "apps.frontend.views.partner_views.partner_member_drawer"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partners/<str:partner_id>/status",
+   "route_name": "partner_status",
+   "view": "apps.frontend.views.partner_views.partner_status_action"
   },
   {
    "page_permission": "partners",
@@ -13872,8 +14028,10 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -13886,8 +14044,10 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
+    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "ImpactAssessment",
     "HumanResources",
     "Admin"
    ],
@@ -14499,27 +14659,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 386,
-  "Admin": 781,
-  "BusinessTransformationOfficer": 212,
-  "CCEO": 477,
-  "CountryDirector": 618,
-  "HumanResources": 265,
-  "ImpactAssessment": 497,
-  "MfiLoanOfficer": 111,
-  "MfiPartnerAdmin": 114,
-  "PartnerAdmin": 201,
-  "PartnerFieldOfficer": 201,
-  "Program Lead": 551,
-  "ProjectCoordinator": 408,
-  "RegionalVicePresident": 304
+  "Accountant": 390,
+  "Admin": 785,
+  "BusinessTransformationOfficer": 219,
+  "CCEO": 493,
+  "CountryDirector": 625,
+  "HumanResources": 269,
+  "ImpactAssessment": 506,
+  "MfiLoanOfficer": 118,
+  "MfiPartnerAdmin": 121,
+  "PartnerAdmin": 205,
+  "PartnerFieldOfficer": 205,
+  "Program Lead": 557,
+  "ProjectCoordinator": 412,
+  "RegionalVicePresident": 311
  },
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 875,
-  "routes_total": 1061,
-  "routes_unguarded": 186,
+  "routes_guarded": 882,
+  "routes_total": 1069,
+  "routes_unguarded": 187,
   "surfaces_no_role_can_reach": 0
  },
  "unguarded": [
@@ -15649,6 +15809,13 @@
    "route": "/lander/?",
    "route_name": "lander-legacy",
    "view": "django.views.generic.base.view"
+  },
+  {
+   "page_permission": "",
+   "required_permissions": [],
+   "route": "/loan-applications/apply",
+   "route_name": "public_loan_application",
+   "view": "apps.business_transformation.frontend_views.public_loan_application_page"
   },
   {
    "page_permission": "",

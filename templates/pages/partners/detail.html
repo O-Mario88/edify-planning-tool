@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
+{% load frontend_filters table_pagination %}
 {% block title %}{{ partner.name }} — Edify{% endblock %}
 {% block shell_content %}
 {% comment %}
@@ -60,6 +60,7 @@ contract every profile page shares.
 <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Every school this organisation has visited or trained, and how each is performing on its latest confirmed SSA.</p>
 </div>
 {% if supported_schools %}
+{% paginate supported_schools "supported_page" as supported_pager %}
 <div class="overflow-x-auto">
 <table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
@@ -74,9 +75,9 @@ contract every profile page shares.
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for row in supported_schools %}
+{% for row in supported_pager.rows %}
 <tr>
-<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold text-slate-800 hover:underline">{{ row.school.name }}</a></td>
+<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.school_id }}" class="font-semibold text-slate-800 hover:underline">{{ row.school.name }}</a></td>
 <td class="px-4 py-3 text-slate-600">{{ row.district|default:"—" }}</td>
 <td class="px-4 py-3 tabular-nums text-slate-700">{{ row.visits_done }}<span class="text-slate-400"> / {{ row.visits }}</span></td>
 <td class="px-4 py-3 tabular-nums text-slate-700">{{ row.trainings_done }}<span class="text-slate-400"> / {{ row.trainings }}</span></td>
@@ -90,6 +91,7 @@ contract every profile page shares.
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=supported_pager param="supported_page" %}
 {% else %}
 {% include "components/empty_state.html" with message="No schools visited or trained yet." hint="Schools appear here as soon as this organisation is given a visit or a training." %}
 {% endif %}
@@ -102,6 +104,7 @@ contract every profile page shares.
 <p class="edify-text-caption text-slate-400 font-medium mt-0.5">School visits, trainings, assessments and every other activity this organisation has been given, newest first.</p>
 </div>
 {% if history %}
+{% paginate history "history_page" as history_pager %}
 <div class="overflow-x-auto">
 <table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
@@ -115,12 +118,12 @@ contract every profile page shares.
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for row in history %}
+{% for row in history_pager.rows %}
 <tr>
 <td class="px-5 py-3 tabular-nums text-slate-600">{{ row.activity.planned_date|date:"d M Y"|default:"—" }}</td>
 <td class="px-4 py-3 text-slate-700">{{ row.kind }}</td>
 <td class="px-4 py-3 font-semibold text-slate-800" data-record-title>{{ row.activity.activity_type|title|replace_underscore }}</td>
-<td class="px-4 py-3">{% if row.activity.school %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{{ row.activity.school.name }}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}—{% endif %}</td>
+<td class="px-4 py-3">{% if row.activity.school %}<a href="/schools/{{ row.activity.school.school_id }}" class="font-semibold hover:underline">{{ row.activity.school.name }}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}—{% endif %}</td>
 <td class="px-4 py-3 text-slate-600">{% firstof row.delivered_by row.staff_name "—" %}</td>
 <td class="px-4 py-3"><span class="edify-status-text" data-edify-tone="{% if row.state == 'completed' %}success{% elif row.state == 'incomplete' %}danger{% else %}info{% endif %}">{{ row.activity.status|replace_underscore }}</span></td>
 </tr>
@@ -128,6 +131,7 @@ contract every profile page shares.
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=history_pager param="history_page" %}
 {% else %}
 {% include "components/empty_state.html" with message="No activities have been assigned to this organisation yet." %}
 {% endif %}
@@ -167,7 +171,8 @@ contract every profile page shares.
 </div>
 {% if can_manage_roster %}<button type="button" hx-get="/partners/{{ partner.id }}/members/drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9">Add person</button>{% endif %}
 </div>
-{% if members or named_on_deliveries %}
+{% if roster_rows %}
+{% paginate roster_rows "roster_page" as roster_pager %}
 <div class="overflow-x-auto">
 <table class="edify-record-table w-full text-[12px] border-collapse">
 <thead>
@@ -179,24 +184,28 @@ contract every profile page shares.
 </tr>
 </thead>
 <tbody class="divide-y divide-slate-100 font-medium">
-{% for m in members %}
+{% for row in roster_pager.rows %}
+{% if row.kind == "member" %}
+{% with m=row.member %}
 <tr>
 <td class="px-5 py-3" data-record-title><span class="font-semibold text-slate-800 block">{{ m.name }}</span>{% if m.title %}<span class="edify-text-caption text-slate-400 block">{{ m.title }}</span>{% endif %}</td>
 <td class="px-4 py-3"><span class="edify-badge" data-tone="{% if m.role == 'volunteer' %}info{% else %}neutral{% endif %}">{{ m.get_role_display }}</span></td>
 <td class="px-4 py-3 text-slate-600">{% if m.phone %}<span class="block tabular-nums">{{ m.phone }}</span>{% endif %}{% if m.email %}<a href="mailto:{{ m.email }}" class="block hover:underline">{{ m.email }}</a>{% endif %}{% if not m.phone and not m.email %}—{% endif %}</td>
 {% if can_manage_roster %}<td class="px-4 py-3 text-right" data-record-action><form method="post" action="/partners/{{ partner.id }}/members" class="inline">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="member_id" value="{{ m.id }}"><button type="submit" class="inline-flex min-h-8 items-center px-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-control edify-text-caption font-semibold uppercase transition-colors" aria-label="Remove {{ m.name }} from the roster">Remove</button></form></td>{% endif %}
 </tr>
-{% endfor %}
-{% for name, n in named_on_deliveries %}
+{% endwith %}
+{% else %}
 <tr class="opacity-80">
-<td class="px-5 py-3 font-semibold text-slate-700" data-record-title>{{ name }}</td>
-<td class="px-4 py-3" colspan="2"><span class="edify-badge" data-tone="warning">Named on {{ n }} deliver{{ n|pluralize:"y,ies" }} · not on the roster</span></td>
-{% if can_manage_roster %}<td class="px-4 py-3 text-right"><button type="button" hx-get="/partners/{{ partner.id }}/members/drawer?name={{ name|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="inline-flex min-h-8 items-center px-2.5 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-control edify-text-caption font-semibold uppercase transition-colors">Add</button></td>{% endif %}
+<td class="px-5 py-3 font-semibold text-slate-700" data-record-title>{{ row.name }}</td>
+<td class="px-4 py-3" colspan="2"><span class="edify-badge" data-tone="warning">Named on {{ row.deliveries }} deliver{{ row.deliveries|pluralize:"y,ies" }} · not on the roster</span></td>
+{% if can_manage_roster %}<td class="px-4 py-3 text-right"><button type="button" hx-get="/partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="inline-flex min-h-8 items-center px-2.5 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-control edify-text-caption font-semibold uppercase transition-colors">Add</button></td>{% endif %}
 </tr>
+{% endif %}
 {% endfor %}
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=roster_pager param="roster_page" %}
 {% else %}
 {% include "components/empty_state.html" with message="Nobody on the roster yet." hint="Add the staff and volunteers who deliver for this organisation." %}
 {% endif %}

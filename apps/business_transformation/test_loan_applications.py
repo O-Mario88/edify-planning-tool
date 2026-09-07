@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import datetime, time, timedelta
 from io import BytesIO
 
 from django.db import IntegrityError, transaction
@@ -312,9 +312,7 @@ class LoanApplicationWorkflowTests(TestCase):
 
     def test_rvp_gets_one_monthly_report_and_can_export_excel(self):
         report_date = timezone.localdate().replace(day=1) - timedelta(days=1)
-        submitted_at = timezone.now().replace(
-            year=report_date.year, month=report_date.month, day=report_date.day
-        )
+        submitted_at = timezone.make_aware(datetime.combine(report_date, time(hour=12)))
         self._application(
             applicant_name='=HYPERLINK("https://invalid","Open")',
             submitted_at=submitted_at,

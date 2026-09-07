@@ -2717,21 +2717,13 @@ def complete(activity_id: str, data: dict, principal) -> dict:
             "Click Complete first to unlock evidence upload and Activity Code entry."
         )
 
-    # A visit is not complete without the school's field feedback. Older unit
-    # fixtures predate this contract, so test-only callers that omit the new
-    # keys remain usable; production callers and explicit strict tests always
-    # pass through the same validation gate.
+    # Older unit fixtures predate the school-visit feedback contract, so
+    # test-only callers that omit the new keys remain usable. Keep the
+    # normalized value ready for the evidence-first validation sequence below.
     import sys as _sys
 
     _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
     visit_feedback = None
-    if a.activity_type in VISIT_TYPES and (
-        not _is_testing
-        or data.get("strict_validation")
-        or data.get("feedbackFinding") is not None
-        or data.get("schoolImprovements") is not None
-    ):
-        visit_feedback = _validate_school_visit_feedback(data)
 
     # SSA-01. A visit scheduled to collect an SSA must answer the SSA
     # question — with the scores, or with a reason there are none.
@@ -2800,6 +2792,17 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 f"Required evidence missing for this activity type: {labels}. "
                 "Upload each required document before submitting completion."
             )
+
+    # A visit is not complete without the school's field feedback. Evidence is
+    # validated first so callers receive the platform's established completion
+    # gate before the newer, activity-specific form requirements.
+    if a.activity_type in VISIT_TYPES and (
+        not _is_testing
+        or data.get("strict_validation")
+        or data.get("feedbackFinding") is not None
+        or data.get("schoolImprovements") is not None
+    ):
+        visit_feedback = _validate_school_visit_feedback(data)
 
     # SF ID lock after IA confirmation.
     if a.ia_verification_status == "confirmed":

@@ -94,7 +94,11 @@ class SchoolVisitFeedbackTest(TestCase):
         self.assertContains(response, "what you found on the ground")
         self.assertContains(response, "one improvement per line")
 
-    def test_visit_completion_rejects_missing_feedback(self):
+    @patch("apps.evidence.requirements.missing_evidence_kinds", return_value=[])
+    @patch("apps.evidence.requirements.evidence_optional", return_value=True)
+    def test_visit_completion_rejects_missing_feedback(
+        self, _evidence_optional, _missing_evidence
+    ):
         with self.assertRaisesMessage(BadRequest, "what you found on the ground"):
             complete(
                 self.visit.id,

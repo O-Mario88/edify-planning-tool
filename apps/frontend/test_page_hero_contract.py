@@ -55,6 +55,7 @@ HEADERLESS_H1_TEMPLATES = {
     # A shareable document rendered for people outside the app; it carries the
     # document's own masthead, not the platform's page chrome.
     "templates/pages/documents/canonical_document.html": "public document masthead",
+    "templates/pages/business_transformation/loan_application_public.html": "public application masthead",
     # A visually hidden heading that exists only to give the review workspace a
     # level-1 outline entry; the visible chrome is a 48px toolbar.
     "templates/pages/ia/review_workspace.html": "sr-only outline heading",

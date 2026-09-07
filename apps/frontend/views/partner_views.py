@@ -819,6 +819,11 @@ def partner_detail_view(request, partner_id):
     )
     can_manage_status = request.user.is_superuser or role_slug in {"ADMIN", "CD"}
 
+    roster_rows = [{"kind": "member", "member": member} for member in members] + [
+        {"kind": "delivery", "name": name, "deliveries": count}
+        for name, count in sorted(named_on_deliveries.items(), key=lambda kv: -kv[1])
+    ]
+
     context = {
         "partner": partner,
         "history": history,
@@ -829,6 +834,7 @@ def partner_detail_view(request, partner_id):
         "named_on_deliveries": sorted(
             named_on_deliveries.items(), key=lambda kv: -kv[1]
         ),
+        "roster_rows": roster_rows,
         "school_count": partner_schools.count(),
         "partner_progress": partner_progress,
         "supported_schools": supported_schools,

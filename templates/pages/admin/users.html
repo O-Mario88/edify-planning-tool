@@ -110,9 +110,9 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
         from the page; deactivation is what a Country Director does.
         {% endcomment %}
         {% for partner in partners_pager.rows %}
-        <tr class="hover:bg-slate-50/50 transition-colors{% if partner.status != "active" %} opacity-70{% endif %}">
+        <tr class="hover:bg-slate-50/50 transition-colors{% if partner.presentation_status != "active" %} opacity-70{% endif %}">
           <td class="px-5 py-3.5" data-record-title>
-            {% if partner.status == "deleted" %}<span class="font-semibold text-slate-500 block line-through">{{ partner.name }}</span>{% else %}<a href="/partners/{{ partner.id }}" class="font-semibold text-slate-800 hover:underline block">{{ partner.name }}</a>{% endif %}
+            {% if partner.presentation_status == "deleted" %}<span class="font-semibold text-slate-500 block line-through">{{ partner.name }}</span>{% else %}<a href="/partners/{{ partner.id }}" class="font-semibold text-slate-800 hover:underline block">{{ partner.name }}</a>{% endif %}
             {% if partner.region_name %}<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ partner.region_name }}</span>{% endif %}
           </td>
           <td class="px-4 py-3.5 font-semibold text-slate-700" data-label="Contact">{{ partner.contact_person|default:"Not recorded" }}</td>
@@ -125,11 +125,11 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
             </span>
           </td>
           <td class="px-4 py-3.5" data-label="Status">
-            <span class="edify-badge" data-tone="{% if partner.status == "active" %}success{% elif partner.status == "inactive" %}warning{% else %}danger{% endif %}">{{ partner.status|title }}</span>
+            <span class="edify-badge" data-tone="{% if partner.presentation_status == "active" %}success{% elif partner.presentation_status == "inactive" %}warning{% else %}danger{% endif %}">{{ partner.presentation_status|title }}</span>
           </td>
           <td class="px-5 py-3.5 text-right" data-record-action>
             <div class="inline-flex items-center justify-end gap-2">
-              {% if partner.status != "deleted" %}
+              {% if partner.presentation_status != "deleted" %}
               <form method="post" action="{% url 'frontend:admin_users' %}" class="inline">
                 {% csrf_token %}
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">

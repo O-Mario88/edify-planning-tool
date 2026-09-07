@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters table_pagination %}
+{% load frontend_filters static table_pagination %}
 
 {% block title %}Loans — Edify{% endblock %}
 
@@ -62,6 +62,7 @@
   {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Uganda loan scorecard" %}
 
   {% if not mfi_user %}
+  {% paginate applications "applications_page" as applications_pager %}
   <section class="edify-surface border border-[var(--edify-border)] rounded-surface shadow-sm overflow-hidden" aria-labelledby="loan-application-intake-title">
     <header class="px-5 py-4 border-b border-[var(--edify-border)] flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
       <div>
@@ -70,7 +71,7 @@
       </div>
       <div class="flex max-w-xl items-center gap-2">
         <input id="public-loan-application-url" value="{{ public_application_url }}" readonly class="w-full min-w-0 text-xs" aria-label="Public loan application link">
-        <button type="button" class="btn btn-secondary h-9 shrink-0" onclick="navigator.clipboard.writeText(document.getElementById('public-loan-application-url').value); this.textContent='Copied'">Copy link</button>
+        <button type="button" class="btn btn-secondary h-9 shrink-0" data-copy-loan-application-link>Copy link</button>
         <a href="/loan-applications/apply" target="_blank" rel="noopener" class="btn btn-primary h-9 shrink-0 inline-flex items-center">Open form</a>
       </div>
     </header>
@@ -79,7 +80,7 @@
         <caption class="sr-only">Loan applications submitted by schools</caption>
         <thead><tr><th scope="col">School</th><th scope="col">Request</th><th scope="col">Applicant</th><th scope="col">Submitted</th><th scope="col">Status</th><th scope="col">Next follow-up</th>{% if can_update_applications %}<th scope="col">Record follow-up</th>{% endif %}</tr></thead>
         <tbody>
-          {% for application in applications %}
+          {% for application in applications_pager.rows %}
           <tr>
             <td data-record-title><strong>{{ application.school.name }}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.school.school_id }} · {{ application.school.account_owner_name_raw|default:"No portfolio owner" }}</small></td>
             <td data-label="Request"><strong>{{ application.requested_amount|ugx }}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.purpose.label }} · {{ application.get_repayment_frequency_display }} · {{ application.requested_term_months }} months</small></td>
@@ -109,6 +110,7 @@
         </tbody>
       </table>
     </div>
+    {% include "components/table_pager.html" with pager=applications_pager param="applications_page" %}
   </section>
   {% endif %}
 
@@ -373,4 +375,5 @@
     {% include "components/table_pager.html" with pager=loans_pager param="loans_page" %}
   </section>
 </div>
+<script src="{% static 'js/loan-dashboard.js' %}" defer></script>
 {% endblock %}

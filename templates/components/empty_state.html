@@ -10,11 +10,13 @@
   Usage:
     {% include "components/empty_state.html" with message="No requests found." %}
 
-  `message` is the sentence. `hint` is an optional second line for what the
-  reader can do about it. The icon is the platform's empty glyph; a page that
-  genuinely needs another can pass `icon` as raw SVG markup.
+  `title` remains optional for older and more descriptive empty states;
+  `message` is the sentence and `hint` is an optional second line for what the
+  reader can do about it. `cta_label` plus `cta_href` add a recovery action.
+  The icon is the platform's empty glyph; a page that genuinely needs another
+  can pass `icon` as raw SVG markup.
 {% endcomment %}
-<div class="edify-empty-state">
+<div class="edify-empty-state{% if compact == 'true' %} edify-empty-state--compact{% endif %}"{% if tone %} data-tone="{{ tone }}"{% endif %}>
   <span class="edify-empty-state__mark" aria-hidden="true">
     {% if icon %}{{ icon }}{% else %}
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -22,6 +24,8 @@
     </svg>
     {% endif %}
   </span>
+  {% if title %}<p class="edify-empty-state__title">{{ title }}</p>{% endif %}
   <p class="edify-empty-state__message">{{ message }}</p>
   {% if hint %}<p class="edify-empty-state__hint">{{ hint }}</p>{% endif %}
+  {% if cta_label and cta_href %}<a href="{{ cta_href }}" class="btn btn-primary min-h-9">{{ cta_label }}</a>{% endif %}
 </div>

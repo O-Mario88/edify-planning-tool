@@ -96,7 +96,7 @@ def visit_request_decide(request, activity_id, decision):
             messages.success(
                 request, f"Visit to {where} declined. The requester has been told."
             )
-    except Forbidden as exc:
+    except Forbidden:
         audit_log(
             action="unauthorized_mutation_attempt",
             subject_kind="Activity",
