@@ -117,7 +117,7 @@ Compare Side-by-Side
 <!-- Cluster -->
 <div>
 <span class="edify-text-caption text-slate-400 font-bold uppercase block">Cluster</span>
-<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ act.cluster.name|default:"No Cluster" }}</span>
+<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{% if act.cluster %}<a href="/clusters/{{ act.cluster.id }}" class="hover:underline">{{ act.cluster.name }}</a>{% else %}No Cluster{% endif %}</span>
 </div>
 <!-- District -->
 <div>

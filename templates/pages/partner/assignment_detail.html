@@ -42,7 +42,7 @@
       {% endif %}
       {% endif %}
       {% if a.cluster %}
-      <div class="edify-data-row"><span class="edify-data-row__label">Cluster</span><span class="edify-data-row__value">{{ a.cluster.name }}</span></div>
+      <div class="edify-data-row"><span class="edify-data-row__label">Cluster</span><span class="edify-data-row__value"><a href="/clusters/{{ a.cluster.id }}" class="hover:underline">{{ a.cluster.name }}</a></span></div>
       {% endif %}
       {% if a.focus_intervention %}
       <div class="edify-data-row"><span class="edify-data-row__label">Focus intervention</span><span class="edify-data-row__value">{{ a.focus_intervention|cut:"_"|title }}</span></div>

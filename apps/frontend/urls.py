@@ -1692,6 +1692,22 @@ urlpatterns = [
         partner_views.partner_detail_view,
         name="partner_detail",
     ),
+    # The profile's own lifecycle toggle and roster (owner, 2026-09-07).
+    path(
+        "partners/<str:partner_id>/status",
+        partner_views.partner_status_action,
+        name="partner_status",
+    ),
+    path(
+        "partners/<str:partner_id>/members/drawer",
+        partner_views.partner_member_drawer,
+        name="partner_member_drawer",
+    ),
+    path(
+        "partners/<str:partner_id>/members",
+        partner_views.partner_member_action,
+        name="partner_member_action",
+    ),
     path("partner/today", partner_views.partner_today_view, name="partner_today"),
     path("partner/schools", partner_views.partner_schools_view, name="partner_schools"),
     path(

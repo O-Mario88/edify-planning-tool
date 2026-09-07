@@ -1172,6 +1172,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             else "No SSA",
             # Cluster details
             "cluster_name": a.cluster.name if a.cluster else "Unknown Cluster",
+            "cluster_id": a.cluster.id if a.cluster else "",
             "cluster_district": a.cluster.district.name if a.cluster else "Unknown",
             "cluster_school_count": School.objects.filter(
                 cluster_id=a.cluster.id

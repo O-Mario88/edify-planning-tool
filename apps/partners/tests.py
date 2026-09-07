@@ -3,10 +3,18 @@
 from django.contrib.auth import get_user_model
 from django.test import TestCase
 
-from apps.core.exceptions import Forbidden
+from apps.core.exceptions import ConflictError, Forbidden
 from apps.core.rbac import EdifyRole
 from apps.partners.models import Partner
-from apps.partners.services import delete_partner, update
+from apps.partners.services import (
+    add_member,
+    delete_partner,
+    onboard,
+    purge_partner,
+    remove_member,
+    set_partner_status,
+    update,
+)
 
 
 class PartnerUpdateScopeTests(TestCase):
@@ -158,6 +166,10 @@ class PartnerDirectoryManagementTests(TestCase):
             contact_person="Partner Contact",
             email="directory-partner@edify.test",
         )
+        # A removed organisation is a row whose Status says so (owner,
+        # 2026-09-07: "active, inactive, deleted"), not a row that vanished.
+        gone = Partner.objects.create(name="Gone Directory Partner", active_status=False)
+        gone.soft_delete()
 
         for principal in (self.admin, self.cd):
             self.client.force_login(principal)
@@ -165,8 +177,21 @@ class PartnerDirectoryManagementTests(TestCase):
             self.assertEqual(response.status_code, 200)
             self.assertContains(response, "Partner Organisations")
             self.assertContains(response, "Visible Directory Partner")
+            self.assertContains(response, "Gone Directory Partner")
+            self.assertContains(response, ">Deleted<")
+            self.assertContains(response, ">Active<")
+            self.assertNotContains(response, 'aria-label="Activate Gone Directory Partner"')
             self.assertContains(response, "Add Partner")
-            self.assertContains(response, "Remove Partner")
+            # Two actions per row (owner, 2026-09-07): the lifecycle toggle,
+            # and — for the Admin alone — permanent deletion. The soft
+            # "Remove" button is gone from the page.
+            # The fixture is active (the model default), so its toggle reads
+            # Deactivate; a freshly onboarded one reads Activate — covered by
+            # PartnerLifecycleTests.
+            self.assertContains(response, "Deactivate")
+            self.assertNotContains(response, "Remove Partner")
+            # The organisation's name opens its profile.
+            self.assertContains(response, '<a href="/partners/')
 
         self.client.force_login(self.hr)
         response = self.client.get("/admin-panel/users")
@@ -211,3 +236,145 @@ class PartnerDirectoryManagementTests(TestCase):
             response, "/admin-panel/users", fetch_redirect_response=False
         )
         self.assertFalse(Partner.objects.filter(id=partner.id).exists())
+
+
+class PartnerLifecycleTests(TestCase):
+    """Activate / deactivate / delete, and the roster (owner, 2026-09-07).
+
+    "When it has just been added, the button should be activate, and once the
+    partner has been added, it should be deactivated. Delete … is to delete the
+    partner permanently and that should only be done by the admin."
+    """
+
+    def setUp(self):
+        User = get_user_model()
+        self.admin = User.objects.create_user(
+            email="lifecycle-admin@edify.test", name="Lifecycle Admin",
+            roles=[EdifyRole.ADMIN.value], active_role=EdifyRole.ADMIN.value,
+            password="StrongPassphrase!23",
+        )
+        self.cd = User.objects.create_user(
+            email="lifecycle-cd@edify.test", name="Lifecycle CD",
+            roles=[EdifyRole.COUNTRY_DIRECTOR.value],
+            active_role=EdifyRole.COUNTRY_DIRECTOR.value,
+            password="StrongPassphrase!23",
+        )
+        self.hr = User.objects.create_user(
+            email="lifecycle-hr@edify.test", name="Lifecycle HR",
+            roles=[EdifyRole.HUMAN_RESOURCES.value],
+            active_role=EdifyRole.HUMAN_RESOURCES.value,
+            password="StrongPassphrase!23",
+        )
+
+    def test_a_new_organisation_starts_inactive(self):
+        created = onboard({"name": "Fresh Partner", "expertiseAreas": "Literacy, EdTech"}, self.cd)
+        partner = Partner.objects.get(id=created["id"])
+        self.assertFalse(partner.active_status)
+        self.assertEqual(partner.expertise_areas, ["Literacy", "EdTech"])
+
+    def test_the_toggle_activates_then_deactivates_and_is_audited(self):
+        from apps.audit.models import AuditLog
+
+        partner = Partner.objects.create(name="Toggle Partner", active_status=False)
+        set_partner_status(partner.id, True, self.cd)
+        partner.refresh_from_db()
+        self.assertTrue(partner.active_status)
+        set_partner_status(partner.id, False, self.admin)
+        partner.refresh_from_db()
+        self.assertFalse(partner.active_status)
+        actions = set(
+            AuditLog.objects.filter(subject_id=partner.id).values_list("action", flat=True)
+        )
+        self.assertIn("partner.activated", actions)
+        self.assertIn("partner.deactivated", actions)
+
+    def test_only_admin_may_purge_and_only_without_history(self):
+        from apps.partners.models import PartnerAssignment
+        from apps.schools.models import School
+
+        clean = Partner.objects.create(name="Never Used Partner", active_status=False)
+        with self.assertRaises(Forbidden):
+            purge_partner(clean.id, self.cd)
+        self.assertTrue(Partner.objects.filter(id=clean.id).exists())
+
+        purge_partner(clean.id, self.admin)
+        self.assertFalse(Partner.all_objects.filter(id=clean.id).exists())
+
+        worked = Partner.objects.create(name="Worked Partner", active_status=True)
+        school = School.objects.create(name="Roster School", school_id="RS-001")
+        PartnerAssignment.objects.create(partner=worked, school=school)
+        with self.assertRaises(ConflictError):
+            purge_partner(worked.id, self.admin)
+        self.assertTrue(Partner.objects.filter(id=worked.id).exists())
+
+    def test_the_users_page_toggles_and_purges_by_role(self):
+        partner = Partner.objects.create(name="Page Partner", active_status=False)
+
+        self.client.force_login(self.cd)
+        self.client.post(
+            "/admin-panel/users", {"action": "activate_partner", "partner_id": partner.id}
+        )
+        partner.refresh_from_db()
+        self.assertTrue(partner.active_status)
+
+        # A Country Director cannot delete permanently.
+        self.client.post(
+            "/admin-panel/users", {"action": "purge_partner", "partner_id": partner.id}
+        )
+        self.assertTrue(Partner.all_objects.filter(id=partner.id).exists())
+        response = self.client.get("/admin-panel/users")
+        self.assertContains(response, "Deactivate")
+        self.assertNotContains(response, "Delete Permanently")
+
+        self.client.force_login(self.admin)
+        response = self.client.get("/admin-panel/users")
+        self.assertContains(response, "Delete Permanently")
+        self.client.post(
+            "/admin-panel/users", {"action": "purge_partner", "partner_id": partner.id}
+        )
+        self.assertFalse(Partner.all_objects.filter(id=partner.id).exists())
+
+    def test_the_roster_is_scoped_and_removable(self):
+        partner = Partner.objects.create(name="Roster Partner", active_status=True)
+        member = add_member(
+            partner.id,
+            {"name": "Grace Nakato", "role": "volunteer", "phone": "0700"},
+            self.cd,
+        )
+        self.assertEqual(member.role, "volunteer")
+        with self.assertRaises(Forbidden):
+            add_member(partner.id, {"name": "Blocked"}, self.hr)
+        remove_member(partner.id, member.id, self.admin)
+        self.assertEqual(partner.members.count(), 0)
+
+    def test_the_profile_shows_history_roster_and_counts(self):
+        from apps.activities.models import Activity
+        from apps.schools.models import School
+
+        partner = Partner.objects.create(name="Profiled Partner", active_status=True)
+        school = School.objects.create(name="History School", school_id="HS-001")
+        Activity.objects.create(
+            activity_type="training", status="completed", school=school,
+            assigned_partner_id=partner.id, delivery_contact_name="Grace Nakato",
+        )
+        Activity.objects.create(
+            activity_type="school_visit", status="assigned_to_partner", school=school,
+            assigned_partner_id=partner.id,
+        )
+        Activity.objects.create(
+            activity_type="school_visit", status="cancelled", school=school,
+            assigned_partner_id=partner.id,
+        )
+        add_member(partner.id, {"name": "Paul Okello", "role": "staff"}, self.cd)
+
+        self.client.force_login(self.cd)
+        response = self.client.get(f"/partners/{partner.id}")
+        self.assertEqual(response.status_code, 200)
+        counts = response.context["counts"]
+        self.assertEqual(counts, {"completed": 1, "assigned": 1, "incomplete": 1})
+        self.assertContains(response, "Staff and volunteers")
+        self.assertContains(response, "Paul Okello")
+        # Named on a delivery but not on the roster — surfaced, not lost.
+        self.assertContains(response, "Grace Nakato")
+        self.assertContains(response, "Activity history")
+        self.assertContains(response, f'href="/schools/{school.id}"')

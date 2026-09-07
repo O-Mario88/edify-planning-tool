@@ -11,6 +11,7 @@ x-data="{
   showPartnerDeleteModal: false,
   partnerToDelete: '',
   partnerToDeleteName: '',
+  partnerToDeleteHasHistory: false,
   tempPassword: '',
   newUserRole: 'CCEO'
 }"
@@ -78,10 +79,10 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
     <div>
       <p class="edify-page-eyebrow">External access</p>
       <h2 id="partner-directory-title" class="text-[16px] font-bold text-slate-800">Partner Organisations</h2>
-      <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Add delivery partners or remove organisations that should no longer receive assignments.</p>
+      <p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Add delivery partners, activate them when they are ready for work, and deactivate the ones that should no longer receive assignments.</p>
     </div>
     <span class="inline-flex items-center rounded-pill border border-slate-200 px-2.5 py-1 edify-text-caption font-semibold text-slate-500">
-      {{ partners|length }} active
+      {{ active_partner_count }} active · {{ partners|length }} total
     </span>
   </header>
 
@@ -89,51 +90,82 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
     <table class="edify-record-table w-full text-[12px] border-collapse">
       <thead>
         <tr class="bg-slate-50 border-b border-slate-100 text-left">
-          <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Organisation</th>
+          <th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Organization</th>
           <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Contact</th>
-          <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Region</th>
+          <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Phone</th>
+          <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Email</th>
+          <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Expertise</th>
           <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">SSA Intervention</th>
+          <th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Status</th>
           <th class="px-5 py-3 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-slate-100 font-medium">
+        {% comment %}
+        The owner's six columns (2026-09-07), the organisation's name a link to
+        its profile the way a school's is, and exactly two actions: the
+        lifecycle toggle — Activate on an organisation that has just been
+        added, Deactivate once it is live — and, for the Admin alone,
+        permanent deletion. The soft "remove" that used to sit here is gone
+        from the page; deactivation is what a Country Director does.
+        {% endcomment %}
         {% for partner in partners_pager.rows %}
-        <tr class="hover:bg-slate-50/50 transition-colors">
+        <tr class="hover:bg-slate-50/50 transition-colors{% if partner.status != "active" %} opacity-70{% endif %}">
           <td class="px-5 py-3.5" data-record-title>
-            <span class="font-semibold text-slate-800 block">{{ partner.name }}</span>
-            <span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">
-              {% if partner.user_id %}Linked user: {{ partner.user.email }}{% else %}No linked login{% endif %}
-            </span>
+            {% if partner.status == "deleted" %}<span class="font-semibold text-slate-500 block line-through">{{ partner.name }}</span>{% else %}<a href="/partners/{{ partner.id }}" class="font-semibold text-slate-800 hover:underline block">{{ partner.name }}</a>{% endif %}
+            {% if partner.region_name %}<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">{{ partner.region_name }}</span>{% endif %}
           </td>
-          <td class="px-4 py-3.5" data-label="Contact">
-            <span class="font-semibold text-slate-700 block">{{ partner.contact_person|default:"Not recorded" }}</span>
-            <span class="edify-text-caption text-slate-400 block mt-0.5">{{ partner.email|default:"No email" }}</span>
-          </td>
-          <td class="px-4 py-3.5 text-slate-500 font-semibold" data-label="Region">{{ partner.region_name|default:"Not assigned" }}</td>
+          <td class="px-4 py-3.5 font-semibold text-slate-700" data-label="Contact">{{ partner.contact_person|default:"Not recorded" }}</td>
+          <td class="px-4 py-3.5 text-slate-600 tabular-nums" data-label="Phone">{{ partner.phone|default:"—" }}</td>
+          <td class="px-4 py-3.5 text-slate-600" data-label="Email">{% if partner.email %}<a href="mailto:{{ partner.email }}" class="hover:underline">{{ partner.email }}</a>{% else %}—{% endif %}</td>
+          <td class="px-4 py-3.5 text-slate-600" data-label="Expertise">{% if partner.expertise_areas %}{{ partner.expertise_areas|join:", " }}{% elif partner.trains_on %}{{ partner.trains_on|join:", " }}{% else %}—{% endif %}</td>
           <td class="px-4 py-3.5" data-label="SSA Intervention">
             <span class="inline-flex rounded-pill bg-sky-50 text-sky-700 border border-sky-100 px-2 py-0.5 edify-text-caption font-semibold">
               {{ partner.ssa_intervention_label }}
             </span>
           </td>
+          <td class="px-4 py-3.5" data-label="Status">
+            <span class="edify-badge" data-tone="{% if partner.status == "active" %}success{% elif partner.status == "inactive" %}warning{% else %}danger{% endif %}">{{ partner.status|title }}</span>
+          </td>
           <td class="px-5 py-3.5 text-right" data-record-action>
-            <button
-              type="button"
-              data-partner-id="{{ partner.id }}"
-              data-partner-name="{{ partner.name }}"
-              @click="
-                partnerToDelete = $el.dataset.partnerId;
-                partnerToDeleteName = $el.dataset.partnerName;
-                showPartnerDeleteModal = true
-              "
-              class="inline-flex min-h-9 items-center px-3 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-control edify-text-caption font-semibold uppercase transition-colors"
-            >
-              Remove
-            </button>
+            <div class="inline-flex items-center justify-end gap-2">
+              {% if partner.status != "deleted" %}
+              <form method="post" action="{% url 'frontend:admin_users' %}" class="inline">
+                {% csrf_token %}
+                <input type="hidden" name="partner_id" value="{{ partner.id }}">
+                {% if partner.active_status %}
+                <input type="hidden" name="action" value="deactivate_partner">
+                <button type="submit" class="inline-flex min-h-9 items-center px-3 border border-amber-200 text-amber-700 hover:bg-amber-50 rounded-control edify-text-caption font-semibold uppercase transition-colors" aria-label="Deactivate {{ partner.name }}">Deactivate</button>
+                {% else %}
+                <input type="hidden" name="action" value="activate_partner">
+                <button type="submit" class="inline-flex min-h-9 items-center px-3 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-control edify-text-caption font-semibold uppercase transition-colors" aria-label="Activate {{ partner.name }}">Activate</button>
+                {% endif %}
+              </form>
+              {% endif %}
+              {% if can_purge_partners %}
+              <button
+                type="button"
+                data-partner-id="{{ partner.id }}"
+                data-partner-name="{{ partner.name }}"
+                data-partner-history="{% if partner.history_count %}1{% else %}0{% endif %}"
+                @click="
+                  partnerToDelete = $el.dataset.partnerId;
+                  partnerToDeleteName = $el.dataset.partnerName;
+                  partnerToDeleteHasHistory = $el.dataset.partnerHistory === '1';
+                  showPartnerDeleteModal = true
+                "
+                class="inline-flex min-h-9 items-center px-3 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-control edify-text-caption font-semibold uppercase transition-colors"
+                aria-label="Delete {{ partner.name }} permanently"
+              >
+                Delete
+              </button>
+              {% endif %}
+            </div>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="px-5 py-8 text-center">
+          <td colspan="8" class="px-5 py-8 text-center">
             <strong class="block text-slate-600">No partner organisations yet</strong>
             <span class="edify-text-caption text-slate-400">Use Add Partner to create the first organisation.</span>
           </td>
@@ -258,8 +290,8 @@ No user accounts found matching your query.
 The Add Partner dialog that used to live here is gone: a second, page-local
 partner form beside the platform drawer the button above now opens.
 {% endcomment %}
-{% if can_manage_partners %}
-<!-- Remove Partner confirmation -->
+{% if can_purge_partners %}
+<!-- Delete Partner (permanent) confirmation — Admin only -->
 <div
 x-show="showPartnerDeleteModal"
 @keydown.escape.window="showPartnerDeleteModal = false"
@@ -274,18 +306,21 @@ aria-describedby="delete-partner-description"
   <div class="flex min-h-screen items-center justify-center p-4">
     <div class="edify-surface rounded-surface max-w-md w-full p-6 shadow-lg relative border border-rose-200 space-y-5" @click.away="showPartnerDeleteModal = false" x-transition>
       <div>
-        <p class="edify-page-eyebrow text-rose-600">Remove organisation</p>
-        <h3 id="delete-partner-title" class="text-[20px] font-extrabold tracking-tight text-slate-900">Remove <span x-text="partnerToDeleteName"></span>?</h3>
-        <p id="delete-partner-description" class="mt-2 text-[13px] leading-relaxed text-slate-500">
-          The organisation will disappear from active partner choices. Historical assignments and audit records will be retained.
+        <p class="edify-page-eyebrow text-rose-600">Delete permanently</p>
+        <h3 id="delete-partner-title" class="text-[20px] font-extrabold tracking-tight text-slate-900">Delete <span x-text="partnerToDeleteName"></span>?</h3>
+        <p id="delete-partner-description" class="mt-2 text-[13px] leading-relaxed text-slate-500" x-show="!partnerToDeleteHasHistory">
+          This removes the organisation and its roster for good. There is no undo. An organisation that should simply stop receiving work is deactivated instead.
+        </p>
+        <p class="mt-2 text-[13px] leading-relaxed text-rose-700 font-semibold" x-show="partnerToDeleteHasHistory" x-cloak>
+          This organisation has assignments or activities on record, so it cannot be deleted — that history is the audit trail. Deactivate it instead; the record stays.
         </p>
       </div>
       <form method="post" action="{% url 'frontend:admin_users' %}" class="flex justify-end gap-3">
         {% csrf_token %}
-        <input type="hidden" name="action" value="delete_partner">
+        <input type="hidden" name="action" value="purge_partner">
         <input type="hidden" name="partner_id" :value="partnerToDelete">
         <button type="button" @click="showPartnerDeleteModal = false" class="btn btn-secondary min-h-11">Cancel</button>
-        <button type="submit" class="inline-flex min-h-11 items-center justify-center rounded-control bg-rose-600 hover:bg-rose-700 px-4 text-[12px] font-bold uppercase tracking-wider text-white transition-colors">Remove Partner</button>
+        <button type="submit" :disabled="partnerToDeleteHasHistory" class="inline-flex min-h-11 items-center justify-center rounded-control bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 text-[12px] font-bold uppercase tracking-wider text-white transition-colors">Delete Permanently</button>
       </form>
     </div>
   </div>

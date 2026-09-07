@@ -55,7 +55,7 @@ Schedule
 <tr class="hover:bg-slate-50/60 transition-colors group">
 <td class="px-5 py-3.5" data-record-title>
 <p class="font-bold text-slate-800">{% if v.school %}{{ v.school.name }}{% else %}No school{% endif %}</p>
-<p class="edify-text-caption text-slate-400">{{ v.cluster.name|default:"—" }}</p>
+<p class="edify-text-caption text-slate-400">{% if v.cluster %}<a href="/clusters/{{ v.cluster.id }}" class="hover:underline">{{ v.cluster.name }}</a>{% else %}—{% endif %}</p>
 </td>
 <td class="px-4 py-3.5" data-label="Type">
 <span class="inline-flex items-center px-2 py-0.5 rounded-pill edify-primary-soft edify-primary-text edify-text-caption font-bold">{{ v.activity_type|status_label }}</span>

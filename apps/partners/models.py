@@ -409,3 +409,50 @@ from apps.partners.withdrawal_models import (  # noqa: E402,F401
     WithdrawalReason,
     WithdrawalState,
 )
+
+
+class PartnerMemberRole(models.TextChoices):
+    STAFF = "staff", "Staff"
+    VOLUNTEER = "volunteer", "Volunteer"
+
+
+class PartnerMember(TimeStampedModel):
+    """A person who delivers for a partner organisation — staff or volunteer.
+
+    THE GAP THIS FILLS (owner, 2026-09-07)
+
+    "Each partner should have a similar profile like the schools with … a list
+    of all the staff and volunteers in table format." The directory had one
+    login per organisation (`Partner.user`) and nothing else: the people who
+    actually turn up at a school were a free-text `delivery_contact_name` on
+    each activity, and a volunteer had nowhere to exist at all.
+
+    This is the roster. It is deliberately NOT a login — a volunteer does not
+    get an account — and it is deliberately not a StaffProfile, because these
+    people are not Edify staff. An activity's `delivery_contact_name` stays the
+    per-delivery record of who was expected; the profile shows the roster and,
+    beside it, the names that appear on deliveries but not on the roster, so a
+    partner admin can see who still needs adding.
+    """
+
+    id = CuidField()
+    partner = models.ForeignKey(
+        Partner, on_delete=models.CASCADE, related_name="members"
+    )
+    name = models.CharField(max_length=255)
+    role = models.CharField(
+        max_length=16, choices=PartnerMemberRole.choices, default=PartnerMemberRole.STAFF
+    )
+    title = models.CharField(max_length=128, blank=True, default="")
+    phone = models.CharField(max_length=64, blank=True, default="")
+    email = models.EmailField(blank=True, default="")
+    active = models.BooleanField(default=True)
+    added_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+
+    class Meta:
+        db_table = "partner_member"
+        ordering = ["role", "name"]
+        indexes = [models.Index(fields=["partner", "active"])]
+
+    def __str__(self) -> str:
+        return f"{self.name} ({self.get_role_display()})"

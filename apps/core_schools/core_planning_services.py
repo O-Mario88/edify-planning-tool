@@ -792,6 +792,10 @@ class CorePackageProgressService:
                     "data_quality_status": s.data_quality_status,
                     "is_clustered": s.cluster_status == "clustered"
                     or s.cluster_id is not None,
+                    # The id travels with the name so the row can link to the
+                    # cluster's profile (owner, 2026-09-07: cluster names are
+                    # links, like school names).
+                    "cluster_id": s.cluster_id,
                     "cluster_name": cluster_name,
                     "project_assignment_count": project_count,
                     "partner_support_count": partner_counts_map.get(s.id, 0),

@@ -52,7 +52,7 @@ Plan Targets
 </h4>
 <div class="space-y-3.5 text-[12px] font-bold">
 <div class="flex justify-between"><span class="text-slate-400">Target School:</span> <span class="text-slate-800">{{ act.school.name|default:"Cluster-wide" }}</span></div>
-<div class="flex justify-between"><span class="text-slate-400">Target Cluster:</span> <span class="text-slate-800">{{ act.cluster.name|default:"No Cluster" }}</span></div>
+<div class="flex justify-between"><span class="text-slate-400">Target Cluster:</span> <span class="text-slate-800">{% if act.cluster %}<a href="/clusters/{{ act.cluster.id }}" class="hover:underline">{{ act.cluster.name }}</a>{% else %}No Cluster{% endif %}</span></div>
 <div class="flex justify-between"><span class="text-slate-400">Intervention:</span> <span class="text-slate-800 capitalize">{{ act.get_focus_intervention_display|default:"None" }}</span></div>
 <div class="flex justify-between"><span class="text-slate-400">Planned Date:</span> <span class="text-slate-800">{{ act.planned_date|date:"Y-m-d"|default:"N/A" }}</span></div>
 </div>
@@ -66,7 +66,7 @@ Field Execution Actuals
 </h4>
 <div class="space-y-3.5 text-[12px] font-bold">
 <div class="flex justify-between"><span class="text-slate-400">Execution School:</span> <span class="text-slate-800">{{ act.school.name|default:"Cluster-wide" }}</span></div>
-<div class="flex justify-between"><span class="text-slate-400">Execution Cluster:</span> <span class="text-slate-800">{{ act.cluster.name|default:"No Cluster" }}</span></div>
+<div class="flex justify-between"><span class="text-slate-400">Execution Cluster:</span> <span class="text-slate-800">{% if act.cluster %}<a href="/clusters/{{ act.cluster.id }}" class="hover:underline">{{ act.cluster.name }}</a>{% else %}No Cluster{% endif %}</span></div>
 <div class="flex justify-between">
 <span class="text-slate-400">Salesforce Activity ID:</span>
 <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill">{{ act.salesforce_activity_id|default:"Unlinked" }}</span>

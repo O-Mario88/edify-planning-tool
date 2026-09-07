@@ -535,6 +535,7 @@ def create_partner_view(request):
         phone = request.POST.get("phone", "").strip()
         ssa_intervention = request.POST.get("ssa_intervention", "").strip()
         notes = request.POST.get("notes", "").strip()
+        expertise = request.POST.get("expertise", "").strip()
 
         if not name:
             messages.error(request, "Partner name is required.")
@@ -548,6 +549,7 @@ def create_partner_view(request):
             "phone": phone,
             "ssaIntervention": ssa_intervention,
             "notes": notes,
+            "expertiseAreas": expertise,
         }
 
         try:
@@ -604,27 +606,102 @@ def _my_plan_activity_url(activity: Activity) -> str:
 
 @require_page_permission("partner_detail")
 def partner_detail_view(request, partner_id):
-    """Partner detail — schools, activities, performance."""
+    """A partner organisation's profile — the school profile's shape, for the
+    organisation that delivers to schools (owner, 2026-09-07).
+
+    Everything a supervisor asks of a partner is here: what it has done (the
+    full history of its activities, by kind, with each school or cluster a
+    link), who does it (the roster of staff and volunteers, beside the names
+    that appear on deliveries but not on the roster), and how much of what it
+    was given is finished (completed, still assigned, not completed).
+    """
+
     if request.user.active_role in PARTNER_ROLES and str(
         partner_id
     ) not in resolve_partner_ids(request.user):
         return HttpResponseForbidden("You may only view your own partner organization.")
     partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
 
-    # Activities delivered by this partner (assigned_partner_id is the
-    # partner-activity link used across planning/IA views).
+    from apps.accounts.models import StaffProfile, User
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        SSA_TYPES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.scoping import resolve_user_scope
+    from apps.partners.models import PartnerMember
+    from apps.ssa.services import get_ssa_progress_by_fy
+
+    # The whole history, not a window of it: this is the record.
     activities = list(
-        Activity.objects.filter(
-            assigned_partner_id=partner.id,
-            deleted_at__isnull=True,
-        )
-        .select_related("school")
-        .order_by("-planned_date")[:30]
+        Activity.objects.filter(assigned_partner_id=partner.id, deleted_at__isnull=True)
+        .select_related("school", "cluster")
+        .order_by("-planned_date", "-created_at")
     )
 
-    from apps.partners.models import PartnerAssignment
-    from apps.schools.models import School
-    from apps.ssa.services import get_ssa_progress_by_fy
+    # `responsible_staff_id` may hold a StaffProfile id or a User id (see
+    # activities.services); resolve both in two queries rather than one per row.
+    staff_ids = {a.responsible_staff_id for a in activities if a.responsible_staff_id}
+    names: dict[str, str] = {}
+    if staff_ids:
+        for sp in StaffProfile.objects.filter(id__in=staff_ids).select_related("user"):
+            names[sp.id] = sp.user.name
+        for u in User.objects.filter(id__in=staff_ids - set(names)):
+            names[u.id] = u.name
+
+    incomplete_statuses = set(STOPPED_ACTIVITY_STATUSES) | {
+        "returned",
+        "returned_by_ia",
+        "returned_by_pl",
+    }
+
+    def kind_of(a):
+        t = a.activity_type
+        if t in TRAINING_TYPES:
+            return "Training"
+        if t in VISIT_TYPES:
+            return "School visit"
+        if t in CLUSTER_MEETING_TYPES:
+            return "Cluster meeting"
+        if t in SSA_TYPES:
+            return "SSA / assessment"
+        return (t or "").replace("_", " ").title() or "Activity"
+
+    def state_of(a):
+        if a.status in COMPLETED_WORK_STATUSES:
+            return "completed"
+        if a.status in incomplete_statuses:
+            return "incomplete"
+        return "assigned"
+
+    history = []
+    counts = {"completed": 0, "assigned": 0, "incomplete": 0}
+    kinds: dict[str, int] = {}
+    for a in activities:
+        state = state_of(a)
+        counts[state] += 1
+        kind = kind_of(a)
+        kinds[kind] = kinds.get(kind, 0) + 1
+        history.append(
+            {
+                "activity": a,
+                "kind": kind,
+                "state": state,
+                "staff_name": names.get(a.responsible_staff_id or "", ""),
+                "delivered_by": a.delivery_contact_name or "",
+            }
+        )
+
+    # The roster, and the people named on deliveries who are not on it.
+    members = list(partner.members.filter(active=True))
+    roster_names = {m.name.casefold() for m in members}
+    named_on_deliveries: dict[str, int] = {}
+    for a in activities:
+        n = (a.delivery_contact_name or "").strip()
+        if n and n.casefold() not in roster_names:
+            named_on_deliveries[n] = named_on_deliveries.get(n, 0) + 1
 
     assigned_school_ids = PartnerAssignment.objects.filter(partner=partner).values_list(
         "school_id", flat=True
@@ -634,13 +711,98 @@ def partner_detail_view(request, partner_id):
     )
     partner_progress = get_ssa_progress_by_fy(partner_schools)
 
+    role_slug = get_user_role_slug(request.user)
+    scope = resolve_user_scope(request.user)
+    can_manage_roster = (
+        request.user.is_superuser
+        or scope.country_scope
+        or partner.id in scope.partner_ids
+    )
+    can_manage_status = request.user.is_superuser or role_slug in {"ADMIN", "CD"}
+
     context = {
         "partner": partner,
-        "activities": activities,
-        "completed": sum(1 for a in activities if a.status in COMPLETED_WORK_STATUSES),
+        "history": history,
+        "counts": counts,
+        "kinds": sorted(kinds.items(), key=lambda kv: -kv[1]),
+        "total": len(activities),
+        "members": members,
+        "named_on_deliveries": sorted(named_on_deliveries.items(), key=lambda kv: -kv[1]),
+        "school_count": partner_schools.count(),
         "partner_progress": partner_progress,
+        "can_manage_roster": can_manage_roster,
+        "can_manage_status": can_manage_status,
+        # Kept for the older template contract.
+        "activities": activities,
+        "completed": counts["completed"],
     }
     return render(request, "pages/partners/detail.html", context)
+
+
+@require_page_permission("partner_detail")
+def partner_status_action(request, partner_id):
+    """Activate or deactivate from the profile — the same toggle the directory
+    has, for the reader who is already on the organisation's page."""
+
+    from django.contrib import messages
+    from django.views.decorators.http import require_POST
+
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.partners.services import set_partner_status
+
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required.")
+    active = (request.POST.get("active") or "").strip() == "1"
+    try:
+        updated = set_partner_status(partner_id, active, request.user)
+        messages.success(
+            request,
+            f"'{updated['name']}' {'activated' if active else 'deactivated'}.",
+        )
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+    return redirect("frontend:partner_detail", partner_id=partner_id)
+
+
+@require_page_permission("partner_detail")
+def partner_member_drawer(request, partner_id):
+    """The Add to roster drawer."""
+
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+    from apps.partners.models import PartnerMemberRole
+
+    return render(
+        request,
+        "partials/partners/member_drawer.html",
+        {"partner": partner, "roles": PartnerMemberRole.choices},
+    )
+
+
+@require_page_permission("partner_detail")
+def partner_member_action(request, partner_id):
+    """Add a person to the roster, or remove one (`action=remove`)."""
+
+    from django.contrib import messages
+
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.partners.services import add_member, remove_member
+
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required.")
+    try:
+        if (request.POST.get("action") or "") == "remove":
+            remove_member(partner_id, (request.POST.get("member_id") or "").strip(), request.user)
+            messages.success(request, "Removed from the roster.")
+        else:
+            member = add_member(partner_id, request.POST.dict(), request.user)
+            messages.success(request, f"{member.name} added to the roster.")
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = reverse("frontend:partner_detail", kwargs={"partner_id": partner_id})
+        return response
+    return redirect("frontend:partner_detail", partner_id=partner_id)
 
 
 @require_page_permission("partner_today")

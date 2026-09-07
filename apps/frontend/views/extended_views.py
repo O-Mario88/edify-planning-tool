@@ -1466,14 +1466,25 @@ def admin_users_view(request):
 
     if request.method == "POST":
         action = request.POST.get("action")
-        if action in {"create_partner", "delete_partner"}:
+        if action in {
+            "create_partner",
+            "delete_partner",
+            "activate_partner",
+            "deactivate_partner",
+            "purge_partner",
+        }:
             from apps.core.exceptions import (
                 BadRequest,
                 ConflictError,
                 Forbidden,
                 NotFoundError,
             )
-            from apps.partners.services import delete_partner, onboard
+            from apps.partners.services import (
+                delete_partner,
+                onboard,
+                purge_partner,
+                set_partner_status,
+            )
 
             if not can_manage_partners:
                 messages.error(
@@ -1494,11 +1505,38 @@ def admin_users_view(request):
                         "email": request.POST.get("partner_email", "").strip(),
                         "phone": request.POST.get("partner_phone", "").strip(),
                         "notes": request.POST.get("partner_notes", "").strip(),
+                        "expertiseAreas": request.POST.get("partner_expertise", ""),
                     }
                     created = onboard(payload, request.user)
                     messages.success(
                         request,
-                        f"Partner organisation '{created['name']}' added.",
+                        f"Partner organisation '{created['name']}' added. "
+                        "Activate it when it is ready to receive work.",
+                    )
+                elif action in {"activate_partner", "deactivate_partner"}:
+                    # The routine lifecycle action (owner, 2026-09-07): the
+                    # same button reads Activate on an organisation that has
+                    # just been added and Deactivate once it is live.
+                    updated = set_partner_status(
+                        (request.POST.get("partner_id") or "").strip(),
+                        action == "activate_partner",
+                        request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"Partner organisation '{updated['name']}' "
+                        f"{'activated' if updated['activeStatus'] else 'deactivated'}.",
+                    )
+                elif action == "purge_partner":
+                    # Permanent, Admin only, and refused when there is history
+                    # to lose — see purge_partner().
+                    purged = purge_partner(
+                        (request.POST.get("partner_id") or "").strip(),
+                        request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"Partner organisation '{purged['name']}' deleted permanently.",
                     )
                 else:
                     deleted = delete_partner(
@@ -1618,7 +1656,31 @@ def admin_users_view(request):
         from apps.core.enums import SsaIntervention
         from apps.partners.models import Partner
 
-        partners = list(Partner.objects.select_related("user").order_by("name"))
+        from django.db.models import Count, F
+
+        # `history_count` is what the Delete confirmation reads to say, before
+        # the press, that an organisation with assignments cannot be deleted —
+        # the service refuses anyway, but a button that opens a dialog only to
+        # refuse is worse than one that says so up front.
+        # Every organisation, including the ones that were removed: the
+        # directory's Status column says active, inactive or deleted (owner,
+        # 2026-09-07), so a tombstone is a row that says so, not a row that
+        # vanished. `all_objects` is the manager that still sees them.
+        partners = list(
+            Partner.all_objects.select_related("user")
+            .annotate(history_count=Count("school_assignments", distinct=True))
+            # Live organisations first, then the deleted ones: Postgres sorts
+            # NULL last on ascending, which put the tombstones at the top.
+            .order_by(F("deleted_at").asc(nulls_first=True), "-active_status", "name")
+        )
+        for partner in partners:
+            partner.status = (
+                "deleted"
+                if partner.deleted_at
+                else "active"
+                if partner.active_status
+                else "inactive"
+            )
         partner_regions = Region.objects.order_by("name")
         partner_interventions = SsaIntervention.choices
 
@@ -1683,7 +1745,12 @@ def admin_users_view(request):
         "can_configure_management_team": can_configure_management_team,
         "management_candidates": management_candidates,
         "can_manage_partners": can_manage_partners,
+        # Permanent deletion is the Admin's alone (owner, 2026-09-07); a
+        # Country Director deactivates.
+        "can_purge_partners": request.user.is_superuser
+        or get_user_role_slug(request.user) == "ADMIN",
         "partners": partners,
+        "active_partner_count": sum(1 for p in partners if p.status == "active"),
         "partner_regions": partner_regions,
         "partner_interventions": partner_interventions,
         "topbar_search": {

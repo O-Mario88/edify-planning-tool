@@ -121,7 +121,9 @@ schedule, and none edits a CCEO's record.
     <section class="card p-0 overflow-hidden" aria-labelledby="partner-{{ forloop.counter }}">
       <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
         <div class="min-w-0">
-          <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h2>
+          {% comment %}The organisation's name opens its profile (owner,
+          2026-09-07), the way a school's name does from every table.{% endcomment %}
+          <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{% if group.id %}<a href="/partners/{{ group.id }}" class="hover:underline">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}</h2>
           {% comment %}
           Who to call, carried over when the Partners directory merged into
           this page. Every control here asks somebody to act, and for a partner

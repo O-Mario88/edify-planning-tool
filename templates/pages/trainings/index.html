@@ -55,7 +55,7 @@ Schedule
 <tr class="hover:bg-violet-50/30 transition-colors group">
 <td class="px-5 py-3.5" data-record-title>
 <p class="font-bold text-slate-800">{{ t.activity_name_snapshot|default:"Training" }}</p>
-<p class="edify-text-caption text-slate-400">{% if t.school %}{{ t.school.name }}{% elif t.cluster %}{{ t.cluster.name }} Cluster{% else %}Programme activity{% endif %}</p>
+<p class="edify-text-caption text-slate-400">{% if t.school %}{{ t.school.name }}{% elif t.cluster %}<a href="/clusters/{{ t.cluster.id }}" class="hover:underline">{{ t.cluster.name }}</a> Cluster{% else %}Programme activity{% endif %}</p>
 </td>
 <td class="px-4 py-3.5" data-label="Category">
 <span class="inline-flex items-center px-2 py-0.5 rounded-pill bg-violet-50 text-violet-700 edify-text-caption font-bold">{{ t.catalogue_item.training_category|default:"Legacy training" }}</span>
