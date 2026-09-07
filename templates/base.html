@@ -218,6 +218,16 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/micro-ux.js' %}?v=20260906field1"></script>
+
+{% comment %}
+Keeps the reader where they were. The shell gives the workspace its own
+scrollbar, so the document never scrolls and the browser has nothing to
+restore on a refresh, a back, or a paginated link — and the sidebar's menu,
+1,395px taller than a short window, returned to the top on every navigation
+(owner, 2026-09-07). `defer` so it runs after the shell is parsed and before
+the load event, which is when the position has to be back.
+{% endcomment %}
+<script defer src="{% static 'js/scroll-memory.js' %}?v=20260907scroll1"></script>
 <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
