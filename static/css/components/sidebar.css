@@ -578,3 +578,38 @@
 .app-sidebar--collapsed .app-sidebar__item--active::before {
   left: -8px;
 }
+
+/* ── The collapsed brand on a 10 or 11 inch tablet ──────────────────────────
+   The landscape tablet band (64rem–79.99rem) is the one width where the
+   sidebar collapses on its own: layouts/shell.html opens it as a rail there,
+   so this mark is what a tablet user sees on every screen, not something they
+   opted into.
+
+   At the desktop size the compact mark is the wordmark cropped to a 36px
+   square — the image is 88px wide in a 36px box with the overflow hidden, so
+   only its first letters show. On a 72px rail that crop reads as "ec": a
+   partial word rather than a mark, and taller than the nav icons beneath it.
+
+   Here it is the whole wordmark instead, scaled to the rail's usable width.
+   Smaller, as the owner asked (2026-09-07), and the brand is legible rather
+   than cut mid-letter. Nothing outside this band changes.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  .app-sidebar--collapsed .app-sidebar__brand-logo-compact {
+    /* The rail is 72px with 8px of padding each side. */
+    width: 100%;
+    max-width: 3.25rem;
+    height: auto;
+    overflow: visible;
+  }
+
+  .app-sidebar--collapsed .app-sidebar__brand-logo-compact img {
+    width: 100%;
+    height: auto;
+    /* Whole, not cropped: the wordmark's own 300x123 keeps it about 21px tall
+       at this width, which sits under the 24px nav icons rather than over
+       them. */
+    object-fit: contain;
+    object-position: center;
+  }
+}

@@ -115,3 +115,39 @@ class LaunchScreenTest(SimpleTestCase):
         self.assertIn('rel="manifest"', head)
         self.assertIn("apple-touch-icon", head)
         self.assertIn('rel="icon"', head)
+
+
+class CollapsedRailBrandTest(SimpleTestCase):
+    """The sidebar's mark on a 10 or 11 inch tablet.
+
+    The landscape tablet band is the one width where the sidebar collapses on
+    its own — layouts/shell.html opens it as a rail between 64rem and 80rem —
+    so this mark is what a tablet user sees on every screen rather than
+    something they chose. At the desktop size it is the wordmark cropped to a
+    36px square, which on a 72px rail reads as "ec": a partial word, and taller
+    than the icons beneath it. The owner asked for it smaller and fitted
+    (2026-09-07).
+    """
+
+    def setUp(self):
+        self.css = _read("static/css/components/sidebar.css")
+        self.band = self.css[self.css.index("The collapsed brand on a 10 or 11 inch tablet") :]
+
+    def test_the_rule_is_scoped_to_the_landscape_tablet_band(self):
+        """That band, and only it: the desktop rail keeps the mark it has."""
+        self.assertIn("@media (min-width: 64rem) and (max-width: 79.99rem)", self.band)
+        self.assertIn(".app-sidebar--collapsed .app-sidebar__brand-logo-compact", self.band)
+
+    def test_the_mark_is_whole_rather_than_cropped(self):
+        self.assertIn("overflow: visible;", self.band)
+        self.assertIn("object-fit: contain;", self.band)
+
+    def test_it_is_sized_to_the_rail(self):
+        self.assertIn("width: 100%;", self.band)
+        self.assertIn("height: auto;", self.band)
+
+    def test_the_band_is_the_one_the_shell_collapses_at(self):
+        """If the shell's auto-collapse band moves, this rule has to move with
+        it or a tablet gets the desktop crop back."""
+        shell = _read("templates/layouts/shell.html")
+        self.assertIn("(min-width: 64rem) and (max-width: 79.99rem)", shell)
