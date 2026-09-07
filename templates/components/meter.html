@@ -19,9 +19,12 @@
     {% if progress.planned_pct is not None %}<span class="edify-meter__planned" style="inline-size: {% if progress.pct is not None and progress.planned_pct < progress.pct %}{{ progress.pct }}{% else %}{{ progress.planned_pct }}{% endif %}%"></span>{% endif %}
     {% if progress.pct is not None %}<span class="edify-meter__done" style="inline-size: {{ progress.pct }}%"></span>{% endif %}
   </span>
-  <span class="edify-meter__value">{% if progress.pct is not None %}{{ progress.pct|floatformat:"0" }}%{% else %}{{ progress.completed }}{% endif %}</span>
+  {% comment %}No target yet: the counts are real and stand as the value,
+  and the words say what unlocks the percentage. A milestone's target is the
+  RVP's decision in Define metric, not something the bar can assume.{% endcomment %}
+  <span class="edify-meter__value">{% if progress.pct is not None %}{{ progress.pct|floatformat:"0" }}%{% else %}{{ progress.completed }} done · {{ progress.planned }} planned{% endif %}</span>
   {% if meta %}
-  <span class="edify-meter__meta">{{ progress.completed }} done · {{ progress.planned }} planned{% if progress.target is not None %} · of {{ progress.target|floatformat:"-2" }}{% endif %} {{ progress.unit }}{% if progress.verified %} · {{ progress.verified|floatformat:"-2" }} verified{% endif %}</span>
+  <span class="edify-meter__meta">{{ progress.completed }} done · {{ progress.planned }} planned{% if progress.target is not None %} · of {{ progress.target|floatformat:"-2" }} {{ progress.unit }}{% else %} {{ progress.unit }} · no target yet — define the metric to get a percentage{% endif %}{% if progress.verified %} · {{ progress.verified|floatformat:"-2" }} verified{% endif %}</span>
   {% endif %}
 </div>
 {% else %}

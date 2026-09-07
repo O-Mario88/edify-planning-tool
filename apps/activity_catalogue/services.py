@@ -115,6 +115,12 @@ def get_selectable_item(item_id_or_code: str, *, on_date=None) -> ActivityCatalo
 #: when the visit's costing is revised.
 COSTED_AS = {
     "core_assessment_visit": "school_visit",
+    # An SSA activity IS a school visit that collects the SSA — the catalogue
+    # costs it as "School Visit + SSA Collection". Without this alias every
+    # SSA activity resolved to nothing, so none of them could be linked to the
+    # priority milestones that count SSA coverage (owner, 2026-09-07: "add
+    # activity rules to the milestones so the bars actually fill").
+    "ssa_activity": "school_visit_ssa_collection",
 }
 
 

@@ -16,6 +16,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.activities.models import Activity
 from apps.activity_catalogue.models import ActivityCatalogueItem
@@ -178,3 +179,164 @@ class MilestonePlanProgressTest(TestCase):
         self.assertEqual(html.count("edify-meter--unlinked"), 2)
         self.assertIn("10% complete", html)
         self.assertIn("1 done · 0 planned · of 10 schools", html)
+
+
+class LinkMilestonesToPlanTest(TestCase):
+    """Add activity rules to the milestones so the bars actually fill (owner,
+    2026-09-07). Two halves: the shape-of-work milestones get rules on the
+    catalogue's standard items, and historical activities get the catalogue
+    link the drawer would have stamped at creation."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from apps.hr.priority_seeding import seed_fy2027_priorities
+
+        seed_fy2027_priorities(actor_id="test")
+
+    def _rules(self, code):
+        from apps.hr.models import MilestoneActivityRule
+
+        return list(
+            MilestoneActivityRule.objects.filter(milestone__code=code, active=True)
+            .select_related("catalogue_item")
+            .order_by("catalogue_item__stable_code")
+        )
+
+    def test_shape_of_work_milestones_get_rules_on_the_standard_items(self):
+        visits = self._rules("SCHOOL_VISITS")
+        self.assertIn("STANDARD_SCHOOL_VISIT", [r.catalogue_item.stable_code for r in visits])
+        self.assertTrue(all(r.counting_basis == "ACTIVITIES_DELIVERED" for r in visits))
+        # No intervention gate: a visit counts whatever focus its planner named.
+        self.assertTrue(all(r.target_intervention == "" for r in visits))
+
+        core_ssa = self._rules("CORE_SSA_COVERAGE")
+        self.assertTrue(core_ssa)
+        self.assertTrue(all(r.school_type == "core" for r in core_ssa))
+        self.assertTrue(all(r.counting_basis == "UNIQUE_SCHOOLS_SUPPORTED" for r in core_ssa))
+
+        clusters = self._rules("CLUSTER_COVERAGE")
+        self.assertEqual(
+            [r.catalogue_item.stable_code for r in clusters],
+            ["STANDARD_CLUSTER_MEETING", "STANDARD_CLUSTER_TRAINING"],
+        )
+        # The curriculum milestones keep their intervention gate.
+        cla = self._rules("CLA")
+        self.assertEqual(cla[0].target_intervention, "christlike_behaviour")
+        # Not activity-shaped: nothing in the plan IS a new school.
+        self.assertEqual(self._rules("NEW_SCHOOLS"), [])
+
+    def test_the_seeder_is_idempotent_about_rules(self):
+        from apps.hr.models import MilestoneActivityRule
+        from apps.hr.priority_seeding import seed_fy2027_priorities
+
+        before = MilestoneActivityRule.objects.count()
+        seed_fy2027_priorities(actor_id="test")
+        self.assertEqual(MilestoneActivityRule.objects.count(), before)
+
+    def _activities(self):
+        school = School.objects.create(name="Link School", school_id="LINK-1")
+        visit = Activity.objects.create(
+            activity_type="school_visit", status="completed", school=school, fy="2027",
+            planned_date=timezone.localdate(),
+        )
+        meeting = Activity.objects.create(
+            activity_type="cluster_meeting", status="scheduled", fy="2027",
+            planned_date=timezone.localdate(),
+        )
+        ssa = Activity.objects.create(
+            activity_type="ssa_activity", status="completed", school=school, fy="2027",
+            planned_date=timezone.localdate(),
+        )
+        # "training" has five governed titles and no standard one: ambiguous,
+        # and the resolver refuses to guess.
+        training = Activity.objects.create(
+            activity_type="training", status="completed", school=school, fy="2027",
+            planned_date=timezone.localdate(),
+        )
+        return school, visit, meeting, ssa, training
+
+    def test_history_is_linked_the_way_the_drawer_would_link_it(self):
+        from apps.hr.management.commands.link_milestones_to_plan import (
+            link_activities_to_catalogue,
+        )
+
+        school, visit, meeting, ssa, training = self._activities()
+        report = link_activities_to_catalogue()
+        self.assertEqual(report["linkedTotal"], 3)
+        self.assertEqual(report["skippedTotal"], 1)
+        for activity, code in (
+            (visit, "STANDARD_SCHOOL_VISIT"),
+            (meeting, "STANDARD_CLUSTER_MEETING"),
+            (ssa, "STANDARD_SCHOOL_VISIT_SSA_COLLECTION"),
+        ):
+            activity.refresh_from_db()
+            self.assertEqual(activity.catalogue_item.stable_code, code)
+            # Stamped through the same service the drawer uses.
+            self.assertEqual(activity.delivery_method_snapshot, activity.catalogue_item.delivery_method)
+            self.assertIsNotNone(activity.catalogue_version)
+        training.refresh_from_db()
+        self.assertIsNone(training.catalogue_item)
+        # Second run: nothing left to link.
+        self.assertEqual(link_activities_to_catalogue()["linkedTotal"], 0)
+
+    def test_a_partner_activity_takes_the_item_its_assignment_named(self):
+        from apps.hr.management.commands.link_milestones_to_plan import (
+            link_activities_to_catalogue,
+        )
+        from apps.partners.models import Partner, PartnerAssignment
+
+        school = School.objects.create(name="Partner School", school_id="LINK-P")
+        partner = Partner.objects.create(name="Link Partner", active_status=True)
+        item = ActivityCatalogueItem.objects.get(stable_code="STANDARD_SCHOOL_VISIT_SSA_COLLECTION")
+        activity = Activity.objects.create(
+            activity_type="partner_activity", status="completed", school=school, fy="2027",
+            planned_date=timezone.localdate(), delivery_type="partner",
+        )
+        PartnerAssignment.objects.create(
+            school=school, partner=partner, catalogue_item=item, scheduled_activity=activity,
+            status="scheduled",
+        )
+        link_activities_to_catalogue()
+        activity.refresh_from_db()
+        self.assertEqual(activity.catalogue_item_id, item.id)
+
+    def test_a_dry_run_writes_nothing(self):
+        from apps.hr.management.commands.link_milestones_to_plan import (
+            link_activities_to_catalogue,
+        )
+
+        _, visit, *_ = self._activities()
+        report = link_activities_to_catalogue(dry_run=True)
+        self.assertEqual(report["linkedTotal"], 3)
+        visit.refresh_from_db()
+        self.assertIsNone(visit.catalogue_item)
+
+    def test_linked_history_moves_the_bar(self):
+        from apps.hr.management.commands.link_milestones_to_plan import (
+            link_activities_to_catalogue,
+        )
+        from apps.hr.models import PriorityMilestone
+        from apps.hr.target_distribution import milestone_plan_progress
+
+        self._activities()
+        link_activities_to_catalogue()
+        visits = PriorityMilestone.objects.get(code="SCHOOL_VISITS")
+        row = milestone_plan_progress([visits], fy="2027")[visits.id]
+        # The visit and the SSA visit both count as school visits; the cluster
+        # meeting does not. No target yet, so no percentage — but real counts.
+        self.assertEqual((row["completed"], row["planned"]), (2, 0))
+        self.assertIsNone(row["pct"])
+        clusters = PriorityMilestone.objects.get(code="CLUSTER_COVERAGE")
+        self.assertEqual(milestone_plan_progress([clusters], fy="2027")[clusters.id]["planned"], 1)
+
+    def test_the_meter_shows_counts_until_a_target_exists(self):
+        from django.template.loader import render_to_string
+
+        html = render_to_string(
+            "components/meter.html",
+            {"progress": {"unit": "activities", "target": None, "planned": 3, "completed": 148,
+                          "verified": 0, "pct": None, "planned_pct": None, "classification": None},
+             "meta": True},
+        )
+        self.assertIn("148 done · 3 planned</span>", html)
+        self.assertIn("no target yet — define the metric to get a percentage", html)
