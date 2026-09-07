@@ -15,6 +15,7 @@ from django.test import TestCase
 
 from apps.accounts.models import StaffProfile
 from apps.core.rbac import EdifyRole
+from apps.partners.models import Partner
 
 User = get_user_model()
 
@@ -80,3 +81,13 @@ class UsersPageScopeTest(TestCase):
         page_two = self.client.get("/admin-panel/users?page=2")
         self.assertEqual(page_two.status_code, 200)
         self.assertNotIn("Admin", response.context["available_roles"])
+
+    def test_partner_summary_uses_the_directory_presentation_status(self):
+        Partner.objects.create(name="Active partner", active_status=True)
+        Partner.objects.create(name="Inactive partner", active_status=False)
+
+        self.client.force_login(self.cd)
+        response = self.client.get("/admin-panel/users")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["active_partner_count"], 1)

@@ -1753,7 +1753,9 @@ def admin_users_view(request):
         "can_purge_partners": request.user.is_superuser
         or get_user_role_slug(request.user) == "ADMIN",
         "partners": partners,
-        "active_partner_count": sum(1 for p in partners if p.status == "active"),
+        "active_partner_count": sum(
+            1 for p in partners if p.presentation_status == "active"
+        ),
         "partner_regions": partner_regions,
         "partner_interventions": partner_interventions,
         "topbar_search": {
