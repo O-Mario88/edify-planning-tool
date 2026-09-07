@@ -115,6 +115,15 @@ class SharedCacheWindowTest(SimpleTestCase):
         limit = 5
         key = _key("burst")
         barrier = threading.Barrier(threads)
+        # The counter buckets by wall-clock window, and twenty threads released
+        # on a loaded machine can straddle a bucket boundary — which the fixed
+        # window allows (up to 2x the limit across two adjacent windows) and
+        # which made this fail under a full parallel run. The clock is pinned so
+        # the test measures the thing it is about: whether the counter is atomic
+        # when every thread hits ONE window at once (2026-09-07).
+        self.enterContext(
+            mock.patch.object(throttling.time, "time", return_value=1_780_000_000.0)
+        )
         results: list[bool] = []
         lock = threading.Lock()
 

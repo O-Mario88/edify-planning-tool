@@ -1351,13 +1351,13 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertEqual(breakfast_setting.unit_cost, 8000)
 
-        # 2. Get edit row view
+        # 2. Editing a rate opens the drawer, not an inline row (2026-09-07).
         response = self.client.get(
             f"/cost-settings/row/{breakfast_setting.key}?mode=edit"
         )
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(
-            response, "partials/cost_settings/cost_setting_row.html"
+            response, "partials/cost_settings/edit_drawer.html"
         )
         self.assertContains(response, 'name="unit_cost"')
 

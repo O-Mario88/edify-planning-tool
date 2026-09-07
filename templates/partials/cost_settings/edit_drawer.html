@@ -1,0 +1,139 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% load frontend_filters %}
+
+{% comment %}
+Editing a rate is a drawer, not an inline row (owner, 2026-09-07).
+
+It was a form that unfolded inside the table row: three fields, two buttons and
+the whole change-history table crammed into one cell spanning three columns, so
+the row it belonged to grew to five times the height of its neighbours and the
+table's own alignment broke around it. A rate is also the input to every
+activity budget in the country — it deserves the same considered surface as
+every other decision on the platform, not a cell.
+{% endcomment %}
+
+{% block drawer_title %}{{ c.label }}{% endblock %}
+{% block drawer_subtitle %}{{ c.unit }}{% if c.catalogue_item_id %} · linked to {{ c.catalogue_item.display_name }}{% endif %} · version {{ c.version }}{% endblock %}
+
+{% block drawer_body %}
+<form
+  hx-post="/cost-settings/row/{{ c.key }}"
+  hx-target="#cost-edit-errors"
+  hx-swap="innerHTML"
+  hx-disabled-elt="find button[type=submit]"
+  class="space-y-4"
+>
+  {% csrf_token %}
+
+  {% comment %}Server-side refusals land here — a rate below the approved
+  minimum, a non-numeric amount, a missing reason. base.html allows 400s to
+  swap, so the message arrives in the drawer rather than being dropped.
+  {% endcomment %}
+  <div id="cost-edit-errors" role="alert" aria-live="polite" class="empty:hidden rounded-control border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-700"></div>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Country operational cost (UGX)
+      {% comment %}The currency belongs in the label, not floated inside the
+      field: it used to sit over the left edge of the input and was painted
+      under the figure being typed.{% endcomment %}
+      <input
+        aria-label="Country operational cost"
+        type="text"
+        inputmode="numeric"
+        name="unit_cost"
+        value="{{ c.unit_cost }}"
+        required
+        class="h-9 px-3 text-[13px] font-semibold"
+      >
+    </label>
+
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Minimum viable cost (UGX)
+      <input
+        aria-label="Minimum viable cost"
+        type="number"
+        min="0"
+        step="1"
+        name="approved_minimum"
+        value="{{ c.approved_minimum|default_if_none:'' }}"
+        placeholder="Not set"
+        class="h-9 px-3 text-[13px] font-semibold"
+      >
+    </label>
+  </div>
+
+  {% if c.reference_unit_cost is not None %}
+  <p class="rounded-control border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] px-3 py-2 text-[12px] font-semibold text-[var(--edify-text-muted)]">
+    Regional reference for this rate: <span class="tabular-nums text-[var(--edify-text)]">UGX {{ c.reference_unit_cost|currency }}</span>
+  </p>
+  {% endif %}
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Why is this rate changing?
+    {% comment %}Required, and deliberately so. Without it the history recorded
+    the reason as the literal string "Updated via CD Dashboard" for every change
+    ever made.{% endcomment %}
+    <input
+      aria-label="Reason for this rate change"
+      type="text"
+      name="reason"
+      required
+      minlength="5"
+      maxlength="512"
+      placeholder="The reason is kept on the rate's record"
+      class="h-9 px-3 text-[13px] font-medium"
+    >
+  </label>
+
+  <p class="text-[12px] font-medium text-[var(--edify-text-muted)]">
+    Saving publishes a new version of the country cost catalogue. Every activity
+    budget priced from this rate uses the new figure from then on.
+  </p>
+
+  {% comment %}The change history, with the form rather than behind another
+  click. `cost_setting_history` existed since this register was built and was
+  never rendered anywhere — so "what was it before, and why did it move" had no
+  answer in the interface.{% endcomment %}
+  <details class="rounded-control border border-[var(--edify-border)]" {% if history %}open{% endif %}>
+    <summary class="cursor-pointer px-3 py-2 text-[12px] font-bold text-[var(--edify-text-muted)]">
+      Change history{% if history %} · {{ history|length }}{% endif %}
+    </summary>
+    {% if history %}
+    <div class="max-h-56 overflow-y-auto px-3 pb-3">
+      <table class="w-full text-[12px]">
+        <thead>
+          <tr class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-text-subtle)] text-left">
+            <th class="py-1 pr-2 font-bold">When</th>
+            <th class="py-1 pr-2 font-bold">Change</th>
+            <th class="py-1 pr-2 font-bold">By</th>
+            <th class="py-1 font-bold">Reason</th>
+          </tr>
+        </thead>
+        <tbody class="align-top">
+          {% for h in history %}
+          <tr class="border-t border-[var(--edify-border)]">
+            <td class="py-1.5 pr-2 tabular-nums text-[var(--edify-text-muted)] whitespace-nowrap">{{ h.changedAt|slice:":10" }}</td>
+            <td class="py-1.5 pr-2 tabular-nums font-semibold text-[var(--edify-text)] whitespace-nowrap">
+              {% if h.oldUnitCost is not None %}{{ h.oldUnitCost|currency }} →{% endif %} {{ h.newUnitCost|currency }}
+              <span class="text-[var(--edify-text-subtle)] font-medium">v{{ h.version }}</span>
+              <span class="block text-[var(--edify-text-muted)] font-medium">Minimum: {% if h.oldApprovedMinimum is not None %}{{ h.oldApprovedMinimum|currency }}{% else %}Not set{% endif %} → {% if h.newApprovedMinimum is not None %}{{ h.newApprovedMinimum|currency }}{% else %}Not set{% endif %}</span>
+            </td>
+            <td class="py-1.5 pr-2 text-[var(--edify-text-muted)]">{{ h.changedByName|default:"—" }}</td>
+            <td class="py-1.5 font-medium text-[var(--edify-text-muted)]">{{ h.reason|default:"—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <p class="px-3 pb-3 text-[12px] font-medium text-[var(--edify-text-subtle)]">No recorded change yet — this rate is at its original value.</p>
+    {% endif %}
+  </details>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Save rate</button>
+  </div>
+</form>
+{% endblock %}

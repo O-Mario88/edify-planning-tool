@@ -1121,6 +1121,17 @@ def cost_setting_row_view(request, key):
             catalogue = active_catalogue()
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
+            if request.headers.get("HX-Request"):
+                # Saving publishes a NEW catalogue version, so it is not this
+                # row alone that changed — every row shows a version and the
+                # page header names the catalogue. Swapping one row back would
+                # leave the rest of the page quietly stale, so the drawer
+                # closes and the page re-reads itself.
+                closing = HttpResponse(
+                    "<script>window.location.reload();</script>"
+                )
+                closing["HX-Trigger"] = "close-drawer"
+                return closing
         except ValueError:
             return HttpResponse(
                 "Enter a valid whole-number cost.",
@@ -1165,6 +1176,10 @@ def cost_setting_row_view(request, key):
         "history": history,
         "can_manage_rates": request.user.active_role == "CountryDirector",
     }
+    if mode == "edit":
+        # Editing a rate is a drawer, not an unfolding table row (owner,
+        # 2026-09-07). The row stays the row; the decision gets a surface.
+        return render(request, "partials/cost_settings/edit_drawer.html", context)
     return render(request, "partials/cost_settings/cost_setting_row.html", context)
 
 
@@ -1181,6 +1196,22 @@ def add_linked_cost_view(request):
     if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
     if request.method != "POST":
+        # The button opens the drawer; anything else asking for this URL goes
+        # back to the register rather than seeing a bare form.
+        if request.headers.get("HX-Request"):
+            from apps.activity_catalogue.services import effective_items
+            from apps.core.fy import get_operational_fy
+
+            return render(
+                request,
+                "partials/cost_settings/add_drawer.html",
+                {
+                    "selected_fy": request.GET.get("fy") or get_operational_fy(),
+                    "linkable_activities": list(
+                        effective_items().order_by("display_name")
+                    ),
+                },
+            )
         return redirect("/cost-settings")
     try:
         result = budget_services.add_linked_cost(

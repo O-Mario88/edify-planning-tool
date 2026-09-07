@@ -87,15 +87,50 @@ def activity_catalogue_page(request):
     )
 
 
-@require_http_methods(["POST"])
+@require_http_methods(["GET", "POST"])
 @_catalogue_permission(Permission.ACTIVITY_CATALOGUE_MANAGE.value)
 def activity_catalogue_create_action(request):
     """The New activity form (owner, 2026-09-06): a school or a non-school
-    activity, typed, delivered and costed like a governed one."""
+    activity, typed, delivered and costed like a governed one.
+
+    GET serves the drawer the New activity button opens (owner, 2026-09-07);
+    POST creates the item. It was an anchor that jumped to a `<details>` and
+    unfolded the form above the catalogue."""
     from django.contrib import messages
 
     from apps.activity_catalogue.authoring import create_catalogue_item
     from apps.core.exceptions import BadRequest
+
+    if request.method == "GET":
+        from apps.activity_catalogue.models import (
+            CatalogueActivityType,
+            DeliveryMethod,
+        )
+        from apps.budget.costing_service import (
+            COSTING_PROFILE_CHOICES,
+            COSTING_PROFILE_LABELS,
+        )
+        from apps.ssa.models import SsaIntervention
+
+        return render(
+            request,
+            "partials/catalogue/new_activity_drawer.html",
+            {
+                "activity_kinds": ACTIVITY_KINDS,
+                "activity_types": CatalogueActivityType.choices,
+                "delivery_methods": DeliveryMethod.choices,
+                "interventions": SsaIntervention.choices,
+                "costing_profiles": [
+                    (
+                        profile,
+                        COSTING_PROFILE_LABELS.get(
+                            profile, profile.replace("_", " ").capitalize()
+                        ),
+                    )
+                    for profile in COSTING_PROFILE_CHOICES
+                ],
+            },
+        )
 
     try:
         item = create_catalogue_item(
