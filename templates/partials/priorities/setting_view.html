@@ -116,6 +116,7 @@ styled only the view you happened to enter from.{% endcomment %}
           <span role="columnheader">Priority Group <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4 3 3 3-3"/></svg></span>
           <span role="columnheader">Metric / Indicator <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4 3 3 3-3"/></svg></span>
           <span role="columnheader">Created Date <svg viewBox="0 0 12 12" aria-hidden="true"><path d="m3 4 3 3 3-3"/></svg></span>
+          <span role="columnheader" title="Completed against target, from the plan">Progress</span>
           <span role="columnheader" title="Defined">Def.</span>
           <span role="columnheader" title="Approved">App.</span>
           <span role="columnheader" title="Allocated">All.</span>
@@ -131,6 +132,9 @@ styled only the view you happened to enter from.{% endcomment %}
               <span role="cell">{{ priority.title }}</span>
               <span role="cell">{% if milestone.metric_definition %}{{ milestone.metric_definition.canonical_label }}{% else %}Metric not yet defined{% endif %}</span>
               <span class="priority-record-date" role="cell">{{ milestone.created_at|date:"d/m/Y, H:i" }}</span>
+              {% comment %}Linked to the plan (owner, 2026-09-07): completed
+              in the accent, planned behind it, the percentage beside.{% endcomment %}
+              <span role="cell">{% include "components/meter.html" with progress=item.progress %}</span>
               <span class="priority-record-state" role="cell" aria-label="{% if milestone.definition_status == 'defined' or milestone.definition_status == 'approved' %}Defined{% else %}Not defined{% endif %}">
                 {% if milestone.definition_status == "defined" or milestone.definition_status == "approved" %}
                 <svg class="priority-record-check" viewBox="0 0 16 16" aria-hidden="true"><path d="m3 8 3 3 7-7"/></svg>

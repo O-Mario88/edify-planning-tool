@@ -107,6 +107,15 @@ def priority_configuration_page(request):
     ).distinct()
 
     priorities = list(cycle.priorities.all()) if cycle else []
+    # Linked to the plan (owner, 2026-09-07): every milestone row carries its
+    # planned / completed / verified figures against its target, read from
+    # the activities that match its rules. One query set for the whole cycle.
+    from apps.hr.target_distribution import milestone_plan_progress
+
+    plan_progress = milestone_plan_progress(
+        [m for priority in priorities for m in priority.milestones.all()],
+        fy=fy,
+    )
     group_rows = []
     milestone_rows = []
     milestone_count = 0
@@ -117,7 +126,12 @@ def priority_configuration_page(request):
     for priority in priorities:
         milestones = list(priority.milestones.all())
         milestone_rows.extend(
-            {"priority": priority, "milestone": milestone} for milestone in milestones
+            {
+                "priority": priority,
+                "milestone": milestone,
+                "progress": plan_progress.get(milestone.id),
+            }
+            for milestone in milestones
         )
         group_needs_definition = sum(
             1 for milestone in milestones if milestone.requires_definition
@@ -164,6 +178,8 @@ def priority_configuration_page(request):
         # Keeping the priority beside each milestone avoids eagerly
         # rendering every nested definition/allocation form in the cycle.
         "milestone_rows": milestone_rows,
+        "plan_progress": plan_progress,
+        "linked_count": len(plan_progress),
         "cycle_years": cycle_years,
         "milestone_count": milestone_count,
         "needs_definition_count": needs_definition_count,

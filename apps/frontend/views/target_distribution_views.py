@@ -27,6 +27,7 @@ from apps.frontend.views.priority_workspace import (
     priority_workspace_tabs,
     wants_panel_only,
 )
+from apps.hr.target_distribution import milestone_plan_progress
 
 
 def _permission(permission):
@@ -180,6 +181,13 @@ def target_distribution_page(request):
     context = {
         **workspace,
         "cycle_years": cycle_years,
+        # Linked to the plan (owner, 2026-09-07): planned / completed /
+        # verified against target for every master milestone, from the
+        # activities that match its rules — not only from approved allocations.
+        "plan_progress": milestone_plan_progress(
+            [row["milestone"] for group in workspace["groups"] for row in group["milestones"]],
+            fy=fy,
+        ),
         "is_cd": _is_cd(request),
         "can_distribute": _is_ia_distributor(request),
         "can_import": can_import,
@@ -916,6 +924,9 @@ def priorities_master_page(request):
         "fy": fy,
         "groups": groups,
         "total_rows": total_rows,
+        "plan_progress": milestone_plan_progress(
+            [row["milestone"] for group in groups for row in group["rows"]], fy=fy
+        ),
         "is_scoped_viewer": is_scoped_viewer,
         "viewer_role": role,
         "fy_options": fy_options(),

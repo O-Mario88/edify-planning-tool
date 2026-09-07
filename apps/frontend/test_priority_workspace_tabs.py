@@ -227,3 +227,41 @@ class PriorityWorkspaceMarkupTest(SimpleTestCase):
 
         source = _read("static/js/view-panels.js")
         self.assertIn('return parsed.searchParams.get("view") || parsed.pathname;', source)
+
+
+class PriorityPlanMeterMarkupTest(SimpleTestCase):
+    """Every priority view draws the plan-linked meter (owner, 2026-09-07:
+    "the priorities should be linked to the plan… the progress bar and
+    percentage should show clearly"). One component, three views, and the
+    detail beneath a milestone carries the bar's words as well."""
+
+    def test_every_view_draws_the_one_meter(self):
+        for view in (
+            "templates/partials/priorities/setting_view.html",
+            "templates/partials/priorities/distribution_view.html",
+            "templates/partials/priorities/master_view.html",
+        ):
+            with self.subTest(view=view):
+                self.assertIn('{% include "components/meter.html" with progress=', _read(view))
+        self.assertIn(
+            '{% include "components/meter.html" with progress=item.progress meta=True %}',
+            _read("templates/partials/hr/priority_milestone_detail.html"),
+        )
+
+    def test_the_meter_has_two_segments_and_an_unlinked_state(self):
+        meter = _read("templates/components/meter.html")
+        self.assertIn('class="edify-meter__planned"', meter)
+        self.assertIn('class="edify-meter__done"', meter)
+        self.assertIn("edify-meter--unlinked", meter)
+        css = _read("static/css/components.css")
+        self.assertIn(".edify-meter__planned {", css)
+        self.assertIn(".edify-meter__done {", css)
+        # Planned is the lighter wash of the same accent, drawn behind done.
+        self.assertIn("color-mix(in srgb, var(--edify-accent) 30%, transparent)", css)
+
+    def test_the_record_grid_made_room_for_the_column(self):
+        css = _read("static/css/pages.css")
+        block = css[css.index(".priority-record-columns {") :]
+        block = block[: block.index("}")]
+        self.assertIn("minmax(7.5rem, 0.8fr)", block)
+        self.assertIn("repeat(3, 4rem)", block)

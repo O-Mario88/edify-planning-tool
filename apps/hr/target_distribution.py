@@ -26,7 +26,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Sum, Q
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
@@ -1352,6 +1352,122 @@ def _rule_activity_query(rule) -> Q:
     if rule.target_intervention:
         query &= Q(focus_intervention=rule.target_intervention)
     return query
+
+
+def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, dict]:
+    """One progress figure per milestone, read straight from the plan.
+
+    THE DEFECT THIS FIXES (owner, 2026-09-07)
+
+    "The priorities should be linked to the plan. When the users plan and
+    complete, the progress bar and percentage should show clearly since
+    everything will be planned including the non school activities."
+
+    Until now a milestone reported progress only through APPROVED allocations
+    and their period rows: a milestone nobody had distributed yet showed
+    nothing at all, and what it showed moved only when Impact Assessment
+    verified the work. This reads the plan itself. Every activity that matches
+    a milestone's rules counts — planned (scheduled, in progress, awaiting
+    verification: PLANNED_OUTPUT_STATUSES), completed (COMPLETED_WORK_STATUSES),
+    and verified (a live credit) — against the milestone's own target.
+
+    Non-school work counts. A rule's query only asks for a school when the rule
+    itself filters by school type; a cluster meeting or a programme event with
+    no school matches on its catalogue item like anything else. The unit is
+    what the rule's counting basis says: distinct schools for the school
+    bases, activities otherwise — the same split planned_output() makes.
+
+    Returns {milestone_id: {...}} with an entry only for milestones that have
+    at least one active rule; a milestone with no rules has no plan to link to
+    and the caller shows it as such rather than as zero.
+    """
+
+    from apps.activities.models import Activity
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES
+
+    from .milestone_progress import SCHOOL_BASES
+    from .models import MilestoneActivityRule, MilestoneProgressCredit
+
+    milestones = list(milestones)
+    if not milestones:
+        return {}
+    by_id = {m.id: m for m in milestones}
+    rules_by_milestone: dict[str, list] = {}
+    for rule in MilestoneActivityRule.objects.filter(
+        active=True, milestone_id__in=by_id.keys()
+    ):
+        rules_by_milestone.setdefault(str(rule.milestone_id), []).append(rule)
+    if not rules_by_milestone:
+        return {}
+
+    verified_by_milestone: dict[str, Decimal] = {}
+    for mid, value in (
+        MilestoneProgressCredit.objects.filter(
+            rule__milestone_id__in=rules_by_milestone.keys(), reversed_at__isnull=True
+        )
+        .values_list("rule__milestone_id")
+        .annotate(total=Sum("credited_value"))
+        .values_list("rule__milestone_id", "total")
+    ):
+        verified_by_milestone[str(mid)] = Decimal(value or 0)
+
+    out: dict[str, dict] = {}
+    for mid, rules in rules_by_milestone.items():
+        milestone = by_id[mid]
+        year = fy or getattr(milestone.priority, "fy", None)
+        query = Q()
+        for rule in rules:
+            query |= _rule_activity_query(rule)
+        activities = Activity.objects.filter(query, deleted_at__isnull=True)
+        if year:
+            activities = activities.filter(fy=year)
+        planned_q = activities.filter(status__in=PLANNED_OUTPUT_STATUSES)
+        completed_q = activities.filter(status__in=COMPLETED_WORK_STATUSES)
+
+        bases = {rule.counting_basis for rule in rules}
+        if bases & SCHOOL_BASES:
+            unit = "schools"
+
+            def measure(qs):
+                return qs.exclude(school__isnull=True).values("school_id").distinct().count()
+
+        else:
+            unit = "activities"
+
+            def measure(qs):
+                return qs.count()
+
+        planned = measure(planned_q)
+        completed = measure(completed_q)
+        verified = verified_by_milestone.get(mid, Decimal("0"))
+        target = milestone.target_value
+        target_f = float(target) if target is not None else None
+
+        def share(n) -> float | None:
+            if not target_f:
+                return None
+            return round(min(float(n) / target_f * 100.0, 100.0), 1)
+
+        pct = share(completed)
+        out[mid] = {
+            "unit": unit,
+            "target": target,
+            "planned": planned,
+            "completed": completed,
+            "verified": verified,
+            # Completed against the target — the number the owner asked to see.
+            "pct": pct,
+            # The same share for planned work, drawn as the lighter segment so
+            # a plan that is scheduled but not yet done is visible as intent.
+            "planned_pct": share(planned),
+            "summable": is_summable(milestone),
+            "classification": (
+                classify_achievement(pct, cap_at_100=milestone.cap_at_100)
+                if pct is not None
+                else None
+            ),
+        }
+    return out
 
 
 def planned_output(

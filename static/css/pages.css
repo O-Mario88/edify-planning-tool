@@ -4706,12 +4706,16 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 
 .priority-record-columns {
   display: grid;
+  /* The Progress column (owner, 2026-09-07) sits between the date and the
+     three checks, so the "last four columns are centred" rule below still
+     names the same four. */
   grid-template-columns:
     3rem
     minmax(12rem, 1.65fr)
     minmax(9rem, 0.95fr)
     minmax(10rem, 1.1fr)
     8rem
+    minmax(7.5rem, 0.8fr)
     repeat(3, 4rem)
     3.25rem;
   align-items: stretch;

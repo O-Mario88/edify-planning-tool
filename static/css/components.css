@@ -4770,3 +4770,80 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
 .edify-metric--lead[data-tone="warning"] .edify-metric__mark { color: var(--edify-warning-text); }
 .edify-metric--lead[data-tone="danger"] .edify-metric__mark { color: var(--edify-danger-text); }
 .edify-metric--lead[data-tone="success"] .edify-metric__mark { color: var(--edify-success-text); }
+
+
+/* ═══ THE METER ════════════════════════════════════════════════════════════
+   (owner, 2026-09-07: "when the users plan and complete, the progress bar and
+   percentage should show clearly".)
+
+   One bar for a milestone's progress against its target, drawn from the plan.
+   Two segments on one track: what is COMPLETED, in the accent, and what is
+   PLANNED but not yet done, in a lighter wash of the same accent behind it —
+   so a plan that is scheduled reads as intent, and a plan that is delivered
+   reads as fact, without a legend. The percentage beside it is completed
+   against target: the number the owner asked to see.
+
+   Tokens only, so every theme draws it in its own colours. */
+.edify-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  min-inline-size: 6rem;
+}
+
+.edify-meter__track {
+  position: relative;
+  block-size: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--edify-text-muted) 14%, var(--edify-surface));
+}
+
+.edify-meter__planned,
+.edify-meter__done {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  transition: inline-size 0.3s ease;
+}
+
+.edify-meter__planned {
+  background-color: color-mix(in srgb, var(--edify-accent) 30%, transparent);
+}
+
+.edify-meter__done {
+  background-color: var(--edify-accent);
+}
+
+.edify-meter[data-tone="success"] .edify-meter__done { background-color: var(--edify-success); }
+.edify-meter[data-tone="warning"] .edify-meter__done { background-color: var(--edify-warning); }
+.edify-meter[data-tone="danger"] .edify-meter__done { background-color: var(--edify-danger); }
+
+.edify-meter__value {
+  min-inline-size: 2.6rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* The words under the bar — "3 done · 5 planned · of 20" — for the places
+   with room for them: the milestone detail and the distribution workspace. */
+.edify-meter__meta {
+  grid-column: 1 / -1;
+  margin-block-start: 0.2rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* No plan to link to: the track stays, empty, and says so. */
+.edify-meter--unlinked .edify-meter__value {
+  color: var(--edify-text-subtle);
+  font-weight: 600;
+}

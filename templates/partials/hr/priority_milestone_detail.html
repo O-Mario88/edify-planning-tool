@@ -1,5 +1,8 @@
 {% load frontend_filters %}
 <div class="priority-record-detail">
+  {% comment %}Linked to the plan (owner, 2026-09-07): the bar with its
+  words — done, planned, target, verified — where there is room for them.{% endcomment %}
+  <div class="px-3 pt-2.5 pb-1">{% include "components/meter.html" with progress=item.progress meta=True %}</div>
   <div class="priority-milestone-layout min-w-0">
     <div class="min-w-0">
       <p class="text-[12px] leading-5 text-slate-600">{{ milestone.source_text }}</p>
