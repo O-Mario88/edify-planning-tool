@@ -199,7 +199,11 @@ main :where(
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-):not(.kpi-strip__item):not(.edify-stat-tile) {
+
+  /* Nor a metric summary: `edify-metric-panel` matches the generic
+     `[class*="-panel"]` arm, and a card's grid of numbers is one panel with
+     hairlines, not a card (owner, 2026-09-07). */
+):not(.kpi-strip__item):not(.edify-stat-tile):not(.edify-metric-panel) {
   /* Card planes are deliberate workspaces; outlines stay subordinate to data.
 
      Tiles are not card planes (2026-09-05). A KPI tile paints its accent
@@ -387,7 +391,7 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-),
+):not(.edify-metric-panel),
 .theme-dark main :is(
   .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
   .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
@@ -399,7 +403,7 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-) {
+):not(.edify-metric-panel) {
   background-color: var(--edify-card-surface) !important;
   background-image: var(--edify-surface-treatment) !important;
   border-color: var(--edify-card-border) !important;

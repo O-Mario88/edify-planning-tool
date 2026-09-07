@@ -4415,3 +4415,197 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   outline-offset: -3px;
   border-radius: var(--edify-radius-sm, 6px);
 }
+
+
+/* ═══ THE SAME PANEL, ONE STEP DOWN ════════════════════════════════════════
+   (owner, 2026-09-07: fold the in-card mini-summaries into the KPI design too.)
+
+   A card's own little grid of numbers — the CD's verification counts, the
+   country budget's month summary, the To-Do status chips — was hand-rolled
+   with Tailwind utilities everywhere it appeared: a tinted box per number,
+   `bg-rose-50 border border-rose-100`, in as many colour pairs as there were
+   moods. Beside a headline tray that had just stopped being boxes, they were
+   the last squares on the page.
+
+   Same anatomy, smaller: one panel, hairlines between the metrics, a small-caps
+   label, the number, an optional caption. Same tokens, so the same rule about
+   themes holds — the blue theme's blues live in the theme, not here.
+
+   The columns are NOT set here. Every one of these grids already declares its
+   own `grid-cols-*` and knows better than a component does how many numbers it
+   is showing; what this claims is the gap, because the hairlines replace it. */
+.edify-metric-panel {
+  display: grid;
+  gap: 0;
+  overflow: clip;
+  border: 1px solid var(--edify-kpi-panel-border);
+  border-radius: var(--edify-radius-md);
+  background-color: var(--edify-surface);
+  background-image: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--edify-accent) 5%, var(--edify-surface)),
+    var(--edify-surface) 70%
+  );
+}
+
+/* The same trick as the tray: a rule on two edges, and the panel clips the
+   outermost pair. No rule needs to know the column count, which is exactly
+   what lets the templates keep choosing it. */
+.edify-metric {
+  min-inline-size: 0;
+  padding: 0.5rem 0.7rem;
+  border-inline-start: 1px solid var(--edify-kpi-divider);
+  border-block-start: 1px solid var(--edify-kpi-divider);
+  margin-inline-start: -1px;
+  margin-block-start: -1px;
+}
+
+.edify-metric__label {
+  overflow: hidden;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.edify-metric__value {
+  margin-block-start: 0.1rem;
+  color: var(--edify-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* The unit, the denominator, the qualifier — whatever rides with the number
+   without being it. */
+.edify-metric__value small,
+.edify-metric__unit {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.edify-metric__meta {
+  margin-block-start: 0.1rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Tone colours the NUMBER, never a box behind it — the same choice the tray
+   makes, and the reason these stopped being coloured rectangles. */
+.edify-metric[data-tone="danger"] .edify-metric__value { color: var(--edify-danger-text); }
+.edify-metric[data-tone="warning"] .edify-metric__value { color: var(--edify-warning-text); }
+.edify-metric[data-tone="success"] .edify-metric__value { color: var(--edify-success-text); }
+.edify-metric[data-tone="info"] .edify-metric__value { color: var(--edify-accent); }
+
+/* A metric that leads with its number — the To-Do chips and the CD's funded
+   backlog read count-first — keeps that order and centres, rather than being
+   rewritten into label-first markup at every call site. */
+.edify-metric--count-first {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: center;
+  text-align: center;
+}
+
+.edify-metric--count-first .edify-metric__label {
+  margin-block-start: 0;
+}
+
+.edify-metric--count-first .edify-metric__value {
+  margin-block-start: 0;
+  margin-block-end: 0.1rem;
+}
+
+/* A metric that leads with a mark — the country budget's plan sources, where
+   the icon IS the identity and the label only names it. Written in visual
+   order (mark, number, label) rather than reversed, because there is nothing
+   to reverse once three things are stacked. */
+.edify-metric--marked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.edify-metric__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+  color: var(--edify-accent);
+}
+
+.edify-metric__mark svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.edify-metric--marked .edify-metric__value,
+.edify-metric--marked .edify-metric__label {
+  margin-block-start: 0;
+  white-space: normal;
+}
+
+/* A metric that carries a share of its own target draws it under the caption.
+   The track and the fill are the platform's chart tokens, so a bar inside a
+   metric and a bar inside a chart are the same bar. */
+.edify-metric__bar {
+  display: block;
+  overflow: hidden;
+  inline-size: 100%;
+  block-size: 0.3rem;
+  margin-block-start: 0.35rem;
+  border-radius: 999px;
+  background: var(--edify-chart-bar-track);
+}
+
+.edify-metric__bar > span {
+  display: block;
+  block-size: 100%;
+  border-radius: 999px;
+  background: var(--edify-chart-series-primary);
+}
+
+/* A metric whose mark sits beside its label rather than above the whole cell —
+   the country budget's six source stats, where the icon identifies where the
+   figure came from. */
+.edify-metric__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-inline-size: 0;
+}
+
+.edify-metric__head .edify-metric__mark {
+  flex: 0 0 auto;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+}
+
+.edify-metric__head .edify-metric__label {
+  min-inline-size: 0;
+}
+
+/* Some of these values are money strings rather than counts, and long enough
+   to need the room; they take the label's truncation instead of the numeral's
+   tabular figures. */
+.edify-metric__value--text {
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-variant-numeric: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

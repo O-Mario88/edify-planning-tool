@@ -295,24 +295,39 @@ items are the only manual country-level costs.{% endcomment %}
 
       <div class="card p-4">
         <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Month Summary</h3>
-        <div class="grid grid-cols-2 gap-2">
-          <div class="rounded-surface bg-amber-50 border border-amber-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-amber-600">Awaiting Approval</p><p class="text-[13px] font-bold text-amber-800 tabular-nums mt-0.5">{{ month_summary.awaiting_approval }}</p></div>
-          <div class="rounded-surface bg-emerald-50 border border-emerald-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-emerald-600">Plan-Backed Cost</p><p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ month_summary.plan_backed_cost }}</p><p class="edify-text-caption font-semibold text-emerald-500">({{ month_summary.plan_backed_pct }}%)</p></div>
-          <div class="rounded-surface bg-rose-50 border border-rose-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-rose-600">Admin Budget</p><p class="text-[13px] font-bold text-rose-800 tabular-nums mt-0.5">{{ month_summary.admin_budget }}</p><p class="edify-text-caption font-semibold text-rose-500">({{ month_summary.admin_pct }}%)</p></div>
-          <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5"><p class="edify-kpi-label edify-text-caption text-slate-500">Staff Included</p><p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ month_summary.staff_included }} Staff</p></div>
+        {% comment %}One panel, hairlines, tone on the number (owner,
+        2026-09-07) — four differently tinted boxes were four moods where the
+        page needed one summary.{% endcomment %}
+        <div class="edify-metric-panel grid grid-cols-2">
+          <div class="edify-metric" data-tone="warning">
+            <p class="edify-metric__label">Awaiting approval</p>
+            <p class="edify-metric__value">{{ month_summary.awaiting_approval }}</p>
+          </div>
+          <div class="edify-metric" data-tone="success">
+            <p class="edify-metric__label">Plan-backed cost</p>
+            <p class="edify-metric__value">{{ month_summary.plan_backed_cost }}</p>
+            <p class="edify-metric__meta">{{ month_summary.plan_backed_pct }}% of the month</p>
+          </div>
+          <div class="edify-metric">
+            <p class="edify-metric__label">Admin budget</p>
+            <p class="edify-metric__value">{{ month_summary.admin_budget }}</p>
+            <p class="edify-metric__meta">{{ month_summary.admin_pct }}% of the month</p>
+          </div>
+          <div class="edify-metric">
+            <p class="edify-metric__label">Staff included</p>
+            <p class="edify-metric__value">{{ month_summary.staff_included }} <span class="edify-metric__unit">staff</span></p>
+          </div>
         </div>
       </div>
 
       <div class="card p-4">
         <h3 class="text-[12px] font-semibold text-slate-800 tracking-tight mb-2.5">Plan Source Summary</h3>
-        <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="edify-metric-panel grid grid-cols-3">
           {% for s in plan_source_summary %}
-          <div class="flex flex-col items-center gap-1">
-            <div class="h-8 w-8 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500">
-              {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
-            </div>
-            <p class="text-[13px] font-bold text-slate-800 tabular-nums leading-none">{{ s.value }}</p>
-            <p class="edify-text-caption font-semibold text-slate-400 leading-tight">{{ s.label }}</p>
+          <div class="edify-metric edify-metric--marked">
+            <span class="edify-metric__mark" aria-hidden="true">{% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}</span>
+            <p class="edify-metric__value">{{ s.value }}</p>
+            <p class="edify-metric__label">{{ s.label }}</p>
           </div>
           {% endfor %}
         </div>
@@ -320,19 +335,17 @@ items are the only manual country-level costs.{% endcomment %}
     </div>
   </div>
 
-  <!-- Bottom stat cards -->
-  <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">
+  <!-- Bottom stats: one panel, six metrics -->
+  <div class="edify-metric-panel grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6">
     {% for s in bottom_stats %}
-    <div class="card p-3.5">
-      <div class="flex items-center gap-2">
-        <div class="h-7 w-7 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-500 shrink-0">
-          {% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}
-        </div>
-        <p class="edify-kpi-label edify-text-caption text-slate-400 leading-tight">{{ s.label }}</p>
-      </div>
-      <p class="text-[15px] font-bold text-slate-800 mt-2 truncate">{{ s.value }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">{{ s.sub }}</p>
-      {% if s.helper %}<p class="edify-text-caption font-semibold text-slate-300 mt-0.5">{{ s.helper }}</p>{% endif %}
+    <div class="edify-metric">
+      <p class="edify-metric__head">
+        <span class="edify-metric__mark" aria-hidden="true">{% include "partials/finance/country_budget/_source_icon.html" with icon=s.icon %}</span>
+        <span class="edify-metric__label">{{ s.label }}</span>
+      </p>
+      <p class="edify-metric__value edify-metric__value--text">{{ s.value }}</p>
+      <p class="edify-metric__meta">{{ s.sub }}</p>
+      {% if s.helper %}<p class="edify-metric__meta">{{ s.helper }}</p>{% endif %}
     </div>
     {% endfor %}
   </div>

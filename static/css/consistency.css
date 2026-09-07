@@ -1379,7 +1379,11 @@ main :is(
   section.rounded-surface.border,
   article.rounded-surface.border,
   aside.rounded-surface.border
-):not([role="alert"]):not([role="status"]):not(.kpi-strip__item):not(.edify-stat-tile) {
+
+  /* Nor a metric summary: `edify-metric-panel` matches the generic
+     `[class*="-panel"]` arm, and a card's grid of numbers is one panel with
+     hairlines, not a card (owner, 2026-09-07). */
+):not([role="alert"]):not([role="status"]):not(.kpi-strip__item):not(.edify-stat-tile):not(.edify-metric-panel) {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
   border-color: var(--edify-card-border) !important;
@@ -2007,6 +2011,12 @@ main :is(
      is what "the tile gradient is never implemented system-wide" looked
      like (owner, 2026-09-05). */
   .kpi-strip__item, .edify-stat-tile,
+  /* Nor is a metric summary, and this rule was claiming it by name: the
+     generic `[class*="-panel"]` branch above matches `edify-metric-panel`
+     exactly, so a card's own grid of numbers lost the border that makes it
+     ONE panel and went back to looking like loose text (2026-09-07). Its
+     hairlines survived, which is what made the loss easy to miss. */
+  .edify-metric-panel,
   /* A floating overlay inside the drawer, not a nested card: the date
      picker must keep its own opaque surface, border and shadow or the form
      shows through the day grid (2026-09-02). */
@@ -2212,7 +2222,11 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
   div[class*="rounded"][class*="border"],
   section[class*="rounded"][class*="border"],
   article[class*="rounded"][class*="border"]
-):not(.edify-stat-tile):not(.kpi-strip__item) {
+
+  /* Nor a metric summary: `edify-metric-panel` matches the generic
+     `[class*="-panel"]` arm, and a card's grid of numbers is one panel with
+     hairlines, not a card (owner, 2026-09-07). */
+):not(.edify-stat-tile):not(.kpi-strip__item):not(.edify-metric-panel) {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;

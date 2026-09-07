@@ -12,21 +12,20 @@
     </div>
     <div class="lg:col-span-5 rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm">
       <h2 class="text-[13px] font-semibold mb-3 edify-text">My Personal Targets</h2>
-      <div class="grid grid-cols-2 gap-2.5 flex-1">
+      {% comment %}The band the percentage falls in is the tone (owner,
+      2026-09-07): it colours the caption rather than a filled card, and a
+      target that cannot be measured says so instead of showing a colour it
+      has not earned.{% endcomment %}
+      <div class="edify-metric-panel grid grid-cols-2 flex-1">
         {% for c in personal_targets.cards %}
-        <div class="flex items-center gap-2.5 p-2.5 rounded-surface edify-surface-muted">
-          <div>
-            <p class="edify-kpi-label text-[12px] edify-text-subtle">{{ c.label }}</p>
-            <p class="text-[15px] font-semibold tabular-nums edify-text">{{ c.done }}<span class="text-[12px] font-semibold edify-text-subtle">/{% if c.has_target %}{{ c.target }}{% else %}—{% endif %}</span></p>
-            {% if c.has_target %}
-            <p class="text-[12px] font-semibold" style="color:
-              {% if c.pct >= 80 %}var(--edify-success)
-              {% elif c.pct >= 60 %}var(--edify-warning)
-              {% else %}var(--edify-danger){% endif %};">{{ c.pct }}%</p>
-            {% else %}
-            <p class="text-[12px] font-semibold edify-text-subtle">Not measurable</p>
-            {% endif %}
-          </div>
+        <div class="edify-metric">
+          <p class="edify-metric__label" title="{{ c.label }}">{{ c.label }}</p>
+          <p class="edify-metric__value">{{ c.done }}<span class="edify-metric__unit">/{% if c.has_target %}{{ c.target }}{% else %}—{% endif %}</span></p>
+          {% if c.has_target %}
+          <p class="edify-metric__meta edify-status-text" data-edify-tone="{% if c.pct >= 80 %}success{% elif c.pct >= 60 %}warning{% else %}danger{% endif %}">{{ c.pct }}%</p>
+          {% else %}
+          <p class="edify-metric__meta">Not measurable</p>
+          {% endif %}
         </div>
         {% endfor %}
       </div>

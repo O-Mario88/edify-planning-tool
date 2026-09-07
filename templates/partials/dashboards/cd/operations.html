@@ -231,18 +231,18 @@ Program Leads table, verification, risk, field intelligence and actions.
         </div>
         <p class="edify-text-caption font-semibold text-slate-400 mt-1">across {{ finance_snapshot.funded_not_completed.activities|intcomma }} funded activities</p>
       </div>
-      <div class="grid grid-cols-3 gap-2 lg:min-w-[360px]">
-        <div class="rounded-surface bg-rose-50 border border-rose-100 px-3 py-2 text-center">
-          <p class="text-[14px] font-bold text-rose-700 tabular-nums">{{ finance_snapshot.funded_not_completed.overdue }}</p>
-          <p class="edify-text-caption font-bold text-rose-600 uppercase">Overdue</p>
+      <div class="edify-metric-panel grid grid-cols-3 lg:min-w-[360px]">
+        <div class="edify-metric edify-metric--count-first" {% if finance_snapshot.funded_not_completed.overdue %}data-tone="danger"{% endif %}>
+          <p class="edify-metric__label">Overdue</p>
+          <p class="edify-metric__value">{{ finance_snapshot.funded_not_completed.overdue }}</p>
         </div>
-        <div class="rounded-surface bg-amber-50 border border-amber-100 px-3 py-2 text-center">
-          <p class="text-[14px] font-bold text-amber-700 tabular-nums">{{ finance_snapshot.funded_not_completed.in_progress }}</p>
-          <p class="edify-text-caption font-bold text-slate-500 uppercase">In Progress</p>
+        <div class="edify-metric edify-metric--count-first" {% if finance_snapshot.funded_not_completed.in_progress %}data-tone="warning"{% endif %}>
+          <p class="edify-metric__label">In progress</p>
+          <p class="edify-metric__value">{{ finance_snapshot.funded_not_completed.in_progress }}</p>
         </div>
-        <div class="rounded-surface bg-slate-50 border border-slate-100 px-3 py-2 text-center">
-          <p class="text-[14px] font-bold text-slate-700 tabular-nums">{{ finance_snapshot.funded_not_completed.not_started }}</p>
-          <p class="edify-text-caption font-bold text-slate-500 uppercase">Not Started</p>
+        <div class="edify-metric edify-metric--count-first">
+          <p class="edify-metric__label">Not started</p>
+          <p class="edify-metric__value">{{ finance_snapshot.funded_not_completed.not_started }}</p>
         </div>
       </div>
       {% comment %}
@@ -264,26 +264,26 @@ Program Leads table, verification, risk, field intelligence and actions.
       </h2>
       <a href="/ia/dashboard/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open verification analytics →</a>
     </div>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
-        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Awaiting verification</p>
-        <p class="text-[22px] font-extrabold tabular-nums">{{ verification.waiting|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">{{ verification.buckets.under_7 }} under 7 days · {{ verification.buckets.d7_30 }} at 7–30 · <span class="{% if verification.buckets.over_30 %}text-rose-700 font-bold{% endif %}">{{ verification.buckets.over_30 }} over 30</span></p>
+    <div class="edify-metric-panel grid grid-cols-2 lg:grid-cols-4">
+      <div class="edify-metric">
+        <p class="edify-metric__label">Awaiting verification</p>
+        <p class="edify-metric__value">{{ verification.waiting|intcomma }}</p>
+        <p class="edify-metric__meta">{{ verification.buckets.under_7 }} under 7 days · {{ verification.buckets.d7_30 }} at 7–30 · <span class="{% if verification.buckets.over_30 %}edify-status-text{% endif %}" {% if verification.buckets.over_30 %}data-edify-tone="danger"{% endif %}>{{ verification.buckets.over_30 }} over 30</span></p>
       </div>
-      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
-        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Verified this week</p>
-        <p class="text-[22px] font-extrabold tabular-nums">{{ verification.verified_week|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">by Impact Assessment</p>
+      <div class="edify-metric">
+        <p class="edify-metric__label">Verified this week</p>
+        <p class="edify-metric__value">{{ verification.verified_week|intcomma }}</p>
+        <p class="edify-metric__meta">by Impact Assessment</p>
       </div>
-      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
-        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Returned by IA</p>
-        <p class="text-[22px] font-extrabold tabular-nums">{{ verification.returned|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">awaiting correction</p>
+      <div class="edify-metric" {% if verification.returned %}data-tone="warning"{% endif %}>
+        <p class="edify-metric__label">Returned by IA</p>
+        <p class="edify-metric__value">{{ verification.returned|intcomma }}</p>
+        <p class="edify-metric__meta">awaiting correction</p>
       </div>
-      <div class="p-3 rounded-surface bg-slate-50 border border-slate-100">
-        <p class="edify-text-caption uppercase tracking-wider text-slate-400 font-semibold">Data quality checks</p>
-        <p class="text-[22px] font-extrabold tabular-nums"><span class="{% if verification.critical %}text-rose-700{% endif %}">{{ verification.critical }}</span> <span class="text-[13px] font-semibold text-slate-400">critical</span> · {{ verification.warnings }} <span class="text-[13px] font-semibold text-slate-400">warnings</span></p>
-        <p class="edify-text-caption edify-text-muted">across the country's school, cluster and staff data</p>
+      <div class="edify-metric" {% if verification.critical %}data-tone="danger"{% endif %}>
+        <p class="edify-metric__label">Data quality checks</p>
+        <p class="edify-metric__value">{{ verification.critical }} <span class="edify-metric__unit">critical</span> · {{ verification.warnings }} <span class="edify-metric__unit">warnings</span></p>
+        <p class="edify-metric__meta">across the country's school, cluster and staff data</p>
       </div>
     </div>
     {% if verification.checks %}
