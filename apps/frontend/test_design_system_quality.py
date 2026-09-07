@@ -1691,7 +1691,9 @@ class StableTypographyContractTest(SimpleTestCase):
         # (The edify-kpi-card twin left with the legacy adapter — the classes
         # it served have no template usage and the old design is deleted.)
         self.assertIn("container: kpi-card / inline-size", components)
-        self.assertIn("@container kpi-card (max-width: 16rem)", components)
+        # 11rem since 2026-09-07: the mark leads every metric in the redesigned
+        # panel, so the width at which it yields moved down with it.
+        self.assertIn("@container kpi-card (max-width: 11rem)", components)
         self.assertIn("font-size: var(--edify-text-tile-value-size)", components)
 
     def test_responsive_svg_text_uses_screen_stable_typography(self):

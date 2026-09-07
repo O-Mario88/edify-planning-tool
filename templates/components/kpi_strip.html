@@ -62,30 +62,18 @@
       <div class="kpi-strip__item-body">
       {% endif %}
 
+        {% comment %}
+          The icon leads the tile, as it does on the login strip this design
+          comes from (owner, 2026-09-07). The movement pill left this row on
+          the same day: it belongs on the caption line under the number, beside
+          the helper, so a tile reads as one column of three text rows with a
+          single mark to its left.
+        {% endcomment %}
         <span class="kpi-strip__topline">
           <span class="kpi-strip__icon-container kpi-strip__icon-container--{% if item.variant %}{{ item.variant }}{% elif item.tone %}{{ item.tone }}{% else %}neutral{% endif %}"
                 aria-hidden="true">
             {% include "partials/analytics/pl/_icon.html" with name=item.icon %}
           </span>
-          {% if item.trend and item.trend.value %}
-          <span class="kpi-strip__trend kpi-strip__trend--{{ item.trend.direction|default:'neutral' }}">
-            {% if item.trend.direction == 'up' %}↗{% elif item.trend.direction == 'down' %}↘{% endif %}
-            {{ item.trend.value }}
-          </span>
-          {% elif item.status %}
-          <span class="kpi-strip__trend kpi-strip__trend--neutral">{{ item.status }}</span>
-          {% elif item.data_state and not item.is_measured %}
-          <span class="kpi-strip__trend kpi-strip__trend--neutral">Pending</span>
-          {% else %}
-          {% comment %}
-            "Current" is a statement about the DATA, not about the metric —
-            it says this figure is up to date. It therefore keeps one meaning
-            and one colour on every tile, rather than taking the tile's accent
-            the way a movement pill does. Green because up-to-date is the good
-            state; "Pending" beside it stays muted because it is not.
-          {% endcomment %}
-          <span class="kpi-strip__trend kpi-strip__trend--fresh">Current</span>
-          {% endif %}
         </span>
 
         <span class="kpi-strip__item-details">
@@ -103,11 +91,36 @@
             <span class="kpi-strip__label" title="{% firstof item.canonical_label item.label %}">{% firstof item.label item.canonical_label %}</span>
             <span class="kpi-strip__value">{% if item.display_value == None or item.display_value == "" %}{{ item.value }}{% else %}{{ item.display_value }}{% endif %}</span>
           {% endif %}
-          {% if item.helper or item.meta %}
+          {% comment %}
+            One caption line: the movement (or the state of the data) and the
+            helper that qualifies it, side by side. `kpi-strip__meta` was
+            already a flex row with a gap, so the pill
+            simply joins the helper in it and every tray's existing rules keep
+            applying. It always renders now: a tile always has something to say
+            about its data, even when that is only "Current".
+          {% endcomment %}
           <span class="kpi-strip__meta">
+            {% if item.trend and item.trend.value %}
+            <span class="kpi-strip__trend kpi-strip__trend--{{ item.trend.direction|default:'neutral' }}">
+              {% if item.trend.direction == 'up' %}↗{% elif item.trend.direction == 'down' %}↘{% endif %}
+              {{ item.trend.value }}
+            </span>
+            {% elif item.status %}
+            <span class="kpi-strip__trend kpi-strip__trend--neutral">{{ item.status }}</span>
+            {% elif item.data_state and not item.is_measured %}
+            <span class="kpi-strip__trend kpi-strip__trend--neutral">Pending</span>
+            {% else %}
+            {% comment %}
+              "Current" is a statement about the DATA, not about the metric —
+              it says this figure is up to date. It therefore keeps one meaning
+              and one colour on every tile, rather than taking the tile's accent
+              the way a movement pill does. Green because up-to-date is the good
+              state; "Pending" beside it stays muted because it is not.
+            {% endcomment %}
+            <span class="kpi-strip__trend kpi-strip__trend--fresh">↗ Current</span>
+            {% endif %}
             {% if item.helper %}<span class="kpi-strip__helper">{{ item.helper }}</span>{% elif item.meta %}<span class="kpi-strip__helper">{{ item.meta }}</span>{% endif %}
           </span>
-          {% endif %}
         </span>
 
       {% if item.hx_get %}

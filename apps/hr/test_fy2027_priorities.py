@@ -102,7 +102,19 @@ class Fy2027PrioritySeedTests(TestCase):
         self.assertContains(response, "Program Growth and Expansion")
         self.assertContains(response, "Governance and People Management")
 
-    def test_rvp_priority_setting_navigation_opens_the_governed_dashboard(self):
+    def test_the_rvp_reaches_priority_setting_from_the_priorities_entry(self):
+        """One sidebar entry, and it is the one named after the thing.
+
+        Priority Setting used to override the RVP's My Performance Agreement
+        slot, which put a priority link under MY PERFORMANCE and left a second
+        entry beside it to give the personal agreement back. It is a tab of the
+        Priorities page now (owner, 2026-09-07: "they should be one page
+        separated by tabs… the idea is to reduce to many menu links"), so the
+        sidebar carries Priorities, the performance slot is the agreement again,
+        and nothing in the menu points at /strategic-priorities at all — the
+        page's own rail builds that URL.
+        """
+
         rvp = User.objects.create_user(
             email="rvp-priority-navigation@example.test",
             name="RVP Priority Navigation",
@@ -117,20 +129,19 @@ class Fy2027PrioritySeedTests(TestCase):
             for section in build_sidebar_for_user(rvp, "/strategic-priorities")
             for item in section["items"]
         ]
-        priority_setting = next(
-            item for item in items if item["label"] == "Priority Setting"
-        )
+        labels = [item["label"] for item in items]
+        self.assertNotIn("Priority Setting", labels)
+        self.assertEqual(labels.count("My Performance Agreement"), 1)
+
+        priorities = next(item for item in items if item["label"] == "Priorities")
+        self.assertEqual(priorities["url"], "/priorities")
         personal = next(
             item for item in items if item["label"] == "My Performance Agreement"
         )
-
-        self.assertEqual(priority_setting["url"], "/strategic-priorities")
-        self.assertTrue(priority_setting["active"])
         self.assertEqual(personal["url"], "/my-performance")
-        self.assertFalse(personal["active"])
         self.assertEqual(
             sum(item["url"] == "/strategic-priorities" for item in items),
-            1,
+            0,
         )
 
     def test_undefined_milestones_do_not_populate_targets(self):

@@ -238,6 +238,21 @@
   --edify-control-border: var(--edify-border);
   --edify-border-strong: #aebcc4;
   --edify-divider: #d7dee2;
+  /* ── KPI panel (owner, 2026-09-07) ─────────────────────────────────────
+     The headline metrics render as ONE panel with hairline rules between
+     them, after the login strip. Three tokens carry that chrome so the shape
+     is identical on every theme while the colour stays the theme's own — "the
+     blue color you see should only apply on blue mode the rest of the modes
+     should retain their themes".
+
+     The divider is deliberately quieter than --edify-border: it separates
+     metrics INSIDE one panel, and at full border strength a row of four reads
+     as four boxes again. The sheen is the top inside highlight the reference
+     panel carries; on a light surface it is white, on a dark one a lift of the
+     same. */
+  --edify-kpi-panel-border: color-mix(in srgb, var(--edify-border) 78%, transparent);
+  --edify-kpi-divider: color-mix(in srgb, var(--edify-border) 55%, transparent);
+  --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.55);
   /* Four-step text hierarchy, all verified against the surfaces above:
      primary 15.3:1 · secondary 7.9:1 · muted 4.9:1 on the card plane. */
   --edify-text: #17232b;
@@ -652,6 +667,11 @@
   --edify-surface-popover: #0b3a63;
   --edify-border: rgba(123, 189, 232, 0.32);
   --edify-border-strong: rgba(123, 189, 232, 0.58);
+  /* The reference photograph is this theme, so these are its measured values
+     rather than a mix: the login strip's own panel border and rule. */
+  --edify-kpi-panel-border: rgba(147, 205, 241, 0.3);
+  --edify-kpi-divider: rgba(131, 196, 234, 0.22);
+  --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.05);
   --edify-text: #f5fbff;
   --edify-text-muted: var(--edify-sky-100);
   --edify-text-subtle: #91b5cc;
@@ -872,6 +892,11 @@ html.theme-blue body {
   --edify-border-strong: #566d7d;
   --edify-control-border: var(--edify-border-strong);
   --edify-divider: #283640;
+  /* A sheen of white on a near-black surface reads as a scratch; this theme
+     lifts the panel's top edge with its own border colour instead. */
+  --edify-kpi-panel-border: #3b4c5a;
+  --edify-kpi-divider: #2c3a45;
+  --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.04);
 
   /* Text remains comfortably above WCAG AA on both canvas and card planes. */
   --edify-text: #edf3f7;

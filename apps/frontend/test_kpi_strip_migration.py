@@ -133,12 +133,18 @@ class KpiStripMigrationTests(SimpleTestCase):
         self.assertIn("grid-template-columns: repeat(6, minmax(0, 1fr));", styles)
         self.assertIn("background-color: var(--edify-surface);", styles)
         self.assertIn("clip-path: inset(50%);", styles)
-        self.assertIn("box-shadow: 0 2px 3px", styles)
+        # The elevation belongs to the panel now, not to each metric inside it
+        # (owner, 2026-09-07). A tile with its own shadow is the square design
+        # that was removed, so the assertion is that the shadow is on the tray.
+        tray = styles[styles.index(".kpi-strip.kpi-strip--executive {") :]
+        tray = tray[: tray.index("\n}")]
+        self.assertIn("box-shadow: inset 0 1px 0 var(--edify-kpi-panel-sheen)", tray)
         # `--fresh`, not `--neutral`: "Current" reports that the DATA is up
         # to date, which is one meaning on every tile. It is the one pill the
         # per-tile accent tint deliberately does not repaint, and it sits
-        # beside "Pending", which means the opposite and stays muted.
-        self.assertIn('kpi-strip__trend--fresh">Current', source)
+        # beside "Pending", which means the opposite and stays muted. It opens
+        # with the reference caption's arrow.
+        self.assertIn('kpi-strip__trend--fresh">↗ Current', source)
         self.assertIn("{% firstof item.label item.canonical_label %}", source)
         # Two lines, not three. The point of the clamp is that a long label
         # cannot push the number down the card — the value is what the tile

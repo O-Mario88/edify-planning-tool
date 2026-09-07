@@ -643,22 +643,30 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertNotIn("font-weight: 700", block)
         self.assertIn("--edify-text-hero-size", block)
 
-    def test_narrow_tiles_move_the_pill_onto_its_own_row(self):
-        """The corner-pill composition needs room a six-up tile lacks.
+    def test_a_narrow_tile_gives_up_its_mark_before_its_words(self):
+        """What yields first when a metric runs out of room.
 
-        Below ~15rem the label's float spacer leaves less width than one
-        unbreakable word, so the whole first line drops beneath the float and
-        grazes the absolutely-positioned pill — five of six IA tiles at
-        laptop width. The per-tile container query degrades to a pill-on-its-
-        own-row layout and removes the spacer; deleting either half brings
-        the collision back.
+        This used to guard the corner-pill composition: a float spacer cleared
+        an absolutely-positioned pill on the label's first line, and below
+        ~15rem the spacer left less width than one unbreakable word, so the
+        line dropped beneath the float and grazed the pill. Both the pill and
+        the spacer went with the redesign on 2026-09-07 — the movement reads on
+        the caption line now, and the corner is spent on nothing.
+
+        What is left to protect is the order of sacrifice. A tile too narrow to
+        hold a mark and a label side by side drops the MARK, which is
+        decorative, rather than truncating the label or the number, which are
+        the metric. The threshold is deliberately low: the mark leads every
+        metric in this design, so it should only ever go when it genuinely
+        cannot fit.
         """
         components = (ROOT / "static/css/components.css").read_text()
-        self.assertIn("@container kpi-card (max-width: 14.99rem)", components)
-        narrow = components.split("@container kpi-card (max-width: 14.99rem)")[1]
+        self.assertNotIn("@container kpi-card (max-width: 14.99rem)", components)
+        self.assertIn("@container kpi-card (max-width: 11rem)", components)
+        narrow = components.split("@container kpi-card (max-width: 11rem)")[1]
         narrow = narrow.split("\n}\n")[0]
-        self.assertIn('"pill"', narrow)
-        self.assertIn("content: none", narrow)
+        self.assertIn(".kpi-strip__icon-container", narrow)
+        self.assertIn("display: none", narrow)
 
     def test_authenticated_pages_use_the_shells_single_main_region(self):
         """Nested page mains cause competing landmarks and inconsistent spacing."""

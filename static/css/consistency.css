@@ -1656,16 +1656,22 @@ main .edify-card-action {
   box-shadow: none !important;
 }
 
+/* Same, for the blue theme: the reference photograph IS this theme, and it
+   carries no per-metric surface. */
+:is(.theme-blue, .theme-dark) .kpi-strip.kpi-strip--executive .kpi-strip__item {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 :is(.theme-blue, .theme-dark) .kpi-strip__item::after {
   display: none;
 }
 
 /* Editorial Night keeps KPI semantics but removes the rainbow ambient washes.
-   A two-pixel inset rail carries each metric's existing tone, matching the
-   reference's status cards while the card itself stays on one calm surface. */
+   The panel itself keeps this theme's calm surface and border. */
 .theme-dark .kpi-strip.kpi-strip--executive {
-  background-color: var(--edify-section-bg) !important;
-  border-color: var(--edify-border) !important;
+  border-color: var(--edify-kpi-panel-border) !important;
   box-shadow: var(--edify-card-shadow) !important;
 }
 
@@ -1673,13 +1679,17 @@ main .edify-card-action {
   --kpi-accent: var(--edify-text-subtle);
 }
 
+/* A metric inside the panel is not a card in either dark theme (owner,
+   2026-09-07: one panel, hairlines between the metrics, no squares). This rule
+   used to give every toned tile its own surface, border and two-pixel accent
+   rail, which is precisely the composition that was removed — so all it does
+   now is make sure the ambient wash the light themes carry does not come back
+   here, where it reads as rainbow noise on a dark plane. The hairlines are the
+   component's own and are left alone. */
 .theme-dark .kpi-strip__item[class*="kpi-strip__item--"] {
-  background-color: var(--edify-card-surface) !important;
+  background-color: transparent !important;
   background-image: none !important;
-  border-color: var(--edify-card-border) !important;
-  box-shadow:
-    inset 0 2px 0 color-mix(in srgb, var(--kpi-accent) 58%, transparent),
-    var(--edify-card-shadow) !important;
+  box-shadow: none !important;
 }
 
 /* Functional controls keep a full 3:1 boundary against the slate field plane.
