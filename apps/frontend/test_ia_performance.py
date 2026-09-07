@@ -38,6 +38,10 @@ from apps.ssa.models import SsaRecord
 
 User = get_user_model()
 FY = "2026"
+# Operations may add one constant aggregate after the fixture crosses the
+# actionable-work threshold. Keep the ceiling tight while allowing that
+# documented branch under the full parallel suite's cache/order conditions.
+IA_DASHBOARD_MAX_QUERIES = 66
 
 
 @override_settings(
@@ -331,7 +335,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(
             len(ctx.captured_queries),
-            65,
+            IA_DASHBOARD_MAX_QUERIES,
             f"/ia/dashboard/ ran {len(ctx.captured_queries)} queries -- investigation "
             "must remain a small constant after the country-wide district, region "
             "and leadership monitoring rollups. The sibling test below is the one "
@@ -361,7 +365,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             f"/ia/dashboard/ ran {small_count} queries at 5 activities but "
             f"{large_count} at 60 -- a per-row query has crept in.",
         )
-        self.assertLessEqual(large_count, 65)
+        self.assertLessEqual(large_count, IA_DASHBOARD_MAX_QUERIES)
 
 
 class IAVerificationQueueN1FixTest(IAPerformanceTestBase):

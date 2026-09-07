@@ -77,7 +77,7 @@ contract every profile page shares.
 <tbody class="divide-y divide-slate-100 font-medium">
 {% for row in supported_pager.rows %}
 <tr>
-<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.school_id }}" class="font-semibold text-slate-800 hover:underline">{{ row.school.name }}</a></td>
+<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold text-slate-800 hover:underline">{{ row.school.name }}</a></td>
 <td class="px-4 py-3 text-slate-600">{{ row.district|default:"—" }}</td>
 <td class="px-4 py-3 tabular-nums text-slate-700">{{ row.visits_done }}<span class="text-slate-400"> / {{ row.visits }}</span></td>
 <td class="px-4 py-3 tabular-nums text-slate-700">{{ row.trainings_done }}<span class="text-slate-400"> / {{ row.trainings }}</span></td>
@@ -123,7 +123,7 @@ contract every profile page shares.
 <td class="px-5 py-3 tabular-nums text-slate-600">{{ row.activity.planned_date|date:"d M Y"|default:"—" }}</td>
 <td class="px-4 py-3 text-slate-700">{{ row.kind }}</td>
 <td class="px-4 py-3 font-semibold text-slate-800" data-record-title>{{ row.activity.activity_type|title|replace_underscore }}</td>
-<td class="px-4 py-3">{% if row.activity.school %}<a href="/schools/{{ row.activity.school.school_id }}" class="font-semibold hover:underline">{{ row.activity.school.name }}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}—{% endif %}</td>
+<td class="px-4 py-3">{% if row.activity.school %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{{ row.activity.school.name }}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}—{% endif %}</td>
 <td class="px-4 py-3 text-slate-600">{% firstof row.delivered_by row.staff_name "—" %}</td>
 <td class="px-4 py-3"><span class="edify-status-text" data-edify-tone="{% if row.state == 'completed' %}success{% elif row.state == 'incomplete' %}danger{% else %}info{% endif %}">{{ row.activity.status|replace_underscore }}</span></td>
 </tr>

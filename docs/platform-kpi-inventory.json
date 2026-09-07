@@ -2372,7 +2372,7 @@
    "audit_id": "KPI-SOURCE-119",
    "kind": "other",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2100,
+   "line": 2102,
    "label": "Search schools, staff and activities",
    "keys": [
     "action",
@@ -2392,7 +2392,7 @@
    "audit_id": "KPI-SOURCE-120",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3126,
+   "line": 3128,
    "label": null,
    "keys": [
     "label",
@@ -26505,7 +26505,7 @@
   {
    "audit_id": "KPI-PAYLOAD-014",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 2842,
+   "line": 2844,
    "function": "project_detail_view",
    "target": "kpi_strip_items",
    "source_item_count": 2,
@@ -26527,7 +26527,7 @@
   {
    "audit_id": "KPI-PAYLOAD-015",
    "module": "apps/frontend/views/extended_views.py",
-   "line": 3307,
+   "line": 3309,
    "function": "admin_data_quality_center_view",
    "target": "kpi_items",
    "source_item_count": 5,
