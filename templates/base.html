@@ -100,7 +100,7 @@ other page was relying on them.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260906float1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260907tabs1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260907tabs3">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
@@ -111,7 +111,7 @@ other page was relying on them.
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260906tabs4">
+<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260907tabs6">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -228,6 +228,15 @@ restore on a refresh, a back, or a paginated link — and the sidebar's menu,
 the load event, which is when the position has to be back.
 {% endcomment %}
 <script defer src="{% static 'js/scroll-memory.js' %}?v=20260907scroll1"></script>
+
+{% comment %}
+A dashboard view, once loaded, stays loaded. Switching between Map and
+Operations cost the server 300-700ms every time because the view rebuilds the
+whole dashboard whichever panel it renders; a panel the reader has already
+waited for is now kept, so going back to it costs nothing (owner, 2026-09-07).
+Loaded after the chart system, whose teardown it calls before parking a panel.
+{% endcomment %}
+<script defer src="{% static 'js/view-panels.js' %}?v=20260907panels1"></script>
 <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).

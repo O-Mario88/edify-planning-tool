@@ -1022,3 +1022,103 @@ main .edify-rail-more__menu > .edify-rail-more__item:is(.is-active, .active, [ar
   color: #fff !important;
   font-weight: 600 !important;
 }
+
+/* ── A rail is a track of equal chips, not a filled bar ─────────────────────
+   The rules above round the first segment's outer corners and the last one's
+   and square everything between: exactly right when the segments fill their
+   rail and their ends ARE its ends.
+
+   From 48rem up they no longer do. Tabs size to their labels now
+   (platform.css), because sharing the spare width drew two Batch Payments
+   tabs at 530px and 588px and four /staff tabs between 231px and 309px. That
+   leaves every rail a track with its tabs at the left — and the old rounding
+   then puts a rounded outer corner in the middle of the bar with a square
+   edge against its neighbour, so two tabs of identical width read as two
+   different shapes (owner, 2026-09-07).
+
+   Inside a track every chip is the same: one radius on all four corners, a
+   small inset from the track, and no divider — a divider separates parts of a
+   filled bar, not chips that already stand apart.
+
+   Phones keep the filled bar: there the tabs DO share the rail, because that
+   is what makes them thumb-sized.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 48rem) {
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) {
+  padding: 3px !important;
+  gap: 3px !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > *,
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :first-child,
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :last-child {
+  border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  border-start-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  border-end-start-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  border-end-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > * + * {
+  border-inline-start-color: transparent !important;
+}
+}

@@ -199,3 +199,85 @@ class DashboardViewRailTest(SimpleTestCase):
         independently: press one then the other and whichever response landed
         last decided what you were looking at."""
         self.assertIn('hx-sync="closest [data-dashboard-views]:replace"', self.markup)
+
+
+class ViewPanelsHeldTest(SimpleTestCase):
+    """A dashboard view, once loaded, stays loaded.
+
+    A switch costs the server 300-700ms and 141 queries, and the same either
+    way, because the view rebuilds the whole dashboard whichever panel it
+    renders. The owner chose to keep each panel after its first load
+    (2026-09-07); measured after: a return switch is 2-3ms and makes no request.
+    """
+
+    def setUp(self):
+        self.js = _read("static/js/view-panels.js")
+
+    def test_the_shell_loads_it_after_the_chart_system(self):
+        base = _read("templates/base.html")
+        self.assertIn("js/view-panels.js", base)
+        self.assertLess(base.index("js/micro-ux.js"), base.index("js/view-panels.js"))
+
+    def test_a_parked_panel_is_detached_not_hidden(self):
+        """A panel left in the document with `display: none` still has a size
+        of zero, and ApexCharts watches its own parent — a zero-size parent is
+        what makes it write width="NaN" into its SVG."""
+        self.assertIn("panel.remove();", self.js)
+        self.assertIn("parked.set(view, panel);", self.js)
+
+    def test_the_charts_are_torn_down_before_a_panel_leaves(self):
+        """htmx is not involved in a switch between two panels already in hand,
+        so the teardown that rides on `htmx:beforeSwap` never runs."""
+        self.assertIn("window.EdifyChartSystem.destroyInside(panel)", self.js)
+
+    def test_the_shell_not_the_rail_says_which_panel_is_held(self):
+        """The pressed tab highlights before the request goes out, so between
+        the press and the response the rail names the view being fetched.
+        Parking by the rail files every panel under its successor's name."""
+        self.assertIn("park(current);", self.js)
+        self.assertNotIn("park(currentView());", self.js)
+
+    def test_a_switch_that_skips_the_network_still_moves_the_address_bar(self):
+        """Every tab is a real URL: a deep link, the back button and a press
+        all land on the same page."""
+        self.assertIn("window.history.pushState", self.js)
+        self.assertIn('window.addEventListener("popstate"', self.js)
+
+    def test_it_holds_nothing_across_a_reload(self):
+        """A parked panel lives in memory, so a reload always re-reads the
+        server and no one is served something older than their page."""
+        self.assertNotIn("sessionStorage", self.js)
+        self.assertNotIn("localStorage", self.js)
+
+
+class TabsDoNotStretchTest(SimpleTestCase):
+    """Tabs size to their labels; the rail keeps the rest as track."""
+
+    def setUp(self):
+        self.platform = _read("static/css/platform.css")
+        self.interactions = _read("static/css/components/interactions.css")
+
+    def test_tabs_stop_sharing_the_spare_rail_width(self):
+        """`flex: 1 0 auto` drew two Batch Payments tabs at 530px and 588px and
+        four /staff tabs between 231px and 309px."""
+        block = self.platform[self.platform.index("Tabs size to their labels; the rail keeps the rest as track") :]
+        self.assertIn("@media (min-width: 48rem)", block)
+        self.assertIn("flex: 0 0 auto !important;", block)
+
+    def test_a_phone_still_shares_the_rail(self):
+        """There the tabs sharing the width is what makes them thumb-sized."""
+        block = self.platform[self.platform.index("Tabs size to their labels; the rail keeps the rest as track") :]
+        head = block[: block.index("@media (min-width: 48rem)")]
+        self.assertIn("phone", head.lower())
+        # The base contract, which phones fall back to, still grows its tabs.
+        self.assertIn("flex: 1 0 auto !important;", self.platform)
+
+    def test_every_rail_is_a_track_of_equal_chips(self):
+        """With the tabs no longer filling the rail, rounding the first tab's
+        outer corners and the last one's puts a rounded corner in the middle of
+        the bar against a square edge — identical widths reading as different
+        shapes."""
+        block = self.interactions[self.interactions.index("A rail is a track of equal chips") :]
+        self.assertIn("@media (min-width: 48rem)", block)
+        self.assertIn("border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;", block)
+        self.assertIn("padding: 3px !important;", block)

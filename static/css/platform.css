@@ -954,6 +954,40 @@ main :where(
               border-color .15s ease, box-shadow .15s ease;
 }
 
+/* ── Tabs size to their labels; the rail keeps the rest as track ────────────
+   `flex: 1 0 auto` above lets every tab share whatever rail width is spare,
+   which is invisible on a crowded rail and absurd on a sparse one: measured at
+   1440px, the Batch Payments rail drew two tabs at 530px and 588px, /staff
+   four at 231-309px, and the calendar five at ~225px. It also made tabs in the
+   same rail different widths from each other, because each grew in proportion
+   to its own label (owner, 2026-09-07: "literally all tabs want to stretch to
+   the end even the ones that have few tabs").
+
+   Analytics never had the problem — its rail already resolved to `0 0 auto` —
+   and it is the shape the others should have: each tab as wide as its label
+   needs, the remainder of the rail left as track.
+
+   From 48rem up only. On a phone a rail's tabs sharing its width is what makes
+   them thumb-sized, and that stays.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (min-width: 48rem) {
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) {
+    flex: 0 0 auto !important;
+  }
+}
+
 main :where(
   [role="tab"],
   .edify-tab-btn,
@@ -1104,11 +1138,33 @@ main .dashboard-view-nav { border-block-end: 0; }
     max-inline-size: 100%;
   }
   /* `0 0 auto` is what keeps two tabs from becoming two half-width slabs when
-     the bar is full width. */
+     the bar is full width, and one width for both keeps them even whatever
+     their labels: "Map" and "Operations" are three letters and ten. */
   main .dashboard-view-nav .edify-section-nav__link {
     flex: 0 0 auto !important;
+    inline-size: 9.5rem !important;
     min-inline-size: 9.5rem !important;
+    justify-content: center;
   }
+
+  /* Equal chips in a track, not segments of a filled bar.
+
+     The segmented contract rounds the FIRST tab's left corners and the LAST
+     tab's right corners, which is right when the tabs fill the bar and their
+     ends are its ends. They no longer do: the tabs sit at the left of a wider
+     track, so the active chip's rounded right edge hung in the middle of the
+     bar while its left edge stayed square against its neighbour — two tabs of
+     identical width reading as different shapes (owner, 2026-09-07: "tab sizes
+     are not even on desktop"). Every tab gets the same radius and the same
+     inset from the track, so the pair reads as one control. */
+  main .dashboard-view-nav .edify-section-nav__inner {
+    padding: 3px !important;
+    gap: 3px !important;
+  }
+
+  /* The chip radius and the segment divider are settled in
+     components/interactions.css, which owns the tab contract and is the last
+     stylesheet loaded — a rule here cannot outrank it. */
   /* The bar is a bar, not a lid: the panel it switches needs room to read as
      the thing below it rather than as something it is welded to. The gap goes
      on the shell that holds both, not on the nav — every role's panel brings
