@@ -1,18 +1,21 @@
-"""Keeping the reader's place, and a launch screen that is only the wait.
+"""Keeping the reader's place, and what the launch screen is for.
 
-Two owner reports on 2026-09-07:
+Two owner reports on 2026-09-07.
 
-  * "When you click a tab or pagination, or refreshed the page, the page resets
-    to the top… the sidebar also has the same behaviour."
-  * "On the loading page, remove the app icon logo and start the app loading
-    page direct, not opening the logo then the loading page. The logo should
-    just be for installing on the computer or the app and on the url."
+THE PAGE RESETTING TO THE TOP — on a tab, on pagination, on a refresh, and the
+sidebar doing the same on every menu click. One cause: this shell does not
+scroll the document. The top bar and sidebar are pinned and the workspace has
+its own scrollbar, so `#main-content` is the scroller and `window.scrollY`
+never leaves zero — exactly the case a browser cannot restore for you. Measured
+before the fix: the workspace sat at 781px, and 0 after a refresh.
 
-The first has one cause: this shell does not scroll the document. The top bar
-and sidebar are pinned and the workspace has its own scrollbar, so
-`#main-content` is the scroller and `window.scrollY` never leaves zero — which
-is exactly the case a browser cannot restore for you. Measured before the fix:
-the workspace sat at 781px, and 0 after a refresh.
+THE LAUNCH SCREEN. The first reading of this was wrong and the logo was taken
+off the screen; the owner meant the opposite. The launch screen keeps the
+sidebar's wordmark. What they did not want was the ROUND APP ICON that shows
+before it — and that screen is not ours: Android and desktop Chrome generate it
+from the installed manifest, icon centred on `background_color`, and no markup
+in this repo can remove it. The app's only move is to share that colour so the
+two read as one field, which it does.
 """
 
 from __future__ import annotations
@@ -75,15 +78,25 @@ class LaunchScreenTest(SimpleTestCase):
     def setUp(self):
         self.partial = _read("templates/partials/pwa_launch.html")
 
-    def test_the_launch_screen_carries_no_logo(self):
-        """The mark identifies the app when it is NOT running. Showing it again
-        on the way in made launching a two-part ceremony."""
-        self.assertNotIn("<img", self.partial)
-        self.assertNotIn("images/logo.png", self.partial)
-        self.assertNotIn("edify-launch__wordmark {", self.partial)
-        self.assertNotIn("edify-launch__lockup {", self.partial)
+    def test_it_carries_the_same_wordmark_the_sidebar_does(self):
+        """The owner asked for the sidebar's logo here (2026-09-07). The round
+        icon that opens a launch is a different thing entirely — Android and
+        desktop Chrome generate that screen from the manifest, and no markup
+        here can remove it."""
+        sidebar = _read("templates/components/sidebar.html")
+        self.assertIn("images/logo.png", sidebar)
+        self.assertIn("images/logo.png", self.partial)
+        self.assertIn("edify-launch__wordmark", self.partial)
 
-    def test_it_is_the_waiting_state_and_nothing_else(self):
+    def test_the_ground_does_not_change_when_the_os_screen_hands_over(self):
+        """The one thing the app CAN do about that first screen: share its
+        colour, so the icon lifts and the lockup arrives on the same field."""
+        pwa = _read("apps/frontend/views/pwa_views.py")
+        self.assertIn('BRAND = "#2d4862"', pwa)
+        self.assertIn('"background_color": BRAND', pwa)
+        self.assertIn("background: #2d4862;", self.partial)
+
+    def test_it_shows_the_waiting_state_as_well_as_the_lockup(self):
         self.assertIn("Loading your workspace", self.partial)
         self.assertIn("Preparing your dashboard", self.partial)
 
