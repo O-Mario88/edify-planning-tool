@@ -19,6 +19,11 @@
   /* ── EDIFY BRAND PALETTE ─────────────────────────────────────────────────
      The login experience is the visual north star for the application.
      These literal values come from the approved brand reference. */
+  --edify-brand-panel: linear-gradient(110deg, #073454, #103f62);
+  --edify-brand-panel-border: #38607d;
+  --edify-brand-panel-text: #ffffff;
+  --edify-brand-panel-muted: #b9d2e5;
+  --edify-brand-kpi-muted: #d4e7fa;
   --edify-navy-950: #001d39;
   --edify-navy-800: #0a4d86;
   --edify-steel-600: #49769f;
@@ -628,21 +633,21 @@
   --edify-notification-glow: rgba(255, 157, 66, 0.38);
 
   /* Opaque blue surfaces retain the brand without a photographic backdrop. */
-  --edify-surface: #10385b;
-  --edify-surface-muted: #123d62;
-  --edify-surface-raised: #154267;
+  --edify-surface: #073454;
+  --edify-surface-muted: #0a3657;
+  --edify-surface-raised: #103f62;
   /* Popovers remain distinct from the underlying content plane. */
   --edify-surface-popover: #0b3a63;
-  --edify-border: rgba(123, 189, 232, 0.32);
+  --edify-border: var(--edify-brand-panel-border);
   --edify-border-strong: rgba(123, 189, 232, 0.58);
   /* The reference photograph is this theme, so these are its measured values
      rather than a mix: the login strip's own panel border and rule. */
   --edify-kpi-panel-border: rgba(147, 205, 241, 0.3);
   --edify-kpi-divider: rgba(131, 196, 234, 0.22);
   --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.05);
-  --edify-text: #f5fbff;
-  --edify-text-muted: var(--edify-sky-100);
-  --edify-text-subtle: #91b5cc;
+  --edify-text: var(--edify-brand-panel-text);
+  --edify-text-muted: var(--edify-brand-panel-muted);
+  --edify-text-subtle: #b9d2e5;
   --edify-bg: var(--edify-navy-950);
 
   /* Page headings sit directly on the canvas. The workspace owns the
@@ -657,7 +662,7 @@
   --page-header-padding-y: 0px;
   --page-header-gap: 0.5rem;
   --edify-canvas-treatment: none;
-  --edify-surface-treatment: none;
+  --edify-surface-treatment: var(--edify-brand-panel);
   --edify-glass-tile-treatment: none;
   --edify-glass-kpi-treatment: none;
   --edify-button-primary-treatment: none;

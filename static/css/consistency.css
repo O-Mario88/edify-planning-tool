@@ -4439,3 +4439,15 @@ main .project-detail details[aria-labelledby] > summary h2 { display: inline; fo
 main .project-detail-context > .grid > div,
 main .project-detail-context > .border-t { padding: .75rem; }
 main #sp-plan-filters { display: flow-root !important; }
+
+/* Login and the blue workspace share one brand surface and text hierarchy. */
+.theme-blue .context-metrics {
+  --kpi-surface: #073454;
+  --kpi-text: var(--edify-brand-panel-text);
+  --kpi-muted: var(--edify-brand-kpi-muted);
+  --kpi-divider: var(--edify-brand-panel-border);
+}
+.theme-blue :is(.context-metrics__sentence, .edify-metric-panel) {
+  background: var(--edify-brand-panel) !important;
+  border-color: var(--edify-brand-panel-border) !important;
+}

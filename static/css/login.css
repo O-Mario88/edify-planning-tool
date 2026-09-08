@@ -1252,7 +1252,7 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
 .login-brand .context-metrics {
   --kpi-surface: var(--login-navy-950);
   --kpi-text: #fff;
-  --kpi-muted: #d4e7fa;
+  --kpi-muted: var(--edify-brand-kpi-muted);
   --kpi-divider: #38556f;
   --kpi-positive: #85f4ce;
   --kpi-warning: #ffdc83;
@@ -1283,11 +1283,11 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
 
 /* One opaque blue surface keeps the impact card and live KPI strip identical,
    independent of the photograph behind them or the workspace theme. */
-.login-page { --login-panel-background: linear-gradient(110deg, #073454, #103f62); }
+.login-page { --login-panel-background: var(--edify-brand-panel); }
 .login-brand .impact-card,
 .login-brand .context-metrics__sentence {
   background: var(--login-panel-background);
-  border-color: #38607d;
+  border-color: var(--edify-brand-panel-border);
 }
 .login-brand__content { padding-block: 2.75rem 1.75rem; }
 .login-brand__header { padding-block: .25rem; }
@@ -1310,8 +1310,8 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
 .login-form { margin-top: 1.75rem; }
 .login-field + .login-field { margin-top: 1.25rem; }
 [data-login-form] .login-field input { min-height: 3.125rem; padding: .75rem 1rem; background: #f8fafc; font-size: 1rem; }
-.login-field input#current-password { padding-inline-end: 4.25rem; }
-[data-login-form] .password-toggle { right: .375rem; width: 3.5rem; height: 2.75rem; min-height: 2.75rem; font: inherit; font-size: var(--edify-text-label-size); font-weight: 600; color: var(--login-blue-700); }
+.login-field input#current-password { padding-inline-end: 3.5rem; }
+[data-login-form] .password-toggle { right: .375rem; width: 2.75rem; height: 2.75rem; min-height: 2.75rem; font: inherit; font-size: var(--edify-text-label-size); font-weight: 600; color: var(--login-blue-700); }
 .secure-card { margin-top: 1.5rem; padding: 1.25rem 0 0; border: 0; border-top: 1px solid #e3eaf1; border-radius: 0; background: transparent; box-shadow: none; }
 @media (max-width: 70rem) {
   .login-shell { align-content: safe center; }

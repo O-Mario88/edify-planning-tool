@@ -13,11 +13,11 @@ test('login surfaces, padding and icon-free fields stay consistent across viewpo
   expect(data.overflow).toBeLessThanOrEqual(1);expect(data.inset).toBeGreaterThanOrEqual(24);expect(data.padding).toBeGreaterThanOrEqual(28);
   expect(data.kpi).toBe(data.impact);
   if(width>1120){expect(data.logoTop).toBeGreaterThanOrEqual(32);expect(data.cardBottom).toBeLessThanOrEqual(height-16);}
-  await expect(page.locator('.login-field svg')).toHaveCount(0);
+  await expect(page.locator('.login-field__control > svg')).toHaveCount(0);
   await page.screenshot({path:`test-results/login-polish/${info.project.name}-${width}.png`,fullPage:true});
  }
  await page.getByRole('button',{name:'Show password',exact:true}).click();
- await expect(page.locator('#current-password')).toHaveAttribute('type','text');await expect(page.locator('[data-password-label]')).toHaveText('Hide');
+ await expect(page.locator('#current-password')).toHaveAttribute('type','text');await expect(page.locator('[data-eye-closed]')).toBeVisible();
  await page.getByRole('button',{name:'Hide password',exact:true}).click();await expect(page.locator('#current-password')).toHaveAttribute('type','password');
  await page.getByLabel('Remember me').check();await expect(page.getByLabel('Remember me')).toBeChecked();
  expect(errors).toEqual([]);
