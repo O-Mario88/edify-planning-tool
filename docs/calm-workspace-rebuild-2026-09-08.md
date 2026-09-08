@@ -76,3 +76,9 @@ Plain-table verification: 528 settled layout checks across 88 rendered page vari
 School record lists previously inherited the 40px page-action size, unlike condensed table controls. Record rows, legacy school cards, cluster cards and enhanced table actions now share a 24px height, 12px icons, 11px labels and 8px horizontal padding. The rule is scoped to records; page actions, drawer footers, disclosure overlays and floating menus retain their existing sizing. Theme colours, accessible names and HTMX actions are preserved.
 
 Verification: the rendered-table sweep covers 88 page variants across three widths (390, 768, 1290) and three themes, checking height and vertical clipping. Live Schools, Core Schools and Clusters checks also cover those widths and themes, and exercise keyboard activation of the core-school scheduling drawer.
+
+### Table header hierarchy and Accountant focus — 9 September
+
+In Light mode, local table title bars use a blue background with white heading text. Column headings use the same blue ink while retaining their existing surface colour. Shared structural enhancement finds local title bars on initial render and HTMX refresh without changing page headings or filter forms. Dark and Blue theme treatments remain scoped separately.
+
+The Accountant landing workspace now renders finance operations directly. The map tab, map partial and map asset include were removed; old map URLs, saved preferences and HTMX shell requests resolve to the operational queue. Other roles retain their maps. Regression checks cover the role behaviour, shared UI contracts, theme/viewport styling and browser rendering.

@@ -2018,7 +2018,7 @@ main :is(
      picker must keep its own opaque surface, border and shadow or the form
      shows through the day grid (2026-09-02). */
   .edify-calendar-popover
-) {
+):not(.edify-table-titlebar) {
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -2271,7 +2271,7 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
      own opaque surface, border and shadow, or the form shows through the
      day grid (2026-09-02). */
   .edify-calendar-popover
-) {
+):not(.edify-table-titlebar) {
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -2287,7 +2287,7 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   [class~="p-8"], [class~="p-10"], [class~="p-12"]
 ):not([data-edify-summary-kpi]):not([role="alert"]):not([role="listbox"]):not(
   [role="radiogroup"]
-) {
+):not(.edify-table-titlebar) {
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -4189,4 +4189,27 @@ main textarea,
   inline-size: .75rem !important;
   block-size: .75rem !important;
   flex-shrink: 0;
+}
+
+/* Light-mode table hierarchy: blue title band, blue column ink on the
+   existing column surface. Other themes retain their own header treatment. */
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
+  background: #285b96 !important;
+  color: #fff !important;
+  padding: .5rem .75rem !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, p, span):not(button *):not(a *) {
+  color: #fff !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table thead :is(th, td),
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table thead :is(th, td) :is(span, a, button) {
+  color: #285b96 !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"])
+  .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
+  :is(span, a:not(.btn):not([class*="btn-"]):not(.rounded-control)):not(button *):not(a.btn *) {
+  color: #fff !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
 }

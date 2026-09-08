@@ -94,6 +94,26 @@
     if (containingTable && contentTables.indexOf(containingTable) < 0) contentTables.push(containingTable);
     contentTables.forEach(function (table) {
       table.classList.add('edify-plain-table');
+      // Find the nearest local title bar; never paint a page heading or filters.
+      var branch = table;
+      while (branch.parentElement && !branch.parentElement.matches('main, body')) {
+        var parent = branch.parentElement;
+        var titleBar = Array.from(parent.children).find(function (child) {
+          return child !== branch && !child.contains(table)
+            && Boolean(child.compareDocumentPosition(branch) & Node.DOCUMENT_POSITION_FOLLOWING)
+            && !child.matches('.edify-page-header, form')
+            && !child.querySelector('h1, table, form, input, select, textarea, section, article')
+            && child.querySelectorAll('h2, h3, h4').length <= 1
+            && (child.matches('h2, h3, h4, caption') || child.querySelector('h2, h3, h4'));
+        });
+        if (titleBar) {
+          titleBar.classList.add('edify-table-titlebar');
+          break;
+        }
+        if (parent.querySelectorAll('table').length > 1 || parent.querySelector('h1')) break;
+        branch = parent;
+      }
+
       table.querySelectorAll('button, [role="button"], summary, a.btn, a[class*="btn-"], a.rounded-control, [data-record-action] a').forEach(function (action) {
         action.classList.add('edify-table-action');
       });
