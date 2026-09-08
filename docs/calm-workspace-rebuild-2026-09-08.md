@@ -48,3 +48,15 @@ npx playwright test e2e/calm-workspace.spec.js --project chromium-desktop --proj
 ```
 
 The live suite uses the local seeded QA accounts and refuses to accept pending legal agreements automatically. The snapshot server is loopback-only, does not write data, and blocks external resources.
+
+## Follow-up polish — 9 September
+
+- Restored the blue login KPI surface, readable white headings on the blue brand panel, and a compact mobile/tablet layout that keeps sign-in and KPIs together.
+- Removed Planning Copilot. Its missing-SSA and core-gap counts already exist in the shared strip; the distinct unclustered-school count now joins them without duplicating metrics.
+- Converted Personal Time Off's summary and entitlement cards to shared strips while retaining allocation, usage, pending requests, coverage and availability values. Leave policy guidance remains expandable.
+- Fixed the leave page's intrinsic grid sizing so mobile navigation cannot widen the page or KPI strips.
+- Changed the light canvas to blue-grey `#e8eef5`, with 450-weight body/table text and 550-weight labels/identity cells using the existing Geist variable font.
+
+The focused responsive suite covers login at 390, 768, 1048, 1290 and 1600px, and Planning/Personal Time Off at 390, 768, 1048 and 1600px in all three themes, including opening the leave request drawer. Regression test: `e2e/workspace-polish.spec.js`.
+
+Verification passed in Chromium, Firefox and WebKit. The source/login/inventory suite covered 154 tests; its old canvas-colour assertion was updated and the complete 72-test design-quality module passed on rerun. Subtle text contrast on the new canvas is 4.74:1. The regenerated inventory identifies 142 shared strip surfaces.

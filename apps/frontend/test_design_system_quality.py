@@ -733,12 +733,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         for declaration in (
             "--edify-table-cell-padding-block: 0.5rem",
             "--edify-table-cell-padding-inline: 0.75rem",
-            # Headers may be bold; the body never is. Cells are regular (400)
+            # Headers may be bold; the body never is. Cells use a medium-light weight (450)
             # per the reference grid, and identity separates itself with ink
             # colour plus a half-step of medium, not a second bold rail.
             "--edify-table-header-weight: 600",
-            "--edify-table-body-weight: 400",
-            "--edify-table-identity-weight: 500",
+            "--edify-table-body-weight: 450",
+            "--edify-table-identity-weight: 550",
             "--edify-table-action-size: 2rem",
             "--edify-table-header-divider:",
         ):
@@ -797,7 +797,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-brand-primary: var(--brand-primary)",
             "--edify-brand-primary-hover: var(--brand-primary-hover)",
             "--edify-brand-secondary: #ef564b",
-            "--edify-bg: #f4f6f8",
+            "--edify-bg: #e8eef5",
             "--edify-section-bg: #f2f5f6",
             "--edify-surface: #f8fafb",
             "--edify-surface-raised: #ffffff",
@@ -817,7 +817,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertIn(":root:not(.theme-blue):not(.theme-dark)", platform)
         self.assertIn("getPropertyValue('--edify-bg')", base)
-        self.assertNotIn("#f4f6f8", base)
+        self.assertNotIn("#e8eef5", base)
 
     def test_light_workspace_text_hierarchy_meets_high_contrast_standard(self):
         tokens = _read("static/css/design-system.css")
@@ -833,12 +833,10 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         # Body-text steps clear AA on the card plane they actually sit on.
         # (#6b7b84 is the disabled step, which WCAG exempts from the minimum.)
-        # #5a6b75 is the subtle step. It was #5f707a until the canvas became
-        # the tinted #f4f6f8, against which it measured 4.49:1 — under AA by a
-        # hundredth, which is still under. This assertion is what caught it.
+        # Subtle text must also remain AA on the darker blue-grey canvas.
         for colour in ("#17232b", "#3f515c", "#5a6b75"):
             self.assertGreaterEqual(_contrast_ratio(colour, "#f8fafb"), 4.5)
-            self.assertGreaterEqual(_contrast_ratio(colour, "#f4f6f8"), 4.5)
+            self.assertGreaterEqual(_contrast_ratio(colour, "#e8eef5"), 4.5)
 
         # Primary brand must stay legible under white button labels in every
         # interaction state.

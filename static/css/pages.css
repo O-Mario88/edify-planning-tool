@@ -1553,9 +1553,12 @@
   margin-inline: auto;
   padding: clamp(1rem, 0.72rem + 1vw, 1.75rem);
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(1rem, 0.72rem + 0.9vw, 1.75rem);
   color: var(--edify-text);
 }
+
+.pto-page > * { min-inline-size: 0; max-inline-size: 100%; }
 
 .pto-page :where(h1, h2, h3, p) {
   margin: 0;
@@ -2894,7 +2897,7 @@
 @media (max-width: 1180px) {
   .pto-command-grid,
   .pto-workspace {
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .pto-decision-rail {

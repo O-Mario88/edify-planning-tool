@@ -1,4 +1,4 @@
-from apps.core.metrics import render_precomputed_metric_item
+from apps.core.metrics import PresentationKpi, render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
@@ -859,6 +859,19 @@ class PlanningDashboardService:
                 variant="purple",
             ),
         ]
+
+        # Preserve the Copilot's distinct school-level count in the shared strip.
+        # Missing SSA and core visit gaps already have canonical entries above.
+        kpi_strip_items.insert(
+            2,
+            PresentationKpi(
+                label="Not grouped in cluster",
+                value=kpis["unclustered"],
+                display_value=str(kpis["unclustered"]),
+                helper="Schools awaiting grouping",
+                tone="warning",
+            ),
+        )
 
         # 6. Cluster Planning List
         clusters_in_scope = Cluster.objects.filter(

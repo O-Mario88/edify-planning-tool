@@ -1,5 +1,5 @@
 {% extends "layouts/shell.html" %}
-{% load table_pagination %}
+{% load table_pagination kpi_metrics %}
 
 {% block title %}Personal Time Off · Edify{% endblock %}
 
@@ -61,108 +61,18 @@
 
   {% include "partials/_section_nav.html" %}
 
-  <section class="pto-command-grid" aria-label="Leave readiness overview">
-    <article class="pto-panel pto-balance-command edify-surface">
-      <div class="pto-panel__header">
-        <div>
-          <span class="pto-kicker">Personal leave balance</span>
-          <h2>Your available time</h2>
-        </div>
-        <a href="{% url 'frontend:leave_policies' %}" class="pto-cycle-badge">FY {% now "Y" %} policy</a>
-      </div>
-
-      <div class="pto-hero-balance">
-        <div class="pto-hero-balance__value">
-          <strong>{{ pto_remaining }}</strong>
-          <span>days available</span>
-        </div>
-        <div class="pto-hero-balance__meter">
-          <div class="pto-progress" role="progressbar" aria-label="Personal leave used" aria-valuemin="0" aria-valuemax="{{ pto_entitlement }}" aria-valuenow="{{ pto_used }}">
-            <span style="--pto-progress: {{ pto_usage_pct }}%;"></span>
-          </div>
-          <div class="pto-progress__legend">
-            <span>{{ pto_used }} used</span>
-            <span>{{ pto_entitlement }} allocated</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="pto-signal-grid">
-        <div class="pto-signal">
-          <span class="pto-signal__icon pto-tone--amber">
-            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6l4 2m5-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </span>
-          <div><strong>{{ pending_requests_count }}</strong><span>Pending requests</span></div>
-        </div>
-        <div class="pto-signal">
-          <span class="pto-signal__icon pto-tone--blue">
-            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m6-1.13a4 4 0 10-4-4 4 4 0 004 4z"/></svg>
-          </span>
-          <div><strong>{{ team_on_leave_count }}</strong><span>Team away today</span></div>
-        </div>
-        <div class="pto-signal">
-          <span class="pto-signal__icon pto-tone--green">
-            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/></svg>
-          </span>
-          <div><strong>{{ coverage_active_count }}</strong><span>Active handovers</span></div>
-        </div>
-        <div class="pto-signal">
-          <span class="pto-signal__icon {% if upcoming_conflicts_count %}pto-tone--rose{% else %}pto-tone--green{% endif %}">
-            <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-          </span>
-          <div><strong>{{ upcoming_conflicts_count }}</strong><span>Schedule conflicts</span></div>
-        </div>
-      </div>
-    </article>
-
-    <aside class="pto-panel pto-readiness edify-surface">
-      <div class="pto-readiness__top">
-        <div>
-          <span class="pto-kicker">Operational readiness</span>
-          {% if upcoming_conflicts_count > 0 %}
-          <h2>Resolve coverage risk</h2>
-          {% elif pending_requests_count > 0 %}
-          <h2>Approval in progress</h2>
-          {% else %}
-          <h2>Ready for time away</h2>
-          {% endif %}
-        </div>
-        <span class="pto-health-badge {% if upcoming_conflicts_count > 0 %}is-risk{% elif pending_requests_count > 0 %}is-pending{% else %}is-ready{% endif %}">
-          {% if upcoming_conflicts_count > 0 %}Action needed{% elif pending_requests_count > 0 %}In review{% else %}Healthy{% endif %}
-        </span>
-      </div>
-
-      <div class="pto-readiness__body">
-        <div class="pto-availability-ring" style="--pto-availability: {{ avg_team_availability }}%;" role="img" aria-label="{{ avg_team_availability }} percent of the team is available">
-          <div><strong>{{ avg_team_availability }}%</strong><span>available</span></div>
-        </div>
-        <div class="pto-readiness__facts">
-          <div><span>Team capacity</span><strong>{{ team_available_count }} of {{ team_total_count }}</strong></div>
-          <div><span>Cover assignments</span><strong>{{ coverage_active_count }} active</strong></div>
-          <div><span>Calendar health</span><strong>{% if upcoming_conflicts_count %}{{ upcoming_conflicts_count }} at risk{% else %}Clear{% endif %}</strong></div>
-        </div>
-      </div>
-
-      <div class="pto-recommendation">
-        <span class="pto-recommendation__icon">
-          <svg aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 00-3 11.2V17h6v-2.8A6 6 0 0012 3zm-2 18h4"/></svg>
-        </span>
-        <div>
-          <span>Recommended next step</span>
-          {% if upcoming_conflicts_count > 0 %}
-          <p>Resolve {{ upcoming_conflicts_count }} planning conflict{{ upcoming_conflicts_count|pluralize }} before confirming time away.</p>
-          <a href="/planning">Review planning conflicts →</a>
-          {% elif pending_requests_count > 0 %}
-          <p>Your request is safely in the approval flow. Coverage will activate after approval.</p>
-          <a href="#my-requests">Track request status →</a>
-          {% else %}
-          <p>Your balance, calendar, and team capacity are ready for a new leave request.</p>
-          <button type="button" @click="openRequestDrawer()">Start a request →</button>
-          {% endif %}
-        </div>
-      </div>
-    </aside>
-  </section>
+  {% kpi_strip %}
+    {% kpi_metric %}{% kpi_label %}Days available{% endkpi_label %}{{ pto_remaining }}{% kpi_helper %}{{ pto_used }} used · {{ pto_entitlement }} allocated{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Pending requests{% endkpi_label %}{{ pending_requests_count }}{% kpi_helper %}Awaiting approval{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Team away today{% endkpi_label %}{{ team_on_leave_count }}{% kpi_helper %}{{ team_available_count }} of {{ team_total_count }} available{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Active handovers{% endkpi_label %}{{ coverage_active_count }}{% kpi_helper %}Cover assignments{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Schedule conflicts{% endkpi_label %}{{ upcoming_conflicts_count }}{% kpi_helper %}{% if upcoming_conflicts_count %}Review before requesting leave{% else %}Calendar clear{% endif %}{% endkpi_helper %}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Team availability{% endkpi_label %}{{ avg_team_availability }}%{% kpi_helper %}Current team capacity{% endkpi_helper %}{% endkpi_metric %}
+  {% endkpi_strip %}
+  <details class="analytics-context-disclosure">
+    <summary>Leave guidance and policy</summary>
+    <p>{% if upcoming_conflicts_count %}Resolve planning conflicts before confirming time away.{% elif pending_requests_count %}Your request is in the approval flow. Coverage activates after approval.{% else %}Review your balance and team calendar before requesting leave.{% endif %} <a href="{% url 'frontend:leave_policies' %}">View leave policy</a></p>
+  </details>
 
   <div class="pto-workspace">
     <div class="pto-primary-column">
@@ -175,26 +85,11 @@
           <span class="pto-panel__helper">Remaining / annual allocation</span>
         </div>
 
-        <div class="pto-balance-grid">
+        {% kpi_strip %}
           {% for b in balances %}
-          <article class="pto-balance-tile">
-            <div class="pto-balance-tile__top">
-              <span>{{ b.label }}</span>
-              <span class="pto-balance-tile__status {% if b.remaining == 0 %}is-empty{% elif b.remaining < 5 %}is-low{% else %}is-healthy{% endif %}">
-                {% if b.remaining == 0 %}Depleted{% elif b.remaining < 5 %}Low{% else %}Available{% endif %}
-              </span>
-            </div>
-            <div class="pto-balance-tile__value">
-              <strong>{{ b.remaining }}</strong>
-              <span>of {{ b.entitlement }} days</span>
-            </div>
-            <div class="pto-progress pto-progress--compact" role="progressbar" aria-label="{{ b.label }} used" aria-valuemin="0" aria-valuemax="{{ b.entitlement }}" aria-valuenow="{{ b.used }}">
-              <span style="--pto-progress: {{ b.pct_used }}%;"></span>
-            </div>
-            <p>{{ b.used }} used{% if b.pending %} · {{ b.pending }} pending{% endif %}</p>
-          </article>
+            {% kpi_metric %}{% kpi_label %}{{ b.label }}{% endkpi_label %}{{ b.remaining }}{% kpi_helper %}of {{ b.entitlement }} days · {{ b.used }} used{% if b.pending %} · {{ b.pending }} pending{% endif %} · {% if b.remaining == 0 %}Depleted{% elif b.remaining < 5 %}Low{% else %}Available{% endif %}{% endkpi_helper %}{% endkpi_metric %}
           {% endfor %}
-        </div>
+        {% endkpi_strip %}
       </section>
 
       <section class="pto-panel edify-surface" id="my-requests" aria-labelledby="my-requests-title">

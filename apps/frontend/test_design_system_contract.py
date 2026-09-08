@@ -567,9 +567,9 @@ class DesignSystemContractTest(SimpleTestCase):
         tokens = (ROOT / "static/css/design-system.css").read_text()
         contract = (ROOT / "static/css/consistency.css").read_text()
 
-        self.assertIn("--edify-text-body-weight:    400", tokens)
-        self.assertIn("--edify-text-label-weight:   500", tokens)
-        self.assertIn("--edify-text-micro-weight:   400", tokens)
+        self.assertIn("--edify-text-body-weight:    450", tokens)
+        self.assertIn("--edify-text-label-weight:   550", tokens)
+        self.assertIn("--edify-text-micro-weight:   450", tokens)
         for tracking_token in (
             "--edify-text-display-tracking: normal",
             "--edify-text-heading-tracking: normal",

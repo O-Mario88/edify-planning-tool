@@ -126,5 +126,35 @@
   "source_tests": {
     "covered": 211,
     "note": "210 passed initially; standalone offline landmark assertion corrected and full design-contract module passed on rerun with project workflow tests."
+  },
+  "follow_up_2026_09_09": {
+    "shared_strip_surfaces": 142,
+    "responsive_browser_tests_passed": 3,
+    "engines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ],
+    "login_widths": [
+      390,
+      768,
+      1048,
+      1290,
+      1600
+    ],
+    "workspace_widths": [
+      390,
+      768,
+      1048,
+      1600
+    ],
+    "themes": [
+      "Light",
+      "Dark",
+      "Edify Blue"
+    ],
+    "source_tests_covered": 154,
+    "source_verification": "153 passed initially; updated expected light canvas and reran all 72 design-quality tests successfully.",
+    "subtle_text_canvas_contrast": 4.738
   }
 }

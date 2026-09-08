@@ -1247,3 +1247,31 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
     margin: 0 1.5rem 1.5rem;
   }
 }
+
+/* Login retains its blue brand treatment in every workspace theme. */
+.login-brand .context-metrics {
+  --kpi-surface: #07549a;
+  --kpi-text: #fff;
+  --kpi-muted: #d4e7fa;
+  --kpi-divider: #4e89bb;
+  --kpi-positive: #85f4ce;
+  --kpi-warning: #ffdc83;
+  --kpi-negative: #ffc0c6;
+  margin-top: 16px;
+}
+.login-brand .context-metrics__navigation-row { color: #d4e7fa; }
+@media (max-width: 70rem) {
+  .login-brand .context-metrics__navigation-row { color: #174b79; }
+}
+
+.login-brand .impact-card__title, .login-brand .impact-item h3 { color: #fff !important; }
+@media (max-width: 70rem) {
+  .login-shell { align-content: center; gap: 16px; }
+  .login-access { min-height: auto; padding: 24px 12px 0; background: transparent; }
+  .login-card { min-height: auto; max-width: 36rem; }
+  .login-brand__content > .context-metrics {
+    width: calc(100% - 24px);
+    max-width: 36rem;
+    margin: 0 auto 24px;
+  }
+}

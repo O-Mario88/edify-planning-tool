@@ -273,7 +273,7 @@
   --edify-table-divider: #d2dbe0;
   --edify-table-header-divider: #c4cfd5;
   /* Neutral canvas keeps operational data and white KPI strips distinct. */
-  --edify-bg: #f4f6f8;
+  --edify-bg: #e8eef5;
   /* Sticky table cells need an opaque background while adjacent data scrolls. */
   --edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);
   --edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);
@@ -382,21 +382,21 @@
      they inherit the same type, colour, focus and numeric rhythm. */
   --edify-table-cell-padding-block: 0.5rem;
   --edify-table-cell-padding-inline: 0.75rem;
-  /* Headers may be bold; the body never is. Cells sit at regular (400) per
+  /* Headers may be bold; the body never is. Cells sit at a clear medium-light (450) weight in
      the reference grid, and the identity column separates itself with ink
      colour plus a half-step of medium — not a second bold rail. */
   --edify-table-header-weight: 600;
-  --edify-table-body-weight: 400;
-  --edify-table-identity-weight: 500;
+  --edify-table-body-weight: 450;
+  --edify-table-identity-weight: 550;
   --edify-table-action-size: 2rem;
   --edify-table-radius: 0.5rem;
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
   --edify-text-title-weight:   600;
-  --edify-text-body-weight:    400;
-  --edify-text-label-weight:   500;
-  --edify-text-micro-weight:   400;
+  --edify-text-body-weight:    450;
+  --edify-text-label-weight:   550;
+  --edify-text-micro-weight:   450;
 
   --edify-text-display-leading: 1.15;
   --edify-text-heading-leading: 1.3;
@@ -434,7 +434,7 @@
   --edify-font-display: 700 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-display-family);
   --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
   --edify-font-title:   600 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
-  --edify-font-body:    400 var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
+  --edify-font-body:    var(--edify-text-body-weight) var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
   --edify-font-label:   500 var(--edify-text-label-size)/var(--edify-text-label-leading) var(--edify-font-sans);
   --edify-font-micro:   600 var(--edify-text-micro-size)/var(--edify-text-micro-leading) var(--edify-font-sans);
 
