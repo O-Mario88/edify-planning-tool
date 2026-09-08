@@ -75,6 +75,34 @@ class BuildEndpointTest(TestCase):
         with patch.dict(os.environ, {"GIT_COMMIT": "a" * 40}):
             self.assertEqual(build_info()["commit"], "a" * 40)
 
+    def test_runtime_commit_replaces_the_image_unknown_marker(self):
+        """A literal image marker must not hide exact platform provenance."""
+        build_info.cache_clear()
+        self.addCleanup(build_info.cache_clear)
+        with tempfile.TemporaryDirectory() as directory:
+            info_path = Path(directory) / "build-info.json"
+            info_path.write_text(
+                json.dumps(
+                    {
+                        "commit": UNKNOWN,
+                        "release": UNKNOWN,
+                        "build_time": "2026-09-08T00:00:00+00:00",
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with (
+                patch("apps.core.build_info.BUILD_INFO_PATH", info_path),
+                patch.dict(
+                    os.environ,
+                    {"GIT_COMMIT": "c" * 40, "RELEASE": "release-c"},
+                ),
+            ):
+                info = build_info()
+
+        self.assertEqual(info["commit"], "c" * 40)
+        self.assertEqual(info["release"], "release-c")
+
     def test_it_uses_the_platform_runtime_release_when_the_image_has_none(self):
         """Runtime provenance must identify the production release too."""
         build_info.cache_clear()

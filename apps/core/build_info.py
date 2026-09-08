@@ -73,25 +73,36 @@ def build_info() -> dict:
         logger.error("Could not read build info: %s", exc)
         data = {}
 
+    # The Dockerfile writer records the literal marker when App Platform does
+    # not expose build arguments. Treat that marker as absent so the exact
+    # runtime bindable can supply provenance instead of being shadowed by a
+    # truthy string that carries no information.
+    image_commit = data.get("commit")
+    if image_commit == UNKNOWN:
+        image_commit = None
+    image_release = data.get("release")
+    if image_release == UNKNOWN:
+        image_release = None
+
     return {
         # App Platform exposes the source revision as a runtime bindable for
         # services. Dockerfile builds cannot consume bindables as build args,
         # so prefer the image value when a CI builder supplied one and fall
         # back to the platform's exact deployed commit at runtime.
-        "commit": data.get("commit") or os.environ.get("GIT_COMMIT") or UNKNOWN,
+        "commit": image_commit or os.environ.get("GIT_COMMIT") or UNKNOWN,
         # DigitalOcean's Dockerfile builder does not forward build arguments,
         # but App Platform can inject an immutable release identifier at
         # runtime.  Prefer the image value when CI supplied it, then fall back
         # to that platform value instead of publishing a misleading
         # ``unknown`` release for the production deployment.
         "release": (
-            data.get("release")
+            image_release
             or os.environ.get("RELEASE")
             # Existing App Platform apps keep their control-plane spec until
             # it is updated explicitly; repository app-spec edits alone do
             # not add a new runtime variable. GIT_COMMIT is already injected
             # in production and is the immutable release identity we want.
-            or data.get("commit")
+            or image_commit
             or os.environ.get("GIT_COMMIT")
             or UNKNOWN
         ),
