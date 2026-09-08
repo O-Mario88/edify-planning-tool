@@ -1250,10 +1250,10 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
 
 /* Login retains its blue brand treatment in every workspace theme. */
 .login-brand .context-metrics {
-  --kpi-surface: #07549a;
+  --kpi-surface: var(--login-navy-950);
   --kpi-text: #fff;
   --kpi-muted: #d4e7fa;
-  --kpi-divider: #4e89bb;
+  --kpi-divider: #38556f;
   --kpi-positive: #85f4ce;
   --kpi-warning: #ffdc83;
   --kpi-negative: #ffc0c6;
