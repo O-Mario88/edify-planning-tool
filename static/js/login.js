@@ -24,6 +24,8 @@
           "aria-label",
           (showing ? "Show " : "Hide ") + fieldLabel
         );
+        var textLabel = toggle.querySelector("[data-password-label]");
+        if (textLabel) textLabel.textContent = showing ? "Show" : "Hide";
         if (eyeOpen && eyeClosed) {
           eyeOpen.classList.toggle("password-toggle__hidden", !showing);
           eyeClosed.classList.toggle("password-toggle__hidden", showing);
