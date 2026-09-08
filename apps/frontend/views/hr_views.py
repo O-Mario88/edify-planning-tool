@@ -1504,8 +1504,15 @@ def offboarding_view(request):
     )
 
 
-@require_page_permission("hr_analytics")
-def hr_analytics_view(request):
+def _hr_analytics_workspace(request) -> dict:
+    """Everything the HR analytics register shows, for both of its homes.
+
+    /hr-analytics is the HR module's own page with its breadcrumb and module
+    chrome; the Analytics workspace reaches the same register at
+    /analytics/people, so crossing into People does not change the page around
+    the reader (owner, 2026-09-05).
+    """
+
     profiles = _search_profiles(
         _profile_scope(request), (request.GET.get("q") or "").strip()
     )
@@ -1538,8 +1545,7 @@ def hr_analytics_view(request):
     compliance = EmployeeComplianceRecord.objects.filter(
         staff_id__in=profiles.values("id")
     )
-    return _render_workspace(
-        request,
+    return dict(
         title="HR Analytics & Workforce Insights",
         description="Live workforce, review, and compliance signals computed from current operational records. Unsupported demographic and salary-correlation claims are intentionally excluded.",
         metrics=[
@@ -1565,6 +1571,43 @@ def hr_analytics_view(request):
         rows=rows,
         primary_action={"label": "Review HR Dashboard", "href": "/dashboard"},
         empty_title="No workforce analytics in this scope",
+    )
+
+
+@require_page_permission("hr_analytics")
+def hr_analytics_view(request):
+    return _render_workspace(request, **_hr_analytics_workspace(request))
+
+
+@require_page_permission("hr_analytics")
+def people_analytics_section_view(request):
+    """People Analytics as a tab of the one Analytics page."""
+
+    workspace = _hr_analytics_workspace(request)
+    paginator = Paginator(workspace["rows"], 25)
+    page = paginator.get_page(request.GET.get("page") or 1)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/people_analytics.html",
+        {
+            **workspace,
+            "page_obj": page,
+            "rows": page.object_list,
+            "search": (request.GET.get("q") or "").strip(),
+        },
+        section_key="people",
+        panel_title=workspace["title"],
+        frame={
+            "question": (
+                "Where are workforce capacity, review workload or compliance "
+                "gaps most likely to constrain delivery?"
+            ),
+            "evidence": "Live workforce, review and compliance records",
+            "freshness": "Current operational scope",
+            "confidence": "No unsupported demographic inference",
+        },
     )
 
 

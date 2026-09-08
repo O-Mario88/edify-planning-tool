@@ -41,3 +41,7 @@ pip-audit==2.10.1
 # which is exactly why it is pinned here: a test that imports a package nobody
 # declared starts failing the day an unrelated dependency drops it.
 PyYAML==6.0.3
+
+# Browser-side audits under tools/audit (long tasks, overflow, UI consistency).
+# Dev only; run `python -m playwright install chromium` once after installing.
+playwright==1.62.0

@@ -1,6 +1,6 @@
 from apps.core.htmx_errors import error_fragment, notice_fragment
 from apps.core.redirects import local_redirect
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.permissions import (
     has_permission,
@@ -443,6 +443,16 @@ def complete_drawer_view(request, activity_id):
             )
     act = get_activity(a.id, request.user)
 
+    def attach_school_feedback():
+        feedback = getattr(a, "school_visit_feedback", None)
+        act["feedbackFinding"] = feedback.finding if feedback else ""
+        act["schoolImprovements"] = feedback.improvements if feedback else []
+        act["schoolImprovementsText"] = (
+            "\n".join(feedback.improvements) if feedback else ""
+        )
+
+    attach_school_feedback()
+
     # Auto-start completion if in scheduling status to unlock files/codes
     pair_needs_start = paired_school_visit is not None and (
         act.get("status")
@@ -470,6 +480,7 @@ def complete_drawer_view(request, activity_id):
             else:
                 start_completion(a.id, principal=request.user)
             act = get_activity(a.id, request.user)
+            attach_school_feedback()
         except Exception as e:
             return error_fragment(e, action="Error starting completion", status=400)
 
@@ -545,6 +556,9 @@ def complete_drawer_view(request, activity_id):
         "needs_netsuite_id": needs_netsuite_id,
         "disbursed_amount": disbursed_amount,
         "is_paired_in_school_training": paired_school_visit is not None,
+        "requires_school_feedback": (
+            paired_school_visit is not None or a.activity_type in VISIT_TYPES
+        ),
         "paired_school_visit": (
             get_activity(paired_school_visit.id, request.user)
             if paired_school_visit is not None
@@ -1093,6 +1107,28 @@ def complete_activity_action(request, activity_id):
             "leadersAttended": int(leaders) if leaders else 0,
             "otherParticipants": int(other) if other else 0,
             "attendedSchoolIds": attended_school_ids,
+            # What the officer saw -- stored by complete(); absent keys leave
+            # earlier entries alone, so only send what the form carried.
+            **{
+                key: request.POST.get(field, "").strip()
+                for key, field in (
+                    ("actualOutcome", "actual_outcome"),
+                    ("actualObservations", "actual_observations"),
+                    ("followUpNote", "follow_up_note"),
+                )
+                if field in request.POST
+            },
+            **(
+                {
+                    "feedbackFinding": request.POST.get("feedback_finding", "").strip(),
+                    "schoolImprovements": request.POST.get(
+                        "school_improvements", ""
+                    ).splitlines(),
+                }
+                if "feedback_finding" in request.POST
+                or "school_improvements" in request.POST
+                else {}
+            ),
         }
 
         try:

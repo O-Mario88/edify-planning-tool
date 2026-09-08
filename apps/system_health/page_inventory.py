@@ -17,6 +17,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from functools import lru_cache
 import hashlib
+import importlib
 import inspect
 import json
 from pathlib import Path
@@ -45,6 +46,15 @@ _TEMPLATE_RE = re.compile(
     r"(?:render|TemplateResponse)\(\s*[^,]+,\s*[\"']([^\"']+\.html)[\"']"
 )
 _TEMPLATE_NAME_RE = re.compile(r"template_name\s*=\s*[\"']([^\"']+\.html)[\"']")
+# `render(request, WORKSPACE_TEMPLATE, ...)` — a renderer that keeps its
+# template names in module constants instead of inline literals.
+_RENDER_CONST_RE = re.compile(
+    r"(?:render|TemplateResponse)\(\s*[^,]+,\s*([A-Z][A-Z0-9_]*)\s*[,)]"
+)
+_CALL_RE = re.compile(r"\b([a-z_][a-z0-9_]*)\s*\(")
+# Views commonly import a renderer inside the function body, to keep module
+# import order simple, so the name never reaches the module globals.
+_LOCAL_IMPORT_RE = re.compile(r"from\s+(apps[\w.]*)\s+import\s+([\w, ]+)")
 _TITLE_BLOCK_RE = re.compile(
     r"{%\s*block\s+title\s*%}(.*?){%\s*endblock\s*%}", re.DOTALL
 )
@@ -292,19 +302,79 @@ def _template_sources(template_names: Iterable[str]) -> tuple[str, list[str]]:
     return "\n".join(chunks), existing
 
 
+def _templates_rendered_by(func) -> list[str]:
+    """The templates one function renders, literals and module constants."""
+
+    try:
+        source = inspect.getsource(func)
+    except (OSError, TypeError):
+        return []
+    names = list(_TEMPLATE_RE.findall(source))
+    names.extend(_TEMPLATE_NAME_RE.findall(source))
+    module_globals = getattr(func, "__globals__", {})
+    for constant in _RENDER_CONST_RE.findall(source):
+        value = module_globals.get(constant)
+        if isinstance(value, str) and value.endswith(".html"):
+            names.append(value)
+    return names
+
+
 def _view_templates(callback) -> list[str]:
     original = inspect.unwrap(callback)
     names: list[str] = []
     template_name = getattr(original, "template_name", None)
     if isinstance(template_name, str):
         names.append(template_name)
+    names.extend(_templates_rendered_by(original))
+    try:
+        own_source = inspect.getsource(original)
+    except (OSError, TypeError):
+        own_source = ""
+    # A section view may name its own fragment (the shape its filter form asks
+    # for) AND hand the page to the workspace renderer; the page is what a
+    # reader opens, so the delegation is followed whenever it is there.
+    if names and "render_analytics_section(" not in own_source:
+        return list(dict.fromkeys(names))
+
+    # A view that hands rendering to a helper names no template of its own —
+    # the Analytics workspace picks its shell, its scope or its panel from the
+    # request, so every section route resolved to nothing here. A route with no
+    # template is filed as a non-visual action, which silently drops its
+    # responsive, theme and accessibility coverage from this manifest: the
+    # platform's main analytics page reported as if it had no interface.
+    #
+    # So follow the delegation, but only one hop and only when the view itself
+    # rendered nothing. That reaches a view whose whole body is `return
+    # helper(...)` without walking the call graph of every view that happens to
+    # call something.
     try:
         source = inspect.getsource(original)
     except (OSError, TypeError):
-        source = ""
-    names.extend(_TEMPLATE_RE.findall(source))
-    names.extend(_TEMPLATE_NAME_RE.findall(source))
-    return list(dict.fromkeys(names))
+        return []
+    scope = dict(getattr(original, "__globals__", {}))
+    for module_name, imported in _LOCAL_IMPORT_RE.findall(source):
+        try:
+            module = importlib.import_module(module_name)
+        except ImportError:
+            continue
+        for name in (part.strip() for part in imported.split(",")):
+            if name:
+                scope.setdefault(name, getattr(module, name, None))
+    for called in dict.fromkeys(_CALL_RE.findall(source)):
+        helper = scope.get(called)
+        if not callable(helper):
+            continue
+        if not getattr(helper, "__module__", "").startswith("apps."):
+            continue
+        names.extend(_templates_rendered_by(helper))
+    # The full page leads. A delegating renderer answers a plain GET with the
+    # page and an HTMX request with a fragment of it, and source order puts the
+    # fragment branches first — which would file the route as a partial and
+    # judge it by a fragment's anatomy instead of the page a person opens.
+    ordered = sorted(
+        dict.fromkeys(names), key=lambda name: name.startswith("partials/")
+    )
+    return ordered
 
 
 @lru_cache(maxsize=None)
@@ -572,7 +642,16 @@ def _surface_kind(route: str, route_name: str, templates: list[str]) -> str:
         return "action"
     if "drawer" in value:
         return "drawer"
-    if "partial" in value or any("/partials/" in f"/{t}" for t in templates):
+    # Page or partial follows the PRIMARY template — the one a plain GET
+    # returns. A route that also answers HTMX with fragments of itself is
+    # still a page, and calling it a partial judged it by a fragment's
+    # anatomy: the Analytics workspace reported no page header and no cards
+    # because the header and cards live in the page it was no longer
+    # credited with rendering.
+    if (
+        "partial" in f"{route} {route_name}".lower()
+        or "/partials/" in f"/{templates[0]}"
+    ):
         return "partial"
     if any(word in value for word in ("export", "download", "print")):
         return "export"

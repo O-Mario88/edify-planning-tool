@@ -73,18 +73,32 @@ def ssa_performance_view(request):
             tone="danger",
         ),
     ]
-    template = (
-        "partials/ssa/performance_workspace.html"
-        if request.headers.get("HX-Request") == "true"
-        else "pages/ssa/performance.html"
-    )
-    return render(
+    context = {
+        "dashboard": dashboard,
+        "ssa_kpi_items": ssa_kpi_items,
+        "can_add_ssa": _may_upload_ssa(request),
+    }
+    # This section's own filter form swaps its workspace and nothing else. It
+    # has to name its target: a tab click and a scope change are HX requests
+    # too, and they ask for different shapes.
+    if request.headers.get("HX-Target") == "ssa-performance-workspace":
+        return render(request, "partials/ssa/performance_workspace.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
         request,
-        template,
-        {
-            "dashboard": dashboard,
-            "ssa_kpi_items": ssa_kpi_items,
-            "can_add_ssa": _may_upload_ssa(request),
+        "partials/analytics/panels/ssa_performance.html",
+        context,
+        section_key="ssa",
+        panel_title="SSA Performance",
+        frame={
+            "question": (
+                "Which schools and interventions are furthest from the SSA "
+                "standard, and where should support be concentrated?"
+            ),
+            "evidence": "Confirmed SSA assessments across eight interventions",
+            "freshness": "Current filters and confirmed cycles",
+            "confidence": "Coverage-qualified",
         },
     )
 

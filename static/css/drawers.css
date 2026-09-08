@@ -2098,3 +2098,381 @@
     padding-inline: 1rem;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   THE FLOATING DRAWER (owner, 2026-09-06, from a reference screenshot)
+
+   One drawer shape for the whole platform: a card that floats clear of every
+   edge, centred in the viewport, over a page that visibly steps back. Not a
+   rail welded to the right edge, and not a sheet dropped from the top — the
+   owner asked for the floating card and for it to be centred always, so
+   `type-center`, `type-right_top` and the bare default all resolve to the
+   same object. Only the geometry and the finish come from the reference; the
+   contents of each drawer are its own.
+
+   Why it is last in the file: four earlier passes each re-declared
+   `.drawer-surface` with `!important`, so anything that has to win over all
+   of them either matches their weight or comes after. This block does both,
+   and it is the one place to change the drawer's shape from now on.
+   ════════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* The gap between the card and the viewport. It is what makes the drawer
+     read as laid ON the page rather than as a second screen. */
+  --edify-drawer-inset: clamp(1rem, 4vh, 3rem);
+  --edify-drawer-radius: 1.5rem;
+  /* Two shadows, not one: a wide soft cast that separates the card from the
+     dimmed page, and a tight one under the edge that keeps it crisp. */
+  --edify-drawer-shadow:
+    0 2.5rem 5rem -1.5rem rgb(15 23 42 / 0.30),
+    0 1rem 2rem -1rem rgb(15 23 42 / 0.18),
+    0 0 0 1px rgb(15 23 42 / 0.06);
+  --edify-drawer-scrim: rgb(15 23 42 / 0.32);
+}
+
+/* ── The page behind steps back ──────────────────────────────────────────
+   The reference does not simply darken the page — it drains its colour and
+   pushes it away, so the eye has one place to be. The scrim alone reads as a
+   grey sheet over a still-busy page; the scale and the desaturation are what
+   make it read as depth.
+
+   Applied to the nodes drawer-background.js already takes out of play, which
+   are the siblings of #drawer-container — so the drawer itself is never
+   inside the transformed subtree. That matters: `filter` and `transform`
+   make an element the containing block for its fixed descendants, and a
+   drawer caught in one would be positioned against the shell instead of the
+   viewport and would inherit the dimming meant for the page. */
+.edify-drawer-recede {
+  transform: scale(0.988);
+  transform-origin: 50% 42%;
+  filter: saturate(0.45) brightness(0.97);
+  transition:
+    transform 420ms cubic-bezier(0.16, 1, 0.3, 1),
+    filter 420ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Every backdrop, including the typed variants. `type-right_top` used to opt
+   out of the scrim entirely (`background-color: transparent !important`) so it
+   could read as a light popover — but there is one drawer now, so there is one
+   backdrop. The longhands are deliberate: `background-color` to outrank that
+   rule's own longhand, and `background-image: none` to clear the accent
+   radial-gradient an earlier pass painted into the shorthand. */
+.drawer-backdrop,
+.drawer-backdrop.type-center,
+.drawer-backdrop.type-right_top,
+.edify-popup-dialog__backdrop {
+  background-color: var(--edify-drawer-scrim) !important;
+  background-image: none !important;
+  /* A light blur only. The page is already desaturated and scaled back, and
+     blurring it hard as well turns the backdrop into fog and costs a
+     full-viewport filter pass on every frame of the transition. */
+  backdrop-filter: blur(3px) !important;
+  -webkit-backdrop-filter: blur(3px) !important;
+}
+
+/* ── The card ──────────────────────────────────────────────────────────────
+   `inset: 0` with `margin: auto` on a fixed element centres it on both axes
+   whatever its size, so the drawer stays centred as its content grows, as the
+   window resizes, and on a phone — without a transform to hold it there. That
+   frees the transform for the entrance, which is why the animation below can
+   be a plain rise-and-settle rather than a correction against a translate. */
+.drawer-surface,
+.drawer-surface.type-center,
+.drawer-surface.type-right_top {
+  position: fixed !important;
+  inset: 0 !important;
+  margin: auto !important;
+  inline-size: calc(100% - (var(--edify-drawer-inset) * 2)) !important;
+  max-inline-size: var(--drawer-width-md) !important;
+  block-size: fit-content !important;
+  max-block-size: calc(100dvh - (var(--edify-drawer-inset) * 2)) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  /* The CARD scrolls, not the body inside it.
+
+     With the body as the scroller its scrollbar gutter sat inside the card, so
+     the action shelf stopped ~15px short of the right edge and left a pale
+     strip beside it. Scrolling the card puts the scrollbar on the card's own
+     edge, inside the radius, and lets the header and the shelf span the full
+     width. Both pin with `sticky`, which resolves against the nearest
+     scrolling ancestor — this element — rather than against their parent, so
+     neither has to be moved out of the markup each drawer already renders. */
+  overflow: hidden auto !important;
+  overscroll-behavior: contain !important;
+  border: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
+  border-radius: var(--edify-drawer-radius) !important;
+  background: var(--edify-surface-raised) !important;
+  box-shadow: var(--edify-drawer-shadow) !important;
+  opacity: 0;
+  transform: translateY(0.75rem) scale(0.97) !important;
+  transition:
+    transform 340ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 240ms ease-out !important;
+}
+
+.drawer-surface.active,
+.drawer-surface.type-center.active,
+.drawer-surface.type-right_top.active {
+  opacity: 1;
+  transform: none !important;
+}
+
+/* The sizes stay as they were — only the shape is shared. */
+.drawer-surface.size-sm { max-inline-size: var(--drawer-width-sm) !important; }
+.drawer-surface.size-md { max-inline-size: var(--drawer-width-md) !important; }
+.drawer-surface.size-lg { max-inline-size: var(--drawer-width-lg) !important; }
+.drawer-surface.size-xl { max-inline-size: var(--drawer-width-xl) !important; }
+.drawer-surface.size-workspace {
+  max-inline-size: var(--drawer-width-workspace) !important;
+}
+
+/* The legacy popup bridge is the same object, so it gets the same finish. */
+.edify-popup-dialog {
+  padding: var(--edify-drawer-inset) !important;
+}
+
+.edify-popup-dialog__surface {
+  max-block-size: calc(100dvh - (var(--edify-drawer-inset) * 2)) !important;
+  border: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
+  border-radius: var(--edify-drawer-radius) !important;
+  box-shadow: var(--edify-drawer-shadow) !important;
+}
+
+/* Header and footer hold their ground while the content scrolls, so a long
+   form never takes the title or the primary action off the screen with it. */
+.drawer-surface .drawer-header,
+.drawer-surface .drawer-footer {
+  flex: 0 0 auto;
+}
+
+.drawer-surface .drawer-body {
+  flex: 1 1 auto;
+  min-block-size: 0;
+}
+
+/* Corners: the header and footer sit on the card's edge, so they carry its
+   radius or they square it off from the inside. */
+.drawer-surface .drawer-header {
+  border-start-start-radius: calc(var(--edify-drawer-radius) - 1px);
+  border-start-end-radius: calc(var(--edify-drawer-radius) - 1px);
+}
+
+.drawer-surface .drawer-footer {
+  border-end-start-radius: calc(var(--edify-drawer-radius) - 1px);
+  border-end-end-radius: calc(var(--edify-drawer-radius) - 1px);
+}
+
+@media (max-width: 47.99rem) {
+  :root {
+    /* Tighter on a phone, so the card still clears the edges without giving
+       the content away — but it stays a floating, centred card rather than
+       becoming a full-screen page. */
+    --edify-drawer-inset: 0.75rem;
+    --edify-drawer-radius: 1.125rem;
+  }
+
+  .drawer-surface,
+  .drawer-surface.type-center,
+  .drawer-surface.type-right_top {
+    max-inline-size: none !important;
+    /* svh, not dvh: the mobile browser's chrome reappearing on scroll must
+       not resize the card out from under a form. */
+    max-block-size: calc(100svh - (var(--edify-drawer-inset) * 2)) !important;
+    transform: translateY(1rem) scale(0.985) !important;
+  }
+
+  .drawer-surface.active,
+  .drawer-surface.type-center.active,
+  .drawer-surface.type-right_top.active {
+    transform: none !important;
+  }
+
+  /* The page behind barely moves on a small screen — at this size the scale
+     reads as a glitch rather than as depth. */
+  .edify-drawer-recede {
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .edify-drawer-recede,
+  .drawer-surface,
+  .drawer-surface.type-center,
+  .drawer-surface.type-right_top {
+    transition-duration: 1ms !important;
+  }
+
+  .drawer-surface,
+  .drawer-surface.type-center,
+  .drawer-surface.type-right_top {
+    transform: none !important;
+  }
+
+  .edify-drawer-recede {
+    transform: none;
+  }
+}
+
+/* ── The card's own furniture ──────────────────────────────────────────────
+   The reference drawer is ONE white surface: a large left-aligned title, a
+   quiet close in the corner, and content below with nothing between them. The
+   platform's header had grown its own filled background, a bordered icon
+   mark, an eyebrow line and a centred title — four pieces of chrome above the
+   first thing the reader came for.
+
+   The close button matters most: it was positioned at `top: -3.65rem`, i.e.
+   floating ABOVE the panel, which worked while the surface let content
+   overflow. This card clips to its corners, so a close button outside it is
+   not just misplaced, it is invisible — and a drawer with no visible close is
+   a trap. It sits inside the card now, in the corner, where the reference
+   puts it. */
+.drawer-surface .drawer-header {
+  position: sticky !important;
+  inset-block-start: 0 !important;
+  z-index: 3;
+  background: var(--edify-surface-raised) !important;
+  min-block-size: 0 !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 0 !important;
+  padding: 1.6rem 4rem 0.9rem 1.75rem !important;
+  /* Opaque, because it is sticky: transparent chrome over a scrolling body
+     lets the content run through the title. The hairline appears only once
+     there is something scrolled under it. */
+  border-bottom: 1px solid transparent !important;
+}
+
+/* The eyebrow and the icon mark are chrome, not information. */
+.drawer-surface .drawer-header__mark,
+.drawer-surface .drawer-header__eyebrow {
+  display: none !important;
+}
+
+.drawer-surface .drawer-header__identity {
+  display: flex !important;
+  justify-content: flex-start !important;
+  inline-size: 100%;
+  min-inline-size: 0;
+}
+
+.drawer-surface .drawer-header__copy,
+.drawer-surface .drawer-header__title-row {
+  text-align: start !important;
+  justify-content: flex-start !important;
+}
+
+.drawer-surface .drawer-header__title-row h3,
+.drawer-surface .drawer-header h2 {
+  font-size: clamp(1.25rem, 1.1rem + 0.6vw, 1.6rem) !important;
+  font-weight: 700 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.2 !important;
+  color: var(--edify-text) !important;
+}
+
+.drawer-surface .drawer-header__subtitle {
+  margin-block-start: 0.4rem !important;
+  color: var(--edify-text-muted) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+}
+
+.drawer-surface .drawer-close-btn {
+  position: absolute !important;
+  inset-block-start: 1.25rem !important;
+  inset-inline-end: 1.25rem !important;
+  inset-inline-start: auto !important;
+  z-index: 2 !important;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  inline-size: 2.25rem !important;
+  block-size: 2.25rem !important;
+  padding: 0 !important;
+  color: var(--edify-text-muted) !important;
+  border: 0 !important;
+  border-radius: 999px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  transform: none !important;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.drawer-surface .drawer-close-btn:hover {
+  color: var(--edify-text) !important;
+  background: var(--edify-surface-muted) !important;
+}
+
+.drawer-surface .drawer-close-btn:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+
+.drawer-surface .drawer-body {
+  /* No bottom padding: the footer below supplies it, and a footer that has to
+     clear the body's own padding cannot sit on the card's edge. A drawer
+     without a footer gets that space back on the next rule. */
+  padding: 0.25rem 1.75rem 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  scrollbar-gutter: auto !important;
+}
+
+.drawer-surface .drawer-body:not(:has(.drawer-footer)) {
+  padding-block-end: 1.75rem !important;
+}
+
+/* The action shelf.
+
+   Each drawer renders its own footer inside the body block, so it is a child
+   of the scrolling element rather than a sibling of it — it cannot be pinned
+   by flex. `sticky` does the same job from where it actually sits: it stays on
+   the card's bottom edge while the body scrolls under it, and on a short
+   drawer it simply ends the content. The negative inline margins pull it back
+   out to the card's edges, which the body's padding had inset it from. */
+.drawer-surface .drawer-footer {
+  position: sticky !important;
+  inset-block-end: 0 !important;
+  z-index: 1;
+  margin: 1.25rem -1.75rem 0 !important;
+  padding: 1rem 1.75rem !important;
+  border-top: 1px solid color-mix(in srgb, var(--edify-border) 70%, transparent) !important;
+  /* Opaque: content scrolling beneath it must not show through. */
+  background: var(--edify-surface-muted) !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+}
+
+@media (max-width: 47.99rem) {
+  .drawer-surface .drawer-header {
+    padding: 1.25rem 3.5rem 0.75rem 1.25rem !important;
+  }
+
+  .drawer-surface .drawer-close-btn {
+    inset-block-start: 0.9rem !important;
+    inset-inline-end: 0.9rem !important;
+    inline-size: 2.5rem !important;
+    block-size: 2.5rem !important;
+  }
+
+  .drawer-surface .drawer-body {
+    padding: 0.25rem 1.25rem 0 !important;
+  }
+
+  .drawer-surface .drawer-body:not(:has(.drawer-footer)) {
+    padding-block-end: 1.25rem !important;
+  }
+
+  .drawer-surface .drawer-footer {
+    margin: 1rem -1.25rem 0 !important;
+    padding: 0.9rem 1.25rem !important;
+  }
+
+  /* No grab handle. The little pill at the top belonged to the sheet this
+     used to be — something you dragged from an edge. A centred card is not
+     dragged, so the handle promises a gesture that does nothing. */
+  .drawer-surface::after {
+    display: none !important;
+    content: none !important;
+  }
+}

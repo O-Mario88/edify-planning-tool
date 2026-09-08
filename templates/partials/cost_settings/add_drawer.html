@@ -1,0 +1,55 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Adding a cost is a drawer opened by a button (owner, 2026-09-07: "every add
+new… is a button").
+
+It was a `<summary>` inside a `<details>` that unfolded a four-column form
+above the rate table — a disclosure triangle reading as a heading, and a form
+that pushed the whole register down the page when it opened. Creating a record
+is an action, so it gets the platform's action surface.
+{% endcomment %}
+
+{% block drawer_title %}Add new cost{% endblock %}
+{% block drawer_subtitle %}Every cost is linked to one activity, and every schedule of that activity carries it as a line{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/cost-settings/add" class="space-y-4">
+  {% csrf_token %}
+  <input type="hidden" name="fy" value="{{ selected_fy }}">
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Activity this cost belongs to
+    <select name="catalogue_item" required class="h-9 px-3 text-[13px] font-semibold">
+      <option value="">Choose an activity</option>
+      {% for activity in linkable_activities %}<option value="{{ activity.id }}">{{ activity.display_name }}</option>{% endfor %}
+    </select>
+  </label>
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Cost name
+    <input name="label" required maxlength="120" placeholder="e.g. Diagnostic kit" class="h-9 px-3 text-[13px] font-semibold">
+  </label>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Country operational (UGX)
+      <input name="unit_cost" type="number" min="0" step="1" required class="h-9 px-3 text-[13px] font-semibold">
+    </label>
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Minimum viable (UGX)
+      <input name="approved_minimum" type="number" min="0" step="1" placeholder="Not set" class="h-9 px-3 text-[13px] font-semibold">
+    </label>
+  </div>
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Why this cost is being added
+    <input name="reason" required maxlength="512" placeholder="The reason is kept on the cost's record" class="h-9 px-3 text-[13px] font-medium">
+  </label>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Add cost</button>
+  </div>
+</form>
+{% endblock %}

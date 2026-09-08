@@ -1,10 +1,12 @@
+{% comment %}The six stages of the weekly money chain, with the selected week's
+request lit at its current stage. `weekly_stage` is the index the request has
+reached (0 = planning, 5 = accountability); `weekly_stage_state` is "current",
+"returned" or "done" for that index. Without a request only the plan stage is
+current.{% endcomment %}
 <nav aria-label="Weekly advance workflow" class="rounded-control border border-slate-200 edify-surface p-3">
-  <ol class="flex flex-wrap items-center gap-2 text-xs text-slate-600">
-    <li>Weekly plan</li><li aria-hidden="true">→</li>
-    <li>Advance request</li><li aria-hidden="true">→</li>
-    <li>Supervisor approval</li><li aria-hidden="true">→</li>
-    <li>Accountant disbursement</li><li aria-hidden="true">→</li>
-    <li>Bank-message confirmation</li><li aria-hidden="true">→</li>
-    <li>Accountability</li>
+  <ol class="fund-stepper">
+    {% for label in weekly_stage_labels %}
+    <li class="fund-stepper__step{% if forloop.counter0 < weekly_stage %} fund-stepper__step--done{% elif forloop.counter0 == weekly_stage %} fund-stepper__step--{{ weekly_stage_state|default:'current' }}{% endif %}"{% if forloop.counter0 == weekly_stage %} aria-current="step"{% endif %}>{{ label }}</li>
+    {% endfor %}
   </ol>
 </nav>

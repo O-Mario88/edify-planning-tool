@@ -2,6 +2,7 @@
 {% load frontend_filters %}
 
 {% block title %}Partner Activities — Edify{% endblock %}
+{% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="partner-workspace edify-page-canvas" data-mobile-family="directory">
@@ -108,13 +109,27 @@
     <aside class="partner-workspace__aside">
       <section class="partner-aside-card partner-aside-card--breakdown">
         <h2>Scheduling Status Breakdown</h2>
-        <div class="partner-status-breakdown">
-          <div class="partner-status-breakdown__donut" style="background: conic-gradient(var(--brand-success) 0 {{ status_breakdown.scheduled_pct }}%, var(--brand-warn) {{ status_breakdown.scheduled_pct }}% {{ status_breakdown.scheduled_pct|add:status_breakdown.pending_pct }}%, var(--brand-danger) {{ status_breakdown.scheduled_pct|add:status_breakdown.pending_pct }}% 100%);"><span><strong>{{ kpis.scheduled|add:kpis.pending }}</strong>Total</span></div>
-          <dl>
-            <div><dt><i class="partner-dot partner-dot--success"></i>Scheduled</dt><dd>{{ status_breakdown.scheduled }} ({{ status_breakdown.scheduled_pct }}%)</dd></div>
-            <div><dt><i class="partner-dot partner-dot--warning"></i>Yet to Schedule</dt><dd>{{ status_breakdown.pending }} ({{ status_breakdown.pending_pct }}%)</dd></div>
-            <div><dt><i class="partner-dot partner-dot--danger"></i>Overdue</dt><dd>{{ status_breakdown.overdue }} ({{ status_breakdown.overdue_pct }}%)</dd></div>
-          </dl>
+        {% comment %}Scheduled, yet to schedule and overdue as a ring through the chart
+        system's donut form (2026-09-05), in place of a conic gradient: the total
+        in the centre, each state in its semantic colour, the legend carrying
+        count and share.{% endcomment %}
+        <div class="partner-status-breakdown"
+             x-data="{
+               chart: null,
+               init() { this.$nextTick(() => this.draw()); },
+               destroy() { if (this.chart) this.chart.destroy(); },
+               draw() {
+                 if (!window.EdifyChartSystem || !this.$refs.el) return;
+                 const cfg = window.EdifyChartSystem.donut('Activities');
+                 cfg.chart.height = 200;
+                 cfg.series = [{{ status_breakdown.scheduled|default:0 }}, {{ status_breakdown.pending|default:0 }}, {{ status_breakdown.overdue|default:0 }}];
+                 cfg.labels = ['Scheduled', 'Yet to schedule', 'Overdue'];
+                 cfg.colors = ['var(--edify-success)', 'var(--edify-warn, var(--edify-warning))', 'var(--edify-danger)'];
+                 cfg.legend.position = 'bottom';
+                 this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+               }
+             }">
+          <div x-ref="el" role="img" aria-label="Scheduling status: {{ status_breakdown.scheduled }} scheduled, {{ status_breakdown.pending }} yet to schedule, {{ status_breakdown.overdue }} overdue"></div>
         </div>
       </section>
 

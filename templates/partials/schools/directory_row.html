@@ -41,7 +41,7 @@
           <div><dt>District:</dt><dd>{{ school.district }}</dd></div>
           <div><dt>Shipping Address:</dt><dd>{{ school.shipping_address }}</dd></div>
           <div><dt>School Type:</dt><dd>{{ school.school_type }}</dd></div>
-          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{{ school.cluster_name }}{% else %}Not assigned{% endif %}</dd></div>
+          <div><dt>Cluster:</dt><dd>{% if school.cluster_name and school.cluster_name != "—" %}{% if school.cluster_id %}<a href="/clusters/{{ school.cluster_id }}" class="hover:underline">{{ school.cluster_name }}</a>{% else %}{{ school.cluster_name }}{% endif %}{% else %}Not assigned{% endif %}</dd></div>
           <div><dt>Enrollment:</dt><dd>{{ school.enrolment }}</dd></div>
           <div><dt>Phone:</dt><dd>{{ school.phone }}</dd></div>
           <div><dt>Primary Contact:</dt><dd>{{ school.school_contact }}</dd></div>

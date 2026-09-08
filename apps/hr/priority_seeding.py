@@ -20,7 +20,12 @@ from .models import (
     StrategicPriorityLevel,
     StrategicPriorityStatus,
 )
-from .priority_seed import ACTIVITY_MAPPINGS, PRIORITIES, ROLE_APPLICABILITY
+from .priority_seed import (
+    ACTIVITY_MAPPINGS,
+    ACTIVITY_RULE_OPTIONS,
+    PRIORITIES,
+    ROLE_APPLICABILITY,
+)
 
 
 @transaction.atomic
@@ -145,6 +150,7 @@ def seed_fy2027_priorities(*, actor_id="system", dry_run=False):
             if _existing is not None:
                 milestone = _existing
                 report["milestones"] += 1
+                _link_activity_rules(_existing, milestone_code, source_text, report)
                 continue
             milestone, _ = PriorityMilestone.objects.update_or_create(
                 priority=priority,
@@ -199,50 +205,77 @@ def seed_fy2027_priorities(*, actor_id="system", dry_run=False):
             report["milestones"] += 1
             if not defined:
                 report["needsDefinition"] += 1
-            mapped_codes = ACTIVITY_MAPPINGS.get(milestone_code, [])
-            for stable_code in mapped_codes:
-                item = ActivityCatalogueItem.objects.filter(
-                    stable_code=stable_code
-                ).first()
-                if item is None:
-                    ActivityCatalogueReviewQueue.objects.get_or_create(
-                        review_kind="missing_activity_catalogue_mapping",
-                        source_model="hr.PriorityMilestone",
-                        source_record_id=milestone.id,
-                        defaults={
-                            "source_value": source_text,
-                            "candidate_codes": [stable_code],
-                        },
-                    )
-                    continue
-                MilestoneActivityRule.objects.get_or_create(
-                    milestone=milestone,
-                    catalogue_item=item,
-                    project=None,
-                    defaults={
-                        "counting_basis": "UNIQUE_SCHOOLS_SUPPORTED",
-                        "target_intervention": (
-                            item.intervention_mappings.filter(
-                                active=True, intervention__isnull=False
-                            )
-                            .values_list("intervention", flat=True)
-                            .first()
-                            or ""
-                        ),
-                        "minimum_completion_state": "ia_verified",
-                        "weight": 1,
-                        "active": True,
-                    },
-                )
-                report["rules"] += 1
-
-            if milestone_code in {"IDE", "DC_TRAINING"}:
-                ActivityCatalogueReviewQueue.objects.get_or_create(
-                    review_kind="missing_activity_catalogue_mapping",
-                    source_model="hr.PriorityMilestone",
-                    source_record_id=milestone.id,
-                    defaults={"source_value": source_text, "candidate_codes": []},
-                )
+            _link_activity_rules(milestone, milestone_code, source_text, report)
     if dry_run:
         transaction.set_rollback(True)
     return report
+
+
+def _link_activity_rules(milestone, milestone_code, source_text, report) -> None:
+    """Link a milestone to the catalogue items that count towards it.
+
+    Additive and idempotent (get_or_create on milestone × item), so it runs
+    for a milestone the seeder created moments ago AND for one it left alone
+    because it already existed. The create-only guard above it protects a
+    milestone's own fields — its status, its target — not its links to the
+    plan; re-running the seeder after ACTIVITY_MAPPINGS grew used to add
+    nothing (owner, 2026-09-07: "add activity rules to the milestones so the
+    bars actually fill").
+    """
+    mapped_codes = ACTIVITY_MAPPINGS.get(milestone_code, [])
+    for stable_code in mapped_codes:
+        item = ActivityCatalogueItem.objects.filter(stable_code=stable_code).first()
+        if item is None:
+            ActivityCatalogueReviewQueue.objects.get_or_create(
+                review_kind="missing_activity_catalogue_mapping",
+                source_model="hr.PriorityMilestone",
+                source_record_id=milestone.id,
+                defaults={
+                    "source_value": source_text,
+                    "candidate_codes": [stable_code],
+                },
+            )
+            continue
+        # A shape-of-work milestone (see ACTIVITY_RULE_OPTIONS) names
+        # its own basis and school family and carries NO intervention
+        # gate; a curriculum milestone keeps the item's intervention.
+        options = ACTIVITY_RULE_OPTIONS.get(milestone_code)
+        if options is not None:
+            defaults = {
+                "counting_basis": options["counting_basis"],
+                "school_type": options.get("school_type", ""),
+                "required_delivery_method": options.get("delivery_method", ""),
+                "target_intervention": "",
+            }
+        else:
+            defaults = {
+                "counting_basis": "UNIQUE_SCHOOLS_SUPPORTED",
+                "target_intervention": (
+                    item.intervention_mappings.filter(
+                        active=True, intervention__isnull=False
+                    )
+                    .values_list("intervention", flat=True)
+                    .first()
+                    or ""
+                ),
+            }
+        MilestoneActivityRule.objects.get_or_create(
+            milestone=milestone,
+            catalogue_item=item,
+            project=None,
+            defaults={
+                **defaults,
+                "minimum_completion_state": "ia_verified",
+                "weight": 1,
+                "active": True,
+            },
+        )
+        report["rules"] += 1
+
+    if milestone_code in {"IDE"}:
+        ActivityCatalogueReviewQueue.objects.get_or_create(
+            review_kind="missing_activity_catalogue_mapping",
+            source_model="hr.PriorityMilestone",
+            source_record_id=milestone.id,
+            defaults={"source_value": source_text, "candidate_codes": []},
+        )

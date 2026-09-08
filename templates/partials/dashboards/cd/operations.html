@@ -1,0 +1,470 @@
+{% load frontend_filters %}
+{% comment %}
+Operations view: what the director works from — performance overview, the
+Program Leads table, verification, risk, field intelligence and actions.
+{% endcomment %}
+<div class="space-y-4" data-cd-operations-view>
+  {# ── Country Performance Overview | Regional Performance + Approvals ── #}
+  {% comment %}
+  Packing columns, not a plain row: the performance chart is far taller than
+  the regional list beside it, and the blank that left was sitting directly
+  above the fold. The fund-approval queue moves up into it — a Country
+  Director's own decisions belong beside the numbers they act on, not four
+  bands below them — so the column fills with the page's most actionable
+  card instead of with air.
+  {% endcomment %}
+  <div class="edify-pack-cols grid grid-cols-1 lg:grid-cols-5 gap-5">
+    <div class="edify-pack-col lg:col-span-3">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3"
+         x-data="{
+           chart: null,
+           initChart() {
+             if (this.chart) { this.chart.destroy(); }
+             const el = document.querySelector('#cdDashPerfChart');
+             if (!el) return;
+             /* Shared dual-axis form — bar geometry, line weight, markers, grid,
+                legend and tooltip all come from the platform preset so this reads
+                as the same chart as its PL and RVP twins. */
+             const cfg = window.EdifyChartSystem.mixedTrend(4);
+             cfg.series = [
+               { name: 'Planned Activities', type: 'column', data: {{ country_performance.planned|escape }} },
+               { name: 'Completed Activities', type: 'column', data: {{ country_performance.completed|escape }} },
+               { name: 'Verified Activities', type: 'column', data: {{ country_performance.verified|escape }} },
+               { name: 'Target Achievement %', type: 'line', data: {{ country_performance.pct|escape }} }
+             ];
+             {% if country_performance.prior_completed %}
+             cfg.series.push({ name: 'Completed FY{{ country_performance.prior_fy }}', type: 'line', data: {{ country_performance.prior_completed|escape }} });
+             {% endif %}
+             cfg.chart.height = 265;
+             cfg.labels = {{ country_performance.labels|escape }};
+             cfg.xaxis.type = 'category';
+             cfg.yaxis = [
+               window.EdifyChartSystem.countAxis('Activities', { seriesName: 'Planned Activities' }),
+               { seriesName: 'Planned Activities', show: false },
+               { seriesName: 'Planned Activities', show: false },
+               window.EdifyChartSystem.rateAxis()
+             ];
+             this.chart = window.EdifyChartSystem.renderDetached(el, cfg);
+           }
+         }" x-init="$nextTick(() => initChart())">
+      <div>
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Country Performance Overview</h2>
+        <p class="edify-text-caption text-slate-400 font-medium mt-0.5">Are plans converting into verified execution? · FY {{ fy }}</p>
+      </div>
+      {% if not country_performance.has_target %}
+      <p class="edify-text-caption text-amber-600 font-semibold bg-amber-50 border border-amber-100 rounded-surface px-2.5 py-1 inline-block">Achievement line shows 0 — no country targets set yet.</p>
+      {% endif %}
+      <div class="h-[265px] w-full" id="cdDashPerfChart"></div>
+    </div>
+    </div>
+
+    <div class="edify-pack-col lg:col-span-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
+      <div class="flex items-center justify-between">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+          <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="map" %}</span>Regional Performance
+        </h2>
+        <span class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Achievement</span>
+      </div>
+      <div class="space-y-3 pt-1 flex-1">
+        {% for r in regional_performance.rows %}
+        <div>
+          <div class="flex items-center justify-between edify-text-caption">
+            <span class="font-semibold text-slate-700"><span class="text-slate-400 font-bold mr-1.5">{{ r.rank }}</span>{{ r.name }}</span>
+            <span class="font-bold text-slate-800 tabular-nums">{{ r.achievement }}%</span>
+          </div>
+          <div class="h-[9px] bg-slate-100 rounded-pill overflow-hidden mt-1">
+            <div class="h-full rounded-pill {% if r.tone == 'success' %}bg-teal-500{% elif r.tone == 'warning' %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.achievement }}%"></div>
+          </div>
+          <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">{{ r.schools|intcomma }} schools · {{ r.completed|intcomma }} of {{ r.planned|intcomma }} done · {{ r.no_ssa|intcomma }} no SSA</p>
+        </div>
+        {% empty %}
+        {% include "components/empty_state.html" with title="No regional data yet" message="Regions appear as schools are uploaded and assigned." compact="true" %}
+        {% endfor %}
+      </div>
+      {% if regional_performance.rows %}
+      <div class="flex items-center justify-between pt-2 border-t border-slate-50 edify-text-caption font-bold">
+        <span class="text-slate-400 uppercase tracking-wider">National Average</span>
+        <span class="text-slate-700 tabular-nums">{{ regional_performance.national }}%</span>
+      </div>
+      {% endif %}
+    </div>
+
+      <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+          <div class="flex items-center justify-between">
+            <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+              <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="currency" %}</span>Fund Approval &amp; Finance Snapshot
+            </h2>
+            <span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill {% if finance_snapshot.pending_count %}bg-amber-100 text-amber-700{% else %}bg-emerald-50 text-emerald-600{% endif %}">{{ finance_snapshot.pending_count }} pending</span>
+          </div>
+          {% if finance_snapshot.pending_rows %}
+          <div class="divide-y divide-slate-50">
+            {% for r in finance_snapshot.pending_rows %}
+            <div class="py-2.5 flex items-center justify-between gap-2">
+              <div class="min-w-0">
+                <p class="text-[12px] font-semibold text-slate-700 truncate">{{ r.team }}</p>
+                <p class="edify-text-caption text-slate-400">{{ r.covered }} activities covered · {{ r.stage }}</p>
+              </div>
+              <div class="flex items-center gap-2 shrink-0">
+                <span class="edify-text-caption font-bold text-slate-700 tabular-nums">{{ r.amount }}</span>
+                <button hx-post="/dashboard/cd-approve?id={{ r.id }}&fy={{ fy }}"
+                        hx-target="#cd-dashboard-body" hx-swap="innerHTML"
+                        class="h-7 px-2.5 rounded-control bg-emerald-600 hover:bg-emerald-700 text-white edify-text-caption font-bold transition-colors">Approve</button>
+                <form hx-post="/dashboard/cd-return?id={{ r.id }}&fy={{ fy }}" hx-target="#cd-dashboard-body" hx-swap="innerHTML" class="m-0 inline-flex items-center gap-1" @submit.stop>
+                  {% csrf_token %}
+                  <input type="text" name="reason" required placeholder="Return reason" aria-label="Reason for returning this request" class="h-7 w-40 px-2 rounded-control border border-slate-200 edify-text-caption bg-slate-50 focus:outline-none">
+                  <button type="submit" class="h-7 px-2.5 rounded-control border border-rose-200 text-rose-700 edify-text-caption font-bold hover:bg-rose-50 transition-colors">Return</button>
+                </form>
+                <a href="/fund-approvals" class="h-7 px-2.5 rounded-control border border-slate-200 text-slate-600 edify-text-caption font-bold inline-flex items-center hover:bg-slate-50">Review</a>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="flex items-center gap-2 py-2">
+            <span class="h-7 w-7 rounded-pill bg-emerald-50 text-emerald-500 flex items-center justify-center shrink-0">
+              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+            </span>
+            <p class="edify-text-caption font-semibold text-slate-500">No weekly fund requests awaiting CD approval.</p>
+          </div>
+          {% endif %}
+
+          <div class="rounded-surface border border-violet-100 bg-violet-50/50 p-3 flex items-center justify-between">
+            <div class="min-w-0">
+              <p class="edify-text-caption font-bold uppercase tracking-wider text-violet-500">General Budget{% if budget_stage.month %} · {{ budget_stage.month }}{% endif %}</p>
+              <p class="text-[13px] font-bold text-slate-800 mt-0.5 truncate">{{ budget_stage.label }}{% if budget_stage.amount %} <span class="edify-text-caption text-slate-500 font-semibold">· {{ budget_stage.amount }}</span>{% endif %}</p>
+              <p class="edify-text-caption font-semibold text-slate-500">{{ budget_stage.helper }} · Accountant disburses after approval</p>
+            </div>
+            <a href="/country-budget/" class="h-8 px-3 rounded-control bg-violet-600 hover:bg-violet-700 text-white edify-text-caption font-bold inline-flex items-center transition-colors shrink-0">Open</a>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  {% comment %}
+  Country Program Leads Performance — a full row of its own. This shared three
+  fifths of a five-column row with the finance snapshot, so a ten-column table
+  lived in roughly 620px and scrolled horizontally at every screen size. Ten
+  columns need the width.
+  {% endcomment %}
+  <div class="edify-card-row grid grid-cols-1 gap-5">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <div class="flex items-center justify-between">
+        <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+          <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="users" %}</span>Country Program Leads Performance
+        </h2>
+        <a href="/analytics/country-director" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Full analytics →</a>
+      </div>
+      <div class="overflow-x-auto -mx-1">
+        <table class="edify-performance-table w-full min-w-[1120px] edify-text-caption">
+          <thead>
+            <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+              <th class="text-left font-bold py-1.5 pl-1">Lead</th>
+              <th class="text-left font-bold py-1.5">Region</th>
+              <th class="text-right font-bold py-1.5">Target %</th>
+              {% comment %}One column per target area, in the owner's order (2026-09-05):
+              MSCS, School Visit, Training, SSA Completed, Cluster Meetings. The list is
+              PL_AREA_COLUMNS in the dashboard service; headers and cells both walk it,
+              so a cell can never sit under the wrong header.{% endcomment %}
+              {% for key, label in pl_performance.area_columns %}
+              <th class="text-right font-bold py-1.5 whitespace-nowrap">{{ label }}</th>
+              {% endfor %}
+              <th class="text-right font-bold py-1.5">Staff</th>
+              <th class="text-right font-bold py-1.5">Planned</th>
+              <th class="text-right font-bold py-1.5">Verified</th>
+              <th class="text-right font-bold py-1.5">SF Pending</th>
+              <th class="text-right font-bold py-1.5">Backlog</th>
+              <th class="text-right font-bold py-1.5 pr-1">Risk</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-50">
+            {% for r in pl_performance.rows %}
+            <tr>
+              <td class="text-left font-semibold text-slate-700 py-2 pl-1" title="{{ r.name }}">{{ r.name }}</td>
+              <td class="text-left text-slate-500 py-2" title="{{ r.region }}">{{ r.region }}</td>
+              <td class="text-right py-2">
+                <span class="inline-flex items-center gap-1.5 justify-end">
+                  <span class="hidden sm:block w-14 h-[6px] bg-slate-100 rounded-pill overflow-hidden"><span class="block h-full rounded-pill {% if r.target_pct >= 70 %}bg-teal-500{% elif r.target_pct >= 55 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ r.target_pct }}%"></span></span>
+                  <span class="font-bold text-slate-700 tabular-nums">{{ r.target_pct }}%</span>
+                </span>
+              </td>
+              {% for key, label in pl_performance.area_columns %}
+              {% with area=r.areas_by_key|get_item:key %}
+              <td class="text-right tabular-nums py-2 whitespace-nowrap">
+                {% if area and area.pct is not None %}
+                  <span title="{{ label }}: {{ area.pct }}% ({{ area.achieved }} of {{ area.target }})"
+                        class="font-bold {% if area.tone == 'success' %}text-emerald-600{% elif area.tone == 'info' %}text-sky-600{% elif area.tone == 'warning' %}text-amber-600{% elif area.tone == 'danger' %}text-rose-600{% else %}text-slate-500{% endif %}">{{ area.pct }}%</span>
+                {% else %}
+                  <span class="text-slate-400" title="{{ label }}: no target agreed">—</span>
+                {% endif %}
+              </td>
+              {% endwith %}
+              {% endfor %}
+              <td class="text-right tabular-nums text-slate-500 py-2">{{ r.staff }}</td>
+              <td class="text-right tabular-nums text-slate-500 py-2">{{ r.planned|intcomma }}</td>
+              <td class="text-right tabular-nums text-slate-500 py-2">{{ r.verified|intcomma }}</td>
+              <td class="text-right tabular-nums py-2 {% if r.sf_pending %}text-amber-600 font-bold{% else %}text-slate-500{% endif %}">{{ r.sf_pending|intcomma }}</td>
+              <td class="text-right tabular-nums text-slate-500 py-2">{{ r.backlog }}</td>
+              <td class="text-right py-2 pr-1">
+                <span class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-pill edify-text-caption font-bold whitespace-nowrap
+                  {% if r.risk_tone == 'danger' %}bg-rose-50 text-rose-700{% elif r.risk_tone == 'warning' %}bg-orange-50 text-orange-700{% elif r.risk_tone == 'amber' %}bg-amber-50 text-amber-700{% else %}bg-emerald-50 text-emerald-700{% endif %}">
+                  <span class="h-1.5 w-1.5 rounded-pill {% if r.risk_tone == 'danger' %}bg-rose-500{% elif r.risk_tone == 'warning' %}bg-orange-500{% elif r.risk_tone == 'amber' %}bg-amber-500{% else %}bg-emerald-500{% endif %}"></span>{{ r.risk }}
+                </span>
+              </td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="14" class="text-center text-[12px] text-slate-400 font-medium py-6">No PL portfolios yet.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <p class="edify-text-caption text-slate-400 font-medium">Area results pool the validated performance of each lead's supervised CCEOs: visits, meetings, trainings, SSA and MSCS. A dash means no CCEO under that lead has agreed a target for that area in this period. Select the lead in Analytics for individual CCEO detail.</p>
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5">
+    <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+      <div class="min-w-0">
+        <div class="flex items-center gap-3">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Funded Not Completed</h2>
+          <span class="text-[20px] font-bold text-slate-800 tabular-nums leading-none">{{ finance_snapshot.funded_not_completed.amount }}</span>
+        </div>
+        <p class="edify-text-caption font-semibold text-slate-400 mt-1">across {{ finance_snapshot.funded_not_completed.activities|intcomma }} funded activities</p>
+      </div>
+      <div class="edify-metric-panel grid grid-cols-3 lg:min-w-[360px]">
+        <div class="edify-metric edify-metric--count-first" {% if finance_snapshot.funded_not_completed.overdue %}data-tone="danger"{% endif %}>
+          <p class="edify-metric__label">Overdue</p>
+          <p class="edify-metric__value">{{ finance_snapshot.funded_not_completed.overdue }}</p>
+        </div>
+        <div class="edify-metric edify-metric--count-first" {% if finance_snapshot.funded_not_completed.in_progress %}data-tone="warning"{% endif %}>
+          <p class="edify-metric__label">In progress</p>
+          <p class="edify-metric__value">{{ finance_snapshot.funded_not_completed.in_progress }}</p>
+        </div>
+        <div class="edify-metric edify-metric--count-first">
+          <p class="edify-metric__label">Not started</p>
+          <p class="edify-metric__value">{{ finance_snapshot.funded_not_completed.not_started }}</p>
+        </div>
+      </div>
+      {% comment %}
+      /disbursements is the Accountant's action queue and the Country Director
+      cannot open it — the link bounced him back to this page. He is not meant
+      to disburse, so the fix is not to grant it: it is to send him where the
+      same money is his to look at. Funded-not-completed is a fund-request
+      question for him, and that page he owns.
+      {% endcomment %}
+      <a href="/fund-requests/weekly" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">Open fund requests →</a>
+    </div>
+  </div>
+
+  {# ── Verification & Data Quality ── #}
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="cd-verification-heading" data-cd-verification>
+    <div class="flex items-center justify-between gap-3">
+      <h2 id="cd-verification-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+        <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="shield" %}</span>Verification &amp; Data Quality
+      </h2>
+      <a href="/ia/dashboard/" class="edify-text-caption font-bold edify-primary-text hover:underline">Open verification analytics →</a>
+    </div>
+    <div class="edify-metric-panel grid grid-cols-2 lg:grid-cols-4">
+      <div class="edify-metric">
+        <p class="edify-metric__label">Awaiting verification</p>
+        <p class="edify-metric__value">{{ verification.waiting|intcomma }}</p>
+        <p class="edify-metric__meta">{{ verification.buckets.under_7 }} under 7 days · {{ verification.buckets.d7_30 }} at 7–30 · <span class="{% if verification.buckets.over_30 %}edify-status-text{% endif %}" {% if verification.buckets.over_30 %}data-edify-tone="danger"{% endif %}>{{ verification.buckets.over_30 }} over 30</span></p>
+      </div>
+      <div class="edify-metric">
+        <p class="edify-metric__label">Verified this week</p>
+        <p class="edify-metric__value">{{ verification.verified_week|intcomma }}</p>
+        <p class="edify-metric__meta">by Impact Assessment</p>
+      </div>
+      <div class="edify-metric" {% if verification.returned %}data-tone="warning"{% endif %}>
+        <p class="edify-metric__label">Returned by IA</p>
+        <p class="edify-metric__value">{{ verification.returned|intcomma }}</p>
+        <p class="edify-metric__meta">awaiting correction</p>
+      </div>
+      <div class="edify-metric" {% if verification.critical %}data-tone="danger"{% endif %}>
+        <p class="edify-metric__label">Data quality checks</p>
+        <p class="edify-metric__value">{{ verification.critical }} <span class="edify-metric__unit">critical</span> · {{ verification.warnings }} <span class="edify-metric__unit">warnings</span></p>
+        <p class="edify-metric__meta">across the country's school, cluster and staff data</p>
+      </div>
+    </div>
+    {% if verification.checks %}
+    <ul class="divide-y edify-border text-[12px]">
+      {% for c in verification.checks %}
+      <li class="py-2 flex items-start justify-between gap-3">
+        <div class="min-w-0">
+          <p class="font-semibold text-slate-800"><span class="edify-status-badge {% if c.severity == 'critical' %}danger{% else %}warning{% endif %} mr-1.5">{{ c.severity|title }}</span>{{ c.current_state }}</p>
+          <p class="edify-text-caption edify-text-muted">{{ c.component }} · owner: {{ c.owner }} · {{ c.recommended_action }}</p>
+        </div>
+      </li>
+      {% endfor %}
+    </ul>
+    {% else %}
+    <p class="edify-text-caption edify-text-muted">No open data-quality checks.</p>
+    {% endif %}
+  </section>
+
+  {# ── Operational Risk & Backlog | School & SSA Intelligence ───────────── #}
+  <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5" data-cd-school-ssa-cards>
+    <div data-cd-risk-priority-row class="contents">
+    <div data-cd-operational-risk-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+        <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="warning" %}</span>Operational Risk &amp; Backlog
+      </h2>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+        {% for c in operational_risk %}
+        <a href="{{ c.link }}" class="rounded-surface p-3 border transition-all hover:shadow-sm
+           {% if c.tone == 'danger' %}bg-rose-50 border-rose-100
+           {% elif c.tone == 'warning' %}bg-amber-50 border-amber-100
+           {% elif c.tone == 'violet' %}bg-violet-50 border-violet-100
+           {% else %}bg-sky-50 border-sky-100{% endif %}">
+          <span class="h-6 w-6 rounded-pill flex items-center justify-center
+            {% if c.tone == 'danger' %}bg-rose-100 text-rose-600{% elif c.tone == 'warning' %}bg-amber-100 text-amber-600{% elif c.tone == 'violet' %}bg-violet-100 text-violet-600{% else %}bg-sky-100 text-sky-600{% endif %}">
+            {% include "partials/analytics/pl/_icon.html" with name=c.icon %}
+          </span>
+          <p class="text-[15px] font-bold tabular-nums mt-1.5 {% if c.tone == 'danger' %}text-rose-700{% elif c.tone == 'warning' %}text-amber-700{% elif c.tone == 'violet' %}text-violet-700{% else %}text-sky-700{% endif %}">{{ c.count|intcomma }}</p>
+          <p class="edify-text-caption font-bold text-slate-600 leading-tight">{{ c.label }}</p>
+          <p class="edify-text-caption font-semibold text-slate-400">{{ c.helper }}</p>
+        </a>
+        {% endfor %}
+      </div>
+      <p class="edify-text-caption text-slate-400 font-medium">Every card drills to a filtered oversight list — follow-up routes to the responsible PL.</p>
+    </div>
+
+      <section data-cd-ssa-heatmap-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 flex flex-col gap-3">
+        <div>
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>Cluster SSA Heatmap
+          </h2>
+          <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Average score by intervention · 0–10 scale{% if ssa_matrix.latest_fy %} · verified FY {{ ssa_matrix.latest_fy }}{% endif %}</p>
+        </div>
+        <div class="overflow-x-auto -mx-1 flex-1">
+          <table class="w-full edify-text-caption border-separate border-spacing-y-1 min-w-[520px]">
+            <thead>
+              <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">
+                <th class="text-left font-bold pl-1 pb-0.5">Cluster</th>
+                {% for c in ssa_matrix.codes %}<th class="text-center font-bold pb-0.5 px-0.5">{{ c }}</th>{% endfor %}
+                <th class="text-center font-bold pb-0.5 pr-1">Overall</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in ssa_matrix.rows %}
+              <tr>
+                <td class="text-left font-semibold text-slate-700 pl-1 whitespace-nowrap max-w-[130px] truncate">{{ row.label }}</td>
+                {% for cell in row.cells %}
+                <td class="text-center font-bold tabular-nums px-0.5 py-1
+                  {% if cell.tone == 'success' %}bg-emerald-100 text-emerald-800
+                  {% elif cell.tone == 'lime' %}bg-lime-100 text-lime-800
+                  {% elif cell.tone == 'warning' %}bg-amber-100 text-amber-800
+                  {% elif cell.tone == 'danger' %}bg-rose-100 text-rose-800
+                  {% else %}bg-slate-50 text-slate-300{% endif %}">
+                  {% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}—{% endif %}
+                </td>
+                {% endfor %}
+                <td class="text-center font-extrabold tabular-nums px-0.5 py-1
+                  {% if row.overall_tone == 'success' %}bg-emerald-200 text-emerald-900
+                  {% elif row.overall_tone == 'lime' %}bg-lime-200 text-lime-900
+                  {% elif row.overall_tone == 'warning' %}bg-amber-200 text-amber-900
+                  {% elif row.overall_tone == 'danger' %}bg-rose-200 text-rose-900
+                  {% else %}bg-slate-100 text-slate-400{% endif %}">
+                  {% if row.overall is not None %}{{ row.overall|floatformat:1 }}{% else %}—{% endif %}
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="10" class="text-center edify-text-caption text-slate-400 font-medium py-4">No verified annual SSA cycle yet — scores appear after IA confirms assessments.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="edify-text-caption text-slate-400 font-medium">Scores use the verified SSA scale: Critical &lt;5.0 · Warning 5.0–6.9 · Improving 7.0–7.9 · Strong 8.0–10.</p>
+      </section>
+    </div>
+
+      <section data-cd-priority-schools-card class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+        <div class="flex items-center justify-between mb-1.5">
+          <h2 class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="warning" %}</span>Priority Schools Needing Urgent Attention
+          </h2>
+          <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">View all priority schools →</a>
+        </div>
+        <div class="overflow-x-auto -mx-1">
+          <table class="w-full edify-text-caption">
+            <thead>
+              <tr class="edify-text-caption font-bold uppercase tracking-wider text-slate-400 border-b border-slate-100">
+                <th class="text-left font-bold py-1.5 pl-1">School</th>
+                <th class="text-left font-bold py-1.5">District</th>
+                <th class="text-left font-bold py-1.5">Key Issues</th>
+                <th class="text-right font-bold py-1.5">Risk</th>
+                <th class="text-right font-bold py-1.5 pr-1">Action</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-50">
+              {% for p in priority_schools %}
+              <tr>
+                <td class="text-left font-semibold text-slate-700 py-2 pl-1 max-w-[170px] truncate">{{ p.school }}</td>
+                <td class="text-left text-slate-500 py-2 whitespace-nowrap">{{ p.region }}</td>
+                <td class="text-left py-2">
+                  {% for i in p.issues %}<span class="inline-block px-1.5 py-0.5 rounded-pill bg-slate-100 text-slate-600 edify-text-caption font-bold mr-1">{{ i }}</span>{% endfor %}
+                </td>
+                <td class="text-right py-2">
+                  <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-bold {% if p.risk_tone == 'danger' %}bg-rose-50 text-rose-700{% else %}bg-amber-50 text-amber-700{% endif %}">{{ p.risk }}</span>
+                </td>
+                <td class="text-right py-2 pr-1">
+                  <a href="/analytics/country-director/drilldown?drill=risk&issue=no_ssa&fy={{ fy }}" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Inspect</a>
+                </td>
+              </tr>
+              {% empty %}
+              <tr><td colspan="5" class="text-center text-[12px] text-slate-400 font-medium py-4">No schools with compounded workflow gaps — country is covered.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+  </div>
+
+  {# ── Country Field Intelligence (Field Debrief §11) ────────────────────── #}
+  <a href="/debriefs" class="block edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 hover:border-slate-200 transition-colors">
+    <div class="flex items-center justify-between">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Country Field Intelligence <span class="text-slate-400 font-medium edify-text-caption">(last {{ field_debrief_intel.days }} days)</span></h2>
+      <span class="edify-text-caption font-bold edify-primary-text">Open Field Debriefs →</span>
+    </div>
+    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+      <div class="rounded-surface bg-slate-50 py-2.5 text-center">
+        <p class="text-[16px] font-bold text-slate-800 tabular-nums">{{ field_debrief_intel.total }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400">Debriefs Filed</p>
+      </div>
+      <div class="rounded-surface py-2.5 text-center {% if field_debrief_intel.critical %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+        <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.critical }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400">Critical Risk</p>
+      </div>
+      <div class="rounded-surface py-2.5 text-center {% if field_debrief_intel.action_required %}bg-amber-50{% else %}bg-slate-50{% endif %}">
+        <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.action_required %}text-amber-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.action_required }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400">Action Required</p>
+      </div>
+      <div class="rounded-surface py-2.5 text-center {% if field_debrief_intel.escalated %}bg-rose-50{% else %}bg-slate-50{% endif %}">
+        <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-600{% else %}text-slate-800{% endif %}">{{ field_debrief_intel.escalated }}</p>
+        <p class="edify-text-caption font-semibold text-slate-400">Escalated</p>
+      </div>
+    </div>
+    {% if field_debrief_intel.top_challenge %}
+    <p class="edify-text-caption text-slate-400 font-medium">Most reported field challenge: <span class="font-bold text-slate-600">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }} debriefs)</p>
+    {% else %}
+    <p class="edify-text-caption text-slate-300 font-medium">No field debriefs filed in this window.</p>
+    {% endif %}
+  </a>
+
+  {# ── Quick Leadership Actions ──────────────────────────────────────────── #}
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Quick Leadership Actions</h2>
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
+      {% for q in quick_actions %}
+      <a href="{{ q.url }}" class="rounded-surface border border-slate-100 hover:border-slate-200 hover:shadow-sm p-3 flex flex-col gap-1.5 transition-all">
+        <span class="h-7 w-7 rounded-pill bg-teal-50 text-teal-600 flex items-center justify-center shrink-0">
+          {% include "partials/analytics/pl/_icon.html" with name=q.icon %}
+        </span>
+        <span class="edify-text-caption font-bold text-slate-700 leading-tight">{{ q.label }}</span>
+        <span class="edify-text-caption font-semibold text-slate-400 leading-tight">{{ q.helper }}</span>
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+
+</div>

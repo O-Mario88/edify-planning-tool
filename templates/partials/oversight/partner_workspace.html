@@ -50,7 +50,7 @@ schedule, and none edits a CCEO's record.
   {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Partner planning context" %}
 
   <div class="flex flex-wrap items-center justify-end gap-2">
-    <a class="btn h-9 inline-flex items-center"
+    <a class="btn h-8 inline-flex items-center"
        href="/partner-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% if partner and partner != 'all' %}&partner={{ partner }}{% endif %}">
       Export CSV
     </a>
@@ -105,8 +105,8 @@ schedule, and none edits a CCEO's record.
           <input id="review-note-{{ forloop.counter }}" name="note" type="text"
                  class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
                  placeholder="Add a note (optional)">
-          <button type="submit" name="decision" value="approve" class="btn btn-primary h-9">Approve</button>
-          <button type="submit" name="decision" value="reject" class="btn h-9">Reject</button>
+          <button type="submit" name="decision" value="approve" class="btn btn-primary h-8">Approve</button>
+          <button type="submit" name="decision" value="reject" class="btn h-8">Reject</button>
         </form>
         <div id="withdrawal-review-result-{{ forloop.counter }}"></div>
       </li>
@@ -121,7 +121,9 @@ schedule, and none edits a CCEO's record.
     <section class="card p-0 overflow-hidden" aria-labelledby="partner-{{ forloop.counter }}">
       <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
         <div class="min-w-0">
-          <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h2>
+          {% comment %}The organisation's name opens its profile (owner,
+          2026-09-07), the way a school's name does from every table.{% endcomment %}
+          <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{% if group.id %}<a href="/partners/{{ group.id }}" class="hover:underline">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}</h2>
           {% comment %}
           Who to call, carried over when the Partners directory merged into
           this page. Every control here asks somebody to act, and for a partner

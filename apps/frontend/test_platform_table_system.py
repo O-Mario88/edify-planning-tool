@@ -42,10 +42,32 @@ class PlatformResponsiveTableSystemTest(SimpleTestCase):
         self.assertIn("display: table-header-group !important", styles)
         self.assertIn("> tbody {", styles)
         self.assertIn("display: table-row-group !important", styles)
-        self.assertIn("> :is(thead, tbody, tfoot) > tr {", styles)
+        # Rows and cells carry a hidden-state guard. The forced display is
+        # `!important` so it beats card mode, which also beat the inline
+        # `display: none` Alpine writes to hide a conditional row — an empty
+        # state, a "show more" row or a detail row reappeared on phones.
+        guard = (
+            ':not([style*="display: none"])'
+            ':not([style*="display:none"])'
+            ":not([x-cloak])"
+        )
+        self.assertIn(f"> :is(thead, tbody, tfoot) > tr{guard} {{", styles)
         self.assertIn("display: table-row !important", styles)
-        self.assertIn("> :is(thead, tbody, tfoot) > tr > :is(th, td) {", styles)
+        self.assertIn(
+            f"> :is(thead, tbody, tfoot) > tr{guard} > :is(th, td){guard} {{",
+            styles,
+        )
         self.assertIn("display: table-cell !important", styles)
+
+        # The same guard on the other two layers that force table anatomy, or
+        # the leak simply moves to whichever one wins.
+        for path in (
+            "static/css/components/mobile-shell.css",
+            "static/css/components/mobile-patterns.css",
+        ):
+            layer = _read(path)
+            self.assertIn(f"> tr{guard}", layer, path)
+            self.assertIn(f"> :is(th, td){guard}", layer, path)
 
     def test_every_data_table_scrolls_and_wide_tables_get_readable_width_tiers(self):
         behavior = _read("static/js/micro-ux.js")

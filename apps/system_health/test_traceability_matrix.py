@@ -70,6 +70,11 @@ def load_matrix() -> dict:
 
 
 class TracerFixtures(TestCase):
+    # pytest does not honour ``load_tests`` below; this keeps the deliberately
+    # red fixture out of its discovery while unittest's loader still finds it
+    # by name for TracerControlsTest.
+    __test__ = False
+
     """Each of these does exactly one traceable thing, and says what."""
 
     def test_fixture_makes_one_http_request(self):

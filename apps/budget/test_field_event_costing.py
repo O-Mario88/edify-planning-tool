@@ -24,9 +24,8 @@ from apps.geography.models import District, Region
 
 RATES = {
     "primary_transport_per_day": 20_000,
-    "primary_lunch_per_day": 10_000,
+    "lunch_per_day": 15_000,
     "secondary_transport_per_day": 60_000,
-    "secondary_lunch_per_day": 15_000,
     "secondary_breakfast_per_day": 8_000,
     "secondary_overnight_dinner_per_day": 12_000,
     "secondary_accommodation_per_night": 80_000,
@@ -46,10 +45,8 @@ class FieldTravelCostingTest(TestCase):
             RATES,
         )
         lines = _line_map(cost)
-        self.assertEqual(
-            set(lines), {"primary_transport_per_day", "primary_lunch_per_day"}
-        )
-        self.assertEqual(cost.amount, 30_000)
+        self.assertEqual(set(lines), {"primary_transport_per_day", "lunch_per_day"})
+        self.assertEqual(cost.amount, 35_000)
 
     def test_day_trip_to_another_district_is_transport_and_lunch(self):
         cost = cost_for_activity(
@@ -63,7 +60,7 @@ class FieldTravelCostingTest(TestCase):
             set(lines),
             {
                 "secondary_transport_per_day",
-                "secondary_lunch_per_day",
+                "lunch_per_day",
                 "secondary_accommodation_per_night",
                 "secondary_overnight_dinner_per_day",
                 "secondary_breakfast_per_day",
@@ -79,7 +76,7 @@ class FieldTravelCostingTest(TestCase):
         lines = _line_map(cost)
         # Transport accrues per day away (owner rule, 2026-08-19).
         self.assertEqual(lines["secondary_transport_per_day"].qty, 3)
-        self.assertEqual(lines["secondary_lunch_per_day"].qty, 3)
+        self.assertEqual(lines["lunch_per_day"].qty, 3)
         self.assertEqual(lines["secondary_accommodation_per_night"].qty, 3)
         self.assertEqual(lines["secondary_overnight_dinner_per_day"].qty, 3)
         self.assertEqual(lines["secondary_breakfast_per_day"].qty, 3)
@@ -243,10 +240,13 @@ class FieldEventEndToEndTest(TestCase):
 
         lines = {l.cost_setting_key: l for l in activity.schedule_cost_lines.all()}
         self.assertEqual(lines["secondary_transport_per_day"].amount, 3 * 60_000)
-        self.assertEqual(lines["secondary_lunch_per_day"].amount, 3 * 15_000)
+        self.assertEqual(lines["lunch_per_day"].amount, 3 * 15_000)
         self.assertEqual(lines["secondary_accommodation_per_night"].amount, 3 * 80_000)
         self.assertEqual(lines["secondary_overnight_dinner_per_day"].amount, 3 * 12_000)
         self.assertEqual(lines["secondary_breakfast_per_day"].amount, 3 * 8_000)
+        # One Lunch row for every district, and no incidentals: the owner's
+        # 2026-09-06 catalogue has neither a second lunch nor an incidentals row.
+        self.assertNotIn("secondary_incidentals_per_day", lines)
         expected_total = 180_000 + 45_000 + 240_000 + 36_000 + 24_000
 
         # Money trail: the owner's weekly request materialised automatically.
@@ -281,7 +281,5 @@ class FieldEventEndToEndTest(TestCase):
         )
         activity = Activity.objects.get(id=result["id"])
         lines = {l.cost_setting_key: l for l in activity.schedule_cost_lines.all()}
-        self.assertEqual(
-            set(lines), {"primary_transport_per_day", "primary_lunch_per_day"}
-        )
-        self.assertEqual(activity.est_cost_cents, 30_000)
+        self.assertEqual(set(lines), {"primary_transport_per_day", "lunch_per_day"})
+        self.assertEqual(activity.est_cost_cents, 35_000)

@@ -1,0 +1,140 @@
+{% extends "layouts/shell.html" %}
+{% load table_pagination %}
+{% load kpi_metrics %}
+
+{% block title %}Verification Analytics · Edify{% endblock %}
+
+{% block shell_content %}
+<div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
+
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Verification</p>
+      <h1 class="edify-page-title edify-page-header__title">Verification Analytics</h1>
+      <p class="edify-page-header__description">What gets returned and why, who keeps sending weak evidence, how fast verifiers turn work round, and how certifications hold up on a second look.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <a href="/ia/analytics/export?window={{ window_days }}" class="h-8 px-3 inline-flex items-center gap-1.5 bg-slate-800 hover:bg-slate-700 text-white text-[12px] font-semibold rounded-control transition-colors">Export decisions</a>
+    </div>
+  </div>
+
+  <form method="get" action="/ia/analytics/" class="platform-filter-bar" data-component="filter-toolbar" aria-label="Window">
+    <label class="block platform-filter-compact">
+      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Window</span>
+      <select name="window" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
+        {% for opt in window_options %}<option value="{{ opt }}" {% if opt == window_days %}selected{% endif %}>Last {{ opt }} days</option>{% endfor %}
+      </select>
+    </label>
+    <button type="submit" class="self-end h-8 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show</button>
+  </form>
+
+  {% legacy_kpi_item "Decisions" decisions helper="verified or returned" tone="neutral" icon="chart" as decisions_kpi %}
+  {% legacy_kpi_item "Returned" returned helper="sent back for correction" tone="danger" icon="warning" as returned_kpi %}
+  {% legacy_kpi_item "Return rate" return_rate_label helper="of decisions" tone=return_rate_tone icon="target" as rate_kpi %}
+  {% legacy_kpi_item "Verifiers active" verifiers|length helper="in this window" tone="primary" icon="users" as verifiers_kpi %}
+  {% collect_kpi_items decisions_kpi returned_kpi rate_kpi verifiers_kpi as analytics_kpis %}
+  {% include "components/kpi_strip.html" with items=analytics_kpis variant="executive" title="Verification quality" %}
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Why work is returned</h2>
+      {% if reasons %}
+      <div class="overflow-x-auto">
+        <table class="edify-record-table w-full text-[12px] font-semibold">
+          <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr><th class="px-6 py-4 text-left">Reason</th><th class="px-6 py-4 text-right">Returns</th><th class="px-6 py-4 text-right">Share</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            {% paginate reasons "reasons_page" as reasons_pager %}
+{% for r in reasons_pager.rows %}<tr><td class="px-6 py-3 font-semibold" data-record-title>{{ r.reason }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Returns">{{ r.count }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Share">{{ r.share }}%</td></tr>{% endfor %}
+          </tbody>
+        </table>
+{% include "components/table_pager.html" with pager=reasons_pager param="reasons_page" %}
+      </div>
+      {% else %}{% include "components/empty_state.html" with title="Nothing returned" message="No work was returned in this window." %}{% endif %}
+    </div>
+
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Return rate by month</h2>
+      {% if trend %}
+      <ul class="space-y-1.5" aria-label="Return rate by month">
+        {% for t in trend %}
+        <li class="flex items-center gap-2 edify-text-caption">
+          <span class="w-16 shrink-0 font-semibold text-slate-500 tabular-nums">{{ t.month }}</span>
+          <span class="flex-1 h-[8px] bg-slate-100 rounded-pill overflow-hidden"><span class="block h-full rounded-pill {% if t.return_rate > 25 %}bg-rose-500{% elif t.return_rate > 10 %}bg-amber-500{% else %}bg-emerald-500{% endif %}" style="width: {{ t.return_rate }}%"></span></span>
+          <span class="w-10 shrink-0 text-right font-bold tabular-nums">{{ t.return_rate }}%</span>
+        </li>
+        {% endfor %}
+      </ul>
+      <div class="overflow-x-auto">
+        <table class="edify-record-table w-full text-[12px] font-semibold">
+          <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr><th class="px-6 py-4 text-left">Month</th><th class="px-6 py-4 text-right">Decisions</th><th class="px-6 py-4 text-right">Returned</th><th class="px-6 py-4 text-right">Rate</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            {% paginate trend "trend_page" as trend_pager %}
+{% for t in trend_pager.rows %}<tr><td class="px-6 py-3 font-semibold" data-record-title>{{ t.month }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Decisions">{{ t.decisions }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Returned">{{ t.returned }}</td><td class="px-6 py-3 text-right tabular-nums font-bold" data-label="Rate">{{ t.return_rate }}%</td></tr>{% endfor %}
+          </tbody>
+        </table>
+{% include "components/table_pager.html" with pager=trend_pager param="trend_page" %}
+      </div>
+      {% else %}{% include "components/empty_state.html" with title="No decisions yet" message="Verification decisions appear here as they are made." %}{% endif %}
+    </div>
+  </div>
+
+  <div class="grid gap-4 lg:grid-cols-2">
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Submitters, highest return rate first</h2>
+      {% if submitters %}
+      <div class="overflow-x-auto">
+        <table class="edify-record-table w-full text-[12px] font-semibold">
+          <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr><th class="px-6 py-4 text-left">Staff</th><th class="px-6 py-4 text-right">Submitted</th><th class="px-6 py-4 text-right">Returned</th><th class="px-6 py-4 text-right">Rate</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            {% paginate submitters "submitters_page" as submitters_pager %}
+{% for r in submitters_pager.rows %}<tr><td class="px-6 py-3 font-semibold" data-record-title>{{ r.name }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Submitted">{{ r.submitted }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Returned">{{ r.returned }}</td><td class="px-6 py-3 text-right tabular-nums font-bold {% if r.return_rate > 25 %}text-rose-600{% elif r.return_rate > 10 %}text-amber-600{% else %}text-emerald-600{% endif %}" data-label="Rate">{{ r.return_rate }}%</td></tr>{% endfor %}
+          </tbody>
+        </table>
+{% include "components/table_pager.html" with pager=submitters_pager param="submitters_page" %}
+      </div>
+      {% else %}{% include "components/empty_state.html" with title="No submissions" message="Staff submissions appear here once verified or returned." %}{% endif %}
+    </div>
+
+    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+      <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Partners, highest return rate first</h2>
+      {% if partners %}
+      <div class="overflow-x-auto">
+        <table class="edify-record-table w-full text-[12px] font-semibold">
+          <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr><th class="px-6 py-4 text-left">Partner</th><th class="px-6 py-4 text-right">Submitted</th><th class="px-6 py-4 text-right">Returned</th><th class="px-6 py-4 text-right">Rate</th></tr></thead>
+          <tbody class="divide-y divide-slate-100">
+            {% paginate partners "partners_page" as partners_pager %}
+{% for r in partners_pager.rows %}<tr><td class="px-6 py-3 font-semibold" data-record-title>{{ r.name }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Submitted">{{ r.submitted }}</td><td class="px-6 py-3 text-right tabular-nums" data-label="Returned">{{ r.returned }}</td><td class="px-6 py-3 text-right tabular-nums font-bold" data-label="Rate">{{ r.return_rate }}%</td></tr>{% endfor %}
+          </tbody>
+        </table>
+{% include "components/table_pager.html" with pager=partners_pager param="partners_page" %}
+      </div>
+      {% else %}{% include "components/empty_state.html" with title="No partner submissions" message="Partner-delivered work appears here once verified or returned." %}{% endif %}
+    </div>
+  </div>
+
+  <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
+    <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Verifiers</h2>
+    <p class="edify-text-caption text-slate-500">Turnaround is measured from submission to decision. Sample accuracy is the share of this verifier's certifications that a second verifier confirmed.</p>
+    {% if verifiers %}
+    <div class="overflow-x-auto">
+      <table class="edify-record-table w-full text-[12px] font-semibold">
+        <thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400"><tr><th class="px-6 py-4 text-left">Verifier</th><th class="px-6 py-4 text-right">Verified</th><th class="px-6 py-4 text-right">Avg hours</th><th class="px-6 py-4 text-right">Within 24h</th><th class="px-6 py-4 text-right">Sampled</th><th class="px-6 py-4 text-right">Sample accuracy</th></tr></thead>
+        <tbody class="divide-y divide-slate-100">
+          {% paginate verifiers "verifiers_page" as verifiers_pager %}
+{% for v in verifiers_pager.rows %}<tr>
+            <td class="px-6 py-3 font-semibold" data-record-title>{{ v.name }}</td>
+            <td class="px-6 py-3 text-right tabular-nums" data-label="Verified">{{ v.verified }}</td>
+            <td class="px-6 py-3 text-right tabular-nums" data-label="Avg hours">{% if v.avg_hours != None %}{{ v.avg_hours }}{% else %}—{% endif %}</td>
+            <td class="px-6 py-3 text-right tabular-nums" data-label="Within 24h">{{ v.within_24h }}%</td>
+            <td class="px-6 py-3 text-right tabular-nums" data-label="Sampled">{{ v.sampled }}</td>
+            <td class="px-6 py-3 text-right tabular-nums font-bold" data-label="Sample accuracy">{% if v.sample_accuracy != None %}{{ v.sample_accuracy }}%{% else %}—{% endif %}</td>
+          </tr>{% endfor %}
+        </tbody>
+      </table>
+{% include "components/table_pager.html" with pager=verifiers_pager param="verifiers_page" %}
+    </div>
+    {% else %}{% include "components/empty_state.html" with title="No verifications" message="Verifier turnaround appears here once work is verified in this window." %}{% endif %}
+  </div>
+
+</div>
+{% endblock %}

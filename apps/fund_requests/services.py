@@ -11,7 +11,7 @@ from django.utils import timezone
 from apps.activities.models import Activity
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import activity_country_q, person_country_q, resolve_user_scope
 
 from .models import FundRequest, FundRequestItem, FundRequestPeriod, FundRequestStatus
 
@@ -33,6 +33,8 @@ def submit(data: dict, principal, strict: bool = True) -> dict:
         # Unconditional for non-country roles: an empty staff_ids narrowed to
         # nothing before, not to the whole country's activities.
         qs = qs.filter(responsible_staff_id__in=scope.staff_ids or ["__none__"])
+    else:
+        qs = qs.filter(activity_country_q(scope))
     # Cancelled/deferred/rejected work never enters a payment request — this
     # channel used to include it (and partner + already-paid lines below),
     # producing approved totals the funding guard could never release.
@@ -254,6 +256,8 @@ def list_requests(query: dict, principal) -> list[dict]:
             ).values_list("user_id", flat=True)
             q |= Q(submitted_by_user_id__in=supervised_user_ids)
         qs = qs.filter(q)
+    else:
+        qs = qs.filter(person_country_q(scope, "submitted_by_user_id"))
     return [_serialize(fr) for fr in qs]
 
 

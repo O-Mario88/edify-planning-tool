@@ -1,0 +1,36 @@
+{% comment %}
+  One milestone's progress against its target, drawn from the plan (owner,
+  2026-09-07). Completed work in the accent, planned-but-not-done work as the
+  lighter segment behind it, the percentage beside them.
+
+  Usage:
+    {% include "components/meter.html" with progress=row.progress %}
+    {% include "components/meter.html" with progress=row.progress meta=True %}
+
+  `progress` is one entry from milestone_plan_progress(); None means the
+  milestone has no activity rule yet, so there is no plan to link it to — the
+  track is drawn empty and says so, rather than reading as 0%.
+{% endcomment %}
+{% if progress %}
+<div class="edify-meter" {% if progress.classification %}data-tone="{{ progress.classification.tone|default:'' }}"{% endif %}
+     role="img"
+     aria-label="{{ progress.completed }} completed and {{ progress.planned }} planned of {% if progress.target is not None %}{{ progress.target|floatformat:'-2' }}{% else %}an unset target{% endif %} {{ progress.unit }}{% if progress.pct is not None %}, {{ progress.pct|floatformat:"-1" }}% complete{% endif %}">
+  <span class="edify-meter__track" aria-hidden="true">
+    {% if progress.planned_pct is not None %}<span class="edify-meter__planned" style="inline-size: {% if progress.pct is not None and progress.planned_pct < progress.pct %}{{ progress.pct }}{% else %}{{ progress.planned_pct }}{% endif %}%"></span>{% endif %}
+    {% if progress.pct is not None %}<span class="edify-meter__done" style="inline-size: {{ progress.pct }}%"></span>{% endif %}
+  </span>
+  {% comment %}No target yet: the counts are real and stand as the value,
+  and the words say what unlocks the percentage. A milestone's target is the
+  RVP's decision in Define metric, not something the bar can assume.{% endcomment %}
+  <span class="edify-meter__value">{% if progress.pct is not None %}{{ progress.pct|floatformat:"0" }}%{% else %}{{ progress.completed }} done · {{ progress.planned }} planned{% endif %}</span>
+  {% if meta %}
+  <span class="edify-meter__meta">{{ progress.completed }} done · {{ progress.planned }} planned{% if progress.target is not None %} · of {{ progress.target|floatformat:"-2" }} {{ progress.unit }}{% else %} {{ progress.unit }} · no target yet — define the metric to get a percentage{% endif %}{% if progress.verified %} · {{ progress.verified|floatformat:"-2" }} verified{% endif %}</span>
+  {% endif %}
+</div>
+{% else %}
+<div class="edify-meter edify-meter--unlinked" role="img" aria-label="Not linked to the plan yet">
+  <span class="edify-meter__track" aria-hidden="true"></span>
+  <span class="edify-meter__value" title="No activity rule links this milestone to the plan yet">—</span>
+  {% if meta %}<span class="edify-meter__meta">Not linked to the plan yet — define which activities count towards it.</span>{% endif %}
+</div>
+{% endif %}

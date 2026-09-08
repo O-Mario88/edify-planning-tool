@@ -69,7 +69,7 @@
         <tbody class="divide-y divide-slate-50">
           {% for a in activities_pager.rows %}
           <tr>
-            <td class="text-left font-semibold py-2.5 pl-1">{% if a.school %}{{ a.school.name }}{% elif a.cluster %}{{ a.cluster.name }}{% else %}—{% endif %}</td>
+            <td class="text-left font-semibold py-2.5 pl-1">{% if a.school %}<a href="/schools/{{ a.school.id }}" class="font-semibold hover:underline">{{ a.school.name }}</a>{% elif a.cluster %}<a href="/clusters/{{ a.cluster.id }}" class="font-semibold hover:underline">{{ a.cluster.name }}</a>{% else %}—{% endif %}</td>
             <td class="text-left text-slate-500 py-2.5 capitalize">{{ a.activity_type|cut:"_" }}</td>
             <td class="text-left tabular-nums text-slate-500 py-2.5">{{ a.planned_date|date:"d M Y" }}</td>
             <td class="text-right py-2.5 pr-1">

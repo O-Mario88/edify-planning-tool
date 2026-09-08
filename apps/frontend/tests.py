@@ -887,10 +887,15 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/my_plan/index.html")
 
     def test_analytics_dashboard_view_renders(self):
+        """Analytics became one page with tabs on 2026-09-05: every section
+        renders `pages/analytics/workspace.html` around its own panel, and the
+        overview's panel is still the KPI-and-content container."""
         self.client.force_login(self.cceo_user)
         response = self.client.get("/analytics")
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(response, "pages/analytics/index.html")
+        self.assertTemplateUsed(response, "pages/analytics/workspace.html")
+        self.assertTemplateUsed(response, "partials/analytics/kpi_cards.html")
+        self.assertTemplateUsed(response, "partials/analytics/tab_rail.html")
 
     @override_settings(ANALYTICS_DASHBOARD_CACHE_SECONDS=30)
     def test_analytics_snapshot_is_reused_within_the_ttl(self):
@@ -1346,14 +1351,12 @@ class FrontendViewsTestCase(TestCase):
         )
         self.assertEqual(breakfast_setting.unit_cost, 8000)
 
-        # 2. Get edit row view
+        # 2. Editing a rate opens the drawer, not an inline row (2026-09-07).
         response = self.client.get(
             f"/cost-settings/row/{breakfast_setting.key}?mode=edit"
         )
         self.assertEqual(response.status_code, 200)
-        self.assertTemplateUsed(
-            response, "partials/cost_settings/cost_setting_row.html"
-        )
+        self.assertTemplateUsed(response, "partials/cost_settings/edit_drawer.html")
         self.assertContains(response, 'name="unit_cost"')
 
         # 3. Post cost update
@@ -1700,7 +1703,7 @@ class FrontendViewsTestCase(TestCase):
 
         self._publish_test_catalogue("2026-07-20")
         CostSetting.objects.get_or_create(
-            key="partner_visit_lump_sum",
+            key="client_partner_visit",
             defaults={"label": "Partner Visit", "unit_cost": 35000},
         )[0]
         partner = Partner.objects.create(name="Gate Partner", active_status=True)
@@ -1751,7 +1754,7 @@ class FrontendViewsTestCase(TestCase):
 
         self._publish_test_catalogue("2026-07-20")
         CostSetting.objects.get_or_create(
-            key="partner_visit_lump_sum",
+            key="client_partner_visit",
             defaults={"label": "Partner Visit", "unit_cost": 35000},
         )[0]
         partner = Partner.objects.create(
@@ -1828,14 +1831,14 @@ class FrontendViewsTestCase(TestCase):
         from apps.activities.models import Activity
 
         # `ensure_cost_reference` seeds the whole canonical catalogue on
-        # post_migrate, including partner_visit_lump_sum, so "no rate is
+        # post_migrate, including client_partner_visit, so "no rate is
         # configured" is no longer reachable by simply not creating one --
         # which is why this test silently stopped exercising its own
         # premise. Remove the rate the partner path resolves to, so the
         # unpriced case is real again.
         from apps.budget.models import CostSetting
 
-        CostSetting.objects.filter(key="partner_visit_lump_sum").delete()
+        CostSetting.objects.filter(key="client_partner_visit").delete()
 
         partner = Partner.objects.create(name="Unpriced Partner", active_status=True)
 
@@ -1870,7 +1873,7 @@ class FrontendViewsTestCase(TestCase):
         from apps.ssa.models import SsaRecord, SsaScore
 
         CostSetting.objects.get_or_create(
-            key="partner_visit_lump_sum",
+            key="client_partner_visit",
             defaults={"label": "Partner Visit", "unit_cost": 35000},
         )[0]
         ssa = SsaRecord.objects.create(
@@ -1939,7 +1942,7 @@ class FrontendViewsTestCase(TestCase):
 
         self._publish_test_catalogue("2026-07-21")
         CostSetting.objects.get_or_create(
-            key="partner_visit_lump_sum",
+            key="client_partner_visit",
             defaults={"label": "Partner Visit", "unit_cost": 35000},
         )[0]
         partner = Partner.objects.create(name="Bulk Dated Partner", active_status=True)
@@ -2043,7 +2046,7 @@ class FrontendViewsTestCase(TestCase):
 
         self._publish_test_catalogue("2026-07-21")
         CostSetting.objects.get_or_create(
-            key="partner_visit_lump_sum",
+            key="client_partner_visit",
             defaults={"label": "Partner Visit", "unit_cost": 35000},
         )[0]
         partner = Partner.objects.create(
@@ -2085,14 +2088,14 @@ class FrontendViewsTestCase(TestCase):
         from apps.activities.models import Activity
 
         # `ensure_cost_reference` seeds the whole canonical catalogue on
-        # post_migrate, including partner_visit_lump_sum, so "no rate is
+        # post_migrate, including client_partner_visit, so "no rate is
         # configured" is no longer reachable by simply not creating one --
         # which is why this test silently stopped exercising its own
         # premise. Remove the rate the partner path resolves to, so the
         # unpriced case is real again.
         from apps.budget.models import CostSetting
 
-        CostSetting.objects.filter(key="partner_visit_lump_sum").delete()
+        CostSetting.objects.filter(key="client_partner_visit").delete()
 
         partner = Partner.objects.create(
             name="Bulk Unpriced Partner", active_status=True

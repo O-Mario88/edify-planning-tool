@@ -271,22 +271,33 @@ class AnalyticsWorkspaceRenderTest(TestCase):
         self.client.force_login(self.user)
 
     def test_the_sub_navigation_renders_on_a_section_page(self):
+        """Every section page carries the one Analytics tablist.
+
+        Impact and SSA used to be standalone pages with a grouped strip and a
+        view menu, so the chrome changed as a reader crossed into them. They
+        are tabs of the one Analytics page now (2026-09-05): every section is
+        a real link in one tablist, and the current one is the selected tab.
+        """
+
         response = self.client.get("/impact")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "edify-section-nav")
         self.assertContains(response, 'aria-label="Analytics sections"')
-        # The five product areas are primary route links; sibling analyses in
-        # the active area remain real links inside one compact view menu.
+        self.assertContains(response, 'role="tablist"')
         self.assertContains(response, 'href="/ssa"')
         self.assertContains(response, 'href="/decisions"')
         self.assertContains(response, 'href="/decision-log"')
-        self.assertContains(response, "edify-section-nav__view-menu")
-        self.assertNotContains(response, "edify-section-nav__inner--group")
-        self.assertContains(response, 'aria-current="page"')
+        self.assertContains(response, 'href="/analytics/people"')
+        self.assertContains(response, 'href="/analytics/verification-quality"')
+        self.assertContains(response, 'aria-selected="true"')
+        # No grouped strip and no view menu inside the workspace any more.
+        self.assertNotContains(response, "edify-section-nav__view-menu")
+        self.assertNotContains(response, "edify-section-nav__clusters")
 
         school_response = self.client.get("/ssa")
         self.assertContains(school_response, 'href="/analytics/visit-effectiveness"')
         self.assertContains(school_response, 'href="/declining-schools"')
+        self.assertContains(school_response, 'role="tablist"')
 
     def test_the_sub_navigation_stays_off_pages_outside_the_workspace(self):
         response = self.client.get("/dashboard")

@@ -73,7 +73,9 @@ class CceoDoctrine(TestCase):
             "cost_settings",
             "disbursements",
             "finance_partner_payments",
-            "escalations",
+            # "escalations" left this list on 2026-09-04: the channel now runs
+            # one level up from every raiser, so a CCEO reaches the page to
+            # escalate to their Programme Lead (never to decide).
             "cd_analytics",
             "pl_analytics",
             "decision_intelligence",
@@ -127,7 +129,8 @@ class ProgramLeadDoctrine(TestCase):
             "disbursements",
             "finance_partner_payments",
             "cd_analytics",
-            "escalations",
+            # "escalations" is no longer country-only: the PL decides their
+            # team's escalations and raises their own to the CD (2026-09-04).
         ):
             self.assertNotIn(
                 "PL", PAGE_PERMISSIONS.get(page, set()), f"PL must not reach '{page}'"
@@ -182,7 +185,7 @@ class ProjectCoordinatorDoctrine(TestCase):
             "cd_analytics",
             "pl_analytics",
             "team_targets",
-            "escalations",
+            # "escalations": a PC raises to their Programme Lead (2026-09-04).
         ):
             self.assertNotIn(
                 "PROJECT_COORDINATOR",
@@ -228,10 +231,15 @@ class ProgramAccountantDoctrine(TestCase):
             )
 
     def test_cannot_reach_programme_execution_pages(self):
+        # `planning` left this list on 2026-09-02: the Accountant opens the
+        # page to schedule a visit into a school somebody else owns, which
+        # the owner must approve before it takes effect
+        # (apps.planning.visit_requests). They still hold no PLANNING_CREATE
+        # and cannot plan into anyone's portfolio directly.
+        # `my_plan` left on 2026-09-03 for the same reason: once the owner
+        # approves the visit it lands on the Accountant's own plan and runs
+        # the ordinary lifecycle there.
         for page in (
-            "planning",
-            "my_plan",
-            "core_schools",
             "ia_verification_queue",
             "cost_settings",
             "school_directory",

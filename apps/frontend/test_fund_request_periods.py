@@ -212,13 +212,28 @@ class FourPeriodBudgetTest(TestCase):
         self.assertEqual(week["total"], 0)
         self.assertEqual(fy["total"], 75_000)
 
-    def test_with_no_week_chosen_the_page_opens_where_the_work_is(self):
-        """The anchoring rule itself -- and the regression this whole page had:
-        deriving that week from the raw UTC date put a local-midnight Monday
-        activity into the previous week, so the page opened one week early
-        with an empty budget."""
+    def test_with_no_week_chosen_the_page_opens_on_the_current_week(self):
+        """Today is the only default that cannot go stale. The old rule opened
+        on the newest scheduled work, so an officer opening the page in
+        September landed on April (the last week with an activity) and was
+        told the monthly submission was months overdue. Old work stays one
+        month-filter away; the current week opens even when it is empty."""
         self._costed(_monday(-12), 75_000)
         week = self._budgets()
+        self.assertEqual(week["total"], 0)
+
+    def test_a_chosen_month_opens_where_that_months_work_is(self):
+        """Within a chosen month the anchoring rule still applies -- and so
+        does the regression this page had: deriving the week from the raw UTC
+        date put a local-midnight Monday activity into the previous week, so
+        the page opened one week early with an empty budget."""
+        when = _monday(-12)
+        import calendar as _cal
+
+        self._costed(when, 75_000)
+        week = self._budgets(
+            f"?fy={get_operational_fy(when)}&month={_cal.month_name[when.month]}"
+        )
         self.assertEqual(week["total"], 75_000)
 
     def test_the_breakdown_groups_travel_with_the_card(self):

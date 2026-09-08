@@ -11,7 +11,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from django.test import Client, TestCase
+from django.test import Client, SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
@@ -22,12 +22,53 @@ from apps.geography.models import District, Region
 from apps.schools.models import School
 
 ROOT = Path(__file__).resolve().parents[2]
+
+
+def _read(relative_path: str) -> str:
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
+
+
 TEMPLATE = ROOT / "templates" / "pages" / "dashboards" / "cceo.html"
+
+
+class ScriptControlledCellChildrenKeepTheirDisplayTest(SimpleTestCase):
+    """A closed row-actions menu has to stay closed.
+
+    The one-line cell rule in consistency.css flattens stacked text inside a
+    table cell with `display: inline !important`, and an important declaration
+    outranks the `display: none` Alpine writes inline for `x-show`. Every
+    CLOSED menu in every table was therefore painted, all of them at the
+    unplaced default of left:0/top:0 — a stack of menus over the sidebar — and
+    the open one measured its width while inline, which put it off the right
+    edge of the window. Display on an `x-show` element belongs to the script.
+    """
+
+    def test_the_one_line_cell_rule_leaves_script_controlled_children_alone(self):
+        css = _read("static/css/consistency.css")
+        rule = css.split("/* Stacked cell content reads on one line.", 1)[1].split(
+            "display: inline !important;", 1
+        )[0]
+        self.assertEqual(rule.count("tbody"), 3, "the rule still has three selectors")
+        self.assertEqual(rule.count(":not([x-show])"), 3)
+        self.assertEqual(rule.count(":not(.row-menu)"), 3)
+
+    def test_the_menu_the_rule_protects_is_the_one_that_hides_itself(self):
+        """The exclusion is worth nothing if the list stops using x-show."""
+        for path in (
+            "templates/partials/my_plan/activity_row.html",
+            "templates/pages/dashboards/cceo.html",
+        ):
+            with self.subTest(path=path):
+                markup = _read(path)
+                menu = markup.split('class="row-menu__list"', 1)[1].split(">", 1)[0]
+                self.assertIn('x-show="open"', menu)
 
 
 class OverdueRowMenuMarkupTest(TestCase):
     def setUp(self):
-        self.src = TEMPLATE.read_text()
+        self.src = _read("templates/pages/dashboards/cceo.html")
 
     def test_the_row_offers_a_menu_not_a_lone_reschedule_button(self):
         self.assertIn("row-menu__trigger", self.src)

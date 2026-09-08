@@ -653,6 +653,12 @@ class AnalyticsDashboardService:
             .annotate(
                 planned=Count("id"),
                 achieved=Count("id", filter=Q(status__in=ACHIEVED_STATUSES)),
+                # School reach (owner, 2026-09-05): distinct schools with planned
+                # and with achieved work, in the same query as the activity counts.
+                planned_schools=Count("school_id", distinct=True),
+                achieved_schools=Count(
+                    "school_id", distinct=True, filter=Q(status__in=ACHIEVED_STATUSES)
+                ),
             )
         }
         district_school_counts = {
@@ -697,6 +703,17 @@ class AnalyticsDashboardService:
                     "planned": planned_d,
                     "achieved": achieved_d,
                     "schools": district_school_counts.get(dist.id, 0),
+                    "schools_planned": row["planned_schools"] if row else 0,
+                    "schools_achieved": row["achieved_schools"] if row else 0,
+                    "schools_pct": (
+                        round(
+                            (row["achieved_schools"] if row else 0)
+                            / district_school_counts[dist.id]
+                            * 100
+                        )
+                        if district_school_counts.get(dist.id)
+                        else 0
+                    ),
                     "status": status,
                     "status_label": status_label,
                     "sort_rank": sort_rank,
@@ -719,6 +736,8 @@ class AnalyticsDashboardService:
                     "planned": 0,
                     "achieved": 0,
                     "schools": 0,
+                    "schools_planned": 0,
+                    "schools_achieved": 0,
                 },
             )
             group["districts"].append(district)
@@ -726,6 +745,8 @@ class AnalyticsDashboardService:
             group["planned"] += district["planned"]
             group["achieved"] += district["achieved"]
             group["schools"] += district["schools"]
+            group["schools_planned"] += district["schools_planned"]
+            group["schools_achieved"] += district["schools_achieved"]
 
         target_by_district_groups = list(district_groups_by_key.values())
         for group in target_by_district_groups:
@@ -742,6 +763,11 @@ class AnalyticsDashboardService:
                 else None
             )
             group["gap"] = 100 - group["pct"] if group["pct"] is not None else None
+            group["schools_pct"] = (
+                round(group["schools_achieved"] / group["schools"] * 100)
+                if group["schools"]
+                else 0
+            )
 
         target_by_district_groups.sort(
             key=lambda group: (
@@ -752,6 +778,17 @@ class AnalyticsDashboardService:
                 group["name"],
             )
         )
+        # The card's filter buttons carry these, so a reader can tell "no
+        # critical district in this scope" from "the filter did nothing" —
+        # with two districts, both critical, the three filters showed the same
+        # rows and the card read as broken (owner, 2026-09-05).
+        target_by_district_summary = {
+            "districts": len(districts_perf),
+            "critical": sum(1 for d in districts_perf if d["status"] == "critical"),
+            "attention": sum(
+                1 for d in districts_perf if d["status"] in ("critical", "watch")
+            ),
+        }
 
         # 8. Regional Performance (Map or list representation)
         regional_perf = []
@@ -1145,6 +1182,7 @@ class AnalyticsDashboardService:
             "ssa_performance": ssa_scores_list,
             "target_by_district": districts_perf,
             "target_by_district_groups": target_by_district_groups,
+            "target_by_district_summary": target_by_district_summary,
             "regional_performance": regional_perf,
             # The geography card is a shared country-level system view for
             # every authorized analytics role. Dashboard KPIs remain scoped;

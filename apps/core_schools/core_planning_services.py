@@ -662,7 +662,9 @@ class CorePackageProgressService:
             assessment_cell = CorePackageProgressService._serialize_slot_ui(None)
 
             if plan:
-                slots = list(plan.slots.all().order_by("sequence_number"))
+                # Sorted in Python: `.order_by` on a prefetched relation issues a
+                # fresh query per plan (2026-09-06).
+                slots = sorted(plan.slots.all(), key=lambda sl: sl.sequence_number or 0)
                 v_slots = [sl for sl in slots if sl.activity_type == "visit"]
                 t_slots = [sl for sl in slots if sl.activity_type == "training"]
                 a_slot = next(
@@ -790,6 +792,10 @@ class CorePackageProgressService:
                     "data_quality_status": s.data_quality_status,
                     "is_clustered": s.cluster_status == "clustered"
                     or s.cluster_id is not None,
+                    # The id travels with the name so the row can link to the
+                    # cluster's profile (owner, 2026-09-07: cluster names are
+                    # links, like school names).
+                    "cluster_id": s.cluster_id,
                     "cluster_name": cluster_name,
                     "project_assignment_count": project_count,
                     "partner_support_count": partner_counts_map.get(s.id, 0),
@@ -924,6 +930,25 @@ class CorePlanningService:
             for sp in StaffProfile.objects.all().select_related("user")
         }
         partner_map = {p.id: p.name for p in Partner.objects.all()}
+        # One query each for partner assignments and latest confirmed SSA,
+        # instead of two per school (2026-09-06).
+        assigned_partner_by_school = {}
+        for school_id, partner_id in (
+            PartnerAssignment.objects.filter(
+                school_id__in=school_ids, status="assigned"
+            )
+            .order_by("school_id", "-created_at")
+            .values_list("school_id", "partner_id")
+        ):
+            assigned_partner_by_school.setdefault(school_id, partner_id)
+        latest_confirmed_ssa_by_school = {}
+        for rec in SsaRecord.objects.filter(
+            school_id__in=school_ids,
+            fy=fy,
+            deleted_at__isnull=True,
+            verification_status="confirmed",
+        ).order_by("school_id", "-date_of_ssa", "-created_at"):
+            latest_confirmed_ssa_by_school.setdefault(rec.school_id, rec)
 
         queue_data = []
         iterator = (
@@ -945,23 +970,17 @@ class CorePlanningService:
                 assigned_staff_name = staff_map.get(s.account_owner_id, "Staff Owner")
 
             # Check Partner Assignment
-            pa = PartnerAssignment.objects.filter(school=s, status="assigned").first()
-            if pa:
-                assigned_partner_name = partner_map.get(pa.partner_id, "Partner Owner")
+            assigned_partner_id = assigned_partner_by_school.get(s.id)
+            if assigned_partner_id:
+                assigned_partner_name = partner_map.get(
+                    assigned_partner_id, "Partner Owner"
+                )
 
             is_clustered = s.cluster_id is not None and s.cluster_id != ""
 
             # Resolve weakest intervention from latest SSA
             weakest_intervention = "—"
-            latest_ssa = (
-                s.ssa_records.filter(
-                    fy=fy,
-                    deleted_at__isnull=True,
-                    verification_status="confirmed",
-                )
-                .order_by("-date_of_ssa", "-created_at")
-                .first()
-            )
+            latest_ssa = latest_confirmed_ssa_by_school.get(s.id)
 
             if plan:
                 # Iterate the prefetched slot list in Python — calling .filter()

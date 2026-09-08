@@ -99,6 +99,7 @@
                 </div>
               </div>
 
+              {% if can_plan_clusters %}
               <div class="flex items-center justify-end gap-2 border-t border-slate-100 pt-4" @click.stop>
                 <button
                   hx-get="/planning/schedule-modal?cluster_id={{ c.id }}&action=training{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}"
@@ -115,6 +116,7 @@
                   Cluster Meeting
                 </button>
               </div>
+              {% endif %}
             </div>
           </div>
         {% endfor %}

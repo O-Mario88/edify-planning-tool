@@ -1,0 +1,62 @@
+{% load frontend_filters %}
+{% comment %}
+Map view: the country map (moved here from Analytics, owner 2026-09-05) with
+its distribution table, then the team's districts beneath.
+{% endcomment %}
+<div class="space-y-4" data-pl-map-view>
+  <div class="analytics-layout-row analytics-row--geography">
+    <div class="analytics-card-slot analytics-card-slot--map">
+      {% include "partials/analytics/regional_performance.html" %}
+    </div>
+  </div>
+
+  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="pl-map-districts-heading" data-pl-map-districts>
+    <div class="flex items-center justify-between gap-3">
+      <h2 id="pl-map-districts-heading" class="text-[13px] font-bold text-slate-800 tracking-tight flex items-center gap-2">
+        <span class="text-slate-400">{% include "partials/analytics/pl/_icon.html" with name="map" %}</span>Team delivery by district
+      </h2>
+      <span class="edify-text-caption font-semibold text-slate-400">Sorted by achievement, lowest first</span>
+    </div>
+    {% if pl_map_rows %}
+    <div class="overflow-x-auto">
+    <table class="w-full text-left text-[12px]">
+      <thead>
+        <tr class="edify-text-caption uppercase tracking-wider edify-text-subtle">
+          <th scope="col" class="px-3 py-2 font-semibold">District</th>
+          <th scope="col" class="px-3 py-2 font-semibold">Region</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right"># Schools</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right"># Planned</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right"># Achieved</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">% Achieved</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Planned</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Done</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Achievement</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Critical</th>
+          <th scope="col" class="px-3 py-2 font-semibold text-right">Avg SSA</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in pl_map_rows %}
+        <tr class="border-t edify-border">
+          <td class="px-3 py-2 font-semibold text-slate-800">{{ d.name }}</td>
+          <td class="px-3 py-2 text-slate-500">{{ d.region|default:"—" }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.schools|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_planned|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.schools_achieved|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums font-bold">{{ d.schools_pct }}%</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.planned|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{{ d.completed|intcomma }}</td>
+          <td class="px-3 py-2 text-right tabular-nums font-bold {% if d.tone == 'success' %}text-emerald-600{% elif d.tone == 'danger' %}text-rose-600{% elif d.tone == 'warning' %}text-amber-600{% else %}text-slate-700{% endif %}">{% if d.pct is not None %}{{ d.pct }}%{% else %}—{% endif %}</td>
+          <td class="px-3 py-2 text-right tabular-nums {% if d.critical %}text-rose-600 font-bold{% endif %}">{{ d.critical }}</td>
+          <td class="px-3 py-2 text-right tabular-nums">{% if d.avg_ssa is not None %}{{ d.avg_ssa|floatformat:1 }}{% else %}—{% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    </div>
+    <p class="edify-text-caption edify-text-muted">Achievement is completed activities as a share of planned. Critical counts schools flagged critical in the period.</p>
+    {% else %}
+    {% include "components/empty_state.html" with title="No district data yet" message="Districts appear as your team's schools are assigned and work is planned." %}
+    {% endif %}
+  </section>
+</div>

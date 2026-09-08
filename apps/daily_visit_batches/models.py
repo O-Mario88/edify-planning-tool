@@ -48,7 +48,7 @@ class DailyVisitBatch(TimeStampedModel):
     )
     catalogue_version = models.IntegerField(null=True, blank=True)
     # Snapshot of the exact per-day catalogue rates used at last recalculation,
-    # e.g. {"primary_transport_per_day": 50000, "primary_lunch_per_day": 12000}.
+    # e.g. {"primary_transport_per_day": 50000, "lunch_per_day": 12000}.
     # Stored (not re-derived) so later rate changes don't corrupt the
     # transparent breakdown display — same provenance principle already used
     # for ActivityScheduleCostLine.catalogue_version elsewhere.

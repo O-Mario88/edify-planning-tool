@@ -116,12 +116,7 @@ Enter NetSuite ID
 {% else %}
 <tr>
 <td colspan="9" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">No active accountability records found in registry.</p>
-</div>
+{% include "components/empty_state.html" with message="No active accountability records found in registry." %}
 </td>
 </tr>
 {% endif %}
@@ -200,14 +195,14 @@ class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px
 <button
 form="netsuite-form"
 type="submit"
-class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center edify-primary-solid edify-primary-hover shadow-sm transition-all"
+class="w-full h-8 rounded-control text-white font-semibold text-[12px] flex items-center justify-center edify-primary-solid edify-primary-hover shadow-sm transition-all"
 >
 Clear Accountability
 </button>
 <button
 @click="netsuiteOpen = false"
 type="button"
-class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-8 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

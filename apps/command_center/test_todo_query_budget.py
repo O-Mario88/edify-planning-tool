@@ -57,13 +57,33 @@ def _user(key, role):
     return user
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "todo-query-budget",
+        }
+    }
+)
 class TodoQueryBudgetTests(TestCase):
-    """A ceiling, never a target."""
+    """A ceiling, never a target.
+
+    Measured against a cache this process owns. Dev points the cache at a real
+    Redis that every parallel test worker shares, and the other query-budget
+    suites clear it — a clear from CceoQueryBudgetTests landing mid-measurement
+    made this one count cache misses and fail (2026-09-06). The budget is about
+    the query shape, not about how the cache is deployed.
+    """
 
     #: Measured at 55 for a Country Director against this fixture after the
     #: series-priming fix (was ~120 before). The headroom covers a handful of
     #: Program Leads; it is a ceiling, never a target.
-    CEILING = 90
+    #: Raised from 90 on 2026-09-03 when the CD's own queue gained six
+    #: sources it never had — returned FY plan, PL monthly team requests,
+    #: missing catalogue rates, overdue and delegated escalations, and
+    #: quality flags — one query each. ISSUE-007 (pl_oversight N+1) remains
+    #: the real cost on this page and is unchanged by the six.
+    CEILING = 96
 
     #: The direct, no-request path with three Programme Leads. Higher than
     #: CEILING because it re-reads what a request memoises; see the module

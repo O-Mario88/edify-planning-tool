@@ -338,6 +338,7 @@ class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):
 class LoanRoleAccessContractTests(UgandaBusinessTransformationTestCase):
     record_level_roles = {
         EdifyRole.BUSINESS_TRANSFORMATION_OFFICER,
+        EdifyRole.CCEO,
         EdifyRole.COUNTRY_DIRECTOR,
         EdifyRole.IMPACT_ASSESSMENT,
         EdifyRole.REGIONAL_VICE_PRESIDENT,

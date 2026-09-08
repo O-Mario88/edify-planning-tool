@@ -24,7 +24,7 @@ from datetime import date
 
 from django.contrib.auth import get_user_model
 from django.db import connection
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.test.utils import CaptureQueriesContext
 from django.utils import timezone
 
@@ -38,9 +38,32 @@ from apps.ssa.models import SsaRecord
 
 User = get_user_model()
 FY = "2026"
+# Operations may add one constant aggregate after the fixture crosses the
+# actionable-work threshold. Keep the ceiling tight while allowing that
+# documented branch under the full parallel suite's cache/order conditions.
+IA_DASHBOARD_MAX_QUERIES = 66
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "ia-performance-budget",
+        }
+    }
+)
 class IAPerformanceTestBase(TestCase):
+    """Query budgets, measured against a cache this process owns.
+
+    Dev points the cache at a real Redis, so every parallel test worker shared
+    one — and several query-budget suites call cache.clear(). A clear landing
+    between this suite's two measurements made the second one cold and the
+    scale-invariance comparison read a cache miss as a per-row regression
+    (2026-09-06). What is being measured is the view's query shape, not how
+    the cache is deployed, so the budgets get a cache of their own; the shared
+    backing is covered by apps/core/test_throttle_shared_backing.py.
+    """
+
     def setUp(self):
         self.region = Region.objects.create(name="IA Region")
         self.district = District.objects.create(name="IA District", region=self.region)
@@ -137,7 +160,11 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         )
         pl = StaffProfile.objects.create(user=pl_user, title="Program Lead")
         StaffSupervisorAssignment.objects.create(supervisor=pl, supervisee=cceo)
-        activity = self._pending_activity(self._school("leadership"))
+        school = self._school("leadership")
+        from apps.accounts.models import StaffSchoolAssignment
+
+        StaffSchoolAssignment.objects.create(staff=cceo, school_id=school.id)
+        activity = self._pending_activity(school)
         activity.responsible_staff_id = cceo.id
         activity.status = "ia_verified"
         activity.ia_verification_status = "confirmed"
@@ -150,7 +177,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             ]
         )
 
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         district = next(
             row
@@ -171,6 +198,44 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertEqual(leaders[pl_user.name]["achieved"], 1)
         self.assertEqual(leaders[pl_user.name]["scope"], "Team portfolio")
 
+        # The district sits under its sub-region group, and the CCEO under the
+        # Program Lead who supervises them (owner, 2026-09-05).
+        groups = response.context["district_groups"]
+        home = next(
+            g
+            for g in groups
+            if any(d["name"] == self.district.name for d in g["districts"])
+        )
+        self.assertEqual(home["region"], self.region.name)
+        self.assertEqual(home["name"], "Other districts")  # fixture has no sub-region
+        self.assertEqual((home["planned"], home["achieved"]), (1, 1))
+        # School reach (owner, 2026-09-05): schools in the district, schools
+        # with planned work, schools with achieved work, and the share.
+        self.assertEqual(
+            (district["schools_planned"], district["schools_achieved"]), (1, 1)
+        )
+        self.assertGreaterEqual(district["schools"], 1)
+        self.assertEqual(district["schools_pct"], round(1 / district["schools"] * 100))
+        self.assertEqual(home["schools_achieved"], 1)
+        leader_groups = {g["name"]: g for g in response.context["leadership_groups"]}
+        team = leader_groups[pl_user.name]
+        self.assertEqual([m["name"] for m in team["members"]], [cceo_user.name])
+        self.assertEqual(team["count"], 1)
+        self.assertNotIn("No Program Lead", leader_groups)
+        # School reach per leader (owner, 2026-09-05): the CCEO's one-school
+        # portfolio, planned and achieved; the lead's row consolidates the
+        # team's reach as sets.
+        for row in (leaders[cceo_user.name], leaders[pl_user.name], team):
+            self.assertEqual(
+                (
+                    row["schools"],
+                    row["schools_planned"],
+                    row["schools_achieved"],
+                    row["schools_pct"],
+                ),
+                (1, 1, 1, 100),
+            )
+
     def test_dashboard_prioritizes_oldest_queue_work_and_links_to_review(self):
         now = timezone.now()
         older = self._pending_activity(self._school("oldest"))
@@ -182,7 +247,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             submitted_to_ia_at=now - timezone.timedelta(hours=2)
         )
 
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         first = response.context["queue_items"][0]
         self.assertEqual(first["id"], str(older.id))
@@ -190,7 +255,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         self.assertTrue(first["is_overdue"])
 
     def test_ia_dashboard_sla_is_empty_until_a_real_cycle_is_measured(self):
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         self.assertEqual(response.status_code, 200)
         self.assertIsNone(response.context["verification_sla"]["pct"])
@@ -247,7 +312,7 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
                 verified_at=now,
             )
 
-        response = self.client.get("/ia/dashboard/")
+        response = self.client.get("/ia/dashboard/?view=operations")
 
         self.assertEqual(response.context["verification_sla"]["pct"], 50.0)
         self.assertEqual(response.context["verification_sla"]["sample_size"], 2)
@@ -266,11 +331,11 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             self._pending_activity(school, with_evidence=(i % 2 == 0))
 
         with CaptureQueriesContext(connection) as ctx:
-            response = self.client.get("/ia/dashboard/")
+            response = self.client.get("/ia/dashboard/?view=operations")
         self.assertEqual(response.status_code, 200)
         self.assertLessEqual(
             len(ctx.captured_queries),
-            65,
+            IA_DASHBOARD_MAX_QUERIES,
             f"/ia/dashboard/ ran {len(ctx.captured_queries)} queries -- investigation "
             "must remain a small constant after the country-wide district, region "
             "and leadership monitoring rollups. The sibling test below is the one "
@@ -282,13 +347,13 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
         for i in range(5):
             self._pending_activity(self._school(i))
         with CaptureQueriesContext(connection) as ctx_small:
-            self.client.get("/ia/dashboard/")
+            self.client.get("/ia/dashboard/?view=operations")
         small_count = len(ctx_small.captured_queries)
 
         for i in range(5, 60):
             self._pending_activity(self._school(i))
         with CaptureQueriesContext(connection) as ctx_large:
-            self.client.get("/ia/dashboard/")
+            self.client.get("/ia/dashboard/?view=operations")
         large_count = len(ctx_large.captured_queries)
 
         # A threshold branch may add one constant aggregate when the larger
@@ -300,11 +365,20 @@ class IADashboardQueryBudgetTest(IAPerformanceTestBase):
             f"/ia/dashboard/ ran {small_count} queries at 5 activities but "
             f"{large_count} at 60 -- a per-row query has crept in.",
         )
-        self.assertLessEqual(large_count, 65)
+        self.assertLessEqual(large_count, IA_DASHBOARD_MAX_QUERIES)
 
 
 class IAVerificationQueueN1FixTest(IAPerformanceTestBase):
     # ── 3. Query count does not scale with queue size (the real N+1 fix) ────
+    def test_ia_dashboard_map_view_query_count_is_bounded(self):
+        """The Map view adds the cached country map context on top of the
+        operations queries; it must stay a small constant above the budget."""
+        self.client.force_login(self.ia)
+        with CaptureQueriesContext(connection) as ctx:
+            response = self.client.get("/ia/dashboard/?view=map")
+        self.assertEqual(response.status_code, 200)
+        self.assertLessEqual(len(ctx.captured_queries), 80)
+
     def test_ia_verification_queue_query_count_does_not_scale_with_queue_size(self):
         for i in range(5):
             self._pending_activity(self._school(i), with_evidence=True, with_ssa=True)

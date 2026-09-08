@@ -9,7 +9,6 @@ from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
 from django.contrib import messages
 from django.core.cache import cache
-from django.db.models import Sum
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods
 
@@ -17,18 +16,36 @@ from django.views.decorators.http import require_http_methods
 def _login_stats():
     """Return coarse, real operational totals for the public sign-in hero.
 
+    Four figures, each a share of the SAME denominator — every school the
+    programme currently operates in (owner, 2026-09-07: "schools reached,
+    schools visited, Schools trained, and SSA Completed out of the total
+    portfolio in the system and should fetch from the DB"). Reading them as
+    fractions of one portfolio is the point: 412 of 703 says something the bare
+    412 does not, and four numerators over one denominator can be compared to
+    each other at a glance.
+
     The values contain no user- or school-level detail and are cached because
     the login page is public. The page never substitutes demo/fabricated
     figures when the database is empty.
     """
-    from apps.schools.lifecycle_service import active_schools
     from apps.activities.models import Activity
-    from apps.analytics.pl_analytics_service import COMPLETED_STATUSES, VISIT_TYPES
+    from apps.analytics.pl_analytics_service import COMPLETED_STATUSES
+    from apps.core.activity_types import TRAINING_TYPES, VISIT_TYPES
+    from apps.core.enums import VerificationStatus
     from apps.core.fy import get_operational_fy
-    from apps.targets.models import MonthlyPersonalTarget, TargetAchievementLedger
+    from apps.schools.lifecycle_service import active_schools
+    from apps.ssa.models import SsaRecord
+
+    from django.conf import settings
 
     fy = get_operational_fy()
-    cache_key = f"frontend:login-stats:{fy}"
+    # Keyed by DATABASE as well as by year. The dev server and the test runner
+    # share one Redis, and a test that rendered /login under a four-school
+    # fixture left "0 of 4" on the real sign-in page for the next five minutes
+    # (2026-09-07). A test database has its own name, so its figures now land
+    # under their own key and never under the operating one.
+    db_name = str(settings.DATABASES["default"].get("NAME") or "default")
+    cache_key = f"frontend:login-stats:{fy}:{db_name}:v4"
     # The cache is an optimisation here, never a dependency. This is the login
     # page — the one page that must stand when everything optional is down —
     # and failure injection found a cache outage turning it into a 500. A
@@ -40,48 +57,69 @@ def _login_stats():
     if cached is not None:
         return cached
 
-    current_fy_activities = Activity.objects.filter(
-        deleted_at__isnull=True,
-        fy=fy,
-    ).exclude(status__in=("cancelled", "rejected", "deferred"))
-    completed = current_fy_activities.filter(status__in=COMPLETED_STATUSES)
+    # The denominator. Active means the row exists and the school is operating,
+    # so a school that has closed leaves both halves of every fraction — it is
+    # not reached and it is not part of the portfolio to be reached.
+    portfolio_ids = set(active_schools().values_list("id", flat=True))
+    portfolio = len(portfolio_ids)
 
-    total_activity_count = current_fy_activities.count()
-    completed_activity_count = completed.count()
-    task_completion_pct = (
-        round((completed_activity_count / total_activity_count) * 100)
-        if total_activity_count
-        else 0
+    completed = (
+        Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+        .exclude(status__in=("cancelled", "rejected", "deferred"))
+        .filter(status__in=COMPLETED_STATUSES)
     )
 
-    target_total = (
-        MonthlyPersonalTarget.objects.filter(fy=fy).aggregate(total=Sum("target"))[
-            "total"
-        ]
-        or 0
+    def _schools_touched_by(queryset) -> int:
+        """How many portfolio schools this work actually reached.
+
+        Both halves of the answer matter. An activity names ONE school in
+        `school`, but a cluster training names a cluster and records who turned
+        up in `attended_school_ids` — and cluster training is a third of
+        TRAINING_TYPES. Counting only the foreign key would report a fraction
+        of the schools trained and would do it silently, because the number it
+        returns is perfectly plausible.
+        """
+        reached = set(
+            queryset.exclude(school__isnull=True).values_list("school_id", flat=True)
+        )
+        for attended in queryset.exclude(attended_school_ids=[]).values_list(
+            "attended_school_ids", flat=True
+        ):
+            reached.update(attended or [])
+        return len(reached & portfolio_ids)
+
+    schools_reached = _schools_touched_by(completed)
+    schools_visited = _schools_touched_by(
+        completed.filter(activity_type__in=VISIT_TYPES)
     )
-    target_achieved = (
-        TargetAchievementLedger.objects.filter(
-            fy=fy,
-            validation_status="validated",
-        ).aggregate(total=Sum("quantity"))["total"]
-        or 0
-    )
-    target_progress_pct = (
-        min(100, round((target_achieved / target_total) * 100)) if target_total else 0
+    schools_trained = _schools_touched_by(
+        completed.filter(activity_type__in=TRAINING_TYPES)
     )
 
+    # An SSA counts once it is CONFIRMED. A pending or returned assessment is
+    # collected work, not a completed measurement, and the platform's own SSA
+    # figures elsewhere are all built on confirmed records.
+    ssa_completed = len(
+        set(
+            SsaRecord.objects.filter(
+                deleted_at__isnull=True,
+                fy=fy,
+                verification_status=VerificationStatus.CONFIRMED,
+            ).values_list("school_id", flat=True)
+        )
+        & portfolio_ids
+    )
+
+    # Numerator and denominator travel separately so the strip can set the
+    # count at full size and the portfolio beside it at caption size. Rendered
+    # as one string, "189 of 703" wrapped onto two lines in the tile and threw
+    # the row's baselines out.
     stats = {
-        # Schools the programme currently reaches, so a school that has closed
-        # stops counting. The alternative reading — lifetime reach, where a
-        # school worked in for three years still counts after it shuts — was
-        # considered and rejected: this sits beside live figures, and a number
-        # that only ever goes up next to ones that move would misread as
-        # current.
-        "stat_schools_reached": f"{active_schools().count():,}",
-        "stat_field_visits": f"{completed.filter(activity_type__in=VISIT_TYPES).count():,}",
-        "stat_tasks_completed": f"{task_completion_pct}%",
-        "stat_target_progress": f"{target_progress_pct}%",
+        "stat_portfolio": f"{portfolio:,}",
+        "stat_schools_reached": f"{schools_reached:,}",
+        "stat_schools_visited": f"{schools_visited:,}",
+        "stat_schools_trained": f"{schools_trained:,}",
+        "stat_ssa_completed": f"{ssa_completed:,}",
     }
     try:
         cache.set(cache_key, stats, timeout=300)

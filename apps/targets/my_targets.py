@@ -180,10 +180,29 @@ def priority_target_areas_for_users(
     N+1 query per supervised employee.
     """
 
-    users = [user for user in users if getattr(user, "staff_profile_id", None)]
-    result = {str(user.id): [] for user in users}
+    from apps.accounts.models import attach_staff_profile_ids
+    from apps.core.request_cache import store
+
+    users = [
+        user
+        for user in attach_staff_profile_ids(users)
+        if getattr(user, "staff_profile_id", None)
+    ]
+    # Memoised per request PER PERSON: CD Analytics asks for the same people's
+    # agreed areas once per team and once per CCEO row — 52 rosters on one
+    # render, mostly subsets of the same nine people. A person's areas are
+    # computed once; only people not yet seen reach the database (2026-09-06).
+    bucket = store()
+    known = (
+        bucket.setdefault(("targets:priority_target_areas", fy), {})
+        if bucket is not None
+        else {}
+    )
+    result = {str(u.id): list(known[str(u.id)]) for u in users if str(u.id) in known}
+    users = [u for u in users if str(u.id) not in known]
     if not users:
         return result
+    result.update({str(user.id): [] for user in users})
 
     from django.db.models import Prefetch
 
@@ -288,6 +307,8 @@ def priority_target_areas_for_users(
                     source="legacy_monthly_target",
                 )
             )
+    for user in users:
+        known[str(user.id)] = list(result.get(str(user.id), []))
     return result
 
 

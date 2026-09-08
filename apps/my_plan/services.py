@@ -18,7 +18,16 @@ from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.metrics import MetricValue, render_metric, render_strip
 from apps.core.scoping import owner_ids, resolve_user_scope
 
-ACTIVE_MY_PLAN_EXCLUDED_STATUSES = ("closed", "cancelled", "rejected")
+# A visit request that the school owner has not yet approved is not on the
+# requester's plan: it takes effect there only once approved (owner,
+# 2026-09-03; apps.planning.visit_requests). Pending ones are tracked on the
+# Visit Requests page, and stay reachable here through the status filter.
+ACTIVE_MY_PLAN_EXCLUDED_STATUSES = (
+    "closed",
+    "cancelled",
+    "rejected",
+    "awaiting_owner_approval",
+)
 
 
 def get_weeks_for_month(year: int, month: int) -> list[dict]:
@@ -91,6 +100,9 @@ def get_activity_status_label_and_class(activity, today) -> tuple[str, str]:
     # it sat next to a timeline that correctly called it complete.
     if status in ("completed", "closed"):
         return "Activity complete", "bg-emerald-50 text-emerald-700 border-emerald-200"
+
+    if status == "awaiting_owner_approval":
+        return "Awaiting owner approval", "bg-amber-50 text-amber-700 border-amber-200"
 
     if status in (
         "submitted_to_pl",
@@ -285,6 +297,15 @@ _WORKED_STATUSES = (
 
 def compute_next_action(a, today) -> dict:
     """Computes the single primary action and its properties for a given activity."""
+    # 0. Asked, not yet granted. Nothing to do here but wait; the request
+    # page shows who was asked and what they said.
+    if a.status == "awaiting_owner_approval":
+        return {
+            "text": "Waiting for owner approval",
+            "action": "await_owner",
+            "url": "/planning/visit-requests",
+            "description": "The school's owner has been asked to approve this visit",
+        }
     # 1. Returned by IA or PL -> Fix and Resubmit
     if a.status in (
         "returned",
@@ -520,6 +541,31 @@ def compute_next_action(a, today) -> dict:
                 "action": "view_status",
                 "url": f"/my-plan/{a.id}",
                 "description": "Accountability submitted — Accountant review pending",
+            }
+    # The two PL stages had no branch, so an officer whose accountability or
+    # reimbursement claim sat with their Programme Lead fell through to the
+    # generic "Scheduled / Waiting" and was told nothing.
+    for adv in advances:
+        if adv.status == "accountability_pl_pending":
+            return {
+                "text": "Awaiting PL Accountability Approval",
+                "action": "view_status",
+                "url": f"/my-plan/{a.id}",
+                "description": "Accountability submitted — Programme Lead approval pending",
+            }
+        if adv.status == "reimbursement_pl_pending":
+            return {
+                "text": "Awaiting PL Claim Approval",
+                "action": "view_status",
+                "url": f"/my-plan/{a.id}",
+                "description": "Self-funded claim submitted — Programme Lead approval pending",
+            }
+        if adv.status == "reimbursement_submitted":
+            return {
+                "text": "Awaiting Reimbursement",
+                "action": "view_status",
+                "url": f"/my-plan/{a.id}",
+                "description": "Claim approved — Accountant reimbursement pending",
             }
 
     # 10. Default
@@ -1126,6 +1172,7 @@ def get_frontend_context(principal, query: dict) -> dict:
             else "No SSA",
             # Cluster details
             "cluster_name": a.cluster.name if a.cluster else "Unknown Cluster",
+            "cluster_id": a.cluster.id if a.cluster else "",
             "cluster_district": a.cluster.district.name if a.cluster else "Unknown",
             "cluster_school_count": School.objects.filter(
                 cluster_id=a.cluster.id

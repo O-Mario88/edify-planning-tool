@@ -93,6 +93,22 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
   word-break: normal !important;
 }
 
+/* Every row and cell below carries a hidden-state guard: a row the page has
+   decided to hide stays hidden.
+
+   These declarations are `!important` because they have to beat the phone
+   card-mode transformation — and an inline style loses to `!important`, so
+   every conditionally-rendered row in an operational table reappeared on a
+   phone. The Analytics distribution table printed "No sub-region data is
+   available." underneath its ten populated rows (owner, 2026-09-05), and the
+   same leak was live in any table with an empty state, a "show more" row or a
+   detail row, because Alpine hides all of them the same way: by writing
+   `display: none` into the element's own style attribute.
+
+   Excepting the hidden state rather than `[x-show]` is deliberate. A row
+   Alpine is SHOWING still needs the real-table display, or it would drop back
+   to a card while its siblings stayed rows. `[x-cloak]` covers the moment
+   before Alpine has evaluated the condition. */
 /* A scroll mode owns table anatomy, not merely overflow. Page-specific mobile
    styles historically converted some tbody/tr/td elements into grids or
    blocks. When one of those rules survived in a cached asset, headings stayed
@@ -122,13 +138,13 @@ html[data-edify-input-modality="pointer"] .edify-workspace :where(
 
 :is(.edify-workspace, .drawer-body)
   :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden)
-  > :is(thead, tbody, tfoot) > tr {
+  > :is(thead, tbody, tfoot) > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
   display: table-row !important;
 }
 
 :is(.edify-workspace, .drawer-body)
   :is(.edify-mobile-table--scroll, .edify-mobile-table--fit, table[data-mobile-table="fit"]):not(.sr-only, .edify-visually-hidden)
-  > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  > :is(thead, tbody, tfoot) > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) > :is(th, td):not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
   display: table-cell !important;
 }
 
@@ -176,8 +192,11 @@ table[data-mobile-table="fit"] {
 
   /* Buttons are controls even when their original utility classes describe a
      32px desktop target. min-size lets long labels grow without clipping. */
-  .edify-workspace :where(button, [role="button"], summary, [role="tab"]),
-  .edify-workspace a:where(
+  /* Never inside a table cell: a record row is 32px and is the target
+     itself, so inflating what sits in the cell only makes the row taller
+     (2026-09-04). */
+  .edify-workspace :where(button, [role="button"], summary, [role="tab"]):not(:is(td, th) *),
+  .edify-workspace a:not(:is(td, th) *):where(
     .btn,
     .edify-action-button,
     .edify-primary-solid,
@@ -201,13 +220,13 @@ table[data-mobile-table="fit"] {
      out in a single horizontal run ("Waiting on HR0HR is the actor"). A link
      containing block content is a card, not a text link: it keeps the 44px
      touch target and keeps its own layout. */
-  .edify-workspace a[href]:not(:has(p, div, h1, h2, h3, h4, table, ul, ol)) {
+  .edify-workspace a[href]:not(:is(td, th) *):not(:has(p, div, h1, h2, h3, h4, table, ul, ol)) {
     display: inline-flex;
     min-block-size: 2.75rem;
     align-items: center;
   }
 
-  .edify-workspace a[href]:has(p, div, h1, h2, h3, h4, table, ul, ol) {
+  .edify-workspace a[href]:not(:is(td, th) *):has(p, div, h1, h2, h3, h4, table, ul, ol) {
     min-block-size: 2.75rem;
   }
 
@@ -225,7 +244,7 @@ table[data-mobile-table="fit"] {
     resize: vertical;
   }
 
-  .edify-workspace :where(label:has(input[type="checkbox"]), label:has(input[type="radio"])) {
+  .edify-workspace :where(label:has(input[type="checkbox"]), label:has(input[type="radio"])):not(:is(td, th) *) {
     display: flex;
     min-block-size: 2.75rem;
     align-items: center;
@@ -287,8 +306,8 @@ table[data-mobile-table="fit"] {
 }
 
 @media (pointer: coarse) {
-  .edify-workspace :where(button, [role="button"], summary, [role="tab"]),
-  .edify-workspace a:where(.btn, .edify-action-button, .edify-primary-solid, [role="button"]) {
+  .edify-workspace :where(button, [role="button"], summary, [role="tab"]):not(:is(td, th) *),
+  .edify-workspace a:not(:is(td, th) *):where(.btn, .edify-action-button, .edify-primary-solid, [role="button"]) {
     min-block-size: 3rem;
     min-inline-size: 3rem;
   }
@@ -331,6 +350,25 @@ main #filters-form .school-filter-grid > * {
   }
 }
 
+/* Tablets (owner, 2026-09-05). The directory filter contract above is keyed
+   on #filters-form, so these carry the same weight and sit after it:
+   portrait tablets (48-64rem) take two filters and the clear action per
+   row, landscape tablets (64-80rem) three. Seven tracks at 112-146px each
+   truncated every district name. */
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  /* The form is a two-column grid in the phone shell; the filter grid spans
+     it, otherwise it inherits half the sheet and squeezes its filters. */
+  main #filters-form .school-filter-grid {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) max-content !important;
+  }
+}
+@media (min-width: 64rem) and (max-width: 79.99rem) {
+  main #filters-form .school-filter-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) max-content !important;
+  }
+}
+
 @media (max-width: 63.9375rem) {
   main #messages-page .messages-filter-bar {
     flex-flow: column nowrap !important;
@@ -363,6 +401,13 @@ main #filters-form .school-filter-grid > * {
  * than the record they belonged to, especially at tablet widths. This scale
  * keeps controls comfortably above WCAG's 24px minimum while returning the
  * interface to the compact rhythm expected of an operational workspace.
+ *
+ * The action button itself is 32px at EVERY width (2026-09-04). The scale
+ * below used to step it 36 / 30 / 28px, so the same button was a different
+ * height on a tablet than on a desktop and different again on a phone —
+ * "32px platform-wide" held only above 1024px. Only the padding, icon and
+ * type steps stay responsive; the height does not. 32px still clears WCAG
+ * 2.2 target size (24px).
  *
  * List titles share the same contract across school, cluster, Planning,
  * My Plan, oversight and enhanced table/card lists: smaller type, safe word
@@ -476,7 +521,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 63.999rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2.25rem;
+    --edify-action-button-block-size: 2rem;
     --edify-action-button-padding-inline: 0.75rem;
     --edify-action-button-icon-size: 0.9375rem;
     --edify-action-button-radius: var(--radius-control);
@@ -538,7 +583,13 @@ main #filters-form .school-filter-grid > * {
     font-size: var(--edify-text-display-size) !important;
   }
 
-  .edify-shell :where(button, [role="button"], summary, [role="tab"]),
+  /* Not inside a table cell. A record row IS the tap target: it is 32px
+     tall, and inflating the link inside it grew the row to 44px in the
+     768-1023px band, where consistency.css's compensating
+     `main table td > a` rule (32px hit area, -8px margin) does not reach
+     because it is written for `max-width: 48rem`, or a coarse pointer. The
+     same table then measured 30px on a laptop and 44px on a tablet. */
+  .edify-shell :where(button, [role="button"], summary, [role="tab"]):not(:is(td, th) *),
   .edify-shell a:where(
     .btn,
     .edify-action-button,
@@ -548,8 +599,8 @@ main #filters-form .school-filter-grid > * {
     [class~="h-9"],
     [class~="min-h-8"],
     [class~="min-h-9"]
-  ),
-  .edify-shell a[href] {
+  ):not(:is(td, th) *),
+  .edify-shell a[href]:not(:is(td, th) *) {
     min-block-size: var(--edify-action-button-block-size) !important;
     min-inline-size: var(--edify-action-button-block-size);
   }
@@ -653,7 +704,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 36rem) {
   :root:root:root {
-    --edify-action-button-block-size: 1.875rem;
+    --edify-action-button-block-size: 2rem;
     --edify-action-button-padding-inline: 0.5rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
@@ -705,7 +756,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 22.5rem) {
   :root:root:root {
-    --edify-action-button-block-size: 1.75rem;
+    --edify-action-button-block-size: 2rem;
     --edify-action-button-padding-inline: 0.45rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);

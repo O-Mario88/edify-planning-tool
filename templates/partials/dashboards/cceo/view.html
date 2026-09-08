@@ -1,0 +1,2 @@
+{% comment %}The chosen view: the week or the map.{% endcomment %}
+{% if dashboard_view == "map" %}{% include "partials/dashboards/cceo/map_view.html" %}{% else %}{% include "partials/dashboards/cceo/week.html" %}{% endif %}

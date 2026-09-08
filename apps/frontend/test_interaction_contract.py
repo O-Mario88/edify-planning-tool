@@ -243,14 +243,35 @@ class SegmentedTabsTest(SimpleTestCase):
             "border-end-end-radius: var(--edify-radius-sm) !important;", self.css
         )
 
-    def test_the_rail_wraps_its_segments_without_reserved_space_below(self):
+    def test_the_rail_is_one_height_and_its_segments_fill_it(self):
+        """The rail wraps its segments with no reserved space below — and it
+        is the same height on every page.
+
+        It used to wrap them with `block-size: auto`, which let the tallest
+        segment decide. A sweep of the eight tab surfaces on 2026-09-05
+        measured three different rails: 32px on Core Schools and My Plan,
+        34px on Messages, 36px on Analytics, Team Targets and Special
+        Projects. Nothing chose those numbers. The rail is 32px now — the
+        platform's control height, shared with the action button, the table
+        row and the row-action trigger — and the segments keep
+        `align-self: stretch`, so they still fill it exactly and the active
+        fill still meets the rail border on every edge.
+        """
         rail_contract = self.css.split(
             "Tabs: a segmented rail, not a row of buttons", 1
         )[1].split('main :is(\n  [role="tab"]', 1)[0]
         self.assertIn("padding: 0 !important;", rail_contract)
-        self.assertIn("min-block-size: 0 !important;", rail_contract)
+        self.assertIn("min-block-size: 2rem !important;", rail_contract)
+        # 32px is the rail's floor, not a pin: a rail pinned to 2rem clipped
+        # its second row out of sight (2026-09-06). One row still measures
+        # 32px because each segment is 30px inside the rail's 1px borders.
         self.assertIn("block-size: auto !important;", rail_contract)
         self.assertIn("height: auto !important;", rail_contract)
+        self.assertNotIn("\n  block-size: 2rem !important;", rail_contract)
+        self.assertIn("block-size: calc(2rem - 2px) !important;", rail_contract)
+
+        segment = self.css.split('main :is(\n  [role="tab"]', 1)[1][:1200]
+        self.assertIn("align-self: stretch !important;", segment)
 
     def test_the_end_radius_is_the_button_radius_not_a_pill(self):
         """A rail and a button should read as the same family of control."""
@@ -404,6 +425,22 @@ class SegmentedRailFamilyTest(SimpleTestCase):
         "edify-tab-container",
         "edify-tab-btn",
     }
+
+    def test_every_allowed_family_is_actually_styled_by_the_rail(self):
+        """The allowlist is not a way to opt out of the design.
+
+        A family may be listed here only if BOTH selector lists carry it —
+        platform.css for the layout and interactions.css for the surface.
+        Adding a name here without adding it there is the very failure this
+        class exists to prevent: markup that passes the contract and renders
+        as bare links.
+        """
+        layout = _read("static/css/platform.css")
+        surface = _read("static/css/components/interactions.css")
+        for family in sorted(self.KNOWN_FAMILIES):
+            with self.subTest(family=family):
+                self.assertIn(f".{family}", layout)
+                self.assertIn(f".{family}", surface)
 
     def test_no_template_invents_a_tab_family_outside_the_rail_contract(self):
         import re

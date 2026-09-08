@@ -74,17 +74,17 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260828utilities1">
+<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260906field1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260828tiles1">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260831budget1">
-<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260826editorial1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260823topbaralign2">
-<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260828tiles1">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260827density2">
+<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260907kpi1">
+<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260907meter1">
+<link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
+<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260906mob1">
+<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260907meter1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,20 +98,20 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260826modal1">
+<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260906float1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260828schoolid1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260907empty1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260828tiles1">{% endblock %}
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260828schoolid1">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260907tiles1">{% endblock %}
+<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260907empty1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260823press1">
+<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260907tabs6">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -159,12 +159,16 @@ other page was relying on them.
 </script>
 
 <!-- Alpine.js Components -->
-    <script src="{% static 'js/alpine-components.js' %}?v=20260828tabs1"></script>
+    <script src="{% static 'js/alpine-components.js' %}?v=20260905charts1"></script>
 
 <!-- Platform defect beacon: dead buttons, script errors and failed HTMX
      exchanges are invisible to the server, so the page reports them. Each
      unique defect becomes one System Incident for the Admin. -->
 <script defer src="{% static 'js/csrf-sync.js' %}?v=20260810csrf1"></script>
+{% comment %}Field outbox: a CCEO's start/complete/evidence actions survive a
+dead signal -- stored on the phone, replayed when it reconnects. Loaded after
+csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
+<script defer src="{% static 'js/field-outbox.js' %}?v=20260904outbox2"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
@@ -207,13 +211,32 @@ the background itself, which meant a drawer opening over another one recorded
 close, leaving it unclickable until a reload. Loaded before Alpine so the
 controller exists by the time a drawer's x-init runs.
 {% endcomment %}
-<script defer src="{% static 'js/drawer-background.js' %}?v=20260809drawerbg1"></script>
+<script defer src="{% static 'js/drawer-background.js' %}?v=20260906float1"></script>
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260828schoolid1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260907empty1"></script>
+
+{% comment %}
+Keeps the reader where they were. The shell gives the workspace its own
+scrollbar, so the document never scrolls and the browser has nothing to
+restore on a refresh, a back, or a paginated link — and the sidebar's menu,
+1,395px taller than a short window, returned to the top on every navigation
+(owner, 2026-09-07). `defer` so it runs after the shell is parsed and before
+the load event, which is when the position has to be back.
+{% endcomment %}
+<script defer src="{% static 'js/scroll-memory.js' %}?v=20260907scroll1"></script>
+
+{% comment %}
+A dashboard view, once loaded, stays loaded. Switching between Map and
+Operations cost the server 300-700ms every time because the view rebuilds the
+whole dashboard whichever panel it renders; a panel the reader has already
+waited for is now kept, so going back to it costs nothing (owner, 2026-09-07).
+Loaded after the chart system, whose teardown it calls before parking a panel.
+{% endcomment %}
+<script defer src="{% static 'js/view-panels.js' %}?v=20260907panels2"></script>
 <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
 
 <!-- Alpine.js (for client-side UI states - dropdown toggles, tabs, sidebars).
@@ -505,6 +528,15 @@ controller exists by the time a drawer's x-init runs.
         colors: S.mixedSeries.slice(),
         stroke: { width: widths, curve: 'straight', lineCap: 'round' },
         markers: { size: markers, strokeWidth: 2, hover: { size: 6 } },
+        /* Month names never trim. The global `labels.trim` exists for long
+           category names; on a twelve-month axis it measured one three-letter
+           month as too wide and printed "." for May (owner, 2026-09-05). A
+           label that genuinely collides is hidden whole, never shortened. */
+        xaxis: {
+          labels: { trim: false, hideOverlappingLabels: true,
+                    style: { colors: S.ink.axis, fontSize: '12px', fontWeight: 600 } },
+          axisBorder: { show: false }, axisTicks: { show: false },
+        },
         plotOptions: {
           bar: {
             columnWidth: '58%', maxColumnWidth: 24,
@@ -526,6 +558,105 @@ controller exists by the time a drawer's x-init runs.
                   labels: { colors: S.ink.legend } },
         tooltip: { theme: 'dark', shared: true, intersect: false,
                    style: { fontSize: '12px' } },
+      }, opts);
+    },
+
+    /* ── Axes ──────────────────────────────────────────────────────────────
+       The two axes the mixed form uses everywhere, written once. Seven
+       templates each restated them; the one that forgot `min: 0` drew an
+       achievement axis running to -20% on the Analytics overview, and none
+       of them handled a small count, so an axis for three activities read
+       0.5 / 1.5 / 2.5 (owner, 2026-09-05). Axis text wears the text tokens:
+       identity comes from the mark, never from a coloured title.
+       ------------------------------------------------------------------- */
+
+    /* Whole numbers from zero. ApexCharts picks a nice scale for the range
+       it has, and for a range of three that means half-steps; a count has
+       no half-steps, so a tick that is not a whole number prints nothing. */
+    countAxis: function (title, opts) {
+      var S = window.EdifyChartSystem;
+      var axis = {
+        min: 0,
+        forceNiceScale: true,
+        labels: {
+          formatter: function (v) { return Number.isInteger(v) ? v : ''; },
+          style: { colors: S.ink.axis, fontSize: '12px' },
+        },
+      };
+      if (title) {
+        axis.title = { text: title, style: { color: S.ink.axis, fontSize: '12px', fontWeight: 500 } };
+      }
+      return Object.assign(axis, opts || {});
+    },
+
+    /* A rate against target: 0-100%, on the right, five steps. Fixed at both
+       ends so a flat line at 0% sits on the floor of the chart, a month at
+       100% touches the top, and the same 20% step reads the same on every
+       role's dashboard. */
+    rateAxis: function (title, opts) {
+      var S = window.EdifyChartSystem;
+      var axis = {
+        opposite: true, min: 0, max: 100, tickAmount: 5,
+        labels: {
+          formatter: function (v) { return Math.round(v) + '%'; },
+          style: { colors: S.ink.axis, fontSize: '12px' },
+        },
+      };
+      if (title) {
+        axis.title = { text: title, style: { color: S.ink.axis, fontSize: '12px', fontWeight: 500 } };
+      }
+      return Object.assign(axis, opts || {});
+    },
+
+    /* One or more measures over time, as lines. The ordered palette gives
+       each series its hue; the legend sits on top and names them. This is
+       the form the hand-drawn SVG trends moved onto (2026-09-05): the IA
+       eight-week activity flow, the team performance trend. */
+    lineTrend: function (seriesCount, opts) {
+      var S = window.EdifyChartSystem;
+      var count = seriesCount || 1;
+      return S.formBase({
+        chart: { type: 'line', toolbar: { show: false }, fontFamily: 'inherit' },
+        colors: (count > 1 ? S.comparisonSeries : S.singleSeries).slice(0, Math.max(1, count)),
+        stroke: { width: 2.25, curve: 'straight', lineCap: 'round' },
+        markers: { size: 4, strokeWidth: 2, hover: { size: 6 } },
+        legend: { show: count > 1, position: 'top', horizontalAlign: 'left', fontSize: '12px',
+                  fontWeight: 600, itemMargin: { vertical: 3 },
+                  markers: { width: 9, height: 9, radius: 9 },
+                  labels: { colors: S.ink.legend } },
+        tooltip: { theme: 'dark', shared: true, intersect: false, style: { fontSize: '12px' } },
+      }, opts);
+    },
+
+    /* One share of a whole, as a ring: budget utilised, funding drawn. The
+       value sits in the centre; the ring wears the tone the caller names,
+       because here colour carries meaning (success = on track). This is the
+       form the conic-gradient gauges moved onto (2026-09-05). */
+    gauge: function (tone, label, opts) {
+      var S = window.EdifyChartSystem;
+      var colour = {
+        success: 'var(--edify-success)',
+        warning: 'var(--edify-warn, var(--edify-warning))',
+        danger: 'var(--edify-danger)',
+      }[tone] || 'var(--edify-series-1)';
+      return S.formBase({
+        chart: { type: 'radialBar', toolbar: { show: false }, fontFamily: 'inherit', sparkline: { enabled: true } },
+        colors: [colour],
+        plotOptions: {
+          radialBar: {
+            hollow: { size: '62%' },
+            track: { background: 'var(--edify-border)', strokeWidth: '100%' },
+            dataLabels: {
+              name: { show: Boolean(label), fontSize: '12px', fontWeight: 700, color: S.ink.legend, offsetY: 18 },
+              value: { fontSize: '18px', fontWeight: 700, color: 'var(--edify-text)', offsetY: label ? -6 : 4,
+                       formatter: function (v) { return Math.round(v) + '%'; } },
+            },
+          },
+        },
+        stroke: { lineCap: 'round' },
+        labels: label ? [label] : [],
+        legend: { show: false },
+        tooltip: { enabled: false },
       }, opts);
     },
 
@@ -573,6 +704,47 @@ controller exists by the time a drawer's x-init runs.
        destroy(); the render itself completes asynchronously, as it always did. */
     renderDetached: function (el, options) {
       if (!el || typeof ApexCharts !== 'function') { return null; }
+      /* Below the fold, a chart waits until it is about to scroll into view,
+         and charts that become visible together are drawn one per idle
+         slice: a dashboard with six charts rendered them all in one
+         150-280ms task at load (2026-09-06). A chart already on screen
+         renders at once, as before. */
+      var system = this;
+      var rect = el.getBoundingClientRect();
+      var viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      var nearViewport = rect.bottom > -200 && rect.top < viewportHeight + 200;
+      if (nearViewport || typeof IntersectionObserver !== 'function') {
+        return system._renderDetachedNow(el, options);
+      }
+      var lazy = { destroy: function () { lazy.cancelled = true; observer.disconnect(); } };
+      var observer = new IntersectionObserver(function (entries) {
+        if (!entries.some(function (entry) { return entry.isIntersecting; })) { return; }
+        observer.disconnect();
+        if (lazy.cancelled) { return; }
+        var schedule = window.requestIdleCallback || function (fn) { window.setTimeout(fn, 0); };
+        schedule(function () {
+          if (lazy.cancelled || !el.isConnected) { return; }
+          var drawn = system._renderDetachedNow(el, options);
+          lazy.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
+        });
+      }, { rootMargin: '200px 0px' });
+      observer.observe(el);
+      return lazy;
+    },
+
+    _renderDetachedNow: function (el, options) {
+      if (!el || typeof ApexCharts !== 'function') { return null; }
+
+      /* A point on a line is hollow — components.css fills it with the
+         surface — so its ring has to carry the series colour, or the point is
+         a surface-coloured circle on a surface-coloured card. That is what
+         made the Achievement line look dashed: invisible points punching
+         holes in it. ApexCharts' own default ring is white. A chart that
+         sets strokeColors itself keeps them. */
+      if (options && Array.isArray(options.colors)) {
+        var pointRing = options.markers || (options.markers = {});
+        if (pointRing.strokeColors == null) { pointRing.strokeColors = options.colors.slice(); }
+      }
 
       /* Call sites re-render by calling destroy() and then this again — a
          theme change, a filter, a period switch. destroy() tears down
@@ -586,8 +758,38 @@ controller exists by the time a drawer's x-init runs.
 
       var slot = Math.round(el.getBoundingClientRect().width);
       if (!slot) {
-        /* No measurable slot: the honest fallback is the old path. */
+        /* No measurable slot. Until 2026-09-05 this fell back to rendering in
+           place, and a slot inside a closed <details> — the Reports insight
+           disclosures — has no width at all, so ApexCharts drew a chart of
+           width NaN and the console filled with "translate(NaN, 0)". A chart
+           in a folded panel waits for the fold to open (or for the slot to
+           gain width any other way) and renders then, at the right width.
+           The in-place fallback is kept only for a slot nothing can observe. */
+        var fold = el.closest('details');
+        if (fold && !fold.open) {
+          var waiting = { destroy: function () { waiting.cancelled = true; } };
+          fold.addEventListener('toggle', function onOpen() {
+            fold.removeEventListener('toggle', onOpen);
+            if (waiting.cancelled || !el.isConnected) { return; }
+            var live = window.EdifyChartSystem._renderDetachedNow(el, options);
+            waiting.destroy = function () { if (live && live.destroy) { live.destroy(); } };
+          });
+          return waiting;
+        }
+        if (typeof ResizeObserver === 'function') {
+          var pending = { destroy: function () { pending.cancelled = true; observer.disconnect(); } };
+          var observer = new ResizeObserver(function (entries) {
+            if (!entries.some(function (entry) { return entry.contentRect.width > 0; })) { return; }
+            observer.disconnect();
+            if (pending.cancelled || !el.isConnected) { return; }
+            var drawn = window.EdifyChartSystem._renderDetachedNow(el, options);
+            pending.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
+          });
+          observer.observe(el);
+          return pending;
+        }
         var inPlace = new ApexCharts(el, options);
+        window.EdifyChartSystem._live.push({ el: el, chart: inPlace });
         inPlace.render();
         return inPlace;
       }
@@ -606,6 +808,20 @@ controller exists by the time a drawer's x-init runs.
       document.body.appendChild(holder);
 
       var settle = function () {
+        /* The slot can leave the document while the render is still running —
+           a dashboard view tab swapped away mid-render is the common case.
+           Moving the finished chart into a slot that is no longer in the
+           document leaves ApexCharts alive with its resize handler and its
+           animation timers pointing at geometry that no longer measures, and
+           the next tick writes width="NaN" and translate(NaN, 0) into the SVG.
+           A chart whose slot is gone has nothing to draw into, so it is torn
+           down here instead of being handed a detached parent. */
+        if (!el.isConnected) {
+          holder.remove();
+          window.EdifyChartSystem._forget(chart);
+          try { chart.destroy(); } catch (e) {}
+          return;
+        }
         holder.style.position = '';
         holder.style.left = '';
         holder.style.top = '';
@@ -615,6 +831,11 @@ controller exists by the time a drawer's x-init runs.
       };
 
       var chart = new ApexCharts(stage, options);
+      /* Tracked so the sweep below can destroy it if its slot leaves the
+         document later — most call sites hold the chart only to destroy it on
+         re-render, and several have no teardown at all, so a swapped-away view
+         would otherwise leave a live chart behind for every visit. */
+      window.EdifyChartSystem._live.push({ el: el, chart: chart });
       /* Both arms move the chart in: a failed render must not leave the panel
          empty AND the holder stranded off-screen under body, where it would be
          invisible to the user and to any check that looks inside the slot.
@@ -634,6 +855,79 @@ controller exists by the time a drawer's x-init runs.
 
       return chart;
     },
+
+    /* Live charts, so one sweep can tear down the ones whose slot has gone.
+       Object.freeze is shallow: the array stays writable. */
+    _live: [],
+
+    _forget: function (chart) {
+      for (var i = this._live.length - 1; i >= 0; i--) {
+        if (this._live[i].chart === chart) { this._live.splice(i, 1); }
+      }
+    },
+
+    _drop: function (index) {
+      var record = this._live[index];
+      this._live.splice(index, 1);
+      try { record.chart.destroy(); } catch (e) {}
+    },
+
+    /* Destroy every chart inside a subtree that is about to be replaced.
+
+       ApexCharts watches its own parent with a ResizeObserver
+       (redrawOnParentResize, on by default) and redraws when that parent
+       changes size. Removing the parent IS a size change: the observer fires
+       on the next frame with a zero rect, ApexCharts recomputes its geometry
+       from an element that no longer measures, and writes width="NaN" and
+       translate(NaN, 0) into an SVG nobody can see. On a dashboard view tab
+       that is one console error per swap.
+
+       That observer fires at the end of the frame that removed the panel,
+       which is BEFORE htmx settles, so tearing the chart down after the swap
+       loses the race about half the time. Doing it before the swap does not
+       race: the chart is gone before anything can observe its removal. */
+    destroyInside: function (root) {
+      if (!root) { return; }
+      for (var i = this._live.length - 1; i >= 0; i--) {
+        var el = this._live[i].el;
+        if (el && (el === root || root.contains(el))) { this._drop(i); }
+      }
+    },
+
+    /* Backstop for slots removed by something other than an htmx swap — an
+       Alpine x-if, a drawer closing, a component tearing down its own DOM. */
+    sweepDetached: function () {
+      for (var i = this._live.length - 1; i >= 0; i--) {
+        var el = this._live[i].el;
+        if (!el || !el.isConnected) { this._drop(i); }
+      }
+    },
+  });
+
+  document.addEventListener('htmx:beforeSwap', function (e) {
+    var detail = e.detail;
+    /* shouldSwap is false for hx-swap="none" and for responses htmx refuses:
+       nothing is replaced, so nothing should be torn down. */
+    if (!detail || detail.shouldSwap === false) { return; }
+    /* Only the swap styles that DISCARD what is in the target. An append
+       (beforeend, afterbegin) or a sibling insert leaves the existing content
+       — and its charts — in place; destroying those would blank a chart that
+       is still on screen, e.g. a list that loads its next page below itself. */
+    var spec = (detail.swapOverride || '').trim();
+    if (!spec) {
+      var elt = detail.requestConfig && detail.requestConfig.elt;
+      var holder = elt && elt.closest ? elt.closest('[hx-swap], [data-hx-swap]') : null;
+      spec = holder
+        ? (holder.getAttribute('hx-swap') || holder.getAttribute('data-hx-swap') || '')
+        : '';
+    }
+    var style = (spec.split(/\s+/)[0] || 'innerHTML').toLowerCase();
+    if (style === 'innerhtml' || style === 'outerhtml' || style === 'delete') {
+      window.EdifyChartSystem.destroyInside(detail.target);
+    }
+  });
+  document.addEventListener('htmx:afterSettle', function () {
+    window.EdifyChartSystem.sweepDetached();
   });
 
   /* ApexCharts merges window.Apex into every chart it creates, which makes this

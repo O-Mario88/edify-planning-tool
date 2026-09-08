@@ -40,6 +40,7 @@
   if (window.__edifyDrawerBackground) return;
 
   var HOST_ID = "drawer-container";
+  var RECEDE_CLASS = "edify-drawer-recede";
   var locked = false;
   var nodes = [];
   var states = [];
@@ -78,6 +79,13 @@
       states.push({ ariaHidden: node.getAttribute("aria-hidden") });
       node.inert = true;
       node.setAttribute("aria-hidden", "true");
+      /* The visible half of "out of play": drawers.css drains the colour from
+         these nodes and steps them back, so the page reads as depth behind the
+         floating card rather than as a busy page under a grey sheet. They are
+         exactly the right nodes for it — everything except the drawer's own
+         container, so the transform never becomes the drawer's containing
+         block (owner, 2026-09-06). */
+      node.classList.add(RECEDE_CLASS);
     });
     bodyOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
@@ -89,6 +97,7 @@
     nodes.forEach(function (node, index) {
       var state = states[index] || { ariaHidden: null };
       node.inert = false;
+      node.classList.remove(RECEDE_CLASS);
       if (state.ariaHidden === null) node.removeAttribute("aria-hidden");
       else node.setAttribute("aria-hidden", state.ariaHidden);
     });

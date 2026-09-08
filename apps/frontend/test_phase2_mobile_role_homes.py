@@ -9,7 +9,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _read(relative_path: str) -> str:
-    return ROOT.joinpath(relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
@@ -29,24 +31,28 @@ class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
                 self.assertIn("components/mobile_role_home.html", source)
                 self.assertIn("mobile_primary_action", source)
 
-    def test_task_queues_precede_mobile_metrics(self):
+    def test_mobile_metrics_follow_the_header_and_precede_the_queue(self):
+        """Owner decision (2026-09-03): tiles sit below the header on every
+        page, so a role home opens hero, headline tiles, then its queue."""
         cceo = _read("templates/pages/dashboards/cceo.html")
         ia = _read("templates/pages/ia/analytics_dashboard.html")
         accounts = _read("templates/pages/accounts/dashboard.html")
-        partner = _read("templates/pages/partner/today.html")
 
         self.assertLess(
-            cceo.index("cceo-mobile-next-title"),
             cceo.index('title="Week at a glance"'),
+            cceo.index("cceo-mobile-next-title"),
         )
         self.assertLess(
-            ia.index("ia-mobile-queue-title"),
             ia.index('title="Verification workload"'),
+            ia.index("ia-mobile-queue-title"),
         )
+        # The Accountant's queue is the fund workspace itself, rendered after
+        # the role-home hero; there is no separate phone-only copy of it.
         self.assertLess(
-            accounts.index("accounts-mobile-queue-title"),
-            accounts.index('title="Finance headline"'),
+            accounts.index("mobile_role_home.html"),
+            accounts.index("partials/finance/accountant_root.html"),
         )
+        self.assertNotIn("accounts-mobile-queue-title", accounts)
 
     def test_desktop_headers_are_suppressed_only_on_mobile(self):
         styles = _read("static/css/components/mobile-patterns.css")

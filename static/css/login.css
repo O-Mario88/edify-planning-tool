@@ -358,11 +358,25 @@ button {
 }
 
 .login-stat__value {
+  display: flex;
+  align-items: baseline;
+  gap: .32rem;
   color: #fff;
   font-size: 1.42rem;
   font-weight: 500;
   letter-spacing: -.025em;
   line-height: 1.22;
+}
+
+/* The denominator is the same for all four metrics (owner, 2026-09-07: "out
+   of the total portfolio in the system"), so it is said quietly beside each
+   count rather than competing with it four times over. */
+.login-stat__of {
+  color: #9fc0d8;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0;
+  white-space: nowrap;
 }
 
 .login-stat__meta {

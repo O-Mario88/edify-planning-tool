@@ -1,68 +1,216 @@
 {% extends "layouts/shell.html" %}
-{% load frontend_filters %}
-
+{% load frontend_filters table_pagination %}
 {% block title %}{{ partner.name }} — Edify{% endblock %}
-
 {% block shell_content %}
+{% comment %}
+A partner organisation's profile in the school profile's shape (owner,
+2026-09-07: "look at the school profile and build something similar" — and
+"make sure the partner profile don't have too many cards"). Four cards on the
+same two-column grid: who they are and what they have done on the left, the
+numbers and the people on the right. Label/value pairs use the profile field
+contract every profile page shares.
+{% endcomment %}
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 {% include "partials/_back_link.html" with back_href="/partners" back_label="Partners" %}
+
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Partner organisation</p>
 <h1 class="edify-page-title edify-page-header__title">{{ partner.name }}</h1>
-<p class="edify-page-header__description">Partner organisation profile</p>
+<p class="edify-page-header__description">{{ partner.ssa_intervention_label }}{% if partner.region_name %} · {{ partner.region_name }}{% endif %}</p>
+</div>
+<div class="edify-page-header__controls">
+<span class="edify-badge" data-tone="{% if partner.active_status %}success{% else %}warning{% endif %}">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
+{% if can_edit %}
+<button type="button" hx-get="/partners/{{ partner.id }}/edit-drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9" aria-label="Edit {{ partner.name }} details">Edit details</button>
+{% endif %}
+{% if can_manage_status %}
+<form method="post" action="/partners/{{ partner.id }}/status" class="inline">
+{% csrf_token %}
+<input type="hidden" name="active" value="{% if partner.active_status %}0{% else %}1{% endif %}">
+<button type="submit" class="btn btn-secondary min-h-9">{% if partner.active_status %}Deactivate{% else %}Activate{% endif %}</button>
+</form>
+{% endif %}
 </div>
 </div>
 
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm">
-<div class="flex items-start gap-5">
-<div class="h-14 w-14 rounded-surface bg-teal-100 text-teal-700 font-semibold text-[20px] grid place-items-center shrink-0">{{ partner.name|slice:":2"|upper }}</div>
-<div class="flex-1">
-<h2 class="text-[22px] font-extrabold tracking-tight">{{ partner.name }}</h2>
-<dl class="mt-2 flex flex-wrap gap-x-6 gap-y-2">
-<div>
-<dt class="edify-profile-field__label">Region</dt>
-<dd class="edify-profile-field__value">{{ partner.region_name|default:"No region" }}</dd>
-</div>
-<div>
-<dt class="edify-profile-field__label">Contract</dt>
-<dd class="edify-profile-field__value">{{ partner.contract_status|default:"N/A" }}</dd>
-</div>
-</dl>
-</div>
-<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-pill {% if partner.active_status %}bg-emerald-50 text-emerald-700{% else %}bg-slate-100 text-slate-500{% endif %} edify-text-caption font-bold">{% if partner.active_status %}Active{% else %}Inactive{% endif %}</span>
-</div>
-</div>
-
-<div class="grid grid-cols-2 gap-4">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold edify-primary-text">{{ activities|length }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-emerald-600">{{ completed }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
+<div class="grid lg:grid-cols-3 gap-6">
+<!-- Left Column: Organisation & Activity history -->
+<div class="lg:col-span-2 space-y-6">
+<!-- Organisation Card -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-6">
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Organisation &amp; Contact</h3>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div><p class="edify-profile-field__label">Contact person</p><p class="edify-profile-field__value mt-0.5">{{ partner.contact_person|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">Phone</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ partner.phone|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">Email</p><p class="edify-profile-field__value mt-0.5">{% if partner.email %}<a href="mailto:{{ partner.email }}" class="hover:underline">{{ partner.email }}</a>{% else %}Not specified{% endif %}</p></div>
+<div><p class="edify-profile-field__label">Region</p><p class="edify-profile-field__value mt-0.5">{{ partner.region_name|default:"Not specified" }}</p></div>
+<div><p class="edify-profile-field__label">SSA intervention</p><p class="edify-profile-field__value mt-0.5">{{ partner.ssa_intervention_label }}</p></div>
+<div><p class="edify-profile-field__label">Expertise</p><p class="edify-profile-field__value mt-0.5">{% if partner.expertise_areas %}{{ partner.expertise_areas|join:", " }}{% elif partner.trains_on %}{{ partner.trains_on|join:", " }}{% else %}Not specified{% endif %}</p></div>
+<div><p class="edify-profile-field__label">Contract</p><p class="edify-profile-field__value mt-0.5">{{ partner.contract_status|default:"Not specified"|title }}</p></div>
+<div><p class="edify-profile-field__label">Schools assigned</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ school_count }}</p></div>
+{% if partner.notes %}<div class="col-span-2"><p class="edify-profile-field__label">Notes</p><p class="edify-profile-field__value mt-0.5">{{ partner.notes }}</p></div>{% endif %}
 </div>
 </div>
 
-<!-- Annual SSA Progress (Assigned Schools) -->
-{% if partner_progress %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
-<h2 class="text-[14px] font-semibold">Annual SSA Progress (Assigned Partner Schools)</h2>
-<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-{% for item in partner_progress %}
-<div class="space-y-1">
-<div class="flex items-center justify-between text-[12px] font-semibold">
-<span>FY{{ item.fy }} ({{ item.school_count }} School{{ item.school_count|pluralize }})</span>
-<span class="font-semibold text-slate-800">{{ item.avg_score|floatformat:1 }} / 10.0</span>
+<!-- Schools supported -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Schools supported</h3>
+<p class="edify-text-caption text-slate-400 font-medium mt-0.5">Every school this organisation has visited or trained, and how each is performing on its latest confirmed SSA.</p>
 </div>
-<div class="h-2 w-full bg-slate-100 rounded-pill overflow-hidden">
-<div class="h-full edify-primary-solid rounded-pill" style="width: {{ item.avg_score|multiply:10 }}%"></div>
+{% if supported_schools %}
+{% paginate supported_schools "supported_page" as supported_pager %}
+<div class="overflow-x-auto">
+<table class="edify-record-table w-full text-[12px] border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100 text-left">
+<th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">District</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Visits</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Trainings</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Last activity</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Latest SSA</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">SSA this FY</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for row in supported_pager.rows %}
+<tr>
+<td class="px-5 py-3" data-record-title><a href="/schools/{{ row.school.id }}" class="font-semibold text-slate-800 hover:underline">{{ row.school.name }}</a></td>
+<td class="px-4 py-3 text-slate-600">{{ row.district|default:"—" }}</td>
+<td class="px-4 py-3 tabular-nums text-slate-700">{{ row.visits_done }}<span class="text-slate-400"> / {{ row.visits }}</span></td>
+<td class="px-4 py-3 tabular-nums text-slate-700">{{ row.trainings_done }}<span class="text-slate-400"> / {{ row.trainings }}</span></td>
+<td class="px-4 py-3 tabular-nums text-slate-600">{{ row.last|date:"d M Y"|default:"—" }}</td>
+<td class="px-4 py-3 tabular-nums">
+{% if row.score is not None %}<span class="font-semibold text-slate-800">{{ row.score|floatformat:1 }}</span><span class="text-slate-400">/10</span>{% if row.delta is not None %} <span class="edify-status-text" data-edify-tone="{% if row.delta > 0 %}success{% elif row.delta < 0 %}danger{% else %}neutral{% endif %}">{% if row.delta > 0 %}+{% endif %}{{ row.delta|floatformat:1 }}</span>{% endif %}{% else %}—{% endif %}
+</td>
+<td class="px-4 py-3"><span class="edify-status-text" data-edify-tone="{% if row.ssa_status == 'Done' %}success{% elif row.ssa_status == 'Not Done' %}neutral{% else %}info{% endif %}">{{ row.ssa_status }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% include "components/table_pager.html" with pager=supported_pager param="supported_page" %}
+{% else %}
+{% include "components/empty_state.html" with message="No schools visited or trained yet." hint="Schools appear here as soon as this organisation is given a visit or a training." %}
+{% endif %}
+</div>
+
+<!-- Activity history -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Activity history</h3>
+<p class="edify-text-caption text-slate-400 font-medium mt-0.5">School visits, trainings, assessments and every other activity this organisation has been given, newest first.</p>
+</div>
+{% if history %}
+{% paginate history "history_page" as history_pager %}
+<div class="overflow-x-auto">
+<table class="edify-record-table w-full text-[12px] border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100 text-left">
+<th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Date</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Kind</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Activity</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">School / cluster</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Delivered by</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Status</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for row in history_pager.rows %}
+<tr>
+<td class="px-5 py-3 tabular-nums text-slate-600">{{ row.activity.planned_date|date:"d M Y"|default:"—" }}</td>
+<td class="px-4 py-3 text-slate-700">{{ row.kind }}</td>
+<td class="px-4 py-3 font-semibold text-slate-800" data-record-title>{{ row.activity.activity_type|title|replace_underscore }}</td>
+<td class="px-4 py-3">{% if row.activity.school %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{{ row.activity.school.name }}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}—{% endif %}</td>
+<td class="px-4 py-3 text-slate-600">{% firstof row.delivered_by row.staff_name "—" %}</td>
+<td class="px-4 py-3"><span class="edify-status-text" data-edify-tone="{% if row.state == 'completed' %}success{% elif row.state == 'incomplete' %}danger{% else %}info{% endif %}">{{ row.activity.status|replace_underscore }}</span></td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% include "components/table_pager.html" with pager=history_pager param="history_page" %}
+{% else %}
+{% include "components/empty_state.html" with message="No activities have been assigned to this organisation yet." %}
+{% endif %}
 </div>
 </div>
+
+<!-- Right Column: the numbers and the people -->
+<div class="space-y-6">
+<!-- Activities Card -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm space-y-4">
+<h3 class="edify-profile-section-title border-b border-slate-100 pb-3">Activities</h3>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+<div><p class="edify-profile-field__label">Total</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ total }}</p></div>
+<div><p class="edify-profile-field__label">Completed</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ counts.completed }}</p></div>
+<div><p class="edify-profile-field__label">Assigned</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ counts.assigned }}</p></div>
+<div><p class="edify-profile-field__label">Incomplete</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ counts.incomplete }}</p></div>
+{% for kind, n in kinds %}
+<div><p class="edify-profile-field__label">{{ kind }}</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{{ n }}</p></div>
 {% endfor %}
 </div>
+{% if partner_progress %}
+<h4 class="edify-profile-section-title pt-2">Annual SSA progress (assigned schools)</h4>
+<div class="grid grid-cols-2 gap-y-4 gap-x-6 text-[12px]">
+{% for item in partner_progress %}
+<div><p class="edify-profile-field__label">FY{{ item.fy }} · {{ item.school_count }} school{{ item.school_count|pluralize }}</p><p class="edify-profile-field__value mt-0.5 tabular-nums">{% if item.average is not None %}{{ item.average }}/10{% else %}—{% endif %}</p></div>
+{% endfor %}
 </div>
 {% endif %}
+</div>
 
+<!-- Staff & Volunteers Card -->
+<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
+<div class="flex items-center justify-between gap-3 px-6 py-4 border-b border-[var(--edify-border)]">
+<div>
+<h3 class="text-[15px] font-semibold text-slate-800 tracking-tight">Staff and volunteers</h3>
+<p class="edify-text-caption text-slate-400 font-medium mt-0.5">{{ members|length }} on the roster{% if named_on_deliveries %} · {{ named_on_deliveries|length }} named on deliveries, not yet on it{% endif %}</p>
+</div>
+{% if can_manage_roster %}<button type="button" hx-get="/partners/{{ partner.id }}/members/drawer" hx-target="#drawer-container" hx-swap="innerHTML" class="btn btn-secondary min-h-9">Add person</button>{% endif %}
+</div>
+{% if roster_rows %}
+{% paginate roster_rows "roster_page" as roster_pager %}
+<div class="overflow-x-auto">
+<table class="edify-record-table w-full text-[12px] border-collapse">
+<thead>
+<tr class="bg-slate-50 border-b border-slate-100 text-left">
+<th class="px-5 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Name</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Role</th>
+<th class="px-4 py-3 edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Contact</th>
+{% if can_manage_roster %}<th class="px-4 py-3 text-right edify-text-caption font-semibold uppercase text-slate-400 tracking-wider"><span class="sr-only">Actions</span></th>{% endif %}
+</tr>
+</thead>
+<tbody class="divide-y divide-slate-100 font-medium">
+{% for row in roster_pager.rows %}
+{% if row.kind == "member" %}
+{% with m=row.member %}
+<tr>
+<td class="px-5 py-3" data-record-title><span class="font-semibold text-slate-800 block">{{ m.name }}</span>{% if m.title %}<span class="edify-text-caption text-slate-400 block">{{ m.title }}</span>{% endif %}</td>
+<td class="px-4 py-3"><span class="edify-badge" data-tone="{% if m.role == 'volunteer' %}info{% else %}neutral{% endif %}">{{ m.get_role_display }}</span></td>
+<td class="px-4 py-3 text-slate-600">{% if m.phone %}<span class="block tabular-nums">{{ m.phone }}</span>{% endif %}{% if m.email %}<a href="mailto:{{ m.email }}" class="block hover:underline">{{ m.email }}</a>{% endif %}{% if not m.phone and not m.email %}—{% endif %}</td>
+{% if can_manage_roster %}<td class="px-4 py-3 text-right" data-record-action><form method="post" action="/partners/{{ partner.id }}/members" class="inline">{% csrf_token %}<input type="hidden" name="action" value="remove"><input type="hidden" name="member_id" value="{{ m.id }}"><button type="submit" class="inline-flex min-h-8 items-center px-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 rounded-control edify-text-caption font-semibold uppercase transition-colors" aria-label="Remove {{ m.name }} from the roster">Remove</button></form></td>{% endif %}
+</tr>
+{% endwith %}
+{% else %}
+<tr class="opacity-80">
+<td class="px-5 py-3 font-semibold text-slate-700" data-record-title>{{ row.name }}</td>
+<td class="px-4 py-3" colspan="2"><span class="edify-badge" data-tone="warning">Named on {{ row.deliveries }} deliver{{ row.deliveries|pluralize:"y,ies" }} · not on the roster</span></td>
+{% if can_manage_roster %}<td class="px-4 py-3 text-right"><button type="button" hx-get="/partners/{{ partner.id }}/members/drawer?name={{ row.name|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="inline-flex min-h-8 items-center px-2.5 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-control edify-text-caption font-semibold uppercase transition-colors">Add</button></td>{% endif %}
+</tr>
+{% endif %}
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% include "components/table_pager.html" with pager=roster_pager param="roster_page" %}
+{% else %}
+{% include "components/empty_state.html" with message="Nobody on the roster yet." hint="Add the staff and volunteers who deliver for this organisation." %}
+{% endif %}
+</div>
+</div>
+</div>
 </div>
 {% endblock %}

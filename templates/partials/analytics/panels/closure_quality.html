@@ -1,0 +1,38 @@
+{% comment %}
+The Closure Quality tab — the IA lens on closure.
+
+Deliberately a worklist with a summary above it rather than a chart wall. The
+question is not how many schools the country lost, which the School Closures
+tab answers, but which of these records should not be believed: a duplicate
+counted as a closure reports a school loss that never happened, and every
+figure built on top of it inherits the error.
+
+Only this section's own period control travels with it. The workspace header,
+the scope filter row, the tiles and the tablist stay fixed above (owner,
+2026-09-05), and the period swaps the body alone so the select that fired the
+request is never re-rendered under the reader's cursor.
+{% endcomment %}
+<form class="edify-filter-bar"
+      aria-label="Closure quality filters"
+      hx-get="/analytics/closure-quality"
+      hx-target="#closure-quality-body"
+      hx-swap="innerHTML"
+      hx-trigger="change"
+      hx-push-url="true">
+  <label class="edify-page-header-control">
+    <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Period</span>
+    <select name="period" aria-label="Period" class="focus:outline-none">
+      {% comment %}
+      All time is the default on purpose. A data-quality queue that hid last
+      year's unresolved duplicates behind a period filter would show a clean
+      desk that is only clean because of where the window starts.
+      {% endcomment %}
+      <option value="all" {% if period != "fy" %}selected{% endif %}>All time</option>
+      <option value="fy" {% if period == "fy" %}selected{% endif %}>FY {{ fy }}</option>
+    </select>
+  </label>
+</form>
+
+<div id="closure-quality-body">
+  {% include "partials/analytics/closure_quality_workspace.html" %}
+</div>

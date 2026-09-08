@@ -1,23 +1,15 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}Duplicate Activity Review Queue - Edify Command Center{% endblock %}
+{% block title %}Duplicate Review · Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
 
-<!-- Premium Header Pane -->
-<div class="edify-page-header edify-page-hero relative">
-<div class="absolute -right-20 -top-20 w-80 h-80 rounded-pill bg-amber-500/10 blur-3xl pointer-events-none"></div>
-
-<div class="relative z-10 space-y-2 edify-page-header__lead">
-<div class="inline-flex items-center gap-2 px-3 py-1 rounded-pill bg-amber-500/10 border border-amber-500/20 text-amber-500 edify-text-caption font-semibold tracking-widest">
-Anomaly Detection
-</div>
-<p class="edify-page-eyebrow">Quality & Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Duplicate Activity Review Queue</h1>
-<p class="max-w-2xl edify-page-header__description">
-Duplicate review hub. Identify and resolve activities flagged with duplicate indicator warnings (same school/date/staff/type, duplicate Salesforce ID, or duplicate evidence uploads).
-</p>
+<div class="edify-page-header">
+<div class="edify-page-header__lead">
+<p class="edify-page-eyebrow">Verification</p>
+<h1 class="edify-page-title edify-page-header__title">Duplicate Review</h1>
+<p class="edify-page-header__description">Activities flagged as possible duplicates — same school, date, staff and type, a repeated Salesforce ID, or the same evidence uploaded twice. Decide each one.</p>
 </div>
 </div>
 
@@ -51,7 +43,7 @@ Submitted Activity Detail
 <p class="flex justify-between"><span class="text-slate-500">Type:</span> <span class="text-slate-800">{{ dup.activity.get_activity_type_display }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">School:</span> <span class="text-slate-800">{{ dup.activity.school.name|default:"Cluster-wide" }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Date:</span> <span class="text-slate-800">{{ dup.activity.planned_date|date:"Y-m-d" }}</span></p>
-<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.activity.responsible_staff_id }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.activity.owner_name }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Salesforce ID:</span> <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill">{{ dup.activity.salesforce_activity_id|default:"Unlinked" }}</span></p>
 </div>
 </div>
@@ -67,7 +59,7 @@ Matching Activity Detail
 <p class="flex justify-between"><span class="text-slate-500">Type:</span> <span class="text-slate-800">{{ dup.duplicate_of.get_activity_type_display }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">School:</span> <span class="text-slate-800">{{ dup.duplicate_of.school.name|default:"Cluster-wide" }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Date:</span> <span class="text-slate-800">{{ dup.duplicate_of.planned_date|date:"Y-m-d" }}</span></p>
-<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.duplicate_of.responsible_staff_id }}</span></p>
+<p class="flex justify-between"><span class="text-slate-500">Owner:</span> <span class="text-slate-800">{{ dup.duplicate_of.owner_name }}</span></p>
 <p class="flex justify-between"><span class="text-slate-500">Salesforce ID:</span> <span class="font-mono text-slate-800 bg-slate-50 px-2 py-0.5 border border-slate-200 rounded-pill">{{ dup.duplicate_of.salesforce_activity_id|default:"Unlinked" }}</span></p>
 </div>
 </div>
@@ -76,20 +68,20 @@ Matching Activity Detail
 <!-- Action buttons -->
 <div class="flex items-center justify-between border-t border-slate-100 pt-4">
 <!-- View side-by-side comparison -->
-<a href="/ia/compare/?activity_id={{ dup.activity.id }}" class="h-9 px-4 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-all shadow-sm">
+<a href="/ia/compare/?activity_id={{ dup.activity.id }}" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 text-[12px] font-semibold flex items-center justify-center transition-all shadow-sm">
 Compare Evidence side-by-side
 </a>
 
 <!-- Action submit forms -->
 <form method="POST" action="/ia/duplicates/{{ dup.id }}/action" class="flex gap-2">
 {% csrf_token %}
-<button type="submit" name="action" value="ignore" class="h-9 px-4 rounded-control border border-slate-200 hover:bg-slate-50 text-[12px] font-semibold transition-all shadow-sm">
+<button type="submit" name="action" value="ignore" class="h-8 px-3 rounded-control border border-slate-200 hover:bg-slate-50 text-[12px] font-semibold transition-all shadow-sm">
 Ignore Flag
 </button>
-<button type="submit" name="action" value="return" class="h-9 px-4 rounded-control bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold transition-all shadow-sm">
+<button type="submit" name="action" value="return" class="h-8 px-3 rounded-control bg-rose-600 hover:bg-rose-700 text-white text-[12px] font-semibold transition-all shadow-sm">
 Return to Plan
 </button>
-<button type="submit" name="action" value="flag" class="h-9 px-4 rounded-control bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-semibold transition-all shadow-sm">
+<button type="submit" name="action" value="flag" class="h-8 px-3 rounded-control bg-slate-800 hover:bg-slate-900 text-white text-[12px] font-semibold transition-all shadow-sm">
 Flag Investigation
 </button>
 </form>
@@ -97,14 +89,7 @@ Flag Investigation
 </div>
 {% endfor %}
 {% else %}
-<div class="edify-surface rounded-surface border border-slate-100 p-16 text-center text-slate-400 font-semibold shadow-sm">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-500">No duplicate overlap warnings in review queue database.</p>
-</div>
-</div>
+{% include "components/empty_state.html" with title="No duplicates flagged" message="Possible duplicates appear here when two records look like the same work." %}
 {% endif %}
 </div>
 </div>

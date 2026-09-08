@@ -5,7 +5,12 @@
 {% block content %}
 <a href="#main-content" class="edify-skip-link">Skip to main content</a>
 <div
-x-data="{ sidebarOpen: false, collapsed: false }"
+{% comment %}The sidebar opens collapsed to its icon rail on a landscape tablet
+(64rem to 80rem, 2026-09-05): a 10-11 inch iPad on its side has ~1100px, and
+the 260px sidebar left the workspace narrower than a phone in landscape. A
+person's own toggle is remembered in this browser and outranks the default.
+Wrapped so a browser without storage still gets the width rule.{% endcomment %}
+x-data="{ sidebarOpen: false, collapsed: (() => { try { const saved = localStorage.getItem('edify-sidebar-collapsed'); if (saved === '1' || saved === '0') return saved === '1'; } catch (e) {} return window.matchMedia('(min-width: 64rem) and (max-width: 79.99rem)').matches; })() }"
 @keydown.escape.window="if (sidebarOpen) { sidebarOpen = false; $nextTick(() => ($refs.mobileSidebarOpen || document.querySelector('[data-mobile-nav-more]'))?.focus()) }"
 class="edify-shell h-full flex overflow-hidden{% if mobile_nav %} edify-shell-has-bottom-nav{% endif %}"
 >

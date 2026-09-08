@@ -14,8 +14,8 @@
       <p class="edify-page-header__description">Real-time field intelligence from your team and partners to drive action and improve impact.</p>
     </div>
     <div class="edify-page-header__controls">
-      <a href="/debriefs/weekly-report" class="h-9 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Weekly Report</a>
-<a href="/debriefs/submit" class="h-9 px-3.5 inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover text-white text-[12px] font-bold rounded-control transition-colors">
+      <a href="/debriefs/weekly-report" class="h-8 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Weekly Report</a>
+<a href="/debriefs/submit" class="h-8 px-3.5 inline-flex items-center gap-1.5 edify-primary-solid edify-primary-hover text-white text-[12px] font-bold rounded-control transition-colors">
         <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
         New Field Debrief
       </a>
@@ -51,6 +51,7 @@
         <option value="7" {% if range_days == 7 %}selected{% endif %}>Last 7 Days</option>
         <option value="30" {% if range_days == 30 %}selected{% endif %}>Last 30 Days</option>
         <option value="90" {% if range_days == 90 %}selected{% endif %}>Last 90 Days</option>
+        <option value="fy" {% if range_days == "fy" %}selected{% endif %}>Full FY {{ fy }}</option>
       </select>
     </label>
     <label class="block">
@@ -60,7 +61,7 @@
         {% for did, dname in district_options %}<option value="{{ did }}" {% if did == district_id %}selected{% endif %}>{{ dname }}</option>{% endfor %}
       </select>
     </label>
-    <button type="button" class="btn btn-ghost h-9 self-end" aria-haspopup="dialog" @click="$refs.debriefAdvancedFilters.showModal()">
+    <button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog" @click="$refs.debriefAdvancedFilters.showModal()">
       More filters{% if risk_level %} · Applied{% endif %}
     </button>
     <dialog x-ref="debriefAdvancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="debrief-advanced-filter-title">
@@ -78,7 +79,7 @@
         </label>
       </div>
       <footer class="edify-filter-drawer__footer">
-        <button type="button" class="btn btn-primary h-10" @click="$refs.debriefAdvancedFilters.close()">Apply filters</button>
+        <button type="button" class="btn btn-primary h-8" @click="$refs.debriefAdvancedFilters.close()">Apply filters</button>
       </footer>
     </dialog>
     {% comment %}Search moved to the top bar (attach_to this filter form).{% endcomment %}

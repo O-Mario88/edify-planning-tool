@@ -37,7 +37,7 @@
         <tbody class="divide-y divide-slate-100 max-xl:block">
           {% for row in rows|slice:":200" %}
           <tr class="max-xl:block max-xl:p-4">
-            <td class="px-5 py-3.5 font-bold text-slate-800 max-xl:px-0" data-record-title>{% firstof row.activity.school.name row.activity.cluster.name "Field work" %}</td>
+            <td class="px-5 py-3.5 font-bold text-slate-800 max-xl:px-0" data-record-title>{% if row.activity.school %}<a href="/schools/{{ row.activity.school.id }}" class="font-semibold hover:underline">{{ row.activity.school.name }}</a>{% elif row.activity.cluster %}<a href="/clusters/{{ row.activity.cluster.id }}" class="font-semibold hover:underline">{{ row.activity.cluster.name }}</a>{% else %}Field work{% endif %}</td>
             <td class="px-5 py-3.5 text-slate-600 max-xl:px-0">{{ row.activity.get_activity_type_display }}</td>
             <td class="px-5 py-3.5 text-slate-600 tabular-nums max-xl:px-0">{{ row.activity.scheduled_date|date:"d M Y" }}</td>
             <td class="px-5 py-3.5 max-xl:px-0"><span class="edify-status-text" data-edify-tone="{{ row.ia_tone }}">{{ row.ia_label }}</span></td>

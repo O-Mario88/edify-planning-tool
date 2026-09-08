@@ -163,4 +163,9 @@ NON_FUNDABLE_ACTIVITY_STATUSES = (
     "cancelled",
     "rejected",
     "deferred",
+    # Not terminal, but not yet anybody's plan either: a visit requested into
+    # another person's portfolio draws no money until that owner approves it,
+    # at which point its status leaves this tuple and every channel picks it
+    # up on its next read.
+    "awaiting_owner_approval",
 )

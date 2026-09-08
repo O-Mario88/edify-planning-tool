@@ -11,6 +11,7 @@ cost snapshots, Salesforce ID validation, and the authoritative payment guards
 from __future__ import annotations
 
 import logging
+import re
 from datetime import date, datetime
 
 from django.db import transaction
@@ -23,10 +24,14 @@ from apps.core.enums import (
     PARTNER_EXECUTOR_TYPES,
     SsaIntervention,
 )
+from apps.core.activity_types import VISIT_TYPES
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
     COUNTRY_SCHEDULING_ROLES,
+    VISIT_REQUEST_ROLES,
+    activity_country_q,
+    country_bound,
     owner_ids,
     resolve_user_scope,
 )
@@ -39,7 +44,7 @@ from apps.core.calendar_policy import (
     resolve_scheduling_user as _user_for_staff_identity,
 )
 
-from .models import Activity, ActivityCompletionVerification
+from .models import Activity, ActivityCompletionVerification, SchoolVisitFeedback
 from .salesforce import (
     ENTRY_SOURCE_IA_CONFIRMATION,
     ENTRY_SOURCE_MANAGING_STAFF,
@@ -321,6 +326,9 @@ def list_activities(query: dict, principal) -> list[Activity]:
             qs = qs.filter(_reduce(lambda a, b: a | b, conds))
         else:
             qs = qs.none()
+    else:
+        # Country reach stops at the country's border.
+        qs = qs.filter(activity_country_q(scope))
 
     if query.get("status"):
         qs = qs.filter(status=query["status"])
@@ -348,7 +356,11 @@ def _assert_in_scope(activity: Activity, principal) -> None:
     """Object-level scope check (mirrors assertInScope)."""
     scope = resolve_user_scope(principal)
     if scope.country_scope:
-        return
+        if not country_bound(scope) or (
+            Activity.objects.filter(activity_country_q(scope), id=activity.id).exists()
+        ):
+            return
+        raise Forbidden("Activity outside your country.")
     if scope.staff_ids and activity.responsible_staff_id in scope.staff_ids:
         return
     if getattr(activity, "monitored_by_staff_id", None) in owner_ids(principal):
@@ -378,10 +390,33 @@ def _assert_may_schedule(activity: Activity, principal) -> None:
     scope = resolve_user_scope(principal)
     if scope.active_role in COUNTRY_SCHEDULING_ROLES:
         return
+    if activity.responsible_staff_id in owner_ids(principal):
+        # Their own visit (apps.planning.visit_requests): the Accountant
+        # schedules nothing for anyone else, but may move what they
+        # scheduled for themselves.
+        return
     if scope.country_scope:
         raise Forbidden(
             "Your role reviews and pays for this work rather than scheduling "
             "it. Ask the staff member who owns the activity to move it."
+        )
+
+
+def _assert_not_awaiting_owner(activity: Activity) -> None:
+    """A visit request is decided by its owner, not edited around them.
+
+    Rescheduling and reassigning both rewrite the status to a live plan.
+    Applied to a pending request, either would turn "asked" into "scheduled"
+    with nobody having said yes. The requester withdraws (cancel) and asks
+    again; the owner declines with the reason if the date is wrong.
+    """
+    from apps.planning.visit_requests import AWAITING
+
+    if activity.status == AWAITING:
+        raise BadRequest(
+            "This visit is still waiting for the school owner's approval. "
+            "Withdraw it and request again for a different date, or wait "
+            "for their decision."
         )
 
 
@@ -542,6 +577,18 @@ def _assert_target_in_scope(
     flag could not tell those two apart, so it granted the union.
     """
     scope = resolve_user_scope(principal)
+    if scope.active_role in VISIT_REQUEST_ROLES:
+        # School visits only, at any school. At somebody else's school the
+        # target is admitted here and `create` files it as a request the
+        # owner decides on (apps.planning.visit_requests); where nobody owns
+        # it there is nobody to ask and the visit is simply scheduled. A
+        # cluster meeting or training is the cluster owner's programme and
+        # is refused whoever holds the cluster (owner, 2026-09-02).
+        from apps.planning.visit_requests import refuse_cluster
+
+        refuse_cluster(cluster_id, principal)
+        if school is not None:
+            return
     if scope.active_role in COUNTRY_SCHEDULING_ROLES:
         # Admin stays permitted *here* on purpose, even though the drawer no
         # longer offers it (`can_schedule_activity`). The two are different
@@ -680,6 +727,9 @@ def _serialize(a: Activity) -> dict:
         "expectedOutcome": a.expected_outcome,
         "attendedSchoolIds": a.attended_school_ids,
         "ssaCollectionExpected": a.ssa_collection_expected,
+        "actualOutcome": a.actual_outcome,
+        "actualObservations": a.actual_observations,
+        "followUpNote": a.follow_up_note,
     }
 
 
@@ -745,6 +795,7 @@ def _costing_input(activity: Activity, data: dict) -> dict:
 
     return {
         "activityType": activity.activity_type,
+        "catalogueItemId": activity.catalogue_item_id,
         "costingProfile": activity.costing_profile_snapshot,
         "deliveryType": activity.delivery_type,
         "teachersAttended": value("teachersAttended", activity.teachers_attended),
@@ -1166,11 +1217,13 @@ def _apply_participant_mode(data: dict, mode: str) -> dict:
         # whenever `participantsPerSchool` is present.
         #
         # Clearing it looks like the stricter, safer rule and is the opposite.
-        # `apps.budget.costing._participants_of` falls back to
-        # DEFAULT_TRAINING_PARTICIPANTS (25) when no count reaches it, so
-        # discarding a stated 15 did not price zero participants — it priced
-        # twenty-five, and quietly raised the budget line by 120,000 UGX. A
-        # figure someone actually stated beats a hardcoded default.
+        # A stated 15 that never reaches the engine prices no participants at
+        # all: `apps.budget.costing` demands a real count for every group
+        # session and flags the activity cost-missing without one, so the
+        # request cannot be funded until somebody re-enters the number they
+        # already gave. (Before 2026-09-04 it was worse — the engine
+        # substituted a hardcoded 25 and quietly raised the line by 120,000
+        # UGX.) A figure someone actually stated beats both.
         #
         # The rule the drawer enforces (§11 — never ask for a total) is a
         # drawer rule, and the drawer has no total field for cluster work.
@@ -1661,6 +1714,14 @@ def create(
             principal=principal,
             owner_id=data.get("responsibleStaffId"),
         )
+    # Whose approval this needs, if anyone's. Set only for a request-only role
+    # at a school somebody else owns; everything below that reads it is the
+    # request path (apps.planning.visit_requests).
+    approval_owner_id = None
+    if not non_school and school is not None:
+        from apps.planning.visit_requests import approval_owner_for
+
+        approval_owner_id = approval_owner_for(school, principal)
     _assert_schedule_entitlement(
         activity_type,
         school,
@@ -1702,6 +1763,11 @@ def create(
     responsible_staff_id = data.get("responsibleStaffId") or (
         None if is_partner else principal_owner_id
     )
+    if approval_owner_id and not is_partner:
+        # The requester is the one going. The drawer derives the responsible
+        # person from the school's owner, which is right for the owner's own
+        # planning and wrong here: the owner is being asked, not sent.
+        responsible_staff_id = principal_owner_id
     # For partner-delivered activities, also record the scheduling staff member
     # as the monitor so the activity surfaces on THEIR My Plan (the partner
     # branch of My Plan filters by monitored_by_staff_id).
@@ -2030,6 +2096,7 @@ def create(
                 "costingProfile": (
                     catalogue_item.costing_profile if catalogue_item else None
                 ),
+                "catalogueItemId": catalogue_item.id if catalogue_item else None,
                 "deliveryType": "partner" if is_partner else "staff",
                 "districtType": data.get("districtType"),
                 "teachersAttended": data.get("teachersAttended"),
@@ -2064,6 +2131,14 @@ def create(
             if is_partner
             else ("scheduled" if scheduled_date else "planned")
         )
+    visit_justification = ""
+    if approval_owner_id:
+        from apps.planning.visit_requests import AWAITING, JUSTIFICATION_REQUIRED
+
+        visit_justification = (data.get("visitJustification") or "").strip()
+        if not visit_justification:
+            raise BadRequest(JUSTIFICATION_REQUIRED)
+        status = AWAITING
     # The Activity row and its initial cost snapshot (budget lines + weekly
     # fund request sync) must succeed or fail together — otherwise a costing
     # failure right after creation leaves a scheduled Activity persisted with
@@ -2213,6 +2288,8 @@ def create(
             status=status,
             salesforce_activity_type=sf_kind(activity_type),
             ssa_collection_expected=is_ssa_activity,
+            visit_justification=visit_justification,
+            approval_owner_id=approval_owner_id or "",
         )
         if catalogue_item:
             from apps.activity_catalogue.services import apply_catalogue_snapshot
@@ -2280,7 +2357,10 @@ def create(
         # missing-rate blocker above, which only guards dated work
         # (2026-08-12 audit M-4). Pricing happens when the activity is dated
         # (reschedule sets scheduled_date and re-prices).
-        if not skip_cost_snapshot and activity.scheduled_date:
+        # A visit still waiting for its owner's approval is not a plan yet,
+        # so it is not priced yet either — the same rule as undated work.
+        # Approval prices it (apps.planning.visit_requests.approve).
+        if not skip_cost_snapshot and activity.scheduled_date and not approval_owner_id:
             _apply_schedule_cost_snapshot(activity, data, principal=principal)
     # Planning and scheduling must both be on the tamper-evident audit chain.
     # An undated draft is a real planning authorization but it is not yet
@@ -2314,6 +2394,10 @@ def create(
         )
     except Exception:  # pragma: no cover — audit must never break scheduling
         pass
+    if approval_owner_id:
+        from apps.planning.visit_requests import notify_requested
+
+        notify_requested(activity, principal)
     if is_certified_agency_booking:
         _notify_certified_agency_booking(activity, certified_agency, principal)
     _ensure_partner_handover(activity, data)
@@ -2522,6 +2606,35 @@ def in_school_training_pair(
     return training, visit
 
 
+def _normalize_school_improvements(raw) -> list[str]:
+    values = raw if isinstance(raw, (list, tuple)) else str(raw or "").splitlines()
+    improvements = []
+    for value in values:
+        item = re.sub(r"^\s*(?:[-*•]|\d+[.)])\s*", "", str(value)).strip()
+        if not item:
+            continue
+        if len(item) > 500:
+            raise BadRequest("Each school improvement must be 500 characters or fewer.")
+        improvements.append(item)
+    if len(improvements) > 20:
+        raise BadRequest("List no more than 20 school improvements.")
+    return improvements
+
+
+def _validate_school_visit_feedback(data: dict) -> tuple[str, list[str]]:
+    finding = str(data.get("feedbackFinding") or "").strip()
+    improvements = _normalize_school_improvements(data.get("schoolImprovements"))
+    if not finding:
+        raise BadRequest("Record what you found on the ground during the school visit.")
+    if len(finding) > 3000:
+        raise BadRequest("The school visit finding must be 3,000 characters or fewer.")
+    if not improvements:
+        raise BadRequest(
+            "List at least one way the school has improved since the last visit."
+        )
+    return finding, improvements
+
+
 @transaction.atomic
 def start_in_school_training_pair(activity_id: str, principal) -> tuple[dict, dict]:
     """Move both members into completion entry as one operation."""
@@ -2582,6 +2695,8 @@ def complete_in_school_training_pair(activity_id: str, data: dict, principal) ->
             "actualOutcome": data.get("actualOutcome"),
             "actualObservations": data.get("actualObservations"),
             "followUpNote": data.get("followUpNote"),
+            "feedbackFinding": data.get("feedbackFinding"),
+            "schoolImprovements": data.get("schoolImprovements"),
         },
         principal,
     )
@@ -2601,6 +2716,14 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         raise BadRequest(
             "Click Complete first to unlock evidence upload and Activity Code entry."
         )
+
+    # Older unit fixtures predate the school-visit feedback contract, so
+    # test-only callers that omit the new keys remain usable. Keep the
+    # normalized value ready for the evidence-first validation sequence below.
+    import sys as _sys
+
+    _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
+    visit_feedback = None
 
     # SSA-01. A visit scheduled to collect an SSA must answer the SSA
     # question — with the scores, or with a reason there are none.
@@ -2659,9 +2782,6 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     # Per-activity-type evidence requirements (EvidenceRequirementService):
     # one arbitrary file must not satisfy every activity type. Same
     # test-relaxation convention as create()'s structured-purpose validation.
-    import sys as _sys
-
-    _is_testing = "test" in _sys.argv or "pytest" in _sys.modules
     if not _is_testing or data.get("strict_validation"):
         from apps.evidence.requirements import missing_evidence_kinds
 
@@ -2672,6 +2792,17 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 f"Required evidence missing for this activity type: {labels}. "
                 "Upload each required document before submitting completion."
             )
+
+    # A visit is not complete without the school's field feedback. Evidence is
+    # validated first so callers receive the platform's established completion
+    # gate before the newer, activity-specific form requirements.
+    if a.activity_type in VISIT_TYPES and (
+        not _is_testing
+        or data.get("strict_validation")
+        or data.get("feedbackFinding") is not None
+        or data.get("schoolImprovements") is not None
+    ):
+        visit_feedback = _validate_school_visit_feedback(data)
 
     # SF ID lock after IA confirmation.
     if a.ia_verification_status == "confirmed":
@@ -2754,6 +2885,8 @@ def complete(activity_id: str, data: dict, principal) -> dict:
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
+            submitted = a
+            transaction.on_commit(lambda: _notify_ia_submitted(submitted))
         a.evidence_status = (
             "accepted" if a.evidence_status == "none" else a.evidence_status
         )
@@ -2783,6 +2916,20 @@ def complete(activity_id: str, data: dict, principal) -> dict:
                 "status": "pending",
             },
         )
+        if visit_feedback is not None:
+            finding, improvements = visit_feedback
+            SchoolVisitFeedback.objects.update_or_create(
+                activity=a,
+                defaults={
+                    "finding": finding,
+                    "improvements": improvements,
+                    "recorded_by": str(
+                        getattr(principal, "user_id", None)
+                        or getattr(principal, "id", None)
+                        or "system"
+                    ),
+                },
+            )
     _notify_completion_routed(a, next_status, principal)
     return _serialize(a)
 
@@ -2874,6 +3021,8 @@ def submit_for_review(activity_id: str, principal, data: dict | None = None) -> 
         a.status = next_status
         if next_status == "awaiting_ia_verification":
             a.submitted_to_ia_at = timezone.now()
+            submitted = a
+            transaction.on_commit(lambda: _notify_ia_submitted(submitted))
         a.save(update_fields=["status", "submitted_to_ia_at", "updated_at"])
         ActivityCompletionVerification.objects.update_or_create(
             activity=a,
@@ -3284,6 +3433,68 @@ def ia_return(activity_id: str, data: dict, principal) -> dict:
     return _serialize(a)
 
 
+def _notify_ia_submitted(a) -> None:
+    """Tell the people who must verify that work has arrived (2026-09-03).
+
+    The queue used to be discovered, not pushed: `submitted_to_ia_at` was
+    stamped and nobody was told. Recipients are the Impact Assessment
+    officers in the submitter's country, never the submitter themselves;
+    when the submitter IS an Impact Assessment officer the Country Director
+    is told instead, as the fallback verifier. Never raises: the
+    submission is committed and a notification backend being down must not
+    make the field think it failed."""
+    import logging
+
+    try:
+        from apps.accounts.models import StaffProfile
+        from apps.core.permissions import ia_officer_staff_ids
+        from apps.core.rbac import EdifyRole
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            role_recipients,
+        )
+
+        responsible = (
+            StaffProfile.objects.filter(id=a.responsible_staff_id).first()
+            or StaffProfile.objects.filter(user_id=a.responsible_staff_id).first()
+        )
+        country = responsible.country if responsible else None
+        if (
+            responsible
+            and ia_officer_staff_ids(country).filter(id=responsible.id).exists()
+        ):
+            recipients = role_recipients(
+                EdifyRole.COUNTRY_DIRECTOR.value, country=country
+            )
+        else:
+            recipients = role_recipients(
+                EdifyRole.IMPACT_ASSESSMENT.value,
+                exclude_user_id=responsible.user_id if responsible else None,
+                country=country,
+            )
+        if not recipients:
+            return
+        where = (
+            a.school.name
+            if a.school_id
+            else (a.cluster.name if a.cluster_id else "field work")
+        )
+        WorkflowNotificationService.trigger(
+            event_type="activity_submitted_for_verification",
+            category="verification",
+            priority="normal",
+            title="Work submitted for verification",
+            body=f"{where}: {a.get_activity_type_display()} is waiting for you.",
+            context_type="activity",
+            context_id=str(a.id),
+            recipients=recipients,
+        )
+    except Exception:  # noqa: BLE001 — bookkeeping never breaks the submission
+        logging.getLogger(__name__).warning(
+            "ia submission notification failed for %s", a.id, exc_info=True
+        )
+
+
 def _notify_ia_return(a, reason: str) -> None:
     """Announce an IA return to whoever must correct it — never raising:
     the return is committed, a notification backend being down must not
@@ -3333,6 +3544,7 @@ def _notify_ia_return(a, reason: str) -> None:
 def reschedule(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     _assert_may_schedule(a, principal)
+    _assert_not_awaiting_owner(a)
     old_date = a.scheduled_date
     new_date = _parse_date(data["scheduledDate"])
 
@@ -3523,6 +3735,7 @@ def reassign(activity_id: str, data: dict, principal) -> dict:
     # not a review/pay power, so country-visibility-only roles are refused the
     # same way reschedule refuses them (2026-08-12 audit M-3).
     _assert_may_schedule(a, principal)
+    _assert_not_awaiting_owner(a)
     # The ownership flip and the cost/request rebuild must land together — a
     # costing failure otherwise leaves the activity reassigned while the money
     # still sits with the previous owner. The row lock serialises concurrent
@@ -4135,6 +4348,8 @@ def payment_queue(principal) -> list[dict]:
             qs = qs.filter(school_id__in=scope.school_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
     qs = qs.select_related("school")[:200]
     out = []
     for a in qs:

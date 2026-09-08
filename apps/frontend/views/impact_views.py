@@ -74,17 +74,31 @@ def impact_analytics_view(request):
         key: json.loads(value) if isinstance(value, str) else value
         for key, value in dashboard.get("charts", {}).items()
     }
-    template = (
-        "partials/analytics/impact_workspace.html"
-        if request.headers.get("HX-Request") == "true"
-        else "pages/analytics/impact.html"
-    )
-    return render(
+    context = {
+        "dashboard": dashboard,
+        "impact_chart_payload": impact_chart_payload,
+        "impact_kpi_items": impact_kpi_items,
+    }
+    # This section's own filter form swaps its workspace and nothing else. It
+    # has to name its target: a tab click and a scope change are HX requests
+    # too, and they ask for different shapes.
+    if request.headers.get("HX-Target") == "impact-workspace":
+        return render(request, "partials/analytics/impact_workspace.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
         request,
-        template,
-        {
-            "dashboard": dashboard,
-            "impact_chart_payload": impact_chart_payload,
-            "impact_kpi_items": impact_kpi_items,
+        "partials/analytics/panels/impact_analytics.html",
+        context,
+        section_key="impact",
+        panel_title="SSA Contribution Analysis",
+        frame={
+            "question": (
+                "Which programme activities are associated with SSA improvement, "
+                "for which portfolios, and where is evidence still too weak to act?"
+            ),
+            "evidence": "Paired confirmed SSA and verified activity dosage",
+            "freshness": "Current assessment cohorts",
+            "confidence": "Association evidence, not causal proof",
         },
     )

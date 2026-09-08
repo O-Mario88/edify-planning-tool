@@ -9,7 +9,9 @@ class SsaScorePresentationContractTest(SimpleTestCase):
     """Keep SSA scores on their canonical 0-10 scale in every UI."""
 
     def _template(self, relative_path):
-        return (Path(settings.BASE_DIR) / "templates" / relative_path).read_text()
+        from apps.frontend.template_families import read_template
+
+        return read_template(Path(settings.BASE_DIR), f"templates/{relative_path}")
 
     def test_score_templates_do_not_render_ssa_values_as_percentages(self):
         templates = Path(settings.BASE_DIR) / "templates"

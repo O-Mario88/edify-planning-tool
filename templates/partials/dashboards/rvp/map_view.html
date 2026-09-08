@@ -1,0 +1,13 @@
+{% load frontend_filters %}
+{% comment %}Map view: the country map (moved here from Analytics, owner 2026-09-05) with its distribution table, then the region ranking beneath.{% endcomment %}
+<div class="space-y-4" data-rvp-map-view>
+  <div class="analytics-layout-row analytics-row--geography">
+    <div class="analytics-card-slot analytics-card-slot--map">
+      {% include "partials/analytics/regional_performance.html" %}
+    </div>
+  </div>
+
+  <div id="region-ranking" class="edify-surface rounded-surface border border-slate-100 shadow-sm p-4 scroll-mt-20">
+    {% include "partials/dashboards/rvp/_region_ranking.html" %}
+  </div>
+</div>

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
 
 from django.db import transaction
 from django.db.models import Q
@@ -9,7 +10,10 @@ from django.db.models import Q
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
 from apps.core.scoping import resolve_partner_ids, resolve_user_scope
 
-from .models import Partner
+from .models import Partner, PartnerAssignment
+
+if TYPE_CHECKING:
+    from .models import PartnerMember
 
 
 # Core package slot types are governed by the nine-slot CorePlan (a partner
@@ -218,6 +222,12 @@ def onboard(data: dict, principal) -> dict:
 
     p = Partner.objects.create(
         name=name,
+        # Inactive until someone activates it (owner, 2026-09-07: "when it has
+        # just been added, the button should be activate"). An organisation
+        # that has just been typed in is not yet somebody a CCEO can assign a
+        # school to; activation is the moment it becomes one, and it is a
+        # separate, audited act rather than a side effect of saving a form.
+        active_status=bool(data.get("activeStatus", False)),
         region_name=data.get("regionName") or data.get("region_name"),
         trains_on=data.get("trainsOn", []),
         notes=data.get("notes"),
@@ -229,7 +239,7 @@ def onboard(data: dict, principal) -> dict:
         contract_status=data.get("contractStatus", "pending"),
         is_certified=bool(data.get("isCertified")),
         certification_status=data.get("certificationStatus"),
-        expertise_areas=data.get("expertiseAreas", []),
+        expertise_areas=_expertise_list(data.get("expertiseAreas", [])),
         user=partner_user,
         onboarded_by_user_id=getattr(
             principal, "user_id", str(getattr(principal, "id", ""))
@@ -278,6 +288,174 @@ def delete_partner(partner_id: str, principal) -> dict:
         payload=snapshot,
     )
     return {**snapshot, "deleted": True}
+
+
+def _expertise_list(value) -> list[str]:
+    """Expertise arrives as a list from the API and as one comma-separated
+    field from the drawer; either way it is stored as a list of trimmed,
+    de-duplicated names."""
+
+    if isinstance(value, str):
+        value = value.split(",")
+    seen: list[str] = []
+    for item in value or []:
+        text = str(item).strip()
+        if text and text.casefold() not in {x.casefold() for x in seen}:
+            seen.append(text)
+    return seen
+
+
+def set_partner_status(partner_id: str, active: bool, principal) -> dict:
+    """Activate or deactivate a partner organisation (owner, 2026-09-07).
+
+    The routine lifecycle action, and the one the directory's button toggles:
+    "activate" on an organisation that has just been added, "deactivate" once
+    it is live. `active_status` is what every assignment surface already keys
+    on — the planning modal, oversight, withdrawal replacement, the partner
+    login's own scope — so deactivating is exactly "stop receiving work"
+    without touching a single historical record.
+    """
+
+    _assert_partner_directory_manager(principal)
+    partner = Partner.objects.filter(id=partner_id).first()
+    if partner is None:
+        raise NotFoundError("Partner organisation not found.")
+    if partner.active_status == bool(active):
+        return _serialize(partner)
+    partner.active_status = bool(active)
+    partner.save(update_fields=["active_status", "updated_at"])
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="partner.activated" if active else "partner.deactivated",
+        subject_kind="partner",
+        subject_id=partner.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload={"name": partner.name},
+    )
+    return _serialize(partner)
+
+
+def _is_admin(principal) -> bool:
+    from apps.core.navigation import get_user_role_slug
+
+    return (
+        bool(getattr(principal, "is_superuser", False))
+        or get_user_role_slug(principal) == "ADMIN"
+    )
+
+
+def partner_history_counts(partner: Partner) -> dict:
+    """What a permanent delete would take with it."""
+
+    from apps.activities.models import Activity
+
+    return {
+        "assignments": PartnerAssignment.objects.filter(partner=partner).count(),
+        "activities": Activity.all_objects.filter(
+            assigned_partner_id=partner.id
+        ).count()
+        if hasattr(Activity, "all_objects")
+        else Activity.objects.filter(assigned_partner_id=partner.id).count(),
+        "holds": partner.holds.count() if hasattr(partner, "holds") else 0,
+    }
+
+
+def purge_partner(partner_id: str, principal) -> dict:
+    """Delete a partner organisation permanently — Admin only (owner,
+    2026-09-07: "delete buttons is to delete the partner permanently and that
+    should only be done by the admin").
+
+    This is the one hard DELETE the partner tables allow, and it is fenced two
+    ways. Only the Admin role may call it — a Country Director deactivates.
+    And it refuses an organisation with history: assignments cascade, holds
+    cascade and activities lose their partner, which is the audit trail of what
+    that partner was asked to do and what it delivered. An organisation that
+    was added by mistake and never given work can go; one that has worked is
+    deactivated instead, and its record stays.
+    """
+
+    if not _is_admin(principal):
+        raise Forbidden("Only an Admin can delete a partner organisation permanently.")
+    partner = Partner.all_objects.select_related("user").filter(id=partner_id).first()
+    if partner is None:
+        raise NotFoundError("Partner organisation not found.")
+    history = partner_history_counts(partner)
+    if any(history.values()):
+        raise ConflictError(
+            f"'{partner.name}' has history — "
+            f"{history['assignments']} assignment(s), {history['activities']} "
+            f"activit(y/ies), {history['holds']} hold(s). Deactivate it instead; "
+            "the record stays for the audit trail."
+        )
+    snapshot = {
+        "id": partner.id,
+        "name": partner.name,
+        "email": partner.email,
+        "linkedUserId": partner.user_id,
+    }
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="partner.purged",
+        subject_kind="partner",
+        subject_id=partner.id,
+        actor_id=getattr(principal, "id", None),
+        actor_role=getattr(principal, "active_role", None),
+        payload=snapshot,
+    )
+    partner.delete()
+    return {**snapshot, "purged": True}
+
+
+def add_member(partner_id: str, data: dict, principal) -> "PartnerMember":
+    """Add a person to a partner's roster — staff or volunteer."""
+
+    from .models import PartnerMember, PartnerMemberRole
+
+    partner = Partner.objects.filter(id=partner_id).first()
+    if partner is None:
+        raise NotFoundError("Partner organisation not found.")
+    scope = resolve_user_scope(principal)
+    if not (
+        _is_admin(principal) or scope.country_scope or partner.id in scope.partner_ids
+    ):
+        raise Forbidden("You may only manage the roster of a partner in your scope.")
+    name = (data.get("name") or "").strip()
+    if not name:
+        raise BadRequest("A name is required.")
+    role = (data.get("role") or PartnerMemberRole.STAFF).strip()
+    if role not in PartnerMemberRole.values:
+        raise BadRequest("Role must be staff or volunteer.")
+    return PartnerMember.objects.create(
+        partner=partner,
+        name=name,
+        role=role,
+        title=(data.get("title") or "").strip(),
+        phone=(data.get("phone") or "").strip(),
+        email=(data.get("email") or "").strip().lower(),
+        added_by_user_id=getattr(
+            principal, "user_id", str(getattr(principal, "id", ""))
+        ),
+    )
+
+
+def remove_member(partner_id: str, member_id: str, principal) -> None:
+    from .models import PartnerMember
+
+    member = PartnerMember.objects.filter(id=member_id, partner_id=partner_id).first()
+    if member is None:
+        raise NotFoundError("Roster entry not found.")
+    scope = resolve_user_scope(principal)
+    if not (
+        _is_admin(principal)
+        or scope.country_scope
+        or member.partner_id in scope.partner_ids
+    ):
+        raise Forbidden("You may only manage the roster of a partner in your scope.")
+    member.delete()
 
 
 def update(partner_id: str, data: dict, principal) -> dict:

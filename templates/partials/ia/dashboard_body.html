@@ -1,0 +1,17 @@
+{% load static %}
+{% comment %}
+The IA dashboard below its header and tiles — one copy, included by the IA
+page and by the Verification Quality tab of the Analytics workspace
+(2026-09-05). `mobile-home-hide` here belongs to the IA page, whose phone
+layout is the role home above it; the Analytics panel lifts it.
+{% endcomment %}
+{% if ia_dashboard_tabs %}
+  {% comment %}
+  Two views under the fixed part of the IA dashboard (owner, 2026-09-05): the
+  country map with regional performance and district monitoring beneath it,
+  and the verification operations. A tab swaps only the view container.
+  {% endcomment %}
+  {% include "partials/dashboards/_view_tabs.html" %}
+{% else %}
+  {% include "partials/ia/operations.html" with show_geography=True %}
+{% endif %}

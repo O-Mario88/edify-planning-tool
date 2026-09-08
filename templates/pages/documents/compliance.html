@@ -18,6 +18,7 @@
   <div class="flex flex-wrap items-center gap-4 text-[12px] font-semibold text-slate-500">
     <span>Required <strong class="tabular-nums text-slate-700">{{ counts.required }}</strong></span>
     <span>Pending <strong class="tabular-nums text-slate-700">{{ counts.pending }}</strong></span>
+    {% if truncated %}<span class="text-amber-700">Table shows the first 1,000 rows; the figures above count the whole scope.</span>{% endif %}
     <span>Declined <strong class="tabular-nums {% if counts.declined %}text-rose-600{% else %}text-slate-700{% endif %}">{{ counts.declined }}</strong></span>
   </div>
 

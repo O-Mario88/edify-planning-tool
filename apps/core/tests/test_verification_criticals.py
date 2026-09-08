@@ -390,6 +390,36 @@ class VolumeReconciliationTests(Fixture):
         first_monday = date.today() + timedelta(
             days=(7 - date.today().weekday()) % 7 or 7
         )
+        # This scenario verifies reconciliation after valid operational setup;
+        # the production scheduling path deliberately rejects an absent or
+        # incomplete Country Cost Catalogue. Near the 30 September boundary,
+        # this three-week volume run spans two fiscal years, so provision each
+        # rate card the scheduled dates can legitimately select.
+        from apps.budget.models import CostCatalogue, RateCardKind, RateCardStatus
+        from apps.budget.reference import ensure_cost_reference
+        from apps.core.fy import get_operational_fy
+
+        for fy in {
+            get_operational_fy(first_monday),
+            get_operational_fy(first_monday + timedelta(days=18)),
+        }:
+            catalogue = CostCatalogue.objects.filter(
+                country="Uganda",
+                fy=fy,
+                kind=RateCardKind.OPERATIONAL,
+                status=RateCardStatus.PUBLISHED,
+                is_active=True,
+            ).first() or CostCatalogue.objects.create(
+                country="Uganda",
+                fy=fy,
+                kind=RateCardKind.OPERATIONAL,
+                status=RateCardStatus.PUBLISHED,
+                is_active=True,
+                version=1,
+                label=f"Volume reconciliation FY{fy}",
+            )
+            ensure_cost_reference(catalogue)
+
         for i in range(300):
             # Four staff each plan five visits per workday across three
             # workweeks. This keeps the 300-activity reconciliation volume

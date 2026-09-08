@@ -411,7 +411,8 @@ class TeamTargetsPageTest(TestCase):
             'aria-label="Open Grace One validated achievement, pace, and blockers"',
             html,
         )
-        self.assertIn("Priority breakdown", html)
+        # The expanded row is the period matrix now (2026-09-05).
+        self.assertIn("Cumulative progress by time period", html)
         member = next(m for m in self._page()["members"] if m["name"] == "Grace One")
         self.assertEqual(
             [cell["key"] for cell in member["mobile_cells"]],
@@ -541,6 +542,37 @@ class TeamTargetsPageTest(TestCase):
         self.assertIn('class="tt-matrix__period-column"', html)
         self.assertIn('class="tt-area-matrix__action-spacer"', html)
 
+    def test_each_team_member_row_opens_the_period_matrix(self):
+        """A team member's row is an accordion, and what it opens is the
+        "Cumulative progress by time period" table: target, verified
+        achievement and share per reporting period, one row per agreed
+        priority (owner, 2026-09-05).
+        """
+
+        self._monthly(self.cceo1, "school_visits", JULY, 4)
+        client = Client()
+        client.force_login(self.pl)
+        html = client.get("/team-targets", {"fy": FY, "month": JULY}).content.decode()
+
+        row_start = html.index(f'id="tt-desktop-areas-{self.cceo1.id}"')
+        row_end = html.index("</tr>", html.index("</table>", row_start))
+        expanded = html[row_start:row_end]
+        self.assertIn('class="tt-area-matrix"', expanded)
+        self.assertIn("Cumulative progress by time period", expanded)
+        self.assertIn(
+            "Grace One agreed-priority performance by reporting period", expanded
+        )
+        for measure in ("Target", "Achieved", "%"):
+            self.assertIn(f">{measure}</th>", expanded)
+        self.assertIn("School Visits", expanded)
+        self.assertIn("Overall progress", expanded)
+        # The row still opens and closes from the row itself and from its
+        # expander, and the hidden-until-opened rule is Alpine's.
+        self.assertIn(f'aria-controls="tt-desktop-areas-{self.cceo1.id}"', html)
+        self.assertIn('class="tt-area-row" x-show="expandedStaff ===', html)
+        # The old per-period pill table is gone from the expanded row.
+        self.assertNotIn("tt-area-period__dot", expanded)
+
     def test_team_targets_uses_an_accessible_line_chart_without_weekly_pacing(self):
         self._monthly(self.cceo1, "school_visits", JULY, 4)
         self._act(self.cceo1_sp, date(2026, 7, 2))
@@ -552,7 +584,9 @@ class TeamTargetsPageTest(TestCase):
         page = self._page()
 
         self.assertIn('class="tt-line-chart"', html)
-        self.assertIn('class="tt-line-chart__series"', html)
+        # Drawn through the chart system from the monthly values (2026-09-05).
+        self.assertIn('id="tt-trend-payload"', html)
+        self.assertIn("EdifyChartSystem.lineTrend(1)", html)
         self.assertIn("Monthly team performance values", html)
         self.assertNotIn("Weekly pacing", html)
         self.assertNotIn("pacing", page)

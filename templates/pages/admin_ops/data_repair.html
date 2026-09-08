@@ -46,7 +46,7 @@
       {% csrf_token %}
       <label class="sr-only" for="repair-reason">Reason for this repair</label>
       <input id="repair-reason" name="reason" required placeholder="Why is this repair being made?" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface flex-1">
-      <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold shrink-0">{% if preview.automatic %}Apply Repair{% else %}Refer for Correction{% endif %}</button>
+      <button type="submit" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold shrink-0">{% if preview.automatic %}Apply Repair{% else %}Refer for Correction{% endif %}</button>
     </form>
     {% endif %}
   </section>

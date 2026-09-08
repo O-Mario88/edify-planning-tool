@@ -45,7 +45,7 @@ class CostReferenceTest(TestCase):
         self.assertEqual(CostSetting.objects.count(), before)
 
     def test_ensure_does_not_reset_a_rate_the_country_director_changed(self):
-        rate = CostSetting.objects.get(key="primary_lunch_per_day")
+        rate = CostSetting.objects.get(key="lunch_per_day")
         rate.unit_cost = 19000
         rate.save(update_fields=["unit_cost"])
         ensure_cost_reference()
@@ -91,14 +91,15 @@ class CostReferenceTest(TestCase):
     def test_costing_ignores_a_rate_not_shown_in_the_active_catalogue(self):
         from apps.budget.costing_service import preview
 
-        key = "group_training_participant_meal_cost_per_head"
+        key = "tot_trainings_meals"
         rate = CostSetting.objects.get(key=key)
         rate.catalogue = None
         rate.save(update_fields=["catalogue", "updated_at"])
 
         result = preview(
             {
-                "activityType": "cluster_training",
+                "activityType": "training",
+                "costingProfile": "TOT_TRAINING",
                 "expectedParticipants": 10,
             }
         )
@@ -152,17 +153,25 @@ class CostReferenceTest(TestCase):
         self.assertFalse(result["canSchedule"])
 
     def test_missing_activity_specific_rate_is_not_replaced_by_visit_costs(self):
+        """A missing component blocks its own activity; it is never swapped
+        for another activity's rate. Written against `core_school_training`,
+        which was retired as a duplicate of the group-training recipe
+        (2026-09-04), so it now asks the same question of the recipe a core
+        training actually prices on."""
         from apps.budget.costing_service import preview
 
-        key = "core_school_training"
+        key = "group_training_facilitation_fee"
         rate = CostSetting.objects.get(key=key)
         rate.catalogue = None
         rate.save(update_fields=["catalogue", "updated_at"])
 
-        result = preview({"activityType": "core_training"})
+        result = preview({"activityType": "core_training", "expectedParticipants": 20})
 
-        self.assertEqual(result["missingItems"], [key])
-        self.assertEqual([line["key"] for line in result["lines"]], [key])
+        self.assertIn(key, result["missingItems"])
+        self.assertIn(key, [line["key"] for line in result["lines"]])
+        self.assertNotIn(
+            "core_school_training", [line["key"] for line in result["lines"]]
+        )
         self.assertFalse(result["canSchedule"])
 
     def test_cost_catalogue_projects_coverage_for_all_governed_activities(self):
@@ -211,7 +220,7 @@ class CostReferenceTest(TestCase):
             },
             {
                 "primary_transport_per_day": 56000,
-                "primary_lunch_per_day": 30000,
+                "lunch_per_day": 30000,
                 "staff_visit_transport_primary": 999999,
                 "lunch": 999999,
             },
@@ -219,7 +228,7 @@ class CostReferenceTest(TestCase):
 
         self.assertEqual(
             [line.key for line in result.lines],
-            ["primary_transport_per_day", "primary_lunch_per_day"],
+            ["primary_transport_per_day", "lunch_per_day"],
         )
         self.assertEqual(result.amount, 86000)
 
@@ -228,8 +237,8 @@ class CostReferenceTest(TestCase):
 
         rates = {
             "primary_transport_per_day": 56000,
-            "primary_lunch_per_day": 30000,
-            "group_training_participant_meal_cost_per_head": 9000,
+            "lunch_per_day": 30000,
+            "tot_trainings_meals": 9000,
             "group_training_facilitation_fee": 50000,
             "group_training_venue_cost": 70000,
         }
@@ -250,8 +259,8 @@ class CostReferenceTest(TestCase):
         from apps.budget.costing import cost_for_activity
 
         rates = {
-            "partner_visit_lump_sum": 180000,
-            "partner_training_lump_sum": 420000,
+            "client_partner_visit": 180000,
+            "partner_meetings": 420000,
         }
         common = {"deliveryType": "partner"}
 
@@ -261,7 +270,7 @@ class CostReferenceTest(TestCase):
         visit = cost_for_activity({**common, "activityType": "school_visit"}, rates)
 
         self.assertEqual(training.amount, visit.amount)
-        self.assertEqual(training.lines[0].key, "partner_visit_lump_sum")
+        self.assertEqual(training.lines[0].key, "client_partner_visit")
 
 
 class CostReferenceSurvivesAFlushTest(TransactionTestCase):

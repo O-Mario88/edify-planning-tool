@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% comment %}
+The navigation fallback the service worker serves when a page cannot be
+fetched (apps/frontend/views/pwa_views.py). It is precached at worker install
+and shown to whoever holds the phone, so it must render the same for everyone:
+nothing here reads the user or the session. What it can show is local to the
+device -- the field outbox in IndexedDB, which field-outbox.js lists into the
+[data-field-outbox-*] slots below.
+{% endcomment %}
+{% block title %}Offline | Edify Planning &amp; Monitoring{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 sm:px-6 py-6" data-offline-page>
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Connection</p>
+      <h1 class="edify-page-header__title edify-page-title" data-offline-title>You are offline</h1>
+      <p class="edify-page-header__description" data-offline-description>This page could not be loaded without a connection. Anything you saved while offline is kept on this phone and sends itself when you are back online.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <button type="button" class="btn btn-primary h-8" data-offline-retry>Retry</button>
+    </div>
+  </header>
+
+  <section class="mt-5 edify-surface rounded-surface border edify-border p-4" aria-labelledby="offline-queue-title">
+    <h2 id="offline-queue-title" class="text-[13px] font-bold text-slate-800">Pending uploads (<span data-field-outbox-count>0</span>)</h2>
+    <p class="mt-1 edify-text-caption font-medium text-slate-500" data-field-outbox-empty>Nothing is waiting to send.</p>
+    <ul class="mt-2 space-y-2 edify-text-caption font-semibold text-slate-700" data-field-outbox-list hidden></ul>
+  </section>
+</div>
+<script>
+  // The address bar still holds the page that was asked for -- the worker
+  // answered that navigation with this page -- so a reload retries it.
+  document.querySelector('[data-offline-retry]').addEventListener('click', function () {
+    window.location.reload();
+  });
+</script>
+{% endblock %}

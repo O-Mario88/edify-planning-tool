@@ -3,7 +3,7 @@ GROUP 3 — Partner Views
 Partner directory, partner detail, partner portal pages
 """
 
-from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
 import csv
 from collections import defaultdict
 
@@ -535,6 +535,7 @@ def create_partner_view(request):
         phone = request.POST.get("phone", "").strip()
         ssa_intervention = request.POST.get("ssa_intervention", "").strip()
         notes = request.POST.get("notes", "").strip()
+        expertise = request.POST.get("expertise", "").strip()
 
         if not name:
             messages.error(request, "Partner name is required.")
@@ -548,6 +549,7 @@ def create_partner_view(request):
             "phone": phone,
             "ssaIntervention": ssa_intervention,
             "notes": notes,
+            "expertiseAreas": expertise,
         }
 
         try:
@@ -604,27 +606,101 @@ def _my_plan_activity_url(activity: Activity) -> str:
 
 @require_page_permission("partner_detail")
 def partner_detail_view(request, partner_id):
-    """Partner detail — schools, activities, performance."""
+    """A partner organisation's profile — the school profile's shape, for the
+    organisation that delivers to schools (owner, 2026-09-07).
+
+    Everything a supervisor asks of a partner is here: what it has done (the
+    full history of its activities, by kind, with each school or cluster a
+    link), who does it (the roster of staff and volunteers, beside the names
+    that appear on deliveries but not on the roster), and how much of what it
+    was given is finished (completed, still assigned, not completed).
+    """
+
     if request.user.active_role in PARTNER_ROLES and str(
         partner_id
     ) not in resolve_partner_ids(request.user):
         return HttpResponseForbidden("You may only view your own partner organization.")
     partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
 
-    # Activities delivered by this partner (assigned_partner_id is the
-    # partner-activity link used across planning/IA views).
+    from apps.accounts.models import StaffProfile, User
+    from apps.core.activity_types import (
+        CLUSTER_MEETING_TYPES,
+        SSA_TYPES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
+    from apps.core.navigation import get_user_role_slug
+    from apps.core.scoping import resolve_user_scope
+    from apps.ssa.services import get_ssa_progress_by_fy
+
+    # The whole history, not a window of it: this is the record.
     activities = list(
-        Activity.objects.filter(
-            assigned_partner_id=partner.id,
-            deleted_at__isnull=True,
-        )
-        .select_related("school")
-        .order_by("-planned_date")[:30]
+        Activity.objects.filter(assigned_partner_id=partner.id, deleted_at__isnull=True)
+        .select_related("school", "cluster")
+        .order_by("-planned_date", "-created_at")
     )
 
-    from apps.partners.models import PartnerAssignment
-    from apps.schools.models import School
-    from apps.ssa.services import get_ssa_progress_by_fy
+    # `responsible_staff_id` may hold a StaffProfile id or a User id (see
+    # activities.services); resolve both in two queries rather than one per row.
+    staff_ids = {a.responsible_staff_id for a in activities if a.responsible_staff_id}
+    names: dict[str, str] = {}
+    if staff_ids:
+        for sp in StaffProfile.objects.filter(id__in=staff_ids).select_related("user"):
+            names[sp.id] = sp.user.name
+        for u in User.objects.filter(id__in=staff_ids - set(names)):
+            names[u.id] = u.name
+
+    incomplete_statuses = set(STOPPED_ACTIVITY_STATUSES) | {
+        "returned",
+        "returned_by_ia",
+        "returned_by_pl",
+    }
+
+    def kind_of(a):
+        t = a.activity_type
+        if t in TRAINING_TYPES:
+            return "Training"
+        if t in VISIT_TYPES:
+            return "School visit"
+        if t in CLUSTER_MEETING_TYPES:
+            return "Cluster meeting"
+        if t in SSA_TYPES:
+            return "SSA / assessment"
+        return (t or "").replace("_", " ").title() or "Activity"
+
+    def state_of(a):
+        if a.status in COMPLETED_WORK_STATUSES:
+            return "completed"
+        if a.status in incomplete_statuses:
+            return "incomplete"
+        return "assigned"
+
+    history = []
+    counts = {"completed": 0, "assigned": 0, "incomplete": 0}
+    kinds: dict[str, int] = {}
+    for a in activities:
+        state = state_of(a)
+        counts[state] += 1
+        kind = kind_of(a)
+        kinds[kind] = kinds.get(kind, 0) + 1
+        history.append(
+            {
+                "activity": a,
+                "kind": kind,
+                "state": state,
+                "staff_name": names.get(a.responsible_staff_id or "", ""),
+                "delivered_by": a.delivery_contact_name or "",
+            }
+        )
+
+    # The roster, and the people named on deliveries who are not on it.
+    members = list(partner.members.filter(active=True))
+    roster_names = {m.name.casefold() for m in members}
+    named_on_deliveries: dict[str, int] = {}
+    for a in activities:
+        n = (a.delivery_contact_name or "").strip()
+        if n and n.casefold() not in roster_names:
+            named_on_deliveries[n] = named_on_deliveries.get(n, 0) + 1
 
     assigned_school_ids = PartnerAssignment.objects.filter(partner=partner).values_list(
         "school_id", flat=True
@@ -634,13 +710,294 @@ def partner_detail_view(request, partner_id):
     )
     partner_progress = get_ssa_progress_by_fy(partner_schools)
 
+    # The schools this organisation supports — every portfolio school it has
+    # visited or trained (owner, 2026-09-07: "so that we can track all the
+    # schools supported by the partner and how they are performing"). A
+    # cluster training names its attendees in `attended_school_ids`, so both
+    # halves are read, as the sign-in strip does. Performance is the school's
+    # latest CONFIRMED SSA and the one before it; the delta is what "how they
+    # are performing" means to a supervisor.
+    from apps.ssa.models import SsaRecord
+
+    support: dict[str, dict] = {}
+
+    def touch(school_id, a, kind):
+        if not school_id:
+            return
+        row = support.setdefault(
+            school_id,
+            {
+                "visits": 0,
+                "visits_done": 0,
+                "trainings": 0,
+                "trainings_done": 0,
+                "last": None,
+            },
+        )
+        row[kind] += 1
+        if a.status in COMPLETED_WORK_STATUSES:
+            row[kind + "_done"] += 1
+        if a.planned_date and (row["last"] is None or a.planned_date > row["last"]):
+            row["last"] = a.planned_date
+
+    for a in activities:
+        kind = (
+            "visits"
+            if a.activity_type in VISIT_TYPES
+            else "trainings"
+            if a.activity_type in TRAINING_TYPES
+            else None
+        )
+        if not kind:
+            continue
+        touch(a.school_id, a, kind)
+        for sid in a.attended_school_ids or []:
+            if sid != a.school_id:
+                touch(sid, a, kind)
+
+    supported_schools = []
+    if support:
+        schools_by_id = {
+            s.id: s
+            for s in School.objects.filter(
+                id__in=support.keys(), deleted_at__isnull=True
+            ).select_related("district")
+        }
+        latest: dict[str, list] = {}
+        for rec in (
+            SsaRecord.objects.filter(
+                school_id__in=schools_by_id.keys(),
+                deleted_at__isnull=True,
+                verification_status="confirmed",
+            )
+            .order_by("school_id", "-date_of_ssa")
+            .values_list("school_id", "average_score", "date_of_ssa")
+        ):
+            bucket = latest.setdefault(rec[0], [])
+            if len(bucket) < 2:
+                bucket.append(rec)
+        for sid, row in support.items():
+            school = schools_by_id.get(sid)
+            if school is None:
+                continue
+            scores = latest.get(sid, [])
+            current = scores[0][1] if scores else None
+            previous = scores[1][1] if len(scores) > 1 else None
+            delta = (
+                round(current - previous, 1)
+                if current is not None and previous is not None
+                else None
+            )
+            supported_schools.append(
+                {
+                    "school": school,
+                    "district": school.district.name if school.district_id else "",
+                    **row,
+                    "score": current,
+                    "score_date": scores[0][2] if scores else None,
+                    "delta": delta,
+                    "ssa_status": school.get_current_fy_ssa_status_display(),
+                }
+            )
+        supported_schools.sort(
+            key=lambda r: (r["last"] is None, r["last"] and -r["last"].toordinal())
+        )
+
+    role_slug = get_user_role_slug(request.user)
+    scope = resolve_user_scope(request.user)
+    # The organisation edits its own bio (owner, 2026-09-07); the roles that
+    # run the directory edit any. Same rule services.update() enforces.
+    can_edit = (
+        request.user.is_superuser
+        or scope.country_scope
+        or partner.id in scope.partner_ids
+    )
+    can_manage_roster = (
+        request.user.is_superuser
+        or scope.country_scope
+        or partner.id in scope.partner_ids
+    )
+    can_manage_status = request.user.is_superuser or role_slug in {"ADMIN", "CD"}
+
+    roster_rows = [{"kind": "member", "member": member} for member in members] + [
+        {"kind": "delivery", "name": name, "deliveries": count}
+        for name, count in sorted(named_on_deliveries.items(), key=lambda kv: -kv[1])
+    ]
+
     context = {
         "partner": partner,
-        "activities": activities,
-        "completed": sum(1 for a in activities if a.status in COMPLETED_WORK_STATUSES),
+        "history": history,
+        "counts": counts,
+        "kinds": sorted(kinds.items(), key=lambda kv: -kv[1]),
+        "total": len(activities),
+        "members": members,
+        "named_on_deliveries": sorted(
+            named_on_deliveries.items(), key=lambda kv: -kv[1]
+        ),
+        "roster_rows": roster_rows,
+        "school_count": partner_schools.count(),
         "partner_progress": partner_progress,
+        "supported_schools": supported_schools,
+        "can_edit": can_edit,
+        "can_manage_roster": can_manage_roster,
+        "can_manage_status": can_manage_status,
+        # Kept for the older template contract.
+        "activities": activities,
+        "completed": counts["completed"],
     }
     return render(request, "pages/partners/detail.html", context)
+
+
+@require_page_permission("partner_detail")
+def partner_edit_drawer_view(request, partner_id):
+    """Edit an organisation's details — its own login may (owner, 2026-09-07:
+    "the partner should be able to edit their bio data"), and so may the roles
+    that run the directory. Region and SSA intervention are Edify's call, so
+    they are editable only from the country-scoped side.
+
+    Same contract as the school edit drawer: the form posts back to itself, a
+    rejected submit re-renders the drawer with the reason, and a saved one
+    reloads the profile.
+    """
+
+    from apps.core.enums import SsaIntervention
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.core.scoping import resolve_user_scope
+    from apps.partners.services import update as update_partner
+
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+    scope = resolve_user_scope(request.user)
+    country_side = bool(request.user.is_superuser or scope.country_scope)
+    if not (country_side or partner.id in scope.partner_ids):
+        return HttpResponseForbidden("You may only edit your own partner organisation.")
+
+    def drawer_context(validation_error=None):
+        return {
+            "partner": partner,
+            "country_side": country_side,
+            "regions": Region.objects.order_by("name"),
+            "interventions": SsaIntervention.choices,
+            "validation_error": validation_error,
+        }
+
+    if request.method == "POST":
+        name = (request.POST.get("name") or "").strip()
+        contact = (request.POST.get("contact_person") or "").strip()
+        email = (request.POST.get("email") or "").strip().lower()
+        phone = (request.POST.get("phone") or "").strip()
+        notes = (request.POST.get("notes") or "").strip()
+        expertise = (request.POST.get("expertise") or "").strip()
+        intervention = ""
+        payload = {
+            "contactPerson": contact,
+            "email": email,
+            "phone": phone,
+            "notes": notes,
+            "expertiseAreas": [x.strip() for x in expertise.split(",") if x.strip()],
+        }
+        if country_side:
+            if not name:
+                return render(
+                    request,
+                    "partials/partners/edit_drawer.html",
+                    drawer_context("Organisation name is required."),
+                )
+            payload["name"] = name
+            payload["regionName"] = (request.POST.get("region_name") or "").strip()
+            intervention = (request.POST.get("ssa_intervention") or "").strip()
+            if intervention and intervention not in {
+                v for v, _ in SsaIntervention.choices
+            }:
+                return render(
+                    request,
+                    "partials/partners/edit_drawer.html",
+                    drawer_context("Choose a valid SSA intervention."),
+                )
+        try:
+            update_partner(partner.id, payload, request.user)
+            if country_side and intervention:
+                # `update()` does not carry the intervention; it is set here,
+                # on the country side only.
+                partner.ssa_intervention = intervention
+                partner.save(update_fields=["ssa_intervention", "updated_at"])
+        except (BadRequest, Forbidden, NotFoundError) as exc:
+            return render(
+                request,
+                "partials/partners/edit_drawer.html",
+                drawer_context(str(getattr(exc, "detail", exc))),
+            )
+        return HttpResponse("<script>window.location.reload();</script>")
+
+    return render(request, "partials/partners/edit_drawer.html", drawer_context())
+
+
+@require_page_permission("partner_detail")
+def partner_status_action(request, partner_id):
+    """Activate or deactivate from the profile — the same toggle the directory
+    has, for the reader who is already on the organisation's page."""
+
+    from django.contrib import messages
+
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.partners.services import set_partner_status
+
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required.")
+    active = (request.POST.get("active") or "").strip() == "1"
+    try:
+        updated = set_partner_status(partner_id, active, request.user)
+        messages.success(
+            request,
+            f"'{updated['name']}' {'activated' if active else 'deactivated'}.",
+        )
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+    return redirect("frontend:partner_detail", partner_id=partner_id)
+
+
+@require_page_permission("partner_detail")
+def partner_member_drawer(request, partner_id):
+    """The Add to roster drawer."""
+
+    partner = get_object_or_404(Partner, id=partner_id, deleted_at__isnull=True)
+    from apps.partners.models import PartnerMemberRole
+
+    return render(
+        request,
+        "partials/partners/member_drawer.html",
+        {"partner": partner, "roles": PartnerMemberRole.choices},
+    )
+
+
+@require_page_permission("partner_detail")
+def partner_member_action(request, partner_id):
+    """Add a person to the roster, or remove one (`action=remove`)."""
+
+    from django.contrib import messages
+
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.partners.services import add_member, remove_member
+
+    if request.method != "POST":
+        return HttpResponseForbidden("POST required.")
+    try:
+        if (request.POST.get("action") or "") == "remove":
+            remove_member(
+                partner_id, (request.POST.get("member_id") or "").strip(), request.user
+            )
+            messages.success(request, "Removed from the roster.")
+        else:
+            member = add_member(partner_id, request.POST.dict(), request.user)
+            messages.success(request, f"{member.name} added to the roster.")
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        messages.error(request, str(getattr(exc, "detail", exc)))
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = reverse(
+            "frontend:partner_detail", kwargs={"partner_id": partner_id}
+        )
+        return response
+    return redirect("frontend:partner_detail", partner_id=partner_id)
 
 
 @require_page_permission("partner_today")
@@ -1308,6 +1665,7 @@ def partner_activity_workroom_view(request, activity_id):
                 cluster_id=a.cluster_id, deleted_at__isnull=True
             ).order_by("name")
         )
+    visit_feedback = getattr(a, "school_visit_feedback", None)
     context = {
         "a": a,
         "assignment": assignment,
@@ -1317,6 +1675,8 @@ def partner_activity_workroom_view(request, activity_id):
         "evidence_is_optional": evidence_optional(a),
         "state": state,
         "is_training_kind": sf_kind_for_activity(a) == "training",
+        "is_visit_kind": a.activity_type in VISIT_TYPES,
+        "visit_feedback": visit_feedback,
         "member_schools": member_schools,
         "attended_ids": set(a.attended_school_ids or []),
         "back_url": "/my-plan",
@@ -1379,6 +1739,18 @@ def partner_activity_submit_action(request, activity_id):
                 "actualOutcome": request.POST.get("actual_outcome") or "",
                 "actualObservations": request.POST.get("actual_observations") or "",
                 "followUpNote": request.POST.get("follow_up_note") or "",
+                **(
+                    {
+                        "feedbackFinding": request.POST.get(
+                            "feedback_finding", ""
+                        ).strip(),
+                        "schoolImprovements": request.POST.get(
+                            "school_improvements", ""
+                        ).splitlines(),
+                    }
+                    if a.activity_type in VISIT_TYPES
+                    else {}
+                ),
             },
             request.user,
         )

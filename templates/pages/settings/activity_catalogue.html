@@ -10,6 +10,21 @@
       <h1 class="edify-page-title">Activity Catalogue</h1>
       <p>Approved responses to SSA-identified need. Historical Activities retain the version and operational profiles used when they were scheduled.</p>
     </div>
+    {% if can_manage %}
+    <div class="edify-page-header__controls">
+      {% comment %}A button, not an anchor that jumps to a disclosure further
+      down the page (owner, 2026-09-07). It opens the drawer at
+      partials/catalogue/new_activity_drawer.html.{% endcomment %}
+      <button
+        type="button"
+        hx-get="/settings/activity-catalogue/new"
+        hx-target="#drawer-container"
+        hx-swap="innerHTML"
+        class="btn btn-primary h-8"
+        data-new-activity-toggle
+      >New activity</button>
+    </div>
+    {% endif %}
   </header>
 
   <form method="get" class="edify-filter-bar" aria-label="Catalogue filters">
@@ -43,7 +58,7 @@
         {% for value, label in statuses %}<option value="{{ value }}" {% if filters.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
-    <div class="flex items-end gap-2"><button class="btn btn-primary h-10" type="submit">Apply filters</button><a class="btn h-10" href="/settings/activity-catalogue/">Reset</a></div>
+    <div class="flex items-end gap-2"><button class="btn btn-primary h-8" type="submit">Apply filters</button><a class="btn h-8" href="/settings/activity-catalogue/">Reset</a></div>
   </form>
 
   {% if can_manage %}
@@ -81,7 +96,7 @@
 
   <section class="space-y-3" aria-label="Catalogue items">
     {% for item in items %}
-    <article class="card p-4">
+    <article class="card p-4" id="item-{{ item.id }}">
       <div class="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div class="flex flex-wrap items-center gap-2">

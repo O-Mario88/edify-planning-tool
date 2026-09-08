@@ -1,36 +1,31 @@
 {% comment %}
-  Edify Empty State — the premium replacement for blank tables/sections.
+  One empty state, everywhere.
 
-  Every list, queue, and table should use this when there's no data, instead
-  of rendering an empty container. An empty state always has: an icon, a clear
-  headline, a one-line explanation, and (when actionable) a CTA.
+  Fifteen pages had written this out by hand — the same centred column, the
+  same 48px icon square, the same clipboard glyph, the same muted sentence —
+  differing only in the words (owner, 2026-09-07: give the empty states and
+  prose notes the same treatment as the panels). Byte-identical markup in
+  fifteen files is fifteen places for it to drift.
 
   Usage:
-    {% include "components/empty_state.html" with title="No activities yet" message="Schedule your first school visit to get started." cta_label="Schedule visit" cta_href="/planning" %}
-    {% include "components/empty_state.html" with title="Queue is clear" tone="success" %}
+    {% include "components/empty_state.html" with message="No requests found." %}
 
-  Required: title
-  Optional:
-    message    — explanatory line under the title
-    icon       — Heroicons-style SVG path data (default: a calm inbox icon)
-    cta_label  — action button label (rendered only if cta_href also set)
-    cta_href   — action button link
-    tone       — neutral | success | info (tints the icon; default: neutral)
-    compact    — "true" → smaller padding (for inside cards vs full pages)
+  `title` remains optional for older and more descriptive empty states;
+  `message` is the sentence and `hint` is an optional second line for what the
+  reader can do about it. `cta_label` plus `cta_href` add a recovery action.
+  The icon is the platform's empty glyph; a page that genuinely needs another
+  can pass `icon` as raw SVG markup.
 {% endcomment %}
-<div class="flex flex-col items-center justify-center text-center {% if compact == 'true' %}py-8{% else %}py-16{% endif %} px-4">
-  <div class="w-12 h-12 rounded-pill flex items-center justify-center mb-3
-              {% if tone == 'success' %}bg-emerald-50 text-emerald-500{% elif tone == 'info' %}edify-primary-soft edify-primary-text{% else %}bg-slate-100 text-slate-400{% endif %}">
-    <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
-      {% if icon %}<path stroke-linecap="round" stroke-linejoin="round" d="{{ icon }}"/>
-      {% else %}<path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>{% endif %}
+<div class="edify-empty-state{% if compact == 'true' %} edify-empty-state--compact{% endif %}"{% if tone %} data-tone="{{ tone }}"{% endif %}>
+  <span class="edify-empty-state__mark" aria-hidden="true">
+    {% if icon %}{{ icon }}{% else %}
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
     </svg>
-  </div>
-  <h4 class="text-[14px] font-semibold text-slate-700 leading-snug">{{ title }}</h4>
-  {% if message %}
-    <p class="text-[12px] text-slate-500 font-medium mt-1 max-w-xs leading-relaxed">{{ message }}</p>
-  {% endif %}
-  {% if cta_label and cta_href %}
-    <a href="{{ cta_href }}" class="mt-4 btn btn-primary h-9 inline-flex items-center gap-1.5">{{ cta_label }}</a>
-  {% endif %}
+    {% endif %}
+  </span>
+  {% if title %}<p class="edify-empty-state__title">{{ title }}</p>{% endif %}
+  <p class="edify-empty-state__message">{{ message }}</p>
+  {% if hint %}<p class="edify-empty-state__hint">{{ hint }}</p>{% endif %}
+  {% if cta_label and cta_href %}<a href="{{ cta_href }}" class="btn btn-primary min-h-9">{{ cta_label }}</a>{% endif %}
 </div>

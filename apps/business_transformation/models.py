@@ -556,6 +556,175 @@ class LoanStatus(models.TextChoices):
     CANCELED = "canceled", "Canceled"
 
 
+class LoanApplicationStatus(models.TextChoices):
+    """School-facing intake lifecycle before an MFI loan is registered."""
+
+    SUBMITTED = "submitted", "Submitted"
+    UNDER_REVIEW = "under_review", "Under review"
+    REFERRED = "referred", "Referred to lender"
+    PROCESSING = "processing", "Processing"
+    APPROVED = "approved", "Approved"
+    DECLINED = "declined", "Declined"
+    WITHDRAWN = "withdrawn", "Withdrawn"
+    CONVERTED = "converted", "Converted to loan"
+
+
+OPEN_LOAN_APPLICATION_STATUSES = (
+    LoanApplicationStatus.SUBMITTED,
+    LoanApplicationStatus.UNDER_REVIEW,
+    LoanApplicationStatus.REFERRED,
+    LoanApplicationStatus.PROCESSING,
+    LoanApplicationStatus.APPROVED,
+)
+
+
+class LoanRepaymentFrequency(models.TextChoices):
+    MONTHLY = "monthly", "Monthly"
+    TERMLY = "termly", "Termly"
+
+
+class LoanApplication(SoftDeleteModel):
+    """Interest submitted directly by a school, before referral/underwriting."""
+
+    id = CuidField()
+    school = models.ForeignKey(
+        "schools.School", on_delete=models.PROTECT, related_name="loan_applications"
+    )
+    purpose = models.ForeignKey(
+        LoanPurpose, on_delete=models.PROTECT, related_name="applications"
+    )
+    preferred_mfi = models.ForeignKey(
+        MfiOrganization,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="loan_applications",
+    )
+    applicant_name = models.CharField(max_length=255)
+    applicant_role = models.CharField(max_length=128)
+    applicant_phone = models.CharField(max_length=64)
+    applicant_email = models.EmailField(blank=True, default="")
+    requested_amount = models.DecimalField(max_digits=18, decimal_places=2)
+    currency = models.CharField(max_length=3, default="UGX")
+    intended_use = models.TextField()
+    requested_term_months = models.PositiveSmallIntegerField()
+    repayment_frequency = models.CharField(
+        max_length=16, choices=LoanRepaymentFrequency.choices
+    )
+    status = models.CharField(
+        max_length=24,
+        choices=LoanApplicationStatus.choices,
+        default=LoanApplicationStatus.SUBMITTED,
+        db_index=True,
+    )
+    next_follow_up_on = models.DateField(null=True, blank=True, db_index=True)
+    consent_recorded_at = models.DateTimeField()
+    submitted_at = models.DateTimeField(db_index=True)
+    reviewed_by = models.CharField(max_length=30, null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    linked_loan = models.OneToOneField(
+        "MfiLoan",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="source_application",
+    )
+
+    class Meta:
+        db_table = "bt_loan_application"
+        ordering = ["-submitted_at"]
+        indexes = [
+            models.Index(fields=["school", "status"]),
+            models.Index(fields=["submitted_at", "status"]),
+        ]
+        constraints = [
+            models.CheckConstraint(
+                condition=Q(requested_amount__gt=0),
+                name="bt_loan_application_amount_positive",
+            ),
+            models.CheckConstraint(
+                condition=Q(requested_term_months__gt=0)
+                & Q(requested_term_months__lte=120),
+                name="bt_loan_application_term_range",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        status=LoanApplicationStatus.CONVERTED,
+                        linked_loan__isnull=False,
+                    )
+                    | (
+                        ~Q(status=LoanApplicationStatus.CONVERTED)
+                        & Q(linked_loan__isnull=True)
+                    )
+                ),
+                name="bt_loan_application_conversion_link",
+            ),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        status__in=(
+                            LoanApplicationStatus.DECLINED,
+                            LoanApplicationStatus.WITHDRAWN,
+                            LoanApplicationStatus.CONVERTED,
+                        ),
+                        processed_at__isnull=False,
+                    )
+                    | (
+                        Q(status__in=OPEN_LOAN_APPLICATION_STATUSES)
+                        & Q(processed_at__isnull=True)
+                    )
+                ),
+                name="bt_loan_application_processed_state",
+            ),
+            models.UniqueConstraint(
+                fields=["school"],
+                condition=Q(
+                    deleted_at__isnull=True,
+                    status__in=OPEN_LOAN_APPLICATION_STATUSES,
+                ),
+                name="uniq_bt_open_loan_application_school",
+            ),
+        ]
+
+
+class LoanApplicationFollowUp(TimeStampedModel):
+    id = CuidField()
+    application = models.ForeignKey(
+        LoanApplication, on_delete=models.CASCADE, related_name="follow_ups"
+    )
+    previous_status = models.CharField(max_length=24, blank=True, default="")
+    new_status = models.CharField(max_length=24, choices=LoanApplicationStatus.choices)
+    note = models.TextField(blank=True, default="")
+    next_follow_up_on = models.DateField(null=True, blank=True)
+    recorded_by = models.CharField(max_length=30)
+
+    class Meta:
+        db_table = "bt_loan_application_follow_up"
+        ordering = ["-created_at"]
+        indexes = [models.Index(fields=["application", "created_at"])]
+
+
+class LoanTrackingDeliveryLog(TimeStampedModel):
+    """Permanent idempotency record for scheduled reminders and reports."""
+
+    id = CuidField()
+    delivery_kind = models.CharField(max_length=32)
+    subject_id = models.CharField(max_length=64)
+    period_key = models.CharField(max_length=32)
+    recipient_id = models.CharField(max_length=30)
+
+    class Meta:
+        db_table = "bt_loan_tracking_delivery_log"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["delivery_kind", "subject_id", "period_key", "recipient_id"],
+                name="uniq_bt_loan_tracking_delivery",
+            )
+        ]
+
+
 DISBURSED_LOAN_STATUSES = (
     LoanStatus.DISBURSED,
     LoanStatus.ACTIVE,

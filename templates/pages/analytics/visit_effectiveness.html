@@ -2,7 +2,7 @@
 {% load static %}
 
 {% block title %}School Visit Effectiveness · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260809layout8">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260906tablet4">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="analytics" data-analytics-enterprise>
@@ -25,7 +25,7 @@
           <span class="edify-filter-label">Assessment comparison</span>
           <select name="comparison" aria-label="Assessment comparison"
                   class="h-9 px-3 text-[12px] font-semibold border border-slate-200 rounded-control">
-            <option value="v1">{{ d.methodology.baseline_fy }} → {{ d.methodology.followup_fy }}</option>
+            <option value="v1">SSA performance FY{{ d.methodology.baseline_fy|slice:"-2:" }} vs FY{{ d.methodology.followup_fy|slice:"-2:" }}</option>
           </select>
         </div>
         <div class="flex flex-col min-w-[120px]">

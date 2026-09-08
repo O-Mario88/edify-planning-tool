@@ -1,9 +1,8 @@
 {% load frontend_filters %}
 <div class="analytics-command-layer">
 
-  {# Executive health and geography stay visible at every visit. #}
+  {# Executive health stays visible at every visit; the country map lives on the home dashboard. #}
   {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" %}
-  {% include "partials/analytics/regional_performance.html" %}
 
   <section class="analytics-decision-section" aria-labelledby="cd-priority-title">
     <header class="analytics-section-heading">

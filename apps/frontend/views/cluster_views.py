@@ -314,8 +314,17 @@ def cluster_list_view(request):
     # search keystroke through that path, so a flag added after it would make
     # the per-card button vanish on the first refresh for the people who are
     # entitled to it.
+    # The page permission alone was not enough: the Country Director holds
+    # `planning` for non-school work, so the buttons appeared for them and
+    # answered 403 — cluster meetings and trainings are the cluster owner's
+    # programme, and `can_schedule_activity` is what the drawer POST checks.
+    # Creating a cluster is registry work behind CLUSTER_ASSIGN, a different
+    # question, so it gets its own flag.
     context["can_plan_clusters"] = RolePermissionService.can_view_page(
         request.user, "planning"
+    ) and RolePermissionService.can_schedule_activity(request.user)
+    context["can_create_clusters"] = (
+        Permission.CLUSTER_ASSIGN.value in resolve_user_scope(request.user).permissions
     )
 
     if request.headers.get("HX-Request") == "true":
@@ -339,7 +348,10 @@ def cluster_schools_partial(request, cluster_id):
     context = {
         "schools": schools,
         "cluster_id": cluster_id,
-        "can_schedule": RolePermissionService.can_schedule_activity(request.user),
+        # Planners plan, and the request-only country roles ask through the
+        # same drawer — see apps.planning.visit_requests.
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
+        or RolePermissionService.can_request_school_visit(request.user),
         "can_assign_partner": RolePermissionService.can_assign_to_partner(request.user),
     }
     return render(request, "partials/clusters/cluster_schools_table.html", context)
@@ -742,10 +754,17 @@ def cluster_detail_view(request, cluster_id):
         # permission checks as the destinations behind their controls. This
         # keeps the profile useful as a planning launch point without showing
         # actions that will answer 403 for oversight-only roles.
+        # Cluster meetings and trainings are the cluster owner's programme;
+        # the page permission alone let the Country Director see buttons the
+        # drawer then refused (apps.planning.visit_requests).
         "can_plan_clusters": RolePermissionService.can_view_page(
             request.user, "planning"
-        ),
-        "can_schedule": RolePermissionService.can_schedule_activity(request.user),
+        )
+        and RolePermissionService.can_schedule_activity(request.user),
+        # Planners plan, and the request-only country roles ask through the
+        # same drawer — see apps.planning.visit_requests.
+        "can_schedule": RolePermissionService.can_schedule_activity(request.user)
+        or RolePermissionService.can_request_school_visit(request.user),
     }
     return render(request, "pages/clusters/detail.html", context)
 

@@ -1,0 +1,2 @@
+{% comment %}The Regional Vice President's chosen view: map or operations.{% endcomment %}
+{% if dashboard_view == "map" %}{% include "partials/dashboards/rvp/map_view.html" %}{% else %}{% include "partials/dashboards/rvp/operations.html" %}{% endif %}

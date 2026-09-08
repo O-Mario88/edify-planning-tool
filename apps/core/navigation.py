@@ -121,6 +121,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     },
     "loans": {
         BUSINESS_TRANSFORMATION,
+        CCEO,
         CD,
         IA,
         RVP,
@@ -136,7 +137,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # wider set for a permissive gate to expose.
     "my_actions": ALL_ROLES,
     "actions_sent": {PL, IA, CD, RVP, ADMIN},
-    "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN},
+    # IA holds My Targets since 2026-09-03: assessment visits and verifications
+    # are measured work, not just planned work.
+    "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN, IA},
     # Supervised-team target oversight. `supervised_users` resolves a team only
     # for the PL (their supervisees) and the CD (country lens); every other
     # role got an empty page. Removed for the Accountant, who supervises nobody
@@ -246,7 +249,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         PROJECT_COORDINATOR,
         ADMIN,
     },
-    "my_plan": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, ADMIN},
+    # CD, IA and the Accountant hold My Plan since 2026-09-03: an owner-approved
+    # visit (apps.planning.visit_requests) lands on the requester's plan and
+    # runs the ordinary lifecycle from there through to closure.
+    "my_plan": {CCEO, PL, PARTNER, PROJECT_COORDINATOR, ADMIN, CD, IA, ACCOUNTANT},
     # Field Debrief (§4/§20): CCEO/PL/Partner/ProjectCoordinator submit; CD/HR/
     # IA/RVP are read-only leadership-intelligence audiences — their actual
     # data is narrowed further by FieldDebriefService.scoped_queryset(), not
@@ -269,7 +275,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "public_holidays": ALL_ROLES,
     "team_availability": {PL, CD, RVP, HR, ADMIN},
     "schools": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
-    "core_schools": {CCEO, PL, IA, ADMIN},
+    # CD and the Accountant since 2026-09-02, for the same reason as
+    # `planning`: a core visit they schedule is filed as a request the school's
+    # owner approves (apps.planning.visit_requests). Core trainings stay the
+    # owner's; the drawer refuses those roles.
+    "core_schools": {CCEO, PL, IA, CD, ACCOUNTANT, ADMIN},
     "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
     "school_profile": {
         CCEO,
@@ -290,14 +300,25 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cluster_detail": {CCEO, PL, IA, CD, ADMIN},
     "partners": ALL_ROLES,
     "partner_detail": ALL_ROLES,
-    "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN},
+    "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN, IA},
     # Calendar is a shared read-only operational surface. The view applies its
     # own role-to-staff audience rule before returning schedules.
     "calendar": ALL_ROLES,
     # The CD plans plenty of non-school work (district trips, boot camps,
     # partner meetings), so they hold the planning surface too — the field-
     # event drawer is its entry point for them (owner, 2026-08-19).
-    "planning": {CCEO, PL, PROJECT_COORDINATOR, CD, ADMIN},
+    # Impact Assessment and the Accountant are here since 2026-09-02, for one
+    # reason: it is where they schedule a visit into a CCEO's or PL's school.
+    # The page's Schedule button opens the same drawer for them, and the
+    # service files what they schedule as a request the school's owner must
+    # approve before it takes effect (apps.planning.visit_requests). Nothing
+    # else on the page is theirs to act on — every write behind it keeps its
+    # own gate (owner, 2026-09-02).
+    "planning": {CCEO, PL, PROJECT_COORDINATOR, CD, IA, ACCOUNTANT, ADMIN},
+    # The owner's approval queue and the requester's follow-up
+    # (apps.planning.visit_requests). Not in the sidebar: owners reach it
+    # from the To-Do and the notification, requesters from the notification.
+    "visit_requests": {CCEO, PL, PROJECT_COORDINATOR, CD, IA, ACCOUNTANT, ADMIN},
     # Work Plan is the FY-level roll-up of the same activity ledger Planning
     # writes. Field planners keep it, and the leadership/verification roles
     # (CD, IA, HR) read it without being able to plan. The RVP gets aggregate
@@ -308,7 +329,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # _ROUTE_TO_CD names them explicitly — so locking them out of the page meant
     # they generated requests they could never see or confirm.
     "weekly_fund_request": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
-    "fund_approvals": {PL, ADMIN},
+    # The CD since 2026-09-03: PL, Project Coordinator, IA and Accountant
+    # weekly requests route to the Country Director, who had no queue page.
+    "fund_approvals": {PL, CD, ADMIN},
     "fund_requests": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
     "monthly_request": {CD, PL, RVP, ACCOUNTANT, IA, PROJECT_COORDINATOR, ADMIN},
     "my_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
@@ -322,7 +345,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cd_analytics": {CD, ADMIN},
     "reports": {CD, PL, IA, RVP, PROJECT_COORDINATOR, ADMIN},
     "completed_archive": {IA, ADMIN},
-    "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD},
+    "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD, ACCOUNTANT},
     # RBAC matrix grants USER_MANAGE to CD and HR as well as Admin
     # (apps/core/rbac.py ROLE_PERMISSIONS) and
     # RolePermissionService.can_manage_users() already includes
@@ -369,9 +392,11 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # CD raises flags, PL is assigned to act on them (apps/flags) — both
     # need the page; IA/Admin keep global read-only monitoring access.
     "quality_checks": {IA, CD, PL, ADMIN},
-    # The upward decision channel: the CD escalates, the RVP decides. Only the
-    # two principals in that exchange (rows are filtered again in the service).
-    "escalations": {CD, RVP, ADMIN},
+    # The upward decision channel, one level at a time: a CCEO or Project
+    # Coordinator escalates to their Programme Lead, the PL to the CD, the CD
+    # to the RVP; the addressee decides. Every principal in that chain needs
+    # the page (rows are filtered again in the service).
+    "escalations": {CCEO, PROJECT_COORDINATOR, PL, CD, RVP, ADMIN},
     # The Leadership Decision + Budget Intelligence engines. Both ran headless
     # for the platform's whole life — permissions granted, detectors firing,
     # no page to open. Audience matches LEADERSHIP_ENGINE_VIEW holders who can
@@ -416,7 +441,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # `ia_` prefix fallback in permissions.py and the page was reachable only
     # by typing the URL — it had no key and no navigation. Named explicitly now
     # that it is an Analytics section.
-    "ia_dashboard": {IA, ADMIN},
+    # The CD reads verification analytics since 2026-09-03 — the only
+    # throughput view of the country's verification chain.
+    "ia_dashboard": {IA, CD, ADMIN},
     # Closure quality. IA and Admin only: this is a data-quality worklist about
     # which closure records to distrust, not a report on how many schools the
     # country lost. Leadership gets that from the closure analytics on their own
@@ -451,12 +478,22 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cost_intelligence": {RVP, ACCOUNTANT},
     # IA queue pages (explicit entries so the sidebar can show them; route
     # gating already resolves these via the ia_ prefix fallback)
-    "ia_verification_queue": {IA, ADMIN},
+    # The Country Director reaches the queue and the workspace as the
+    # fallback verifier: the one person who may certify an Impact Assessment
+    # officer's OWN field work, which that officer may never verify
+    # themselves (2026-09-03). The views narrow the CD to exactly that.
+    "ia_verification_queue": {IA, CD, ADMIN},
+    "ia_review_workspace": {IA, CD, ADMIN},
     "ia_partner_evidence": {IA, ADMIN},
     "ia_duplicates": {IA, ADMIN},
     "ia_compare": {IA, ADMIN},
     "ia_returned": {IA, ADMIN},
     "ia_history": {IA, ADMIN},
+    # Verification as a pattern, sample checks and attribution (2026-09-03).
+    # The CD reads all three: they are the country's quality picture.
+    "ia_verification_analytics": {IA, CD, ADMIN},
+    "ia_samples": {IA, CD, ADMIN},
+    "ia_attribution": {IA, CD, ADMIN},
     "ia_upload_center": {IA, ADMIN},
     # Finance operations sidebar visibility (views gate on "disbursements")
     "finance_advances": {ACCOUNTANT, ADMIN},
@@ -488,7 +525,12 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The RVP and CD author here; HR gets read access because the coverage
     # report — which published priorities reached nobody — is theirs to act on,
     # and it lives nowhere else.
-    "strategic_priorities": {RVP, CD, HR, ADMIN},
+    # Priority Setting is a TAB of the Priorities page (owner, 2026-09-07),
+    # so its readers are the page's readers. IA runs the distribution and
+    # needs the source beside it; a PL reads the priorities their own
+    # allocation comes from. Acting on a milestone still needs the define,
+    # approve or allocate permission, which neither role gains here.
+    "strategic_priorities": {RVP, CD, HR, ADMIN, IA, PL},
     # The Today workbench (roadmap Phase 5): the field roles' one primary
     # daily surface — route, next action, waiting-on-you, exceptions, the
     # proposed week, day completion.
@@ -747,7 +789,9 @@ ANALYTICS_SECTIONS = [
     {
         "key": "people",
         "label": "People Analytics",
-        "url": "/hr-analytics",
+        # The HR module keeps /hr-analytics with its own chrome; the Analytics
+        # workspace shows the same register as a tab of the one page.
+        "url": "/analytics/people",
         "page_key": "hr_analytics",
         "cluster": "delivery",
         "description": "Workforce, capacity and people investment.",
@@ -755,7 +799,9 @@ ANALYTICS_SECTIONS = [
     {
         "key": "verification_quality",
         "label": "Verification Quality",
-        "url": "/ia/dashboard/",
+        # IA keeps /ia/dashboard/ as its own home; the Analytics workspace shows
+        # the same dashboard as a tab of the one page.
+        "url": "/analytics/verification-quality",
         "page_key": "ia_dashboard",
         "cluster": "delivery",
         "description": "Evidence quality and verification throughput.",
@@ -1135,9 +1181,25 @@ SIDEBAR_ITEMS = [
                 # non-school work (district trips, boot camps, partner
                 # meetings) — Planning surfaces here for them; field roles
                 # keep their entry in SCHOOLS & FIELD (owner, 2026-08-19).
+                # IA and the Accountant reach it here too: it is where they
+                # schedule a visit the school's owner then approves
+                # (owner, 2026-09-02).
                 "label": "Planning",
                 "url": "/planning",
                 "page_key": "planning",
+                "visible_to": {CD, IA, ACCOUNTANT},
+            },
+            {
+                # Same reasoning as Planning above. The CD holds `clusters`
+                # with country scope, so /clusters already lists every
+                # cluster for them in the same card directory a CCEO or PL
+                # opens from SCHOOLS & FIELD — but with no entry here the only
+                # cluster list they were ever offered was the grouped
+                # oversight table on Team Oversight, which is a different
+                # layout answering a different question (who holds what).
+                "label": "Clusters",
+                "url": "/clusters",
+                "page_key": "clusters",
                 "visible_to": {CD},
             },
             {
@@ -1205,6 +1267,16 @@ SIDEBAR_ITEMS = [
                 "page_key": "my_actions",
             },
             {
+                # The CD's flags to Program Leads (apps.flags). Permitted for
+                # years, reachable from nowhere: no sidebar item registered
+                # the page for any role.
+                "label": "Quality Flags",
+                "url": "/quality-checks",
+                "page_key": "quality_checks",
+                "icon_key": "todos",
+                "visible_to": {CD, PL, IA},
+            },
+            {
                 # The other end of the same rows. Only the roles that can send
                 # — PL supervises, IA assures — have anything to monitor here.
                 "label": "Actions Sent",
@@ -1231,9 +1303,13 @@ SIDEBAR_ITEMS = [
                 "page_key": "daily_debrief",
             },
             {
+                # Everyone who can raise or decide an escalation: the field
+                # (CCEO, Project Coordinator) raises to the PL, the PL to the
+                # CD, the CD to the RVP.
                 "label": "Escalations",
                 "url": "/escalations",
                 "page_key": "escalations",
+                "visible_to": {CCEO, PROJECT_COORDINATOR, PL, CD, RVP, ADMIN},
             },
             {
                 "label": "Leave & Personal Time Off",
@@ -1362,7 +1438,7 @@ SIDEBAR_ITEMS = [
                 "label": "Loans",
                 "url": "/loans",
                 "page_key": "loans",
-                "visible_to": {BUSINESS_TRANSFORMATION, CD, IA, RVP},
+                "visible_to": {BUSINESS_TRANSFORMATION, CCEO, CD, IA, RVP},
             },
             {
                 "label": "Business Accounting & Finance",
@@ -1436,27 +1512,17 @@ SIDEBAR_ITEMS = [
                 # performance agreement. /priorities is the one canonical
                 # priority page, and two things called a priority dashboard is
                 # how two pages end up answering the same question differently.
+                # Priority Setting used to override this slot for the RVP and
+                # the CD, which gave them two priority links in two different
+                # groups — the second one filed under MY PERFORMANCE, which is
+                # not what it is. It is a tab of the Priorities page now
+                # (owner, 2026-09-07: "they should be one page separated by
+                # tabs… the idea is to reduce to many menu links"), so this
+                # slot is the personal agreement for everyone, and the pair of
+                # entries that existed to undo the override is one entry again.
                 "label": "My Performance Agreement",
                 "url": "/my-performance",
                 "page_key": "my_performance",
-                # Regional and country strategy authors enter the governed
-                # source-priority workspace from the familiar dashboard slot.
-                # Their personal agreement remains available as the sibling
-                # item below, so strategy ownership does not erase it.
-                "role_urls": {
-                    RVP: "/strategic-priorities",
-                    CD: "/strategic-priorities",
-                },
-                "role_labels": {
-                    RVP: "Priority Setting",
-                    CD: "Priority Setting",
-                },
-            },
-            {
-                "label": "My Performance Agreement",
-                "url": "/my-performance",
-                "page_key": "my_performance",
-                "visible_to": {RVP, CD},
             },
             {
                 "label": "My Targets",
@@ -1479,6 +1545,9 @@ SIDEBAR_ITEMS = [
                 "label": "Weekly Advance Request",
                 "url": "/fund-requests/weekly",
                 "page_key": "weekly_fund_request",
+                # The Accountant's advance requests live on the disbursement
+                # workspace (owner, 2026-09-04): one page for the money desk.
+                "role_urls": {ACCOUNTANT: "/disbursements"},
             },
             {
                 "label": "Fund Approvals",
@@ -1486,6 +1555,10 @@ SIDEBAR_ITEMS = [
                 "page_key": "fund_approvals",
             },
             {
+                # For the CD and RVP this IS the country budget: /budget forces
+                # the country scope for them and /country-budget redirects
+                # here. Named accordingly, and the mobile bar asks for this
+                # key rather than a `country_budget` item nobody registers.
                 "label": "Budget",
                 "url": "/budget",
                 "page_key": "monthly_budget",
@@ -1524,6 +1597,9 @@ SIDEBAR_ITEMS = [
                 "label": "Disbursement Dashboard",
                 "url": "/disbursements",
                 "page_key": "disbursements",
+                # The Accountant reaches the same workspace through "Weekly
+                # Advance Request" above; one entry, not two, for one page.
+                "visible_to": {ADMIN},
             },
             {
                 "label": "Partner Payments",
@@ -1592,6 +1668,24 @@ SIDEBAR_ITEMS = [
                 "label": "Verification History",
                 "url": "/ia/history/",
                 "page_key": "ia_history",
+            },
+            {
+                "label": "Verification Analytics",
+                "url": "/ia/analytics/",
+                "page_key": "ia_verification_analytics",
+                "icon_key": "analytics",
+            },
+            {
+                "label": "Sample Checks",
+                "url": "/ia/samples/",
+                "page_key": "ia_samples",
+                "icon_key": "ia_compare",
+            },
+            {
+                "label": "Impact Attribution",
+                "url": "/ia/attribution/",
+                "page_key": "ia_attribution",
+                "icon_key": "impact_analytics",
             },
         ],
     },
@@ -1752,25 +1846,14 @@ SIDEBAR_ITEMS = [
     {
         "group_label": "PERFORMANCE",
         "items": [
-            {
-                "label": "Strategic Priorities",
-                "url": "/strategic-priorities",
-                "page_key": "strategic_priorities",
-                # RVP/CD reach the same authoring workspace from their primary
-                # performance group; keep this validation/configuration entry
-                # for the support roles that do not receive that override.
-                "visible_to": {HR, ADMIN},
-            },
             # §12's workspace is no longer a second sidebar entry: for IA, CD
             # and Admin the Priorities item above IS the distribution
             # workspace. The /target-distribution route, its permission and
             # its page key all remain — only the duplicate link is gone.
-            {
-                # §13 — the PL's one distribution among supervised CCEOs.
-                "label": "Team Target Distribution",
-                "url": "/target-distribution/team",
-                "page_key": "team_target_distribution",
-            },
+            #
+            # §13's — a Program Lead's own distribution among supervised CCEOs
+            # — went the same way on 2026-09-07: it is the "My Team" tab of the
+            # Priorities page. Route, permission and page key unchanged.
             {
                 "label": "Performance Cycle",
                 "url": "/hr/performance-cycle",
@@ -2163,12 +2246,17 @@ MOBILE_NAV_BY_ROLE: dict[str, tuple[str, ...]] = {
     # Verification is the whole job; SSA is its second queue.
     IA: ("dashboard", "ia_verification_queue", "ssa", "messages"),
     # Finance operates queues, not dashboards.
-    ACCOUNTANT: ("dashboard", "disbursements", "finance_partner_payments", "messages"),
+    ACCOUNTANT: (
+        "dashboard",
+        "weekly_fund_request",
+        "finance_partner_payments",
+        "messages",
+    ),
     # People work: the directory and the approvals that block others.
     HR: ("dashboard", "staff", "leave_approvals", "messages"),
     # Leadership decides on budget and reads the evidence.
-    CD: ("dashboard", "country_budget", "analytics", "messages"),
-    RVP: ("dashboard", "country_budget", "analytics", "messages"),
+    CD: ("dashboard", "monthly_budget", "analytics", "messages"),
+    RVP: ("dashboard", "monthly_budget", "analytics", "messages"),
     # Platform operations: the incoming queue and the health of the system.
     ADMIN: ("dashboard", "admin_support_queue", "system_health", "messages"),
 }

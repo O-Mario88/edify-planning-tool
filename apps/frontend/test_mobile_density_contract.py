@@ -32,11 +32,19 @@ class MobileDensityContractTests(SimpleTestCase):
         self.assertIn("padding: 0.625rem 0.875rem !important", css)
 
     def test_shared_mobile_controls_use_compact_accessible_scale(self):
+        """The type, icon and padding steps stay responsive; the button height
+        does not. This test used to pin the stepped scale (2.25rem tablet,
+        1.875rem small, 1.75rem tiny), which is why "32px action buttons
+        platform-wide" was true only above 1024px: the same button measured
+        36px on a tablet and 30px on a phone (owner, 2026-09-04). 2rem clears
+        WCAG 2.2 target size (24px) at every step."""
         css = (ROOT / "static/css/components/mobile-micro-ux.css").read_text()
 
-        self.assertIn("--edify-action-button-block-size: 2.25rem", css)
-        self.assertIn("--edify-action-button-block-size: 1.875rem", css)
-        self.assertIn("--edify-action-button-block-size: 1.75rem", css)
+        sizes = re.findall(r"--edify-action-button-block-size:\s*([0-9.]+rem)", css)
+        self.assertEqual(set(sizes), {"2rem"})
+        self.assertEqual(len(sizes), 4, "one height declared per breakpoint step")
+        self.assertIn("--edify-action-button-padding-inline: 0.5rem", css)
+        self.assertIn("--edify-action-button-icon-size: 0.75rem", css)
         self.assertIn("max-width: 22.5rem", css)
         self.assertEqual(css.count(":root:root:root"), 4)
         self.assertIn(

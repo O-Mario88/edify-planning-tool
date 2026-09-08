@@ -17,7 +17,7 @@
 <div class="edify-page-header__controls">
 {% if can_export %}
 <a href="/work-plan/export.xlsx?{{ request.GET.urlencode }}"
-   class="btn btn-secondary h-10">
+   class="btn btn-secondary h-8">
 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3v12m0 0l-4-4m4 4l4-4M5 19h14"/></svg>
 Export Excel
 </a>
@@ -27,7 +27,7 @@ Export Excel
         hx-get="/work-plan/add"
         hx-target="#drawer-container"
         hx-swap="innerHTML"
-        class="btn btn-primary h-10 shadow-sm">
+        class="btn btn-primary h-8 shadow-sm">
 <svg class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
 Add Non-School Activity
 </button>
@@ -71,7 +71,7 @@ Add Non-School Activity
 <form method="post" action="/work-plan/submit-to-rvp">
 {% csrf_token %}
 <input type="hidden" name="fy" value="{{ fy }}">
-<button type="submit" class="btn btn-primary h-9" {% if not work_plan_approval.ready %}disabled aria-disabled="true" title="Resolve the readiness issues first"{% endif %}>
+<button type="submit" class="btn btn-primary h-8" {% if not work_plan_approval.ready %}disabled aria-disabled="true" title="Resolve the readiness issues first"{% endif %}>
 Submit completed plan to RVP
 </button>
 </form>
@@ -84,8 +84,8 @@ Submit completed plan to RVP
 <input name="note" maxlength="512" placeholder="Reason required when returning"
        aria-label="Reason for returning this Work Plan"
        class="h-9 min-w-[230px] rounded-control border border-[var(--edify-border)] bg-transparent px-3 text-[12px] font-semibold">
-<button type="submit" name="action" value="return" class="btn btn-secondary h-9">Return</button>
-<button type="submit" name="action" value="approve" class="btn btn-primary h-9">Approve &amp; lock</button>
+<button type="submit" name="action" value="return" class="btn btn-secondary h-8">Return</button>
+<button type="submit" name="action" value="approve" class="btn btn-primary h-8">Approve &amp; lock</button>
 </form>
 {% endif %}
 </div>
@@ -102,7 +102,7 @@ Submit completed plan to RVP
   designs. Selection, fill, dividers and corners now come from
   static/css/components/interactions.css.
 {% endcomment %}
-<nav aria-label="Work plan view" data-edify-tablist class="self-start">
+<nav aria-label="Work plan view" data-edify-tablist class="self-start shrink-0">
 {% for tab in view_tabs %}
 <a href="{{ tab.url }}" data-edify-tab
    {% if tab.active %}aria-current="page"{% endif %}>
@@ -141,7 +141,7 @@ Submit completed plan to RVP
 </select>
 </label>
 
-<button type="submit" class="btn btn-primary h-9">Apply</button>
+<button type="submit" class="btn btn-primary h-8">Apply</button>
 {% if filters_active %}
 <a href="{{ clear_filters_url }}" data-component="clear-filters" class="inline-flex items-center gap-1 h-9 px-2 edify-primary-text edify-text-caption font-bold uppercase tracking-wider hover:underline">
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
@@ -182,7 +182,7 @@ More filters
 {% for value, label in executor_options %}<option value="{{ value }}" {% if selected_executor == value %}selected{% endif %}>{{ label }}</option>{% endfor %}
 </select>
 </label>
-<button type="submit" class="btn btn-primary h-9 w-full">Apply filters</button>
+<button type="submit" class="btn btn-primary h-8 w-full">Apply filters</button>
 </div>
 </details>
 </form>
@@ -239,7 +239,7 @@ Showing: {{ flag_label }}
 <section id="work-plan-detail" aria-labelledby="work-plan-detail-title" tabindex="-1" class="work-plan-table-shell scroll-mt-24">
 <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
 <h2 id="work-plan-detail-title" class="text-[13px] font-extrabold text-slate-800">Detailed Activity Plan — {{ period_label }}</h2>
-<a href="#work-plan-summary" class="btn btn-secondary h-9">Back to Summary</a>
+<a href="#work-plan-summary" class="btn btn-secondary h-8">Back to Summary</a>
 </div>
 {% if rows %}
 <div class="overflow-x-auto">

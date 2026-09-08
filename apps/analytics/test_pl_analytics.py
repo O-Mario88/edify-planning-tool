@@ -229,8 +229,12 @@ class PLAnalyticsTest(TestCase):
         response = self.client.get("/analytics/program-lead", {"fy": FY})
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, "Performance by Sub-Region")
-        self.assertContains(response, "Country-wide system data")
+        # The map moved to the Map view of the home dashboard (owner,
+        # 2026-09-05); the analytics tab opens on its decision cards.
+        self.assertNotContains(response, "Performance by Sub-Region")
+        dashboard = self.client.get("/dashboard", {"fy": FY, "view": "map"})
+        self.assertContains(dashboard, "Performance by Sub-Region")
+        self.assertContains(dashboard, "Country-wide system data")
 
     @override_settings(
         ANALYTICS_DASHBOARD_CACHE_SECONDS=60,
@@ -304,6 +308,11 @@ class PLAnalyticsTest(TestCase):
     def test_pl_district_performance_scoped(self):
         d = self._dash(self.pl_a)
         names = {r["name"] for r in d["district_performance"]["rows"]}
+        # School reach travels with every district row (owner, 2026-09-05).
+        for row in d["district_performance"]["rows"]:
+            self.assertLessEqual(row["schools_achieved"], row["schools_planned"])
+            self.assertLessEqual(row["schools_achieved"], row["schools"])
+            self.assertIn("schools_pct", row)
         self.assertEqual(names, {"District A"})
         self.assertNotIn("District B", names)
 

@@ -29,7 +29,9 @@ LEGACY_KPI_CLASSES = {
 
 
 def _read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 class KpiStripMigrationTests(SimpleTestCase):
@@ -51,7 +53,7 @@ class KpiStripMigrationTests(SimpleTestCase):
 
     def test_previously_bespoke_kpi_surfaces_use_the_shared_component(self):
         for template in (
-            "templates/pages/accounts/dashboard.html",
+            "templates/partials/finance/fund_workspace.html",
             "templates/pages/hr/my_performance.html",
             # ia/analytics_dashboard.html is not in this list because it uses
             # the real shared component rather than the legacy adapter — the
@@ -59,7 +61,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             # tiles onto components/kpi_strip.html. See
             # test_ia_dashboard_design.test_summary_metrics_use_the_one_approved_kpi_component.
             "templates/pages/notifications/index.html",
-            "templates/pages/reports/index.html",
+            "templates/partials/analytics/panels/reports.html",
             "templates/pages/staff/detail.html",
             "templates/pages/staff/index.html",
             "templates/pages/todos/index.html",
@@ -76,7 +78,9 @@ class KpiStripMigrationTests(SimpleTestCase):
         fund_allocation = _read("templates/pages/finance/fund_allocation.html")
         targets = _read("templates/partials/targets/my_body.html")
         self.assertIn("budget-period-rail", fund_allocation)
-        self.assertIn("target-period-progression", targets)
+        # The period cards became the progress table (2026-09-05); the table
+        # is a disclosure, not a KPI strip.
+        self.assertIn('<details class="edify-disclosure" open>', targets)
         self.assertNotIn("edify-kpi-strip", fund_allocation)
 
     def test_no_template_bypasses_the_platform_kpi_renderer(self):
@@ -129,12 +133,18 @@ class KpiStripMigrationTests(SimpleTestCase):
         self.assertIn("grid-template-columns: repeat(6, minmax(0, 1fr));", styles)
         self.assertIn("background-color: var(--edify-surface);", styles)
         self.assertIn("clip-path: inset(50%);", styles)
-        self.assertIn("box-shadow: 0 2px 3px", styles)
+        # The elevation belongs to the panel now, not to each metric inside it
+        # (owner, 2026-09-07). A tile with its own shadow is the square design
+        # that was removed, so the assertion is that the shadow is on the tray.
+        tray = styles[styles.index(".kpi-strip.kpi-strip--executive {") :]
+        tray = tray[: tray.index("\n}")]
+        self.assertIn("box-shadow: inset 0 1px 0 var(--edify-kpi-panel-sheen)", tray)
         # `--fresh`, not `--neutral`: "Current" reports that the DATA is up
         # to date, which is one meaning on every tile. It is the one pill the
         # per-tile accent tint deliberately does not repaint, and it sits
-        # beside "Pending", which means the opposite and stays muted.
-        self.assertIn('kpi-strip__trend--fresh">Current', source)
+        # beside "Pending", which means the opposite and stays muted. It opens
+        # with the reference caption's arrow.
+        self.assertIn('kpi-strip__trend--fresh">↗ Current', source)
         self.assertIn("{% firstof item.label item.canonical_label %}", source)
         # Two lines, not three. The point of the clamp is that a long label
         # cannot push the number down the card — the value is what the tile

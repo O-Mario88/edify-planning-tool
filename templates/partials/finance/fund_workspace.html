@@ -1,0 +1,194 @@
+{% load frontend_filters kpi_metrics %}
+{% comment %}
+The fund workspace. One composition for the people who move money: the
+Program Lead approving team plans and the Accountant disbursing advances.
+
+  {% include "partials/finance/fund_workspace.html" with workspace=workspace %}
+
+`workspace` carries the page copy, the headline tiles, the queue, the
+selected record and the month's position. The filter form, the selected
+record's body and its actions are page-owned templates named on the
+workspace, so the roles differ only where their work differs.
+{% endcomment %}
+<div class="fund-workspace" data-fund-workspace>
+
+  {% if action_error %}
+  <div class="p-3 rounded-surface bg-rose-50 border border-rose-200 text-[12px] font-bold text-rose-700" role="alert">{{ action_error }}</div>
+  {% endif %}
+
+  {% comment %}A page with a role-home hero keeps that as its phone header. {% endcomment %}
+  <div{% if workspace.has_role_home %} class="mobile-home-hide"{% endif %}>
+  <header class="edify-page-header">
+    <div class="min-w-0 edify-page-header__lead">
+      <div class="flex items-center gap-2">
+        <h1 class="edify-page-header__title edify-page-title">{{ workspace.title }}</h1>
+        {% if workspace.tooltip %}
+        <span class="inline-flex h-4 w-4 items-center justify-center text-slate-400 cursor-help" title="{{ workspace.tooltip }}" aria-label="{{ workspace.tooltip }}">
+          <svg viewBox="0 0 24 24" class="h-3.5 w-3.5" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="9"></circle><path d="M12 10.8v5.2M12 7.5h.01"></path></svg>
+        </span>
+        {% endif %}
+      </div>
+      <p class="edify-page-header__description">{{ workspace.description }}</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <span id="fund-workspace-updating" class="htmx-indicator fund-workspace__updating" role="status" aria-live="polite">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" d="M12 3a9 9 0 1 0 9 9"/></svg>Updating…
+      </span>
+      {% if workspace.export_url %}
+      <a href="{{ workspace.export_url }}" class="btn btn-ghost h-8">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/></svg>
+        Export
+      </a>
+      {% endif %}
+      {% if workspace.primary_action %}
+      {% if workspace.primary_action.hx_post %}
+      <button type="button" hx-post="{{ workspace.primary_action.hx_post }}" hx-target="{{ workspace.primary_action.hx_target }}" hx-swap="innerHTML"
+              {% if workspace.primary_action.confirm %}hx-confirm="{{ workspace.primary_action.confirm }}"{% endif %}
+              hx-indicator="#fund-workspace-updating"
+              hx-vals='{{ workspace.primary_action.hx_vals|safe }}'
+              class="btn btn-primary h-8">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ workspace.primary_action.label }}
+      </button>
+      {% else %}
+      <a href="{{ workspace.primary_action.href }}" class="btn btn-primary h-8">
+        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        {{ workspace.primary_action.label }}
+      </a>
+      {% endif %}
+      {% endif %}
+    </div>
+  </header>
+  </div>
+
+  <div id="fund-filters-card">
+    {% include workspace.filters_template %}
+  </div>
+
+  {% if kpis %}
+  {% include "components/kpi_strip.html" with items=kpis variant="executive" title=workspace.kpi_title %}
+  {% else %}
+  {% include "components/kpi_strip.html" with items=workspace.kpis variant="executive" title=workspace.kpi_title %}
+  {% endif %}
+
+  {% if workspace.empty %}
+  <div class="card p-12">
+    {% include "components/empty_state.html" with title=workspace.empty.title message=workspace.empty.message %}
+  </div>
+  {% else %}
+  {% comment %}
+      The requesters are tabs, like the team tabs on the Weekly Advance Request
+      page, so the selected request's ledger reads at full width. Each tab
+      swaps the detail beside it; the strip scrolls sideways on small screens.
+    {% endcomment %}
+    <div class="fund-requesters">
+      <p class="fund-requesters__label">{{ workspace.queue.title }} <span class="fund-queue__count">{{ workspace.queue.count }}</span></p>
+      <nav class="fund-requesters__strip" data-edify-tablist aria-label="{{ workspace.queue.title }}"
+           x-data="{ selectedKey: '{{ workspace.queue.selected_key }}' }">
+        {% for item in workspace.queue.items %}
+        <button type="button" data-edify-tab
+                {% if item.hx_get %}hx-get="{{ item.hx_get }}" hx-target="{{ item.hx_target }}" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"{% endif %}
+                @click="selectedKey = '{{ item.key }}'"
+                :aria-current="selectedKey === '{{ item.key }}' ? 'page' : null"
+                {# Object syntax so Alpine also REMOVES the server-rendered is-active from the tab you just left. #}
+                :class="{ 'is-active': selectedKey === '{{ item.key }}' }"
+                class="fund-requester{% if item.selected %} is-active{% endif %}"
+                title="{{ item.name }} · {{ item.total_fmt }} · {{ item.status }}">
+          <span class="fund-requester__dot fund-requester__dot--{{ item.status_tone|default:'neutral' }}" aria-hidden="true"></span>
+          <span class="fund-requester__name">{{ item.name }}</span>
+        </button>
+        {% empty %}
+        <span class="fund-requesters__empty">{{ workspace.queue.empty_title }}. {{ workspace.queue.empty_text }}</span>
+        {% endfor %}
+      </nav>
+    </div>
+
+  <div class="fund-workspace__grid">
+    <section class="card fund-detail" id="{{ workspace.detail_id }}" aria-live="polite">
+      {% include workspace.detail_template %}
+    </section>
+
+    <aside class="card fund-side" aria-label="This month">
+      {% with side=workspace.side %}
+      <section class="fund-side__section">
+        <h3 class="fund-panel__title">{{ side.month.title }}</h3>
+        <dl class="fund-panel__rows">
+          {% for row in side.month.rows %}
+          <div class="fund-panel__row"><dt>{{ row.name }}</dt><dd class="fund-panel__figure fund-panel__figure--{{ row.tone }}">{{ row.figure }}</dd></div>
+          {% endfor %}
+        </dl>
+        <a href="{{ side.month.link }}" class="fund-panel__link">{{ side.month.link_label }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg></a>
+      </section>
+
+      <section class="fund-side__section">
+        <div class="fund-panel__head">
+          <h3 class="fund-panel__title">{{ side.progress.title }}</h3>
+          {% include "components/badge.html" with tone=side.progress.status_tone label=side.progress.status_label size="sm" %}
+        </div>
+        <div class="fund-panel__row"><span>Total Allocation</span><strong class="fund-panel__figure">{{ side.progress.allocation_fmt }}</strong></div>
+        <div class="fund-progress" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="{{ side.progress.pct }}" aria-label="{{ side.progress.caption }}">
+          <span class="fund-progress__bar" style="inline-size: {{ side.progress.pct }}%"></span>
+        </div>
+        <div class="fund-panel__row fund-panel__row--muted"><span>{{ side.progress.caption }}</span><span>{{ side.progress.approved_fmt }} ({{ side.progress.pct }}%)</span></div>
+        <a href="{{ side.progress.link }}" class="fund-panel__link">{{ side.progress.link_label }}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m9 18 6-6-6-6"/></svg></a>
+      </section>
+
+      <section class="fund-side__section">
+        <h3 class="fund-panel__title">{{ side.rate.title|default:"Approval Rate This Month" }}</h3>
+        {% if side.rate.total %}
+        <div class="fund-rate">
+          {% include "partials/components/donut_rings.html" with donut=side.rate.donut donut_label=side.rate.title|default:"Approval rate" headline=side.rate.pct headline_unit="%" subline=side.rate.subline|default:"Approval Rate" donut_class="fund-rate__donut" %}
+          <ul class="fund-rate__legend">
+            {% for row in side.rate.legend %}
+            <li><span class="fund-rate__dot" style="background: {{ row.color }}"></span><span>{{ row.label }}</span><strong>{{ row.pct }}%</strong></li>
+            {% endfor %}
+          </ul>
+        </div>
+        {% else %}
+        <p class="fund-panel__empty">{{ side.rate.empty|default:"No decisions recorded this month yet." }}</p>
+        {% endif %}
+      </section>
+      {% endwith %}
+    </aside>
+  </div>
+
+  <div class="fund-workspace__bottom">
+    <section class="card fund-panel fund-insights" aria-label="{{ workspace.insights_title }}">
+      <h3 class="fund-panel__title">{{ workspace.insights_title }}</h3>
+      {% if workspace.insights.segments %}
+      <div class="fund-mix" role="img" aria-label="Budget mix, {{ workspace.insights.total_fmt }} in total">
+        {% for seg in workspace.insights.segments %}
+        <span class="fund-mix__segment" style="inline-size: {{ seg.pct }}%; background: {{ seg.color }}" title="{{ seg.label }} {{ seg.amount_fmt }}">{% if seg.pct >= 7 %}{{ seg.pct }}%{% endif %}</span>
+        {% endfor %}
+      </div>
+      <ul class="fund-mix__legend">
+        {% for seg in workspace.insights.segments %}
+        <li><span class="fund-rate__dot" style="background: {{ seg.color }}"></span><span class="fund-mix__label">{{ seg.label }}</span><span class="fund-mix__amount">{{ seg.amount_fmt }}</span></li>
+        {% endfor %}
+      </ul>
+      {% else %}
+      <div class="edify-empty-state"><strong>No costed activities this month</strong><span>The budget mix fills in as plans are costed.</span></div>
+      {% endif %}
+    </section>
+
+    <section class="card fund-panel fund-recent" aria-label="{{ workspace.recent_title }}">
+      <h3 class="fund-panel__title">{{ workspace.recent_title }}</h3>
+      <ul class="fund-recent__list">
+        {% for row in workspace.recent %}
+        <li>
+          <span class="fund-recent__icon fund-recent__icon--{{ row.tone }}" aria-hidden="true">
+            {% if row.tone == "danger" %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>{% elif row.tone == "warning" %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path stroke-linecap="round" d="M12 7v5l3 2"/></svg>{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>{% endif %}
+          </span>
+          <span class="fund-recent__text">{{ row.text }}</span>
+          <span class="fund-recent__amount">{{ row.amount_fmt }}</span>
+          <span class="fund-recent__when">{{ row.when }}</span>
+        </li>
+        {% empty %}
+        <li class="fund-recent__empty">No decisions recorded yet.</li>
+        {% endfor %}
+      </ul>
+      {% if workspace.recent_link %}<a href="{{ workspace.recent_link }}" class="fund-panel__link">View all activity</a>{% endif %}
+    </section>
+  </div>
+  {% endif %}
+</div>

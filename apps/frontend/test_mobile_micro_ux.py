@@ -22,8 +22,10 @@ def _cache_buster(base: str, asset: str) -> str:
     return match.group(1) if match else ""
 
 
-def _read(relative_path: str) -> str:
-    return ROOT.joinpath(relative_path).read_text(encoding="utf-8")
+def _read(relative_path: str):
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 class MobileMicroUXContractTest(SimpleTestCase):
@@ -135,7 +137,9 @@ class MobileMicroUXContractTest(SimpleTestCase):
             "templates/partials/evidence/workspace.html",
             "templates/partials/my_plan/_pager.html",
             "templates/partials/dashboards/pl/urgent_schools_page.html",
-            "templates/pages/hr/module_workspace.html",
+            # The register (and its pagination) is a shared partial since People
+            # Analytics also became a tab of the one Analytics page (2026-09-05).
+            "templates/partials/hr/module_register.html",
             "templates/pages/ia/partials/queue_table.html",
         ):
             with self.subTest(path=path):

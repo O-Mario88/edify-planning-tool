@@ -1,11 +1,21 @@
 {% load frontend_filters %}
 <div class="pl-funding-summary">
-  <div class="pl-funding-donut" role="img" aria-label="{{ funding_execution.utilization_pct }} percent of approved funding utilized">
-    <div class="absolute inset-0 rounded-pill" style="background:conic-gradient(var(--edify-success) {{ funding_execution.utilization_pct }}%, var(--edify-border) 0);"></div>
-    <div class="absolute inset-[7px] rounded-pill flex flex-col items-center justify-center edify-surface edify-shadow-sm">
-      <span class="pl-funding-donut__value">{{ funding_execution.utilization_pct }}%</span>
-      <span class="pl-funding-donut__label">Utilized</span>
-    </div>
+  {% comment %}Utilisation as a ring through the chart system's gauge form
+  (2026-09-05), in place of a conic gradient.{% endcomment %}
+  <div class="pl-funding-donut"
+       x-data="{
+         chart: null,
+         init() { this.$nextTick(() => this.draw()); },
+         destroy() { if (this.chart) this.chart.destroy(); },
+         draw() {
+           if (!window.EdifyChartSystem || !this.$refs.el) return;
+           const cfg = window.EdifyChartSystem.gauge('success', 'Utilized');
+           cfg.chart.height = 92;
+           cfg.series = [{{ funding_execution.utilization_pct|default:0 }}];
+           this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+         }
+       }">
+    <div x-ref="el" role="img" aria-label="{{ funding_execution.utilization_pct }} percent of approved funding utilized"></div>
   </div>
   <div class="pl-funding-summary__copy">
     <strong>Budget utilization</strong>

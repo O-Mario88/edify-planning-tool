@@ -38,6 +38,46 @@ def _analytics_filters(request):
     }
 
 
+def analytics_scope_kpis(request) -> dict:
+    """The workspace tile strip for the scope the filters ask for.
+
+    Every Analytics section renders the same four signals above its tablist,
+    so they are computed once here from the same cached dataset the overview
+    reads rather than recomputed per section.
+    """
+    from apps.analytics.models import (
+        DEFAULT_ANALYTICS_CARDS,
+        AnalyticsDashboardPreference,
+    )
+    from apps.analytics.report_delivery import CARD_CATEGORY
+    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+
+    filters = _analytics_filters(request)
+    fingerprint = hashlib.sha256(
+        json.dumps(filters, sort_keys=True, default=str).encode()
+    ).hexdigest()[:20]
+    data = stampede_safe_get_or_compute(
+        f"analytics-dashboard:v1:{request.user.id}:{request.user.active_role}:"
+        f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:{fingerprint}",
+        lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),
+        timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
+    )
+    preference = AnalyticsDashboardPreference.objects.filter(
+        user_id=request.user.id
+    ).first()
+    visible = preference.visible_cards if preference else DEFAULT_ANALYTICS_CARDS
+    items = [
+        item
+        for item in data.get("kpi_strip_items", [])
+        if CARD_CATEGORY.get(item.get("label"), "reach") in visible
+    ]
+    return {
+        "executive_kpi_items": items[:4],
+        "additional_kpi_items": items[4:],
+        "as_of_date": data.get("as_of_date"),
+    }
+
+
 @require_page_permission("analytics")
 def analytics_dashboard_view(request):
     """GET to render the primary Analytics Dashboard with filters."""
@@ -183,11 +223,20 @@ def analytics_dashboard_view(request):
         },
     }
 
-    # If HTMX request, render only content cards to swap
-    if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/analytics/kpi_cards.html", context)
+    # The workspace renderer decides the shape: a tab click gets the panel, a
+    # filter change gets the tiles and the panel together, a deep link gets the
+    # whole shell around the same panel.
+    from apps.frontend.views.analytics_render import render_analytics_section
 
-    return render(request, "pages/analytics/index.html", context)
+    return render_analytics_section(
+        request,
+        "partials/analytics/kpi_cards.html",
+        context,
+        section_key="overview",
+        panel_title="Analytics",
+        tiles_template="partials/analytics/executive_pulse.html",
+        filters_template="partials/analytics/filters.html",
+    )
 
 
 @require_page_permission("analytics")
@@ -220,9 +269,12 @@ def analytics_export_view(request):
 def pl_analytics_view(request):
     """Program Lead Analytics — the supervised-team decision cockpit.
 
-    Full page on a normal GET; the analytics body partial on an HX-Request so
-    the filter row swaps only `#pl-analytics-body` (charts re-init via Alpine).
-    Everything is scoped to the PL's supervised team by PLAnalyticsService."""
+    This is what Overview means for a Program Lead, so it renders through the
+    Analytics workspace shell like every other section: the header, the scope
+    filters, the tiles and the tablist are written once and stay fixed, and the
+    cockpit is the panel beneath them. Its own filter row still swaps only
+    `#pl-analytics-body` (charts re-init via Alpine). Everything is scoped to
+    the PL's supervised team by PLAnalyticsService."""
     from apps.analytics.pl_analytics_service import PLAnalyticsService
 
     filters = {
@@ -267,9 +319,30 @@ def pl_analytics_view(request):
         **data,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
-    if request.headers.get("HX-Request") == "true":
+    # The filter row's own swap has to name its target. A tab click
+    # (HX-Target: analytics-panel) and a scope change (analytics-scope) are HX
+    # requests too, and answering either with a bare body would replace the
+    # whole workspace with this cockpit's charts.
+    if request.headers.get("HX-Target") == "pl-analytics-body":
         return render(request, "partials/analytics/pl/body.html", context)
-    return render(request, "pages/analytics/pl_analytics.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/pl_overview.html",
+        context,
+        section_key="overview",
+        panel_title="Program Lead Analytics",
+        frame={
+            "question": (
+                "Which schools, clusters and team members need my "
+                "intervention this week?"
+            ),
+            "evidence": "My supervised portfolio and confirmed delivery",
+            "freshness": "Live to the selected period",
+            "confidence": "Role-scoped and verification-aware",
+        },
+    )
 
 
 @require_page_permission("pl_analytics")
@@ -723,10 +796,19 @@ def system_health_view(request):
 
 
 # ── Country Director Analytics — national leadership-intelligence cockpit ──────
+from apps.analytics.cd_export_service import DATASETS as EXPORT_DATASETS  # noqa: E402
+from apps.analytics.cd_export_service import dataset_label  # noqa: E402
+
+
 def _cd_filters(request):
     return {
         "pl": request.GET.get("pl"),
         "cceo": request.GET.get("cceo"),
+        # The Region select has been on this filter row all along and the
+        # service has always supported it (cd_analytics_service scopes schools
+        # by region_id), but it was never put in the dict — so choosing a
+        # region did nothing at all (2026-09-06).
+        "region": request.GET.get("region"),
         "district": request.GET.get("district"),
         "cluster": request.GET.get("cluster"),
         "partner": request.GET.get("partner"),
@@ -741,10 +823,12 @@ def cd_analytics_view(request):
     """Country Director Analytics — the national leadership cockpit.
 
     Country-wide intelligence across every PL, CCEO, district, region, partner,
-    cluster and school. Full page on a normal GET; the analytics body partial on
-    an HX-Request so the filter row swaps only `#cd-analytics-body`. The CD sees
-    everything but acts only through oversight workflows — CDAnalyticsService
-    never emits field-execution actions."""
+    cluster and school. This is what Overview means for a Country Director, so
+    it renders through the Analytics workspace shell like every other section
+    and the cockpit is the panel; its own filter row still swaps only
+    `#cd-analytics-body`. The CD sees everything but acts only through
+    oversight workflows — CDAnalyticsService never emits field-execution
+    actions."""
     from apps.analytics.cd_analytics_service import CDAnalyticsService
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
@@ -796,6 +880,7 @@ def cd_analytics_view(request):
     ]
     month_options = [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)]
     context = {
+        "export_sets": [(k, dataset_label(k)) for k in EXPORT_DATASETS],
         **data,
         "month_options": month_options,
         "month": (month or ""),
@@ -804,9 +889,28 @@ def cd_analytics_view(request):
         "heatmap_levels": _heatmap_level_choices(),
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
     }
-    if request.headers.get("HX-Request") == "true":
+    # Named target, for the reason given on the PL cockpit: a tab click and a
+    # scope change are HX requests too, and this branch answers neither.
+    if request.headers.get("HX-Target") == "cd-analytics-body":
         return render(request, "partials/analytics/cd/body.html", context)
-    return render(request, "pages/analytics/cd_analytics.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/cd_overview.html",
+        context,
+        section_key="overview",
+        panel_title="Country Director Analytics",
+        frame={
+            "question": (
+                "Where is country performance off plan, why, and which "
+                "leadership action has the highest leverage?"
+            ),
+            "evidence": "Country delivery, SSA, finance and field risk",
+            "freshness": "Live to the selected period",
+            "confidence": "Country-wide, verification-aware",
+        },
+    )
 
 
 @require_page_permission("cd_analytics")
@@ -818,7 +922,11 @@ def cd_ssa_heatmap_view(request):
     looking at are never computed. The page ships with district rendered; the
     rest arrive when asked for.
     """
-    from apps.analytics.cd_analytics_service import CDAnalyticsService, resolve_cd_scope
+    from apps.analytics.cd_analytics_service import (
+        CDAnalyticsService,
+        country_for,
+        resolve_cd_scope,
+    )
 
     level = (request.GET.get("level") or "district").strip()
     # `get_dashboard` normalises this before resolving scope; calling
@@ -828,7 +936,9 @@ def cd_ssa_heatmap_view(request):
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
-    cd = resolve_cd_scope(fy, quarter=quarter, month=month)
+    cd = resolve_cd_scope(
+        fy, quarter=quarter, month=month, country=country_for(request.user)
+    )
     return render(
         request,
         "partials/analytics/cd/district_heatmap.html",
@@ -895,55 +1005,37 @@ def cd_analytics_drilldown_view(request):
 @require_page_permission("cd_analytics")
 @require_export_permission
 def cd_analytics_export_view(request):
-    """CSV export of the CD's country oversight roster (PL performance + risk).
-    Read-only export; respects the CD role gate."""
+    """One of the CD's four country CSVs, for the cockpit's current period.
+
+    ``?set=delivery|risk|finance|core`` picks the dataset; the FY, quarter,
+    month and filters are the ones the page is showing. Read-only; respects
+    the CD role gate and the export permission."""
     import csv
 
     from django.http import HttpResponse
 
-    from apps.analytics.cd_analytics_service import CDAnalyticsService
+    from apps.analytics.cd_export_service import country_export, normalise_dataset
 
     fy = (request.GET.get("fy") or "").strip() or None
     quarter = (request.GET.get("quarter") or "").strip() or None
     month = (request.GET.get("month") or "").strip() or None
-    rows = CDAnalyticsService.export_rows(
-        request.user, fy=fy, quarter=quarter, month=month, filters=_cd_filters(request)
+    dataset = normalise_dataset(request.GET.get("set"))
+    slug, header, rows = country_export(
+        request.user,
+        dataset,
+        fy=fy,
+        quarter=quarter,
+        month=month,
+        filters=_cd_filters(request),
     )
     resp = HttpResponse(content_type="text/csv")
-    resp["Content-Disposition"] = 'attachment; filename="cd_analytics_pl_oversight.csv"'
-    w = csv.writer(resp)
-    w.writerow(
-        [
-            "PL",
-            "CCEOs Supervised",
-            "Target Achievement %",
-            "School Visits %",
-            "Cluster Meetings %",
-            "Cluster Trainings %",
-            "SSA Completed %",
-            "MSCS %",
-            "Schools at Risk",
-            "Budget Utilization %",
-            "Backlog",
-            "Risk Status",
-        ]
+    resp["Content-Disposition"] = (
+        f'attachment; filename="cd-{slug}-{fy or get_operational_fy()}.csv"'
     )
-    for r in rows:
-        w.writerow(
-            [
-                r["name"],
-                r["cceos"],
-                r["target_pct"],
-                *[
-                    area["pct"] if area["pct"] is not None else "Not set"
-                    for area in r["areas"]
-                ],
-                r["schools_at_risk"],
-                r["budget_util"],
-                r["backlog"],
-                r["risk"],
-            ]
-        )
+    w = csv.writer(resp)
+    w.writerow(header)
+    for row in rows:
+        w.writerow(row)
     return resp
 
 

@@ -308,6 +308,23 @@ class PLTeamTargetsService:
                 }
             )
 
+        # The same "Cumulative progress by time period" table My Target shows,
+        # for this member: target, achieved and share per period, one row per
+        # priority, plus the weighted share the summary row already carries
+        # (owner, 2026-09-05: each team member row expands to it).
+        period_matrix_rows = [
+            {
+                "label": area["label"],
+                "key": area["key"],
+                "cells": [
+                    {"t": p["target"], "a": p["achieved"], "pct": p["display_pct"]}
+                    for p in area["periods"]
+                ],
+            }
+            for area in area_matrix
+        ]
+        period_matrix_overall = [{"pct": cell["display_pct"]} for cell in matrix_cells]
+
         mobile_cells = [
             matrix_cells[0],
             next(cell for cell in matrix_cells if cell["key"] == q),
@@ -341,6 +358,8 @@ class PLTeamTargetsService:
             "matrix_cells": matrix_cells,
             "mobile_cells": mobile_cells,
             "area_matrix": area_matrix,
+            "period_matrix_rows": period_matrix_rows,
+            "period_matrix_overall": period_matrix_overall,
             "metric_areas": metric_areas,
         }
 

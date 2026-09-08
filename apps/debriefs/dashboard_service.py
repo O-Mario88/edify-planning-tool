@@ -46,9 +46,22 @@ class FieldDebriefDashboardService:
     def get_dashboard(principal, params: dict) -> dict:
         params = params or {}
         today = date.today()
-        range_days = int(params.get("range_days") or 30)
-        start = params.get("start") or (today - timedelta(days=range_days))
-        end = params.get("end") or today
+        raw_range = str(params.get("range_days") or 30).strip().lower()
+        if raw_range == "fy":
+            # The FY selector used to change which debriefs were listed while
+            # every KPI stayed on a rolling 30-day window, so "FY2025" showed
+            # this month's numbers. "fy" makes the window the year itself.
+            from apps.core.fy import get_fy_date_range
+
+            fy_label = str(params.get("fy") or get_operational_fy())
+            fy_start, fy_end = get_fy_date_range(fy_label)
+            start = fy_start.date()
+            end = min(today, fy_end.date() - timedelta(days=1))
+            range_days = "fy"
+        else:
+            range_days = int(raw_range)
+            start = params.get("start") or (today - timedelta(days=range_days))
+            end = params.get("end") or today
         prev_start = start - (end - start) - timedelta(days=1)
         prev_end = start - timedelta(days=1)
 

@@ -47,8 +47,28 @@ def closure_quality_view(request):
         "fy": fy,
         "stale_days": closure_analytics.STALE_RECORDING_DAYS,
     }
-    if request.headers.get("HX-Request") == "true":
+    # The period control swaps this section's body and nothing else, so it has
+    # to name its target rather than answer any HX request: a tab click and a
+    # workspace scope change are HX requests too, and they ask for other shapes.
+    if request.headers.get("HX-Target") == "closure-quality-body":
         return render(
             request, "partials/analytics/closure_quality_workspace.html", context
         )
-    return render(request, "pages/analytics/closure_quality.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/closure_quality.html",
+        context,
+        section_key="closure_quality",
+        panel_title="Closure Quality",
+        frame={
+            "question": (
+                "Which closure records should not yet be trusted, and who "
+                "needs to correct them?"
+            ),
+            "evidence": "Closure reasons, dates, enrolment and reopen history",
+            "freshness": "Live closure ledger",
+            "confidence": "Exceptions are explicitly flagged",
+        },
+    )

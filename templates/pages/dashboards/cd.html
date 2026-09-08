@@ -3,6 +3,7 @@
 
 {% block title %}Country Director Dashboard · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]">
@@ -31,6 +32,7 @@
 
       <form hx-get="/dashboard" hx-target="#cd-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
             class="edify-filter-bar" aria-label="Country dashboard filters">
+        <input type="hidden" name="view" value="{{ dashboard_view }}">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
         <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
           {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}

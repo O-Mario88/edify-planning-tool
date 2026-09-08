@@ -1,0 +1,41 @@
+{% comment %}
+The Analytics tablist.
+
+Every section of the workspace is a tab, and the panel below is the only part
+of the page a tab changes: the header, the filter row and the tiles above it
+stay put (owner, 2026-09-05: "replace links with tab roles and display only
+what needs to be displayed under tab roles ... consolidate everything in the
+headers, filters, and tiles for them to stay fixed").
+
+A tab is an anchor because every section is also a real URL: deep links,
+permissions, the browser's back button and "open in new tab" all keep working,
+and a section reached directly renders the same shell around the same panel.
+`hx-get` turns the click into a swap of `#analytics-scope` — the filter row,
+the tiles, this rail and the panel — rather than a page load; a section whose
+view does not answer with a scope simply navigates, which is what an anchor
+does anyway. `aria-selected` marks the current tab either way. The workspace
+header above the scope never moves.
+{% endcomment %}
+{% if workspace and workspace.sections|length > 1 %}
+<nav class="edify-section-nav" aria-label="{{ workspace.label }} sections">
+<div class="edify-section-nav__inner" role="tablist" aria-label="{{ workspace.label }} sections"
+     x-data
+     x-init="$nextTick(() => { const active = $el.querySelector('[aria-selected=\'true\']'); if (!active) return; const activeEnd = active.offsetLeft + active.offsetWidth; if (activeEnd > $el.clientWidth) $el.scrollLeft = Math.max(0, activeEnd - $el.clientWidth + 16) })">
+{% for section in workspace.sections %}
+<a href="{{ section.url }}"
+   id="analytics-tab-{{ section.key }}"
+   role="tab"
+   aria-selected="{% if section.active %}true{% else %}false{% endif %}"
+   aria-controls="analytics-panel"
+   tabindex="{% if section.active %}0{% else %}-1{% endif %}"
+   class="edify-section-nav__link{% if section.active %} is-active{% endif %}"
+   title="{{ section.description }}"
+   hx-get="{{ section.url }}"
+   hx-target="#analytics-scope"
+   hx-swap="innerHTML"
+   hx-push-url="true"
+   hx-indicator="#analytics-panel-updating">{{ section.label }}</a>
+{% endfor %}
+</div>
+</nav>
+{% endif %}

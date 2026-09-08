@@ -350,6 +350,26 @@ def accountant_dashboard_view(request):
             "url": "/disbursements" if all_funds else "/accounts/advances",
         },
     }
+    context["workspace"] = _accountant_workspace(
+        request,
+        all_funds,
+        wfrs_db,
+        fy,
+        kpis_raw={
+            "total_approved": total_approved_db,
+            "total_disbursed": total_disbursed_db,
+            "pending_disb_sum": pending_disb_sum,
+            "pending_disb_count": pending_disb_count,
+            "awaiting_sum": awaiting_sum,
+            "awaiting_count": awaiting_count,
+            "disbursed_count": disbursed_count,
+            "returned_sum": returned_sum,
+            "accounted_count": accounted_count,
+        },
+        month_overview=month_overview,
+        recon_stats=recon_stats,
+        recent_disbursements=recent_activity,
+    )
     context["topbar_search"] = {
         "placeholder": "Search funds, people, activities…",
         "name": "q",
@@ -358,7 +378,47 @@ def accountant_dashboard_view(request):
         "hx_target": "#accounts-root",
         "hx_trigger": "keyup changed delay:250ms, search",
     }
-    return render(request, "pages/accounts/dashboard.html", context)
+    from apps.frontend.views.dashboard_view_state import (
+        dashboard_view_tabs,
+        remember_dashboard_view,
+        resolve_dashboard_view,
+    )
+
+    dashboard_view, view_explicit = resolve_dashboard_view(
+        request, role_key="accountant", default="operations"
+    )
+    context["dashboard_view"] = dashboard_view
+    context["dashboard_tabs"] = dashboard_view_tabs(
+        request,
+        active=dashboard_view,
+        panel_id="accountant-dashboard-view",
+        view_template="partials/finance/accountant_view.html",
+        tabs=[
+            ("operations", "Operations", "Money movement: disburse, reconcile, chase"),
+            ("map", "Map", "The country map and its distribution table"),
+        ],
+        base_url="/accounts",
+        keep=("q",),
+    )
+    if dashboard_view == "map":
+        from apps.analytics.country_map_context import country_map_context
+
+        context.update(country_map_context(fy))
+    if request.headers.get("HX-Target") == "accountant-dashboard-view-shell":
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    elif request.headers.get("HX-Target") == "accounts-root":
+        response = render(request, "partials/finance/accountant_root.html", context)
+    elif request.headers.get("HX-Request") == "true" and request.GET.get("selected"):
+        response = render(request, "partials/finance/accountant_detail.html", context)
+    else:
+        response = render(request, "pages/accounts/dashboard.html", context)
+    if view_explicit:
+        remember_dashboard_view(response, role_key="accountant", view=dashboard_view)
+    return response
 
 
 @require_page_permission("disbursements")
@@ -505,6 +565,19 @@ def partner_payments_view(request):
     )
     for inv in invoice_queue:
         inv.partner_name = partner_names.get(inv.partner_id, inv.partner_id)
+    from apps.activities.verification_analytics import _partner_names as _pn
+    from apps.activities.verification_analytics import _staff_names
+
+    for _key in ("advance_queue", "payments"):
+        _acts = locals().get(_key) or []
+        _pnames = _pn({getattr(a, "assigned_partner_id", None) for a in _acts})
+        _snames = _staff_names({a.responsible_staff_id for a in _acts})
+        for a in _acts:
+            a.assigned_partner_name = _pnames.get(
+                getattr(a, "assigned_partner_id", None),
+                getattr(a, "assigned_partner_id", "") or "—",
+            )
+            a.responsible_name = _snames.get(a.responsible_staff_id, "")
 
     context = {
         "payments": payments,
@@ -717,6 +790,16 @@ def blocked_view(request):
                 {"activity": a, "reasons": reasons, "reasons_label": ", ".join(reasons)}
             )
 
+    from apps.activities.verification_analytics import _staff_names
+
+    _blocked_names = _staff_names(
+        {b["activity"].responsible_staff_id for b in blocked_list}
+    )
+    for b in blocked_list:
+        b["responsible_name"] = _blocked_names.get(
+            b["activity"].responsible_staff_id,
+            b["activity"].responsible_staff_id or "Unassigned",
+        )
     context = {"blocked": blocked_list}
     return render(request, "pages/accounts/blocked.html", context)
 
@@ -896,8 +979,14 @@ def approval_history_view(request):
     # Materialised before stamping: `{% paginate %}` re-evaluates a queryset,
     # which would rebuild the model instances and drop the attribute.
     requests = list(WeeklyFundRequest.objects.all().order_by("-week_start_date"))
+    from apps.activities.verification_analytics import _names
+
+    _owner_names = _names({r.responsible_user for r in requests})
     for req in requests:
         req.approval_chain = _weekly_chain(req)
+        req.responsible_name = _owner_names.get(
+            req.responsible_user, req.responsible_user
+        )
 
     context = {"requests": requests}
     return render(request, "pages/accounts/approval_history.html", context)
@@ -1013,11 +1102,18 @@ def monthly_request_action_view(request):
 @require_page_permission("disbursements")
 def weekly_requests_view(request):
     """Weekly Fund Request Review Page."""
-    requests = (
+    from apps.activities.verification_analytics import _names
+
+    requests = list(
         WeeklyFundRequest.objects.all()
         .order_by("-week_start_date")
         .prefetch_related("lines")
     )
+    _owner_names = _names({r.responsible_user for r in requests})
+    for req in requests:
+        req.responsible_name = _owner_names.get(
+            req.responsible_user, req.responsible_user
+        )
 
     context = {"requests": requests}
     return render(request, "pages/accounts/weekly_requests.html", context)
@@ -1059,3 +1155,283 @@ def partner_invoice_pay_action(request, invoice_id):
         except Exception as e:  # noqa: BLE001 — page-level error surface
             messages.error(request, f"Invoice payment failed: {e}")
     return redirect("/accounts/partner-payments/")
+
+
+def _accountant_workspace(
+    request,
+    all_funds,
+    wfrs_db,
+    fy,
+    *,
+    kpis_raw,
+    month_overview,
+    recon_stats,
+    recent_disbursements=(),
+):
+    """The Accountant's money movement page in the shared fund workspace
+    shape: weekly advances as the queue, the selected advance in the middle,
+    the month's position on the right, the FY budget mix and the latest
+    disbursement decisions underneath."""
+    from apps.budget.services import weekly_request_budget
+    from apps.fund_requests.fund_workspace import (
+        LINE_TYPE_LABELS,
+        approval_rate,
+        budget_mix,
+        progress_panel,
+        recent_activity,
+    )
+
+    # One vocabulary for a request's state, whichever desk reads it: the queue
+    # pill says what the Program Lead's page says for the same status.
+    from apps.fund_requests.pl_approval_service import WEEKLY_STATUS_LABELS
+
+    def _status(w):
+        label, tone = WEEKLY_STATUS_LABELS.get(
+            w.status if w else None, (None, "warning")
+        )
+        return label, tone
+
+    q = (request.GET.get("q") or "").strip().lower()
+    status_filter = (request.GET.get("status") or "").strip()
+    district_filter = (request.GET.get("district") or "").strip()
+    sort = (
+        request.GET.get("sort")
+        if request.GET.get("sort") in ("week", "amount", "name")
+        else "week"
+    )
+    funds = [
+        f
+        for f in all_funds
+        if (not status_filter or f["status"] == status_filter)
+        and (not district_filter or f["region"] == district_filter)
+        and (
+            not q
+            or q in f"{f['user_name']} {f['region']} {f['role']} {f['status']}".lower()
+        )
+    ]
+    if sort == "amount":
+        funds = sorted(funds, key=lambda f: -float(f["requested"] or 0))
+    elif sort == "name":
+        funds = sorted(funds, key=lambda f: f["user_name"].lower())
+    selected_id = request.GET.get("selected") or (funds[0]["id"] if funds else None)
+    wfr_by_id = {w.id: w for w in wfrs_db}
+    items = []
+    for f in funds:
+        w = wfr_by_id.get(f["id"])
+        line_types = {}
+        for line in w.lines.all() if w else []:
+            label = LINE_TYPE_LABELS.get(
+                line.line_item_type,
+                (line.line_item_type or "Line").replace("_", " ").title(),
+            )
+            line_types[label] = line_types.get(label, 0) + 1
+        chips = [
+            {"icon": "lines", "label": f"{n} {label}", "tone": "info"}
+            for label, n in sorted(line_types.items(), key=lambda kv: -kv[1])[:4]
+        ]
+        items.append(
+            {
+                "key": f["id"],
+                "name": f["user_name"],
+                "initials": "".join(
+                    part[0] for part in f["user_name"].split()[:2]
+                ).upper(),
+                "own_plan": False,
+                "district": f["region"],
+                "region": f["role"],
+                "summary": f"Week of {f['week_start']} · {len(f['lines'])} cost line{'' if len(f['lines']) == 1 else 's'}",
+                "total_fmt": format_ugx_compact(f["requested"]),
+                "status": _status(w)[0] or f["status"],
+                "status_tone": _status(w)[1],
+                "selected": f["id"] == selected_id,
+                "hx_get": f"/accounts?selected={f['id']}"
+                + (f"&status={status_filter}" if status_filter else "")
+                + (f"&q={q}" if q else ""),
+                "hx_target": "#accounts-fund-detail",
+                "chips": chips,
+            }
+        )
+
+    selected = None
+    sel = next((f for f in funds if f["id"] == selected_id), None)
+    if sel:
+        w = wfr_by_id.get(sel["id"])
+        selected = {
+            "id": sel["id"],
+            "name": sel["user_name"],
+            "plan_label": "Weekly Fund Plan",
+            "district": sel["region"],
+            "region": sel["role"],
+            "period": f"{sel['week_start']} – {sel['week_end']}",
+            "status": _status(w)[0] or sel["status"],
+            "status_tone": _status(w)[1],
+            "total_label": "Total Requested",
+            "total_fmt": f"UGX {int(round(float(sel['requested'] or 0))):,}",
+            "breakdown_title": "Funding Breakdown from the Weekly Request",
+            "ledger": weekly_request_budget(w) if w else None,
+            "breakdown": [
+                {
+                    "category": line["category"],
+                    "qty": line["quantity"] or "—",
+                    "unit_cost": f"{int(line['unit_cost']):,}"
+                    if line["unit_cost"]
+                    else "—",
+                    "total": f"{int(line['total']):,}",
+                }
+                for line in sel["lines"]
+            ],
+            "empty_breakdown": "No cost lines are attached to this request. Review its source plan before disbursement.",
+            "issues": [],
+            "notes": [
+                "Approval chain: PL ✓ · CD "
+                + ("✓" if sel["cd_approved"] else "·")
+                + " · RVP "
+                + ("✓" if sel["rvp_approved"] else "·")
+                + " · Finance "
+                + ("✓" if sel["finance_completed"] else "·")
+                + (
+                    " · payment sent"
+                    if sel["disbursed_completed"]
+                    else " · payment pending"
+                ),
+                f"Approved {format_ugx_compact(sel['approved'])} · disbursed {format_ugx_compact(sel['disbursed'])} · balance {format_ugx_compact(sel['balance'])}",
+            ],
+        }
+
+    fy_ids = [w.id for w in wfrs_db]
+    disbursed_n = kpis_raw["disbursed_count"]
+    returned_n = len([w for w in wfrs_db if (w.status or "").startswith("returned")])
+    pending_n = kpis_raw["pending_disb_count"]
+    mix = {}
+    for w in wfrs_db:
+        for line in w.lines.all():
+            label = LINE_TYPE_LABELS.get(
+                line.line_item_type,
+                (line.line_item_type or "Other").replace("_", " ").title(),
+            )
+            mix[label] = mix.get(label, 0) + int(line.total_cost or 0)
+    rate = approval_rate(disbursed_n, returned_n, pending_n)
+    rate["title"] = "Disbursement Rate This FY"
+    rate["subline"] = "Disbursed"
+    side = {
+        "month": {
+            "title": "All Fund Types This Month",
+            "rows": [
+                {
+                    "name": "Waiting for Approval",
+                    "figure": month_overview["waiting_for_approval"],
+                    "tone": "warning",
+                },
+                {
+                    "name": "Returned",
+                    "figure": month_overview["returned"],
+                    "tone": "danger",
+                },
+                {
+                    "name": "Approved (Not Disbursed)",
+                    "figure": month_overview["approved_not_disbursed"],
+                    "tone": "warning",
+                },
+                {
+                    "name": "Disbursed",
+                    "figure": month_overview["disbursed"],
+                    "tone": "success",
+                },
+                {
+                    "name": "Reconciled",
+                    "figure": month_overview["reconciled"],
+                    "tone": "success",
+                },
+                {
+                    "name": "Awaiting receipts (proof)",
+                    "figure": f"{recon_stats['awaiting_receipts']} request{'' if recon_stats['awaiting_receipts'] == 1 else 's'}",
+                    "tone": "warning",
+                },
+            ],
+            "link": "/accounts/audit-log",
+            "link_label": "View all activity",
+        },
+        "progress": progress_panel(
+            f"FY {fy} Approved vs Disbursed",
+            kpis_raw["total_approved"],
+            kpis_raw["total_disbursed"],
+            status_label="On Track" if not pending_n else f"{pending_n} to disburse",
+            link="/disbursements",
+            link_label="Open the consolidated queue",
+            caption="Disbursed (to date)",
+        ),
+        "rate": rate,
+        "rules_title": "Finance & Disbursement Rules",
+        "rules": [
+            "Disbursements must match approved weekly staff plans exactly.",
+            "All disbursements require supporting cost catalogue settings.",
+            "Receipts must be submitted within 7 days of field activity.",
+            "Return unused funds within plan period limits.",
+            "Non-compliance triggers a hold on subsequent weekly fund requests.",
+        ],
+        "rules_link": "/help",
+    }
+    return {
+        "title": "Fund Disbursement Dashboard",
+        "has_role_home": True,
+        "tooltip": "Reconcile and disburse funds",
+        "description": "Weekly advances only: the money the Accountant moves. The figures cover every fund type.",
+        "export_url": None,
+        "primary_action": {
+            "label": "Create Disbursement",
+            "href": "/accounts/advances",
+        },
+        "filters_template": "partials/finance/accountant_filters.html",
+        "filters_id": "accounts-filters",
+        "kpis": None,  # the page builds the tiles in-template from `kpis`
+        "kpi_title": "Finance headline",
+        "empty": None,
+        "queue": {
+            "title": "Weekly Advance Queue",
+            "count": len(funds),
+            "items": items,
+            "selected_key": selected_id or "",
+            "sort": sort,
+            "sort_options": [
+                {"value": "week", "label": "Week"},
+                {"value": "amount", "label": "Amount"},
+                {"value": "name", "label": "Name"},
+            ],
+            "empty_title": "No fund requests match these filters",
+            "empty_text": "Clear the search or choose another workflow status.",
+        },
+        "sort_url": "/accounts",
+        "root_target": "#accounts-root",
+        "district_options": sorted(
+            {f["region"] for f in all_funds if f["region"] != "—"}
+        ),
+        "district_filter": district_filter,
+        "detail_id": "accounts-fund-detail",
+        "detail_template": "partials/finance/accountant_detail.html",
+        "selected": selected,
+        "status_options": sorted({f["status"] for f in all_funds}),
+        "status_filter": status_filter,
+        "q": q,
+        "side": side,
+        "insights": budget_mix(mix),
+        "insights_title": f"Budget Mix by Cost Line (FY {fy})",
+        "recent": recent_activity(
+            {
+                "weekly_fund_request.disburse": "disbursed",
+                "weekly_fund_request.return": "returned",
+                "weekly_fund_request.approve": "approved for disbursement",
+            },
+            subject_ids=fy_ids,
+        )
+        or [
+            {
+                "tone": "success",
+                "text": f"{row['name']} — {row['region']} disbursed",
+                "amount_fmt": row["amount"],
+                "when": row["when"],
+            }
+            for row in recent_disbursements
+        ],
+        "recent_title": "Recent Disbursement Activity",
+        "recent_link": "/accounts/audit-log",
+    }

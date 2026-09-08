@@ -361,8 +361,8 @@
   .edify-record-table { display: table !important; }
   .edify-record-table > thead { display: table-header-group !important; }
   .edify-record-table > tbody { display: table-row-group !important; }
-  .edify-record-table > :is(thead, tbody, tfoot) > tr { display: table-row !important; }
-  .edify-record-table > :is(thead, tbody, tfoot) > tr > :is(th, td) {
+  .edify-record-table > :is(thead, tbody, tfoot) > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) { display: table-row !important; }
+  .edify-record-table > :is(thead, tbody, tfoot) > tr:not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) > :is(th, td):not([style*="display: none"]):not([style*="display:none"]):not([x-cloak]) {
     display: table-cell !important;
   }
 

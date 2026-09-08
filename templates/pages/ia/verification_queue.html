@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}Activity Verification — Edify{% endblock %}
+{% block title %}Verification Queue · Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="verification">
@@ -16,8 +16,8 @@ its honest empty state and moved into the header's context slot.
 <header class="edify-page-header">
 <div class="flex flex-wrap items-start justify-between gap-3">
 <div class="lg:max-w-[560px] edify-page-header__lead">
-<p class="edify-page-eyebrow">Quality &amp; Insights</p>
-<h1 class="edify-page-title edify-page-header__title">Activity Verification</h1>
+<p class="edify-page-eyebrow">Verification</p>
+<h1 class="edify-page-title edify-page-header__title">Verification Queue</h1>
 <p class="edify-page-header__description">Review implementation evidence, cross-reference Salesforce records and certify school improvement activities.</p>
 </div>
 <div class="flex flex-col items-start gap-1">
@@ -77,7 +77,7 @@ filtered on a value no row has ever carried and emptied the queue.
 <input id="ia-filter-district" type="text" name="district" value="{{ filters.district|default:'' }}" placeholder="Kampala, Masaka…" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 </div>
 
-<button type="button" class="btn btn-ghost h-9 self-end" aria-haspopup="dialog" @click="$refs.advancedFilters.showModal()">Advanced filters{% if filters.quarter or filters.staff or filters.core_school %} · Applied{% endif %}</button>
+<button type="button" class="btn btn-ghost h-8 self-end" aria-haspopup="dialog" @click="$refs.advancedFilters.showModal()">Advanced filters{% if filters.quarter or filters.staff or filters.core_school %} · Applied{% endif %}</button>
 
 <dialog x-ref="advancedFilters" data-component="filter-drawer" class="edify-filter-drawer" aria-labelledby="ia-advanced-filter-title">
   <header class="edify-filter-drawer__header">
@@ -108,7 +108,7 @@ filtered on a value no row has ever carried and emptied the queue.
     </div>
   </div>
   <footer class="edify-filter-drawer__footer">
-    <button type="button" class="btn btn-primary h-10" @click="$refs.advancedFilters.close()">Apply filters</button>
+    <button type="button" class="btn btn-primary h-8" @click="$refs.advancedFilters.close()">Apply filters</button>
   </footer>
 </dialog>
 

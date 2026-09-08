@@ -83,6 +83,22 @@ class BaseFlowTest(TestCase):
 class AnonymousAccessFlowTest(BaseFlowTest):
     """Unauthenticated users must be redirected to login; login works."""
 
+    def setUp(self):
+        # The login route is throttled at 10 per minute per client IP, counted
+        # in the shared cache — and dev's cache is a real Redis that every
+        # parallel test worker shares. Every worker posts to /login from the
+        # test client's default 127.0.0.1, so a big enough run tripped the
+        # limit and this class failed on the throttle rather than on the
+        # credentials it is testing (2026-09-06). Clearing the cache would
+        # still race the other workers; a client address of its own cannot,
+        # because the throttle counts per address. The throttle itself is
+        # covered by apps/core/test_throttle_shared_backing.py.
+        import uuid
+
+        super().setUp()
+        octets = uuid.uuid4().bytes[:3]
+        self.client.defaults["REMOTE_ADDR"] = "10.%d.%d.%d" % tuple(octets)
+
     def test_anonymous_dashboard_redirects_to_login_with_next(self):
         r = self.client.get("/dashboard")
         self.assertRedirects(r, "/login?next=/dashboard", fetch_redirect_response=False)

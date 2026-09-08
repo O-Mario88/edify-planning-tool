@@ -1,6 +1,15 @@
+{% comment %}
+The three filters are one control with three states, and each state says how
+many districts it holds. A filter that changes nothing on screen has to say
+why: in a scope of two critical districts every filter shows the same two rows,
+and without the counts and the empty state below that read as a broken control
+(owner, 2026-09-05).
+{% endcomment %}
 <section class="analytics-priority-card edify-surface rounded-surface p-4 shadow-sm"
          aria-labelledby="district-priorities-title"
-         x-data="{ filter: 'all' }">
+         x-data="{ filter: 'all',
+                   critical: {{ target_by_district_summary.critical|default:0 }},
+                   attention: {{ target_by_district_summary.attention|default:0 }} }">
   <header class="analytics-priority-card__header">
     <div>
       <p class="analytics-band-eyebrow">Geographic priorities</p>
@@ -14,13 +23,19 @@
   <div class="analytics-priority-filters" aria-label="District priority status">
     <button type="button" @click="filter = 'all'"
             :class="filter === 'all' && 'is-active'"
-            :aria-pressed="(filter === 'all').toString()">All sub-regions</button>
+            :aria-pressed="(filter === 'all').toString()">All sub-regions <b>{{ target_by_district_summary.districts|default:0 }}</b></button>
     <button type="button" @click="filter = 'attention'"
             :class="filter === 'attention' && 'is-active'"
-            :aria-pressed="(filter === 'attention').toString()">Needs attention</button>
+            :aria-pressed="(filter === 'attention').toString()">Needs attention <b>{{ target_by_district_summary.attention|default:0 }}</b></button>
     <button type="button" @click="filter = 'critical'"
             :class="filter === 'critical' && 'is-active'"
-            :aria-pressed="(filter === 'critical').toString()">Critical</button>
+            :aria-pressed="(filter === 'critical').toString()">Critical <b>{{ target_by_district_summary.critical|default:0 }}</b></button>
+  </div>
+
+  <div class="analytics-priority-empty" x-cloak role="status"
+       x-show="(filter === 'critical' && critical === 0) || (filter === 'attention' && attention === 0)">
+    <strong x-text="filter === 'critical' ? 'No critical district in this scope' : 'No district needs attention in this scope'"></strong>
+    Every district with an activity plan is delivering at 80% or better. Choose All sub-regions to see them.
   </div>
 
   <div class="analytics-priority-groups">
@@ -42,7 +57,10 @@
       </summary>
 
       <div class="analytics-priority-group__meta">
-        <span>{{ group.schools }} school{{ group.schools|pluralize }}</span>
+        <span># Schools {{ group.schools }}</span>
+        <span># Planned {{ group.schools_planned }}</span>
+        <span># Achieved {{ group.schools_achieved }}</span>
+        <span>% Achieved {{ group.schools_pct }}%</span>
         <span>{{ group.achieved }}/{{ group.planned }} activities delivered</span>
         {% if group.gap is not None %}<span>{{ group.gap }}% remaining gap</span>{% endif %}
       </div>
@@ -56,7 +74,7 @@
             <span class="analytics-district-row__rank">{{ forloop.counter }}</span>
             <span>
               <strong>{{ district.name }}</strong>
-              <small>{{ district.schools }} school{{ district.schools|pluralize }} · {{ district.achieved }}/{{ district.planned }} delivered</small>
+              <small># Schools {{ district.schools }} · # Planned {{ district.schools_planned }} · # Achieved {{ district.schools_achieved }} · % Achieved {{ district.schools_pct }}% · {{ district.achieved }}/{{ district.planned }} activities delivered</small>
             </span>
           </div>
           <div class="analytics-district-row__status">

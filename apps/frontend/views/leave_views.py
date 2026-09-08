@@ -1678,9 +1678,13 @@ def team_availability_view(request):
             - timezone.timedelta(days=today.weekday())
         )
         end = start + timezone.timedelta(days=6)
-        weeks_headers.append(
-            f"Wk {i+1} ({start.strftime('%d %b')} - {end.strftime('%d %b')})"
-        )
+        # "Wk 3 · 14–20 Sep" reads in one line of a 1440px desktop's eight
+        # week columns; "Wk 3 (14 Sep - 20 Sep)" did not (2026-09-06).
+        if start.month == end.month:
+            span = f"{start.day}–{end.day} {end.strftime('%b')}"
+        else:
+            span = f"{start.day} {start.strftime('%b')}–{end.day} {end.strftime('%b')}"
+        weeks_headers.append(f"Wk {i+1} · {span}")
 
     context = {
         "matrix": matrix,

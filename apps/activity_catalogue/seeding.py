@@ -24,6 +24,115 @@ def normalize_alias(value: str) -> str:
 
 
 @transaction.atomic
+def install_item(
+    source_row: dict, *, actor_id: str, status: str = CatalogueStatus.ACTIVE
+):
+    """Install ONE catalogue row (a seed row or a Country Director's new
+    activity): the item, its primary mapping when it names an intervention,
+    its eligibility rule and its aliases. Returns (item, outcome counts)."""
+    row = deepcopy(source_row)
+    mapping_mode = row.pop("mapping_mode")
+    intervention = row.pop("intervention")
+    code = row.pop("stable_code")
+    outcome = {"created": 0, "updated": 0, "unchanged": 0, "mappings": 0}
+    defaults = {
+        **row,
+        "status": status,
+        "created_by": actor_id,
+        "updated_by": actor_id,
+    }
+    item = ActivityCatalogueItem.objects.filter(stable_code=code).first()
+    if item is None:
+        item = ActivityCatalogueItem.objects.create(
+            stable_code=code,
+            **defaults,
+        )
+        outcome["created"] += 1
+    else:
+        changed = []
+        # Lifecycle is governance-owned after the initial insert.
+        for field, value in row.items():
+            if getattr(item, field) != value:
+                setattr(item, field, value)
+                changed.append(field)
+        if item.updated_by != actor_id:
+            item.updated_by = actor_id
+            changed.append("updated_by")
+        if changed:
+            item.save(update_fields=[*changed, "updated_at"])
+            outcome["updated"] += 1
+        else:
+            outcome["unchanged"] += 1
+
+    # When the governed source changes a course's canonical SSA mapping,
+    # release the previous primary before installing the new one.
+    # PostgreSQL enforces one primary per catalogue item, so doing this
+    # after ``update_or_create`` is one statement too late on an already-
+    # seeded database. Alternate human-authored mappings stay active and
+    # reviewable; only the source-of-truth primary designation changes.
+    # An item with no intervention still carries its primary mapping row:
+    # scheduling asks every item for an active mapping.
+    ActivityInterventionMapping.objects.filter(
+        catalogue_item=item,
+        active=True,
+        relationship=MappingRelationship.PRIMARY,
+    ).exclude(
+        intervention=intervention,
+        mapping_mode=mapping_mode,
+    ).update(
+        is_primary=False,
+        relationship=MappingRelationship.SECONDARY,
+    )
+
+    mapping, _ = ActivityInterventionMapping.objects.update_or_create(
+        catalogue_item=item,
+        intervention=intervention,
+        mapping_mode=mapping_mode,
+        defaults={
+            "priority": 10,
+            "is_primary": True,
+            "relationship": MappingRelationship.PRIMARY,
+            "active": True,
+            "authored_by": MappingAuthor.SEED,
+        },
+    )
+    outcome["mappings"] += 1
+    # Retire only what a machine wrote. This used to deactivate EVERY
+    # other mapping for the item, which made a second intervention
+    # impossible to keep — the next seed run silently retired it — and
+    # would have thrown away Impact Assessment's measurement rules with
+    # it.
+    ActivityInterventionMapping.objects.filter(
+        catalogue_item=item, authored_by__in=MACHINE_AUTHORS
+    ).exclude(id=mapping.id).update(active=False)
+
+    _install_rules_and_aliases(item, code)
+    return item, outcome
+
+
+def _install_rules_and_aliases(item, code):
+    ActivityEligibilityRule.objects.get_or_create(
+        catalogue_item=item,
+        defaults={
+            "allowed_target_audiences": [item.target_audience],
+            "core_school_only": bool(item.core_slot_type),
+            "client_school_only": item.counts_toward_client_visit
+            or item.counts_toward_client_training,
+            "requires_project_membership": item.requires_project,
+            "requires_cluster_membership": item.requires_cluster,
+            "counts_toward_entitlement": item.counts_toward_client_visit
+            or item.counts_toward_client_training
+            or bool(item.core_slot_type),
+        },
+    )
+    for source_alias in {item.source_name, item.display_name, code}:
+        ActivityCatalogueAlias.objects.get_or_create(
+            normalized_alias=normalize_alias(source_alias),
+            defaults={"catalogue_item": item, "source_alias": source_alias},
+        )
+
+
+@transaction.atomic
 def seed_activity_catalogue(*, actor_id: str = "system", dry_run: bool = False) -> dict:
     """Idempotently install the governed source catalogue.
 
@@ -40,99 +149,9 @@ def seed_activity_catalogue(*, actor_id: str = "system", dry_run: bool = False) 
         "versions": 0,
     }
     for source_row in CATALOGUE_ITEMS:
-        row = deepcopy(source_row)
-        mapping_mode = row.pop("mapping_mode")
-        intervention = row.pop("intervention")
-        code = row.pop("stable_code")
-        defaults = {
-            **row,
-            "status": CatalogueStatus.ACTIVE,
-            "created_by": actor_id,
-            "updated_by": actor_id,
-        }
-        item = ActivityCatalogueItem.objects.filter(stable_code=code).first()
-        if item is None:
-            item = ActivityCatalogueItem.objects.create(
-                stable_code=code,
-                **defaults,
-            )
-            result["created"] += 1
-        else:
-            changed = []
-            # Lifecycle is governance-owned after the initial insert.
-            for field, value in row.items():
-                if getattr(item, field) != value:
-                    setattr(item, field, value)
-                    changed.append(field)
-            if item.updated_by != actor_id:
-                item.updated_by = actor_id
-                changed.append("updated_by")
-            if changed:
-                item.save(update_fields=[*changed, "updated_at"])
-                result["updated"] += 1
-            else:
-                result["unchanged"] += 1
-
-        # When the governed source changes a course's canonical SSA mapping,
-        # release the previous primary before installing the new one.
-        # PostgreSQL enforces one primary per catalogue item, so doing this
-        # after ``update_or_create`` is one statement too late on an already-
-        # seeded database. Alternate human-authored mappings stay active and
-        # reviewable; only the source-of-truth primary designation changes.
-        ActivityInterventionMapping.objects.filter(
-            catalogue_item=item,
-            active=True,
-            relationship=MappingRelationship.PRIMARY,
-        ).exclude(
-            intervention=intervention,
-            mapping_mode=mapping_mode,
-        ).update(
-            is_primary=False,
-            relationship=MappingRelationship.SECONDARY,
-        )
-
-        mapping, _ = ActivityInterventionMapping.objects.update_or_create(
-            catalogue_item=item,
-            intervention=intervention,
-            mapping_mode=mapping_mode,
-            defaults={
-                "priority": 10,
-                "is_primary": True,
-                "relationship": MappingRelationship.PRIMARY,
-                "active": True,
-                "authored_by": MappingAuthor.SEED,
-            },
-        )
-        result["mappings"] += 1
-        # Retire only what a machine wrote. This used to deactivate EVERY
-        # other mapping for the item, which made a second intervention
-        # impossible to keep — the next seed run silently retired it — and
-        # would have thrown away Impact Assessment's measurement rules with
-        # it.
-        ActivityInterventionMapping.objects.filter(
-            catalogue_item=item, authored_by__in=MACHINE_AUTHORS
-        ).exclude(id=mapping.id).update(active=False)
-
-        ActivityEligibilityRule.objects.get_or_create(
-            catalogue_item=item,
-            defaults={
-                "allowed_target_audiences": [item.target_audience],
-                "core_school_only": bool(item.core_slot_type),
-                "client_school_only": item.counts_toward_client_visit
-                or item.counts_toward_client_training,
-                "requires_project_membership": item.requires_project,
-                "requires_cluster_membership": item.requires_cluster,
-                "counts_toward_entitlement": item.counts_toward_client_visit
-                or item.counts_toward_client_training
-                or bool(item.core_slot_type),
-            },
-        )
-        for source_alias in {item.source_name, item.display_name, code}:
-            ActivityCatalogueAlias.objects.get_or_create(
-                normalized_alias=normalize_alias(source_alias),
-                defaults={"catalogue_item": item, "source_alias": source_alias},
-            )
-
+        item, outcome = install_item(source_row, actor_id=actor_id)
+        for field in ("created", "updated", "unchanged", "mappings"):
+            result[field] += outcome[field]
         if not item.versions.exists():
             ActivityCatalogueVersion.objects.create(
                 catalogue_item=item,

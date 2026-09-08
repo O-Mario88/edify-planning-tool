@@ -16,6 +16,7 @@ from .views import (
     school_views,
     cluster_views,
     planning_views,
+    visit_request_views,
     oversight_views,
     budget_views,
     my_plan_views,
@@ -51,6 +52,9 @@ urlpatterns = [
     # must live at the root or its scope covers only /static/.
     path("manifest.webmanifest", pwa_views.manifest, name="webmanifest"),
     path("sw.js", pwa_views.service_worker, name="service_worker"),
+    # Rendered without user data: the worker precaches it and serves it to
+    # any navigation the network cannot answer.
+    path("offline", pwa_views.offline, name="offline"),
     # Auth
     path("login", auth_views.login_view, name="login"),
     path(
@@ -68,6 +72,11 @@ urlpatterns = [
         "settings/activity-catalogue/",
         catalogue_views.activity_catalogue_page,
         name="activity_catalogue",
+    ),
+    path(
+        "settings/activity-catalogue/new",
+        catalogue_views.activity_catalogue_create_action,
+        name="activity_catalogue_create",
     ),
     path(
         "settings/activity-catalogue/<str:item_id>/lifecycle",
@@ -247,6 +256,11 @@ urlpatterns = [
         "dashboard/cd-approve",
         dashboard_views.cd_dashboard_approve_view,
         name="cd_dashboard_approve",
+    ),
+    path(
+        "dashboard/cd-return",
+        dashboard_views.cd_dashboard_return_view,
+        name="cd_dashboard_return",
     ),
     # To-Do operating queue (system-generated, role-scoped)
     path("todos", extended_views.todos_view, name="todos"),
@@ -562,6 +576,17 @@ urlpatterns = [
         planning_views.schedule_action_view,
         name="planning_schedule_action",
     ),
+    # Visit requests: the owner's queue and the requester's follow-up.
+    path(
+        "planning/visit-requests",
+        visit_request_views.visit_requests_page,
+        name="visit_requests",
+    ),
+    path(
+        "planning/visit-requests/<str:activity_id>/<str:decision>",
+        visit_request_views.visit_request_decide,
+        name="visit_request_decide",
+    ),
     path(
         "planning/assign-partner-modal",
         planning_views.assign_partner_modal_view,
@@ -625,6 +650,11 @@ urlpatterns = [
         "fund-requests/advances/<str:advance_id>/pl-return",
         budget_views.advance_pl_return_action,
         name="advance_pl_return",
+    ),
+    path(
+        "fund-requests/weekly/<str:request_id>/not-requested",
+        budget_views.weekly_fund_request_not_requested_action,
+        name="weekly_fund_request_not_requested",
     ),
     path(
         "fund-requests/weekly/<str:request_id>/self-funded",
@@ -918,6 +948,24 @@ urlpatterns = [
     path("ia/dashboard/", ia_views.ia_dashboard_view, name="ia_dashboard"),
     path("ia/notifications/", ia_views.ia_notifications_view, name="ia_notifications"),
     path("ia/compare/", ia_views.ia_compare_view, name="ia_compare"),
+    path(
+        "ia/analytics/",
+        ia_views.ia_verification_analytics_view,
+        name="ia_verification_analytics",
+    ),
+    path(
+        "ia/analytics/export",
+        ia_views.ia_verification_analytics_export_view,
+        name="ia_verification_analytics_export",
+    ),
+    path("ia/samples/", ia_views.ia_samples_view, name="ia_samples"),
+    path("ia/samples/draw", ia_views.ia_sample_draw_action, name="ia_sample_draw"),
+    path(
+        "ia/samples/<str:sample_id>/outcome",
+        ia_views.ia_sample_outcome_action,
+        name="ia_sample_outcome",
+    ),
+    path("ia/attribution/", ia_views.ia_attribution_view, name="ia_attribution"),
     path(
         "activities/<str:activity_id>/timeline/",
         ia_views.activity_timeline_view,
@@ -1644,6 +1692,27 @@ urlpatterns = [
         partner_views.partner_detail_view,
         name="partner_detail",
     ),
+    # The profile's own lifecycle toggle and roster (owner, 2026-09-07).
+    path(
+        "partners/<str:partner_id>/edit-drawer",
+        partner_views.partner_edit_drawer_view,
+        name="partner_edit_drawer",
+    ),
+    path(
+        "partners/<str:partner_id>/status",
+        partner_views.partner_status_action,
+        name="partner_status",
+    ),
+    path(
+        "partners/<str:partner_id>/members/drawer",
+        partner_views.partner_member_drawer,
+        name="partner_member_drawer",
+    ),
+    path(
+        "partners/<str:partner_id>/members",
+        partner_views.partner_member_action,
+        name="partner_member_action",
+    ),
     path("partner/today", partner_views.partner_today_view, name="partner_today"),
     path("partner/schools", partner_views.partner_schools_view, name="partner_schools"),
     path(
@@ -1738,6 +1807,19 @@ urlpatterns = [
         "analytics/school-closures",
         closure_impact_views.closure_impact_view,
         name="closure_impact",
+    ),
+    # People and Verification Quality are pages of other modules (HR, IA) with
+    # their own chrome. The Analytics workspace reaches the same content here,
+    # as tabs of the one Analytics page (owner, 2026-09-05).
+    path(
+        "analytics/people",
+        hr_views.people_analytics_section_view,
+        name="people_analytics",
+    ),
+    path(
+        "analytics/verification-quality",
+        ia_views.verification_quality_section_view,
+        name="verification_quality",
     ),
     path("impact", impact_views.impact_analytics_view, name="impact_analytics"),
     path("fy", extended_views.fy_overview_view, name="fy_overview"),
@@ -2145,6 +2227,11 @@ urlpatterns = [
         "cost-settings/row/<str:key>",
         finance_views.cost_setting_row_view,
         name="cost_setting_row",
+    ),
+    path(
+        "cost-settings/add",
+        finance_views.add_linked_cost_view,
+        name="cost_settings_add",
     ),
     path(
         "cost-settings/initialize-default",

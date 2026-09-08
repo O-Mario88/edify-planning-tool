@@ -1,0 +1,2 @@
+{% comment %}The Country Director's chosen view: map or operations.{% endcomment %}
+{% if dashboard_view == "map" %}{% include "partials/dashboards/cd/map_view.html" %}{% else %}{% include "partials/dashboards/cd/operations.html" %}{% endif %}

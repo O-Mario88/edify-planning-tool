@@ -10,6 +10,18 @@ the product's own brand moment: the same navy family as the manifest's
 lockup centred — so the handover from the OS screen reads as the app arriving,
 not as two unrelated splashes.
 
+ON THE SCREEN BEFORE THIS ONE
+
+The round app icon a launch opens with is NOT drawn here and cannot be removed
+from here. Android, and desktop Chrome, generate that first screen themselves
+from the installed app's manifest: the icon centred on `background_color` with
+the app's name. There is no manifest key that turns it off, and dropping the
+512px icon to provoke it would damage the home-screen and installer icon, which
+is the one place that mark genuinely has to be. What the app CAN do is make the
+handover invisible, and it does: `background_color` and the base colour of this
+overlay are the same #2d4862, so the ground never changes — the icon lifts and
+the lockup and the waiting rhythm arrive on the same field (owner, 2026-09-07).
+
 The composition is the brand plate: the wordmark and product name centred on a
 deep navy field lit from the upper right, a quiet field of dots rising from the
 bottom of the screen, and one small sign of life beneath the lockup. That sign
@@ -17,6 +29,11 @@ adapts to the screen it is on: phones show a turning ring over "Loading your
 workspace…", larger screens a hairline progress track with a travelling
 highlight over "Preparing your dashboard…". Both are rhythm, not measurement —
 neither pretends to know how far boot has come.
+
+It leaves when the app is ready rather than after a set time. The hold used to
+be a flat 2.4 seconds whether or not the shell had finished, which held a ready
+app behind a plate. A short floor stops it flashing on a fast boot, and a
+ceiling stops a slow one stranding the reader behind it.
 
 Standalone only, and at every launch — but only at launches. In a browser tab
 there is no OS splash to continue, and an overlay there would just be a delay.
@@ -30,8 +47,8 @@ when they restore the app after killing it in the background.
 The markup and its critical CSS are inline on purpose. A launch screen that
 waits for a stylesheet is not a launch screen — it has to paint on the first
 frame, before main.css has been fetched. The wordmark image is the same asset
-the sidebar paints next, so by the time the overlay lifts it is already warm
-in the cache.
+the sidebar paints next, so by the time the overlay lifts it is already warm in
+the cache.
 {% endcomment %}
 <div id="edify-launch" hidden aria-hidden="true">
   <span class="edify-launch__field" aria-hidden="true"></span>
@@ -113,8 +130,8 @@ in the cache.
     position: relative;
     display: grid;
     justify-items: center;
-    /* The lockup rides slightly above true centre, as on the reference: the
-       waiting row and the dot field share the lower half. */
+    /* The lockup rides slightly above true centre: the waiting row and the
+       dot field share the lower half. */
     transform: translateY(-6vmin);
     animation: edify-launch-arrive 700ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
   }
@@ -287,12 +304,15 @@ in the cache.
     root.style.overflow = 'hidden';
 
     var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    // Within the 1-3s platform convention for a splash: long enough for the
-    // lockup to arrive and the waiting rhythm to establish itself, short
-    // enough that launching never feels gated on a ceremony. It plays once
-    // per launch, never on in-app navigation.
-    var HOLD = reduced ? 400 : 2400;
+    // It leaves when the app is ready, not after a set time. The hold used to
+    // be a flat 2.4s whether or not the shell had finished (owner,
+    // 2026-09-07). FLOOR is long enough for the lockup to arrive and keeps a
+    // fast boot from flashing the overlay for a frame; CEILING keeps a slow or
+    // stalled one from stranding the reader behind it.
+    var FLOOR = reduced ? 200 : 900;
+    var CEILING = reduced ? 400 : 6000;
     var EXIT = reduced ? 200 : 500;
+    var shownAt = Date.now();
 
     var finished = false;
     function finish() {
@@ -302,17 +322,30 @@ in the cache.
       overlay.remove();
     }
 
+    var opened = false;
     function open() {
+      if (opened) return;
+      opened = true;
       overlay.classList.add('is-opening');
       // Timer rather than animationend: two animations run on this element
       // and its child, and whichever fires first would cut the other off.
       window.setTimeout(finish, EXIT + 60);
     }
 
-    window.setTimeout(open, HOLD);
-    // A launch screen must never be the reason the app is unusable. If an
-    // animation is dropped or a timer is throttled in the background, this
-    // takes the overlay down regardless.
-    window.setTimeout(finish, HOLD + EXIT + 2500);
+    // Ready means the document has loaded — stylesheets applied, shell drawn.
+    // Whatever is left of the floor is waited out so the overlay is never a
+    // flicker.
+    function openWhenReady() {
+      window.setTimeout(open, Math.max(0, FLOOR - (Date.now() - shownAt)));
+    }
+
+    if (document.readyState === 'complete') openWhenReady();
+    else window.addEventListener('load', openWhenReady);
+
+    // A launch screen must never be the reason the app is unusable. If `load`
+    // never fires, an animation is dropped, or a timer is throttled in the
+    // background, these take the overlay down regardless.
+    window.setTimeout(open, CEILING);
+    window.setTimeout(finish, CEILING + EXIT + 2500);
   })();
 </script>

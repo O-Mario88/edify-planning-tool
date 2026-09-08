@@ -178,6 +178,80 @@ def _do_daily_digest() -> int:
     return created
 
 
+def _do_ia_verification_digest() -> int:
+    """One morning line per verifier: what is waiting, and what is past the
+    24-hour SLA (2026-09-03). Bounded to the verifier's country and never
+    counting their own submissions, which they may not verify."""
+    from datetime import timedelta
+
+    from apps.activities.models import Activity
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import activity_country_q, owner_ids, resolve_user_scope
+    from apps.notifications.models import Notification
+    from apps.notifications.services import (
+        WorkflowNotificationService,
+        role_recipients,
+    )
+
+    today = timezone.now().date()
+    cutoff = timezone.now() - timedelta(hours=24)
+    created = 0
+    for verifier in role_recipients(EdifyRole.IMPACT_ASSESSMENT.value):
+        scope = resolve_user_scope(verifier)
+        own = [i for i in owner_ids(verifier) if i]
+        waiting = (
+            Activity.objects.filter(
+                deleted_at__isnull=True, status="awaiting_ia_verification"
+            )
+            .filter(activity_country_q(scope))
+            .exclude(responsible_staff_id__in=own)
+        )
+        n = waiting.count()
+        if n == 0:
+            continue
+        overdue = waiting.filter(submitted_to_ia_at__lte=cutoff).count()
+        # 30-char source_event_id: 4 + 10 + 1 + 14 hex = 29.
+        recipient_hash = hashlib.blake2s(
+            str(verifier.id).encode(), digest_size=7
+        ).hexdigest()
+        digest_id = f"iad-{today.isoformat()}-{recipient_hash}"
+        assert len(digest_id) <= 30, digest_id
+        if Notification.objects.filter(
+            recipient_id=verifier.id, source_event_id=digest_id
+        ).exists():
+            continue
+        WorkflowNotificationService.trigger(
+            event_type="ia_verification_digest",
+            category="verification",
+            priority="high" if overdue else "normal",
+            title=f"{n} waiting for verification"
+            + (f" · {overdue} past 24h" if overdue else ""),
+            body="Your morning verification digest.",
+            context_id=digest_id,
+            recipients=[verifier],
+        )
+        created += 1
+    return created
+
+
+def _do_verification_sampling() -> int:
+    from apps.activities.verification_sampling import draw_samples
+
+    return draw_samples(days=7)
+
+
+def verification_sampling_job():
+    if not _enabled():
+        return
+    run_tracked_job("verification_sampling", _do_verification_sampling)
+
+
+def ia_verification_digest_job():
+    if not _enabled():
+        return
+    run_tracked_job("ia_verification_digest", _do_ia_verification_digest)
+
+
 def daily_digest_job():
     if not _enabled():
         return
@@ -319,7 +393,22 @@ def pd_reminders_job():
     run_tracked_job("pd_reminders", _do_pd_reminders)
 
 
-# ── 7. Field Debrief recurring-issue detection ───────────────────────────────
+# ── 7. Loan application and repayment follow-ups ─────────────────────────────
+def _do_loan_tracking_notifications() -> int:
+    from apps.business_transformation.loan_tracking import (
+        run_loan_tracking_notifications,
+    )
+
+    return run_loan_tracking_notifications()
+
+
+def loan_tracking_notifications_job():
+    if not _enabled():
+        return
+    run_tracked_job("loan_tracking_notifications", _do_loan_tracking_notifications)
+
+
+# ── 8. Field Debrief recurring-issue detection ───────────────────────────────
 def _do_field_debrief_recurring_issues() -> int:
     from apps.debriefs.insight_service import RecurringIssueDetectionService
 
@@ -502,6 +591,7 @@ __all__ = [
     "daily_digest_job",
     "target_ledger_sync_job",
     "pd_reminders_job",
+    "loan_tracking_notifications_job",
     "field_debrief_recurring_issues_job",
     "analytics_report_delivery_job",
     "escalation_sla_sweep_job",

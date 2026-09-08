@@ -117,7 +117,7 @@ Compare Side-by-Side
 <!-- Cluster -->
 <div>
 <span class="edify-text-caption text-slate-400 font-bold uppercase block">Cluster</span>
-<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ act.cluster.name|default:"No Cluster" }}</span>
+<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{% if act.cluster %}<a href="/clusters/{{ act.cluster.id }}" class="hover:underline">{{ act.cluster.name }}</a>{% else %}No Cluster{% endif %}</span>
 </div>
 <!-- District -->
 <div>
@@ -127,12 +127,12 @@ Compare Side-by-Side
 <!-- Owner / Staff -->
 <div>
 <span class="edify-text-caption text-slate-400 font-bold uppercase block">CCEO / Owner</span>
-<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ act.responsible_staff_id|default:"Unassigned" }}</span>
+<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ owner_name }}</span>
 </div>
 <!-- Partner -->
 <div>
 <span class="edify-text-caption text-slate-400 font-bold uppercase block">Assigned Partner</span>
-<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ act.assigned_partner_id|default:"N/A" }}</span>
+<span class="text-[14px] font-semibold text-slate-800 mt-0.5 block">{{ partner_name|default:"—" }}</span>
 </div>
 <!-- Focus Intervention -->
 <div>
@@ -500,14 +500,14 @@ class="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-control text-[12
 <button
 form="return-form"
 type="submit"
-class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 shadow-sm transition-all"
+class="w-full h-8 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-rose-600 hover:bg-rose-700 shadow-sm transition-all"
 >
 Confirm &amp; Return
 </button>
 <button
 @click="closeReturn()"
 type="button"
-class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-8 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

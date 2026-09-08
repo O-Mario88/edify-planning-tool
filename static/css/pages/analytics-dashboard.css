@@ -204,19 +204,19 @@
   box-sizing: border-box;
   min-inline-size: 0;
   overflow: hidden;
-  padding-inline: .22rem !important;
+  padding-inline: .5rem !important;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .analytics-geo-card .sr-distribution-table :is(th, td):first-child {
   overflow: hidden;
-  padding-inline-start: .08rem !important;
+  padding-inline-start: .25rem !important;
   text-overflow: ellipsis;
 }
 
 .analytics-geo-card .sr-distribution-table :is(th, td):last-child {
-  padding-inline-end: .08rem !important;
+  padding-inline-end: .25rem !important;
 }
 
 .analytics-geo-card .sr-distribution-table td:first-child > span {
@@ -377,10 +377,44 @@
   white-space: nowrap;
 }
 
+/* The selected filter is unmistakable: accent on accent, not a lighter
+   shade of the rail. And every button carries its count, so a reader can
+   tell "no critical district in this scope" from "the filter did nothing" —
+   with two districts, both critical, all three filters showed the same rows
+   and the card read as broken (owner, 2026-09-05). */
 .analytics-priority-filters button.is-active {
-  color: var(--edify-accent-text);
-  background: var(--edify-surface);
+  color: var(--edify-on-accent);
+  background: var(--edify-accent);
   box-shadow: var(--edify-shadow-sm);
+}
+
+.analytics-priority-filters button b {
+  margin-inline-start: .3rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  opacity: .7;
+}
+
+.analytics-priority-filters button.is-active b {
+  opacity: 1;
+}
+
+/* What a filter says when nothing matches, instead of an empty card. */
+.analytics-priority-empty {
+  margin-block-start: .65rem;
+  padding: 1rem;
+  border: 1px dashed var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+}
+
+.analytics-priority-empty strong {
+  display: block;
+  margin-block-end: .2rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size, .875rem);
 }
 
 .analytics-priority-groups {
@@ -504,12 +538,12 @@
 .analytics-district-row__rank {
   display: grid;
   place-items: center;
-  flex: 0 0 22px;
-  block-size: 22px;
+  flex: 0 0 24px;
+  block-size: 24px;
   border-radius: var(--edify-radius-pill);
   background: var(--edify-surface-muted);
   color: var(--edify-text-muted);
-  font-size: 10px;
+  font-size: var(--edify-text-micro-size); /* 12px floor (tablet pass, 2026-09-05) */
   font-weight: 800;
 }
 
@@ -642,6 +676,29 @@
   .analytics-geo-card .sr-map-viewport {
     max-inline-size: 60rem;
   }
+  /* Beside the map the panel is 286px: 12px of side padding leaves the
+     table 262px, and a FIXED layout keeps the four columns inside it — an
+     automatic layout summed the columns to 275px and clipped the SSA
+     figures at the panel edge (owner, 2026-09-06). */
+  .analytics-geo-card .sr-distribution-panel {
+    padding-inline: 0.75rem !important;
+  }
+  .analytics-geo-card .sr-distribution-table,
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
+    table-layout: fixed !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+  /* Nothing here can scroll sideways: the table is fixed at the panel's
+     width, so the "fit" wrapper's sideways scroll region is clipped, and the
+     vertical scrollbar that appears once the list passes its height cap
+     keeps a stable gutter instead of stealing width from a 100% table and
+     spilling it into a horizontal scrollbar (owner, 2026-09-06). */
+  .analytics-geo-card .sr-distribution-scroll,
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
+    overflow-x: clip !important;
+    scrollbar-gutter: stable;
+  }
 }
 
 @container analytics-dashboard (max-width: 51.99rem) {
@@ -764,8 +821,13 @@
 /* Mobile and tablet keep the geographic legend as one uninterrupted reading
    sequence: map first, the full distribution table immediately below, then
    the explanatory confidence note. The priority rail follows the complete
-   card instead of splitting that sequence. */
-@media (max-width: 64rem) {
+   card instead of splitting that sequence.
+
+   The bound is the side-by-side breakpoint (xl, 80rem), not 64rem: the panel
+   stacks under the map at every width below xl, and between 64rem and 80rem
+   -- a 10-inch tablet -- the stacked table was still sized to its columns,
+   267px inside an 829px panel, half the row empty (owner, 2026-09-05). */
+@media (max-width: 79.99rem) {
   .analytics-geo-card .sr-distribution-panel {
     margin-block-start: .25rem;
     padding: 1rem 0.5rem 0;
@@ -779,9 +841,26 @@
     scrollbar-gutter: auto;
   }
 
-  .analytics-geo-card .sr-distribution-scroll table {
-    inline-size: 100%;
+  /* The table fills the card. A nested scroll region was giving it a second,
+     narrower viewport inside the panel — the table measured 256px inside a
+     337px card and scrolled sideways with the whole width sitting unused
+     beside it (owner, 2026-09-05). There is room here; nothing needs to
+     scroll horizontally. */
+  .analytics-geo-card .sr-distribution-scroll table,
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region > table {
+    inline-size: 100% !important;
     min-inline-size: 0 !important;
+    table-layout: auto;
+  }
+
+  .analytics-geo-card .sr-distribution-scroll .edify-table-scroll-region {
+    overflow-x: visible !important;
+    overflow-y: visible !important;
+  }
+
+  /* The name column takes whatever the three figure columns leave. */
+  .analytics-geo-card .sr-distribution-col--name {
+    inline-size: auto;
   }
 
   .analytics-geo-card .sr-distribution-scroll :is(th, td) {
@@ -978,7 +1057,7 @@
   border-radius: var(--edify-radius-control);
   background: var(--edify-primary, var(--edify-accent));
   color: #fff;
-  font-size: .6875rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 750;
   white-space: nowrap;
 }
@@ -1313,7 +1392,7 @@
   inset-inline-start: 0;
   z-index: 1;
   max-inline-size: 17rem;
-  background: var(--edify-surface, #fff);
+  background: var(--edify-frozen-surface);
   color: var(--edify-text, #1e293b);
   box-shadow: 1px 0 0 var(--edify-border, #e2e8f0);
   white-space: normal;
@@ -1397,3 +1476,56 @@ main #impact-workspace .impact-group-pagination a {
     justify-content: stretch;
   }
 }
+
+/* The sub-region colour key: the row's tie to the choropleth. It was an 8px
+   dot, and a dot in front of a name reads as list punctuation rather than a
+   legend (owner, 2026-09-05: "the dot before the sub-region name looks
+   weird"). A short rounded rule at the row's cap height carries the same
+   colour and reads as a key beside the name instead of a mark inside it. */
+.sr-distribution-key {
+  inline-size: .1875rem;
+  block-size: .8125rem;
+  border-radius: 999px;
+  background-color: var(--sr-key, var(--edify-border));
+  align-self: center;
+}
+
+/* A chart that cannot draw says so where a reader can see it. The status
+   was screen-reader-only, so when the library was missing on the Impact
+   page a sighted reader got a blank 260px box (owner, 2026-09-05). Empty
+   while the chart is fine, so it costs nothing on the normal path. */
+.analytics-chart-status {
+  display: grid;
+  place-items: center;
+  min-block-size: 8rem;
+  padding: 1rem;
+  border: 1px dashed var(--edify-border);
+  border-radius: var(--edify-radius-control);
+  text-align: center;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+.analytics-chart-status:empty {
+  display: none;
+}
+
+/* The toolbar a tab carries when it has actions of its own (SSA's Add SSA
+   Score and Upload Center) or an engine state. */
+.analytics-panel-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: .5rem;
+}
+
+/* The IA dashboard body hides its desktop sections on phones because the IA
+   PAGE puts a role home in their place. Inside the Analytics workspace there
+   is no role home, so the same body shows everything. */
+@media (max-width: 63.999rem) {
+  .analytics-ia-panel .mobile-home-hide {
+    display: block !important;
+  }
+}
+

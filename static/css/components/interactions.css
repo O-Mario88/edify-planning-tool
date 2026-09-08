@@ -256,11 +256,57 @@ main :is(
      a visible white seam under fixed-height legacy tabs and made the active
      fill look unfinished. */
   padding: 0 !important;
-  min-block-size: 0 !important;
+  /* ONE rail height, everywhere (2026-09-05).
+   *
+   * The rail's container was already one design — same surface, border,
+   * radius and zero gap on every family — but its HEIGHT was `auto`, so the
+   * tallest segment decided it and each family landed somewhere different: a
+   * sweep of the eight tab surfaces measured 32px on Core Schools and My
+   * Plan, 34px on Messages, 36px on Analytics, Team Targets and Special
+   * Projects. Nothing chose those numbers; they fell out of which padding or
+   * density override happened to win inside each rail.
+   *
+   * 32px is the platform's control height — the action button, the table row
+   * and the row-action trigger all close there — so the rail closes there
+   * too. The segments keep `align-self: stretch` below and fill it exactly,
+   * which is what keeps the active fill flush with the rail border. */
+  min-block-size: 2rem !important;
+  /* The rail closes at 32px on one row and GROWS when its segments wrap
+     (platform.css wraps every rail at desktop widths since 2026-09-06, so
+     fourteen Analytics sections take two rows at 1440px). A fixed 2rem
+     here clipped the second row out of sight. Each row is a 30px segment
+     inside the rail's 1px borders, so one row still measures 32px. */
   block-size: auto !important;
   height: auto !important;
   border-radius: var(--edify-radius-sm) !important;
   background: var(--edify-surface) !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :is(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) {
+  block-size: calc(2rem - 2px) !important;
+  min-block-size: calc(2rem - 2px) !important;
+  max-block-size: calc(2rem - 2px) !important;
 }
 
 main :is(
@@ -871,4 +917,208 @@ main :is(a, button):is(.btn, [class*="btn-"], .edify-primary-solid, [class*="rou
       color var(--edify-press-out),
       box-shadow var(--edify-press-out);
   }
+}
+
+/* ─── THE RAIL'S "MORE" MENU (2026-09-06) ───────────────────────────────
+   A rail is one row. The tabs that do not fit sit in a menu behind a "More"
+   segment at the rail's end — the priority navigation pattern — so nothing
+   wraps and nothing scrolls. micro-ux.js fitRails() moves them there and
+   back as the width changes; the active tab is never moved. The menu is
+   fixed-positioned by the script so the rail can clip its own overflow. */
+main .edify-rail-more {
+  display: flex;
+  flex: 0 0 auto;
+  align-self: stretch;
+  margin-inline-start: auto;
+}
+main .edify-rail-more[hidden] { display: none !important; }
+main .edify-rail-more__toggle {
+  list-style: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  block-size: calc(2rem - 2px);
+  padding-inline: 0.875rem;
+  border-inline-start: 1px solid var(--edify-border);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size, 13px);
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+}
+main .edify-rail-more__toggle::-webkit-details-marker { display: none; }
+main .edify-rail-more__toggle::after {
+  content: "";
+  inline-size: 0.4rem;
+  block-size: 0.4rem;
+  margin-block-start: -0.2rem;
+  border-inline-end: 1.5px solid currentColor;
+  border-block-end: 1.5px solid currentColor;
+  transform: rotate(45deg);
+}
+main .edify-rail-more[open] > .edify-rail-more__toggle { color: var(--edify-primary); background: var(--edify-surface-muted); }
+main .edify-rail-more__toggle:hover { color: var(--edify-primary); }
+main .edify-rail-more__toggle:focus-visible { outline: 2px solid var(--edify-primary); outline-offset: -2px; }
+main .edify-rail-more__count {
+  min-inline-size: 1.25rem;
+  padding-inline: 0.375rem;
+  border-radius: 999px;
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.25rem;
+  text-align: center;
+}
+main .edify-rail-more__menu {
+  position: fixed;
+  z-index: 70;
+  display: grid;
+  gap: 1px;
+  min-inline-size: 14rem;
+  max-inline-size: 22rem;
+  max-block-size: min(60vh, 28rem);
+  overflow: auto;
+  padding: 0.25rem;
+  background: var(--edify-surface);
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-sm);
+  box-shadow: 0 12px 32px rgba(15, 23, 42, 0.14);
+}
+main .edify-rail-more__menu > .edify-rail-more__item {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 0.5rem;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  block-size: 2rem !important;
+  min-block-size: 2rem !important;
+  max-block-size: 2rem !important;
+  padding-inline: 0.75rem !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: var(--edify-text) !important;
+  font-size: var(--edify-text-label-size, 13px) !important;
+  font-weight: 500 !important;
+  text-align: start !important;
+  white-space: nowrap !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+main .edify-rail-more__menu > .edify-rail-more__item:hover,
+main .edify-rail-more__menu > .edify-rail-more__item:focus-visible {
+  background: var(--edify-surface-muted) !important;
+  color: var(--edify-primary) !important;
+  outline: none;
+}
+main .edify-rail-more__menu > .edify-rail-more__item:is(.is-active, .active, [aria-selected="true"], [aria-current], [aria-pressed="true"]) {
+  background: var(--edify-primary) !important;
+  color: #fff !important;
+  font-weight: 600 !important;
+}
+
+/* ── A rail is a track of equal chips, not a filled bar ─────────────────────
+   The rules above round the first segment's outer corners and the last one's
+   and square everything between: exactly right when the segments fill their
+   rail and their ends ARE its ends.
+
+   From 48rem up they no longer do. Tabs size to their labels now
+   (platform.css), because sharing the spare width drew two Batch Payments
+   tabs at 530px and 588px and four /staff tabs between 231px and 309px. That
+   leaves every rail a track with its tabs at the left — and the old rounding
+   then puts a rounded outer corner in the middle of the bar with a square
+   edge against its neighbour, so two tabs of identical width read as two
+   different shapes (owner, 2026-09-07).
+
+   Inside a track every chip is the same: one radius on all four corners, a
+   small inset from the track, and no divider — a divider separates parts of a
+   filled bar, not chips that already stand apart.
+
+   Phones keep the filled bar: there the tabs DO share the rail, because that
+   is what makes them thumb-sized.
+   ────────────────────────────────────────────────────────────────────────── */
+@media (min-width: 48rem) {
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) {
+  padding: 3px !important;
+  gap: 3px !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > *,
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :first-child,
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > :last-child {
+  border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  border-start-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  border-end-start-radius: calc(var(--edify-radius-sm) - 2px) !important;
+  border-end-end-radius: calc(var(--edify-radius-sm) - 2px) !important;
+}
+
+main :is(
+  [role="tablist"],
+  .edify-tab-container,
+  [data-edify-tablist],
+  .messages-inbox-tabs,
+  .pto-tabs,
+  .sp-period-tabs,
+  .spp-tabs,
+  .tt-segmented,
+  .oversight-entity-tabs,
+  .edify-section-nav__clusters,
+  .edify-section-nav__inner
+) > * + * {
+  border-inline-start-color: transparent !important;
+}
 }

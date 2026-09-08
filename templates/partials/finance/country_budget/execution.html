@@ -17,38 +17,42 @@ says so rather than showing a zero that reads as a fact.
     {% endif %}
   </div>
 
-  <div class="grid grid-cols-2 gap-2">
-    <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5">
-      <p class="edify-kpi-label edify-text-caption text-slate-500">Approved</p>
-      <p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ reconciliation.approved_fmt }}</p>
+  {% comment %}The four money stages read as one reconciliation, so they are
+  one panel with hairlines rather than four tinted boxes (owner, 2026-09-07).
+  Variance keeps its own panel below because it is a conclusion about the four,
+  not a fifth one — and it is the only figure here that can be bad.{% endcomment %}
+  <div class="edify-metric-panel grid grid-cols-2">
+    <div class="edify-metric">
+      <p class="edify-metric__label">Approved</p>
+      <p class="edify-metric__value">{{ reconciliation.approved_fmt }}</p>
     </div>
-    <div class="rounded-surface bg-slate-50 border border-slate-100 p-2.5">
-      <p class="edify-kpi-label edify-text-caption text-slate-500">Committed</p>
-      <p class="text-[13px] font-bold text-slate-800 tabular-nums mt-0.5">{{ reconciliation.committed_fmt }}</p>
+    <div class="edify-metric">
+      <p class="edify-metric__label">Committed</p>
+      <p class="edify-metric__value">{{ reconciliation.committed_fmt }}</p>
     </div>
-    <div class="rounded-surface edify-primary-soft border edify-primary-border p-2.5">
-      <p class="edify-kpi-label edify-text-caption edify-primary-text">Disbursed</p>
-      <p class="text-[13px] font-bold edify-primary-text tabular-nums mt-0.5">{{ reconciliation.disbursed_fmt }}</p>
-      <p class="edify-text-caption font-semibold edify-primary-text">{{ reconciliation.utilisationPct }}% of approved</p>
+    <div class="edify-metric" data-tone="info">
+      <p class="edify-metric__label">Disbursed</p>
+      <p class="edify-metric__value">{{ reconciliation.disbursed_fmt }}</p>
+      <p class="edify-metric__meta">{{ reconciliation.utilisationPct }}% of approved</p>
     </div>
-    <div class="rounded-surface bg-emerald-50 border border-emerald-100 p-2.5">
-      <p class="edify-kpi-label edify-text-caption text-emerald-600">Accounted</p>
-      <p class="text-[13px] font-bold text-emerald-800 tabular-nums mt-0.5">{{ reconciliation.accounted_fmt }}</p>
-      {% if reconciliation.returnedTotal %}<p class="edify-text-caption font-semibold text-emerald-600">{{ reconciliation.returned_fmt }} returned</p>{% endif %}
+    <div class="edify-metric" data-tone="success">
+      <p class="edify-metric__label">Accounted</p>
+      <p class="edify-metric__value">{{ reconciliation.accounted_fmt }}</p>
+      {% if reconciliation.returnedTotal %}<p class="edify-metric__meta">{{ reconciliation.returned_fmt }} returned</p>{% endif %}
     </div>
   </div>
 
-  <div class="mt-2.5 rounded-surface p-2.5 border {% if reconciliation.isOverspend %}bg-rose-50 border-rose-100{% else %}bg-slate-50 border-slate-100{% endif %}">
-    <p class="edify-kpi-label edify-text-caption {% if reconciliation.isOverspend %}text-rose-600{% else %}text-slate-500{% endif %}">Variance vs approved</p>
-    <p class="text-[13px] font-bold tabular-nums mt-0.5 {% if reconciliation.isOverspend %}text-rose-800{% else %}text-slate-800{% endif %}">
-      {{ reconciliation.variance_fmt }} {{ reconciliation.variance_label }}
-    </p>
+  <div class="edify-metric-panel mt-2.5">
+    <div class="edify-metric" {% if reconciliation.isOverspend %}data-tone="danger"{% endif %}>
+      <p class="edify-metric__label">Variance vs approved</p>
+      <p class="edify-metric__value">{{ reconciliation.variance_fmt }} <span class="edify-metric__unit">{{ reconciliation.variance_label }}</span></p>
+    </div>
   </div>
 
   {% if reconciliation.unattributedCount %}
-  <div class="mt-2 rounded-surface bg-amber-50 border border-amber-100 p-2.5">
-    <p class="edify-text-caption font-bold text-amber-800">{{ reconciliation.unattributed_fmt }} moved this month could not be attributed to a country</p>
-    <p class="edify-text-caption font-semibold text-amber-700 mt-0.5">{{ reconciliation.unattributedCount }} advance{{ reconciliation.unattributedCount|pluralize }} whose owner has no country recorded. Excluded from the figures above — shown here so it is not silently lost.</p>
+  <div class="edify-note mt-2" data-tone="warning">
+    <p class="edify-note__title">{{ reconciliation.unattributed_fmt }} moved this month could not be attributed to a country</p>
+    <p class="edify-note__body">{{ reconciliation.unattributedCount }} advance{{ reconciliation.unattributedCount|pluralize }} whose owner has no country recorded. Excluded from the figures above — shown here so it is not silently lost.</p>
   </div>
   {% endif %}
 </div>
@@ -108,8 +112,8 @@ was invisible to the people accountable for it.
     <p class="edify-text-caption font-semibold text-slate-500 mt-0.5 tabular-nums">{{ forecast.daysRemaining }} day{{ forecast.daysRemaining|pluralize }} remaining</p>
   </div>
   {% else %}
-  <div class="mt-2 rounded-surface bg-slate-50 border border-slate-100 p-2.5">
-    <p class="edify-text-caption font-semibold text-slate-500">Too early in the quarter to project a run rate — a projection before day {{ forecast.minForecastDays }} multiplies a single payment into a false alarm. Spend to date is shown above.</p>
+  <div class="edify-note mt-2">
+    <p class="edify-note__body">Too early in the quarter to project a run rate — a projection before day {{ forecast.minForecastDays }} multiplies a single payment into a false alarm. Spend to date is shown above.</p>
   </div>
   {% endif %}
 </div>

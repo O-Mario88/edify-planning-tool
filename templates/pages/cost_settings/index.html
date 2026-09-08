@@ -13,7 +13,34 @@
 <h1 class="edify-page-title edify-page-header__title">Cost Catalogue</h1>
 <p class="edify-page-header__description">FY{{ fy }} approved cost items for activity budgeting</p>
 </div>
+{% if can_manage_rates %}
+{% comment %}
+Adding a cost is a button, in the header where every page keeps its action
+(owner, 2026-09-07). It was a `<summary>` that unfolded a four-column form
+above the register — a disclosure triangle reading as a heading, and a form
+that pushed the whole table down the page when it opened.
+{% endcomment %}
+<div class="edify-page-header__controls">
+<button
+type="button"
+hx-get="/cost-settings/add?fy={{ selected_fy }}"
+hx-target="#drawer-container"
+hx-swap="innerHTML"
+class="btn btn-primary h-8"
+>Add new cost</button>
 </div>
+{% endif %}
+</div>
+
+<form method="get" action="/cost-settings" class="platform-filter-bar" data-component="filter-toolbar" aria-label="Fiscal year">
+  <label class="block platform-filter-compact">
+    <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Fiscal year</span>
+    <select id="cost-settings-fy" name="fy" class="mt-1 w-full h-9 px-3 rounded-control border border-slate-200 bg-slate-50 text-[12px] font-semibold focus:outline-none">
+{% for option in fy_options %}<option value="{{ option }}" {% if option|stringformat:"s" == selected_fy|stringformat:"s" %}selected{% endif %}>FY{{ option }}</option>{% endfor %}
+    </select>
+  </label>
+  <button type="submit" class="self-end h-8 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show year</button>
+</form>
 
 <section class="grid gap-3 lg:grid-cols-2" aria-label="Cost governance layers">
   <article class="edify-surface rounded-surface border border-[var(--edify-border)] p-4 shadow-sm">
@@ -87,7 +114,7 @@
 {% if can_initialize %}
 <form method="post" action="/cost-settings/initialize-default" class="mt-4">
 {% csrf_token %}
-<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold">Initialize Default Catalogue</button>
+<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid edify-primary-hover text-white text-[12px] font-bold">Initialize Default Catalogue</button>
 </form>
 {% endif %}
 </div>

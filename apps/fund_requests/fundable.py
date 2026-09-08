@@ -68,6 +68,11 @@ def fundable_lines(qs):
             activity__scheduled_date__isnull=False,
             activity__cost_missing=False,
         )
+        # A line worth nothing funds nothing: the 2026-09-06 catalogue's
+        # per-activity rates default to 0 until the Country Director sets
+        # them, and a zero-shilling advance was one more advance to account
+        # for (it collided on the NetSuite id).
+        .exclude(amount=0)
         .exclude(activity__status__in=NON_FUNDABLE_ACTIVITY_STATUSES)
         .exclude(activity__delivery_type="partner")
         .exclude(vendor_direct_filter())

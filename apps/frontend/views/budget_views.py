@@ -1,9 +1,12 @@
 from apps.core.metrics import render_precomputed_metric_item
+import logging
+
 from django.utils import timezone
 from django.shortcuts import render, redirect
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.metrics import format_ugx_compact
 from apps.core.redirects import local_redirect
+from apps.core.permissions import RolePermissionService
 from apps.core.permissions import require_page_permission
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
@@ -31,6 +34,11 @@ from apps.core.fy import (
     get_quarter_for_date,
 )
 from apps.core.scoping import resolve_user_scope
+
+
+from apps.accounts.hr_dashboard_service import ROLE_LABELS as _ROLE_LABELS  # noqa: E402
+
+logger = logging.getLogger(__name__)
 
 
 def parse_date(d_str: str) -> date:
@@ -130,6 +138,8 @@ def budget_view(request):
         workspace_kind="planned",
         workspace_base_url="/budget",
         selected_district=request.GET.get("district", ""),
+        # The header names the person's role; "CountryDirector" is a code.
+        role=_ROLE_LABELS.get(ctx.get("role") or role, ctx.get("role") or role),
     )
     if is_country:
         ctx["districts"] = District.objects.order_by("name")
@@ -366,6 +376,75 @@ def _weekly_status_label(weekly_request) -> str:
     return weekly_status_buckets([weekly_request]).get(weekly_request.id, "")
 
 
+WEEKLY_STAGE_LABELS = (
+    "Weekly plan",
+    "Advance request",
+    "Supervisor approval",
+    "Accountant disbursement",
+    "Bank-message confirmation",
+    "Accountability",
+)
+
+
+def _weekly_stage(wfr):
+    """(index, state) of the stage a weekly request has reached, for the
+    stepper. A returned request sits at the stage that returned it, marked so;
+    no request at all means the week is still being planned."""
+    if wfr is None:
+        return 0, "current"
+    status = wfr.status
+    if status in ("pending_responsible_confirmation", "not_requested"):
+        return 1, "current"
+    if status in ("submitted_to_pl", "submitted_to_cd"):
+        return 2, "current"
+    if status in ("returned_by_pl", "returned_by_cd"):
+        return 2, "returned"
+    if status == "confirmed_for_advance":
+        return 3, "current"
+    if status == "returned_by_accountant":
+        return 3, "returned"
+    if status == "disbursed" and not wfr.receipt_confirmed_at:
+        return 4, "current"
+    if status == "disbursed":
+        return 5, "current"
+    if status == "accounted":
+        return 5, "done"
+    return 1, "current"
+
+
+def _self_heal_weekly_request(user, activities_qs, week_start, week_end):
+    """Scheduling an activity creates its weekly request, so a week with the
+    viewer's own scheduled activities and no request is a sync fault, not a
+    state. Repair it on read rather than showing a "sync" button: the officer
+    should never be asked to recover the platform's own bookkeeping. Only the
+    viewer's own week is repaired -- a manager reading a team member's week
+    is not the owner of that request."""
+    from apps.fund_requests.models import WeeklyFundRequest
+
+    staff_profile_id = getattr(user, "staff_profile_id", None)
+    if not staff_profile_id:
+        return
+    if WeeklyFundRequest.objects.filter(
+        responsible_user=user.user_id, week_start_date=week_start
+    ).exists():
+        return
+    own_scheduled = (
+        activities_qs.filter(
+            responsible_staff_id=staff_profile_id,
+            scheduled_date__date__gte=week_start,
+            scheduled_date__date__lte=week_end,
+        )
+        .exclude(status="cancelled")
+        .exists()
+    )
+    if not own_scheduled:
+        return
+    try:
+        generate_weekly_fund_request(user.user_id, week_start.isoformat())
+    except Exception:  # noqa: BLE001 - the page must still render
+        logger.exception("weekly request self-heal failed for %s", week_start)
+
+
 def _build_fund_requests_context(request):
     """The full Fund Requests page context (weekly card, monthly preview,
     KPIs, insights, breakdown). Shared by the GET page render and by the
@@ -439,8 +518,19 @@ def _build_fund_requests_context(request):
     # Open on the newest scheduled work the user can see.  The old hard-coded
     # April default made a newly scheduled July activity look as though no
     # weekly request or budget existed until the user manually changed filters.
+    # The page opens on today. The previous rule ("newest scheduled work the
+    # user can see") made a field officer open in September land on April,
+    # because April held the last scheduled activity -- and then told them the
+    # monthly submission was 132 days overdue. Today is the only default that
+    # cannot be stale; the latest-activity rule survives only for a past FY,
+    # where "today" is not inside the year being viewed.
+    _today = timezone.localdate()
+    _current_fy = str(_today.year + 1 if _today.month >= 10 else _today.year)
     if month_name:
-        month_num = MONTH_MAP.get(month_name.lower(), date.today().month)
+        month_num = MONTH_MAP.get(month_name.lower(), _today.month)
+    elif str(fy) == _current_fy:
+        month_num = _today.month
+        month_name = calendar.month_name[month_num]
     else:
         latest_for_month = (
             activities_qs.filter(fy=fy, scheduled_date__isnull=False)
@@ -476,9 +566,19 @@ def _build_fund_requests_context(request):
         except ValueError:
             pass
 
+    if not selected_week_start and (
+        str(fy) == _current_fy and month_num == _today.month
+    ):
+        # Viewing the current month: open on this week, even when it is empty.
+        # An empty current week with a clear "schedule in My Plan" prompt is
+        # honest; a full week from months ago is not.
+        selected_week_start = _today - timedelta(days=_today.weekday())
     if not selected_week_start:
         latest_act = (
-            activities_qs.filter(scheduled_date__isnull=False)
+            activities_qs.filter(
+                scheduled_date__isnull=False,
+                scheduled_date__month=month_num,
+            )
             .order_by("-scheduled_date")
             .first()
         )
@@ -657,9 +757,13 @@ def _build_fund_requests_context(request):
     ]
 
     # 4. Weekly Fund Request details
+    _self_heal_weekly_request(
+        user, activities_qs, selected_week_start, selected_week_end
+    )
     active_wfr = wfr_qs.filter(week_start_date=selected_week_start).first()
     weekly_lines = []
     weekly_total = 0
+    accountability_activity_id = None
     wfr_status = "No Request"
     viewer_can_approve_wfr = False
     if active_wfr:
@@ -683,6 +787,7 @@ def _build_fund_requests_context(request):
         )
         wfr_status = active_wfr.status
         weekly_total = active_wfr.total_amount
+        accountability_activity_id = None
         for line in active_wfr.lines.select_related("activity_budget_line__activity"):
             adv = (
                 line.activity_budget_line.advance_requests.first()
@@ -706,6 +811,14 @@ def _build_fund_requests_context(request):
                 "reimbursed": "Reimbursed",
             }
             status_label = status_labels.get(status_raw, "Auto-calculated")
+            if (
+                accountability_activity_id is None
+                and adv is not None
+                and adv.status == "disbursed"
+                and not adv.accountability_netsuite_id
+                and line.activity_budget_line.activity_id
+            ):
+                accountability_activity_id = line.activity_budget_line.activity_id
 
             act = (
                 line.activity_budget_line.activity
@@ -1165,10 +1278,14 @@ def _build_fund_requests_context(request):
             .exists()
         )
         if has_scheduled_this_week:
-            recommended_action = "Sync this week's request"
-            recommended_desc = "Activities are scheduled but the request hasn't synced yet — this should be automatic; use this to recover."
-            can_take_action = True
-            action_type = "generate"
+            # The page already tried to repair the viewer's own week on read
+            # (_self_heal_weekly_request). Reaching here means the scheduled
+            # work belongs to someone else in scope, or the repair failed and
+            # was logged; either way it is an operations matter, not a button.
+            recommended_action = "This week's request could not be prepared"
+            recommended_desc = "Activities are scheduled but no advance request exists for them. The platform normally creates it automatically; if this persists, report it from Help."
+            can_take_action = False
+            action_type = "none"
         else:
             recommended_action = "No immediate action pending"
             recommended_desc = "No activities scheduled for this week yet."
@@ -1190,6 +1307,12 @@ def _build_fund_requests_context(request):
         "recommended_desc": recommended_desc,
         "can_take_action": can_take_action,
         "action_type": action_type,
+        # A link the viewer cannot open is a dead button: gate the two
+        # cross-page links on the same page permissions their routes enforce.
+        "can_prepare_monthly": RolePermissionService.can_view_page(
+            request.user, "monthly_request"
+        ),
+        "can_view_report": RolePermissionService.can_view_page(request.user, "reports"),
     }
 
     # 8. Period Breakdown
@@ -1332,6 +1455,10 @@ def _build_fund_requests_context(request):
         # owner-confirmable request may be submitted; anything already in the
         # approval chain says so instead of offering the button again.
         "active_wfr_id": getattr(active_wfr, "id", None),
+        # "Start Accountability" opens the advance that needs it, not My Plan.
+        "accountability_activity_id": (
+            accountability_activity_id if active_wfr else None
+        ),
         "active_wfr_can_submit": getattr(active_wfr, "status", None)
         == "pending_responsible_confirmation",
         # WeeklyFundRequest.status carries no `choices`, so there is no
@@ -1340,6 +1467,9 @@ def _build_fund_requests_context(request):
         # Dashboard and the Accountant home read -- so this page cannot
         # describe a request differently from the pages that act on it.
         "active_wfr_status_label": _weekly_status_label(active_wfr),
+        "weekly_stage_labels": WEEKLY_STAGE_LABELS,
+        "weekly_stage": _weekly_stage(active_wfr)[0],
+        "weekly_stage_state": _weekly_stage(active_wfr)[1],
         "period_tab_query": _period_tab_query,
         "viewer_is_wfr_owner": bool(
             active_wfr and active_wfr.responsible_user == user.user_id
@@ -1539,6 +1669,29 @@ def weekly_fund_request_receipt_action(request, request_id):
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/fund_requests/root.html", context)
     return render(request, "pages/fund_requests/weekly.html", context)
+
+
+@require_page_permission("fund_requests")
+def weekly_fund_request_not_requested_action(request, request_id):
+    """The owner declines an advance for the week (work goes ahead without
+    money moving). The status existed and the panel accepted it, but nothing
+    on the page could produce it -- only the API could."""
+    from apps.fund_requests.weekly_service import not_requested
+
+    action_error = action_ok = None
+    if request.method == "POST":
+        try:
+            not_requested(request_id, request.user)
+            action_ok = "No advance will be requested for this week."
+        except Exception as e:  # noqa: BLE001 - shown to the user in place
+            action_error = str(e)
+
+    context = _build_fund_requests_context(request)
+    context["action_error"] = action_error
+    context["action_ok"] = action_ok
+    if request.headers.get("HX-Request") == "true":
+        return render(request, "partials/fund_requests/root.html", context)
+    return local_redirect(f"/fund-requests/weekly?{context['weekly_action_query']}")
 
 
 @require_page_permission("fund_requests")

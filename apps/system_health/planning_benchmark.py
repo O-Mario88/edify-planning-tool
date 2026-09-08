@@ -63,6 +63,7 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
             "approved activity or training",
             "completed session being followed up, when applicable",
             "partner visitor name",
+            "why you need to visit, when the school is somebody else's",
         ),
         why_a_human=(
             "Who does the work and when is an allocation decision against real "
@@ -71,7 +72,10 @@ HUMAN_TOUCHPOINTS: tuple[Touchpoint, ...] = (
             "actually invited. The organiser also chooses which approved "
             "priority activity will be delivered and, for a follow-up, which "
             "completed attended session is being continued; the platform "
-            "derives totals and inherited intervention from those facts."
+            "derives totals and inherited intervention from those facts. A "
+            "country role asking to visit a school in another person's "
+            "portfolio is the one person who can say why they, rather than "
+            "the owner, must be there (apps.planning.visit_requests)."
         ),
     ),
     Touchpoint(
@@ -123,6 +127,14 @@ class Derived:
 #: it, so a claim here is checkable rather than aspirational.
 PLATFORM_DERIVED: tuple[Derived, ...] = (
     Derived("target intervention", "apps.ssa.services.weakest_interventions_for"),
+    Derived(
+        "owner whose approval a visit needs",
+        "apps.planning.visit_requests.approval_owner_for",
+    ),
+    Derived(
+        "requester as the person going",
+        "apps.activities.services.create (visit request path)",
+    ),
     Derived("SSA record in force", "apps.ssa.services.latest_applicable_record"),
     Derived("activity type", "derived from the targeted intervention"),
     Derived("entitlement slot", "client 1+1 / core 9-slot package rules"),
@@ -253,6 +265,9 @@ SANCTIONED_INPUTS: frozenset[str] = frozenset(
         # but it is a sanctioned input either way, and listing both names keeps
         # the alias table honest.
         "activity_purpose_text",
+        # Why a request-only role needs to be at a school somebody else owns.
+        # Asked only in that case, and read by the owner who decides.
+        "visit_justification",
         "focus_intervention",
         "ssa_collection_expected",
         "reason",

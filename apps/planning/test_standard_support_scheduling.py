@@ -539,11 +539,11 @@ class ParticipantModeTest(StandardSupportBase):
         """§11 is a rule about the DRAWER, which has no total field.
 
         Discarding a total an API client did state looks stricter and costs
-        money: `costing._participants_of` substitutes
-        DEFAULT_TRAINING_PARTICIPANTS (25) when nothing reaches it, so
-        throwing away a stated 15 prices twenty-five people. A number
-        somebody stated beats a hardcoded default; a number DERIVED from
-        cluster membership beats both, and that is asserted above.
+        money: the engine demands a participant count for every group session
+        and flags the activity cost-missing without one, so throwing away a
+        stated 15 blocks the funding request instead of pricing it. A number
+        somebody stated beats no number; a number DERIVED from cluster
+        membership beats both, and that is asserted above.
         """
         result = self.schedule(
             clusterId=self.cluster.id,
@@ -803,7 +803,7 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
         from apps.budget.costing import cost_for_activity
 
         rates = {
-            "group_training_participant_meal_cost_per_head": 12000,
+            "tot_trainings_meals": 12000,
             "group_training_facilitation_fee": 150000,
             "group_training_venue_cost": 200000,
         }
@@ -812,9 +812,12 @@ class GroupTrainingUnderAProjectTest(StandardSupportBase):
         some = self.train(projectId=self.literacy.id, schoolsInvited=3)
         activity = Activity.objects.get(id=some["id"])
 
+        # The headcount prices the session that feeds people: a TOT training
+        # (owner's catalogue, 2026-09-06).
         priced = cost_for_activity(
             {
-                "activityType": "cluster_training",
+                "activityType": "training",
+                "costingKind": "tot",
                 "expectedParticipants": activity.expected_participants,
             },
             rates,

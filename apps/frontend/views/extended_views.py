@@ -14,6 +14,7 @@ from apps.core.activity_types import (
 )
 from apps.core.enums import ActivityType
 import calendar
+import csv
 import re
 from collections import defaultdict
 from urllib.parse import urlencode
@@ -395,7 +396,11 @@ def calendar_view(request):
             status__in=_CALENDAR_STATUS_FAMILIES["cancelled"]
         )
     else:
-        activities = activities.exclude(status__in=["cancelled", "rejected"])
+        # A visit still waiting for its owner's approval is not on anyone's
+        # calendar yet — it becomes scheduled the moment it is approved.
+        activities = activities.exclude(
+            status__in=["cancelled", "rejected", "awaiting_owner_approval"]
+        )
         if selected_status:
             activities = activities.filter(
                 status__in=_CALENDAR_STATUS_FAMILIES[selected_status]
@@ -885,27 +890,38 @@ def districts_list_view(request):
     """Districts list — geographic view."""
     search = request.GET.get("q", "").strip()
     fy = get_operational_fy()
-    districts = District.objects.all().order_by("name")
+    # One query for every district: two per district (a school count and an
+    # SSA average) made this page 417 queries at 136 districts (2026-09-06).
+    districts = (
+        District.objects.select_related("region")
+        .annotate(
+            school_count=Count(
+                "schools", filter=Q(schools__deleted_at__isnull=True), distinct=True
+            ),
+            avg_ssa=Avg(
+                "schools__ssa_records__average_score",
+                filter=Q(
+                    schools__ssa_records__fy=fy,
+                    schools__ssa_records__deleted_at__isnull=True,
+                    schools__deleted_at__isnull=True,
+                ),
+            ),
+        )
+        .order_by("name")
+    )
     if search:
         districts = districts.filter(name__icontains=search)
 
-    district_data = []
-    for d in districts:
-        schools = School.objects.filter(district=d, deleted_at__isnull=True)
-        school_count = schools.count()
-        avg_ssa = SsaRecord.objects.filter(
-            school__district=d, fy=fy, deleted_at__isnull=True
-        ).aggregate(avg=Avg("average_score"))["avg"]
-
-        district_data.append(
-            {
-                "id": d.id,
-                "name": d.name,
-                "region": d.region.name if d.region else "—",
-                "school_count": school_count,
-                "avg_ssa": round(avg_ssa, 2) if avg_ssa else None,
-            }
-        )
+    district_data = [
+        {
+            "id": d.id,
+            "name": d.name,
+            "region": d.region.name if d.region else "—",
+            "school_count": d.school_count,
+            "avg_ssa": round(d.avg_ssa, 2) if d.avg_ssa else None,
+        }
+        for d in districts
+    ]
 
     context = {
         "districts": district_data,
@@ -1049,13 +1065,22 @@ def reports_view(request):
     requested_fy = request.GET.get("fy")
     fy = requested_fy if requested_fy in fy_choices else operational_fy
 
-    total_schools = active_schools().count()
-    total_activities = Activity.objects.filter(deleted_at__isnull=True).count()
-    completed = Activity.objects.filter(
-        status__in=COMPLETED_WORK_STATUSES, deleted_at__isnull=True
-    ).count()
+    from apps.core.scoping import (
+        activity_country_q,
+        resolve_user_scope,
+        scoped_school_queryset,
+    )
 
-    activities_fy = Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+    # The report is the country's, not the deployment's.
+    scope = resolve_user_scope(request.user)
+    total_schools = scoped_school_queryset(scope, active_schools()).count()
+    in_country = Activity.objects.filter(deleted_at__isnull=True).filter(
+        activity_country_q(scope)
+    )
+    total_activities = in_country.count()
+    completed = in_country.filter(status__in=COMPLETED_WORK_STATUSES).count()
+
+    activities_fy = in_country.filter(fy=fy)
     today = date.today()
     current_quarter = get_quarter_for_date(today) if fy == operational_fy else None
     quarter_order = {q[1]: q[3] for q in _REPORTS_QUARTER_PERIODS}
@@ -1279,6 +1304,14 @@ def reports_view(request):
         if total_activities > 0
         else 0,
         "periods": periods,
+        # The trend chart reads the periods as plain rows (2026-09-05).
+        "reports_trend_payload": [
+            {
+                "label": p["chevron_label"],
+                "pct": p["pct"] if p.get("has_target") else None,
+            }
+            for p in periods
+        ],
         "core_cards": core_cards,
         "core_kpi_items": core_kpi_items,
         "matrix_rows": matrix_rows,
@@ -1288,23 +1321,56 @@ def reports_view(request):
         "donut_off_track": donut_off_track,
         "priorities": priorities,
     }
-    return render(request, "pages/reports/index.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/reports.html",
+        context,
+        section_key="reports",
+        panel_title="Reports & Performance",
+        frame={
+            "question": (
+                "Are verified results accumulating fast enough to meet the "
+                "approved reporting targets?"
+            ),
+            "evidence": "Verified delivery against approved FY targets",
+            "freshness": "Selected financial year",
+            "confidence": "Official reporting basis",
+        },
+    )
 
 
 @require_page_permission("coverage")
 def coverage_view(request):
-    """Coverage overview — CD/IA."""
-    total_schools = active_schools().count()
-    visited = (
+    """Coverage overview — CD/IA.
+
+    Reach is a fiscal-year question: a school visited two years ago has not
+    been reached this year. The page therefore honours ``?fy=`` (defaulting
+    to the operational year) and breaks reach down by district, which is the
+    unit a Country Director actually redeploys people across.
+    """
+    fy_choices = fy_options()
+    requested_fy = (request.GET.get("fy") or "").strip()
+    fy = requested_fy if requested_fy in fy_choices else get_operational_fy()
+
+    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+
+    # The CD's country, not the deployment.
+    schools = scoped_school_queryset(resolve_user_scope(request.user), active_schools())
+    total_schools = schools.count()
+    visited_ids = set(
         Activity.objects.filter(
             activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
             status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
+            fy=fy,
+            school_id__in=schools.values("id"),
         )
-        .values("school_id")
+        .values_list("school_id", flat=True)
         .distinct()
-        .count()
     )
+    visited = len(visited_ids)
 
     # School.cluster_id is the canonical cluster membership source. Build the
     # counts in one aggregate query instead of reading the legacy assignment
@@ -1312,8 +1378,7 @@ def coverage_view(request):
     clusters = list(Cluster.objects.filter(deleted_at__isnull=True).order_by("name"))
     school_counts = {
         row["cluster_id"]: row["count"]
-        for row in active_schools()
-        .exclude(cluster_id__isnull=True)
+        for row in schools.exclude(cluster_id__isnull=True)
         .exclude(cluster_id="")
         .values("cluster_id")
         .annotate(count=Count("id"))
@@ -1321,12 +1386,31 @@ def coverage_view(request):
     for cluster in clusters:
         cluster.school_count = school_counts.get(cluster.id, 0)
 
+    districts: dict = {}
+    for school_id, district_name in schools.values_list("id", "district__name"):
+        bucket = districts.setdefault(
+            district_name or "No district",
+            {"name": district_name or "No district", "total": 0, "visited": 0},
+        )
+        bucket["total"] += 1
+        if school_id in visited_ids:
+            bucket["visited"] += 1
+    district_rows = []
+    for bucket in districts.values():
+        bucket["unvisited"] = bucket["total"] - bucket["visited"]
+        bucket["pct"] = round(bucket["visited"] / max(bucket["total"], 1) * 100)
+        district_rows.append(bucket)
+    district_rows.sort(key=lambda row: (row["pct"], -row["total"], row["name"]))
+
     context = {
+        "fy": fy,
+        "fy_options": fy_choices,
         "total_schools": total_schools,
         "visited": visited,
         "unvisited": total_schools - visited,
         "coverage_pct": round(visited / max(total_schools, 1) * 100),
         "clusters": clusters,
+        "districts": district_rows,
     }
     return render(request, "pages/coverage/index.html", context)
 
@@ -1382,14 +1466,25 @@ def admin_users_view(request):
 
     if request.method == "POST":
         action = request.POST.get("action")
-        if action in {"create_partner", "delete_partner"}:
+        if action in {
+            "create_partner",
+            "delete_partner",
+            "activate_partner",
+            "deactivate_partner",
+            "purge_partner",
+        }:
             from apps.core.exceptions import (
                 BadRequest,
                 ConflictError,
                 Forbidden,
                 NotFoundError,
             )
-            from apps.partners.services import delete_partner, onboard
+            from apps.partners.services import (
+                delete_partner,
+                onboard,
+                purge_partner,
+                set_partner_status,
+            )
 
             if not can_manage_partners:
                 messages.error(
@@ -1410,11 +1505,38 @@ def admin_users_view(request):
                         "email": request.POST.get("partner_email", "").strip(),
                         "phone": request.POST.get("partner_phone", "").strip(),
                         "notes": request.POST.get("partner_notes", "").strip(),
+                        "expertiseAreas": request.POST.get("partner_expertise", ""),
                     }
                     created = onboard(payload, request.user)
                     messages.success(
                         request,
-                        f"Partner organisation '{created['name']}' added.",
+                        f"Partner organisation '{created['name']}' added. "
+                        "Activate it when it is ready to receive work.",
+                    )
+                elif action in {"activate_partner", "deactivate_partner"}:
+                    # The routine lifecycle action (owner, 2026-09-07): the
+                    # same button reads Activate on an organisation that has
+                    # just been added and Deactivate once it is live.
+                    updated = set_partner_status(
+                        (request.POST.get("partner_id") or "").strip(),
+                        action == "activate_partner",
+                        request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"Partner organisation '{updated['name']}' "
+                        f"{'activated' if updated['activeStatus'] else 'deactivated'}.",
+                    )
+                elif action == "purge_partner":
+                    # Permanent, Admin only, and refused when there is history
+                    # to lose — see purge_partner().
+                    purged = purge_partner(
+                        (request.POST.get("partner_id") or "").strip(),
+                        request.user,
+                    )
+                    messages.success(
+                        request,
+                        f"Partner organisation '{purged['name']}' deleted permanently.",
                     )
                 else:
                     deleted = delete_partner(
@@ -1492,6 +1614,22 @@ def admin_users_view(request):
     selected_status = request.GET.get("status", "").strip()
 
     users = User.objects.filter(deleted_at__isnull=True).order_by("name")
+    # Country roles administer their country. Admin and superusers see the
+    # deployment; everyone else was seeing every user in every country here
+    # while /staff and HR Today scoped them correctly.
+    viewer_is_admin = (
+        request.user.is_superuser
+        or getattr(request.user, "active_role", None) == EdifyRole.ADMIN.value
+    )
+    if not viewer_is_admin:
+        viewer_country = getattr(
+            getattr(request.user, "staff_profile", None), "country", None
+        )
+        users = (
+            users.filter(staff_profile__country=viewer_country)
+            if viewer_country
+            else users.none()
+        )
     if search:
         users = users.filter(
             Q(name__icontains=search)
@@ -1508,7 +1646,9 @@ def admin_users_view(request):
         users = users.filter(Q(is_active=False) | Q(status="inactive"))
 
     districts = District.objects.all().order_by("name")
-    roles = [r.value for r in EdifyRole]
+    # The form must not promise a role the service refuses: Admin grants are
+    # rejected by admin_users.services for anyone but an Admin.
+    roles = [r.value for r in EdifyRole if viewer_is_admin or r is not EdifyRole.ADMIN]
     partners = []
     partner_regions = []
     partner_interventions = []
@@ -1516,7 +1656,34 @@ def admin_users_view(request):
         from apps.core.enums import SsaIntervention
         from apps.partners.models import Partner
 
-        partners = list(Partner.objects.select_related("user").order_by("name"))
+        from django.db.models import Count, F
+
+        # `history_count` is what the Delete confirmation reads to say, before
+        # the press, that an organisation with assignments cannot be deleted —
+        # the service refuses anyway, but a button that opens a dialog only to
+        # refuse is worse than one that says so up front.
+        # Every organisation, including the ones that were removed: the
+        # directory's Status column says active, inactive or deleted (owner,
+        # 2026-09-07), so a tombstone is a row that says so, not a row that
+        # vanished. `all_objects` is the manager that still sees them.
+        partners = list(
+            Partner.all_objects.select_related("user")
+            .annotate(history_count=Count("school_assignments", distinct=True))
+            # Live organisations first, then the deleted ones: Postgres sorts
+            # NULL last on ascending, which put the tombstones at the top.
+            .order_by(F("deleted_at").asc(nulls_first=True), "-active_status", "name")
+        )
+        for partner in partners:
+            # Presentation state only. Do not assign to the model's workflow
+            # `status` name: the production-readiness scanner correctly treats
+            # direct workflow-state writes in views as unsafe.
+            partner.presentation_status = (
+                "deleted"
+                if partner.deleted_at
+                else "active"
+                if partner.active_status
+                else "inactive"
+            )
         partner_regions = Region.objects.order_by("name")
         partner_interventions = SsaIntervention.choices
 
@@ -1570,7 +1737,7 @@ def admin_users_view(request):
         ]
 
     context = {
-        "users": users[:100],
+        "users": users,
         "total": users.count(),
         "search": search,
         "selected_role": selected_role,
@@ -1581,13 +1748,25 @@ def admin_users_view(request):
         "can_configure_management_team": can_configure_management_team,
         "management_candidates": management_candidates,
         "can_manage_partners": can_manage_partners,
+        # Permanent deletion is the Admin's alone (owner, 2026-09-07); a
+        # Country Director deactivates.
+        "can_purge_partners": request.user.is_superuser
+        or get_user_role_slug(request.user) == "ADMIN",
         "partners": partners,
+        "active_partner_count": sum(
+            1 for p in partners if p.presentation_status == "active"
+        ),
         "partner_regions": partner_regions,
         "partner_interventions": partner_interventions,
         "topbar_search": {
             "placeholder": "Search users by name, email, or role…",
+            "name": "q",
             "value": search,
             "action": reverse("frontend:admin_users"),
+            # Bound to the filter form, so a role or status change submits the
+            # live search with it rather than dropping it.
+            "attach_to": "admin-users-filters",
+            "autosubmit": True,
         },
     }
     return render(request, "pages/admin/users.html", context)
@@ -1856,6 +2035,15 @@ def settings_view(request):
     return render(request, "pages/settings/index.html", context)
 
 
+def _searches_every_country(user) -> bool:
+    role = getattr(user, "active_role", None)
+    return bool(getattr(user, "is_superuser", False)) or role in {
+        EdifyRole.ADMIN.value,
+        EdifyRole.HUMAN_RESOURCES.value,
+        EdifyRole.REGIONAL_VICE_PRESIDENT.value,
+    }
+
+
 @require_page_permission("search")
 def search_view(request):
     """Global search — open to every authenticated role (the topbar renders
@@ -1883,9 +2071,20 @@ def search_view(request):
             )[:10]
         )
         if RolePermissionService.can_view_page(request.user, "staff_directory"):
-            results["staff"] = list(
-                User.objects.filter(name__icontains=q, deleted_at__isnull=True)[:10]
-            )
+            staff = User.objects.filter(name__icontains=q, deleted_at__isnull=True)
+            # A Country Director searching "Okello" must not be handed the
+            # Kenya office. Only the roles whose directory spans countries
+            # (Admin, HR, RVP) search across them.
+            if not _searches_every_country(request.user):
+                from apps.documents.services import country_of
+
+                country = country_of(request.user)
+                staff = (
+                    staff.filter(staff_profile__country=country)
+                    if country
+                    else staff.none()
+                )
+            results["staff"] = list(staff[:10])
         results["activities"] = list(
             list_activities({}, request.user)
             .filter(Q(school__name__icontains=q) | Q(cluster__name__icontains=q))
@@ -2410,6 +2609,7 @@ def todos_view(request):
     return render(request, "pages/todos/index.html", get_cached_todos(request.user))
 
 
+@require_export_permission
 @require_page_permission("fund_approvals")
 def pl_fund_approvals_view(request):
     """PL Fund Approval — team-scoped fund plans derived from supervised CCEOs'
@@ -2418,10 +2618,57 @@ def pl_fund_approvals_view(request):
 
     filters = {
         k: request.GET.get(k)
-        for k in ("fy", "month", "week", "cceo", "status", "q")
+        for k in (
+            "fy",
+            "month",
+            "week",
+            "cceo",
+            "status",
+            "q",
+            "region",
+            "district",
+            "sort",
+        )
         if request.GET.get(k)
     }
     ctx = get_pl_fund_approvals(request.user, filters)
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="fund-approvals-{ctx["fy"]}-week-{ctx["week"]}.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            [
+                "CCEO",
+                "District",
+                "Region",
+                "Week",
+                "Requested (UGX)",
+                "Status",
+                "Visits",
+                "Partner visits",
+                "Clusters",
+                "Trainings",
+            ]
+        )
+        for card in ctx["queue"]:
+            chips = card["chips"]
+            writer.writerow(
+                [
+                    card["name"],
+                    card["district"],
+                    card["region"],
+                    ctx["week_label"],
+                    card["total"],
+                    card["status"],
+                    chips["visits"],
+                    chips["partner"],
+                    chips["clusters"],
+                    chips["trainings"],
+                ]
+            )
+        return response
     if request.headers.get("HX-Target") == "fund-approval-root":
         return render(request, "partials/fund_approvals/root.html", ctx)
     ctx["topbar_search"] = {
@@ -2760,6 +3007,9 @@ def quality_checks_view(request):
                         "recommendedAction": request.POST.get("recommended_action"),
                         "priority": request.POST.get("priority", "normal"),
                         "dueDate": request.POST.get("due_date"),
+                        "scopeType": request.POST.get("scope_type") or None,
+                        "scopeId": request.POST.get("scope_id") or None,
+                        "scopeName": request.POST.get("scope_name") or None,
                     },
                     request.user,
                 )
@@ -2794,12 +3044,27 @@ def quality_checks_view(request):
         qs = qs.filter(assigned_to_user_id=request.user.id)
     # IA / Admin: unfiltered — the global monitoring audience.
 
+    # Arriving from an analytics drill-down: the entity and, when known, the
+    # Program Lead come along so the director does not re-type what they
+    # just looked at.
+    prefill = {
+        key: (request.GET.get(key) or "").strip()
+        for key in (
+            "assign_to",
+            "scope_type",
+            "scope_id",
+            "scope_name",
+            "note",
+            "category",
+        )
+    }
     context = {
         "flags": qs[:50],
         "can_raise": is_cd,
         "can_act": is_pl,
         "program_leads": flag_services.program_leads(request.user) if is_cd else [],
         "current_user_id": request.user.id,
+        "prefill": prefill,
     }
     return render(request, "pages/quality_checks/index.html", context)
 
@@ -2979,7 +3244,17 @@ def admin_school_upload_history_view(request):
             )
         return redirect("/admin-panel/school-upload-history")
 
-    batches = UploadBatch.objects.all().order_by("-created_at")[:50]
+    batches = list(UploadBatch.objects.all().order_by("-created_at")[:50])
+    # Batches store the uploader's user id; the page shows the person's name.
+    from django.contrib.auth import get_user_model
+
+    uploader_names = dict(
+        get_user_model()
+        .objects.filter(id__in={b.uploaded_by for b in batches if b.uploaded_by})
+        .values_list("id", "name")
+    )
+    for batch in batches:
+        batch.uploaded_by_name = uploader_names.get(batch.uploaded_by) or "Unknown user"
 
     context = {
         "batches": batches,
@@ -3349,7 +3624,12 @@ def admin_notifications_mgmt_view(request):
     """
     from apps.notifications.models import Notification
 
-    logs = Notification.objects.all().order_by("-created_at")[:50]
+    logs = list(Notification.objects.all().order_by("-created_at")[:50])
+    from apps.activities.verification_analytics import _names
+
+    _recipient_names = _names({log.recipient_id for log in logs})
+    for log in logs:
+        log.recipient_name = _recipient_names.get(log.recipient_id, log.recipient_id)
 
     context = {
         "logs": logs,

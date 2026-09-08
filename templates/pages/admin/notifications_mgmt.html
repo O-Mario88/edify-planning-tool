@@ -42,7 +42,7 @@
 <span class="edify-text-caption text-slate-400 font-bold block mt-1">Generated: {{ log.created_at|date:"M d, Y H:i" }}</span>
 </td>
 <td class="px-4 py-4 text-slate-500 font-semibold" data-label="Recipient Details">
-<span class="block">User ID: {{ log.recipient_id }}</span>
+<span class="block">{{ log.recipient_name }}</span>
 {% if log.recipient_role %}
 <span class="block edify-text-caption text-slate-400 mt-0.5">Role: {{ log.recipient_role|upper }}</span>
 {% endif %}

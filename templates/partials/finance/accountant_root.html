@@ -1,0 +1,6 @@
+{% load frontend_filters kpi_metrics %}
+{% comment %}Accountant money movement root — re-rendered by HTMX on filter, search and selection.{% endcomment %}
+{% comment %}Two views (owner, 2026-09-05): the money movement queue the
+Accountant works from, and the country map. Operations opens first — the
+Accountant's day is the queue — with the map one tab away.{% endcomment %}
+{% include "partials/dashboards/_view_tabs.html" %}

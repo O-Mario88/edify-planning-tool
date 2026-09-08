@@ -36,7 +36,17 @@ from apps.fund_requests.disbursement_dashboard_service import (
 
 ROOT = Path(settings.BASE_DIR)
 ACCOUNTANT_CARD = ROOT / "templates" / "pages" / "accounts" / "dashboard.html"
+# The queue's title and prose are built by the view since the page moved onto
+# the shared fund workspace (2026-09-03); the template keeps the link.
+ACCOUNTANT_WORKSPACE = (
+    ROOT / "apps" / "frontend" / "views" / "finance_operating_views.py"
+)
 DISBURSEMENTS_CARD = ROOT / "templates" / "partials" / "disbursements" / "root.html"
+# The Disbursements page renders the shared fund workspace; its queue title is
+# built by the service (2026-09-04).
+DISBURSEMENTS_WORKSPACE = (
+    ROOT / "apps" / "fund_requests" / "disbursement_dashboard_service.py"
+)
 
 OVERVIEW_KEYS = (
     "waiting_for_approval",
@@ -199,7 +209,7 @@ class MonthCardIsActuallyMonthScopedTest(TestCase):
 
 class CardsNameTheirPopulationTest(SimpleTestCase):
     def test_both_cards_say_they_cover_every_fund_type(self):
-        for path in (ACCOUNTANT_CARD, DISBURSEMENTS_CARD):
+        for path in (ACCOUNTANT_WORKSPACE, DISBURSEMENTS_WORKSPACE):
             with self.subTest(path.name):
                 self.assertIn("All Fund Types This Month", _read(path))
 
@@ -229,7 +239,7 @@ class QueueListNamesItsContentsTest(SimpleTestCase):
     """
 
     def test_the_accountant_list_says_it_holds_weekly_advances(self):
-        self.assertIn("Weekly Advance Queue", _read(ACCOUNTANT_CARD))
+        self.assertIn("Weekly Advance Queue", _read(ACCOUNTANT_WORKSPACE))
 
     def test_the_accountant_list_no_longer_claims_to_be_consolidated(self):
         """Matched on the rendered heading, not the prose.
@@ -238,16 +248,16 @@ class QueueListNamesItsContentsTest(SimpleTestCase):
         title, so a bare substring check fails on the explanation rather than
         on the markup a reader sees.
         """
+        self.assertNotIn("Consolidated Fund Queue", _read(ACCOUNTANT_WORKSPACE))
         self.assertNotIn(">Consolidated Fund Queue<", _read(ACCOUNTANT_CARD))
 
     def test_the_disbursements_queue_keeps_the_consolidated_name(self):
         """It earns the title: monthly, weekly, partner and reimbursement."""
-        self.assertIn(">Consolidated Fund Queue<", _read(DISBURSEMENTS_CARD))
+        self.assertIn('"Consolidated Fund Queue"', _read(DISBURSEMENTS_WORKSPACE))
 
     def test_the_accountant_page_points_at_the_consolidated_queue(self):
-        body = _read(ACCOUNTANT_CARD)
-        self.assertIn('href="/disbursements"', body)
-        self.assertIn("Weekly advances only", body)
+        self.assertIn('"/disbursements"', _read(ACCOUNTANT_WORKSPACE))
+        self.assertIn("Weekly advances only", _read(ACCOUNTANT_WORKSPACE))
 
 
 class WeeklyAdvancesCannotBeHeldTest(SimpleTestCase):

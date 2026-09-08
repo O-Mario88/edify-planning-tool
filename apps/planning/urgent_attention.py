@@ -239,7 +239,9 @@ def monthly_urgent_schools(
             deleted_at__isnull=True,
         )
         .exclude(status__in=_LIVE)
-        .select_related("school")
+        # The row reads school.district.name; without the join that was one
+        # district fetch per planned school on every CCEO dashboard load.
+        .select_related("school", "school__district")
         .order_by("planned_date")
     )
     by_school: dict[str, list] = {}

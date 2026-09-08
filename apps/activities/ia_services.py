@@ -265,6 +265,9 @@ class ActivityReturnService:
         # not a guard — two staffers who both loaded the queue see AWAITING
         # in memory simultaneously, and the race test proved both were then
         # told their action succeeded.
+        # Returning is a verification decision too: same authority, same
+        # refusal of one's own work.
+        _assert_may_certify(actor_id, activity)
         if activity.status != ActivityStatus.AWAITING_IA_VERIFICATION:
             raise BadRequest("Activity is not awaiting IA verification")
         with transaction.atomic():
@@ -337,7 +340,7 @@ class ActivityReturnService:
             return _serialize(activity)
 
 
-def _assert_may_certify(actor) -> None:
+def _assert_may_certify(actor, activity: Activity | None = None) -> None:
     """Only a holder of `ia.verify` may certify that work was done.
 
     Read from the permission matrix rather than a role tuple, the same
@@ -361,6 +364,18 @@ def _assert_may_certify(actor) -> None:
         from apps.accounts.models import User
 
         actor = User.objects.filter(id=actor).first()
+    if actor is None:
+        raise Forbidden("Only Impact Assessment can verify an activity.")
+    if activity is not None:
+        # The full rule — own work refused, CD fallback for IA-owned work —
+        # lives in one place so the page and the act cannot disagree.
+        from apps.core.permissions import RolePermissionService, verifies_own_work
+
+        if verifies_own_work(actor, activity):
+            raise Forbidden("You cannot verify your own field work.")
+        if not RolePermissionService.can_verify_ia(actor, activity):
+            raise Forbidden("Only Impact Assessment can verify an activity.")
+        return
     if not has_permission(actor, Permission.IA_VERIFY.value):
         raise Forbidden("Only Impact Assessment can verify an activity.")
 
@@ -527,7 +542,7 @@ class ActivityCertificationService:
         # handing to whichever caller happened to show up. "False IA
         # verification" is a P0 by name. Found by the Journey 19 sweep, where
         # all fourteen roles certified successfully.
-        _assert_may_certify(actor_id)
+        _assert_may_certify(actor_id, activity)
         # Same race/replay guard as ActivityReturnService.return_activity,
         # and the same two-layer shape: the early check is a courtesy, the
         # re-check under select_for_update is the guard. Without it, two IA

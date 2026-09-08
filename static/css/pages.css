@@ -164,6 +164,53 @@
   color: var(--edify-danger-text);
 }
 
+/* On tablet and desktop the CCEO performance row is one 32px line: an 18px
+   avatar beside "Name · District", "value · caption" pairs on the line, and
+   the exception counts as 18px chips. Phones keep the stacked cells. */
+@media (min-width: 768px) {
+  .pl-cceo-person {
+    display: flex;
+    grid-template-columns: none;
+    gap: 0.5rem;
+  }
+  .pl-cceo-person__avatar {
+    inline-size: 1.125rem;
+    block-size: 1.125rem;
+    font-size: var(--edify-text-micro-size);
+  }
+  .pl-cceo-person__identity,
+  .pl-cceo-metric,
+  .pl-cceo-performance-table__number {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 0.375rem;
+    white-space: nowrap;
+  }
+  .pl-cceo-person__identity strong,
+  .pl-cceo-metric strong,
+  .pl-cceo-performance-table__number strong,
+  .pl-cceo-person__identity > span,
+  .pl-cceo-metric > span,
+  .pl-cceo-performance-table__number > span {
+    line-height: 1.35;
+  }
+  .pl-cceo-performance-table__number {
+    justify-content: center;
+  }
+  .pl-cceo-exceptions {
+    align-items: center;
+  }
+  .pl-cceo-exception {
+    flex-direction: row;
+    align-items: center;
+    gap: 0.25rem;
+    min-inline-size: 0;
+    block-size: 1.125rem;
+    padding: 0 0.375rem;
+    line-height: 1;
+  }
+}
+
 .pl-cceo-status {
   display: inline-flex;
   min-block-size: 1.75rem;
@@ -526,8 +573,7 @@
 
 .pl-funding-donut {
   position: relative;
-  inline-size: clamp(3.75rem, 22cqi, 4.5rem);
-  aspect-ratio: 1;
+  inline-size: clamp(5rem, 28cqi, 6rem);
   flex: none;
 }
 
@@ -1126,6 +1172,9 @@
 .sp-chart-point { fill: var(--edify-surface-raised); stroke: var(--edify-success); stroke-width: 2.5; }
 .sp-chart-value { fill: var(--edify-text); font-size: var(--edify-svg-text-micro, var(--edify-text-micro-size)); font-weight: 800; }
 .sp-trend figcaption { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); text-align: right; }
+.sp-trend__figure { padding: 4px 8px 10px; }
+.sp-trend__chart { min-height: 340px; }
+.sp-trend__caption { margin: 0; padding-inline: 8px; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); text-align: right; }
 .sp-visually-hidden { position: absolute !important; clip-path: inset(50%) !important; overflow: hidden !important; width: 1px !important; height: 1px !important; margin: -1px !important; padding: 0 !important; border: 0 !important; white-space: nowrap !important; }
 .sp-empty { grid-column: 1 / -1; margin: 18px; color: var(--edify-text-muted); text-align: center; font-size: var(--edify-text-label-size); }
 .sp-empty-state { min-height: 230px; display: grid; place-content: center; gap: 5px; padding: 32px; text-align: center; }
@@ -1140,9 +1189,20 @@
   .sp-insights ul { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
+/* SSA Performance has three controls, not four: financial year, quarter and
+   district. On the shared four-column grid the actions fell into a fifth,
+   zero-width track and wrapped under the fields; here they close the row
+   (owner, 2026-09-05: "the filters for ssa performance are all in the same
+   row"). Held to one row until the phone breakpoint stacks everything. */
+#ssa-performance-workspace .sp-filter-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) auto;
+}
+
 @media (max-width: 1024px) {
   .sp-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sp-filter-actions { grid-column: 1 / -1; justify-content: flex-end; }
+  #ssa-performance-workspace .sp-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) auto; }
+  #ssa-performance-workspace .sp-filter-actions { grid-column: auto; }
   .sp-dashboard-grid { grid-template-columns: 1fr; }
   .sp-matrix-card, .sp-urgent-card, .sp-heat-panel, .sp-insights, .sp-fy-comparison, .sp-trend { grid-column: 1; }
   .sp-district-tiles { grid-template-columns: repeat(3, minmax(0, 1fr)); }
@@ -2819,7 +2879,13 @@
   }
 }
 
-@container pto-panel (min-width: 38rem) {
+@container pto-panel (min-width: 38rem) and (max-width: 53.99rem) {
+  /* A tablet panel: three across, never five cards of 147px. */
+  .pto-balance-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+@container pto-panel (min-width: 54rem) {
   .pto-balance-grid {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }
@@ -3348,8 +3414,15 @@
 .tt-member-row:hover > td.is-current-quarter {
   background: color-mix(in oklab, var(--tt-current-quarter-fill) 76%, var(--edify-accent-light));
 }
-.tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; }
-.tt-member-row:hover > td:first-child { background: var(--edify-accent-light); }
+/* A frozen column is a curtain, not a window. Every other cell in the row
+   wears the 92% surface so the row reads as one band, but the two cells that
+   stay put while the rest scroll under them must be OPAQUE: at 92% the
+   member's name showed the quarter columns sliding through it (owner,
+   2026-09-05: "the frozen first column on the tables should not be
+   transparent"). Hover mixes the accent INTO the surface for the same
+   reason — a translucent accent tint would let the scroll show again. */
+.tt-member-row > td:first-child { position: sticky; left: 0; z-index: 1; background: var(--edify-frozen-surface); }
+.tt-member-row:hover > td:first-child { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
 .tt-member-row.is-expanded > td:first-child { box-shadow: inset 3px 0 0 var(--edify-accent); }
 
 .tt-member-row > td.tt-matrix__action-cell {
@@ -3360,8 +3433,10 @@
   min-width: 4.75rem;
   padding-inline: 0.55rem;
   border-left: 1px solid var(--edify-border);
+  background: var(--edify-frozen-surface);
   text-align: center;
 }
+.tt-member-row:hover > td.tt-matrix__action-cell { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
 
 .tt-person {
   display: flex;
@@ -3507,7 +3582,7 @@
   z-index: 1;
   width: auto;
   min-width: 0;
-  background: var(--edify-surface-muted);
+  background: var(--edify-frozen-surface-muted);
   text-align: left;
 }
 .tt-matrix .tt-area-matrix thead th:first-child { z-index: 2; background: color-mix(in oklab, var(--edify-surface-muted) 84%, var(--edify-accent-light)); }
@@ -3683,58 +3758,8 @@
 .tt-progress-row small { color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); }
 
 .tt-line-chart { margin: 0; }
-.tt-line-chart__viewport {
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-gutter: stable;
-  padding: 0.45rem 0.75rem 0;
-}
-.tt-line-chart svg { display: block; width: 100%; min-width: 34rem; height: auto; }
-.tt-line-chart__grid line {
-  stroke: var(--edify-border);
-  stroke-width: 1;
-  stroke-dasharray: 4 7;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__grid text,
-.tt-line-chart__month {
-  fill: var(--edify-text-subtle);
-  font-family: var(--edify-font-sans);
-  font-size: var(--edify-svg-text-label, var(--edify-text-label-size));
-}
-.tt-line-chart__series,
-.tt-line-chart__glow {
-  fill: none;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__glow { stroke: var(--edify-accent); stroke-width: 12; opacity: 0.13; }
-.tt-line-chart__series { stroke: url(#tt-trend-line-gradient); stroke-width: 3; }
-.tt-line-chart__halo {
-  fill: var(--edify-accent-light);
-  stroke: var(--edify-accent-border);
-  stroke-width: 2;
-  opacity: 0;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__dot {
-  fill: var(--edify-surface-raised);
-  stroke: var(--edify-accent);
-  stroke-width: 3;
-  vector-effect: non-scaling-stroke;
-}
-.tt-line-chart__point.is-selected .tt-line-chart__halo { opacity: 1; }
-.tt-line-chart__point.is-selected .tt-line-chart__dot { fill: var(--edify-accent); stroke: var(--edify-surface-raised); }
-.tt-line-chart__selected-value {
-  fill: var(--edify-accent);
-  font-family: var(--edify-font-sans);
-  font-size: var(--edify-svg-text-title, var(--edify-text-title-size));
-  font-weight: 600;
-  text-anchor: middle;
-}
-.tt-line-chart__month { text-anchor: middle; }
-.tt-line-chart__month.is-selected { fill: var(--edify-accent); font-weight: 600; }
+.tt-line-chart__viewport { padding: 0.45rem 0.75rem 0; }
+.tt-line-chart__viewport [x-ref="el"] { min-height: 16rem; }
 .tt-insight-note { margin: 0; padding: 0 1rem 1rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); line-height: 1.45; }
 
 .tt-lower-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
@@ -4673,19 +4698,25 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
 }
 
 .priority-record-grid {
-  min-inline-size: 74rem;
+  /* Floors sum to 57.25rem so a 1440px desktop shows all nine columns
+     without a sideways scroll (owner, 2026-09-06); narrower screens scroll. */
+  min-inline-size: min(58rem, 100%);
   background: var(--edify-surface, #fff);
 }
 
 .priority-record-columns {
   display: grid;
+  /* The Progress column (owner, 2026-09-07) sits between the date and the
+     three checks, so the "last four columns are centred" rule below still
+     names the same four. */
   grid-template-columns:
     3rem
-    minmax(20rem, 1.65fr)
-    minmax(13rem, 0.95fr)
-    minmax(14rem, 1.1fr)
-    10rem
-    repeat(3, 4.5rem)
+    minmax(12rem, 1.65fr)
+    minmax(9rem, 0.95fr)
+    minmax(10rem, 1.1fr)
+    8rem
+    minmax(7.5rem, 0.8fr)
+    repeat(3, 4rem)
     3.25rem;
   align-items: stretch;
 }
@@ -4848,4 +4879,281 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   .priority-milestone-layout {
     grid-template-columns: minmax(0, 1fr);
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   FUND WORKSPACE (2026-09-03)
+   ───────────────────────────────────────────────────────────────────────────
+   The Program Lead's approvals and the Accountant's money movement share one
+   composition: headline tiles, a queue on the left, the selected request in
+   the middle, the month's position on the right, budget mix and recent
+   decisions underneath. Tokens only; the reference brought the layout, the
+   platform brings colour and type.
+   ═══════════════════════════════════════════════════════════════════════════ */
+.fund-workspace {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.fund-workspace__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+.fund-workspace__bottom {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1.25rem;
+  align-items: start;
+}
+
+@media (min-width: 64rem) {
+  .fund-workspace__grid {
+    grid-template-columns: minmax(0, 1fr) minmax(14rem, 0.42fr);
+  }
+  .fund-side { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.25rem; }
+  .fund-workspace__bottom { grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); }
+}
+
+.fund-side { display: grid; gap: 1.25rem; }
+
+.fund-panel { padding: 1rem 1.125rem; display: grid; gap: 0.625rem; align-content: start; }
+.fund-panel__head { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+.fund-panel__title {
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  color: var(--edify-text);
+  letter-spacing: -0.01em;
+}
+.fund-panel__rows { display: grid; gap: 0.375rem; margin: 0; }
+.fund-panel__row { display: flex; align-items: baseline; justify-content: space-between; gap: 0.75rem; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-panel__row dt, .fund-panel__row dd { margin: 0; }
+.fund-panel__row--muted { font-size: var(--edify-text-label-size); }
+.fund-panel__figure { font-weight: var(--edify-text-title-weight); color: var(--edify-text); font-variant-numeric: tabular-nums; }
+.fund-panel__figure--success { color: var(--edify-success-text); }
+.fund-panel__figure--warning { color: var(--edify-warning-text); }
+.fund-panel__figure--danger { color: var(--edify-danger-text); }
+.fund-panel__link {
+  display: inline-flex; align-items: center; justify-content: space-between; gap: 0.375rem;
+  font-size: var(--edify-text-label-size); font-weight: 600; color: var(--edify-accent); text-decoration: none;
+}
+.fund-panel__link:hover { text-decoration: underline; }
+.fund-panel__empty { font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-workspace__updating { display: inline-flex; align-items: center; gap: 0.375rem; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-workspace__updating svg { inline-size: 0.875rem; block-size: 0.875rem; animation: fund-spin 0.9s linear infinite; }
+@keyframes fund-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .fund-workspace__updating svg { animation: none; } }
+.fund-queue__list > li { list-style: none; }
+.fund-queue__list > li + li { margin-block-start: 0.375rem; }
+@media (min-width: 64rem) { .fund-detail { position: sticky; inset-block-start: 1rem; } }
+.fund-panel__link svg { inline-size: 0.875rem; block-size: 0.875rem; }
+
+/* Queue */
+.fund-queue { display: grid; grid-template-rows: auto 1fr auto; overflow: hidden; }
+.fund-queue__header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.5rem 0.75rem; padding: 0.875rem 1rem; border-block-end: 1px solid var(--edify-border); }
+.fund-queue__header .fund-panel__title { white-space: nowrap; }
+.fund-queue__count { display: inline-flex; align-items: center; block-size: 1.125rem; padding-inline: 0.4rem; border-radius: var(--edify-radius-pill); background: var(--edify-accent-soft, color-mix(in srgb, var(--edify-accent) 12%, transparent)); color: var(--edify-accent); font-size: var(--edify-text-label-size); font-weight: 700; font-variant-numeric: tabular-nums; }
+.fund-queue__sort { display: inline-flex; align-items: center; gap: 0.375rem; block-size: 2rem; padding-inline: 0.625rem; border: 1px solid var(--edify-border); border-radius: var(--radius-control); background: var(--edify-surface); font-size: var(--edify-text-label-size); color: var(--edify-text-muted); white-space: nowrap; }
+.fund-queue__sort select { appearance: none; border: 0; background: transparent; padding: 0 1rem 0 0; font: inherit; font-weight: 600; color: var(--edify-text); cursor: pointer; }
+.fund-queue__sort svg { inline-size: 0.75rem; block-size: 0.75rem; margin-inline-start: -0.875rem; pointer-events: none; }
+.fund-queue__list { max-block-size: 46rem; overflow-y: auto; }
+.fund-queue__amount { margin-inline-start: auto; }
+/* A block list, not a grid: a <button> as a grid item reports a one-line
+   automatic minimum in the phone shell and every card collapsed to it. */
+.fund-queue__list { padding: 0.5rem; display: block; }
+.fund-queue__list { margin: 0; }
+.fund-queue__card {
+  display: grid; grid-template-columns: 2.5rem minmax(0, 1fr) 1rem; gap: 0.75rem; align-items: start;
+  inline-size: 100%; padding: 0.75rem 0.875rem; text-align: start;
+  background: var(--edify-surface); border: 1px solid transparent; border-radius: var(--edify-radius-md);
+  border-block-end-color: var(--edify-border); cursor: pointer;
+  transition: background-color var(--edify-transition-fast, 0.15s), border-color var(--edify-transition-fast, 0.15s);
+}
+/* A queue card is a record, not a tap target: the shell's button sizing
+   (a fixed action-button height on phones) must not crop its four lines. */
+.fund-queue__card,
+.edify-shell .fund-queue__card,
+.edify-workspace .fund-queue__card {
+  display: grid !important;
+  grid-template-columns: 2.5rem minmax(0, 1fr) 1rem !important;
+  align-items: start !important;
+  justify-content: stretch !important;
+  inline-size: 100% !important;
+  block-size: auto !important;
+  min-block-size: 0 !important;
+  max-block-size: none !important;
+  padding: 0.75rem 0.875rem !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  text-align: start !important;
+}
+.fund-queue__card .fund-queue__body { display: grid !important; }
+.fund-queue__card .fund-queue__row { display: flex !important; }
+.fund-queue__card .fund-queue__chips { display: flex !important; }
+.fund-queue__card:hover { background: var(--edify-surface-hover); }
+.fund-queue__card.is-selected {
+  background: color-mix(in srgb, var(--edify-success) 7%, var(--edify-surface));
+  border-color: var(--edify-success);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--edify-success) 35%, transparent);
+}
+.fund-queue__card:focus-visible { outline: 2px solid var(--edify-accent); outline-offset: -2px; }
+.fund-queue__avatar { display: inline-grid; place-items: center; inline-size: 2.5rem; block-size: 2.5rem; border-radius: var(--edify-radius-pill); background: var(--edify-surface-muted); color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 700; }
+.fund-queue__body { display: grid; gap: 0.125rem; min-inline-size: 0; }
+.fund-queue__row { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-inline-size: 0; }
+.fund-queue__name { flex: 1 1 auto; min-inline-size: 0; font-size: var(--edify-text-body-size); font-weight: var(--edify-text-title-weight); color: var(--edify-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fund-queue__own { font-style: normal; font-weight: 600; color: var(--edify-success-text); font-size: var(--edify-text-label-size); }
+.fund-queue__status { display: inline-flex; gap: 0.25rem; flex: 0 0 auto; }
+.fund-queue__place { flex: 1 1 auto; min-inline-size: 0; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fund-queue__amount { font-size: var(--edify-text-title-size); font-weight: var(--edify-text-title-weight); color: var(--edify-text); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.fund-queue__chips { display: flex; flex-wrap: wrap; gap: 0.375rem; margin-block-start: 0.25rem; }
+.fund-queue__chevron { inline-size: 1rem; block-size: 1rem; color: var(--edify-text-subtle, var(--edify-text-muted)); align-self: center; }
+.fund-queue__footer { display: flex; align-items: center; justify-content: space-between; padding: 0.625rem 1rem; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); border-block-start: 1px solid var(--edify-border); }
+
+.fund-chip {
+  --chip-accent: var(--edify-text-muted);
+  display: inline-flex; align-items: center; gap: 0.25rem; block-size: 1.25rem; padding-inline: 0.4rem;
+  border: 1px solid color-mix(in srgb, var(--chip-accent) 35%, var(--edify-border)); border-radius: var(--radius-control);
+  background: color-mix(in srgb, var(--chip-accent) 7%, var(--edify-surface));
+  color: var(--edify-text); font-size: var(--edify-text-label-size); font-weight: 600; white-space: nowrap;
+}
+.fund-chip svg { inline-size: 0.75rem; block-size: 0.75rem; color: var(--chip-accent); }
+.fund-chip--success { --chip-accent: var(--edify-success); }
+.fund-chip--purple { --chip-accent: #8b5cf6; }
+.fund-chip--info { --chip-accent: var(--edify-accent); }
+.fund-chip--warning { --chip-accent: var(--edify-warn); }
+
+/* Selected request */
+.fund-detail { padding: 1.125rem 1.25rem; min-inline-size: 0; container: fund-detail / inline-size; }
+.fund-detail__inner { display: grid; gap: 1rem; }
+.fund-detail__head { display: flex; flex-wrap: wrap; gap: 0.75rem 1.5rem; align-items: flex-start; padding-block-end: 0.875rem; border-block-end: 1px solid var(--edify-border); }
+.fund-detail__head > :first-child { flex: 1 1 16rem; }
+.fund-detail__total { margin-inline-start: auto; }
+.fund-detail__title { font-size: var(--edify-text-heading-size); font-weight: var(--edify-text-title-weight); color: var(--edify-text); letter-spacing: -0.01em; }
+.fund-detail__place { font-size: var(--edify-text-label-size); color: var(--edify-text-muted); margin-block-start: 0.125rem; }
+.fund-detail__period { display: flex; align-items: center; gap: 0.5rem; color: var(--edify-text-muted); }
+.fund-detail__period svg { inline-size: 1.125rem; block-size: 1.125rem; }
+.fund-detail__period span { display: grid; }
+.fund-detail__period small, .fund-detail__total small { font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-detail__period strong { font-size: var(--edify-text-label-size); font-weight: 600; color: var(--edify-text); white-space: nowrap; }
+.fund-detail__total { display: grid; justify-items: end; gap: 0.125rem; }
+.fund-detail__total strong { font-size: var(--edify-text-hero-size); font-weight: var(--edify-text-title-weight); color: var(--edify-text); font-variant-numeric: tabular-nums; line-height: 1.1; }
+.fund-detail__body { display: grid; gap: 1rem; }
+.fund-detail .edify-record-table td:first-child { max-inline-size: 14rem; }
+.fund-detail .edify-record-table :is(td, th):not(:first-child) { white-space: nowrap; }
+.fund-detail__actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 0.5rem; padding-block-start: 0.25rem; }
+.fund-detail__actions > .btn { inline-size: auto; flex: 0 0 auto; }
+.fund-detail__actions > .fund-detail__hint { margin-inline-end: auto; }
+
+/* Progress and rate */
+.fund-progress { block-size: 0.5rem; border-radius: var(--edify-radius-pill); background: var(--edify-surface-muted); overflow: hidden; }
+.fund-progress__bar { display: block; block-size: 100%; border-radius: inherit; background: var(--edify-success); }
+.fund-rate { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.75rem; align-items: center; }
+.fund-rate__donut { inline-size: 7.5rem; }
+.fund-rate .edify-donut__legend, .fund-rate .edify-donut__chips { display: none; }
+.fund-rate__legend, .fund-mix__legend { display: grid; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.fund-rate__legend li { display: flex; align-items: center; gap: 0.5rem; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-rate__legend li strong, .fund-mix__amount { margin-inline-start: auto; color: var(--edify-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fund-rate__dot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--edify-radius-pill); flex: 0 0 auto; }
+
+/* Budget mix and recent decisions */
+.fund-mix { display: flex; block-size: 1.625rem; border-radius: var(--radius-control); overflow: hidden; }
+.fund-mix__segment { display: inline-grid; place-items: center; min-inline-size: 0; color: #fff; font-size: var(--edify-text-label-size); font-weight: 700; }
+.fund-mix__segment + .fund-mix__segment { border-inline-start: 2px solid var(--edify-surface); }
+.fund-mix__legend { grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr)); gap: 0.5rem 1rem; }
+.fund-mix__legend li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 0.125rem 0.5rem; font-size: var(--edify-text-label-size); color: var(--edify-text); align-items: center; }
+.fund-mix__legend .fund-mix__amount { grid-column: 2; margin-inline-start: 0; color: var(--edify-text-muted); font-weight: 500; }
+.fund-recent__list { display: grid; margin: 0; padding: 0; list-style: none; }
+.fund-recent__list li { display: grid; grid-template-columns: 1.5rem minmax(0, 1fr) auto auto; gap: 0.75rem; align-items: center; padding-block: 0.5rem; font-size: var(--edify-text-label-size); border-block-end: 1px solid var(--edify-border); }
+.fund-recent__list li:last-child { border-block-end: 0; }
+.fund-recent__icon { display: inline-grid; place-items: center; inline-size: 1.5rem; block-size: 1.5rem; border-radius: var(--edify-radius-pill); background: color-mix(in srgb, var(--edify-success) 12%, var(--edify-surface)); color: var(--edify-success); }
+.fund-recent__icon svg { inline-size: 0.875rem; block-size: 0.875rem; }
+.fund-recent__icon--danger { background: color-mix(in srgb, var(--edify-danger) 12%, var(--edify-surface)); color: var(--edify-danger); }
+.fund-recent__icon--warning { background: color-mix(in srgb, var(--edify-warn) 12%, var(--edify-surface)); color: var(--edify-warn); }
+.fund-recent__text { color: var(--edify-text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fund-recent__amount { color: var(--edify-text); font-weight: 600; font-variant-numeric: tabular-nums; }
+.fund-recent__when { color: var(--edify-text-muted); white-space: nowrap; }
+.fund-recent__empty { grid-template-columns: minmax(0, 1fr) !important; color: var(--edify-text-muted); }
+
+/* Fund workspace: approval chain stages and the waiting hint on a detail. */
+.fund-stages { display: flex; flex-wrap: wrap; gap: 0.375rem; margin: 0; padding: 0; list-style: none; }
+.fund-stage { --stage-accent: var(--edify-text-muted); display: inline-flex; align-items: center; gap: 0.375rem; block-size: 1.75rem; padding-inline: 0.5rem 0.625rem; border: 1px solid color-mix(in srgb, var(--stage-accent) 35%, var(--edify-border)); border-radius: var(--edify-radius-pill); background: color-mix(in srgb, var(--stage-accent) 8%, var(--edify-surface)); font-size: var(--edify-text-label-size); color: var(--edify-text); }
+.fund-stage__mark { display: inline-grid; place-items: center; inline-size: 1rem; block-size: 1rem; color: var(--stage-accent); }
+.fund-stage__mark svg { inline-size: 0.75rem; block-size: 0.75rem; }
+.fund-stage__label { font-weight: 600; }
+.fund-stage__state { color: var(--edify-text-muted); }
+.fund-stage--approved, .fund-stage--done { --stage-accent: var(--edify-success); }
+.fund-stage--pending { --stage-accent: var(--edify-warn); }
+.fund-stage--held { --stage-accent: #ea580c; }
+.fund-stage--returned { --stage-accent: var(--edify-danger); }
+.fund-stage--not_required { --stage-accent: var(--edify-text-subtle, var(--edify-text-muted)); border-style: dashed; }
+.fund-detail__hint { display: flex; align-items: center; gap: 0.5rem; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-detail__hint svg { inline-size: 1rem; block-size: 1rem; flex: 0 0 auto; }
+
+
+/* The filter card wraps its fields on tablet and phone instead of scrolling
+   them off the edge. */
+/* The id outranks the platform filter-bar contract's id-level selector, which
+   otherwise lays the fields out as one scrolling row on phones. */
+@media (max-width: 63.999rem) {
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 0.625rem !important;
+    overflow: visible !important;
+    flex-flow: initial !important;
+  }
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar > label,
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar > .edify-filter-field { grid-column: auto !important; inline-size: 100%; min-inline-size: 0; flex-basis: auto !important; }
+  main :is(#fund-filters-card, .edify-filters-wrap) .platform-filter-bar select { inline-size: 100%; }
+}
+
+
+/* Requesters on the rail. The strip carries data-edify-tablist/-tab, so the
+   platform's segmented-rail contract draws the tabs; these rules only lay
+   the strip out and add the status dot and the amount. */
+.fund-requesters { display: grid; gap: 0.375rem; }
+.fund-requesters__label { display: inline-flex; align-items: center; gap: 0.5rem; margin: 0; font-size: var(--edify-text-label-size); font-weight: 600; color: var(--edify-text-muted); white-space: nowrap; }
+.fund-requesters__strip { display: flex; gap: 0.375rem; min-inline-size: 0; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-width: thin; padding-block: 0.125rem; }
+.fund-requester { display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap; }
+.fund-requester__dot { inline-size: 0.5rem; block-size: 0.5rem; border-radius: var(--edify-radius-pill); background: var(--edify-text-subtle, var(--edify-text-muted)); flex: 0 0 auto; }
+.fund-requester__dot--success { background: var(--edify-success); }
+.fund-requester__dot--warning { background: var(--edify-warn); }
+.fund-requester__dot--danger { background: var(--edify-danger); }
+.fund-requester__dot--info { background: var(--edify-accent); }
+.fund-requester__amount { opacity: 0.8; font-variant-numeric: tabular-nums; font-weight: 500; }
+.fund-requesters__empty { font-size: var(--edify-text-label-size); color: var(--edify-text-muted); padding-inline: 0.5rem; }
+
+/* Period figures as ledger rows: four columns on desktop, two on tablet. */
+.fund-panel__rows--columns { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 1.5rem; }
+@media (min-width: 64rem) { .fund-panel__rows--columns { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+.fund-panel__rows--columns .fund-panel__row { flex-direction: column; align-items: flex-start; gap: 0.125rem; padding: 0.625rem 0.75rem; border: 1px solid var(--edify-border); border-radius: var(--radius-control); background: var(--edify-surface-muted); }
+.fund-panel__rows--columns dd span { color: var(--edify-text-muted); font-size: var(--edify-text-label-size); margin-inline-start: 0.375rem; }
+
+
+/* The month column is one card; its three readings are sections. */
+.fund-side.card { padding: 0; }
+.fund-side__section { display: grid; gap: 0.625rem; align-content: start; padding: 1rem 1.125rem; }
+.fund-side__section + .fund-side__section { border-block-start: 1px solid var(--edify-border); }
+/* The detail states the total once, in its header; the ledger's own band is redundant here. */
+.fund-detail .budget-ledger-summary { display: none; }
+.fund-detail__notes { display: flex; flex-wrap: wrap; gap: 0.25rem 1rem; margin: 0; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-workspace { gap: 1rem; }
+.fund-workspace__grid, .fund-workspace__bottom { gap: 1rem; }
+
+/* Weekly advance stepper: the six stages of the money chain, with the
+   request's current stage lit. On a phone it becomes a two-column list so
+   the labels stay whole instead of wrapping into a paragraph of arrows. */
+.fund-stepper { display: flex; flex-wrap: wrap; align-items: center; gap: 0.375rem 0.75rem; margin: 0; padding: 0; list-style: none; counter-reset: stage; font-size: var(--edify-text-label-size); color: var(--edify-text-muted); }
+.fund-stepper__step { display: inline-flex; align-items: center; gap: 0.375rem; white-space: nowrap; }
+.fund-stepper__step::before { counter-increment: stage; content: counter(stage); display: inline-grid; place-items: center; inline-size: 1.25rem; block-size: 1.25rem; border-radius: var(--edify-radius-pill); border: 1px solid var(--edify-border); font-size: var(--edify-text-micro-size); font-weight: 700; color: var(--edify-text-muted); background: var(--edify-surface); }
+.fund-stepper__step--done { color: var(--edify-text); }
+.fund-stepper__step--done::before { content: "\2713"; background: var(--edify-success); border-color: var(--edify-success); color: #fff; }
+.fund-stepper__step--current { color: var(--edify-text); font-weight: 700; }
+.fund-stepper__step--current::before { background: var(--edify-accent); border-color: var(--edify-accent); color: var(--edify-on-accent, #fff); }
+.fund-stepper__step--returned::before { background: var(--edify-danger); border-color: var(--edify-danger); color: #fff; content: "!"; }
+@media (max-width: 47.999rem) {
+  .fund-stepper { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.5rem 0.75rem; }
+  .fund-stepper__step { white-space: normal; }
 }

@@ -60,6 +60,33 @@ class CDScope:
     quarter: str | None = None
     month: int | None = None
     filters: dict = field(default_factory=dict)
+    # The country this scope is bounded to; "" is the whole deployment.
+    country: str = ""
+
+    @property
+    def target_period(self):
+        """What `_weighted_achievement` should measure over.
+
+        A selected month narrows target performance to that one FY month;
+        otherwise the quarter (or the whole FY) does. Every consumer of the
+        achievement math passes this rather than `quarter`, so the KPI strip
+        and the PL/CCEO tables beneath it always measure the same period —
+        the headline used to stay FY-cumulative while every other tile moved
+        with the month selector.
+        """
+        if self.month:
+            from datetime import date
+
+            from apps.core.fy import get_fy_date_range
+            from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
+
+            start = get_fy_date_range(self.fy)[0].date()
+            year = start.year if int(self.month) >= start.month else start.year + 1
+            fy_month = TCal.month_of_fy_for(date(year, int(self.month), 1), self.fy)
+            if fy_month:
+                return [fy_month]
+        return self.quarter
+
     school_ids: list = field(default_factory=list)  # all in-scope schools
     # What goes into `school_id__in=` filters. Same membership as school_ids,
     # but unevaluated: at 17,000 schools binding the materialised id list costs
@@ -93,11 +120,26 @@ def _initials(name):
     return "".join(p[0].upper() for p in (name or "").split() if p)[:2] or "—"
 
 
-def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
+def country_for(user) -> str:
+    """The country a principal's oversight is bounded to ("" = deployment)."""
+    if user is None or not getattr(user, "active_role", None):
+        return ""
+    try:
+        from apps.core.scoping import resolve_user_scope
+
+        return resolve_user_scope(user).country
+    except Exception:  # noqa: BLE001 - a bare principal in a unit test
+        return ""
+
+
+def resolve_cd_scope(fy, quarter=None, month=None, filters=None, country="") -> CDScope:
     """Country-wide scope, narrowed by the CD filters (pl / cceo / district /
-    cluster / school_type)."""
+    cluster / school_type). ``country`` bounds it to one country's regions
+    and staff; empty keeps the whole deployment."""
     filters = filters or {}
     schools = School.objects.filter(deleted_at__isnull=True)
+    if country:
+        schools = schools.filter(region__country=country)
 
     # PL filter → that PL's supervised CCEOs' schools.
     pl_filter = (filters.get("pl") or "").strip()
@@ -122,6 +164,9 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
 
     district = (filters.get("district") or "").strip()
     cluster = (filters.get("cluster") or "").strip()
+    region = (filters.get("region") or "").strip()
+    if region:
+        schools = schools.filter(region_id=region)
     if district:
         schools = schools.filter(district_id=district)
     if cluster:
@@ -131,10 +176,22 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
 
     # CCEO id sets (country-wide unless pl/cceo filtered).
     cceo_qs = User.objects.filter(roles__contains=["CCEO"], deleted_at__isnull=True)
+    if country:
+        cceo_qs = cceo_qs.filter(staff_profile__country=country)
     cceo_users = list(cceo_qs.values_list("id", flat=True))
     cceo_sps = list(
         StaffProfile.objects.filter(user__in=cceo_users).values_list("id", flat=True)
     )
+    if staff_ids is None and (region or district or cluster):
+        # A geography filter must narrow the people too. Every activity
+        # reader admits work by school OR by responsible staff, so leaving
+        # the staff set country-wide let a district filter match the whole
+        # country's activities through the second half of that OR.
+        staff_ids = list(
+            StaffSchoolAssignment.objects.filter(school_id__in=school_ids)
+            .values_list("staff_id", flat=True)
+            .distinct()
+        )
     if staff_ids is not None:
         # Narrow the CCEO set to the filtered staff.
         cceo_sps = [s for s in cceo_sps if s in set(staff_ids)]
@@ -151,6 +208,7 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
         quarter=quarter or None,
         month=month or None,
         filters=filters,
+        country=country or "",
         school_ids=school_ids,
         # The same queryset that produced school_ids, left unevaluated.
         school_ref=schools.values("id"),
@@ -162,10 +220,24 @@ def resolve_cd_scope(fy, quarter=None, month=None, filters=None) -> CDScope:
 
 def _country_activities(cd: CDScope):
     qs = Activity.objects.filter(fy=cd.fy, deleted_at__isnull=True)
+    if cd.country:
+        qs = qs.filter(
+            Q(school__region__country=cd.country)
+            | Q(cluster__district__region__country=cd.country)
+            | (
+                Q(school__isnull=True, cluster__isnull=True)
+                & Q(
+                    responsible_staff_id__in=StaffProfile.objects.filter(
+                        country=cd.country
+                    ).values("id")
+                )
+            )
+        )
     # School-scope when a school-narrowing filter is active; else all activities.
     if (
         cd.filters.get("pl")
         or cd.filters.get("cceo")
+        or cd.filters.get("region")
         or cd.filters.get("district")
         or cd.filters.get("cluster")
     ):
@@ -316,7 +388,7 @@ class CDAnalyticsService:
             if (filters.get("month") or "").strip().isdigit()
             else None
         )
-        cd = resolve_cd_scope(fy, quarter, month, filters)
+        cd = resolve_cd_scope(fy, quarter, month, filters, country=country_for(user))
         acts = _country_activities(cd)
         map_context = {}
         if include_regional_map:
@@ -372,10 +444,19 @@ class CDAnalyticsService:
     # ── PL / CCEO helpers ────────────────────────────────────────────────────
     @staticmethod
     def _pls():
+        from apps.core.request_cache import memoize
+
+        # Memoised per request: eight KPI tiles each asked for the roster
+        # (2026-09-06).
         return list(
-            User.objects.filter(
-                roles__contains=["Program Lead"], deleted_at__isnull=True
-            ).order_by("name")
+            memoize(
+                "cd_analytics:_pls",
+                lambda: list(
+                    User.objects.filter(
+                        roles__contains=["Program Lead"], deleted_at__isnull=True
+                    ).order_by("name")
+                ),
+            )
         )
 
     @staticmethod
@@ -405,6 +486,15 @@ class CDAnalyticsService:
         uid = getattr(pl_user, "id", None)
         if cd is not None and uid in cd.pl_cceos:
             return cd.pl_cceos[uid]
+        # Inside a request, resolve EVERY lead on the first singular call and
+        # serve the rest from the per-lead memo: the KPI strip asked for four
+        # leads one at a time before anything had primed them (2026-09-06).
+        from apps.core.request_cache import store
+
+        if store() is not None and uid is not None:
+            batch = CDAnalyticsService._pl_cceos_batch(CDAnalyticsService._pls(), cd)
+            if uid in batch:
+                return batch[uid]
 
         # cd participates in the key: the same PL yields a different school set
         # under a different scope, and returning one for the other would be a
@@ -422,7 +512,29 @@ class CDAnalyticsService:
         return CDAnalyticsService._pl_cceos_batch([pl_user], cd).get(uid) or []
 
     @staticmethod
-    def _pl_cceos_batch(pl_users, cd=None) -> dict:
+    def _pl_cceos_batch(pl_users, cd=None):
+        """Memoised per request: the KPI strip, the leads table and the
+        attention band each asked for the same PL→CCEO map (2026-09-06)."""
+        from apps.core.request_cache import store
+
+        users = list(pl_users)
+        ids = [getattr(u, "id", u) for u in users]
+        bucket = store()
+        if bucket is None:
+            return CDAnalyticsService._pl_cceos_batch_uncached(users, cd)
+        scope = (
+            getattr(cd, "fy", None),
+            getattr(cd, "month", None),
+            len(getattr(cd, "school_ids", ()) or ()),
+        )
+        known = bucket.setdefault(("cd_analytics:_pl_cceos_batch", scope), {})
+        missing = [u for u, pl_id in zip(users, ids) if pl_id not in known]
+        if missing:
+            known.update(CDAnalyticsService._pl_cceos_batch_uncached(missing, cd))
+        return {pl_id: known.get(pl_id, []) for pl_id in ids}
+
+    @staticmethod
+    def _pl_cceos_batch_uncached(pl_users, cd=None) -> dict:
         """{Programme Lead user id: supervised-CCEO rows} for several PLs at once.
 
         The single definition of the answer — `_pl_cceos_uncached` asks this
@@ -709,7 +821,7 @@ class CDAnalyticsService:
         from one place instead of recomputing its own definition."""
         return CDAnalyticsService._weighted_achievement(
             cd.fy,
-            cd.quarter,
+            cd.target_period,
             cd.cceo_user_ids,
             cd.cceo_staff_ids,
             areas=cd.areas or None,
@@ -732,7 +844,7 @@ class CDAnalyticsService:
         for staff_id, user_id, name in CDAnalyticsService._cceo_identities(cd):
             pct, achieved, target = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [user_id] if user_id else [],
                 [staff_id],
                 areas=cd.areas or None,
@@ -800,6 +912,89 @@ class CDAnalyticsService:
             for link in links
             if link.supervisor and link.supervisor.user_id
         }
+
+    @staticmethod
+    def _activity_rows(cd, acts) -> list:
+        """The scoped activities as plain rows, once per request, so the
+        per-lead tables count in Python instead of five queries per lead
+        (2026-09-06)."""
+        from apps.core.request_cache import memoize
+
+        key = ("cd_analytics:_activity_rows", cd.fy, cd.month, len(cd.school_ids))
+        return memoize(
+            key,
+            lambda: list(
+                acts.values_list(
+                    "id",
+                    "school_id",
+                    "responsible_staff_id",
+                    "status",
+                    "activity_type",
+                    "salesforce_activity_id",
+                )
+            ),
+        )
+
+    @staticmethod
+    def _team_rows(cd, acts, ids, school_ids) -> list:
+        ids = set(ids)
+        school_ids = set(school_ids)
+        return [
+            row
+            for row in CDAnalyticsService._activity_rows(cd, acts)
+            if row[2] in ids or row[1] in school_ids
+        ]
+
+    @staticmethod
+    def _pl_budget_by_user(cd_fy, uids) -> dict:
+        """Requested and disbursed per responsible user in one grouped query,
+        memoised per request; `_pl_budget` sums its team from it."""
+        from apps.core.request_cache import store
+        from apps.fund_requests.models import AdvanceRequest
+
+        wanted = {u for u in uids if u}
+        bucket = store()
+        known = (
+            bucket.setdefault(("cd_analytics:_pl_budget_by_user", cd_fy), {})
+            if bucket is not None
+            else {}
+        )
+        missing = wanted - known.keys()
+        if missing:
+            for row in (
+                AdvanceRequest.objects.filter(
+                    activity__fy=cd_fy, responsible_user_id__in=missing
+                )
+                .values("responsible_user_id")
+                .annotate(requested=Sum("amount"), disbursed=Sum("disbursed_amount"))
+            ):
+                known[row["responsible_user_id"]] = (
+                    int(row["requested"] or 0),
+                    int(row["disbursed"] or 0),
+                )
+            for u in missing:
+                known.setdefault(u, (0, 0))
+        return {u: known.get(u, (0, 0)) for u in wanted}
+
+    @staticmethod
+    def _users_by_id(user_ids) -> list:
+        """User rows for a set of ids, memoised PER USER for the request: the
+        28 rosters a CD render resolves are subsets of the same people, so
+        each person is loaded once and only unseen ids reach the database."""
+        from apps.core.request_cache import store
+
+        wanted = {u for u in user_ids if u}
+        bucket = store()
+        if bucket is None:
+            return list(User.objects.filter(id__in=wanted))
+        known = bucket.setdefault("cd_analytics:_users_by_id", {})
+        missing = wanted - known.keys()
+        if missing:
+            for user in User.objects.filter(id__in=missing):
+                known[user.id] = user
+            for user_id in missing:
+                known.setdefault(user_id, None)
+        return [known[u] for u in wanted if known.get(u) is not None]
 
     @staticmethod
     def _staff_user_ids(staff_ids) -> frozenset:
@@ -908,11 +1103,18 @@ class CDAnalyticsService:
         if not resolved_user_ids:
             return 0, 0, 0
 
-        months = TCal.months_of_quarter(quarter) if quarter else list(range(1, 13))
+        # `quarter` is a quarter label, a list of FY months (a single selected
+        # month, from CDScope.target_period), or None for the whole FY.
+        if isinstance(quarter, (list, tuple)):
+            months = [int(m) for m in quarter]
+        elif quarter:
+            months = TCal.months_of_quarter(quarter)
+        else:
+            months = list(range(1, 13))
         users = None
         if areas is None:
             # See _prime_target_series: agreed areas, never the catalogue.
-            users = list(User.objects.filter(id__in=resolved_user_ids))
+            users = CDAnalyticsService._users_by_id(resolved_user_ids)
             areas = agreed_target_areas(users, fy)
         if not areas:
             # Nobody in scope has agreed a measurable priority. Reporting 0 of
@@ -1039,6 +1241,7 @@ class CDAnalyticsService:
         if (
             cd.filters.get("pl")
             or cd.filters.get("cceo")
+            or cd.filters.get("region")
             or cd.filters.get("district")
             or cd.filters.get("cluster")
         ):
@@ -1055,10 +1258,78 @@ class CDAnalyticsService:
 
     @staticmethod
     def _budget_utilization(cd):
+        return CDAnalyticsService.budget_utilisation_detail(cd)["pct"]
+
+    @staticmethod
+    def budget_utilisation_detail(cd) -> dict:
+        """Disbursed against the APPROVED envelope, falling back to requested.
+
+        Utilisation used to divide by the request pipeline, which is what
+        people asked for rather than what the RVP approved. The approved
+        envelope is the sum of the monthly work-plan budgets the RVP has
+        signed (or that have gone on to the Accountant), narrowed to the
+        selected month when there is one. Where no envelope exists yet the
+        requested basis is kept, and the helper says so.
+        """
+        from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
+
+        from apps.core.request_cache import memoize
+
         qs = CDAnalyticsService._advance_qs(cd)
-        requested = int(qs.aggregate(s=Sum("amount"))["s"] or 0)
-        disbursed = int(qs.aggregate(s=Sum("disbursed_amount"))["s"] or 0)
-        return _pct(disbursed, requested)
+        # One aggregate for both sums, memoised per request with the envelope:
+        # four KPI tiles each ran these three sums (2026-09-06).
+        memo_key = (
+            "cd_analytics:budget_utilisation",
+            cd.fy,
+            cd.month,
+            tuple(sorted(cd.school_ids))[:50],
+            len(cd.school_ids),
+        )
+        sums = memoize(
+            memo_key,
+            lambda: qs.aggregate(
+                requested=Sum("amount"), disbursed=Sum("disbursed_amount")
+            ),
+        )
+        requested = int(sums["requested"] or 0)
+        disbursed = int(sums["disbursed"] or 0)
+
+        def _approved():
+            envelopes = MonthlyWorkPlanBudget.objects.filter(
+                fy=cd.fy,
+                status__in=(
+                    "approved_by_rvp",
+                    "sent_to_accountant",
+                    "disbursed",
+                    "closed",
+                ),
+            )
+            if cd.month:
+                envelopes = envelopes.filter(
+                    month_key__endswith=f"-{int(cd.month):02d}"
+                )
+            return int(envelopes.aggregate(s=Sum("total_amount"))["s"] or 0)
+
+        approved = memoize(
+            ("cd_analytics:approved_envelope", cd.fy, cd.month), _approved
+        )
+        if approved:
+            return {
+                "pct": _pct(disbursed, approved),
+                "basis": "approved",
+                "approved": approved,
+                "requested": requested,
+                "disbursed": disbursed,
+                "helper": "disbursed vs approved envelope",
+            }
+        return {
+            "pct": _pct(disbursed, requested),
+            "basis": "requested",
+            "approved": 0,
+            "requested": requested,
+            "disbursed": disbursed,
+            "helper": "disbursed vs requested (no approved envelope yet)",
+        }
 
     # ── 1. Performance vs target over time ───────────────────────────────────
     @staticmethod
@@ -1205,7 +1476,7 @@ class CDAnalyticsService:
             # per-CCEO numbers, which would silently unweight the team total).
             pl_pct, _pl_a, _pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [c["user_id"] for c in cceos if c["user_id"]],
                 [c["staff_id"] for c in cceos],
                 areas=cd.areas or None,
@@ -1215,7 +1486,7 @@ class CDAnalyticsService:
             for c in cceos:
                 pct, _a, t = CDAnalyticsService._weighted_achievement(
                     cd.fy,
-                    cd.quarter,
+                    cd.target_period,
                     [c["user_id"]] if c["user_id"] else [],
                     [c["staff_id"]],
                     areas=cd.areas or None,
@@ -1724,6 +1995,32 @@ class CDAnalyticsService:
     def pl_oversight(cd, acts):
         latest, _ = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
         rows = []
+        # Warm the per-request memos ONCE for every team before the per-lead
+        # loop: each lead's roster is a different subset of the same people,
+        # so resolving staff ids, users, profile ids and agreed areas inside
+        # the loop cost four rounds of each (2026-09-06).
+        pls = CDAnalyticsService._pls()
+        teams = CDAnalyticsService._pl_cceos_batch(pls, cd)
+        all_staff = {
+            c["staff_id"]
+            for members in teams.values()
+            for c in members
+            if c.get("staff_id")
+        }
+        all_user_ids = set(CDAnalyticsService._staff_user_ids(all_staff))
+        all_user_ids |= {
+            c["user_id"]
+            for members in teams.values()
+            for c in members
+            if c.get("user_id")
+        }
+        if all_user_ids:
+            from apps.accounts.models import attach_staff_profile_ids
+            from apps.targets.my_targets import priority_target_areas_for_users
+
+            roster = CDAnalyticsService._users_by_id(all_user_ids)
+            attach_staff_profile_ids(roster)
+            priority_target_areas_for_users(roster, cd.fy)
         for pl in CDAnalyticsService._pls():
             cceos = CDAnalyticsService._pl_cceos(pl, cd)
             all_school_ids = set()
@@ -1734,7 +2031,7 @@ class CDAnalyticsService:
             # per-row table can never disagree with the KPI above it.
             pl_pct, pl_a, pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [c["user_id"] for c in cceos if c["user_id"]],
                 [c["staff_id"] for c in cceos],
                 areas=cd.areas or None,
@@ -1753,20 +2050,18 @@ class CDAnalyticsService:
                 resp_ids.add(c["staff_id"])
                 if c["user_id"]:
                     resp_ids.add(c["user_id"])
-            backlog = (
-                acts.filter(
-                    Q(responsible_staff_id__in=resp_ids)
-                    | Q(school_id__in=all_school_ids)
+            _pending_statuses = {
+                "returned_by_pl",
+                "returned_by_ia",
+                "salesforce_id_required",
+                "awaiting_ia_verification",
+            }
+            backlog = sum(
+                1
+                for row in CDAnalyticsService._team_rows(
+                    cd, acts, resp_ids, all_school_ids
                 )
-                .filter(
-                    status__in=[
-                        "returned_by_pl",
-                        "returned_by_ia",
-                        "salesforce_id_required",
-                        "awaiting_ia_verification",
-                    ]
-                )
-                .count()
+                if row[3] in _pending_statuses
             )
             budget_util = CDAnalyticsService._pl_budget(cceos, cd.fy)
             risk = CDAnalyticsService._pl_risk(
@@ -1795,16 +2090,12 @@ class CDAnalyticsService:
 
     @staticmethod
     def _pl_budget(cceos, fy):
-        from apps.fund_requests.models import AdvanceRequest
-
         uids = [c["user_id"] for c in cceos if c["user_id"]]
         if not uids:
             return 0
-        qs = AdvanceRequest.objects.filter(
-            activity__fy=fy, responsible_user_id__in=uids
-        )
-        requested = int(qs.aggregate(s=Sum("amount"))["s"] or 0)
-        disbursed = int(qs.aggregate(s=Sum("disbursed_amount"))["s"] or 0)
+        per_user = CDAnalyticsService._pl_budget_by_user(fy, uids)
+        requested = sum(r for r, _ in per_user.values())
+        disbursed = sum(d for _, d in per_user.values())
         return _pct(disbursed, requested)
 
     @staticmethod
@@ -2308,6 +2599,16 @@ class CDAnalyticsService:
             "fy_options": fy_options(),
             "quarters": ["Q1", "Q2", "Q3", "Q4"],
             "pls": [{"id": p.id, "name": p.name} for p in CDAnalyticsService._pls()],
+            "regions": list(
+                __import__("apps.geography.models", fromlist=["Region"])
+                .Region.objects.filter(
+                    id__in=schools.exclude(region__isnull=True)
+                    .values_list("region_id", flat=True)
+                    .distinct()
+                )
+                .values("id", "name")
+                .order_by("name")
+            ),
             "districts": list(
                 District.objects.filter(id__in=district_ids)
                 .values("id", "name")
@@ -2334,7 +2635,9 @@ class CDAnalyticsService:
     def export_rows(user, fy=None, quarter=None, month=None, filters=None):
         """PL-oversight roster for CSV export (read-only)."""
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, quarter, month, filters or {})
+        cd = resolve_cd_scope(
+            fy, quarter, month, filters or {}, country=country_for(user)
+        )
         acts = _country_activities(cd)
         _prime_target_series(cd)
         return CDAnalyticsService.pl_oversight(cd, acts)["rows"]
@@ -2346,7 +2649,9 @@ class CDAnalyticsService:
         live from state (no storage; auto-close when the state resolves). Every
         To-Do routes to an oversight workflow — never field execution."""
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, quarter, month, filters or {})
+        cd = resolve_cd_scope(
+            fy, quarter, month, filters or {}, country=country_for(user)
+        )
         acts = _country_activities(cd)
         # Prime the per-user target series once for the whole roster.
         #
@@ -2488,8 +2793,53 @@ class CDAnalyticsService:
 
     @staticmethod
     def drilldown(user, drill, params, fy=None, quarter=None, month=None, filters=None):
+        """A drawer whose actions know what they are about.
+
+        The action chips used to be static hrefs — "Flag to Program Lead"
+        opened an empty flag form, "Escalate to RVP" an empty escalation —
+        so the director re-typed the entity they had just drilled into. Each
+        chip now carries the entity (and, for a Program Lead, the assignee)
+        into the form it opens.
+        """
+        payload = CDAnalyticsService._drilldown_raw(
+            user, drill, params, fy=fy, quarter=quarter, month=month, filters=filters
+        )
+        entity_id = str(
+            params.get("id") or params.get("issue") or params.get("intervention") or ""
+        )
+        title = str(payload.get("title") or "")
+        payload["actions"] = [
+            CDAnalyticsService._contextual_action(a, drill, entity_id, title)
+            for a in payload.get("actions", [])
+        ]
+        return payload
+
+    @staticmethod
+    def _contextual_action(
+        action: dict, drill: str, entity_id: str, title: str
+    ) -> dict:
+        from urllib.parse import urlencode
+
+        href = action.get("href", "")
+        scope = {"scope_type": drill, "scope_id": entity_id, "scope_name": title}
+        if href == "/quality-checks":
+            params = dict(scope)
+            if drill == "pl" and entity_id:
+                params["assign_to"] = entity_id
+            return {**action, "href": f"/quality-checks?{urlencode(params)}"}
+        if href == "/escalations":
+            params = {**scope, "subject": title[:120]}
+            return {**action, "href": f"/escalations?{urlencode(params)}"}
+        return action
+
+    @staticmethod
+    def _drilldown_raw(
+        user, drill, params, fy=None, quarter=None, month=None, filters=None
+    ):
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, quarter, month, filters or {})
+        cd = resolve_cd_scope(
+            fy, quarter, month, filters or {}, country=country_for(user)
+        )
         acts = _country_activities(cd)
         actions = CDAnalyticsService._OVERSIGHT_ACTIONS.get(
             drill,
@@ -2586,7 +2936,7 @@ class CDAnalyticsService:
             )
             pct, a, t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
-                cd.quarter,
+                cd.target_period,
                 [c["user_id"]] if c["user_id"] else [],
                 [c["staff_id"]],
                 areas=cd.areas or None,

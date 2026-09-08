@@ -1,36 +1,41 @@
 {% load frontend_filters %}
 <div class="space-y-5">
 
-  {# ── Period progression: Current Month → Q1–Q4 → FY Cumulative ─────────── #}
-  <div class="target-period-progression flex flex-col lg:flex-row items-stretch gap-2" aria-label="Target period progression">
-    {% for c in period_cards %}
-    <div class="flex-1 edify-surface rounded-surface border {% if c.current %}edify-primary-border ring-2 edify-primary-ring{% else %}border-slate-100{% endif %} shadow-sm p-3.5 flex flex-col gap-1.5 min-w-0">
-      <div class="flex items-center justify-between">
-        <p class="edify-kpi-label edify-text-caption {% if c.current %}edify-primary-text{% else %}text-slate-400{% endif %} truncate">{{ c.label }}</p>
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-300 shrink-0">{{ c.sublabel }}</span>
+  {% comment %}The page opens on the progress table — every agreed priority, target,
+  achieved and share per period, with the weighted overall row — rather than
+  six period cards of the weighted roll-up alone (owner, 2026-09-05: "should
+  be the progress table with all the priorities"). The cards said "0 / 0" six
+  times over when nothing was agreed; the table says so once, in words.{% endcomment %}
+  {# ── Operational agreements + approved strategic allocations by period ─── #}
+  {% comment %}"Cumulative progress by time period" moved here from the Reports page on
+  2026-09-05, as an accordion: open by default because it is what this page is
+  for, and a click on its heading folds it away. The table itself is
+  partials/targets/_period_matrix.html, the same one each Team Target row
+  opens.{% endcomment %}
+  {% if matrix_rows or strategic_milestones %}
+  <details class="edify-disclosure" open>
+    <summary>
+      <span>
+        <h2 id="my-cumulative-progress-title">Cumulative progress by time period</h2>
+        <small>Your agreed performance priorities and approved strategic milestone allocations, from the selected month through Q1–Q4 and the full year. Validated work only.</small>
+      </span>
+      <svg class="edify-disclosure__chevron" aria-hidden="true" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9l6 6 6-6"/></svg>
+    </summary>
+    <div class="edify-disclosure__body">
+      <div class="overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="Scrollable personal cumulative target progress table. Scroll horizontally to compare every quarter and the full year.">
+        {% include "partials/targets/_period_matrix.html" with rows=matrix_rows heads=matrix_heads overall=overall_cells overall_label="Operational overall progress" quarter=current_quarter milestones=strategic_milestones drawer="/my-targets/area-drawer" fy=fy month_of_fy=month_of_fy %}
       </div>
-      <div class="flex items-center gap-2.5">
-        <div class="relative h-[52px] w-[52px] shrink-0 rounded-pill"
-             style="background: conic-gradient({% if c.tone == 'success' %}var(--edify-chart-green){% elif c.tone == 'warning' %}var(--edify-chart-amber){% elif c.tone == 'danger' %}var(--edify-chart-red){% else %}var(--edify-border){% endif %} 0% {{ c.ring }}%, var(--edify-border, var(--edify-border)) {{ c.ring }}% 100%);">
-          <div class="absolute inset-[6px] edify-surface rounded-pill flex items-center justify-center">
-            <span class="text-[12px] font-bold text-slate-800 tabular-nums">{{ c.pct }}%</span>
-          </div>
-        </div>
-        <div class="min-w-0">
-          <p class="edify-text-caption font-bold {% if c.tone == 'success' %}text-emerald-600{% elif c.tone == 'warning' %}text-amber-600{% elif c.tone == 'danger' %}text-rose-600{% else %}text-slate-400{% endif %}">{{ c.status }}</p>
-          <p class="edify-text-caption font-bold text-slate-700 tabular-nums">{{ c.achieved|intcomma }} / {{ c.target|intcomma }}</p>
-          <p class="edify-text-caption font-semibold text-slate-400">{% if c.status != 'Not Started' %}pace {{ c.pace }}%{% else %}&nbsp;{% endif %}</p>
-        </div>
-      </div>
+      <p class="edify-text-caption text-slate-400 font-medium">Operational overall progress is priority-weighted{% if area_cards %} ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %}, {% endif %}{% endfor %}){% endif %}. Strategic milestone rows are approved allocations and are not weighted into it.</p>
     </div>
-    {% if not forloop.last %}
-    <div class="hidden lg:flex items-center shrink-0 text-slate-300">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"/></svg>
-    </div>
-    {% endif %}
-    {% endfor %}
-  </div>
-  <div class="flex items-center justify-between -mt-2">
+  </details>
+  {% else %}
+  <section class="edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6" aria-labelledby="no-performance-priorities-title">
+    <h2 id="no-performance-priorities-title" class="text-[13px] font-bold text-slate-800">No measurable performance priorities agreed for FY {{ fy }}</h2>
+    <p class="mt-1 edify-text-caption leading-5 text-slate-500">This table is populated from your agreed performance priorities. Add a measurable priority and complete manager agreement to make it appear here.</p>
+    <a href="/my-performance" class="mt-3 inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Open My Performance →</a>
+  </section>
+  {% endif %}
+  <div class="flex items-center justify-between">
     <p class="edify-text-caption text-slate-400 font-medium">Monthly achievements contribute to their quarter; Q1–Q4 roll into the financial year. Validated work only.</p>
     <button type="button" @click="showRollup = true" class="edify-text-caption font-bold edify-primary-text edify-primary-text-hover shrink-0">How roll-up works</button>
   </div>
@@ -88,82 +93,6 @@
   {# ── User-owned performance priority cards ─────────────────────────────── #}
   {% if area_kpi_items %}
   {% include "components/kpi_strip.html" with items=area_kpi_items variant="executive" title="Performance priorities" %}
-  {% else %}
-  <section class="edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6" aria-labelledby="no-performance-priorities-title">
-    <h2 id="no-performance-priorities-title" class="text-[13px] font-bold text-slate-800">No measurable performance priorities agreed for FY {{ fy }}</h2>
-    <p class="mt-1 edify-text-caption leading-5 text-slate-500">This table is populated from your agreed performance priorities. Add a measurable priority and complete manager agreement to make it appear here.</p>
-    <a href="/my-performance" class="mt-3 inline-block edify-text-caption font-bold edify-primary-text edify-primary-text-hover">Open My Performance →</a>
-  </section>
-  {% endif %}
-
-  {# ── Operational agreements + approved strategic allocations by period ─── #}
-  {% if matrix_rows or strategic_milestones %}
-  <section class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3" aria-labelledby="my-cumulative-progress-title">
-    <div>
-      <h2 id="my-cumulative-progress-title" class="text-[13px] font-bold text-slate-800 tracking-tight">Cumulative progress by time period</h2>
-      <p class="mt-1 edify-text-caption text-slate-400 font-medium">Your agreed performance priorities and approved strategic milestone allocations, from the selected month through Q1–Q4 and the full financial year.</p>
-    </div>
-    <div class="overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="Scrollable personal cumulative target progress table. Scroll horizontally to compare every quarter and the full financial year.">
-      <table class="w-full edify-text-caption border-collapse min-w-[860px]">
-        <caption class="sr-only">Personal cumulative target and verified achievement by reporting period</caption>
-        <thead>
-          <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
-            <th scope="col" class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">Priority / target</th>
-            {% for h in matrix_heads|slice:":30" %}
-            <th scope="colgroup" class="py-2 px-2 text-center border-l border-slate-100 {% if forloop.first %}edify-primary-soft-alpha-40{% endif %}" colspan="3">
-              <span class="block text-slate-600 font-bold">{{ h.label }}</span>
-              <span class="block edify-text-caption text-slate-400 normal-case">{{ h.sub }}</span>
-            </th>
-            {% endfor %}
-          </tr>
-          <tr class="border-b border-slate-100 text-slate-400 font-bold edify-text-caption uppercase">
-            <th class="py-1 px-3 sticky left-0 edify-surface z-10"><span class="sr-only">Measure</span></th>
-            {% for h in matrix_heads|slice:":30" %}
-            <th scope="col" class="py-1 text-center border-l border-slate-100">Tgt</th><th scope="col" class="py-1 text-center">Ach</th><th scope="col" class="py-1 text-center">%</th>
-            {% endfor %}
-          </tr>
-        </thead>
-        <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
-          {% for row in matrix_rows %}
-          <tr class="hover:bg-slate-50/50 cursor-pointer"
-              hx-get="/my-targets/area-drawer?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}"
-              hx-target="#drawer-container" hx-swap="innerHTML">
-            <th scope="row" class="py-2.5 px-3 font-semibold text-left text-slate-800 whitespace-nowrap sticky left-0 edify-surface z-10">{{ row.label }}</th>
-            {% for cell in row.cells %}
-            <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400 tabular-nums">{{ cell.t }}</td>
-            <td class="py-2.5 text-center font-semibold text-slate-800 tabular-nums">{{ cell.a }}</td>
-            <td class="py-2.5 text-center font-semibold tabular-nums {% if cell.pct == None %}text-slate-300{% elif cell.pct >= 100 %}text-emerald-600{% elif cell.pct >= 60 %}text-amber-600{% else %}text-rose-500{% endif %}">{% if cell.pct != None %}{{ cell.pct }}%{% else %}—{% endif %}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-          {% for row in strategic_milestones %}
-          <tr class="hover:bg-slate-50/50">
-            <th scope="row" class="py-2.5 px-3 text-left sticky left-0 edify-surface z-10">
-              <span class="block font-semibold text-slate-800 whitespace-nowrap">{{ row.milestone }}</span>
-              <span class="block max-w-[260px] truncate font-medium text-slate-400 normal-case">{{ row.priority }}</span>
-            </th>
-            {% for cell in row.periodCells %}
-            <td class="py-2.5 text-center border-l border-slate-50 font-bold text-slate-400 tabular-nums">{{ cell.t|floatformat:"-2" }}</td>
-            <td class="py-2.5 text-center font-semibold text-slate-800 tabular-nums">{{ cell.a|floatformat:"-2" }}</td>
-            <td class="py-2.5 text-center font-semibold tabular-nums {% if cell.pct == None %}text-slate-300{% elif cell.pct >= 100 %}text-emerald-600{% elif cell.pct >= 60 %}text-amber-600{% else %}text-rose-500{% endif %}">{% if cell.pct != None %}{{ cell.pct }}%{% else %}—{% endif %}</td>
-            {% endfor %}
-          </tr>
-          {% endfor %}
-          {% if matrix_rows %}
-          <tr class="border-t border-slate-100 bg-slate-50/60">
-            <th scope="row" class="py-2.5 px-3 text-left font-bold text-slate-800 sticky left-0 bg-slate-50 z-10">Operational Overall Progress</th>
-            {% for cell in overall_cells %}
-            <td class="py-2.5 text-center border-l border-slate-100" colspan="3">
-              <span class="font-bold tabular-nums {% if cell.pct >= 70 %}text-emerald-600{% elif cell.pct >= 50 %}text-amber-600{% else %}text-rose-500{% endif %}">{{ cell.pct }}%</span>
-            </td>
-            {% endfor %}
-          </tr>
-          {% endif %}
-        </tbody>
-      </table>
-    </div>
-    <p class="edify-text-caption text-slate-400 font-medium">Operational overall progress is priority-weighted{% if area_cards %} ({% for a in area_cards %}{{ a.label }} {{ a.weight }}%{% if not forloop.last %} · {% endif %}{% endfor %}){% endif %}. Strategic allocations retain their governed milestone weights and are not silently blended into that score.</p>
-  </section>
   {% endif %}
 
   {# ── Charts + focus row ─────────────────────────────────────────────────── #}

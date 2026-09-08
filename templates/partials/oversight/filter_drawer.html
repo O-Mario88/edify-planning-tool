@@ -53,6 +53,18 @@ selection can return an empty page and read as a broken one.
   </label>
   {% endif %}
 
+  {% if filter_options.districts %}
+  <label class="block">
+    <span class="block text-sm font-semibold mb-1">District</span>
+    <select name="district_id" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
+      <option value="">Any district</option>
+      {% for id, name in filter_options.districts %}
+      <option value="{{ id }}" {% if advanced.district_id == id %}selected{% endif %}>{{ name }}</option>
+      {% endfor %}
+    </select>
+  </label>
+  {% endif %}
+
   <label class="block">
     <span class="block text-sm font-semibold mb-1">Context</span>
     <select name="context" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
@@ -86,8 +98,8 @@ selection can return an empty page and read as a broken one.
   </label>
 
   <div class="flex items-center gap-2 pt-1">
-    <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+    <button type="submit" class="btn btn-primary h-8">Apply filters</button>
     <a href="{{ target_url }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}"
-       class="btn h-9 inline-flex items-center">Clear</a>
+       class="btn h-8 inline-flex items-center">Clear</a>
   </div>
 </form>

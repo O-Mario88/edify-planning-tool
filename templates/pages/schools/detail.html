@@ -52,7 +52,7 @@
              placeholder="e.g. 380"
              class="h-9 w-32 px-3 rounded-control border border-amber-200 edify-surface text-sm mt-1">
     </label>
-    <button type="submit" class="btn h-9">Reopen school</button>
+    <button type="submit" class="btn h-8">Reopen school</button>
   </form>
   <div id="school-reopen-result" class="mt-2"></div>
 </div>
@@ -246,6 +246,43 @@ Improved: {{ impact_data.improvedCount }}
 {% endif %}
 </div>
 </div>
+
+{% if visit_feedback %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden" aria-labelledby="school-visit-feedback-title">
+<div class="px-6 py-4 border-b border-[var(--edify-border)]">
+<h3 id="school-visit-feedback-title" class="text-[15px] font-semibold text-slate-800 tracking-tight">School Visit Feedback</h3>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Findings and improvements recorded at completed follow-up visits.</p>
+</div>
+<div class="divide-y divide-[var(--edify-border)]">
+{% for feedback in visit_feedback %}
+<article class="p-5 space-y-4">
+<div class="flex flex-wrap items-start justify-between gap-2">
+<div>
+<h4 class="text-[13px] font-bold text-slate-800">{{ feedback.activity.get_activity_type_display }}</h4>
+<p class="edify-text-caption text-slate-500 mt-0.5 font-semibold">
+{{ feedback.activity_date|date:"j M Y"|default:"Date not recorded" }}
+{% if feedback.activity.salesforce_activity_id %} &bull; {{ feedback.activity.salesforce_activity_id }}{% endif %}
+</p>
+</div>
+{% if feedback.related_activity %}
+<span class="inline-flex items-center rounded-pill bg-slate-100 px-2.5 py-1 edify-text-caption font-bold text-slate-600">Related to {{ feedback.related_activity.get_activity_type_display }}{% if feedback.related_activity.planned_date %} · {{ feedback.related_activity.planned_date|date:"j M Y" }}{% endif %}</span>
+{% endif %}
+</div>
+<div>
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Finding</p>
+<p class="mt-1 text-[12px] font-medium leading-relaxed text-slate-700">{{ feedback.finding|linebreaksbr }}</p>
+</div>
+<div>
+<p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Improvement since the last visit</p>
+<ul class="mt-2 list-disc space-y-1 pl-5 text-[12px] font-medium text-slate-700">
+{% for improvement in feedback.improvements %}<li>{{ improvement }}</li>{% endfor %}
+</ul>
+</div>
+</article>
+{% endfor %}
+</div>
+</section>
+{% endif %}
 
 <!-- Activities History -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">

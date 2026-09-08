@@ -1,0 +1,13 @@
+{% load static %}
+{% comment %}
+The People Analytics tab: the HR register inside the one Analytics page. The
+workspace header, the scope filter row, the tiles and the tablist stay fixed
+above (owner, 2026-09-05). The stylesheet travels with the panel because a
+tab click swaps this markup into a page whose head was written for another
+section; a link in the body loads exactly when it is needed and nowhere else.
+{% endcomment %}
+<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260823aura1">
+<div class="hcos-workspace hcos-workspace--panel" data-mobile-family="performance">
+  {% include "components/kpi_strip.html" with items=metrics variant="executive" title=title|add:" context" %}
+  {% include "partials/hr/module_register.html" %}
+</div>

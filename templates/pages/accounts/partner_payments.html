@@ -1,5 +1,6 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
+{% load table_pagination %}
 
 {% block title %}Partner Payments - Edify Command Center{% endblock %}
 
@@ -60,9 +61,9 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <h2 class="text-[14px] font-semibold text-slate-800">Transport Provider Payments</h2>
 <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">The day's mission transport, paid direct to the transport company. Staff see arrangement status only — never these amounts.</p>
 </div>
-<div class="overflow-x-auto">
-<table class="edify-record-table w-full text-[12px] font-semibold max-xl:block">
-<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+<div class="overflow-x-auto edify-table-scroll-region">
+<table class="edify-record-table w-full text-[12px] font-semibold edify-mobile-table--scroll">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-3 text-left">Mission Day</th>
 <th class="px-6 py-3 text-left">Staff Member</th>
@@ -71,23 +72,20 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <th class="px-6 py-3 text-right">Action</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 max-xl:block">
+<tbody class="divide-y divide-slate-100">
 {% for t in transport_queue|slice:":100" %}
-<tr class="max-xl:block max-xl:p-4 max-xl:space-y-1">
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-record-title>
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Mission Day</span>
+<tr class="">
+<td class="px-6 py-3" data-record-title>
 <div class="font-semibold text-slate-900">{{ t.batch.visit_date|date:"M d, Y" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ t.batch.district_type }} district · {{ t.batch.school_count }} activit{{ t.batch.school_count|pluralize:"y,ies" }}</div>
 </td>
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="Staff Member">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Staff Member</span>
+<td class="px-6 py-3" data-label="Staff Member">
 {{ t.staff_name }}
 </td>
-<td class="px-6 py-3 text-right text-slate-800 tabular-nums max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Transport Amount">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Transport Amount (UGX)</span>
+<td class="px-6 py-3 text-right text-slate-800 tabular-nums" data-label="Transport Amount">
 {{ t.amount|ugx_amount }}
 </td>
-<td class="px-6 py-3 max-xl:px-0 max-xl:py-2" colspan="2">
+<td class="px-6 py-3" colspan="2">
 <form method="POST" action="/accounts/transport-payments/{{ t.id }}/pay" class="flex flex-wrap items-center gap-2 justify-end">
 {% csrf_token %}
 <input name="provider_name" required value="{{ t.provider_name }}" aria-label="Transport provider" placeholder="Provider" class="h-8 w-44 bg-slate-50 border border-slate-200 rounded-control text-[12px] font-semibold px-2">
@@ -116,9 +114,9 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <h2 class="text-[14px] font-semibold text-slate-800">Partner Invoices — Awaiting Payment</h2>
 <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Confirmed by the Program Lead against the plan. The entered amount equals the period's planned cost; the payable instalment is system-derived.</p>
 </div>
-<div class="overflow-x-auto">
-<table class="edify-record-table w-full text-[12px] font-semibold max-xl:block">
-<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+<div class="overflow-x-auto edify-table-scroll-region">
+<table class="edify-record-table w-full text-[12px] font-semibold edify-mobile-table--scroll">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-3 text-left">Invoice</th>
 <th class="px-6 py-3 text-left">Period</th>
@@ -127,24 +125,21 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <th class="px-6 py-3 text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 max-xl:block">
+<tbody class="divide-y divide-slate-100">
 {% for inv in invoice_queue|slice:":100" %}
-<tr class="max-xl:block max-xl:p-4 max-xl:space-y-1">
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-record-title>
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Invoice</span>
+<tr class="">
+<td class="px-6 py-3" data-record-title>
 <div class="font-semibold text-slate-900">{{ inv.get_invoice_type_display }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ inv.created_at|date:"M d, Y" }} · {{ inv.partner_name }}</div>
 </td>
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="Period">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Period</span>
+<td class="px-6 py-3" data-label="Period">
 <div class="font-semibold text-slate-800">{{ inv.period_start|date:"d M" }} – {{ inv.period_end|date:"d M Y" }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ inv.items.count }} activit{{ inv.items.count|pluralize:"y,ies" }} · plan {{ inv.entered_total|ugx_amount }} · PL-confirmed</div>
 </td>
-<td class="px-6 py-3 text-right text-slate-800 tabular-nums max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Payable">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Payable (UGX)</span>
+<td class="px-6 py-3 text-right text-slate-800 tabular-nums" data-label="Payable">
 {{ inv.payable_amount|ugx_amount }}
 </td>
-<td class="px-6 py-3 max-xl:px-0 max-xl:py-2" colspan="2">
+<td class="px-6 py-3" colspan="2">
 <div class="flex flex-wrap items-center gap-2 justify-end">
 <a href="/accounts/partner-invoices/{{ inv.id }}/download"
    class="inline-flex h-8 items-center rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-600 hover:bg-slate-50 transition-colors">Download Invoice</a>
@@ -174,9 +169,10 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <h2 class="text-[14px] font-semibold text-slate-800">Awaiting 50% MOU Advance</h2>
 <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">Costed partner activities the MOU advances before the work happens. The balance clears after IA verification.</p>
 </div>
-<div class="overflow-x-auto">
-<table class="edify-record-table w-full text-[12px] font-semibold max-xl:block">
-<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+{% paginate advance_queue "advance_page" as advance_pager %}
+<div class="overflow-x-auto edify-table-scroll-region">
+<table class="edify-record-table w-full text-[12px] font-semibold edify-mobile-table--scroll">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-3 text-left">Partner</th>
 <th class="px-6 py-3 text-left">Activity</th>
@@ -187,38 +183,31 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 <th class="px-6 py-3 text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 max-xl:block">
-{% for act in advance_queue %}
-<tr class="hover:bg-slate-50/50 transition-colors max-xl:block max-xl:p-4 max-xl:space-y-1">
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-record-title>
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Partner</span>
-<div class="font-semibold text-slate-900 text-[12px]">{{ act.assigned_partner_id }}</div>
+<tbody class="divide-y divide-slate-100">
+{% for act in advance_pager.rows %}
+<tr class="hover:bg-slate-50/50 transition-colors">
+<td class="px-6 py-3" data-record-title>
+<div class="font-semibold text-slate-900 text-[12px]">{{ act.assigned_partner_name }}</div>
 </td>
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="Activity">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Activity</span>
+<td class="px-6 py-3" data-label="Activity">
 <div>
-<div class="font-semibold text-slate-900">#{{ act.id|slice:":8" }}</div>
+<div class="font-semibold text-slate-900">{{ act.title }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ act.get_activity_type_display }}</div>
 </div>
 </td>
-<td class="px-6 py-3 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="School / Cluster">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">School / Cluster</span>
+<td class="px-6 py-3" data-label="School / Cluster">
 <div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
-<td class="px-6 py-3 text-slate-500 font-medium max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Activity Date">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Activity Date</span>
+<td class="px-6 py-3 text-slate-500 font-medium" data-label="Activity Date">
 {{ act.scheduled_date|date:"M d, Y" }}
 </td>
-<td class="px-6 py-3 text-right text-slate-700 tabular-nums max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Planned">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Planned (UGX)</span>
+<td class="px-6 py-3 text-right text-slate-700 tabular-nums" data-label="Planned">
 {{ act.planned_total|ugx_amount }}
 </td>
-<td class="px-6 py-3 text-right text-emerald-600 font-semibold tabular-nums max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="50% Advance">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">50% Advance (UGX)</span>
+<td class="px-6 py-3 text-right text-emerald-600 font-semibold tabular-nums" data-label="50% Advance">
 {{ act.mou_advance|ugx_amount }}
 </td>
-<td class="px-6 py-3 text-right max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-3 max-xl:border-t max-xl:border-slate-100" data-record-action>
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Actions</span>
+<td class="px-6 py-3 text-right" data-record-action>
 <button
 @click="openPayment($event, '{{ act.id }}', '{{ act.assigned_partner_id|escapejs }}', {{ act.mou_advance|default:0 }}, 'advance', '50% MOU Advance')"
 type="button"
@@ -232,6 +221,7 @@ Pay 50% Advance
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=advance_pager param="advance_page" %}
 </div>
 {% endif %}
 
@@ -242,13 +232,13 @@ Pay 50% Advance
 <h2 class="text-[14px] font-semibold text-slate-800">Verified — Awaiting Clearance</h2>
 <p class="edify-text-caption font-semibold text-slate-400 mt-0.5">The partner finished and IA verified the work; the remaining balance clears here.</p>
 </div>
-<div class="overflow-x-auto"
+<div class="overflow-x-auto edify-table-scroll-region"
      :inert="payOpen" :aria-hidden="payOpen ? 'true' : null">
-<table class="edify-record-table w-full text-[12px] font-semibold max-xl:block">
-<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400 max-xl:hidden">
+<table class="edify-record-table w-full text-[12px] font-semibold edify-mobile-table--scroll">
+<thead class="bg-slate-50 border-b border-slate-100 edify-text-caption uppercase font-bold text-slate-400">
 <tr>
 <th class="px-6 py-4 text-left">Partner</th>
-<th class="px-6 py-4 text-left">Activity ID</th>
+<th class="px-6 py-4 text-left">Activity</th>
 <th class="px-6 py-4 text-left">School / Cluster</th>
 <th class="px-6 py-4 text-left">Assigned Staff</th>
 <th class="px-6 py-4 text-left">Activity Date</th>
@@ -257,57 +247,50 @@ Pay 50% Advance
 <th class="px-6 py-4 text-right">Actions</th>
 </tr>
 </thead>
-<tbody class="divide-y divide-slate-100 max-xl:block">
+<tbody class="divide-y divide-slate-100">
+{% paginate payments "payments_page" as payments_pager %}
 {% if payments %}
-{% for act in payments %}
-<tr class="hover:bg-slate-50/50 transition-colors max-xl:block max-xl:p-4 max-xl:space-y-1">
+{% for act in payments_pager.rows %}
+<tr class="hover:bg-slate-50/50 transition-colors">
 <!-- Partner -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-record-title>
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Partner</span>
-<div class="font-semibold text-slate-900 text-[12px]">{{ act.assigned_partner_id }}</div>
+<td class="px-6 py-4" data-record-title>
+<div class="font-semibold text-slate-900 text-[12px]">{{ act.assigned_partner_name }}</div>
 </td>
 <!-- ID -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="Activity ID">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Activity</span>
+<td class="px-6 py-4" data-label="Activity">
 <div>
-<div class="font-semibold text-slate-900">#{{ act.id|slice:":8" }}</div>
+<div class="font-semibold text-slate-900">{{ act.title }}</div>
 <div class="edify-text-caption text-slate-400 font-bold uppercase mt-0.5">{{ act.get_activity_type_display }}</div>
 </div>
 </td>
 <!-- School -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="School / Cluster">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">School / Cluster</span>
+<td class="px-6 py-4" data-label="School / Cluster">
 <div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
 </td>
 <!-- Staff -->
-<td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="Assigned Staff">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Assigned Staff</span>
-<div class="font-semibold text-slate-800">{{ act.responsible_staff_id|default:"N/A" }}</div>
+<td class="px-6 py-4" data-label="Assigned Staff">
+<div class="font-semibold text-slate-800">{{ act.responsible_name|default:"N/A" }}</div>
 </td>
 <!-- Date -->
-<td class="px-6 py-4 text-slate-500 font-medium max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Activity Date">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Activity Date</span>
+<td class="px-6 py-4 text-slate-500 font-medium" data-label="Activity Date">
 {{ act.scheduled_date|date:"M d, Y" }}
 </td>
 <!-- IA Status -->
-<td class="px-6 py-4 text-center max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="IA Status">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">IA Status</span>
+<td class="px-6 py-4 text-center" data-label="IA Status">
 <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-emerald-50 text-emerald-700 border border-emerald-200">
 <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7" /></svg>
 Verified
 </span>
 </td>
 <!-- Payment Amount -->
-<td class="px-6 py-4 text-center text-emerald-600 font-semibold max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Balance Due">
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Balance Due</span>
+<td class="px-6 py-4 text-center text-emerald-600 font-semibold" data-label="Balance Due">
 <div>
 <div class="tabular-nums">{{ act.balance_due|ugx }}</div>
 {% if act.advance_paid %}<div class="edify-text-caption font-semibold text-slate-400 mt-0.5">Advance paid {{ act.advance_paid|ugx_amount }}</div>{% endif %}
 </div>
 </td>
 <!-- Actions -->
-<td class="px-6 py-4 text-right max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-3 max-xl:border-t max-xl:border-slate-100" data-record-action>
-<span class="xl:hidden edify-text-caption uppercase text-slate-400">Actions</span>
+<td class="px-6 py-4 text-right" data-record-action>
 <div class="flex items-center justify-end gap-2">
 <button
 @click="openPayment($event, '{{ act.id }}', '{{ act.assigned_partner_id|escapejs }}', {{ act.balance_due|default:0 }}, 'clearance', 'Clearance')"
@@ -324,20 +307,16 @@ Clear Balance
 </tr>
 {% endfor %}
 {% else %}
-<tr class="max-xl:block">
-<td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20 max-xl:block">
-<div class="flex flex-col items-center justify-center gap-3">
-<div class="w-12 h-12 rounded-surface bg-slate-50 border border-slate-100 flex items-center justify-center text-slate-300 shadow-inner">
-<svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
-</div>
-<p class="text-slate-400">No partner activities verified and awaiting payment.</p>
-</div>
+<tr class="">
+<td colspan="8" class="px-6 py-16 text-center text-[14px] font-semibold text-slate-400 bg-slate-50/20">
+{% include "components/empty_state.html" with message="No partner activities verified and awaiting payment." %}
 </td>
 </tr>
 {% endif %}
 </tbody>
 </table>
 </div>
+{% include "components/table_pager.html" with pager=payments_pager param="payments_page" %}
 
 <!-- PARTNER PAYMENT DETAIL DRAWER (Slide-over overlay inside parent) -->
 <div
@@ -430,14 +409,14 @@ class="w-full p-3 bg-slate-50 border border-slate-200 rounded-control text-[12px
 <button
 form="pay-form"
 type="submit"
-class="w-full h-10 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
+class="w-full h-8 rounded-control text-white font-semibold text-[12px] flex items-center justify-center bg-emerald-600 hover:bg-emerald-700 shadow-sm transition-all"
 >
 Confirm Payment
 </button>
 <button
 @click="closePayment()"
 type="button"
-class="w-full h-10 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
+class="w-full h-8 rounded-control border border-slate-200 hover:bg-slate-50 text-slate-600 font-semibold text-[12px] flex items-center justify-center transition-all"
 >
 Cancel
 </button>

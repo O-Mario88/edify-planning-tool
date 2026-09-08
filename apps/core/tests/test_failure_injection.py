@@ -33,6 +33,7 @@ no test:
 from __future__ import annotations
 
 import re
+import uuid
 from unittest import mock
 
 from django.contrib.auth import get_user_model
@@ -183,6 +184,12 @@ class MailOutageDuringSignInTest(TestCase):
         self.user.save(update_fields=["mfa_enabled"])
 
     def _sign_in(self, client):
+        # A client address of its own. /login is throttled at ten per minute
+        # per address, counted in the shared cache — and dev's cache is a real
+        # Redis every parallel test worker shares, so a busy run had this test
+        # failing on the throttle rather than on the mail outage it exercises
+        # (2026-09-06). Same remedy as AnonymousAccessFlowTest.
+        client.defaults["REMOTE_ADDR"] = "10.%d.%d.%d" % tuple(uuid.uuid4().bytes[:3])
         return client.post(
             "/login", {"email": self.user.email, "password": self.PASSWORD}
         )

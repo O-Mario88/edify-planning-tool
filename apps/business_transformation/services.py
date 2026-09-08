@@ -38,6 +38,7 @@ from .models import (
     FinancialPracticeAssessment,
     ComplianceStatus,
     IAValidationStatus,
+    LoanApplicationStatus,
     LoanAmendment,
     ImpactEvidenceStatus,
     LoanImpactStatus,
@@ -471,8 +472,12 @@ def scoped_loans(principal):
         return qs.filter(mfi_id__in=_mfi_ids_for(principal)).filter(
             _loan_officer_scope(principal)
         )
-    if role in UGANDA_WIDE_ROLES - {EdifyRole.ADMIN.value}:
-        return qs
+    if role in UGANDA_WIDE_ROLES or role == EdifyRole.CCEO.value:
+        from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+
+        schools = scoped_school_queryset(resolve_user_scope(principal))
+        if schools is not None:
+            return qs.filter(school_id__in=schools.values("id"))
     return qs.none()
 
 
@@ -1893,6 +1898,12 @@ def filter_loans(qs, filters: dict):
         qs = qs.filter(purpose__is_edtech=False)
     if filters.get("salesforce_status"):
         qs = qs.filter(salesforce_status=filters["salesforce_status"])
+    report_month = (filters.get("report_month") or "").strip()
+    if re.fullmatch(r"[0-9]{4}-[0-9]{2}", report_month):
+        start = parse_date(f"{report_month}-01")
+        if start:
+            end = (start + timedelta(days=32)).replace(day=1)
+            qs = qs.filter(disbursement_date__gte=start, disbursement_date__lt=end)
     if filters.get("ia_status"):
         qs = qs.filter(ia_validation_status=filters["ia_status"])
     if filters.get("impact_status"):
@@ -3162,6 +3173,11 @@ def loan_register_context(principal, filters: dict) -> dict:
 
     from apps.geography.models import District, Region
     from apps.schools.models import School
+    from .loan_tracking import (
+        APPLICATION_TRANSITIONS,
+        APPLICATION_UPDATE_ROLES,
+        scoped_applications,
+    )
 
     fy = filters.get("fy") or get_operational_fy()
     filters = {**filters, "fy": fy}
@@ -3189,6 +3205,25 @@ def loan_register_context(principal, filters: dict) -> dict:
         principal, Permission.BUSINESS_TRANSFORMATION_SALESFORCE_CONFIRM.value
     )
     loan_rows = list(loans[:200])
+    applications = scoped_applications(principal)
+    if filters.get("application_status"):
+        applications = applications.filter(status=filters["application_status"])
+    report_month = (filters.get("report_month") or "").strip()
+    if re.fullmatch(r"[0-9]{4}-[0-9]{2}", report_month):
+        report_start = parse_date(f"{report_month}-01")
+        if report_start:
+            report_end = (report_start + timedelta(days=32)).replace(day=1)
+            applications = applications.filter(
+                submitted_at__date__gte=report_start,
+                submitted_at__date__lt=report_end,
+            )
+    application_rows = list(applications[:200])
+    application_labels = dict(LoanApplicationStatus.choices)
+    for application in application_rows:
+        application.allowed_status_choices = [
+            (status, application_labels[status])
+            for status in APPLICATION_TRANSITIONS.get(application.status, ())
+        ]
     repayment_labels = dict(RepaymentStatus.choices)
     for loan in loan_rows:
         loan.latest_repayment_health_label = repayment_labels.get(
@@ -3200,6 +3235,10 @@ def loan_register_context(principal, filters: dict) -> dict:
         "metrics": metrics,
         "kpi_strip_items": _portfolio_kpi_items(metrics, fy, operational=True),
         "loans": loan_rows,
+        "applications": application_rows,
+        "application_statuses": LoanApplicationStatus.choices,
+        "can_update_applications": getattr(principal, "active_role", "")
+        in APPLICATION_UPDATE_ROLES,
         "lending_partners": lending_partner_dashboard(principal, filters),
         "salesforce_pending_loans": (
             loans.filter(salesforce_status=SalesforceStatus.PENDING)[:50]
@@ -3233,6 +3272,7 @@ def loan_register_context(principal, filters: dict) -> dict:
         "can_export_loans": has_permission(
             principal, Permission.BUSINESS_TRANSFORMATION_EXPORT.value
         ),
+        "mfi_user": getattr(principal, "active_role", "") in MFI_ROLES,
         "access_label": (
             "Full access · MFI scope"
             if getattr(principal, "active_role", "") in MFI_ROLES

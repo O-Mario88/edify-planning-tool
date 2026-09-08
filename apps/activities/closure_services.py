@@ -1,3 +1,5 @@
+from datetime import timedelta
+
 from django.db import transaction
 from django.db.models import Sum
 from django.utils import timezone
@@ -218,6 +220,23 @@ class ClosureEligibilityService:
 
             return checklist, blockers
 
+    #: A checklist evaluated this recently is reused by list pages. The
+    #: readiness queue evaluated every open activity on every load — twelve
+    #: writes and reads each, 5,445 queries and 2.7 seconds at 450 activities
+    #: (2026-09-06). Actions on an activity still evaluate it afresh.
+    LIST_FRESHNESS = timedelta(minutes=15)
+
+    @staticmethod
+    def evaluate_for_listing(activity: Activity) -> ClosureChecklist | None:
+        """The activity's checklist, re-derived only when it is stale."""
+        checklist = getattr(activity, "closure_checklist", None)
+        if checklist is not None and checklist.last_evaluated_at >= (
+            timezone.now() - ClosureEligibilityService.LIST_FRESHNESS
+        ):
+            return checklist
+        checklist, _blockers = ClosureEligibilityService.evaluate(activity)
+        return checklist
+
     @staticmethod
     def _core_requirements_met(checklist: ClosureChecklist) -> bool:
         """Execution, evidence, SF ID, IA verification, and (if money moved)
@@ -242,7 +261,7 @@ class ClosureEligibilityService:
         return ClosureEligibilityService._core_requirements_met(checklist)
 
 
-def _assert_may_close(actor) -> None:
+def _assert_may_close(actor, activity: Activity | None = None) -> None:
     """Authority at the act, not only at the door (CLOSE-01).
 
     Closure is terminal: it locks the record, freezes the financial snapshot,
@@ -284,6 +303,24 @@ def _assert_may_close(actor) -> None:
         actor = User.objects.filter(id=actor).first()
     if actor is None or not RolePermissionService.can_view_page(actor, "planning"):
         raise Forbidden("Your role cannot close an activity.")
+    # Since 2026-09-03 the Accountant and Impact Assessment reach Planning to
+    # request owner-approved school visits (apps.planning.visit_requests).
+    # That is a request door, not closure authority: they still verify and
+    # clear the money, and closure comes after both.
+    # Their OWN approved visit is the exception: it lands on their plan and
+    # runs the ordinary lifecycle, and closing it is the last step of that.
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import owner_ids
+
+    if getattr(actor, "active_role", None) in (
+        EdifyRole.PROGRAM_ACCOUNTANT.value,
+        EdifyRole.IMPACT_ASSESSMENT.value,
+    ):
+        owns = activity is not None and str(activity.responsible_staff_id or "") in {
+            str(i) for i in owner_ids(actor) if i
+        }
+        if not owns:
+            raise Forbidden("Your role cannot close an activity.")
 
 
 class ActivityClosureService:
@@ -303,7 +340,7 @@ class ActivityClosureService:
         # added later has to say so rather than inheriting a bypass from the
         # `closed_by="system"` default.
         if not system:
-            _assert_may_close(closed_by)
+            _assert_may_close(closed_by, activity)
         # Check eligibility first
         if not bypass_checks and not ClosureEligibilityService.is_eligible(activity):
             raise BadRequest(

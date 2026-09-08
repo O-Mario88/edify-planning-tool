@@ -52,3 +52,4 @@ referential-integrity-backup*.json
 .codex-work/
 outputs/
 backups/
+tools/audit/out/

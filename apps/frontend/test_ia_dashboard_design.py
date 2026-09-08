@@ -6,7 +6,11 @@ from django.test import SimpleTestCase
 
 
 ROOT = Path(__file__).resolve().parents[2]
+
+from apps.frontend.template_families import read_template  # noqa: E402
+
 TEMPLATE = ROOT / "templates" / "pages" / "ia" / "analytics_dashboard.html"
+BODY = ROOT / "templates" / "partials" / "ia" / "dashboard_body.html"
 CSS = ROOT / "static" / "css" / "ia-dashboard.css"
 QUEUE_TEMPLATE = ROOT / "templates" / "pages" / "ia" / "verification_queue.html"
 QUEUE_TABLE = ROOT / "templates" / "pages" / "ia" / "partials" / "queue_table.html"
@@ -15,7 +19,15 @@ REVIEW_TEMPLATE = ROOT / "templates" / "pages" / "ia" / "review_workspace.html"
 
 class IADashboardDesignContractTest(SimpleTestCase):
     def setUp(self):
-        self.template = TEMPLATE.read_text(encoding="utf-8")
+        # The page and the body it includes, as one document: the body became
+        # a shared partial when the dashboard also became a tab of the one
+        # Analytics page (2026-09-05).
+        self.template = "\n".join(
+            (
+                TEMPLATE.read_text(encoding="utf-8"),
+                read_template(ROOT, str(BODY.relative_to(ROOT))),
+            )
+        )
         self.css = CSS.read_text(encoding="utf-8")
 
     def test_dashboard_has_one_clear_operational_hierarchy(self):
@@ -70,9 +82,35 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertIn("Regional performance", self.template)
         self.assertIn("District monitoring", self.template)
         self.assertIn("CCEO and Program Lead performance", self.template)
-        self.assertIn("activity_trend.planned_points", self.template)
+        # Drawn through the chart system from the weekly values (2026-09-05).
+        self.assertIn("ia-activity-trend-payload", self.template)
+        self.assertIn("EdifyChartSystem.lineTrend(2)", self.template)
         self.assertIn("district_performance", self.template)
         self.assertIn("leadership_performance", self.template)
+        # Districts fold under their sub-region and CCEOs under their Program
+        # Lead, the way clusters fold under the person who holds them
+        # (owner, 2026-09-05): a toggle per group, opened into its table.
+        self.assertIn("{% for group in district_groups %}", self.template)
+        self.assertIn("{% for group in leadership_groups %}", self.template)
+        self.assertEqual(self.template.count('class="ia-group__toggle"'), 2)
+        self.assertIn(
+            'aria-controls="ia-district-group-{{ group.key }}"', self.template
+        )
+        self.assertIn('aria-controls="ia-leader-group-{{ group.key }}"', self.template)
+        self.assertIn("{% for district in group.districts %}", self.template)
+        for header in (
+            "<th># Schools</th>",
+            "<th># Planned</th>",
+            "<th># Achieved</th>",
+            "<th>% Achieved</th>",
+        ):
+            self.assertIn(header, self.template)
+        self.assertIn("{% for leader in group.members %}", self.template)
+        # The lead's consolidated row heads the same two bands the districts use.
+        self.assertIn('class="ia-monitor-table__lead"', self.template)
+        self.assertEqual(
+            self.template.count('class="ia-monitor-table ia-monitor-table--reach"'), 2
+        )
         self.assertIn("align-items: start", self.css)
 
     def test_reporting_period_sits_below_the_reporting_scope(self):
@@ -138,7 +176,8 @@ class IAVerificationWorkspaceContractTest(SimpleTestCase):
         ):
             with self.subTest(label=label):
                 self.assertIn(label, self.table)
-        self.assertIn('class="btn btn-primary h-9">Review</a>', self.table)
+        # Action buttons are 32px platform-wide since 2026-09-03.
+        self.assertIn('class="btn btn-primary h-8">Review</a>', self.table)
         self.assertIn("edify-row-overflow__menu", self.table)
         self.assertNotIn("Review Action", self.table)
 

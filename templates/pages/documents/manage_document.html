@@ -17,18 +17,18 @@
     <p class="text-[12px] font-semibold text-slate-500">Draft → Under Review → Approved → Published. A published version is never edited; a correction is a new version.</p>
     <div class="flex flex-wrap items-center gap-2">
       {% if document.status == "draft" or document.status == "returned" %}
-      <form method="post" action="/documents/{{ document.slug }}/submit">{% csrf_token %}<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Submit for review</button></form>
+      <form method="post" action="/documents/{{ document.slug }}/submit">{% csrf_token %}<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Submit for review</button></form>
       {% endif %}
       {% if document.status == "under_review" and can_review %}
       <form method="post" action="/documents/{{ document.slug }}/approve" class="flex items-center gap-2">{% csrf_token %}
         <label class="sr-only" for="review-note">Review note</label>
         <input id="review-note" name="note" placeholder="Review note" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
-        <button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Approve</button>
+        <button type="submit" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Approve</button>
       </form>
-      <form method="post" action="/documents/{{ document.slug }}/return">{% csrf_token %}<button type="submit" class="h-9 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600">Return for correction</button></form>
+      <form method="post" action="/documents/{{ document.slug }}/return">{% csrf_token %}<button type="submit" class="h-8 px-3 rounded-control border border-slate-200 text-[13px] font-bold text-slate-600">Return for correction</button></form>
       {% endif %}
       {% if document.status == "approved" and can_publish %}
-      <form method="post" action="/documents/{{ document.slug }}/publish">{% csrf_token %}<button type="submit" class="h-9 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Publish</button></form>
+      <form method="post" action="/documents/{{ document.slug }}/publish">{% csrf_token %}<button type="submit" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Publish</button></form>
       {% endif %}
     </div>
   </section>
@@ -102,7 +102,7 @@
         <input type="checkbox" name="material_change" checked class="h-4 w-4 rounded border-slate-300">
         <span class="text-[13px] font-semibold text-slate-600">Material change — everyone must acknowledge it again</span>
       </label>
-      <button type="submit" class="h-9 rounded-control bg-[var(--color-edify-primary)] px-4 text-[12px] font-bold text-white">Upload version</button>
+      <button type="submit" class="h-8 rounded-control bg-[var(--color-edify-primary)] px-4 text-[12px] font-bold text-white">Upload version</button>
     </form>
   </section>
 

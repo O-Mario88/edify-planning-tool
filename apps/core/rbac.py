@@ -383,6 +383,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.SSA_VIEW,
         P.PLANNING_VIEW,
         P.ACTIVITY_CATALOGUE_VIEW,
+        # The Country Director adds activities to the catalogue (owner,
+        # 2026-09-06: "activity page should have new activity button").
+        P.ACTIVITY_CATALOGUE_MANAGE,
         P.EVIDENCE_REVIEW,
         P.BUDGET_VIEW_SUMMARY,
         P.BUDGET_VIEW_DETAIL,

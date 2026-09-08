@@ -38,6 +38,40 @@ class FieldNavigationRoleTest(SimpleTestCase):
             with self.subTest(role=role):
                 self.assertIn("SCHOOLS & FIELD", self._groups(role))
 
+    def test_country_director_reaches_the_cluster_directory_from_my_work(self):
+        """The CD holds `clusters` with country scope, so /clusters lists every
+        cluster for them in the same card directory a CCEO or PL opens from
+        SCHOOLS & FIELD. With no entry in any group they could see, the only
+        cluster list the CD was ever offered was the grouped oversight table on
+        Team Oversight — a different layout for a different question. Mirrors
+        the CD-only Planning entry that already sits in MY WORK."""
+        groups = self._groups(CD)
+        items = {i["label"]: i["url"] for i in groups["MY WORK"]["items"]}
+        self.assertEqual(items.get("Clusters"), "/clusters")
+        for role in (CCEO, PL):
+            with self.subTest(role=role):
+                field = {
+                    i["label"]: i["url"]
+                    for i in self._groups(role)["SCHOOLS & FIELD"]["items"]
+                }
+                self.assertEqual(field.get("Clusters"), "/clusters")
+                self.assertNotIn(
+                    "Clusters",
+                    {i["label"] for i in self._groups(role)["MY WORK"]["items"]},
+                )
+
+    def test_clusters_is_offered_once_per_sidebar(self):
+        """Admin's audience override must not turn the CD-only registration
+        into a second Clusters link beside the SCHOOLS & FIELD one."""
+        for role in (ADMIN, CD, CCEO, PL):
+            with self.subTest(role=role):
+                labels = [
+                    i["label"]
+                    for g in build_sidebar_for_user(_user(role), "/clusters")
+                    for i in g["items"]
+                ]
+                self.assertEqual(labels.count("Clusters"), 1)
+
     def test_partner_gets_my_field_work_instead(self):
         """Partners left SCHOOLS & FIELD (2026-08-20): their surface is the
         MY FIELD WORK intake — Assigned Schools/Activities, Evidence and

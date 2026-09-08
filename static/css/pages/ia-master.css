@@ -96,7 +96,7 @@
   padding: 0 .9rem;
   background: #edf9f3;
   color: var(--ia-success);
-  font-size: .7rem;
+  font-size: var(--edify-text-micro-size);
   font-weight: 790;
   white-space: nowrap;
 }

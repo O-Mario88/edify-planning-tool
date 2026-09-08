@@ -1,0 +1,11 @@
+{% comment %}
+The stylesheets the Priorities page's views need, on every page that can
+host the tab rail.
+
+A tab press swaps the panel, not the document head — so a view entered
+from another tab rendered unstyled unless its stylesheet was already on
+the page. Two small files, loaded once each.
+{% endcomment %}
+{% load static %}
+<link rel="stylesheet" href="{% static 'css/pages/ia-master.css' %}?v=20260907tabs1">
+<link rel="stylesheet" href="{% static 'css/pages/team-target-distribution.css' %}?v=20260907tabs1">

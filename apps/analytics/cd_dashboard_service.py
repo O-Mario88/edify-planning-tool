@@ -19,7 +19,8 @@ from apps.core.metrics import render_precomputed_metric_for_source
 
 from datetime import date, timedelta
 
-from django.db.models import Avg, Count, Q, Sum
+from django.utils import timezone
+from django.db.models import Count, Q, Sum
 
 from apps.accounts.models import User
 from apps.core.fy import get_operational_fy
@@ -31,6 +32,7 @@ from apps.analytics.cd_analytics_service import (
     _country_activities,
     _cycle_fys,
     _prime_target_series,
+    country_for,
     resolve_cd_scope,
 )
 from apps.analytics.pl_analytics_service import (
@@ -44,6 +46,12 @@ from apps.analytics.pl_analytics_service import (
     ssa_band,
 )
 from apps.analytics.pl_dashboard_service import SF_ID_OVERDUE_DAYS, _requires_sf_id
+from apps.core.activity_types import (
+    TRAINING_TYPES as _SF_TRAINING_TYPES,
+    VISIT_TYPES as _SF_VISIT_TYPES,
+)
+
+SF_ID_ACTIVITY_TYPES = tuple(_SF_VISIT_TYPES) + tuple(_SF_TRAINING_TYPES)
 
 REGION_BEHIND_THRESHOLD = 60  # attention trigger: region achievement below this
 HIGH_RISK_PL_BANDS = ("High Risk", "Critical")
@@ -84,14 +92,33 @@ def _ugx_compact(amount: int) -> str:
     return f"UGX {amount:,}"
 
 
+# The Country Program Leads Performance table shows one column per target
+# area, in the order the owner set (2026-09-05): MSCS, School Visit, Training,
+# SSA Completed, Cluster Meetings. Cells fill by key, never by position.
+PL_AREA_COLUMNS = (
+    ("mscs", "MSCS"),
+    ("school_visits", "School Visit"),
+    ("cluster_trainings", "Training"),
+    ("ssa_completed", "SSA Completed"),
+    ("cluster_meetings", "Cluster Meetings"),
+)
+
+
 class CDDashboardService:
     """Facade for the CD Executive Command Center. All figures are
     country-wide, real, and month/FY filterable."""
 
     @staticmethod
     def get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
+        from apps.core.request_cache import scoped
+
+        with scoped():
+            return CDDashboardService._get_dashboard(user, fy=fy, month=month)
+
+    @staticmethod
+    def _get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy, month=month)
+        cd = resolve_cd_scope(fy, month=month, country=country_for(user))
         acts = _country_activities(cd)
         # The KPI strip's "Country Target Progress" and the PL performance
         # table's per-row target_pct both read the validated ledger — refresh
@@ -121,12 +148,14 @@ class CDDashboardService:
         return {
             "fy": fy,
             "month": month,
-            "kpi_strip_items": CDDashboardService.kpis(cd, acts, fy, pl_rows),
+            "kpi_strip_items": CDDashboardService.kpis(cd, acts, fy, pl_rows, user),
             "leadership_attention": CDDashboardService.leadership_attention(
                 cd, acts, fy, regional
             ),
             "country_performance": CDDashboardService.country_performance(cd),
             "regional_performance": regional,
+            "geography": CDDashboardService.geography_breakdown(cd, acts),
+            "verification": CDDashboardService.verification_and_quality(cd, acts),
             "pl_performance": pl_rows,
             "finance_snapshot": CDDashboardService.finance_snapshot(cd, acts, fy),
             "operational_risk": CDDashboardService.operational_risk_backlog(
@@ -146,41 +175,117 @@ class CDDashboardService:
 
     # ── KPI strip (8, per mandate §6) ────────────────────────────────────────
     @staticmethod
-    def kpis(cd, acts, fy, pl_rows) -> list[dict]:
+    def _tile_numbers(cd, acts, fy, user=None) -> dict:
+        """The period-scoped numbers behind the KPI strip, as plain numbers.
+
+        Computed once for the selected period and once for the same period a
+        year earlier, so every tile can carry a prior-period delta — the
+        strip had no trend anywhere, and a director reading "58%" could not
+        tell whether that was progress or slippage.
+        """
         completed = acts.filter(status__in=COMPLETED_STATUSES)
-
-        # Addressed by stable key, not by display label: the previous lookup
-        # keyed on the string "Overall Target Achievement", so any rewording of
-        # that card raised a KeyError here instead of quietly reading the same
-        # number under a new name.
+        # Addressed by stable key, not by display label: a rewording of the
+        # analytics card must not raise a KeyError here.
         analytics = {k["key"]: k for k in CDAnalyticsService.kpis(cd, acts)}
-        target_progress = analytics["country_overall_target_achievement_pct"]["value"]
-
-        active_schools = (
-            completed.exclude(school_id__isnull=True)
-            .values("school_id")
-            .distinct()
-            .count()
-        )
-
-        core = CDDashboardService._core_on_track(fy)
-
-        planned_n = acts.count()
-        productivity = _pct(completed.count(), planned_n)
-
+        target_raw = analytics["country_overall_target_achievement_pct"]["value"]
+        try:
+            target_pct = int(str(target_raw).rstrip("%"))
+        except ValueError:
+            target_pct = 0
         sf_required = _requires_sf_id(acts)
         sf_total = sf_required.count()
         sf_with = sf_required.exclude(
             Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")
         ).count()
-        sf_compliance = _pct(sf_with, sf_total)
+        return {
+            "target_pct": target_pct,
+            "target_display": target_raw,
+            "active_schools": (
+                completed.exclude(school_id__isnull=True)
+                .values("school_id")
+                .distinct()
+                .count()
+            ),
+            "core": CDDashboardService._core_on_track(fy, user),
+            "sf_with": sf_with,
+            "sf_total": sf_total,
+            "sf_pct": _pct(sf_with, sf_total),
+            "utilisation": CDAnalyticsService.budget_utilisation_detail(cd),
+        }
+
+    @staticmethod
+    def _trend(current, previous, *, unit: str = "", label: str = "") -> dict:
+        """A prior-period delta for a tile, in the strip's own vocabulary."""
+        if previous is None:
+            return {}
+        delta = int(current) - int(previous)
+        if delta == 0:
+            return {"direction": "neutral", "value": f"flat {label}".strip()}
+        sign = "+" if delta > 0 else "−"
+        return {
+            "direction": "up" if delta > 0 else "down",
+            "value": f"{sign}{abs(delta)}{unit} {label}".strip(),
+        }
+
+    @staticmethod
+    def kpis(cd, acts, fy, pl_rows, user=None) -> list[dict]:
+        now = CDDashboardService._tile_numbers(cd, acts, fy, user)
+        target_progress = now["target_display"]
+        active_schools = now["active_schools"]
+        core = now["core"]
+        utilisation = now["utilisation"]
+        sf_with, sf_total, sf_compliance = (
+            now["sf_with"],
+            now["sf_total"],
+            now["sf_pct"],
+        )
+
+        # The same period one year earlier, for the deltas.
+        prior_fy = str(int(fy) - 1) if str(fy).isdigit() else None
+        prior = None
+        if prior_fy:
+            prior_cd = resolve_cd_scope(prior_fy, month=cd.month, country=cd.country)
+            # The prior year's tiles change rarely and cost a full second
+            # scope plus every KPI query: cached for ten minutes per prior
+            # FY, month and country (2026-09-06).
+            from django.core.cache import cache as _cache
+            from django.db.models import Max
+
+            # The key carries the prior year's activity count and latest
+            # edit, so a back-dated correction (or a fresh dataset) is never
+            # served last period's tiles.
+            prior_acts = _country_activities(prior_cd)
+            _version = prior_acts.aggregate(n=Count("id"), latest=Max("updated_at"))
+            _prior_key = (
+                "cd-dashboard:prior-tiles:v2:"
+                f"{prior_fy}:{cd.month or ''}:{cd.country or ''}:"
+                f"{_version['n']}:{int(_version['latest'].timestamp()) if _version['latest'] else 0}"
+            )
+            prior = _cache.get(_prior_key)
+            if prior is None:
+                prior = CDDashboardService._tile_numbers(
+                    prior_cd, prior_acts, prior_fy, user
+                )
+                _cache.set(_prior_key, prior, 600)
+        vs = f"vs FY{prior_fy}" if prior_fy else ""
+        trend = CDDashboardService._trend
+
+        # Workload, not "productivity": the old tile was the country activity
+        # completion rate and said nothing about staff. This one reads the
+        # governed StaffSupportCapacity, so overload is surfaced for
+        # rebalancing, never for discipline (PRODUCT_PRINCIPLES: Healthy).
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.schools.data_quality import over_capacity_staff
+
+        over = len(over_capacity_staff())
+        carrying = StaffSchoolAssignment.objects.values("staff_id").distinct().count()
 
         pending = CDDashboardService._pending_cd_items(fy)
         high_risk_teams = sum(
             1 for r in pl_rows["rows"] if r["risk"] in HIGH_RISK_PL_BANDS
         )
 
-        def card(icon, label, value, variant, helper, link=""):
+        def card(icon, label, value, variant, helper, link="", trend=None):
             return render_precomputed_metric_for_source(
                 "apps.analytics.cd_dashboard_service:kpis.card",
                 label,
@@ -189,6 +294,7 @@ class CDDashboardService:
                 variant=variant,
                 helper=helper,
                 link=link,
+                **({"trend": trend} if trend else {}),
             )
 
         return [
@@ -199,6 +305,12 @@ class CDDashboardService:
                 "primary",
                 "valid completed vs assigned targets",
                 "/analytics/country-director",
+                trend(
+                    now["target_pct"],
+                    prior and prior["target_pct"],
+                    unit=" pts",
+                    label=vs,
+                ),
             ),
             card(
                 "school",
@@ -206,6 +318,8 @@ class CDDashboardService:
                 f"{active_schools:,}",
                 "success",
                 "completed activity this period",
+                "/analytics/country-director",
+                trend(active_schools, prior and prior["active_schools"], label=vs),
             ),
             card(
                 "shield",
@@ -214,13 +328,17 @@ class CDDashboardService:
                 "info",
                 f"{core['on_track']} of {core['total']} core plans",
                 "/core-school-health",
+                trend(
+                    core["pct"], prior and prior["core"]["pct"], unit=" pts", label=vs
+                ),
             ),
             card(
                 "users",
-                "Staff Productivity",
-                f"{productivity}%",
-                "info",
-                f"{completed.count():,} of {planned_n:,} activities completed",
+                "Staff Over Capacity",
+                f"{over} of {carrying}",
+                "danger" if over else "info",
+                "carrying more direct schools than their capacity",
+                "/staff",
             ),
             card(
                 "cloud",
@@ -229,6 +347,7 @@ class CDDashboardService:
                 "violet",
                 f"{sf_with:,} of {sf_total:,} requiring SF IDs",
                 "/completed-activities",
+                trend(sf_compliance, prior and prior["sf_pct"], unit=" pts", label=vs),
             ),
             card(
                 "clock",
@@ -236,14 +355,21 @@ class CDDashboardService:
                 str(pending["count"]),
                 "warning",
                 pending["amount_label"],
-                "/fund-requests/weekly",
+                "/fund-approvals",
             ),
             card(
                 "currency",
                 "Budget Utilization",
-                analytics["country_budget_utilisation_pct"]["value"],
+                f"{utilisation['pct']}%",
                 "finance",
-                "disbursed vs requested pipeline",
+                utilisation["helper"],
+                "/budget",
+                trend(
+                    utilisation["pct"],
+                    prior and prior["utilisation"]["pct"],
+                    unit=" pts",
+                    label=vs,
+                ),
             ),
             card(
                 "warning",
@@ -255,18 +381,23 @@ class CDDashboardService:
         ]
 
     @staticmethod
-    def _core_on_track(fy) -> dict:
-        """Core plan is on track when its baseline exists and the 4+4 package
-        is progressing (any completed visit/training)."""
-        from apps.core_schools.models import CorePlan
+    def _core_on_track(fy, user=None) -> dict:
+        """The Core School Health page's own definition, for the same FY.
 
-        plans = CorePlan.objects.filter(status__iexact="active")
-        total = plans.count()
-        on_track = (
-            plans.filter(baseline_average__isnull=False)
-            .filter(Q(visits_completed__gt=0) | Q(trainings_completed__gt=0))
-            .count()
-        )
+        This tile used to count every active core plan in every year and call
+        one "on track" the moment it had a baseline and a single visit; the
+        page it links to counts the selected FY and calls a plan on track when
+        its package is within two slots of done with nothing stuck at the
+        completion gate. Two definitions under one label is how a director
+        stops trusting either.
+        """
+        from apps.core_schools.leadership_service import core_school_health
+
+        if user is None:
+            return {"total": 0, "on_track": 0, "pct": 0, "behind": 0}
+        health = core_school_health(user, {"fy": fy})
+        total = int(health.get("totalPlans") or 0)
+        on_track = int(health.get("onTrackCount") or 0)
         return {
             "total": total,
             "on_track": on_track,
@@ -276,14 +407,23 @@ class CDDashboardService:
 
     @staticmethod
     def _pending_cd_items(fy) -> dict:
-        """Everything waiting on the CD: escalated weekly fund requests plus
-        the General Budget when it sits at a CD stage."""
-        from apps.fund_requests.models import WeeklyFundRequest
+        """Everything waiting on the CD's signature, counted by kind.
+
+        The tile is the approvals: weekly advances escalated to the CD plus
+        PL monthly team requests at the CD stage — both real decisions with
+        money behind them. The General Budget at a CD stage is a review, not
+        an approval, so it is named in the helper rather than added into the
+        count; the old single integer summed three different objects.
+        """
+        from apps.fund_requests.models import FundRequest, WeeklyFundRequest
         from apps.monthly_work_plan.models import MonthlyWorkPlanBudget
 
         weekly = WeeklyFundRequest.objects.filter(fy=fy, status="submitted_to_cd")
         weekly_n = weekly.count()
-        amount = int(weekly.aggregate(s=Sum("total_amount"))["s"] or 0)
+        weekly_amount = int(weekly.aggregate(s=Sum("total_amount"))["s"] or 0)
+        monthly = FundRequest.objects.filter(fy=fy, status="submitted_to_cd")
+        monthly_n = monthly.count()
+        monthly_amount = int(monthly.aggregate(s=Sum("total_amount"))["s"] or 0)
         budget_n = MonthlyWorkPlanBudget.objects.filter(
             fy=fy,
             status__in=[
@@ -293,19 +433,28 @@ class CDDashboardService:
                 "returned_by_rvp",
             ],
         ).count()
+        amount = weekly_amount + monthly_amount
+        parts = []
+        if weekly_n:
+            parts.append(f"{weekly_n} weekly")
+        if monthly_n:
+            parts.append(f"{monthly_n} monthly")
+        label = (
+            f"{_ugx_compact(amount)} · " + ", ".join(parts)
+            if parts
+            else "nothing waiting"
+        )
+        if budget_n:
+            label += f" · {budget_n} budget{'s' if budget_n != 1 else ''} to review"
         return {
-            "count": weekly_n + budget_n,
+            "count": weekly_n + monthly_n,
             "weekly": weekly_n,
+            "monthly": monthly_n,
             "budgets": budget_n,
             "amount": amount,
-            "amount_label": (
-                f"{_ugx_compact(amount)} pending"
-                if amount
-                else ("monthly budget needs review" if budget_n else "nothing waiting")
-            ),
+            "amount_label": label,
         }
 
-    # ── Leadership attention (mandate §7 triggers) ───────────────────────────
     @staticmethod
     def leadership_attention(cd, acts, fy, regional) -> list[dict]:
         cards = []
@@ -379,7 +528,7 @@ class CDDashboardService:
         from apps.core.fy import get_month_date_range
 
         base = CDAnalyticsService.performance_vs_target(cd)  # labels + pct line
-        full = _country_activities(resolve_cd_scope(cd.fy))
+        full = _country_activities(resolve_cd_scope(cd.fy, country=cd.country))
         # One grouped pass instead of 36 per-month counts. Exactly equivalent
         # to the per-month loop it replaces: get_month_date_range() yields
         # contiguous first-of-month boundaries (verified: m and m+1 share an
@@ -411,6 +560,30 @@ class CDDashboardService:
             planned.append(row.get("planned", 0))
             completed.append(row.get("completed", 0))
             verified.append(row.get("verified", 0))
+        # Last year's completions, month by month, so the chart shows a
+        # comparison rather than a single year floating on its own.
+        prior_completed = []
+        prior_fy = str(int(cd.fy) - 1) if str(cd.fy).isdigit() else None
+        if prior_fy:
+            p_start, _ = get_month_date_range(prior_fy, 1)
+            _, p_end = get_month_date_range(prior_fy, 12)
+            prior_buckets = {
+                row["month_bucket"]: row
+                for row in _country_activities(
+                    resolve_cd_scope(prior_fy, country=cd.country)
+                )
+                .filter(planned_date__gte=p_start.date(), planned_date__lt=p_end.date())
+                .annotate(month_bucket=TruncMonth("planned_date"))
+                .values("month_bucket")
+                .annotate(
+                    completed=Count("id", filter=Q(status__in=COMPLETED_STATUSES))
+                )
+            }
+            for m in range(1, 13):
+                start, _end = get_month_date_range(prior_fy, m)
+                prior_completed.append(
+                    (prior_buckets.get(start.date()) or {}).get("completed", 0)
+                )
         return {
             "labels": base["labels"],
             "pct": base["pct"],
@@ -418,6 +591,8 @@ class CDDashboardService:
             "planned": planned,
             "completed": completed,
             "verified": verified,
+            "prior_fy": prior_fy,
+            "prior_completed": prior_completed,
         }
 
     # ── Regional performance ranking (mandate §9) ────────────────────────────
@@ -490,6 +665,192 @@ class CDDashboardService:
 
     # ── PL performance table (mandate §10) ───────────────────────────────────
     @staticmethod
+    def verification_and_quality(cd, acts) -> dict:
+        """The verification backlog by age, and the data-quality checks.
+
+        Both were IA-only pages. The CD's own signals were a raw "IA Pending"
+        count whose "30+ days" label was decorative, and nothing at all about
+        data quality — even where a finding names the CD as its owner.
+        """
+        from datetime import timedelta
+
+        from apps.activities.ia_models import VerificationHistory
+        from apps.system_health.data_quality_health import data_quality_health
+
+        now = timezone.now()
+        waiting = acts.filter(status="awaiting_ia_verification")
+        buckets = {"under_7": 0, "d7_30": 0, "over_30": 0, "undated": 0}
+        for submitted in waiting.values_list("submitted_to_ia_at", flat=True):
+            if submitted is None:
+                buckets["undated"] += 1
+                continue
+            age = (now - submitted).days
+            if age < 7:
+                buckets["under_7"] += 1
+            elif age <= 30:
+                buckets["d7_30"] += 1
+            else:
+                buckets["over_30"] += 1
+        week_start = (now - timedelta(days=now.weekday())).replace(
+            hour=0, minute=0, second=0, microsecond=0
+        )
+        verified_week = VerificationHistory.objects.filter(
+            verified_at__gte=week_start
+        ).count()
+        returned = acts.filter(status="returned_by_ia").count()
+        checks = []
+        try:
+            report = data_quality_health()
+            checks = report.get("checks") or []
+        except Exception:  # noqa: BLE001 - a health probe must never break the page
+            checks = []
+        return {
+            "waiting": waiting.count(),
+            "buckets": buckets,
+            "verified_week": verified_week,
+            "returned": returned,
+            "checks": checks,
+            "critical": sum(1 for c in checks if c.get("severity") == "critical"),
+            "warnings": sum(1 for c in checks if c.get("severity") == "warning"),
+        }
+
+    @staticmethod
+    def geography_breakdown(cd, acts) -> dict:
+        """Delivery, backlog and money by region, then by district.
+
+        The only geography a director could compare before this was SSA
+        scores. Every other country number was one national figure, so
+        "which region is behind, and where inside it" had no answer on any
+        page. Rows read from the same scoped activity set as the tiles above
+        them, so a region's numbers add up to the country's.
+        """
+        from apps.fund_requests.models import AdvanceRequest
+
+        today = timezone.localdate()
+        schools = School.objects.filter(id__in=cd.school_ref)
+        school_geo = {
+            s["id"]: s
+            for s in schools.values(
+                "id", "region_id", "region__name", "district_id", "district__name"
+            )
+        }
+        scoped = acts.filter(school_id__in=cd.school_ref)
+        act_rows = list(
+            scoped.values("school_id", "status", "planned_date", "est_cost_cents")
+        )
+        disbursed_by_school = {
+            r["activity__school_id"]: int(r["s"] or 0)
+            for r in AdvanceRequest.objects.filter(activity__in=scoped.values("id"))
+            .values("activity__school_id")
+            .annotate(s=Sum("disbursed_amount"))
+        }
+        completed = set(COMPLETED_STATUSES)
+        terminal = {"cancelled", "rejected", "deferred", "closed"}
+
+        def _bucket():
+            return {
+                "schools": 0,
+                "planned": 0,
+                "completed": 0,
+                "backlog": 0,
+                "planned_budget": 0,
+                "disbursed": 0,
+                # School reach (owner, 2026-09-05): distinct schools with planned
+                # and with achieved work — ten visits into one school read as
+                # one school. Sets while counting, counts when finished.
+                "planned_schools": set(),
+                "achieved_schools": set(),
+            }
+
+        regions: dict = {}
+        for sid, geo in school_geo.items():
+            rid = geo["region_id"] or "none"
+            region = regions.setdefault(
+                rid,
+                {
+                    "id": rid,
+                    "name": geo["region__name"] or "Unassigned region",
+                    **_bucket(),
+                    "districts": {},
+                },
+            )
+            did = geo["district_id"] or "none"
+            district = region["districts"].setdefault(
+                did,
+                {
+                    "id": did,
+                    "name": geo["district__name"] or "Unassigned district",
+                    **_bucket(),
+                },
+            )
+            region["schools"] += 1
+            district["schools"] += 1
+            region["disbursed"] += disbursed_by_school.get(sid, 0)
+            district["disbursed"] += disbursed_by_school.get(sid, 0)
+        for a in act_rows:
+            geo = school_geo.get(a["school_id"])
+            if not geo:
+                continue
+            region = regions[geo["region_id"] or "none"]
+            district = region["districts"][geo["district_id"] or "none"]
+            done = a["status"] in completed
+            overdue = (
+                not done
+                and a["status"] not in terminal
+                and a["planned_date"] is not None
+                and a["planned_date"] < today
+            )
+            for b in (region, district):
+                b["planned"] += 1
+                b["completed"] += 1 if done else 0
+                b["backlog"] += 1 if overdue else 0
+                b["planned_budget"] += int(a["est_cost_cents"] or 0)
+                b["planned_schools"].add(a["school_id"])
+                if done:
+                    b["achieved_schools"].add(a["school_id"])
+
+        def _finish(b):
+            if isinstance(b.get("planned_schools"), set):
+                b["schools_planned"] = len(b["planned_schools"])
+                b["schools_achieved"] = len(b["achieved_schools"])
+                del b["planned_schools"], b["achieved_schools"]
+            b["schools_pct"] = _pct(b.get("schools_achieved", 0), b.get("schools", 0))
+            b["achievement"] = _pct(b["completed"], b["planned"])
+            b["tone"] = (
+                "danger"
+                if b["achievement"] < 50
+                else "warning"
+                if b["achievement"] < REGION_BEHIND_THRESHOLD
+                else "success"
+            )
+            b["planned_budget_label"] = _ugx_compact(b["planned_budget"])
+            b["disbursed_label"] = _ugx_compact(b["disbursed"])
+            return b
+
+        rows = []
+        for region in regions.values():
+            districts = sorted(
+                (_finish(d) for d in region["districts"].values()),
+                key=lambda d: (-d["backlog"], d["achievement"]),
+            )
+            region["districts"] = districts
+            rows.append(_finish(region))
+        rows.sort(key=lambda r: (-r["backlog"], r["achievement"]))
+        totals = _finish(
+            {
+                "schools": sum(r["schools"] for r in rows),
+                "planned": sum(r["planned"] for r in rows),
+                "completed": sum(r["completed"] for r in rows),
+                "backlog": sum(r["backlog"] for r in rows),
+                "planned_budget": sum(r["planned_budget"] for r in rows),
+                "disbursed": sum(r["disbursed"] for r in rows),
+                "schools_planned": sum(r["schools_planned"] for r in rows),
+                "schools_achieved": sum(r["schools_achieved"] for r in rows),
+            }
+        )
+        return {"rows": rows, "totals": totals}
+
+    @staticmethod
     def pl_performance(cd, acts) -> dict:
         acts.filter(status__in=COMPLETED_STATUSES)
         base = {r["id"]: r for r in CDAnalyticsService.pl_oversight(cd, acts)["rows"]}
@@ -512,15 +873,18 @@ class CDDashboardService:
                 if c["user_id"]:
                     ids.add(c["user_id"])
                 school_ids |= c["school_ids"]
-            team_acts = acts.filter(
-                Q(responsible_staff_id__in=ids) | Q(school_id__in=school_ids)
+            # Counted in Python from the request's one activity pass: five
+            # queries per lead made this table twenty queries (2026-09-06).
+            team_rows = CDAnalyticsService._team_rows(cd, acts, ids, school_ids)
+            planned = len(team_rows)
+            verified = sum(1 for row in team_rows if row[3] in VERIFIED_STATUSES)
+            sf_pending = sum(
+                1
+                for row in team_rows
+                if row[3] in COMPLETED_STATUSES
+                and row[4] in SF_ID_ACTIVITY_TYPES
+                and not (row[5] or "").strip()
             )
-            planned = team_acts.count()
-            verified = team_acts.filter(status__in=VERIFIED_STATUSES).count()
-            sf_req = _requires_sf_id(team_acts)
-            sf_pending = sf_req.filter(
-                Q(salesforce_activity_id__isnull=True) | Q(salesforce_activity_id="")
-            ).count()
             label, tone = band.get(b["risk"], (b["risk"], "neutral"))
             rows.append(
                 {
@@ -534,6 +898,15 @@ class CDDashboardService:
                     # in a list it had just been taken out of.
                     "areas": b["areas"],
                     "mscs": b.get("mscs"),
+                    # One column per target area on the dashboard (owner,
+                    # 2026-09-05), so each is looked up by key, not position.
+                    "areas_by_key": {
+                        area["key"]: area
+                        for area in [
+                            *b["areas"],
+                            *([b["mscs"]] if b.get("mscs") else []),
+                        ]
+                    },
                     "staff": len(cceos),
                     "planned": planned,
                     "verified": verified,
@@ -544,7 +917,7 @@ class CDDashboardService:
                 }
             )
         rows.sort(key=lambda r: r["target_pct"])
-        return {"rows": rows}
+        return {"rows": rows, "area_columns": PL_AREA_COLUMNS}
 
     @staticmethod
     def _pl_region(school_ids) -> str:
@@ -755,9 +1128,18 @@ class CDDashboardService:
     # ── School & SSA intelligence (mandate §13 — all 8 interventions) ────────
     @staticmethod
     def ssa_matrix(cd, acts) -> dict:
-        """Region rows (plus clusters with genuine school membership) ×
-        the eight backend SSA interventions, latest verified annual cycle."""
-        from apps.geography.models import Region
+        """Cluster rows × the eight backend SSA interventions, latest verified
+        annual cycle.
+
+        Clusters only. This carried a region row per region above the cluster
+        rows, so a card headed "Cluster SSA Heatmap" opened on geography the
+        Country Director already reads on the map and in the region table, and
+        the clusters it exists to compare started below the fold (owner,
+        2026-09-06: "It should ONLY fetch Cluster SSA performance not the
+        regional or sub-region"). Dropping the region rows also drops the two
+        queries that built them. The Program Lead's twin,
+        ProgramLeadDashboardService.ssa_cluster_matrix, was always cluster-only.
+        """
         from apps.ssa.models import SsaRecord, SsaScore
 
         latest, _prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
@@ -765,29 +1147,42 @@ class CDDashboardService:
         if not latest:
             return {"rows": [], "codes": codes, "latest_fy": None}
 
+        # Every confirmed latest-FY record and every score for the scoped
+        # schools in two queries; each row then averages in Python. Three
+        # queries per row (records, scores, overall) made this eighteen
+        # queries for three rows (2026-09-06).
+        record_school: dict = {}
+        record_avg: dict = {}
+        for rid_, sid_, avg_ in SsaRecord.objects.filter(
+            school_id__in=cd.school_ref, verification_status="confirmed", fy=latest
+        ).values_list("id", "school_id", "average_score"):
+            record_school[rid_] = sid_
+            record_avg[rid_] = avg_
+        scores_by_record: dict = {}
+        if record_school:
+            for rid_, code_, score_ in SsaScore.objects.filter(
+                ssa_record_id__in=list(record_school)
+            ).values_list("ssa_record_id", "intervention", "score"):
+                scores_by_record.setdefault(rid_, []).append((code_, score_))
+
+        def _mean(values):
+            values = [v for v in values if v is not None]
+            return (sum(values) / len(values)) if values else None
+
         def matrix_row(label, school_ids, kind, rid=""):
-            rids = list(
-                SsaRecord.objects.filter(
-                    school_id__in=school_ids, verification_status="confirmed", fy=latest
-                ).values_list("id", flat=True)
-            )
+            school_ids = set(school_ids)
+            rids = [r for r, sid_ in record_school.items() if sid_ in school_ids]
             if not rids:
                 return None
-            by = {
-                r["intervention"]: r["a"]
-                for r in SsaScore.objects.filter(ssa_record_id__in=rids)
-                .values("intervention")
-                .annotate(a=Avg("score"))
-            }
+            by_code: dict = {}
+            for r in rids:
+                for code_, score_ in scores_by_record.get(r, ()):
+                    by_code.setdefault(code_, []).append(score_)
             cells = []
             for v, _label, _code in SSA_INTERVENTIONS:
-                score = _ssa_score(by.get(v))
+                score = _ssa_score(_mean(by_code.get(v, [])))
                 cells.append({"score": score, "tone": ssa_band(score)[2]})
-            overall = _ssa_score(
-                SsaRecord.objects.filter(id__in=rids).aggregate(a=Avg("average_score"))[
-                    "a"
-                ]
-            )
+            overall = _ssa_score(_mean(record_avg[r] for r in rids))
             return {
                 "label": label,
                 "kind": kind,
@@ -797,26 +1192,7 @@ class CDDashboardService:
                 "overall_tone": ssa_band(overall)[2],
             }
 
-        schools = School.objects.filter(id__in=cd.school_ref)
         rows = []
-        for rid in (
-            schools.exclude(region__isnull=True)
-            .order_by("region_id")
-            .values_list("region_id", flat=True)
-            .distinct()
-        ):
-            name = (
-                Region.objects.filter(id=rid).values_list("name", flat=True).first()
-                or "Region"
-            )
-            row = matrix_row(
-                name,
-                set(schools.filter(region_id=rid).values_list("id", flat=True)),
-                "region",
-                rid,
-            )
-            if row:
-                rows.append(row)
         # Clusters with genuine membership only — never fabricated groupings.
         names, membership = CDAnalyticsService._cluster_membership(cd, acts)
         for cid, sids in sorted(membership.items()):

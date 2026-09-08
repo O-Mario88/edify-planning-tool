@@ -45,7 +45,7 @@ here sends a corrective action, which writes a TeamAction and nothing else.
           <input id="note-{{ forloop.counter }}" name="note" type="text"
                  class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
                  placeholder="Add a note (optional)">
-          <button type="submit" class="btn btn-primary h-9">
+          <button type="submit" class="btn btn-primary h-8">
             Send to {{ risk.owner_name|default:"the owner" }}
           </button>
         </form>

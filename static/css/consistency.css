@@ -135,9 +135,14 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
  * base form contract uses), the hit area grows to 44px while symmetric
  * negative margins keep the visual position unchanged. */
 @media (max-width: 48rem), (pointer: coarse) {
-  main a.edify-primary-text,
-  main a[class*="edify-chart-blue"][href],
-  main a[class*="edify-text-caption"][href],
+  /* `:not(:is(td, th) *)`: a record row is the 32px target, so growing a
+     link inside a cell to 44px only grows the row (2026-09-05 sweep — the
+     Projects list ran 42px rows on a phone because its name link carries
+     `.edify-primary-text`, and this class selector outranks the `main table
+     td > a` compensation two rules below). */
+  main a.edify-primary-text:not(:is(td, th) *),
+  main a[class*="edify-chart-blue"][href]:not(:is(td, th) *),
+  main a[class*="edify-text-caption"][href]:not(:is(td, th) *),
   .hcos-breadcrumbs a,
   .admin-command__breadcrumbs a,
   .admin-panel__header > a,
@@ -157,10 +162,12 @@ html.light :where(.text-violet-300, .text-violet-400, .text-violet-500, .text-vi
      sit closer than 44px apart, and overlapping tap targets between adjacent
      rows would be worse than a slightly shorter one. 32px still clears the
      24px WCAG 2.5.8 minimum with margin. */
-  main table td > a {
+  main table td > a,
+  main table td > :is(div, p, span) > a {
     display: inline-flex;
     align-items: center;
     min-height: 32px;
+    /* Negative margin so the hit area does not become the row height. */
     margin-block: -8px;
   }
 }
@@ -552,7 +559,13 @@ main table tbody tr:hover,
   --edify-action-button-radius: var(--radius-control);
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+/* `input` here means a BUTTON that happens to be an input — submit, reset,
+   button, image. It used to mean every input, so a text field carrying
+   `border-slate-200 rounded-control` was painted with the quiet-button border
+   and came out pale blue in the middle of a form (owner's reference field,
+   2026-09-06). A data-entry field takes the field contract at the end of this
+   file instead. */
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
@@ -566,7 +579,7 @@ main table tbody tr:hover,
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-primary, .btn-premium-primary, .edify-action-button.primary,
   .edify-primary-solid, .school-record-action--schedule, .premium-button-primary,
   .pto-button--primary, .sp-button--primary, .spa-button--primary,
@@ -578,7 +591,7 @@ main table tbody tr:hover,
   box-shadow: 0 8px 18px -10px color-mix(in oklab, var(--brand-primary) 50%, transparent) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-ghost, .btn-secondary, .btn-premium-secondary,
   .edify-action-button.secondary, .school-record-action--assign,
   .premium-button-secondary, .premium-button-outline, .btn-smooth,
@@ -593,7 +606,7 @@ main table tbody tr:hover,
   box-shadow: none !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .btn-ghost, .btn-secondary, .btn-premium-secondary,
   .edify-action-button.secondary, .school-record-action--assign,
   .premium-button-secondary, .premium-button-outline, .btn-smooth,
@@ -610,7 +623,7 @@ main table tbody tr:hover,
  * their own colour ramps and are intentionally excluded. */
 :root:not(.theme-blue):not(.theme-dark) :is(button, a).btn:not(
   .btn-primary, .btn-secondary, .btn-ghost, .btn-danger, .btn-success,
-  .btn-warning, .btn-smooth
+  .btn-warning, .btn-smooth, .btn-outline-danger, .btn-outline-warning
 ) {
   color: var(--brand-primary-text) !important;
   background-color: var(--edify-surface-raised) !important;
@@ -624,7 +637,7 @@ main table tbody tr:hover,
  * blue-outline treatments here, so a page cannot create a fourth button
  * appearance just by using an older template. Compact navigation, tabs and
  * rich-text formatting controls deliberately keep their compact geometry. */
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
   .fc-button-primary,
   [class~="bg-slate-700"], [class~="bg-slate-800"], [class~="bg-slate-900"],
@@ -638,7 +651,7 @@ main table tbody tr:hover,
   box-shadow: 0 6px 14px -10px color-mix(in oklab, var(--brand-primary) 44%, transparent) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .help-search-button, .tile-filter-btn-primary, .tile-filter-btn-reset,
   .fc-button-primary,
   [class~="bg-slate-700"], [class~="bg-slate-800"], [class~="bg-slate-900"],
@@ -649,7 +662,7 @@ main table tbody tr:hover,
   border-color: var(--brand-primary-hover) !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
   .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
   .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
@@ -676,7 +689,7 @@ main table tbody tr:hover,
   box-shadow: none !important;
 }
 
-:root:not(.theme-blue):not(.theme-dark) :is(button, a, input):is(
+:root:not(.theme-blue):not(.theme-dark) :is(button, a, input:is([type="button"], [type="submit"], [type="reset"], [type="image"])):is(
   .premium-button-ghost, .tt-button--quiet, .tt-button--soft,
   .tile-filter-btn-secondary, .drawer-close-btn, .btn-icon,
   .tt-icon-button, .tt-link-button, .text-button, .forgot-button,
@@ -1022,10 +1035,22 @@ main :is(
   #cluster-filters,
   [data-component="filter-toolbar"]
 ):not(.edify-has-work-plan-filter-popover) {
-  overflow-x: auto;
-  overflow-y: visible;
-  overscroll-behavior-inline: contain;
-  scroll-padding-inline: 0.25rem;
+  /* Filters WRAP; they do not scroll sideways.
+
+     This asked for "scroll sideways, never clip vertically" as
+     `overflow-x: auto; overflow-y: visible`, which CSS does not allow: when
+     one axis is a scrolling value the other computes to `auto` too. So every
+     filter panel on the platform became a VERTICAL scroll box. On a phone the
+     School Directory panel was 220px tall over 233px of content — the last
+     row and Clear Filters sat behind a scrollbar the owner photographed
+     (2026-09-06).
+
+     Sideways scrolling was the wrong goal anyway. A filter the reader cannot
+     see is a filter they will not use, and on a phone two thirds of the row
+     is off-screen with nothing to say so. Wrapping shows every field at every
+     width, and `overflow: visible` keeps native select popups unclipped. */
+  flex-wrap: wrap !important;
+  overflow: visible;
 }
 
 main :is(
@@ -1067,6 +1092,41 @@ main :is(
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* A toolbar with one selector (a fiscal-year switch, say) must not stretch
+   that selector across the page: the flex-grow above exists to share a row
+   between several fields, not to make one field the width of the bar. Same
+   selector list as the field rule, so it carries the same specificity. */
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) > .edify-filter-field.platform-filter-compact {
+  flex: 0 1 20rem;
+  max-inline-size: 20rem;
 }
 
 /* Search fields routinely carry longer labels and query text than compact
@@ -1265,7 +1325,14 @@ main :is(.sp-plan, .spp, .spa) :is(.sp-status, .spp-status, .spa-status,
    coloured notice inside <main> — success, warning and error alike — was
    repainted as a plain white card with a transparent border. An error message
    that looks identical to a content card is not an error message. Both live
-   regions are exempt now, matching the drawer rule further down this file. */
+   regions are exempt now, matching the drawer rule further down this file.
+
+   Tiles are exempt for the same reason (2026-09-05). A KPI tile carries its
+   accent gradient by design, and `.edify-interactive-card` — the class a
+   clickable tile adds — matches `[class*="-card"]` here, so this rule was
+   repainting them as plain white surfaces: 71 of the platform's 124 KPI tiles
+   had no gradient, which was every tile that happened to be clickable. A tile
+   that states a number is not a content card. */
 main :is(
   .card:not(.card-alert),
   .card-elevated,
@@ -1312,7 +1379,11 @@ main :is(
   section.rounded-surface.border,
   article.rounded-surface.border,
   aside.rounded-surface.border
-):not([role="alert"]):not([role="status"]) {
+
+  /* Nor a metric summary: `edify-metric-panel` matches the generic
+     `[class*="-panel"]` arm, and a card's grid of numbers is one panel with
+     hairlines, not a card (owner, 2026-09-07). */
+):not([role="alert"]):not([role="status"]):not(.kpi-strip__item):not(.edify-stat-tile):not(.edify-metric-panel) {
   background-color: var(--edify-card-surface) !important;
   background-image: none !important;
   border-color: var(--edify-card-border) !important;
@@ -1589,16 +1660,22 @@ main .edify-card-action {
   box-shadow: none !important;
 }
 
+/* Same, for the blue theme: the reference photograph IS this theme, and it
+   carries no per-metric surface. */
+:is(.theme-blue, .theme-dark) .kpi-strip.kpi-strip--executive .kpi-strip__item {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
 :is(.theme-blue, .theme-dark) .kpi-strip__item::after {
   display: none;
 }
 
 /* Editorial Night keeps KPI semantics but removes the rainbow ambient washes.
-   A two-pixel inset rail carries each metric's existing tone, matching the
-   reference's status cards while the card itself stays on one calm surface. */
+   The panel itself keeps this theme's calm surface and border. */
 .theme-dark .kpi-strip.kpi-strip--executive {
-  background-color: var(--edify-section-bg) !important;
-  border-color: var(--edify-border) !important;
+  border-color: var(--edify-kpi-panel-border) !important;
   box-shadow: var(--edify-card-shadow) !important;
 }
 
@@ -1606,13 +1683,17 @@ main .edify-card-action {
   --kpi-accent: var(--edify-text-subtle);
 }
 
+/* A metric inside the panel is not a card in either dark theme (owner,
+   2026-09-07: one panel, hairlines between the metrics, no squares). This rule
+   used to give every toned tile its own surface, border and two-pixel accent
+   rail, which is precisely the composition that was removed — so all it does
+   now is make sure the ambient wash the light themes carry does not come back
+   here, where it reads as rainbow noise on a dark plane. The hairlines are the
+   component's own and are left alone. */
 .theme-dark .kpi-strip__item[class*="kpi-strip__item--"] {
-  background-color: var(--edify-card-surface) !important;
+  background-color: transparent !important;
   background-image: none !important;
-  border-color: var(--edify-card-border) !important;
-  box-shadow:
-    inset 0 2px 0 color-mix(in srgb, var(--kpi-accent) 58%, transparent),
-    var(--edify-card-shadow) !important;
+  box-shadow: none !important;
 }
 
 /* Functional controls keep a full 3:1 boundary against the slate field plane.
@@ -1916,7 +1997,30 @@ main :is(
 ):not([data-edify-summary-kpi]):not(.card-alert):not(.edify-risk-card):not(
   [role="alert"], [role="dialog"], [role="menu"], [role="listbox"],
   [popover], .drawer-surface, .edify-popup-dialog__surface,
-  .platform-filter-bar, .overflow-x-auto, .overflow-auto
+  .platform-filter-bar, .overflow-x-auto, .overflow-auto,
+  /* A form control is not a nested card, which this rule's own preamble
+     already says — but a `<select class="edify-surface rounded-control
+     border">` matched the generic entries above and was flattened to a
+     square, borderless box. The Activity Catalogue's review queue had a
+     dozen of them (2026-09-06). Fields take the field contract at the end
+     of this file. */
+  input, select, textarea,
+  /* A tile is not a nested card. It states one number and carries the
+     accent wash every tile on the platform carries, so stripping its
+     surface here left it flat white beside its washed neighbours — which
+     is what "the tile gradient is never implemented system-wide" looked
+     like (owner, 2026-09-05). */
+  .kpi-strip__item, .edify-stat-tile,
+  /* Nor is a metric summary, and this rule was claiming it by name: the
+     generic `[class*="-panel"]` branch above matches `edify-metric-panel`
+     exactly, so a card's own grid of numbers lost the border that makes it
+     ONE panel and went back to looking like loose text (2026-09-07). Its
+     hairlines survived, which is what made the loss easy to miss. */
+  .edify-metric-panel,
+  /* A floating overlay inside the drawer, not a nested card: the date
+     picker must keep its own opaque surface, border and shadow or the form
+     shows through the day grid (2026-09-02). */
+  .edify-calendar-popover
 ) {
   background-color: transparent !important;
   background-image: none !important;
@@ -1970,7 +2074,11 @@ main .edify-inline-metrics {
   min-inline-size: 0;
 }
 
-main .edify-data-row {
+/* Never a <tr>: the monthly work plan puts this class on a table row, and a
+   row told to be a grid stacks its own cells -- four 30px cells became a
+   95px "row" on a 32px table (2026-09-04). A table row already has the
+   layout this class is trying to create. */
+main .edify-data-row:not(tr) {
   display: grid;
   /* Label sizes to its own content (never collapses); the value takes the
      rest and WRAPS. The old `minmax(0, 1fr) auto` let a long free-text value
@@ -1983,7 +2091,7 @@ main .edify-data-row {
   padding-block: var(--edify-content-row-padding);
 }
 
-main .edify-data-row:not(:last-child) {
+main .edify-data-row:not(tr):not(:last-child) {
   border-block-end: 1px solid var(--edify-content-divider);
 }
 
@@ -2114,7 +2222,11 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
   div[class*="rounded"][class*="border"],
   section[class*="rounded"][class*="border"],
   article[class*="rounded"][class*="border"]
-) {
+
+  /* Nor a metric summary: `edify-metric-panel` matches the generic
+     `[class*="-panel"]` arm, and a card's grid of numbers is one panel with
+     hairlines, not a card (owner, 2026-09-07). */
+):not(.edify-stat-tile):not(.kpi-strip__item):not(.edify-metric-panel) {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
@@ -2157,7 +2269,11 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
 ):not([role="alert"]):not([role="status"]):not([role="listbox"]):not(
   [role="radiogroup"]
 ):not(
-  .platform-filter-bar, .overflow-x-auto, .overflow-auto
+  .platform-filter-bar, .overflow-x-auto, .overflow-auto,
+  /* A floating overlay, not a nested card: the date picker must keep its
+     own opaque surface, border and shadow, or the form shows through the
+     day grid (2026-09-02). */
+  .edify-calendar-popover
 ) {
   background-color: transparent !important;
   background-image: none !important;
@@ -2226,8 +2342,18 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   letter-spacing: var(--edify-text-title-tracking) !important;
 }
 
+/* The parts of a component that state their own type are not prose. A
+   metric's number, its small-caps label and its caption, a note's title and
+   body, an empty state's sentence — all of them are written as <p>, and this
+   rule was flattening every one to body size, so a metric panel's number and
+   its label both measured 13px and the label's caps read heavier than the
+   figure (2026-09-07). The tray escaped only because it uses <span>. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  :is(p, li, dd, .edify-profile-body, .edify-section__description) {
+  :is(p, li, dd, .edify-profile-body, .edify-section__description):not(
+    .edify-metric__value, .edify-metric__label, .edify-metric__meta, .edify-metric__unit,
+    .edify-note__title, .edify-note__body,
+    .edify-empty-state__title, .edify-empty-state__message, .edify-empty-state__hint
+  ) {
   font-family: var(--edify-font-sans) !important;
   font-size: var(--edify-text-body-size) !important;
   font-weight: var(--edify-text-body-weight);
@@ -3069,4 +3195,909 @@ main table tbody > tr:only-child > td[colspan] > :is(
     --page-header-padding-y: 0.75rem;
     --page-header-padding-x: 0.75rem;
   }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLE ROW RHYTHM: 32px (2026-09-03)
+   ───────────────────────────────────────────────────────────────────────────
+   One row height for EVERY table at EVERY width: a single-line row measures
+   32px or less, whatever utility classes the template carries. Rows that
+   hold a control keep the control at 24px inside a 4px cell so the row still
+   closes at 32px; badges sit on one text line; a record title with a caption
+   reads on one line as "title · caption".
+
+   Phones were excluded here until 2026-09-04, on the assumption that a table
+   becomes a card list on a phone. It does not — mobile-shell.css states the
+   opposite ("Record tables stay tables", the region scrolls inline instead)
+   — so the exclusion only meant the same table was 40-43px per row on a
+   phone and 30px on a laptop.
+   ═══════════════════════════════════════════════════════════════════════════ */
+@media all {
+  :root {
+    --edify-table-cell-padding-block: 0.34375rem;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th),
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell {
+    padding-block: 0.34375rem !important;
+    line-height: 1.35 !important;
+  }
+
+  /* A cell that carries the row's action: 24px control in a 4px cell. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).edify-cell.edify-cell:is([data-record-action], .edify-table__actions, .edify-cell-action, .ia-queue-row__action) {
+    padding-block: 0.21875rem !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) :is(a, button, summary):is(.rounded-control, .btn),
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell .spp-row-actions > :is(a, button),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).ia-queue-row__action > a {
+    block-size: 1.5rem !important;
+    min-block-size: 1.5rem !important;
+    padding-block: 0 !important;
+    vertical-align: middle !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) .edify-status-badge {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+
+  /* "Title" over "caption" becomes "Title · caption" on one line. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span):not(.edify-cell-row) + :is(div, p, span):not(.edify-cell-row) {
+    display: inline !important;
+    margin-block-start: 0 !important;
+    margin-inline-start: 0.375rem;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span):first-child:not(.edify-cell-row) {
+    display: inline !important;
+  }
+
+  /* Beside an avatar, the stacked pair reads on one line too. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):first-child {
+    display: inline !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody [data-record-title] > :is(div, p, span):not(:empty) + :is(div, p, span)::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ROW HEIGHT IS PINNED (owner, 2026-09-05: table padding verdict).
+   "32px or less" let a single-line row land anywhere from 29 to 32px,
+   depending on whether a cell held a pill, a badge or plain text; two
+   tables side by side visibly disagreed. A cell is a 32px border box: 5.5px
+   of padding either side of an 18px line, and a 24px control or an 18px
+   badge sits inside the same box. Header cells take the same 32px, so a
+   table is a stack of equal rows from its first line. Horizontal padding is
+   the one token (12px) everywhere.
+   `.edify-table--compact` is the ONE declared denser variant (28px rows,
+   8px inline) for matrices and legends; nothing else on the platform may go
+   below it.
+   ═══════════════════════════════════════════════════════════════════════ */
+/* The pin sits on the ROW: a height on the cell lost to the cell contracts
+   above, a height on the row is a minimum that table layout always honours
+   and never clips a taller cell. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) > tr {
+  block-size: 2rem !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th) {
+  box-sizing: border-box !important;
+  line-height: 1.125rem !important;
+  padding-inline: var(--edify-table-cell-padding-inline) !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).edify-cell.edify-cell:is([data-record-action], .edify-cell--action) {
+  padding-inline: var(--edify-table-cell-padding-inline) !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table.edify-table--compact:not(.sr-only) :is(thead, tbody) > tr {
+  block-size: 1.75rem !important;
+}
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table.edify-table--compact:not(.sr-only) :is(thead, tbody) :is(td, th) {
+  padding-block: 0.3125rem !important;
+  padding-inline: 0.5rem !important;
+  line-height: 1.125rem !important;
+}
+/* The country map's distribution table is a legend beside the map, sized to
+   its three figure columns in a 286px side panel: 8px between columns and
+   4px at the outer edges, so "5.91/10" still fits its 62px column and the
+   last column never clips at the panel edge (owner, 2026-09-06: "everything
+   seems to be at the real edge"). Stacked under the map, below 80rem, it is
+   a full-width table and takes the normal 12px token like every other. The
+   selector matches the row contract's weight so these win. */
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) > tr {
+  block-size: auto !important;
+}
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th) {
+  padding-inline: 0.5rem !important;
+}
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):first-child {
+  padding-inline-start: 0.25rem !important;
+}
+:is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):last-child {
+  padding-inline-end: 0.25rem !important;
+}
+@media (max-width: 79.99rem) {
+  :is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th),
+  :is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):first-child,
+  :is(main, .drawer-body) table.sr-distribution-table:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody) :is(td, th):last-child {
+    padding-inline: var(--edify-table-cell-padding-inline) !important;
+  }
+}
+
+/* The same one line, whatever the template called its wrapper.
+   The rules above only reach a stack that is a direct child of the cell or
+   of one wrapper, and only when the wrapper carries `.edify-cell-row`. Role
+   pages built before that class flattened nothing: /staff nested its name
+   and email two levels down inside a raw `flex items-center`, and Team
+   Oversight wrote a caption as a bare `<span class="block">` after a text
+   node, so their rows measured 67px and 46px against the 32px contract.
+
+   A text-carrying element with no element children of its own is a line of
+   text, wherever it sits, so it reads inline. Badges, pills and chips are
+   excluded (they are boxes with padding), `div` is excluded (an empty div is
+   usually a bar or a rule, and inline would collapse it), and `[x-show]` is
+   excluded because display on those belongs to the script. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(p, span, small).edify-cell-text:not(.edify-cell-row):not(.row-menu):not([x-show]):not(.pill):not(.edify-status-badge):not([class*="badge"]):not([class*="chip"]):not([class*="pill"]) {
+  display: inline !important;
+  margin-block: 0 !important;
+}
+
+/* A checkbox or radio in a record row, and the label wrapping it: 20px, the
+   size a 32px row can hold. A 44px touch target here made a phone's row
+   56px; the row itself is the target. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(input[type="checkbox"], input[type="radio"]) {
+  min-block-size: 1.25rem !important;
+  block-size: 1.25rem !important;
+  min-inline-size: 1.25rem !important;
+  inline-size: 1.25rem !important;
+}
+
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  label.edify-cell-choice {
+  min-block-size: 1.25rem !important;
+}
+
+/* A badge written with utility classes rather than `.edify-status-badge`
+   still sits on one text line. /staff wrote its status as a bare
+   `span.inline-flex` with `py-1`, which measured 26px and set the row to
+   38px against the 32px contract. Height is not forced here -- an icon
+   inside the badge keeps its size -- only the padding that made it tall. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(span, div)[class~="inline-flex"]:not(.btn):not(.edify-action-button):not(.row-menu):not(.row-menu__trigger):not([class~="h-8"]):not([class~="h-9"]):not([class~="h-10"]) {
+  min-block-size: 0 !important;
+  padding-block: 0 !important;
+  line-height: 1.35 !important;
+}
+
+/* An avatar in a record row is an identity mark, not a picture: 24px in a
+   4px cell, so the row still closes at 32px. Square utility boxes and images
+   only — a pill badge is round too, and must keep its own size. */
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th)
+  :is(img, [class~="h-8"][class~="w-8"], [class~="h-9"][class~="w-9"], [class~="h-10"][class~="w-10"], [class~="h-11"][class~="w-11"], [class~="h-12"][class~="w-12"]) {
+  block-size: 1.5rem !important;
+  inline-size: 1.5rem !important;
+  min-block-size: 0 !important;
+  font-size: var(--edify-text-micro-size) !important;
+  object-fit: cover;
+}
+
+:is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  table:not(.sr-only):not(.edify-visually-hidden) tbody
+  :is(td, th).edify-cell-media {
+  padding-block: 0.21875rem !important;
+}
+
+/* Stacked cell content reads on one line. A table row is a record, not a
+   card: a name over an id, a value over a caption, an avatar beside a
+   stacked pair — all of it sits on one 32px line. Forms and flex rows keep
+   their own layout; only stacked text blocks are flattened. Every width, for
+   the reason above the row-rhythm block: a table is still a table on a phone.
+
+   `[x-show]` is excluded because display on those elements belongs to the
+   script, not the stylesheet. A `display: inline !important` here outranks
+   the `display: none` Alpine writes inline, so every CLOSED row-actions menu
+   in a table was painted at its unplaced default of left:0/top:0 — a stack of
+   menus over the sidebar — and the open one measured itself while inline,
+   which put it off the right edge of the window. `.row-menu` is excluded for
+   the same reason one level up: the trigger and its list are a positioning
+   context, not a stacked pair of text lines.
+
+   `.edify-empty-state` is excluded for a third reason: it is not a record at
+   all. An empty row's guidance is a mark above a sentence, and flattening it
+   put the icon and the message on one line joined by a middle dot — "▢ · No
+   requests found" (owner, 2026-09-07). The component states its own layout;
+   this rule is about cells that hold a record.
+   */
+@media all {
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row):not(.edify-empty-state) > :is(div, p, span, small):not(.edify-cell-row):not(.row-menu):not([x-show]),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):not(.row-menu):not([x-show]),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(.edify-empty-state) + :is(div, p, small):not(.row-menu):not([x-show]) {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row):not(.edify-empty-state) > :is(div, p, span, small) + :is(div, p, span, small),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small) + :is(div, p, span, small),
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(.edify-empty-state) + :is(div, p, small) {
+    margin-inline-start: 0.375rem;
+  }
+
+  /* `:not(:empty)` on the FIRST of the pair: the separator joins two pieces
+     of text ("Sacred Heart · SCH-014"), and an empty element is a colour
+     swatch, a status dot or an icon. Joining a swatch to a name produced
+     "● · Central" in the analytics sub-region table, which is what a middle
+     dot floating before every row name looked like (owner, 2026-09-05). */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p, span):not(.edify-cell-row):not(.edify-empty-state) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > :is(div, p) > :is(div, p, span, small):not(:empty) + :is(div, p, span, small)::before,
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > :is(div, p):not(.edify-cell-row):not(.edify-empty-state):not(:empty) + :is(div, p, small)::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+
+  /* An avatar in a row is a 24px mark, and the row never wraps around it. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    white-space: nowrap;
+  }
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) > .edify-cell-row > .edify-cell-mark {
+    block-size: 1.125rem !important;
+    inline-size: 1.125rem !important;
+    min-inline-size: 1.125rem !important;
+  }
+
+  /* Inline pills (roles, categories, states) sit on the text line. */
+  :is(main, .drawer-body, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+    table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th) .edify-cell-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    margin-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+/* Marked by micro-ux.js: a cell with two or more stacked blocks. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) + :is(div, p):not(.edify-cell-row) {
+    margin-inline-start: 0.375rem;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-stack > :is(div, p, span, small):not(.edify-cell-row) + :is(div, p):not(.edify-cell-row)::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+}
+
+/* Marked by micro-ux.js: `.block` lines and control rows inside a cell. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-line,
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-wrap > .edify-cell-line {
+    display: inline !important;
+    margin-block: 0 !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-wrap > .edify-cell-line + .edify-cell-line {
+    margin-inline-start: 0.375rem;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-follows,
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-line + .edify-cell-line,
+  :is(main, .drawer-body) table tbody :is(td, th) > :not(.edify-cell-line) + .edify-cell-line {
+    margin-inline-start: 0.375rem;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-inline-row {
+    display: inline-flex !important;
+    vertical-align: middle;
+    margin-block: 0 !important;
+    margin-inline-start: 0.5rem;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th) .status-pill {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+/* One line per row: a cell that is not the action cell never wraps; long
+   text is cut with an ellipsis and the table scrolls sideways instead.
+   The IA dashboard's own queue pills join the 18px pill rhythm. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table:not(.sr-only):not(.edify-visually-hidden) tbody :is(td, th).edify-cell.edify-cell:not(.edify-cell-action):not([data-record-action]) {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-inline-size: 24rem;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th) .ia-status {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody :is(td, th) > .edify-cell-follows::before {
+    content: "· ";
+    color: var(--edify-text-subtle, var(--edify-text-muted));
+  }
+}
+
+/* Shapes the platform-wide sweep found (2026-09-03): a selection checkbox
+   label, an avatar sitting directly in a cell, form controls inside a cell,
+   the special-projects action stack and status pills, and the SSA matrix
+   blocks. All close at 32px — at EVERY width since 2026-09-05, for the same
+   reason as the row rhythm above: a record table is still a table on a
+   phone, and gating this at 768px left a control in a cell at its native
+   height there while the row around it was told to close at 32px. */
+@media all {
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell .edify-table-choice,
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell .edify-cell-control {
+    min-block-size: 0 !important;
+    block-size: 1.5rem !important;
+    max-block-size: 1.5rem !important;
+    padding-block: 0 !important;
+    vertical-align: middle !important;
+    line-height: 1 !important;
+  }
+  /* A cell the template laid out as a flex box stays a table cell. */
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-flex.edify-cell-flex {
+    display: table-cell !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-flex.edify-cell-flex > * {
+    display: inline-block !important;
+    vertical-align: middle !important;
+    white-space: nowrap;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-flex.edify-cell-flex > * + * {
+    margin-inline-start: 0.5rem;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell-flex.edify-cell-flex > .edify-cell-mark {
+    display: inline-flex !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell .edify-cell-mark {
+    block-size: 1.125rem !important;
+    inline-size: 1.125rem !important;
+    min-inline-size: 1.125rem !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > .edify-cell-mark {
+    block-size: 1.125rem !important;
+    inline-size: 1.125rem !important;
+    min-inline-size: 1.125rem !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell :is(select, input:not([type="checkbox"]):not([type="radio"])) {
+    min-block-size: 0 !important;
+    block-size: 1.5rem !important;
+    padding-block: 0 !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell :is(form:is(.grid, .flex, .flex-col), .spp-row-actions) {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 0.375rem !important;
+    margin-block: 0 !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell :is(.spp-status, .sp-matrix-cell, .edify-status-text) {
+    display: inline-flex !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+  :is(main, .drawer-body) table.sp-matrix tbody :is(td, th).edify-cell.edify-cell > span {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    block-size: 1.25rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > a.spp-school {
+    display: inline !important;
+  }
+}
+
+/* Score chips and similar inline-flex marks inside a cell sit on the line. */
+@media (min-width: 768px) {
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > :is(strong, b, span, em).inline-flex:not(.edify-cell-row):not(.edify-cell-inline-row) {
+    block-size: 1.125rem !important;
+    min-block-size: 0 !important;
+    padding-block: 0 !important;
+    line-height: 1 !important;
+    align-items: center !important;
+    vertical-align: middle !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > a.spp-school {
+    white-space: nowrap !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > a.spp-school > :is(small, span, div) {
+    display: inline !important;
+    margin-block: 0 !important;
+    margin-inline-start: 0.375rem;
+  }
+  /* A child the page hides at this width stays hidden, marker or not. */
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > .edify-cell-hidden.edify-cell-hidden {
+    display: none !important;
+  }
+  /* A disclosure in a cell keeps its summary on the row line; the row only
+     grows when the reader opens it. */
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > details {
+    display: inline-block !important;
+    margin-block: 0 !important;
+    margin-inline-start: 0.375rem;
+    vertical-align: middle;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > details > summary {
+    display: inline !important;
+    line-height: inherit !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > details[open] > :not(summary) {
+    white-space: normal;
+  }
+  /* A value-over-caption tile in a cell sits as one 20px chip. */
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > .edify-cell-stackchip {
+    display: inline-flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.375rem !important;
+    block-size: 1.25rem !important;
+    min-block-size: 0 !important;
+    max-inline-size: none !important;
+    inline-size: auto !important;
+    padding-block: 0 !important;
+    padding-inline: 0.5rem !important;
+    line-height: 1 !important;
+    box-shadow: none !important;
+    transform: none !important;
+    vertical-align: middle !important;
+  }
+  :is(main, .drawer-body) table tbody :is(td, th).edify-cell.edify-cell > .edify-cell-stackchip > * {
+    margin-block: 0 !important;
+    line-height: 1 !important;
+  }
+}
+
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   ONE TILE (2026-09-03)
+   ───────────────────────────────────────────────────────────────────────────
+   Every numeric tile on the platform reads as the headline tile: a quiet
+   label, a semibold numeral, a muted helper, on a bordered, softly elevated
+   surface with the tone as a wash. Pages that still draw a figure by hand
+   (a 22px numeral beside a caption) are marked by micro-ux.js as
+   `edify-stat-tile`; these rules give them the shared design without a
+   template rewrite. The label always sits above the numeral, whatever order
+   the template wrote them in.
+   ═══════════════════════════════════════════════════════════════════════════ */
+main .edify-stat-tile.edify-stat-tile {
+  /* Neutral, not transparent: a hand-built tile whose utility classes name no
+     colour still belongs to the same family as the component tiles beside it,
+     and `transparent` left it flat white while its neighbours carried a wash
+     (2026-09-05). A tone found in the markup overrides this below. */
+  --kpi-accent: var(--edify-text-muted, #64748b);
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: stretch !important;
+  gap: 0.125rem;
+  text-align: start !important;
+  padding: 0.875rem 1rem !important;
+  border: 1px solid color-mix(in srgb, var(--edify-border) 82%, transparent) !important;
+  border-radius: 0.875rem !important;
+  background-color: color-mix(in srgb, var(--edify-surface) 96%, var(--edify-surface-muted)) !important;
+  box-shadow: 0 2px 3px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.08) !important;
+  color: var(--edify-text);
+}
+
+main .edify-stat-tile.edify-stat-tile--success { --kpi-accent: var(--edify-success, #10b981); }
+main .edify-stat-tile.edify-stat-tile--warning { --kpi-accent: var(--edify-warn, #f59e0b); }
+main .edify-stat-tile.edify-stat-tile--danger { --kpi-accent: var(--edify-danger, #ef4444); }
+main .edify-stat-tile.edify-stat-tile--info { --kpi-accent: var(--edify-accent, #2563eb); }
+
+main .edify-stat-tile.edify-stat-tile.edify-stat-tile {
+  border-color: color-mix(in srgb, var(--kpi-accent) 42%, var(--edify-border)) !important;
+  background-image:
+    radial-gradient(
+      120% 140% at 100% 0%,
+      color-mix(in srgb, var(--kpi-accent) 40%, transparent) 0%,
+      color-mix(in srgb, var(--kpi-accent) 12%, transparent) 45%,
+      transparent 78%
+    ),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--kpi-accent) 20%, transparent) 0%,
+      color-mix(in srgb, var(--kpi-accent) 6%, transparent) 50%,
+      transparent 88%
+    ) !important;
+}
+
+main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__label {
+  order: 1;
+  margin: 0 !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-tile-label-size) !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  line-height: 1.3;
+}
+
+main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__value {
+  order: 2;
+  margin: 0 0 0.125rem !important;
+  font-size: clamp(1.125rem, 1rem + 1.6cqi, 1.5rem) !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  line-height: 1.15 !important;
+}
+
+main .edify-stat-tile.edify-stat-tile > .edify-stat-tile__helper {
+  order: 3;
+  margin: 0 !important;
+  color: var(--edify-text-muted) !important;
+  font-size: var(--edify-text-label-size) !important;
+  font-weight: 500 !important;
+  letter-spacing: normal !important;
+  text-transform: none !important;
+  line-height: 1.35;
+}
+
+/* A section a role home hides below the desktop breakpoint stays hidden even
+   when it is a filter bar, whose own display rule also asserts !important.
+   Except inside the Analytics workspace's Verification Quality tab: that is
+   the IA dashboard body shown WITHOUT its role home, so there is nothing to
+   stand in for the hidden sections and they have to show (2026-09-05). */
+@media (max-width: 63.999rem) {
+  main .mobile-home-hide.mobile-home-hide:not(.analytics-ia-panel *) {
+    display: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════
+   A TABLE WIDER THAN ITS REGION FITS BY TRUNCATING, NEVER BY WRAPPING
+   (owner, 2026-09-06: "make sure the wraps are removed and use more space").
+   micro-ux.js measures every table against its scroll region from the
+   desktop shell up. One that is wider gets a <colgroup> whose widths sum to
+   the region — rigid columns (figures, pills, controls, images) keep their
+   width, text columns give up width in proportion to what they have to
+   spare — and takes a fixed layout, so nothing scrolls and nothing wraps:
+   a text cell that no longer fits shows an ellipsis and its full text on
+   hover. Rows stay on the 32px rhythm.
+   ═══════════════════════════════════════ */
+@media (min-width: 64rem) {
+  :is(main, .drawer-body) table.edify-table--truncate:not(.sr-only):not(.edify-visually-hidden) {
+    table-layout: fixed !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate:not(.sr-only):not(.edify-visually-hidden) :is(thead, tbody, tfoot) :is(th, td) {
+    padding-inline: 0.5rem !important;
+    min-inline-size: 0 !important;
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate :is(thead, tbody, tfoot) :is(th, td).edify-cell-truncate {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+  /* Text inside a truncated cell — a link, a sort button in a heading, a
+     caption span — clips with the cell rather than pushing past it. A flex
+     row (a mark beside a name beside an id) keeps its row; its text parts
+     are the ones that shorten. */
+  :is(main, .drawer-body) table.edify-table--truncate :is(thead, tbody, tfoot) :is(th, td).edify-cell-truncate:not(.edify-cell-stack)
+    > :is(a, button, span, div, p, small, strong, time):not(.edify-cell-row):not(.flex):not(.inline-flex):not(.edify-cell-inline-row):not(.pill):not(.rounded-pill):not(.rounded-full):not(.edify-cell-pill):not([class*="badge"]):not([class*="chip"]) {
+    display: inline-block !important;
+    max-inline-size: 100% !important;
+    vertical-align: middle;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+    text-align: inherit;
+  }
+  /* A text cell with more than one part on its line (a name beside a
+     control; a title, a caption and a link): micro-ux marks each text
+     part with its share of the text and writes the width of everything
+     else on the line to --edify-cell-fixed. Each text part takes its share
+     of what is left and shows its own ellipsis; boxes and actions stay
+     whole. The line may be the cell or the one wrapper it holds. */
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate.edify-cell-mixed > *,
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate.edify-cell-mixed > .edify-cell-truncate-line > * {
+    max-inline-size: none !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+  }
+  /* The line takes the whole cell, so each part's share is a share of the
+     cell's width — an inline (shrink-to-fit) line would measure its parts
+     against themselves and shorten them with room to spare. */
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate.edify-cell-mixed > .edify-cell-truncate-line {
+    display: flex !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    inline-size: 100% !important;
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    overflow: hidden !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate.edify-cell-mixed .edify-cell-truncate-target {
+    display: inline-block !important;
+    flex: 0 1 auto !important;
+    max-inline-size: calc((100% - var(--edify-cell-fixed, 0px) - 0.5rem) * var(--edify-part, 1)) !important;
+    min-inline-size: 0 !important;
+    vertical-align: middle;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate.edify-cell-mixed
+    > :is(.edify-cell-row, .flex, .inline-flex, .edify-cell-inline-row):not(.edify-cell-truncate-line) {
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    overflow: hidden !important;
+    flex-wrap: nowrap !important;
+  }
+  /* A pill in a truncating cell keeps up to 10rem of its label and shows
+     an ellipsis beyond that; a status rarely needs more, and one long
+     status must not size a whole column (partners' "Ask the partner to
+     deliver or reschedule" made its column 399px wide). */
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td)
+    :is(.rounded-pill, .rounded-full, .edify-cell-pill, [class*="badge"], [class*="pill"], [class*="chip"]):not(button):not(a[class*="btn"]):not(.edify-cell-mark):not(img) {
+    display: inline-block !important;
+    max-inline-size: 10rem !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    vertical-align: middle !important;
+    line-height: 1.125rem !important;
+  }
+  /* A stacked cell (a name, then an id on the same 32px line) keeps the
+     row rhythm's inline layout; the cell itself carries the ellipsis. */
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate.edify-cell-stack > * {
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate
+    > :is(.edify-cell-row, .flex, .inline-flex, .edify-cell-inline-row) {
+    max-inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    overflow: hidden !important;
+    flex-wrap: nowrap !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate
+    > :is(.edify-cell-row, .flex, .inline-flex, .edify-cell-inline-row)
+    > :is(a, span, div, p, small, strong, time):not(.edify-cell-mark):not(.edify-cell-pill):not(.rounded-pill):not(.rounded-full) {
+    min-inline-size: 0 !important;
+    flex: 0 1 auto !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    text-wrap: nowrap !important;
+  }
+  :is(main, .drawer-body) table.edify-table--truncate tbody :is(th, td).edify-cell-truncate
+    > :is(.edify-cell-row, .flex, .inline-flex, .edify-cell-inline-row)
+    > :is(.edify-cell-mark, .edify-cell-pill, .rounded-pill, .rounded-full, img, svg) {
+    flex: 0 0 auto !important;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   FILTER PANELS ON A PHONE (owner, 2026-09-06, with a screenshot).
+
+   The toolbar contract above is a desktop contract: one row, left to right,
+   scrolling sideways when the viewport cannot hold it. On a phone that row is
+   two thirds off-screen with nothing to say so, and a filter nobody can see
+   is a filter nobody will use. The row wraps instead — which is already what
+   platform.css does from the desktop shell up, so this makes one behaviour
+   at every width rather than two.
+
+   Wrapping, not a grid: several of these "bars" wrap another grid or form
+   rather than holding the fields themselves (the School Directory below is
+   one), and forcing a two-up grid on those nests a grid inside a grid and
+   halves every field. Wrapping makes no assumption about what is inside.
+
+   It lives at the end of this file because the contract it overrides is in
+   this file and names `#filters-form` inside its `:is()`, which makes that
+   selector ID-specific — a rule in any earlier stylesheet loses to it however
+   it is written.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (max-width: 63.999rem) {
+main :is(
+  .platform-filter-bar,
+  .edify-filter-bar,
+  .sp-filter-panel,
+  .spp-filter-panel,
+  .spa-filter-panel,
+  .tt-filter-panel,
+  .school-filters-form,
+  .school-filter-canvas,
+  #filters-form,
+  #core-filters-form,
+  #analytics-filters-form,
+  #pl-analytics-filters,
+  #cd-analytics-filters,
+  #cb-filters,
+  #debrief-filters,
+  #visits-filters,
+  #trainings-filters,
+  #pd-filters,
+  #spp-filters,
+  #spa-filters,
+  #sp-plan-filters,
+  #pl-dashboard-filters,
+  #project-filters,
+  #cluster-filters,
+  [data-component="filter-toolbar"]
+) {
+  flex-wrap: wrap !important;
+  overflow: visible !important;
+}
+
+/* components.css turns every `#filters-form` into a two-up grid of fields on a
+   phone, which is right where the fields are the form's own children. The
+   School Directory's child is `.school-filter-grid`, already the two-up grid,
+   so that made a grid of grids: the outer one handed the inner one a single
+   170px column, the inner one split it into two 80px cells, and six fields
+   drew 112px wide on top of each other with every label truncated ("FY 20…",
+   "Choos…"). The form lays out as a block; the grid inside keeps its job. */
+main #filters-form.school-filters-form {
+  display: block !important;
+  grid-template-columns: none !important;
+}
+
+main .school-filter-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.65rem !important;
+}
+
+main .school-filter-grid > div {
+  min-inline-size: 0 !important;
+  max-inline-size: none !important;
+}
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   THE INPUT FIELD (owner, 2026-09-06, from a reference screenshot)
+
+   The reference field is a rounded, quietly bordered box on white, with grey
+   placeholder text and a warm tint once it holds a value. The owner asked for
+   that field "condensed to fit" this platform — so the proportions carry over
+   and the sizes do not: the reference draws a ~48px field with a ~14px radius,
+   and the platform's control is 32px on a desktop and 44px on a phone, which
+   is why the radius moved to 10px in the shared token rather than to 14px
+   here. Fields and the rectangular buttons beside them resolve to that same
+   token, so a row never mixes two corner treatments.
+
+   Every rule below repeats the same long selector rather than a shorter one.
+   That is deliberate: each `:not([type=…])` adds specificity, so a base rule
+   written this way outranks a state rule written as `:is(input, textarea):focus`
+   — the states silently lost to the resting look, which is exactly what
+   happened the first time this was written. Same shape everywhere, and the
+   later rule wins as intended.
+   ════════════════════════════════════════════════════════════════════════ */
+:root {
+  /* The tint for a field that holds a value. The reference uses a warm cream;
+     this is the platform's own surface moved the same distance from white, so
+     it reads identically in the light theme and stays legible in the blue and
+     dark ones, where a cream would be a hole in the page. */
+  --edify-field-filled: color-mix(in srgb, var(--edify-accent) 6%, var(--edify-surface-raised));
+  --edify-field-border: color-mix(in srgb, var(--edify-border-strong) 78%, transparent);
+}
+
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+  border: 1px solid var(--edify-field-border) !important;
+  border-radius: var(--edify-radius-sm) !important;
+  background-color: var(--edify-surface-raised) !important;
+  color: var(--edify-text) !important;
+}
+
+/* A field that holds something looks different from one that does not. This is
+   the reference's cream fill, and it is why that screenshot reads at a glance:
+   the eye finds the empty fields without reading a word.
+
+   `data-edify-filled` is stamped by micro-ux on input, on change, and on every
+   field it enhances. CSS can nearly do this alone — `:placeholder-shown` — but
+   only where there IS a placeholder, and to that selector a field without one
+   looks filled when it is empty. On a form mixing both kinds the tint landed
+   on some boxes and not others, side by side. The attribute treats every field
+   the same, a select included, where "filled" means a real choice rather than
+   the leading All option every filter starts on. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled],
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled] {
+  border-color: var(--edify-border-strong) !important;
+  background-color: var(--edify-field-filled) !important;
+}
+
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea)::placeholder,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), textarea)::placeholder {
+  color: var(--edify-text-subtle) !important;
+  opacity: 1;
+}
+
+/* Focus keeps the platform's ring: the reference does not show a focus state,
+   and the ring is what carries the accessibility contract. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible) {
+  border-color: var(--edify-accent) !important;
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-accent) 18%, transparent) !important;
+  outline: 0 !important;
+}
+
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled {
+  border-color: var(--edify-field-border) !important;
+  background-color: var(--edify-surface-muted) !important;
+  color: var(--edify-text-disabled) !important;
+}
+
+/* A field that failed validation says so on its own edge, not only in a message
+   below it. `:user-invalid` waits until the person has actually interacted, so
+   an untouched required field is not painted red on arrival. */
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid {
+  border-color: var(--edify-danger, #b42318) !important;
+}
+
+/* A textarea is the same field, taller — the reference's address box. */
+main textarea,
+.drawer-surface textarea {
+  padding-block: 0.55rem !important;
+  line-height: 1.45 !important;
 }

@@ -1,0 +1,61 @@
+{% comment %}Accountant actions for the selected fund item, in the reference order:
+View Full Plan · the money-moving action (Disburse / Disburse Advance / Pay Partner /
+Process Reimbursement / Review Accountability) · Return · Hold · Download Voucher.
+Primary fill for the one action that moves money; outline danger and warning for
+Return and Hold; ghost for the read-only links.{% endcomment %}
+  <!-- Actions -->
+  <div class="fund-detail__actions">
+    {% if selected.status == 'Pending Approval' %}
+    <p class="fund-detail__hint"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>Disbursement unlocks once the approval chain is complete.</p>
+    {% endif %}
+    {% if selected.plan_url %}
+    <a href="{{ selected.plan_url }}" class="btn btn-ghost h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+      View Full Plan
+    </a>
+    {% endif %}
+    {% if selected.can_confirm_accountability %}
+    <button hx-get="/finance/actions/drawer?action=confirm_accountability&request_id={{ selected.weekly_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-primary h-8">Review Accountability</button>
+    {% endif %}
+    {% if selected.can_disburse %}
+    <button hx-get="/disbursements/drawer?type=disburse&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-primary h-8">Disburse</button>
+    {% endif %}
+    {% if selected.weekly_can_disburse %}
+    <button hx-get="/finance/actions/drawer?action=disburse_advance&request_id={{ selected.weekly_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-primary h-8">Disburse Advance</button>
+    {% endif %}
+    {% if selected.activity_id %}
+    <button hx-get="/finance/actions/drawer?action=clear_partner_payment&activity_id={{ selected.activity_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-primary h-8">Pay Partner</button>
+    {% endif %}
+    {% if selected.advance_id %}
+    <button hx-get="/finance/actions/drawer?action=process_reimbursement&advance_id={{ selected.advance_id }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-primary h-8">Process Reimbursement</button>
+    {% endif %}
+    {% if selected.can_return %}
+    <button hx-get="/disbursements/drawer?type=return&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-outline-danger h-8">Return</button>
+    {% endif %}
+    {% if selected.can_hold %}
+    <button hx-get="/disbursements/drawer?type=hold&item={{ selected.key }}&fy={{ fy }}&month={{ month }}" hx-target="#drawer-container" hx-swap="innerHTML" hx-indicator="#fund-workspace-updating"
+            class="btn btn-outline-warning h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+      Hold
+    </button>
+    {% endif %}
+    {% if selected.can_release %}
+    <form hx-post="/disbursements/action" hx-target="#disb-root" hx-swap="innerHTML" hx-confirm="Release the hold on {{ selected.name }} and return it to the disbursement queue?" hx-indicator="#fund-workspace-updating" class="contents">
+      {% csrf_token %}
+      <input type="hidden" name="action" value="release">
+      <input type="hidden" name="fund_request_id" value="{{ selected.fund_request_id }}">
+      <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="month" value="{{ month }}">
+      <button type="submit" class="btn btn-outline-warning h-8">Release Hold</button>
+    </form>
+    {% endif %}
+    <a href="{{ selected.voucher_url }}" class="btn btn-ghost h-8">
+      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+      Download Voucher
+    </a>
+  </div>

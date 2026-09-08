@@ -105,6 +105,10 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     password = models.CharField(max_length=255, null=True, blank=True)
     name = models.CharField(max_length=255)
     phone = models.CharField(max_length=64, null=True, blank=True)
+    # Off-device channel for the decisions that move this person's money
+    # (apps.notifications.services.SMS_MONEY_EVENTS). Opt-out per user;
+    # a blank `phone` opts out by absence.
+    sms_money_alerts = models.BooleanField(default=True)
     roles = ArrayField(
         base_field=models.CharField(
             max_length=64, choices=[(r.value, r.value) for r in EdifyRole]
@@ -213,6 +217,27 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     @property
     def user_id(self) -> str:
         return self.id
+
+
+def attach_staff_profile_ids(users) -> list:
+    """Fill every user's `staff_profile_id` cache from ONE query.
+
+    The property caches per instance, but a service that builds fresh User
+    rows and then reads `staff_profile_id` for each still paid a query per
+    user: 108 on the Country Director's dashboard, 148 on CD Analytics
+    (2026-09-06). Call this on a roster before reading the property.
+    """
+    users = list(users)
+    missing = [u for u in users if not hasattr(u, "_staff_profile_id_cache")]
+    if missing:
+        found = dict(
+            StaffProfile.objects.filter(
+                user_id__in=[u.id for u in missing]
+            ).values_list("user_id", "id")
+        )
+        for u in missing:
+            u._staff_profile_id_cache = found.get(u.id)
+    return users
 
 
 class UserInvitation(TimeStampedModel):

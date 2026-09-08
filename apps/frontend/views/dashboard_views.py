@@ -10,7 +10,6 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.activities.models import Activity
-from apps.fund_requests.models import WeeklyFundRequest
 from apps.command_center import services as cc_services
 from apps.command_center.planning_progress import (
     normalise_period as normalise_progress_period,
@@ -21,21 +20,12 @@ from apps.core.permissions import RolePermissionService, require_page_permission
 from apps.core.enums import SsaIntervention
 from apps.command_center.dashboard_service import DashboardMetricsService
 from apps.core.activity_types import VISIT_TYPES
-from apps.core.donut import build_rings
 from apps.core.metrics import MetricValue, render_kpi_item
-
-
-def _format_ugx_compact(val):
-    """Compact UGX formatting helper (mirrors budget_views.format_ugx_compact)."""
-    if not val:
-        return "UGX 0"
-    if val >= 1_000_000_000:
-        return f"UGX {val / 1_000_000_000:.1f}B"
-    if val >= 1_000_000:
-        return f"UGX {val / 1_000_000:.1f}M"
-    if val >= 1_000:
-        return f"UGX {val / 1_000:.0f}K"
-    return f"UGX {val}"
+from apps.frontend.views.dashboard_view_state import (
+    dashboard_view_tabs,
+    remember_dashboard_view,
+    resolve_dashboard_view,
+)
 
 
 def _export_hr_dashboard_csv(data, *, fy, month, country, department):
@@ -144,18 +134,6 @@ def _agenda_icon(activity_type):
     )
 
 
-def _agenda_type_class(activity_type):
-    if activity_type in _TRAINING_TYPES:
-        return "bg-emerald-50 text-emerald-600"
-    if activity_type in _VISIT_TYPES:
-        return "edify-primary-soft edify-primary-text"
-    if activity_type in _MEETING_TYPES or activity_type in _PARTNER_TYPES:
-        return "bg-violet-50 text-violet-600"
-    if activity_type in _SSA_TYPES:
-        return "bg-amber-50 text-amber-600"
-    return "bg-slate-50 text-slate-600"
-
-
 def _agenda_status_pill(activity, today):
     if activity.status == "completed":
         return "Completed", "bg-emerald-50 text-emerald-700 border-emerald-200"
@@ -230,6 +208,33 @@ def _build_agenda_item(activity, today):
     return item
 
 
+def _pl_map_context(user, fy, filters) -> dict:
+    """The district table under the Program Lead's map: the same district
+    performance rows PL Analytics shows, with each district's region."""
+    from apps.analytics.pl_analytics_service import PLAnalyticsService, resolve_pl_scope
+    from apps.geography.models import District
+
+    pls = resolve_pl_scope(user, filters)
+    rows = list(
+        PLAnalyticsService.district_performance(pls, fy, None, filters).get("rows")
+        or []
+    )
+    regions = {
+        d["id"]: d["region__name"]
+        for d in District.objects.filter(
+            id__in=[r["id"] for r in rows if r.get("id")]
+        ).values("id", "region__name")
+    }
+    table_rows = [{**r, "region": regions.get(r.get("id"))} for r in rows]
+    table_rows.sort(
+        key=lambda r: (
+            r.get("pct") if r.get("pct") is not None else -1,
+            r.get("name") or "",
+        )
+    )
+    return {"pl_map_rows": table_rows}
+
+
 @require_page_permission("dashboard")
 def dashboard_view(request):
     user = request.user
@@ -263,10 +268,15 @@ def dashboard_view(request):
     if role in ("MfiPartnerAdmin", "MfiLoanOfficer"):
         return redirect("/mfi-portal/dashboard")
 
-    # Fetch common alerts and todays items
-    alerts_list = cc_services.alerts(user)
-    alerts_summary = cc_services.alerts_summary(user)
-    today_context = cc_services.today(user)
+    # Fetch common alerts and todays items. The CCEO dashboard renders none
+    # of them (its right rail was removed), so that role does not pay for
+    # the five alert queries and the today() derivation it would discard.
+    if role == "CCEO":
+        alerts_list = alerts_summary = today_context = None
+    else:
+        alerts_list = cc_services.alerts(user)
+        alerts_summary = cc_services.alerts_summary(user)
+        today_context = cc_services.today(user)
 
     # Get user avatar initials
     names = user.name.split()
@@ -284,6 +294,9 @@ def dashboard_view(request):
         raw_month = (request.GET.get("month") or "").strip()
         month = int(raw_month) if raw_month.isdigit() else None
         data = CDDashboardService.get_dashboard(request.user, fy=fy, month=month)
+        dashboard_view, view_explicit = resolve_dashboard_view(
+            request, role_key="cd", default="map"
+        )
         _fy_months = [
             "Oct",
             "Nov",
@@ -317,9 +330,38 @@ def dashboard_view(request):
                 ),
             },
         }
-        if request.headers.get("HX-Request") == "true":
-            return render(request, "partials/dashboards/cd/body.html", context)
-        return render(request, "pages/dashboards/cd.html", context)
+        context["dashboard_view"] = dashboard_view
+        context["dashboard_tabs"] = dashboard_view_tabs(
+            request,
+            active=dashboard_view,
+            panel_id="cd-dashboard-view",
+            view_template="partials/dashboards/cd/view.html",
+            tabs=[
+                ("map", "Map", "The country shaded by delivery, backlog or money"),
+                (
+                    "operations",
+                    "Operations",
+                    "Performance, Program Leads, verification and risk",
+                ),
+            ],
+        )
+        if dashboard_view == "map":
+            from apps.analytics.country_map_context import country_map_context
+
+            context.update(country_map_context(fy))
+        if request.headers.get("HX-Target") == "cd-dashboard-view-shell":
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
+        elif request.headers.get("HX-Request") == "true":
+            response = render(request, "partials/dashboards/cd/body.html", context)
+        else:
+            response = render(request, "pages/dashboards/cd.html", context)
+        if view_explicit:
+            remember_dashboard_view(response, role_key="cd", view=dashboard_view)
+        return response
 
     elif role == "Program Lead":
         # Program Lead Command Dashboard — the PL's supervised-team operating
@@ -366,9 +408,42 @@ def dashboard_view(request):
             "urgent_pagination_query": urlencode(urgent_pagination_query),
             "mobile_primary_action": mobile_primary_action,
         }
-        if request.headers.get("HX-Request") == "true":
-            return render(request, "partials/dashboards/pl/body.html", context)
-        return render(request, "pages/dashboards/pl.html", context)
+        dashboard_view, view_explicit = resolve_dashboard_view(
+            request, role_key="pl", default="map"
+        )
+        context["dashboard_view"] = dashboard_view
+        context["dashboard_tabs"] = dashboard_view_tabs(
+            request,
+            active=dashboard_view,
+            panel_id="pl-dashboard-view",
+            view_template="partials/dashboards/pl/view.html",
+            tabs=[
+                ("map", "Map", "Your region's districts shaded by team delivery"),
+                (
+                    "operations",
+                    "Operations",
+                    "Team performance, CCEOs, SSA, funding and actions",
+                ),
+            ],
+        )
+        if dashboard_view == "map":
+            from apps.analytics.country_map_context import country_map_context
+
+            context.update(country_map_context(fy))
+            context.update(_pl_map_context(request.user, fy, filters))
+        if request.headers.get("HX-Target") == "pl-dashboard-view-shell":
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
+        elif request.headers.get("HX-Request") == "true":
+            response = render(request, "partials/dashboards/pl/body.html", context)
+        else:
+            response = render(request, "pages/dashboards/pl.html", context)
+        if view_explicit:
+            remember_dashboard_view(response, role_key="pl", view=dashboard_view)
+        return response
 
     elif role == "RegionalVicePresident":
         # RVP Dashboard — the regional approval cockpit: country monthly
@@ -398,7 +473,40 @@ def dashboard_view(request):
                 else "/reports",
             },
         }
-        return render(request, "pages/dashboards/rvp.html", context)
+        dashboard_view, view_explicit = resolve_dashboard_view(
+            request, role_key="rvp", default="map"
+        )
+        context["dashboard_view"] = dashboard_view
+        context["dashboard_tabs"] = dashboard_view_tabs(
+            request,
+            active=dashboard_view,
+            panel_id="rvp-dashboard-view",
+            view_template="partials/dashboards/rvp/view.html",
+            tabs=[
+                ("map", "Map", "The country map and the region ranking"),
+                (
+                    "operations",
+                    "Operations",
+                    "Budgets, directors, projects, approvals and notes",
+                ),
+            ],
+            keep=("fy",),
+        )
+        if dashboard_view == "map":
+            from apps.analytics.country_map_context import country_map_context
+
+            context.update(country_map_context(fy))
+        if request.headers.get("HX-Target") == "rvp-dashboard-view-shell":
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
+        else:
+            response = render(request, "pages/dashboards/rvp.html", context)
+        if view_explicit:
+            remember_dashboard_view(response, role_key="rvp", view=dashboard_view)
+        return response
 
     elif role == "HumanResources":
         # HR People-Operations Dashboard
@@ -462,9 +570,45 @@ def dashboard_view(request):
                 else ("/recruitment" if data.get("open_positions") else "/staff"),
             },
         }
-        if request.headers.get("HX-Request") == "true":
-            return render(request, "partials/dashboards/hr/body.html", context)
-        return render(request, "pages/dashboards/hr.html", context)
+        dashboard_view, view_explicit = resolve_dashboard_view(
+            request, role_key="hr", default="operations"
+        )
+        context["dashboard_view"] = dashboard_view
+        context["dashboard_tabs"] = dashboard_view_tabs(
+            request,
+            active=dashboard_view,
+            panel_id="hr-dashboard-view",
+            view_template="partials/dashboards/hr/view.html",
+            tabs=[
+                (
+                    "operations",
+                    "Operations",
+                    "People, policy compliance and workforce planning",
+                ),
+                ("map", "Map", "The country map and its distribution table"),
+            ],
+            keep=("fy", "month", "country", "department"),
+        )
+        if dashboard_view == "map":
+            from apps.analytics.country_map_context import country_map_context
+            from apps.core.fy import get_operational_fy
+
+            context.update(
+                country_map_context(context.get("fy") or get_operational_fy())
+            )
+        if request.headers.get("HX-Target") == "hr-dashboard-view-shell":
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
+        elif request.headers.get("HX-Request") == "true":
+            response = render(request, "partials/dashboards/hr/body.html", context)
+        else:
+            response = render(request, "pages/dashboards/hr.html", context)
+        if view_explicit:
+            remember_dashboard_view(response, role_key="hr", view=dashboard_view)
+        return response
 
     elif role == "CCEO":
         # CCEO Field Officer Dashboard Context — all figures are scoped to
@@ -565,19 +709,6 @@ def dashboard_view(request):
             .exclude(status__in=["completed", "closed"])
             .count()
         )
-
-        total_tasks = completed_cnt + in_progress_cnt + planned_cnt + overdue_cnt
-
-        # A CCEO with nothing scheduled has every share render as 0% -- which
-        # on this strip reads as "you have done none of it" rather than "you
-        # have nothing". Preserved as-is for now; the honest form is
-        # apps.core.metrics.percentage (None) or MetricValue.ratio (NO_DATA).
-        from apps.core.metrics import percentage_or_zero
-
-        completed_pct = percentage_or_zero(completed_cnt, total_tasks)
-        in_progress_pct = percentage_or_zero(in_progress_cnt, total_tasks)
-        planned_pct = percentage_or_zero(planned_cnt, total_tasks)
-        overdue_pct = percentage_or_zero(overdue_cnt, total_tasks)
 
         # ── "This Week's Plan" — three real, actionable operating lists ────────
         _interv = dict(SsaIntervention.choices)
@@ -719,70 +850,6 @@ def dashboard_view(request):
                 }
             )
 
-        # Rest of the coming week — real activities, not yet done.
-        upcoming_qs = (
-            cc_activities.filter(
-                planned_date__range=[today + timedelta(days=1), week_end],
-            )
-            .exclude(status__in=["completed", "closed"])
-            .select_related(
-                "school", "school__district", "cluster", "cluster__district"
-            )
-            .order_by("planned_date")[:10]
-        )
-
-        upcoming_week = []
-        for a in upcoming_qs:
-            title, _, short_location = _agenda_title_and_location(a)
-            upcoming_week.append(
-                {
-                    "day": a.planned_date.strftime("%a, %b %-d"),
-                    "title": title,
-                    "desc": short_location,
-                    "icon": _agenda_icon(a.activity_type),
-                    "type_class": _agenda_type_class(a.activity_type),
-                }
-            )
-
-        # Pending approvals — this CCEO's own weekly fund requests that need
-        # their action (awaiting confirmation, or bounced back for fixes).
-        CCEO_ACTION_STATUSES = [
-            "pending_responsible_confirmation",
-            "returned_by_pl",
-            "returned_by_cd",
-            "returned_by_rvp",
-            "returned_by_accountant",
-        ]
-        STATUS_LABELS = {
-            "pending_responsible_confirmation": "Awaiting",
-            "returned_by_pl": "Returned",
-            "returned_by_cd": "Returned",
-            "returned_by_rvp": "Returned",
-            "returned_by_accountant": "Returned",
-        }
-        wfrs = WeeklyFundRequest.objects.filter(
-            responsible_user=user.id,
-            status__in=CCEO_ACTION_STATUSES,
-        ).order_by("-week_start_date")[:5]
-
-        pending_approvals = []
-        for w in wfrs:
-            line_count = w.lines.count()
-            pending_approvals.append(
-                {
-                    "title": f"Weekly Fund Request — {w.week_start_date.strftime('%b %-d')}–{w.week_end_date.strftime('%b %-d')}",
-                    "desc": f"{_format_ugx_compact(w.total_amount)} &bull; {line_count} item{'s' if line_count != 1 else ''}",
-                    "status": STATUS_LABELS.get(w.status, "Awaiting"),
-                }
-            )
-
-        # Unread notifications, for the header bell badge.
-        from apps.notifications.models import Notification
-
-        unread_notifications_count = Notification.objects.filter(
-            recipient_id=user.id, status="unread"
-        ).count()
-
         cceo_kpi_items = [
             render_precomputed_metric_item(
                 "frontend_views_dashboard_views_completed_tasks",
@@ -814,12 +881,6 @@ def dashboard_view(request):
             ),
         ]
 
-        # System-generated To-Do operating queue (derived from live workflow
-        # state — auto-closes when the underlying action completes).
-        from apps.command_center.todo_service import get_cached_todos
-
-        todo_data = get_cached_todos(user)
-
         if overdue_last_week:
             mobile_primary_action = {
                 "label": overdue_last_week[0]["action_label"],
@@ -841,76 +902,24 @@ def dashboard_view(request):
                 "url": "/planning",
             }
 
+        # Only what pages/dashboards/cceo.html renders. The keys that fed the
+        # removed right rail (alerts, an At-a-Glance donut and its percentages,
+        # Upcoming This Week, Pending Approvals, the To-Do queue and the
+        # unread-notification badge the context processor already supplies)
+        # went with it; each one was queries the template threw away.
         context = {
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
             "today": today,
             "current_week_number": today.isocalendar()[1],
-            "unread_notifications_count": unread_notifications_count,
-            "kpis": {
-                "completed": completed_cnt,
-                "in_progress": in_progress_cnt,
-                "planned": planned_cnt,
-                "overdue": overdue_cnt,
-                "total": total_tasks,
-                "completed_pct": completed_pct,
-                "in_progress_pct": in_progress_pct,
-                "planned_pct": planned_pct,
-                "overdue_pct": overdue_pct,
-                "in_progress_offset": -completed_pct,
-                "planned_offset": -(completed_pct + in_progress_pct),
-                "overdue_offset": -(completed_pct + in_progress_pct + planned_pct),
-            },
-            # Concentric rings, largest state outermost. Each ring is a share
-            # of the total, so the ring lengths are comparable to each other
-            # and the centre reads the completion rate.
-            "at_a_glance_donut": build_rings(
-                [
-                    {
-                        "key": "completed",
-                        "label": "Completed",
-                        "value": completed_cnt,
-                        "color": "var(--edify-success)",
-                    },
-                    {
-                        "key": "in_progress",
-                        "label": "In Progress",
-                        "value": in_progress_cnt,
-                        "color": "var(--edify-accent)",
-                    },
-                    {
-                        "key": "planned",
-                        "label": "Planned",
-                        "value": planned_cnt,
-                        "color": "var(--edify-warning)",
-                    },
-                    {
-                        "key": "overdue",
-                        "label": "Overdue",
-                        "value": overdue_cnt,
-                        "color": "var(--edify-danger)",
-                    },
-                ],
-                share_of=total_tasks or None,
-            ),
-            "at_a_glance_subline": (
-                f"{total_tasks} activities" if total_tasks else "No activities yet"
-            ),
             "overdue_last_week": overdue_last_week,
             "school_visits_week": school_visits_week,
             "cluster_activities_week": cluster_activities_week,
             "week_plan_total": len(overdue_last_week)
             + len(school_visits_week)
             + len(cluster_activities_week),
-            "upcoming_week": upcoming_week,
-            "pending_approvals": pending_approvals,
             "kpi_strip_items": cceo_kpi_items,
-            "todos": todo_data["todos"][:6],
-            "todo_counts": todo_data["counts"],
-            "todo_total": todo_data["total"],
             "urgent_schools": urgent_schools,
             # Whether to offer "Assign" on each urgent row — handing the visit
             # to a partner is the alternative to doing it yourself, and the
@@ -920,7 +929,46 @@ def dashboard_view(request):
             ),
             "mobile_primary_action": mobile_primary_action,
         }
-        return render(request, "pages/dashboards/cceo.html", context)
+        # No HTMX partial: nothing on cceo.html hx-gets the dashboard body
+        # (its only hx-get targets are the drawers), so there is no fragment
+        # for an HX-Request to ask for.
+        dashboard_view, view_explicit = resolve_dashboard_view(
+            request, role_key="cceo", default="operations"
+        )
+        context["dashboard_view"] = dashboard_view
+        context["dashboard_tabs"] = dashboard_view_tabs(
+            request,
+            active=dashboard_view,
+            panel_id="cceo-dashboard-view",
+            view_template="partials/dashboards/cceo/view.html",
+            tabs=[
+                (
+                    "operations",
+                    "Week",
+                    "Urgent schools, this week's plan and overdue work",
+                ),
+                ("map", "Map", "The country map and its distribution table"),
+            ],
+            keep=(),
+        )
+        if dashboard_view == "map":
+            from apps.analytics.country_map_context import country_map_context
+            from apps.core.fy import get_operational_fy
+
+            context.update(
+                country_map_context(context.get("fy") or get_operational_fy())
+            )
+        if request.headers.get("HX-Target") == "cceo-dashboard-view-shell":
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
+        else:
+            response = render(request, "pages/dashboards/cceo.html", context)
+        if view_explicit:
+            remember_dashboard_view(response, role_key="cceo", view=dashboard_view)
+        return response
 
     elif role == "ProjectCoordinator":
         # Special Projects Dashboard Context — sourced entirely from the real
@@ -1035,7 +1083,41 @@ def dashboard_view(request):
                 "url": "/projects",
             },
         }
-        return render(request, "pages/dashboards/special_projects.html", context)
+        dashboard_view, view_explicit = resolve_dashboard_view(
+            request, role_key="projects", default="operations"
+        )
+        context["dashboard_view"] = dashboard_view
+        context["dashboard_tabs"] = dashboard_view_tabs(
+            request,
+            active=dashboard_view,
+            panel_id="projects-dashboard-view",
+            view_template="partials/dashboards/special_projects/view.html",
+            tabs=[
+                ("operations", "Operations", "Portfolio, impact, partners and actions"),
+                ("map", "Map", "The country map and its distribution table"),
+            ],
+            keep=(),
+        )
+        if dashboard_view == "map":
+            from apps.analytics.country_map_context import country_map_context
+            from apps.core.fy import get_operational_fy
+
+            context.update(
+                country_map_context(context.get("fy") or get_operational_fy())
+            )
+        if request.headers.get("HX-Target") == "projects-dashboard-view-shell":
+            response = render(
+                request,
+                "partials/dashboards/_view_tabs.html",
+                {**context, "dashboard_tabs_inner": True},
+            )
+        else:
+            response = render(
+                request, "pages/dashboards/special_projects.html", context
+            )
+        if view_explicit:
+            remember_dashboard_view(response, role_key="projects", view=dashboard_view)
+        return response
 
     # Every role above returns from its own branch with its own figures, and
     # this is the only reader of `metrics`. Built at the top of the view, it
@@ -1234,7 +1316,37 @@ def dashboard_view(request):
             else "/admin-ops/my-plan",
         }
 
-    return render(request, "pages/dashboards/main.html", context)
+    dashboard_view, view_explicit = resolve_dashboard_view(
+        request, role_key="admin", default="operations"
+    )
+    context["dashboard_view"] = dashboard_view
+    context["dashboard_tabs"] = dashboard_view_tabs(
+        request,
+        active=dashboard_view,
+        panel_id="admin-dashboard-view",
+        view_template="partials/dashboards/admin/view.html",
+        tabs=[
+            ("operations", "Operations", "Platform operations and business overview"),
+            ("map", "Map", "The country map and its distribution table"),
+        ],
+        keep=(),
+    )
+    if dashboard_view == "map":
+        from apps.analytics.country_map_context import country_map_context
+        from apps.core.fy import get_operational_fy
+
+        context.update(country_map_context(context.get("fy") or get_operational_fy()))
+    if request.headers.get("HX-Target") == "admin-dashboard-view-shell":
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    else:
+        response = render(request, "pages/dashboards/main.html", context)
+    if view_explicit:
+        remember_dashboard_view(response, role_key="admin", view=dashboard_view)
+    return response
 
 
 @require_page_permission("dashboard")
@@ -1444,6 +1556,44 @@ def _action_recipient_name(action) -> str:
         .first()
         or "the school's owner"
     )
+
+
+@require_page_permission("cd_analytics")
+def cd_dashboard_return_view(request):
+    """Return an escalated weekly fund request with a reason, from the CD
+    dashboard. Approve had no counterpart here, so a request the CD would
+    not sign had to be hunted down on the weekly page by staff tab and week."""
+    if (
+        request.user.active_role not in ("CountryDirector", "Admin")
+        or request.method != "POST"
+    ):
+        from django.http import HttpResponseForbidden
+
+        return HttpResponseForbidden("Not allowed.")
+    from apps.analytics.cd_dashboard_service import CDDashboardService
+    from apps.core.fy import fy_options, get_operational_fy
+    from apps.fund_requests.weekly_service import return_weekly_request
+
+    rid = request.GET.get("id")
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    reason = (request.POST.get("reason") or "").strip()
+    error = None
+    if not reason:
+        error = "Give the requester a reason for returning their request."
+    elif rid:
+        try:
+            return_weekly_request(rid, {"reason": reason}, request.user)
+        except Exception as e:  # noqa: BLE001
+            error = str(e)
+    data = CDDashboardService.get_dashboard(request.user, fy=fy)
+    context = {
+        **data,
+        "fy_options": fy_options(),
+        "approve_error": error,
+        "role": "CountryDirector",
+        "user_name": request.user.name,
+    }
+    return render(request, "partials/dashboards/cd/body.html", context)
 
 
 @require_page_permission("cd_analytics")

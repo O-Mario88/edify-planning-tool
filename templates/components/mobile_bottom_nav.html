@@ -42,6 +42,17 @@ Hidden at lg and above, where the static sidebar takes over.
       >
         <span class="edify-bottom-nav__icon" aria-hidden="true">{{ item.icon|safe }}</span>
         <span class="edify-bottom-nav__label">{{ item.label }}</span>
+        {% if item.page_key == "my_plan" %}
+        {% comment %}
+        Field actions saved offline, waiting to send. Rendered hidden: the
+        count lives in this phone's IndexedDB, so only field-outbox.js can
+        fill it in -- the server never knows.
+        {% endcomment %}
+        <span class="edify-bottom-nav__badge" data-field-outbox-badge hidden>
+          <span data-field-outbox-count>0</span>
+          <span class="sr-only"> pending uploads</span>
+        </span>
+        {% endif %}
         {% if item.url == "/messages" and unread_messages_count > 0 %}
         <span class="edify-bottom-nav__badge">
           {{ unread_messages_count }}

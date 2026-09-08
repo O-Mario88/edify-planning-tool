@@ -151,3 +151,14 @@ def month_name(value):
 def split(value, sep=","):
     """Split a string into a list — {{ "a,b,c"|split:"," }}."""
     return [s.strip() for s in str(value).split(sep) if s.strip()]
+
+
+@register.filter
+def get_item(mapping, key):
+    """Look a key up in a dict, for columns rendered by key rather than position."""
+    if not mapping:
+        return None
+    try:
+        return mapping.get(key)
+    except AttributeError:
+        return None

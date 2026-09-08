@@ -1,5 +1,6 @@
 """Regression contracts for the platform-wide intrinsic density system."""
 
+import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -73,6 +74,57 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         for data_canvas in ("canvas", "map", "upload", "chart"):
             self.assertNotIn(f".{data_canvas}", density)
 
+    def test_one_action_button_height_at_every_width(self):
+        """32px "platform-wide" meant 32px above 1024px only: the responsive
+        scale stepped the same button to 36px on a tablet and 30px on a phone,
+        so a role page looked denser or looser purely by window size."""
+        css = _read("static/css/components/mobile-micro-ux.css")
+        sizes = set(
+            re.findall(r"--edify-action-button-block-size:\s*([0-9.]+rem)", css)
+        )
+        self.assertEqual(sizes, {"2rem"})
+
+    def test_the_row_rhythm_is_not_gated_on_a_desktop_width(self):
+        """A record table stays a table on a phone (mobile-shell.css says so),
+        so the 32px row applies there too. Gating it at 768px left the same
+        table 40-43px per row on a phone and 30px on a laptop."""
+        css = _read("static/css/consistency.css")
+        block = css.split("TABLE ROW RHYTHM", 1)[1][:2000]
+        self.assertIn("@media all {", block)
+        self.assertNotIn("@media (min-width: 768px)", block)
+
+    def test_a_record_row_is_the_touch_target_not_what_sits_in_it(self):
+        """Inflating a link, checkbox or label inside a cell to 44px grew the
+        row instead of the target: 56px rows on a phone, 44px on a tablet."""
+        for path in (
+            "static/css/components/mobile-micro-ux.css",
+            "static/css/platform.css",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(":not(:is(td, th) *)", _read(path))
+
+    def test_a_control_in_a_cell_is_sized_at_every_width(self):
+        """A platform-wide sweep of 63 pages across five roles (2026-09-05)
+        found the last two gaps at phone width: the in-cell control block was
+        gated at 768px, so a control kept its native height on a phone while
+        the row was told to close at 32px, and the card-header touch rule
+        grew a `.edify-primary-text` link inside a cell to 44px, outranking
+        the `main table td > a` compensation by specificity."""
+        css = _read("static/css/consistency.css")
+        block = css.split("Shapes the platform-wide sweep found", 1)[1][:900]
+        self.assertIn("@media all {", block)
+        self.assertIn(".edify-cell-control", block)
+        self.assertIn("main a.edify-primary-text:not(:is(td, th) *)", css)
+
+    def test_the_cell_markers_the_rhythm_needs_are_applied(self):
+        """consistency.css may not use `:has()` (the bridge contract), so the
+        cell markers it hangs these rules on come from micro-ux.js."""
+        behaviour = _read("static/js/micro-ux.js")
+        for marker in ("edify-cell-text", "edify-cell-media", "edify-cell-choice"):
+            with self.subTest(marker=marker):
+                self.assertIn(marker, behaviour)
+                self.assertIn(marker, _read("static/css/consistency.css"))
+
     def test_mobile_and_desktop_page_edges_share_the_compact_rhythm(self):
         css = _read("static/css/consistency.css")
         base = _read("templates/base.html")
@@ -81,7 +133,10 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertIn("padding-block: 0.75rem !important;", css)
         self.assertIn('[class~="sm:p-6"]', css)
         self.assertIn(".space-y-5, .space-y-6", css)
-        self.assertIn("20260827density2", base)
+        # pages.css carries a fresh cache key whenever its rhythm rules change.
+        # The key moves forward whenever pages.css changes; it was last bumped
+        # for the Progress column in the priority record grid (2026-09-07).
+        self.assertIn("pages.css' %}?v=20260907meter1", base)
 
     def test_shared_feature_grids_do_not_force_blank_equal_height_surfaces(self):
         platform = _read("static/css/platform.css")

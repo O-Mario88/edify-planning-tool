@@ -1,0 +1,83 @@
+{% comment %}
+"Cumulative progress by time period" — target, verified achievement and the
+share per reporting period, one row per agreed priority, written once.
+
+It came off the Reports page on 2026-09-05 to live with the targets it
+measures: My Target renders it as an accordion of the reader's own
+priorities, and Team Target renders it inside each team member's row when
+the row is expanded.
+
+  rows      [{label, key, cells: [{t, a, pct}]}]      one row per priority
+  heads     [{label, sub, key}]                       one head per period
+  overall   [{pct}]                                   the weighted share per period
+  variant   "team" inside the Team Target row, else the personal table
+  quarter   the selected quarter key, so its columns carry the current tint
+  owner     whose priorities these are (caption)
+  drawer    URL prefix that opens a priority's drawer on click (personal only)
+  milestones  approved strategic milestone rows (personal only)
+{% endcomment %}
+<table class="{% if variant == 'team' %}tt-area-matrix{% else %}period-matrix w-full edify-text-caption border-collapse min-w-[860px]{% endif %}">
+  <caption class="sr-only">{% if variant == 'team' %}{{ owner }} agreed-priority performance by reporting period{% else %}Personal cumulative target and verified achievement by reporting period{% endif %}</caption>
+  <colgroup>
+    <col class="period-matrix__label-column">
+    {% for head in heads %}<col class="period-matrix__cell-column"><col class="period-matrix__cell-column"><col class="period-matrix__cell-column">{% endfor %}
+    {% if variant == 'team' %}<col class="tt-matrix__action-column">{% endif %}
+  </colgroup>
+  <thead>
+    <tr>
+      <th scope="col" rowspan="2" class="period-matrix__label period-matrix__label--head">
+        <span>Cumulative progress by time period</span>
+        <small>Target · achieved · share</small>
+      </th>
+      {% for head in heads %}
+      <th scope="colgroup" colspan="3" class="period-matrix__period{% if forloop.first %} is-current{% endif %}{% if head.key == quarter %} is-current-quarter{% endif %}">
+        <span>{{ head.label }}</span>
+        <small>{{ head.sub }}</small>
+      </th>
+      {% endfor %}
+      {% if variant == 'team' %}<th scope="col" rowspan="2" class="tt-area-matrix__action-spacer"><span class="sr-only">Review</span></th>{% endif %}
+    </tr>
+    <tr class="period-matrix__measures">
+      {% for head in heads %}
+      <th scope="col" class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %} is-current-quarter{% endif %}">Target</th>
+      <th scope="col" class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %} is-current-quarter{% endif %}">Achieved</th>
+      <th scope="col" class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %} is-current-quarter{% endif %}">%</th>
+      {% endfor %}
+    </tr>
+  </thead>
+  <tbody>
+    {% for row in rows %}
+    <tr{% if drawer %} class="is-openable" hx-get="{{ drawer }}?area={{ row.key }}&fy={{ fy }}&month={{ month_of_fy }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %}>
+      <th scope="row" class="period-matrix__label">{{ row.label }}</th>
+      {% for cell in row.cells %}
+      <td class="period-matrix__target{% if forloop.first %} is-current{% endif %}">{{ cell.t }}</td>
+      <td class="period-matrix__achieved">{{ cell.a }}</td>
+      <td class="period-matrix__share" data-tone="{% if cell.pct == None %}neutral{% elif cell.pct >= 100 %}success{% elif cell.pct >= 60 %}warning{% else %}danger{% endif %}">{% if cell.pct == None %}—{% else %}{{ cell.pct }}%{% endif %}</td>
+      {% endfor %}
+      {% if variant == 'team' %}<td class="tt-area-matrix__action-spacer" aria-label="No review action"></td>{% endif %}
+    </tr>
+    {% endfor %}
+    {% for row in milestones %}
+    <tr>
+      <th scope="row" class="period-matrix__label">
+        <span class="block">{{ row.milestone }}</span>
+        <span class="block period-matrix__label-sub">{{ row.priority }}</span>
+      </th>
+      {% for cell in row.periodCells %}
+      <td class="period-matrix__target">{{ cell.t|floatformat:"-2" }}</td>
+      <td class="period-matrix__achieved">{{ cell.a|floatformat:"-2" }}</td>
+      <td class="period-matrix__share" data-tone="{% if cell.pct == None %}neutral{% elif cell.pct >= 100 %}success{% elif cell.pct >= 60 %}warning{% else %}danger{% endif %}">{% if cell.pct == None %}—{% else %}{{ cell.pct }}%{% endif %}</td>
+      {% endfor %}
+    </tr>
+    {% endfor %}
+    {% if overall %}
+    <tr class="period-matrix__overall">
+      <th scope="row" class="period-matrix__label">{{ overall_label|default:"Overall progress" }}</th>
+      {% for cell in overall %}
+      <td colspan="3" data-tone="{% if cell.pct == None %}neutral{% elif cell.pct >= 70 %}success{% elif cell.pct >= 50 %}warning{% else %}danger{% endif %}">{% if cell.pct == None %}—{% else %}{{ cell.pct }}%{% endif %}</td>
+      {% endfor %}
+      {% if variant == 'team' %}<td class="tt-area-matrix__action-spacer"></td>{% endif %}
+    </tr>
+    {% endif %}
+  </tbody>
+</table>

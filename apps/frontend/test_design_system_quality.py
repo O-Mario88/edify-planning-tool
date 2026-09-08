@@ -9,7 +9,9 @@ ROOT = Path(settings.BASE_DIR)
 
 
 def _read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 def _production_frontend_files():
@@ -268,15 +270,21 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn(".sp-plan-main > .sp-card:nth-of-type(n + 2)", project_plan)
 
     def test_analytics_dashboard_groups_cards_by_content_scale(self):
-        page = _read("templates/pages/analytics/index.html")
+        """Analytics became one page with tabs on 2026-09-05, so the bands are
+        read where they now live: the executive pulse is the workspace's tile
+        strip above the tablist, and the rest is the Overview panel. Same
+        bands, same order, same page — one shell instead of fourteen."""
+        page = _read("templates/pages/analytics/workspace.html")
+        pulse = _read("templates/partials/analytics/executive_pulse.html")
         cards = _read("templates/partials/analytics/kpi_cards.html")
         layout = _read("static/css/pages/analytics-dashboard.css")
 
         self.assertIn("data-analytics-enterprise", page)
         self.assertIn("css/pages/analytics-dashboard.css", page)
+        self.assertIn("analytics-executive-pulse", pulse)
+        # The geography band left for the home dashboards on 2026-09-05.
+        self.assertNotIn("analytics-row--geography", cards)
         for band in (
-            "analytics-executive-pulse",
-            "analytics-row--geography",
             "analytics-row--overview",
             "analytics-row--decision",
             "analytics-impact-band",
@@ -289,8 +297,8 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             cards.index("target_by_district.html"),
             cards.index("recommended_insights.html"),
         )
-        self.assertIn("items=executive_kpi_items", cards)
-        self.assertIn("items=additional_kpi_items", cards)
+        self.assertIn("items=executive_kpi_items", pulse)
+        self.assertIn("items=additional_kpi_items", pulse)
         self.assertNotIn("lg:col-span-4 space-y-6", cards)
         self.assertIn("container: analytics-dashboard / inline-size", layout)
         self.assertIn("container: analytics-impact / inline-size", layout)
@@ -355,7 +363,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
 
         for declaration in (
             "--radius-surface: 12px",
-            "--radius-control: 8px",
+            "--radius-control: 10px",
             "--radius-overlay: 16px",
         ):
             self.assertIn(
@@ -550,7 +558,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         # modal hierarchy and focus separation of an active workflow.
         self.assertIn(":is(.theme-blue, .theme-dark) .drawer-surface", consistency)
         self.assertIn("box-shadow: var(--drawer-shadow) !important", consistency)
-        self.assertIn("20260826modal1", base)
+        self.assertIn("20260906float1", base)
 
     def test_blue_primary_actions_use_white_ink_on_saturated_blue(self):
         components = _read("static/css/components.css")
@@ -984,7 +992,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("overflow-x: clip", pages)
 
     def test_priority_milestones_use_the_compact_reference_record_grid(self):
-        dashboard = _read("templates/pages/hr/priority_configuration.html")
+        # Priority Setting is a tab of the Priorities page since
+        # 2026-09-07: the record grid lives in the view the rail swaps.
+        dashboard = _read("templates/partials/priorities/setting_view.html")
         detail = _read("templates/partials/hr/priority_milestone_detail.html")
         pages = _read("static/css/pages.css")
 
@@ -1009,7 +1019,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("Define metric", detail)
         self.assertIn("Allocate approved target", detail)
         self.assertIn("overflow-x: auto", pages)
-        self.assertIn("min-inline-size: 74rem", pages)
+        self.assertIn("min-inline-size: min(58rem, 100%)", pages)
         self.assertIn("var(--edify-text-micro-size)", pages)
 
     def test_program_lead_urgent_schools_card_uses_compact_server_pagination(self):
@@ -1091,8 +1101,12 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertNotIn("activeTab", active_template)
         self.assertNotIn("Documents &amp; Proofs (0)", active_template)
         self.assertNotIn("Disburse Funds\n</button>", active_template)
-        self.assertIn("Open Canonical Disbursement Queue", active_template)
-        self.assertIn("filteredFunds()", active_template)
+        # The page moved onto the shared fund workspace (2026-09-03): the
+        # selected advance's actions live in the Accountant's actions partial
+        # and point at the consolidated queue that owns the money movement.
+        actions = _read("templates/partials/finance/accountant_actions.html")
+        self.assertIn('href="/disbursements"', actions)
+        self.assertIn("Consolidated Queue", actions)
 
 
 class GeometryConsistencyGuardTest(SimpleTestCase):
@@ -1351,9 +1365,10 @@ class ChartLegendRailGuardTest(SimpleTestCase):
             "The shared legend rule must cover both comparison bars and trends.",
         )
         self.assertIn(
-            "flex-flow: row nowrap !important;",
+            "flex-flow: row wrap !important;",
             css,
-            "Chart legends must read left-to-right instead of stacking series.",
+            "Chart legends read left-to-right and take a second row only when "
+            "the first is full (2026-09-06); they no longer scroll sideways.",
         )
         self.assertIn(
             "justify-content: flex-start !important;",
@@ -1676,7 +1691,9 @@ class StableTypographyContractTest(SimpleTestCase):
         # (The edify-kpi-card twin left with the legacy adapter — the classes
         # it served have no template usage and the old design is deleted.)
         self.assertIn("container: kpi-card / inline-size", components)
-        self.assertIn("@container kpi-card (max-width: 16rem)", components)
+        # 11rem since 2026-09-07: the mark leads every metric in the redesigned
+        # panel, so the width at which it yields moved down with it.
+        self.assertIn("@container kpi-card (max-width: 11rem)", components)
         self.assertIn("font-size: var(--edify-text-tile-value-size)", components)
 
     def test_responsive_svg_text_uses_screen_stable_typography(self):

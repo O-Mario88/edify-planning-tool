@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import functools
+
 from datetime import timedelta
 from types import SimpleNamespace
 
@@ -962,6 +964,18 @@ ROUTE_PREFIX_ARTICLES = [
 ]
 
 
+@functools.lru_cache(maxsize=1)
+def _direct_route_map() -> dict[str, str]:
+    """Route name -> owning article slug, built once: the canonical specs are
+    static, and rebuilding this for each of 541 routes cost 1.2 seconds of
+    every route sync (2026-09-06)."""
+    direct: dict[str, str] = {}
+    for spec in canonical_specs():
+        for route_name in spec["routes"]:
+            direct.setdefault(route_name, spec["slug"])
+    return direct
+
+
 def _article_slug_for_route(route: str, name: str) -> str:
     """The article that owns a route.
 
@@ -972,10 +986,7 @@ def _article_slug_for_route(route: str, name: str) -> str:
     /my-plan to the Salesforce article and /calendar to Daily Visit Batches,
     and contextual Help then opened the wrong guide on both pages.
     """
-    direct: dict[str, str] = {}
-    for spec in canonical_specs():
-        for route_name in spec["routes"]:
-            direct.setdefault(route_name, spec["slug"])
+    direct = _direct_route_map()
     if name in direct:
         return direct[name]
     for prefix, slug in ROUTE_PREFIX_ARTICLES:
@@ -986,38 +997,86 @@ def _article_slug_for_route(route: str, name: str) -> str:
 
 @transaction.atomic
 def sync_route_contexts() -> dict:
+    """Give every frontend route its owning article.
+
+    Four queries however many routes there are: the articles by slug, the
+    existing default mappings by route, one delete of the stale rows and one
+    bulk insert of the missing ones. The previous shape ran a lookup, a
+    count, a delete and a get-or-create per route — 2,200 queries and three
+    seconds whenever a path had no article yet (2026-09-06).
+    """
     ensure_canonical_content()
-    created = 0
-    removed = 0
-    for route, name in _route_inventory():
-        slug = _article_slug_for_route(route, name)
-        article = HelpArticle.objects.filter(slug=slug).first()
-        if not article:
-            continue
+    inventory = _route_inventory()
+    articles = {a.slug: a for a in HelpArticle.objects.only("id", "slug")}
+    existing = {}
+    for ctx in HelpArticleRouteContext.objects.filter(workflow_status="").only(
+        "id", "route_pattern", "article_id"
+    ):
+        existing.setdefault(ctx.route_pattern, []).append(ctx)
+    wanted: dict[str, tuple] = {}
+    for route, name in inventory:
+        article = articles.get(_article_slug_for_route(route, name))
+        if article is not None and route not in wanted:
+            wanted[route] = (article, name)
+    stale_ids = []
+    missing = []
+    for route, (article, name) in wanted.items():
+        rows = existing.get(route, [])
         # A route has ONE owning article. When a new article takes ownership
         # (a feature ships and its guide is written), the previous fallback
         # mapping must go — two rows at equal priority made the resolved
         # article depend on insertion order, so the page opened whichever
         # guide happened to be written first.
-        stale = HelpArticleRouteContext.objects.filter(
-            route_pattern=route, workflow_status=""
-        ).exclude(article=article)
-        removed += stale.count()
-        stale.delete()
-        _, was_created = HelpArticleRouteContext.objects.get_or_create(
-            article=article,
-            route_pattern=route,
-            workflow_status="",
-            defaults={"route_name": name, "priority": 100},
-        )
-        created += int(was_created)
+        stale_ids.extend(r.id for r in rows if r.article_id != article.id)
+        if not any(r.article_id == article.id for r in rows):
+            missing.append(
+                HelpArticleRouteContext(
+                    article=article,
+                    route_pattern=route,
+                    workflow_status="",
+                    route_name=name,
+                    priority=100,
+                )
+            )
+    removed = 0
+    if stale_ids:
+        removed = HelpArticleRouteContext.objects.filter(id__in=stale_ids).delete()[0]
+    if missing:
+        HelpArticleRouteContext.objects.bulk_create(missing, ignore_conflicts=True)
     return {
-        "created": created,
+        "created": len(missing),
         "removed": removed,
         "mapped": HelpArticleRouteContext.objects.values("route_pattern")
         .distinct()
         .count(),
     }
+
+
+ROUTE_CONTEXT_SYNC_KEY = "help-center:route-contexts-synced"
+ROUTE_CONTEXT_SYNC_SECONDS = 60 * 60
+
+
+def _route_context_sync_key() -> str:
+    """The marker is keyed on the article and mapping counts, so a newly
+    written article (or a fresh database in a test) re-syncs, while an
+    unchanged catalogue syncs at most once an hour."""
+    return "%s:%s:%s" % (
+        ROUTE_CONTEXT_SYNC_KEY,
+        HelpArticle.objects.count(),
+        HelpArticleRouteContext.objects.count(),
+    )
+
+
+def _route_contexts_stale() -> bool:
+    from django.core.cache import cache
+
+    return not cache.get(_route_context_sync_key())
+
+
+def _mark_route_contexts_synced() -> None:
+    from django.core.cache import cache
+
+    cache.set(_route_context_sync_key(), True, ROUTE_CONTEXT_SYNC_SECONDS)
 
 
 def contextual_article(
@@ -1032,8 +1091,14 @@ def contextual_article(
     contexts = HelpArticleRouteContext.objects.filter(
         route_pattern=route
     ).select_related("article")
-    if not contexts.exists():
+    if not contexts.exists() and _route_contexts_stale():
+        # A path with no owning article used to re-sync the whole route
+        # inventory on EVERY request — 2,200 queries and three seconds for
+        # /help/context?for=/ (2026-09-06). The sync runs at most once an
+        # hour; a path that still has no article falls through to the
+        # orientation guide below, as it always did.
         sync_route_contexts()
+        _mark_route_contexts_synced()
         contexts = HelpArticleRouteContext.objects.filter(
             route_pattern=route
         ).select_related("article")

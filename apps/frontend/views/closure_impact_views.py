@@ -60,11 +60,31 @@ def closure_impact_view(request):
         "region_scoped": scope.rvp_region_scoped,
         "scope_label": _scope_label(scope),
     }
-    if request.headers.get("HX-Request") == "true":
+    # Period and grouping swap this section's body and nothing else, so the
+    # branch names its target rather than answering any HX request: a tab click
+    # and a workspace scope change are HX requests too, and want other shapes.
+    if request.headers.get("HX-Target") == "closure-impact-body":
         return render(
             request, "partials/analytics/closure_impact_workspace.html", context
         )
-    return render(request, "pages/analytics/closure_impact.html", context)
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
+        request,
+        "partials/analytics/panels/closure_impact.html",
+        context,
+        section_key="closure_impact",
+        panel_title="School Closures",
+        frame={
+            "question": (
+                "Where are school closures concentrated, what capacity was "
+                "lost, and how did they change the delivery plan?"
+            ),
+            "evidence": "Closed-school ledger, enrolment and planned work",
+            "freshness": "Live to the selected period",
+            "confidence": "Qualified by closure data quality",
+        },
+    )
 
 
 def _scope_label(scope) -> str:

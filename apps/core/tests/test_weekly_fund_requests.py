@@ -33,11 +33,10 @@ class WeeklyFundRequestsTest(APITestCase):
             ("school_visit_cost_per_school_primary", 50000),
             ("school_visit_cost_per_school_secondary", 66000),
             ("primary_transport_per_day", 50000),
-            ("primary_lunch_per_day", 12000),
-            ("group_training_participant_meal_cost_per_head", 12000),
+            ("lunch_per_day", 12000),
+            ("tot_trainings_meals", 12000),
             ("group_training_venue_cost", 200000),
             ("group_training_facilitation_fee", 150000),
-            ("cluster_meeting_participant_meal_cost_per_head", 8000),
             ("partner_visit_rate", 80000),
         ]:
             CostSetting.objects.update_or_create(
@@ -177,12 +176,17 @@ class WeeklyFundRequestsTest(APITestCase):
             201,
         )
 
-        # Confirm the governed primary transport + lunch split is persisted.
+        # Confirm the governed transport + lunch split is persisted, with the
+        # visit's own rate (Client Staff Visit, 0 until the CD sets it).
         lines = ActivityScheduleCostLine.objects.filter(activity_id=sv["id"])
-        self.assertEqual(lines.count(), 2)
+        self.assertEqual(lines.count(), 3)
         self.assertEqual(
             set(lines.values_list("cost_setting_key", "amount")),
-            {("primary_transport_per_day", 50000), ("primary_lunch_per_day", 12000)},
+            {
+                ("client_staff_visit", 0),
+                ("primary_transport_per_day", 50000),
+                ("lunch_per_day", 12000),
+            },
         )
         self.assertEqual(
             set(lines.values_list("week_start_date", flat=True)),
@@ -205,17 +209,18 @@ class WeeklyFundRequestsTest(APITestCase):
             201,
         )
 
+        # A cluster meeting (2026-09-06 catalogue): its own rate, the venue,
+        # printing and photocopying (all 0 until the CD sets them) and the
+        # staff day. Nobody is fed at a meeting.
         cm_lines = ActivityScheduleCostLine.objects.filter(activity_id=cm["id"])
-        self.assertEqual(cm_lines.count(), 4)
+        self.assertEqual(cm_lines.count(), 6)
+        self.assertEqual(sum(l.amount for l in cm_lines), 262000)
         self.assertEqual(
-            cm_lines.get(
-                cost_setting_key="cluster_meeting_participant_meal_cost_per_head"
-            ).amount,
-            80000,
-        )  # 10 * 8,000
+            cm_lines.get(cost_setting_key="group_training_venue_cost").amount, 200000
+        )
 
-        # 3. Schedule a Group Training (15 participants: meals=15*12000=180000, venue=200000, facilitation=150000)
-        # Total = 530,000
+        # 3. Schedule a Group Training (15 participants: venue=200000,
+        # facilitation=150000, materials 0, staff day 62000). Total = 412,000
         # ACCOUNTING_FINANCIAL_MANAGEMENT is the cluster_training item for
         # financial_health, the second-weakest verified intervention →
         # also a primary cluster recommendation.
@@ -232,7 +237,7 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         gt_lines = ActivityScheduleCostLine.objects.filter(activity_id=gt["id"])
-        self.assertEqual(sum(l.amount for l in gt_lines), 592000)
+        self.assertEqual(sum(l.amount for l in gt_lines), 412000)
         self.assertEqual(
             Activity.objects.get(id=gt["id"]).expected_participants,
             15,
@@ -240,16 +245,19 @@ class WeeklyFundRequestsTest(APITestCase):
         self.assertEqual(
             {line.cost_setting_key for line in gt_lines},
             {
-                "group_training_participant_meal_cost_per_head",
+                "cluster_meetings_trainings",
                 "group_training_facilitation_fee",
                 "group_training_venue_cost",
+                "printing_training_materials",
+                "photocopying_training_materials",
                 "primary_transport_per_day",
-                "primary_lunch_per_day",
+                "lunch_per_day",
             },
         )
 
         # 4. Generate Weekly Fund Request (aggregates all 3 activities)
-        # Total: 62,000 transport/lunch + 80,000 + 530,000 = 672,000 UGX
+        # 62,000 visit + 262,000 meeting + 412,000 training = 736,000 UGX, less
+        # the visit's 50,000 vendor-direct transport.
         wfr_data = self._post(
             "/api/fund-requests/weekly/generate",
             {
@@ -259,7 +267,7 @@ class WeeklyFundRequestsTest(APITestCase):
             200,
         )
 
-        self.assertEqual(wfr_data["totalAmount"], 946000)
+        self.assertEqual(wfr_data["totalAmount"], 686000)  # transport is vendor-direct
         self.assertEqual(wfr_data["status"], "pending_responsible_confirmation")
 
         # 5. Retrieve weekly requests list and detail
@@ -267,18 +275,21 @@ class WeeklyFundRequestsTest(APITestCase):
         self.assertEqual(len(list_res), 1)
 
         detail_res = self._get(f"/api/fund-requests/weekly/{wfr_data['id']}")
-        self.assertEqual(
-            len(detail_res["lines"]), 10
-        )  # 1 visit component (lunch — transport is vendor-direct),
-        #    4 cluster meeting and 5 cluster-training components (including travel).
+        # Every staff-payable component of the three activities: vendor-direct
+        # transport stays out of the request, and so does a line worth nothing.
+        from apps.fund_requests.fundable import vendor_direct_filter
+
+        payable = (
+            ActivityScheduleCostLine.objects.filter(
+                activity_id__in=[sv["id"], cm["id"], gt["id"]]
+            )
+            .exclude(vendor_direct_filter())
+            .exclude(amount=0)
+        )
+        self.assertEqual(len(detail_res["lines"]), payable.count())
         descriptions = {line["description"] for line in detail_res["lines"]}
         self.assertTrue(
-            {
-                "Participant snacks",
-                "Participant meals",
-                "Facilitation fee",
-                "Venue fee",
-            }.issubset(descriptions)
+            {"Facilitation Fee", "Venue Fee", "Lunch"}.issubset(descriptions)
         )
 
         # 6. CCEO submits — the request routes to their PL for approval;
@@ -292,7 +303,7 @@ class WeeklyFundRequestsTest(APITestCase):
         self._as(self.accountant)
         self._post(
             f"/api/fund-requests/{wfr_data['id']}/disburse",
-            {"amount": 622000, "method": "Mobile Money", "reference": "TXN-9988"},
+            {"amount": 586000, "method": "Mobile Money", "reference": "TXN-9988"},
             400,
         )
 
@@ -306,7 +317,7 @@ class WeeklyFundRequestsTest(APITestCase):
         disburse_res = self._post(
             f"/api/fund-requests/{wfr_data['id']}/disburse",
             {
-                "amount": 622000,
+                "amount": 586000,
                 "method": "Mobile Money",
                 "reference": "TXN-9988",
             },
@@ -314,4 +325,4 @@ class WeeklyFundRequestsTest(APITestCase):
         )
 
         self.assertEqual(disburse_res["status"], "disbursed")
-        self.assertEqual(disburse_res["disbursedAmount"], 622000)
+        self.assertEqual(disburse_res["disbursedAmount"], 586000)

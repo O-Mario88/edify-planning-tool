@@ -8,6 +8,8 @@ budget at a CD stage, and a core plan behind schedule.
 
 from __future__ import annotations
 
+import re
+
 from datetime import date
 
 from django.contrib.auth import get_user_model
@@ -22,6 +24,7 @@ from apps.accounts.models import (
     StaffTargetProfile,
 )
 from apps.activities.models import Activity, ActivityScheduleCostLine
+from apps.clusters.models import Cluster
 from apps.analytics.cd_dashboard_service import CDDashboardService as S
 from apps.core.rbac import EdifyRole
 from apps.core_schools.models import CorePlan
@@ -69,6 +72,15 @@ class CDCommandCenterTest(TestCase):
         StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=self.sch_a.id)
         StaffSchoolAssignment.objects.create(staff=self.a1_sp, school_id=self.sch_a2.id)
         StaffSchoolAssignment.objects.create(staff=self.b1_sp, school_id=self.sch_b.id)
+
+        # The SSA heatmap is a CLUSTER heatmap, so the fixture needs a cluster
+        # with genuine membership — two schools, one of them assessed.
+        self.cluster_a = Cluster.objects.create(
+            name="Cluster Alpha", region=self.region_a, district=self.dist_a
+        )
+        School.objects.filter(id__in=[self.sch_a.id, self.sch_a2.id]).update(
+            cluster_id=self.cluster_a.id
+        )
 
         self._ssa(self.sch_a, FY, 7.5, {"leadership": 7.0, "enrolment": 6.0})
 
@@ -236,8 +248,12 @@ class CDCommandCenterTest(TestCase):
     # 5 ─ pending fund requests calculation
     def test_cd_pending_fund_requests_calculation(self):
         by = self._kpis()
-        # 1 escalated weekly + 1 monthly budget in cd_review = 2.
-        self.assertEqual(by["Pending Fund Requests"]["value"], "2")
+        # The tile counts APPROVALS — the escalated weekly request — and names
+        # the monthly budget sitting at cd_review as a review in the helper,
+        # rather than adding two different objects into one integer.
+        self.assertEqual(by["Pending Fund Requests"]["value"], "1")
+        self.assertIn("1 budget to review", by["Pending Fund Requests"]["helper"])
+        self.assertEqual(by["Pending Fund Requests"]["link"], "/fund-approvals")
         WeeklyFundRequest.objects.filter(id=self.wfr.id).update(
             status="confirmed_for_advance"
         )
@@ -294,6 +310,64 @@ class CDCommandCenterTest(TestCase):
             "an area nobody agreed appeared in the Programme Lead's row",
         )
 
+    def test_program_lead_table_renders_one_column_per_target_area(self):
+        """The CD dashboard shows each target area as its own column.
+
+        Owner, 2026-09-05: "Country Program Leads Performance should have MSCS,
+        School Visit, Training, SSA Completed, Cluster Meetings ... SF Pending,
+        Backlog, Risk". A column is filled by key, never by position, so an
+        area the team has not agreed leaves a dash in ITS column rather than
+        shifting the others left.
+        """
+        d = self._dash()
+        ada = next(r for r in d["pl_performance"]["rows"] if r["name"] == "PL Ada")
+        self.assertEqual(ada["areas_by_key"]["school_visits"]["pct"], 50)
+        self.assertEqual(
+            [k for k, _ in d["pl_performance"]["area_columns"]],
+            [
+                "mscs",
+                "school_visits",
+                "cluster_trainings",
+                "ssa_completed",
+                "cluster_meetings",
+            ],
+        )
+        self.assertNotIn("ssa_completed", ada["areas_by_key"])
+        self.assertNotIn("mscs", ada["areas_by_key"])
+
+        self.client.force_login(self.cd)
+        html = self.client.get("/dashboard?view=operations").content.decode()
+        table = html.split("Country Program Leads Performance", 1)[1]
+        headers = re.findall(r"<th[^>]*>\s*([^<]+?)\s*</th>", table)[:14]
+        self.assertEqual(
+            headers,
+            [
+                "Lead",
+                "Region",
+                "Target %",
+                "MSCS",
+                "School Visit",
+                "Training",
+                "SSA Completed",
+                "Cluster Meetings",
+                "Staff",
+                "Planned",
+                "Verified",
+                "SF Pending",
+                "Backlog",
+                "Risk",
+            ],
+        )
+        row = table.split("PL Ada", 1)[1].split("</tr>", 1)[0]
+        cells = [
+            re.sub(r"\s+", " ", re.sub(r"<[^>]+>", "", c)).strip()
+            for c in re.findall(r"<td[^>]*>(.*?)</td>", row, re.S)
+        ]
+        # Region, Target %, then MSCS · School Visit · Training · SSA · Meetings.
+        self.assertEqual(cells[2:7], ["—", "50%", "0%", "—", "—"])
+        self.assertIn('title="School Visit: 50% (1 of 2)"', row)
+        self.assertIn('title="SSA Completed: no target agreed"', row)
+
     # 8 ─ leadership attention from real data
     def test_cd_leadership_attention_cards_generated_from_real_data(self):
         d = self._dash()
@@ -315,12 +389,16 @@ class CDCommandCenterTest(TestCase):
             d["ssa_matrix"]["codes"],
             ["CB", "WOG", "FH", "Lship", "GR", "LE", "TE", "Erlm't"],
         )
-        central = next(
-            r for r in d["ssa_matrix"]["rows"] if r["label"] == "Central Region"
-        )
-        self.assertEqual(len(central["cells"]), 8)
+        # Clusters only: the card is titled "Cluster SSA Heatmap" and the
+        # Country Director reads geography on the map and the region table.
+        labels = [r["label"] for r in d["ssa_matrix"]["rows"]]
+        self.assertEqual(labels, ["Cluster Alpha"])
+        self.assertNotIn("Central Region", labels)
+        self.assertTrue(all(r["kind"] == "cluster" for r in d["ssa_matrix"]["rows"]))
+        alpha = d["ssa_matrix"]["rows"][0]
+        self.assertEqual(len(alpha["cells"]), 8)
         lship_idx = d["ssa_matrix"]["codes"].index("Lship")
-        self.assertEqual(central["cells"][lship_idx]["score"], 7.0)
+        self.assertEqual(alpha["cells"][lship_idx]["score"], 7.0)
 
     # 10 ─ priority schools from real workflow gaps
     def test_cd_priority_school_list_generated_from_real_workflow_gaps(self):
@@ -367,7 +445,7 @@ class CDCommandCenterTest(TestCase):
     def test_command_center_renders_over_http(self):
         c = Client()
         c.force_login(self.cd)
-        resp = c.get("/dashboard")
+        resp = c.get("/dashboard?view=operations")
         self.assertEqual(resp.status_code, 200)
         body = resp.content.decode()
         for marker in (

@@ -23,7 +23,6 @@ found everywhere else.
 from __future__ import annotations
 
 from django.contrib import messages
-from django.shortcuts import render
 
 from apps.core.redirects import local_redirect
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
@@ -117,9 +116,11 @@ def decision_intelligence_view(request):
     )
     budget_insights = _open_first(budget.get("insights", []))
 
-    return render(
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
         request,
-        "pages/decisions/index.html",
+        "partials/analytics/panels/decision_intelligence.html",
         {
             "fy": fy,
             "fy_options": [fy, str(int(fy) - 1)],
@@ -136,6 +137,17 @@ def decision_intelligence_view(request):
             "statuses": REVIEW_CHOICES,
             "undecided": sorted(UNDECIDED),
         },
+        section_key="decision_intelligence",
+        panel_title="Decision Intelligence",
+        frame={
+            "question": (
+                "What is leadership being asked to decide now, what evidence "
+                "supports it, and what happens if we wait?"
+            ),
+            "evidence": "Rule-generated operational and financial signals",
+            "freshness": "Rescanned for the selected FY",
+            "confidence": "Recommendation requires human decision",
+        },
     )
 
 
@@ -150,15 +162,28 @@ def declining_schools_view(request):
     """
     from apps.analytics.decline_service import MATERIAL_DROP, declining_schools
 
+    from apps.frontend.views.analytics_render import render_analytics_section
+
     fy = request.GET.get("fy") or get_operational_fy()
     data = declining_schools(request.user, {"fy": fy})
-    return render(
+    return render_analytics_section(
         request,
-        "pages/analytics/declining_schools.html",
+        "partials/analytics/panels/declining_schools.html",
         {
             "d": data,
             "fy_options": [fy, str(int(fy) - 1)],
             "material_drop": MATERIAL_DROP,
+        },
+        section_key="declining_schools",
+        panel_title="Declining Schools",
+        frame={
+            "question": (
+                "Which schools are losing ground fastest, where is decline "
+                "concentrated, and what support failed to arrest it?"
+            ),
+            "evidence": "Schools with two confirmed consecutive SSA cycles",
+            "freshness": "Selected financial year comparison",
+            "confidence": "Confirmed paired assessments",
         },
     )
 
@@ -173,13 +198,26 @@ def core_school_health_view(request):
     """
     from apps.core_schools.leadership_service import core_school_health
 
+    from apps.frontend.views.analytics_render import render_analytics_section
+
     fy = request.GET.get("fy") or get_operational_fy()
-    return render(
+    return render_analytics_section(
         request,
-        "pages/core_schools/leadership.html",
+        "partials/analytics/panels/core_school_health.html",
         {
             "d": core_school_health(request.user, {"fy": fy}),
             "fy_options": [fy, str(int(fy) - 1)],
+        },
+        section_key="core_school_health",
+        panel_title="Core Verification",
+        frame={
+            "question": (
+                "Which core-school packages are off track or stuck at the "
+                "evidence gate, and what must happen next?"
+            ),
+            "evidence": "Package slots, evidence gates and SSA movement",
+            "freshness": "Selected financial year",
+            "confidence": "Verified programme records",
         },
     )
 
@@ -194,10 +232,23 @@ def decision_log_view(request):
     """
     from apps.audit.decision_log_service import decision_log
 
-    return render(
+    from apps.frontend.views.analytics_render import render_analytics_section
+
+    return render_analytics_section(
         request,
-        "pages/audit/decision_log.html",
+        "partials/analytics/panels/decision_log.html",
         {"log": decision_log(request.user, request.GET.dict())},
+        section_key="decision_log",
+        panel_title="Decision Log",
+        frame={
+            "question": (
+                "What was decided, by whom, on what record, and with what "
+                "stated reason?"
+            ),
+            "evidence": "Tamper-evident audit chain",
+            "freshness": "Selected lookback window",
+            "confidence": "System-recorded history",
+        },
     )
 
 

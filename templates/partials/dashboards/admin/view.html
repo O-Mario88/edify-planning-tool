@@ -1,0 +1,2 @@
+{% comment %}The chosen view: operations or the map.{% endcomment %}
+{% if dashboard_view == "map" %}{% include "partials/dashboards/admin/map_view.html" %}{% else %}{% include "partials/dashboards/admin/operations.html" %}{% endif %}

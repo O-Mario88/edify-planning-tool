@@ -1,0 +1,84 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+Adding an activity is a drawer opened by a button (owner, 2026-09-07: "every
+add new… is a button"). It was an anchor styled as a button that jumped to a
+`<details>` further down the page and unfolded a nine-field, three-column form
+above the catalogue — so the control said "button", behaved like a link, and
+pushed the list it belonged to off the screen.
+
+The first choice is still whether this is a school or a non-school activity;
+everything the platform needs beyond the type, delivery, cost recipe and
+intervention is derived the way the governed seed rows are, so a new item
+schedules, prices and verifies like any other.
+{% endcomment %}
+
+{% block drawer_title %}New activity{% endblock %}
+{% block drawer_subtitle %}An approved response to SSA-identified need, scheduled and priced like every governed activity{% endblock %}
+
+{% block drawer_body %}
+<form method="post" action="/settings/activity-catalogue/new" class="space-y-4">
+  {% csrf_token %}
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Activity name
+    <input name="name" required maxlength="255" placeholder="e.g. OneTest Diagnostic Visit" class="h-9 px-3 text-[13px] font-semibold">
+  </label>
+
+  <fieldset class="flex flex-col gap-1.5 text-[13px] font-semibold text-[var(--edify-text)]">
+    <legend class="font-semibold">Kind</legend>
+    {% for value, label in activity_kinds %}
+    <label class="inline-flex items-center gap-2 font-medium"><input type="radio" name="kind" value="{{ value }}" {% if forloop.first %}checked{% endif %} required> {{ label }}</label>
+    {% endfor %}
+  </fieldset>
+
+  <div class="grid gap-3 sm:grid-cols-2">
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Activity type
+      <select name="activity_type" required class="h-9 px-3 text-[13px] font-semibold">
+        {% for value, label in activity_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Delivery
+      <select name="delivery_method" required class="h-9 px-3 text-[13px] font-semibold">
+        {% for value, label in delivery_methods %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Cost recipe
+      <select name="costing_profile" required class="h-9 px-3 text-[13px] font-semibold">
+        {% for value, label in costing_profiles %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+    <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+      Intervention <span class="font-normal text-[var(--edify-text-muted)]">(optional)</span>
+      <select name="intervention" class="h-9 px-3 text-[13px] font-semibold">
+        <option value="">None</option>
+        {% for value, label in interventions %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+      </select>
+    </label>
+  </div>
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Target audience
+    <input name="target_audience" maxlength="128" placeholder="School staff" class="h-9 px-3 text-[13px] font-semibold">
+  </label>
+
+  <fieldset class="flex flex-col gap-1.5 text-[13px] font-semibold text-[var(--edify-text)]">
+    <legend class="font-semibold">Options</legend>
+    <label class="inline-flex items-center gap-2 font-medium"><input type="checkbox" name="participant_counts" value="1"> Counts participants</label>
+    <label class="inline-flex items-center gap-2 font-medium"><input type="checkbox" name="multi_day" value="1"> Can run over several days</label>
+  </fieldset>
+
+  <label class="flex flex-col gap-1 text-[13px] font-semibold text-[var(--edify-text)]">
+    Why this activity is being added
+    <input name="reason" required maxlength="512" placeholder="The reason is kept on the activity's record" class="h-9 px-3 text-[13px] font-medium">
+  </label>
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">Add activity</button>
+  </div>
+</form>
+{% endblock %}

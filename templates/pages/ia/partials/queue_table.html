@@ -30,7 +30,7 @@
           </td>
           <td>{{ act.activityType|title|replace_underscore }}</td>
           <td>
-            <span class="block">{{ act.responsibleStaffId|default:"Unassigned" }}</span>
+            <span class="block">{{ act.responsibleStaffName|default:"Unassigned" }}</span>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.deliveryType|title }}</span>
           </td>
           <td>
@@ -44,9 +44,8 @@
           <td class="tabular-nums {% if act.is_overdue %}text-[var(--edify-danger)] font-semibold{% endif %}">{{ act.age_label }}</td>
           <td><span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span></td>
           <td>
-            <span class="block max-w-[17rem] text-[var(--edify-text-muted)]">{{ act.next_action_status }}</span>
-            <div class="mt-2 flex items-center gap-2">
-              <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary h-9">Review</a>
+            <div class="flex items-center gap-2" title="{{ act.next_action_status }}">
+              <a href="/ia/verification/{{ act.id }}/" class="btn btn-primary h-8">Review</a>
               <details class="edify-row-overflow relative">
                 <summary class="btn btn-ghost h-9 w-9 px-0" aria-label="More actions for {{ act.activityType|title|replace_underscore }} at {{ act.schoolName|default:'cluster' }}">•••</summary>
                 <div class="edify-row-overflow__menu">
@@ -95,8 +94,8 @@
   <nav class="edify-pagination-scope flex items-center justify-between gap-3 px-4 py-3 border-t border-[var(--edify-border)]" aria-label="Verification queue pages">
     <span class="edify-text-caption text-[var(--edify-text-muted)]">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} records</span>
     <div class="flex items-center gap-2">
-      {% if page_obj.has_previous %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Previous</a>{% endif %}
-      {% if page_obj.has_next %}<a class="btn btn-ghost h-9" href="/ia/verification/?page={{ page_obj.next_page_number }}" hx-get="/ia/verification/?page={{ page_obj.next_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Next</a>{% endif %}
+      {% if page_obj.has_previous %}<a class="btn btn-ghost h-8" href="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-get="/ia/verification/?page={{ page_obj.previous_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Previous</a>{% endif %}
+      {% if page_obj.has_next %}<a class="btn btn-ghost h-8" href="/ia/verification/?page={{ page_obj.next_page_number }}" hx-get="/ia/verification/?page={{ page_obj.next_page_number }}" hx-target="#queue-table-container" hx-include="#filters-form">Next</a>{% endif %}
     </div>
   </nav>
   {% endif %}

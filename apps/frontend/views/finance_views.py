@@ -17,7 +17,9 @@ from apps.core.rbac import Permission
 from apps.core.exceptions import BadRequest
 from django.contrib import messages
 from django.utils import timezone
-from django.http import HttpResponse
+import csv
+
+from django.http import HttpResponse, HttpResponseNotFound
 
 from apps.fund_requests.models import (
     WeeklyFundRequest,
@@ -62,6 +64,49 @@ def _disb_filters(request):
     }
 
 
+def _disbursement_voucher(ctx):
+    """One item's payment voucher as CSV: who, what, the approval chain, the
+    funding breakdown and the amount. It is the paper the Accountant files
+    with the payment, so it carries exactly what the detail panel shows."""
+    selected = ctx.get("selected")
+    if not selected:
+        return HttpResponseNotFound("No fund item selected for a voucher.")
+    response = HttpResponse(content_type="text/csv")
+    slug = selected["key"].replace(":", "-")
+    response["Content-Disposition"] = f'attachment; filename="voucher-{slug}.csv"'
+    writer = csv.writer(response)
+    writer.writerow(["Payment voucher", selected["name"]])
+    writer.writerow(["Fund type", selected["kind_label"]])
+    writer.writerow(["Reference", selected["subtitle"]])
+    writer.writerow(["Period", f'{ctx["month_label"]} {ctx["fy"]}'])
+    writer.writerow(["Status", selected["status"]])
+    writer.writerow([])
+    writer.writerow(["Approval chain", "State"])
+    for stage in selected.get("chain", []):
+        writer.writerow([stage["label"], stage["state"].replace("_", " ")])
+    writer.writerow([])
+    writer.writerow(
+        ["Activity category", "Planned qty", "Unit cost (UGX)", "Total (UGX)"]
+    )
+    for row in selected.get("breakdown", []):
+        writer.writerow(
+            [
+                row["category"],
+                row.get("qty") or "",
+                row.get("unit_cost") or "",
+                int(row["raw_total"] or 0),
+            ]
+        )
+    writer.writerow(["Total", "", "", int(selected["raw_amount"] or 0)])
+    if selected.get("disburse_reference"):
+        writer.writerow([])
+        writer.writerow(["Disbursed", selected.get("disbursed_at") or ""])
+        writer.writerow(["Method", selected.get("disburse_method") or ""])
+        writer.writerow(["Reference", selected["disburse_reference"]])
+    return response
+
+
+@require_export_permission
 @require_page_permission("disbursements")
 def disbursements_view(request):
     """Fund Disbursement Dashboard — the Accountant's finance execution center.
@@ -74,6 +119,28 @@ def disbursements_view(request):
     ctx = get_disbursement_dashboard(request.user, _disb_filters(request))
     ctx["status_filter"] = request.GET.get("status", "")
     ctx["q"] = request.GET.get("q", "")
+    if request.GET.get("export") == "voucher":
+        return _disbursement_voucher(ctx)
+    if request.GET.get("export") == "csv":
+        response = HttpResponse(content_type="text/csv")
+        response["Content-Disposition"] = (
+            f'attachment; filename="disbursements-{ctx["fy"]}-{ctx["month"]:02d}.csv"'
+        )
+        writer = csv.writer(response)
+        writer.writerow(
+            ["Requester", "Fund type", "Reference", "Amount (UGX)", "Status"]
+        )
+        for item in ctx["queue"]:
+            writer.writerow(
+                [
+                    item["name"],
+                    item["kind_label"],
+                    item["subtitle"],
+                    int(item["amount"] or 0),
+                    item["status"],
+                ]
+            )
+        return response
     if request.headers.get("HX-Target") == "disb-root":
         return render(request, "partials/disbursements/root.html", ctx)
     ctx["topbar_search"] = {
@@ -585,10 +652,16 @@ def cost_settings_view(request):
         CountryStrategicActivityReserve,
         RateCardKind,
     )
+    from apps.core.fy import fy_options
     from apps.core.permissions import has_permission
     from apps.core.rbac import Permission
 
-    fy = get_operational_fy()
+    # The CD owns every year's rate card, not only this year's: the page was
+    # locked to the operational FY, so last year's card could not be
+    # inspected and next year's could not be prepared ahead of rollover.
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
+    if not fy.isdigit():
+        fy = get_operational_fy()
 
     catalogues = CostCatalogue.objects.filter(
         fy=fy, kind=RateCardKind.OPERATIONAL
@@ -603,11 +676,17 @@ def cost_settings_view(request):
 
     cost_items = []
     if active_catalogue:
-        cost_items = list(
-            CostSetting.objects.filter(
-                catalogue=active_catalogue,
-                key__in=CANONICAL_RATE_KEYS,
-            ).order_by("label")
+        from apps.budget.reference import CANONICAL_RATES
+        from apps.budget.services import visible_rates
+
+        # The registry's order — activity rates, partner rates, session
+        # components, travel — then the costs added for one activity.
+        order = {
+            key: index for index, (key, _label, _cost) in enumerate(CANONICAL_RATES)
+        }
+        cost_items = sorted(
+            visible_rates(active_catalogue).select_related("catalogue_item"),
+            key=lambda item: (order.get(item.key, len(order)), item.label.lower()),
         )
         reference_by_key = {}
         if reference_catalogue:
@@ -631,13 +710,17 @@ def cost_settings_view(request):
     )
 
     context = {
+        "fy_options": fy_options(),
+        "selected_fy": fy,
         "catalogues": catalogues,
+        "add_open": bool(request.GET.get("add")),
         "active_catalogue": active_catalogue,
         "cost_items": cost_items,
         "activity_cost_coverage": activity_cost_coverage(
             governed_activities, active_catalogue
         ),
         "governed_activity_count": len(governed_activities),
+        "linkable_activities": governed_activities,
         "fy": fy,
         "can_initialize": request.user.active_role == "CountryDirector",
         "can_manage_rates": request.user.active_role == "CountryDirector",
@@ -1012,7 +1095,6 @@ def cost_setting_row_view(request, key):
     from apps.budget.models import CostSetting, RateCardKind
     from apps.budget import services as budget_services
     from apps.budget.costing_service import active_catalogue
-    from apps.budget.reference import CANONICAL_RATE_KEYS
 
     if request.user.active_role != "CountryDirector":
         return HttpResponse("Forbidden", status=403)
@@ -1021,12 +1103,10 @@ def cost_setting_row_view(request, key):
     if catalogue is None:
         return HttpResponse("No active CD Cost Catalogue", status=409)
 
+    from apps.budget.services import visible_rates
+
     setting = get_object_or_404(
-        CostSetting.objects.filter(
-            catalogue=catalogue,
-            key__in=CANONICAL_RATE_KEYS,
-        ),
-        key=key,
+        visible_rates(catalogue).select_related("catalogue_item"), key=key
     )
     mode = request.GET.get("mode", "view")
 
@@ -1053,6 +1133,15 @@ def cost_setting_row_view(request, key):
             catalogue = active_catalogue()
             setting = CostSetting.objects.get(key=key, catalogue=catalogue)
             mode = "view"
+            if request.headers.get("HX-Request"):
+                # Saving publishes a NEW catalogue version, so it is not this
+                # row alone that changed — every row shows a version and the
+                # page header names the catalogue. Swapping one row back would
+                # leave the rest of the page quietly stale, so the drawer
+                # closes and the page re-reads itself.
+                closing = HttpResponse("<script>window.location.reload();</script>")
+                closing["HX-Trigger"] = "close-drawer"
+                return closing
         except ValueError:
             return HttpResponse(
                 "Enter a valid whole-number cost.",
@@ -1097,7 +1186,60 @@ def cost_setting_row_view(request, key):
         "history": history,
         "can_manage_rates": request.user.active_role == "CountryDirector",
     }
+    if mode == "edit":
+        # Editing a rate is a drawer, not an unfolding table row (owner,
+        # 2026-09-07). The row stays the row; the decision gets a surface.
+        return render(request, "partials/cost_settings/edit_drawer.html", context)
     return render(request, "partials/cost_settings/cost_setting_row.html", context)
+
+
+@require_page_permission("cost_settings")
+def add_linked_cost_view(request):
+    """Add new cost (owner, 2026-09-06): a cost the Country Director adds is
+    linked to one activity and priced on every schedule of it."""
+    from django.contrib import messages
+    from django.http import HttpResponse
+    from django.shortcuts import redirect
+    from apps.budget import services as budget_services
+    from apps.core.exceptions import BadRequest
+
+    if request.user.active_role != "CountryDirector":
+        return HttpResponse("Forbidden", status=403)
+    if request.method != "POST":
+        # The button opens the drawer; anything else asking for this URL goes
+        # back to the register rather than seeing a bare form.
+        if request.headers.get("HX-Request"):
+            from apps.activity_catalogue.services import effective_items
+            from apps.core.fy import get_operational_fy
+
+            return render(
+                request,
+                "partials/cost_settings/add_drawer.html",
+                {
+                    "selected_fy": request.GET.get("fy") or get_operational_fy(),
+                    "linkable_activities": list(
+                        effective_items().order_by("display_name")
+                    ),
+                },
+            )
+        return redirect("/cost-settings")
+    try:
+        result = budget_services.add_linked_cost(
+            {
+                "catalogueItemId": request.POST.get("catalogue_item"),
+                "label": request.POST.get("label"),
+                "unitCost": request.POST.get("unit_cost"),
+                "approvedMinimum": request.POST.get("approved_minimum") or None,
+                "reason": request.POST.get("reason"),
+                "fy": request.POST.get("fy") or None,
+            },
+            request.user,
+        )
+    except BadRequest as exc:
+        messages.error(request, str(exc.detail))
+        return redirect("/cost-settings?add=1")
+    messages.success(request, f"{result['label']} added to the Cost Catalogue.")
+    return redirect(f"/cost-settings#cost-setting-row-{result['key']}")
 
 
 @require_page_permission("cost_settings")

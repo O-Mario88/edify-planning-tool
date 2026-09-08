@@ -64,6 +64,44 @@ class AllowAny(BasePermission):
 
 
 # Common role gating helpers used by services for object-level checks.
+def verifies_own_work(user, activity) -> bool:
+    """True when `user` is the person responsible for `activity`."""
+    from apps.core.scoping import owner_ids
+
+    responsible = str(getattr(activity, "responsible_staff_id", "") or "")
+    if not responsible:
+        return False
+    return responsible in {str(i) for i in owner_ids(user) if i}
+
+
+def ia_officer_staff_ids(country: str | None = None):
+    """Staff profile ids of Impact Assessment officers, unevaluated."""
+    from apps.accounts.models import StaffProfile
+    from apps.core.rbac import EdifyRole
+
+    qs = StaffProfile.objects.filter(
+        user__roles__contains=[EdifyRole.IMPACT_ASSESSMENT.value],
+        deleted_at__isnull=True,
+    )
+    if country:
+        qs = qs.filter(country=country)
+    return qs.values("id")
+
+
+def is_ia_fallback_verifier(user, activity) -> bool:
+    """The Country Director may verify an IA officer's own field work."""
+    from apps.core.rbac import EdifyRole
+    from apps.core.scoping import resolve_user_scope
+
+    if getattr(user, "active_role", None) != EdifyRole.COUNTRY_DIRECTOR.value:
+        return False
+    responsible = str(getattr(activity, "responsible_staff_id", "") or "")
+    if not responsible:
+        return False
+    scope = resolve_user_scope(user)
+    return ia_officer_staff_ids(scope.country or None).filter(id=responsible).exists()
+
+
 def has_permission(principal: AuthPrincipal, permission: str) -> bool:
     return permission in _user_permissions(principal)
 
@@ -339,6 +377,18 @@ class RolePermissionService:
         return RolePermissionService.can_view_record(user, school_or_cluster)
 
     @staticmethod
+    def can_request_school_visit(user) -> bool:
+        """May this person ask a school's owner for a visit?
+
+        The country roles with no portfolio of their own. They open the same
+        scheduling drawer as a planner and leave a request in it rather than
+        a plan — see apps.planning.visit_requests.
+        """
+        from apps.core.scoping import VISIT_REQUEST_ROLES
+
+        return getattr(user, "active_role", None) in VISIT_REQUEST_ROLES
+
+    @staticmethod
     def can_assign_to_partner(user, school_or_cluster=None) -> bool:
         role = getattr(user, "active_role", None)
         # Mirrors can_schedule_activity's allowed set: assigning to a partner
@@ -482,7 +532,15 @@ class RolePermissionService:
         """
         from apps.core.rbac import Permission
 
-        return has_permission(user, Permission.IA_VERIFY.value)
+        if activity is not None and verifies_own_work(user, activity):
+            # Nobody certifies their own field work (2026-09-03).
+            return False
+        if has_permission(user, Permission.IA_VERIFY.value):
+            return True
+        # The Country Director is the fallback verifier for work an Impact
+        # Assessment officer ran themselves — the one case the IA cannot
+        # verify — and for nothing else.
+        return activity is not None and is_ia_fallback_verifier(user, activity)
 
     @staticmethod
     def can_clear_accounts(user, activity) -> bool:
@@ -733,6 +791,36 @@ def get_operational_school_or_404(user, *args, **kwargs):
             "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
         )
     if not may_plan_school(resolve_user_scope(user), school.id):
+        raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
+    return school
+
+
+def get_visit_target_school_or_404(user, *args, **kwargs):
+    """`get_operational_school_or_404`, plus the request path.
+
+    The scheduling drawer is the one surface a request-only role opens at a
+    school it does not own — to ask, not to plan. Every other operational
+    drawer keeps the strict twin above.
+    """
+    from django.shortcuts import get_object_or_404
+    from django.core.exceptions import PermissionDenied
+    from apps.core.scoping import (
+        OVERSIGHT_ONLY_MESSAGE,
+        may_plan_school,
+        may_request_school_visit,
+        resolve_user_scope,
+    )
+    from apps.schools.models import School
+
+    school = get_object_or_404(School, *args, **kwargs)
+    if not RolePermissionService.can_view_record(user, school):
+        raise PermissionDenied(
+            "Access Denied: Your active role or assigned portfolio scope does not permit accessing this record."
+        )
+    scope = resolve_user_scope(user)
+    if not (
+        may_plan_school(scope, school.id) or may_request_school_visit(scope, school)
+    ):
         raise PermissionDenied(OVERSIGHT_ONLY_MESSAGE)
     return school
 

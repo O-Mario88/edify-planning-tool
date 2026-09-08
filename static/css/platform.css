@@ -199,8 +199,18 @@ main :where(
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-) {
-  /* Card planes are deliberate workspaces; outlines stay subordinate to data. */
+
+  /* Nor a metric summary: `edify-metric-panel` matches the generic
+     `[class*="-panel"]` arm, and a card's grid of numbers is one panel with
+     hairlines, not a card (owner, 2026-09-07). */
+):not(.kpi-strip__item):not(.edify-stat-tile):not(.edify-metric-panel) {
+  /* Card planes are deliberate workspaces; outlines stay subordinate to data.
+
+     Tiles are not card planes (2026-09-05). A KPI tile paints its accent
+     gradient, and a clickable one carries `.edify-interactive-card`, which
+     matches the `[class*="-card"]` arm above — so this rule repainted it as a
+     plain surface and 71 of the platform's 124 KPI tiles lost their gradient.
+     consistency.css carries the same exemption on its own surface rule. */
   border-color: var(--edify-card-border) !important;
   background-color: var(--edify-card-surface) !important;
   background-image: var(--edify-surface-treatment) !important;
@@ -381,7 +391,7 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-),
+):not(.edify-metric-panel),
 .theme-dark main :is(
   .card:not(.card-alert), .card-elevated, .card-flat, .card-insight,
   .card-kpi, .card-rail-amber, .card-rail-emerald, .card-rail-rose,
@@ -393,7 +403,7 @@ main :where(a, button, [role="button"])[class*="rounded"]:hover:not(:disabled) {
   [class*="-kpi"]:not([class*="-kpi-"]):not([class*="-kpi__"]):not([class*="-kpis"]):not(.text-kpi),
   .edify-surface[class*="rounded"], .bg-white[class*="rounded"],
   [style*="--edify-surface"][class*="rounded"]
-) {
+):not(.edify-metric-panel) {
   background-color: var(--edify-card-surface) !important;
   background-image: var(--edify-surface-treatment) !important;
   border-color: var(--edify-card-border) !important;
@@ -657,7 +667,7 @@ main table tbody th {
 
 main table th,
 .drawer-body table th {
-  padding: 0.5625rem 0.6875rem !important;
+  padding: 0.5625rem var(--edify-table-cell-padding-inline) !important;
   border-block-end: 1px solid var(--edify-border) !important;
   background: var(--edify-surface-muted) !important;
   /* Header text sits ON the muted band: the subtle tone measures 4.24:1
@@ -674,7 +684,7 @@ main table th,
 
 main table td,
 .drawer-body table td {
-  padding: 0.5625rem 0.6875rem !important;
+  padding: 0.5625rem var(--edify-table-cell-padding-inline) !important;
   color: var(--edify-text-muted);
   font-size: var(--edify-text-table-size) !important;
   line-height: 1.4;
@@ -948,6 +958,61 @@ main :where(
               border-color .15s ease, box-shadow .15s ease;
 }
 
+/* ── Tabs size to their labels; the rail keeps the rest as track ────────────
+   `flex: 1 0 auto` above lets every tab share whatever rail width is spare,
+   which is invisible on a crowded rail and absurd on a sparse one: measured at
+   1440px, the Batch Payments rail drew two tabs at 530px and 588px, /staff
+   four at 231-309px, and the calendar five at ~225px. It also made tabs in the
+   same rail different widths from each other, because each grew in proportion
+   to its own label (owner, 2026-09-07: "literally all tabs want to stretch to
+   the end even the ones that have few tabs").
+
+   Analytics never had the problem — its rail already resolved to `0 0 auto` —
+   and it is the shape the others should have: each tab as wide as its label
+   needs, the remainder of the rail left as track.
+
+   From 48rem up only. On a phone a rail's tabs sharing its width is what makes
+   them thumb-sized, and that stays.
+   ───────────────────────────────────────────────────────────────────────── */
+@media (min-width: 48rem) {
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) {
+    flex: 0 0 auto !important;
+  }
+}
+
+main :where(
+  [role="tab"],
+  .edify-tab-btn,
+  [data-edify-tab],
+  .messages-inbox-tab,
+  .pto-tabs > button,
+  .sp-period-tabs > button,
+  .spp-tabs > button,
+  .tt-segmented > button,
+  .oversight-entity-tabs__link,
+  .edify-section-nav__cluster,
+  .edify-section-nav__link
+) {
+  block-size: 2rem !important;
+  min-block-size: 2rem !important;
+  max-block-size: 2rem !important;
+  padding-block: 0 !important;
+  padding-inline: 0.875rem !important;
+  line-height: 1 !important;
+}
+
 main :where(
   [role="tab"],
   .edify-tab-btn,
@@ -1052,6 +1117,89 @@ main .edify-section-nav {
   background: transparent !important;
 }
 
+/* The dashboard view rail (Map | Operations, 2026-09-05) has two tabs.
+
+   The segmented contract shares the rail's width between its tabs, which is
+   right for fourteen Analytics sections and wrong for two: it painted two
+   half-width blue slabs. The answer to that was to shrink the whole rail to
+   its labels — which fixed the slabs and created a different problem. A 306px
+   control adrift at the left of a 1120px column, hard against the panel below
+   it, reads as two buttons dropped on the page rather than as the tab bar for
+   the content underneath (owner, 2026-09-07: "the tabs are not professionally
+   placed where they are supposed to be").
+
+   Both are avoidable at once, and Analytics already shows how: the BAR spans
+   the content column, and the TABS keep their own width at its left. Eight
+   sections there occupy 112px each of a 1120px bar and the remainder stays as
+   track — nothing stretches, and the bar still reads as one object belonging
+   to the panel it switches. Specificity above the `:where()` contract, so
+   these `!important`s win. */
+main .dashboard-view-nav { border-block-end: 0; }
+@media (min-width: 48rem) {
+  main .dashboard-view-nav .edify-section-nav__inner {
+    display: flex !important;
+    inline-size: 100% !important;
+    max-inline-size: 100%;
+  }
+  /* `0 0 auto` is what keeps two tabs from becoming two half-width slabs when
+     the bar is full width, and one width for both keeps them even whatever
+     their labels: "Map" and "Operations" are three letters and ten. */
+  main .dashboard-view-nav .edify-section-nav__link {
+    flex: 0 0 auto !important;
+    inline-size: 9.5rem !important;
+    min-inline-size: 9.5rem !important;
+    justify-content: center;
+  }
+
+  /* Equal chips in a track, not segments of a filled bar.
+
+     The segmented contract rounds the FIRST tab's left corners and the LAST
+     tab's right corners, which is right when the tabs fill the bar and their
+     ends are its ends. They no longer do: the tabs sit at the left of a wider
+     track, so the active chip's rounded right edge hung in the middle of the
+     bar while its left edge stayed square against its neighbour — two tabs of
+     identical width reading as different shapes (owner, 2026-09-07: "tab sizes
+     are not even on desktop"). Every tab gets the same radius and the same
+     inset from the track, so the pair reads as one control. */
+  main .dashboard-view-nav .edify-section-nav__inner {
+    padding: 3px !important;
+    gap: 3px !important;
+  }
+
+  /* The chip radius and the segment divider are settled in
+     components/interactions.css, which owns the tab contract and is the last
+     stylesheet loaded — a rule here cannot outrank it. */
+  /* The bar is a bar, not a lid: the panel it switches needs room to read as
+     the thing below it rather than as something it is welded to. The gap goes
+     on the shell that holds both, not on the nav — every role's panel brings
+     its own spacing (the IA's leaves 3px, the CD's 12px), and one gap owned by
+     the container is the same on all of them and cannot double up. */
+  main [data-dashboard-view-shell] {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+}
+@media (max-width: 48rem) {
+  main .dashboard-view-nav .edify-section-nav__link {
+    flex: 1 1 0 !important;
+    min-inline-size: 0 !important;
+  }
+}
+/* The swap indicator sits over the rail's end rather than in the row, so an
+   invisible "Updating…" never steals width from the tabs. */
+main .dashboard-view-nav { position: relative; }
+main .dashboard-view-nav .dashboard-view-nav__updating {
+  position: absolute;
+  inset-inline-end: 0.75rem;
+  inset-block-start: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: var(--edify-text-micro-size);
+  color: var(--edify-text-muted);
+  pointer-events: none;
+}
+
 main .edify-section-nav :where(.edify-section-nav__eyebrow, .edify-section-nav__rule, .edify-section-nav__divider) {
   display: none !important;
 }
@@ -1115,16 +1263,17 @@ main .apexcharts-canvas:has(
   .apexcharts-line-series
 ) .apexcharts-legend {
   display: flex !important;
-  flex-flow: row nowrap !important;
+  /* One row while it fits; a second row when it does not. It used to scroll
+     sideways behind a hidden scrollbar, which on a 1440px desktop hid the
+     last series of a five-series legend (owner, 2026-09-06). */
+  flex-flow: row wrap !important;
   align-items: center !important;
   align-content: center !important;
   justify-content: flex-start !important;
-  gap: 0 clamp(0.5rem, 1vw, 0.75rem) !important;
-  overflow-x: auto !important;
-  overflow-y: hidden !important;
-  overscroll-behavior-inline: contain;
+  gap: 0.125rem clamp(0.5rem, 1vw, 0.75rem) !important;
+  overflow: visible !important;
+  max-block-size: none !important;
   padding: 0.125rem 0.125rem 0.375rem !important;
-  scrollbar-width: none;
 }
 
 main .apexcharts-canvas:has(
@@ -1177,18 +1326,12 @@ main .apexcharts-canvas:has(
   line-height: 1.2 !important;
 }
 
-/* The existing empty-state component becomes a guided, quiet surface. */
-main .edify-empty-state {
-  min-block-size: 10rem;
-  display: grid;
-  place-content: center;
-  justify-items: center;
-  gap: 0.5rem;
-  border: 1px dashed var(--edify-border-strong);
-  border-radius: var(--edify-radius-lg);
-  background: var(--edify-surface-muted);
-  color: var(--edify-text-muted);
-}
+/* The empty-state component is defined once, in components.css — container
+   and parts together. It used to be declared here as well (a grid, dashed,
+   muted, 10rem tall) and a third time at the top of components.css (dashed,
+   muted, no parts), so an empty state took its container from one file and its
+   anatomy from another, and neither knew about the mark or the message
+   (2026-09-07). The values that rule carried are kept there. */
 
 /* ── Page command patterns. ────────────────────────────────────────────── */
 main .platform-page-header {
@@ -1841,10 +1984,13 @@ main .platform-responsive-table [data-priority="low"] {
 }
 
 @media (pointer: coarse) {
-  main :where(button, [role="button"], input, select, textarea),
-  main a[class*="btn"],
-  main a[class*="button"],
-  main a[class*="bg-"] {
+  /* Not inside a table cell: the record row is the 32px target, and a 44px
+     control in it made a phone's table row 60px against the 32px contract
+     (2026-09-04). Controls in cells are sized by the row rhythm instead. */
+  main :where(button, [role="button"], input, select, textarea):not(:is(td, th) *),
+  main a[class*="btn"]:not(:is(td, th) *),
+  main a[class*="button"]:not(:is(td, th) *),
+  main a[class*="bg-"]:not(:is(td, th) *) {
     min-block-size: 2.75rem;
   }
 }
@@ -3921,6 +4067,36 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 }
 
+/* Planning rows keep Schedule and Assign beside the school name at every
+   width (owner, 2026-09-02). The shared row drops its actions under the name
+   once the list is narrower than 58rem — which, beside the sidebar, is most
+   laptops — so the planner's two buttons sat a line below the school they
+   act on. Here they stay on the name's row and shed their labels for icons
+   when the row gets tight; each button carries an aria-label, so nothing is
+   lost to a screen reader. Written for both the media-query fallback and
+   the container-query twin above, like the rules they override. */
+@media (max-width: 52rem) {
+  .planning-school-row .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+  .planning-school-row .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 3; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end; }
+}
+
+@media (max-width: 33rem) {
+  .planning-school-row .school-record-action span { display: none; }
+  .planning-school-row .school-record-action { padding-inline: .55rem; }
+}
+
+@supports (container-type: inline-size) {
+  @container school-record (max-width: 58rem) {
+    .planning-school-row .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+    .planning-school-row .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 3; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end; }
+  }
+
+  @container school-record (max-width: 38rem) {
+    .planning-school-row .school-record-action span { display: none; }
+    .planning-school-row .school-record-action { padding-inline: .55rem; }
+  }
+}
+
 /* ── Report and performance workspace ──────────────────────────────────────
    The report canvas shares the topbar's workspace gutter at every width. It
    must not introduce a centered inner rail: on wide monitors that made the
@@ -4169,7 +4345,7 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   z-index: 1;
   inline-size: 10rem;
   min-inline-size: 10rem;
-  background: var(--edify-surface);
+  background: var(--edify-frozen-surface);
   box-shadow: 1px 0 0 var(--edify-border);
 }
 
@@ -4198,8 +4374,8 @@ main .edify-report-summary-card :is(.edify-kpi-label, h3, .edify-text-caption) {
   padding: 1rem !important;
 }
 
-.edify-report-trend-chart {
-  block-size: clamp(10rem, 14vw, 13rem);
+.edify-report-trend-chart [x-ref="el"] {
+  min-block-size: 13rem;
 }
 
 .edify-report-priority {
@@ -4714,5 +4890,293 @@ main .core-scope-switch [data-edify-tab] {
 
   .school-record-row.is-expanded .school-record-row__metadata {
     grid-column: 1 / -1;
+  }
+}
+
+/* ── Disclosure ─────────────────────────────────────────────────────────
+   The platform's accordion: a surface whose summary is a heading with a
+   subtitle and a chevron, the same shape the Analytics evidence disclosures
+   use, available to every page (2026-09-05: My Target's period matrix). */
+main .edify-disclosure {
+  border: 1px solid var(--edify-border);
+  border-radius: var(--edify-radius-md);
+  background: var(--edify-surface);
+  box-shadow: var(--edify-shadow-sm);
+}
+
+main .edify-disclosure > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  min-block-size: 58px;
+  padding: .8rem 1rem;
+  color: var(--edify-text);
+  cursor: pointer;
+  list-style: none;
+}
+
+main .edify-disclosure > summary::-webkit-details-marker { display: none; }
+
+main .edify-disclosure > summary > span:first-child { display: grid; gap: 2px; min-inline-size: 0; }
+
+main .edify-disclosure > summary h2 {
+  margin: 0;
+  font-size: var(--edify-text-label-size);
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+main .edify-disclosure > summary small {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+}
+
+main .edify-disclosure__chevron {
+  flex: 0 0 auto;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+  color: var(--edify-text-muted);
+  transition: transform var(--edify-transition-fast);
+}
+
+main .edify-disclosure[open] > summary > .edify-disclosure__chevron { transform: rotate(180deg); }
+
+main .edify-disclosure__body {
+  display: grid;
+  gap: .75rem;
+  padding: 0 1rem 1rem;
+}
+
+/* ── Frozen cell ────────────────────────────────────────────────────────
+   The platform's sticky first column, for tables written with utility
+   classes. Opaque in every theme (see --edify-frozen-surface). */
+main table .edify-frozen-cell {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 1;
+  background: var(--edify-frozen-surface);
+}
+
+main table thead .edify-frozen-cell,
+main table .edify-frozen-cell--muted {
+  background: var(--edify-frozen-surface-muted);
+}
+
+main table thead .edify-frozen-cell { z-index: 2; }
+
+/* ── Period matrix ──────────────────────────────────────────────────────
+   Target · achieved · share per reporting period, one row per priority. The
+   first column is frozen, and frozen means opaque: the table scrolls
+   sideways behind it (owner, 2026-09-05). */
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) {
+  border-collapse: collapse;
+  font-size: var(--edify-text-table-size);
+  font-variant-numeric: tabular-nums;
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) th,
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) td {
+  padding: .5rem .55rem;
+  border-bottom: 1px solid color-mix(in oklab, var(--edify-border) 72%, transparent);
+  text-align: center;
+  white-space: nowrap;
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-table-heading-size);
+  font-weight: 700;
+  background: var(--edify-surface-muted);
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th span { display: block; color: var(--edify-text); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th small { display: block; margin-block-start: .1rem; color: var(--edify-text-subtle); font-size: var(--edify-text-micro-size); font-weight: 600; }
+.period-matrix__measures th { font-size: var(--edify-text-table-heading-size); text-transform: uppercase; letter-spacing: .04em; }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label {
+  position: sticky;
+  left: 0;
+  z-index: 1;
+  min-inline-size: 12rem;
+  text-align: left;
+  font-weight: 600;
+  color: var(--edify-text);
+  background: var(--edify-frozen-surface);
+  box-shadow: 1px 0 0 var(--edify-border);
+}
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead .period-matrix__label { z-index: 2; background: var(--edify-frozen-surface-muted); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__label-sub { color: var(--edify-text-muted); font-weight: 500; font-size: var(--edify-text-micro-size); }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .period-matrix__period { border-inline-start: 1px solid var(--edify-border); }
+.period-matrix__target { color: var(--edify-text-subtle); border-inline-start: 1px solid color-mix(in oklab, var(--edify-border) 60%, transparent); }
+.period-matrix__achieved { font-weight: 600; }
+.period-matrix__share { font-weight: 700; }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="success"] { color: var(--edify-success); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="warning"] { color: var(--edify-warn, var(--edify-warning)); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="danger"] { color: var(--edify-danger); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) [data-tone="neutral"] { color: var(--edify-text-subtle); }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) .is-current { background: var(--edify-accent-light); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) thead th.is-current-quarter { background: color-mix(in oklab, var(--edify-accent) 12%, var(--edify-surface-muted)); }
+
+.period-matrix__overall th,
+.period-matrix__overall td { background: var(--edify-surface-muted); font-weight: 700; border-block-start: 1px solid var(--edify-border); }
+
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable { cursor: pointer; }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > td { background: color-mix(in oklab, var(--edify-accent) 6%, var(--edify-surface)); }
+:is(.period-matrix, .tt-area-matrix-shell--matrix > .tt-area-matrix) tbody tr.is-openable:hover > .period-matrix__label { background: linear-gradient(var(--edify-accent-light), var(--edify-accent-light)), var(--edify-frozen-surface); }
+
+/* Inside a Team Target row the shell scrolls the wide matrix instead of
+   clipping it, and the row's own frozen label stays opaque over it. */
+.tt-area-matrix-shell--matrix { overflow-x: auto; overscroll-behavior-inline: contain; }
+.tt-area-matrix-shell--matrix > .tt-area-matrix { min-width: 0; table-layout: auto; }
+.tt-area-matrix-shell--matrix > .tt-area-matrix th,
+.tt-area-matrix-shell--matrix > .tt-area-matrix td { position: static; width: auto; }
+.tt-area-matrix-shell--matrix > .tt-area-matrix .period-matrix__label { position: sticky; background: var(--edify-frozen-surface-muted); }
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   TABLET BANDS (owner, 2026-09-05: "optimize the entire platform for 10 and
+   11 inch tablets"). Two bands, because the shell changes at 64rem:
+
+   • Portrait, 48rem–63.999rem (an iPad on end is 810–834px): the phone shell
+     applies — bottom navigation, the role home — but the page is twice a
+     phone's width, so phone-shaped stacks leave half the row empty. These
+     rules let the shell keep its anatomy while the grids inside it use the
+     width: three KPI tiles across, two agenda cards across, four metrics.
+   • Landscape, 64rem–79.99rem (1080–1194px): the desktop shell with the
+     sidebar collapsed to its rail (layouts/shell.html). Grids built for a
+     laptop's 1200px+ workspace drop a column here instead of squeezing.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  /* `!important` because the strip's own container-query bands select with
+     `:has()` chains whose specificity outranks any plain selector here. */
+  main .kpi-strip.kpi-strip--executive .kpi-strip__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+  /* Four tiles sit in one row rather than three and an orphan. */
+  main .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  }
+  main .kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item:last-child:nth-child(odd) {
+    grid-column: auto !important;
+  }
+  main .mobile-home-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+  main .mobile-home-stack > .edify-empty-state {
+    grid-column: 1 / -1;
+  }
+  main .mobile-home-metrics {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+  main .admin-quick-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  main .admin-quick-grid li:nth-child(2n) { border-inline-end: 0; }
+  /* Directory record cards two across: a phone card is ~120px tall and one
+     per row on an 820px screen halves the list's reading speed. An opened
+     record takes the full row so its disclosure has room. */
+  main .school-record-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.5rem;
+    align-items: start;
+  }
+  main .school-record-list > .school-record-row { min-inline-size: 0; }
+  main .school-record-list > .school-record-row.is-expanded { grid-column: 1 / -1; }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   NO SIDEWAYS SCROLL WHERE THERE IS ROOM (owner, 2026-09-06).
+   A 1440px desktop showed horizontal scrollbars on tables whose content
+   would have fitted: `min-w-[1120px]`-style utilities pinned a table wider
+   than its card, filter rows refused to wrap, and a chart legend clipped
+   its series. From the desktop shell up, a table inside a scroll region
+   sizes to its content — a wide ledger still scrolls, because its content
+   is wider, but a table that fits no longer scrolls because a utility said
+   so — filter rows wrap, and legends wrap.
+   ═══════════════════════════════════════════════════════════════════════ */
+@media (min-width: 64rem) {
+  /* 100%, not 0.
+
+     Zeroing the minimum did cancel the `min-w-[1120px]` utilities, which was
+     the point — but tables here are `inline-size: max-content` (set in
+     mobile-micro-ux.css so a wide ledger can scroll), and max-content with no
+     minimum shrinks a table to exactly its text. Measured on a 1440px screen:
+     the Cluster SSA Heatmap drew 607px of table in a 1041px card and Priority
+     Schools 738px, each leaving a third of its card empty (owner, 2026-09-06:
+     "should fill up the entire row"). A minimum of 100% fills the card, and a
+     table whose content genuinely needs more is still max-content, so a wide
+     ledger scrolls exactly as before. */
+  main :is(.edify-table-scroll-region, .overflow-x-auto, .overflow-auto) > table {
+    min-inline-size: 100% !important;
+  }
+  main :is(#filters-form, #cd-analytics-filters, #pl-analytics-filters, #analytics-filters-form, .edify-filter-bar, .platform-filter-bar, [data-component="filter-toolbar"]):not(.school-filters-form) {
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
+  }
+  /* One control height on a desktop (owner, 2026-09-06: measured selects at
+     36-40px beside 32px buttons, HR and leave buttons at 42px). Filter
+     controls and the two page-family buttons take the platform's 32px. */
+  main :is(
+    .platform-filter-bar, .edify-filter-bar, #filters-form, #core-filters-form,
+    #analytics-filters-form, #pl-analytics-filters, #cd-analytics-filters, #cb-filters,
+    #debrief-filters, #visits-filters, #trainings-filters, #pd-filters, #spp-filters,
+    #spa-filters, #sp-plan-filters, #pl-dashboard-filters, #project-filters,
+    #cluster-filters, [data-component="filter-toolbar"], .school-filters-form
+  ) :is(select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"])) {
+    min-block-size: 2rem !important;
+    block-size: 2rem !important;
+    padding-block: 0 !important;
+  }
+  main :is(.hcos-button, .pto-button) {
+    min-block-size: 2rem !important;
+    block-size: 2rem !important;
+    padding-block: 0 !important;
+    border-radius: var(--edify-radius-sm) !important;
+  }
+  /* One corner radius for every field and every rectangular button: the
+     audit measured 12px (`rounded-xl`) on 82 controls beside 8px on 425.
+     Pills keep their own shape. */
+  main :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"])) {
+    border-radius: var(--edify-radius-sm) !important;
+  }
+  main :is(button, a.btn, a[class*="btn"], a[class*="button"]):not(.rounded-pill):not(.rounded-full):not([class*="pill"]):not([role="tab"]):not(.edify-section-nav__link):not(.edify-section-nav__cluster) {
+    border-radius: var(--edify-radius-sm) !important;
+  }
+  /* A single-line button written with `py-2` measured 34px beside the
+     platform's 32px; card-like tile buttons (`w-full`) keep their height. */
+  main button.py-2:not(.w-full):not([class*="pill"]):not(.rounded-full) {
+    block-size: 2rem !important;
+    min-block-size: 2rem !important;
+    padding-block: 0 !important;
+  }
+  /* The leave workspace's panels take the platform card padding. */
+  main :is(article, section).pto-panel {
+    padding: 1.25rem !important;
+  }
+  /* A rail is one row, never two and never a sideways scroll (owner,
+     2026-09-06: "make sure the wraps are removed and use more space"). It
+     takes the full width it is given; the tabs that still do not fit move
+     into a "More" menu at its end (micro-ux.js fitRails), the active tab
+     always staying in the rail. Tabs size to their labels. */
+  main :is(
+    [role="tablist"], .edify-tab-container, [data-edify-tablist], .messages-inbox-tabs,
+    .pto-tabs, .sp-period-tabs, .spp-tabs, .tt-segmented, .oversight-entity-tabs,
+    .edify-section-nav__clusters, .edify-section-nav__inner, .fund-requesters__strip
+  ) {
+    flex-wrap: nowrap !important;
+    overflow: hidden !important;
+    inline-size: 100%;
+    max-inline-size: 100%;
+  }
+  main :is(.edify-section-nav__inner, .edify-section-nav__clusters, .fund-requesters__strip, nav[data-edify-tablist])
+    > :is(a, button, [role="tab"]) {
+    flex: 0 0 auto !important;
   }
 }

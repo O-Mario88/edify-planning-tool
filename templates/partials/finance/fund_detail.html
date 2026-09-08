@@ -1,0 +1,112 @@
+{% comment %}
+The selected record of the fund workspace. Expects `selected` (name,
+plan_label, district, region, period, status, status_tone, total_label,
+total_fmt, issues, breakdown, subtotal_fmt, adjustment, notes) and
+`actions_template`, the page's own action row. No snapshot column: the
+queue card's chips already carry the counts, so the breakdown reads at
+full width.
+{% endcomment %}
+{% if selected %}
+<div class="fund-detail__inner">
+  <div class="fund-detail__head">
+    <div class="min-w-0">
+      <h2 class="fund-detail__title">{{ selected.name }} — {{ selected.plan_label }}</h2>
+      <p class="fund-detail__place">{{ selected.district }} · {{ selected.region }}</p>
+    </div>
+    {% if selected.period %}
+    <div class="fund-detail__period">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path stroke-linecap="round" d="M16 3v4M8 3v4M3 10h18"/></svg>
+      <span><small>Plan Period</small><strong>{{ selected.period }}</strong></span>
+    </div>
+    {% endif %}
+    <div class="fund-detail__total">
+      {% include "components/badge.html" with tone=selected.status_tone label=selected.status size="md" %}
+      <small>{{ selected.total_label|default:"Total Requested" }}</small>
+      <strong>{{ selected.total_fmt }}</strong>
+    </div>
+  </div>
+
+  {% if selected.stages %}
+  <ol class="fund-stages" aria-label="Approval chain">
+    {% for st in selected.stages %}
+    <li class="fund-stage fund-stage--{{ st.state }}">
+      <span class="fund-stage__mark" aria-hidden="true">
+        {% if st.state == "approved" or st.state == "done" %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>{% elif st.state == "returned" %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"/></svg>{% elif st.state == "held" %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path stroke-linecap="round" d="M10 9v6m4-6v6"/></svg>{% else %}<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="8"/></svg>{% endif %}
+      </span>
+      <span class="fund-stage__label">{{ st.label }}</span>
+      <span class="fund-stage__state">{{ st.state_label }}</span>
+    </li>
+    {% endfor %}
+  </ol>
+  {% endif %}
+  {% if selected.alert %}
+  <div class="rounded-surface border p-3 text-[12px] font-bold {% if selected.alert.tone == 'danger' %}bg-rose-50 border-rose-200 text-rose-800{% else %}bg-amber-50 border-amber-200 text-amber-800{% endif %}" role="status">{{ selected.alert.text }}</div>
+  {% endif %}
+  {% if selected.issues %}
+  <div class="rounded-surface bg-amber-50 border border-amber-200 p-3">
+    <p class="text-[12px] font-bold text-amber-800 mb-1">Needs Review — resolve before approving:</p>
+    <ul class="space-y-0.5">{% for i in selected.issues %}<li class="edify-text-caption font-semibold text-amber-700">• {{ i }}</li>{% endfor %}</ul>
+  </div>
+  {% endif %}
+  {% if selected.notes %}
+  <p class="fund-detail__notes">{% for note in selected.notes %}<span>{{ note }}</span>{% endfor %}</p>
+  {% endif %}
+
+  <div class="fund-detail__body">
+    <div class="min-w-0">
+      <h3 class="fund-panel__title">{{ selected.breakdown_title|default:"Funding Breakdown from Planned Activities" }}</h3>
+      {% if selected.ledger %}
+      {% comment %}The same six-column ledger the Weekly Advance Request page
+      draws, so a request reads identically wherever it is reviewed.{% endcomment %}
+      <div class="overflow-x-auto edify-table-scroll-region rounded-control border border-slate-200 mt-2">
+        {% include "partials/budgets/budget_group_tables.html" with groups=selected.ledger.groups all_groups=selected.ledger.groups staff_total=selected.ledger.staff_total total=selected.ledger.total selected=selected.ledger_scope workspace_title=selected.plan_label %}
+      </div>
+      {% else %}
+      <div class="overflow-x-auto edify-table-scroll-region rounded-control border border-slate-200 mt-2">
+        {% comment %}The category breakdown wears the Weekly Advance Request ledger's dress: blue header band, bold total row.{% endcomment %}
+        <div class="budget-ledger">
+        <table class="budget-ledger-table fund-breakdown-table w-full edify-mobile-table--scroll">
+          <caption class="sr-only">{{ selected.breakdown_title|default:"Funding breakdown from planned activities" }} for {{ selected.name }}, {{ selected.period }}</caption>
+          <thead><tr class="budget-ledger-band">
+            <th scope="col">Activity Category</th><th scope="col">Planned Qty</th><th scope="col">Unit Cost (UGX)</th><th scope="col">Total (UGX)</th>
+          </tr></thead>
+          <tbody>
+            {% for b in selected.breakdown %}
+            <tr>
+              <th scope="row">{{ b.category }}{% if b.note %} <span class="fund-breakdown-table__note">{{ b.note }}</span>{% endif %}</th>
+              <td>{{ b.qty|default:"—" }}</td>
+              <td>{{ b.unit_cost|default:"—" }}</td>
+              <td>{{ b.total }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4" class="fund-breakdown-table__empty">{{ selected.empty_breakdown|default:"No costed activities in this period." }}</td></tr>
+            {% endfor %}
+          </tbody>
+          <tfoot>
+            {% if selected.subtotal_fmt %}
+            <tr class="budget-ledger-subtotal"><th scope="row" colspan="3">Subtotal</th><td>{{ selected.subtotal_fmt }}</td></tr>
+            {% endif %}
+            {% if selected.adjustment_fmt %}
+            <tr class="fund-breakdown-table__adjustment"><th scope="row" colspan="3">{{ selected.adjustment_label }}</th><td>{{ selected.adjustment_fmt }}</td></tr>
+            {% endif %}
+            <tr class="budget-ledger-band fund-breakdown-table__total">
+              <th scope="row" colspan="3">{{ selected.total_label|default:"Total Requested" }}</th>
+              <td>{{ selected.total_fmt }}</td>
+            </tr>
+          </tfoot>
+        </table>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+
+  {% include actions_template %}
+</div>
+{% else %}
+<div class="py-16 text-center">
+  <p class="text-[14px] font-semibold text-slate-500">{{ empty_detail_title|default:"Select a request to review it" }}</p>
+  <p class="text-[12px] font-medium text-slate-400 mt-1">{{ empty_detail_text|default:"Each request is derived from scheduled, costed activities." }}</p>
+</div>
+{% endif %}

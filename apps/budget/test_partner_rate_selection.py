@@ -44,7 +44,7 @@ class PartnerRateSelectionTest(TestCase):
             country="Uganda", fy="2026", version=1, defaults={"is_active": True}
         )
         for key, label, rate in (
-            ("partner_visit_lump_sum", "Partner visit", PARTNER_VISIT_RATE),
+            ("client_partner_visit", "Client Partner Visit", PARTNER_VISIT_RATE),
             ("school_visit_transport", "Staff transport", STAFF_VISIT_RATE),
         ):
             CostSetting.objects.update_or_create(

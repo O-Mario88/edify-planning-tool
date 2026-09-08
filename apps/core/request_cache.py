@@ -17,6 +17,7 @@ code that runs outside the request cycle.
 from __future__ import annotations
 
 import threading
+from contextlib import contextmanager
 
 _local = threading.local()
 
@@ -46,3 +47,23 @@ def memoize(key, compute):
     if key not in bucket:
         bucket[key] = compute()
     return bucket[key]
+
+
+@contextmanager
+def scoped():
+    """Memoise for the duration of one service call when no request is active.
+
+    A dashboard or To-Do build asks for the same rosters and activity rows
+    from a dozen places; inside a request they memoise, and a direct call
+    (a test, a scheduled digest) should pay the same cost. The scope is a
+    no-op inside a request, and outside one it opens a store that is cleared
+    on exit, so nothing outlives the call it was computed for (2026-09-06).
+    """
+    if store() is not None:
+        yield
+        return
+    begin()
+    try:
+        yield
+    finally:
+        end()

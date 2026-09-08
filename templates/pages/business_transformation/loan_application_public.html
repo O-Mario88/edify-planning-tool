@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}School loan application — Edify{% endblock %}
+
+{% block content %}
+<div class="min-h-full bg-[var(--edify-bg)] px-4 py-8 sm:py-12">
+  <div class="mx-auto max-w-3xl">
+    <header class="mb-6 text-center">
+      <img src="{% static 'images/logo.png' %}" alt="Edify" class="mx-auto mb-5 h-8 object-contain">
+      <p class="text-xs font-bold uppercase tracking-widest text-[var(--edify-primary)]">School finance support</p>
+      <h1 class="edify-page-title mt-2 text-2xl font-black text-[var(--edify-text)] sm:text-3xl">Apply for a school loan</h1>
+      <p class="mx-auto mt-2 max-w-2xl text-sm text-[var(--edify-text-muted)]">Submit your school's interest. Edify staff will review it with you; submitting this form does not guarantee approval by a lending partner.</p>
+    </header>
+
+    {% if submitted %}
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] p-8 text-center shadow-sm" aria-live="polite">
+      <h2 class="text-xl font-black text-[var(--edify-text)]">Application received</h2>
+      <p class="mt-3 text-sm text-[var(--edify-text-muted)]">The school's portfolio owner and Edify review team have been notified and will follow up.</p>
+      <p class="mt-5 text-xs font-bold uppercase tracking-wide text-[var(--edify-text-muted)]">Reference</p>
+      <p class="mt-1 font-mono text-sm text-[var(--edify-text)]">{{ reference }}</p>
+    </section>
+    {% else %}
+    <form method="post" class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm sm:p-8" novalidate>
+      {% csrf_token %}
+      {{ form.website }}
+      {% if throttle_error %}
+      <div class="mb-5 rounded-surface border border-red-200 bg-red-50 p-3 text-sm text-red-800">{{ throttle_error }}</div>
+      {% endif %}
+      {% if form.non_field_errors %}
+      <div class="mb-5 rounded-surface border border-red-200 bg-red-50 p-3 text-sm text-red-800">{{ form.non_field_errors }}</div>
+      {% endif %}
+
+      <fieldset>
+        <legend class="text-base font-black text-[var(--edify-text)]">School details</legend>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {% include "components/form_field.html" with field=form.school_id %}
+          {% include "components/form_field.html" with field=form.school_name %}
+        </div>
+      </fieldset>
+
+      <fieldset class="mt-7 border-t border-[var(--edify-border)] pt-6">
+        <legend class="text-base font-black text-[var(--edify-text)]">Your contact details</legend>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {% include "components/form_field.html" with field=form.applicant_name %}
+          {% include "components/form_field.html" with field=form.applicant_role %}
+          {% include "components/form_field.html" with field=form.applicant_phone %}
+          {% include "components/form_field.html" with field=form.applicant_email %}
+        </div>
+      </fieldset>
+
+      <fieldset class="mt-7 border-t border-[var(--edify-border)] pt-6">
+        <legend class="text-base font-black text-[var(--edify-text)]">Loan request</legend>
+        <div class="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {% include "components/form_field.html" with field=form.purpose %}
+          {% include "components/form_field.html" with field=form.preferred_mfi %}
+          {% include "components/form_field.html" with field=form.requested_amount %}
+          {% include "components/form_field.html" with field=form.requested_term_months %}
+          {% include "components/form_field.html" with field=form.repayment_frequency %}
+          <div class="sm:col-span-2">{% include "components/form_field.html" with field=form.intended_use %}</div>
+        </div>
+      </fieldset>
+
+      <div class="mt-6">
+        <label class="flex items-start gap-3 text-sm text-[var(--edify-text)]">
+          {{ form.consent }}
+          <span>{{ form.consent.label }}</span>
+        </label>
+        {% if form.consent.errors %}<p class="mt-1 text-xs text-red-700">{{ form.consent.errors|striptags }}</p>{% endif %}
+      </div>
+      <div class="mt-7 flex justify-end">
+        <button type="submit" class="btn btn-primary h-10 px-5">Submit loan application</button>
+      </div>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

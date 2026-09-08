@@ -101,6 +101,227 @@
       });
     });
 
+    /* A cell whose direct children are two or more stacked blocks (a name
+       over an id, a value over a caption) is marked so consistency.css can
+       lay them on one 32px line. Flex and grid wrappers keep their layout. */
+    var cells = Array.from(elementsWithin(root, 'main table tbody td, main table tbody th, .drawer-body table tbody td, .drawer-body table tbody th'));
+    /* READ PHASE. Every computed-style question this pass asks is answered
+       here, before a single class is written. A style read after a class
+       write re-resolves style for the changed subtree — 40-90ms on a
+       dashboard with four thousand rules — and asking it per cell made the
+       Country Director operations view a 400ms task (2026-09-06). Reading
+       first costs one resolution for the whole pass. */
+    var reads = new Map();
+    cells.forEach(function (cell) {
+      /* A child the page hides at this width (a phone-only label) is not a
+         line of the row; marking it would show it again. Only a child that
+         carries a hiding or responsive display class can be hidden. */
+      var hidden = Array.from(cell.children).map(function (child) {
+        if (child.hidden || child.hasAttribute('x-cloak')) return true;
+        var classes = child.className && typeof child.className === 'string' ? child.className : '';
+        if (!/(^|\s)(hidden|max-\w+:hidden|\w+:hidden|\w+:block|\w+:flex|\w+:inline\S*)(\s|$)/.test(classes)) return false;
+        return window.getComputedStyle(child).display === 'none';
+      });
+      /* Chips a page stylesheet draws as inline-flex (a score, a status, a
+         badge) take the 18px pill line. Colour dots carry no text. */
+      var inlineFlexChips = [];
+      cell.querySelectorAll('span, strong, b, em, small, a, div').forEach(function (chip) {
+        if (chip.textContent.trim() === '') return;
+        if (chip.matches('div') && chip.querySelector('div, p, table, form, ul, a, button')) return;
+        if (window.getComputedStyle(chip).display === 'inline-flex') inlineFlexChips.push(chip);
+      });
+      /* A plain inline link in a cell is text, not a 24px control. */
+      var inlineAnchors = Array.from(cell.querySelectorAll('a')).filter(function (anchor) {
+        return window.getComputedStyle(anchor).display === 'inline';
+      });
+      reads.set(cell, {
+        hidden: hidden,
+        flex: window.getComputedStyle(cell).display === 'flex',
+        inlineFlexChips: inlineFlexChips,
+        inlineAnchors: inlineAnchors
+      });
+    });
+    /* WRITE PHASE. */
+    cells.forEach(function (cell) {
+      var read = reads.get(cell);
+      /* Every cell carries the marker the row rhythm hangs its rules on, so a
+         page stylesheet with a class selector cannot out-rank the rhythm. */
+      cell.classList.add('edify-cell');
+      var hiddenChildren = read.hidden;
+      Array.from(cell.children).forEach(function (child, index) {
+        child.classList.toggle('edify-cell-hidden', hiddenChildren[index]);
+      });
+      Array.from(cell.children).forEach(function (child) {
+        if (child.matches('div.rounded-pill, div.rounded-full')) child.classList.add('edify-cell-mark');
+      });
+      var blocks = Array.from(cell.children).filter(function (child) {
+        return child.matches('div, p, span.block, small.block') && !child.matches('.flex, .grid, .inline-flex, form, .edify-cell-hidden');
+      });
+      cell.classList.toggle('edify-cell-stack', blocks.length > 1);
+      /* A flex row in a cell (avatar beside a name) and the pills inside a
+         cell get markers too, so the row rhythm never has to reach for a
+         utility class in a selector. */
+      Array.from(cell.children).forEach(function (child) {
+        if (!child.classList.contains('flex')) return;
+        if (child.classList.contains('edify-cell-mark')) return;
+        child.classList.add('edify-cell-row');
+        var first = child.firstElementChild;
+        if (first && first.classList.contains('rounded-pill')) first.classList.add('edify-cell-mark');
+      });
+      cell.querySelectorAll('span.rounded-pill, a.rounded-pill, span.rounded-full, a.rounded-full').forEach(function (pill) {
+        /* A colour dot carries no text; only labelled pills take the 18px line. */
+        if (pill.textContent.trim() !== '') pill.classList.add('edify-cell-pill');
+      });
+      /* A cell laid out as a flex box is still a table cell: its children
+         sit side by side on the one line. */
+      var flexCell = read.flex ||
+        Array.from(cell.classList).some(function (name) { return /^(?:[a-z-]+:)?(?:inline-)?flex$/.test(name); });
+      if (flexCell) cell.classList.add('edify-cell-flex');
+      read.inlineFlexChips.forEach(function (chip) {
+        if (chip.matches('.edify-cell-row, .edify-cell-inline-row, .rounded-control, .btn, .edify-cell-pill, .edify-cell-stackchip')) return;
+        chip.classList.add('edify-cell-pill');
+      });
+      /* A stacked tile in a cell (a heatmap value over its caption) reads
+         as one 20px chip on the row line. */
+      Array.from(cell.children).forEach(function (child) {
+        if (child.matches('div.inline-flex.flex-col, div.flex.flex-col')) child.classList.add('edify-cell-stackchip');
+      });
+      /* A block that follows a pill or a control in a cell (a status over
+         its action) sits beside it on the row line. */
+      Array.from(cell.children).forEach(function (child, index) {
+        if (index === 0 || child.classList.contains('edify-cell-hidden')) return;
+        if (!child.matches('div, p')) return;
+        if (child.matches('.flex, .grid, .inline-flex, form, table, details, .edify-cell-stackchip, .edify-cell-row')) return;
+        child.classList.add('edify-cell-line', 'edify-cell-follows');
+      });
+      /* A text-carrying element with no element children of its own is a
+         line of text wherever it sits, so it reads inline. Role pages built
+         before `.edify-cell-row` nested their stacks two levels down inside a
+         raw `flex items-center` (/staff) or wrote a caption as a bare
+         `span.block` after a text node (Team Oversight), and neither was
+         reached by the cell-level markers above: 67px and 46px rows against
+         the 32px contract. Marked here rather than matched with `:has()`,
+         which the bridge bans. */
+      cell.querySelectorAll('p, span, small').forEach(function (line) {
+        if (line.firstElementChild) return;
+        if (line.textContent.trim() === '') return;
+        if (line.matches('.edify-cell-pill, .edify-cell-mark, .edify-cell-row, .pill, .edify-status-badge, [class*="badge"], [class*="chip"], [class*="pill"], [x-show]')) return;
+        line.classList.add('edify-cell-text');
+      });
+      /* A cell holding an identity mark (an avatar, a logo) keeps the mark at
+         24px in a 4px cell, so the row still closes at 32px. */
+      if (cell.querySelector('img, .edify-cell-mark, .h-8.w-8, .h-9.w-9, .h-10.w-10, .h-11.w-11, .h-12.w-12')) {
+        cell.classList.add('edify-cell-media');
+      }
+      /* The label wrapping a row checkbox is not a 44px touch control: the
+         row is. Marked here because the bridge cannot ask `:has()`. */
+      cell.querySelectorAll('label').forEach(function (choice) {
+        if (choice.querySelector('input[type="checkbox"], input[type="radio"]')) {
+          choice.classList.add('edify-cell-choice');
+        }
+      });
+      /* Every control in a cell is 24px tall, whatever the page gives it. */
+      cell.querySelectorAll('button, label.edify-table-choice, select, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]), a').forEach(function (control) {
+        if (control.matches('a') && read.inlineAnchors.indexOf(control) !== -1) return;
+        if (control.matches('.edify-cell-pill, .edify-cell-row')) return;
+        control.classList.add('edify-cell-control');
+      });
+      /* A `.block` line directly in a cell, and a flex row of controls beside
+         cell text, both sit on the one line. */
+      var lines = Array.from(cell.children).filter(function (child) {
+        return child.matches('a, span, p, small, div, time, strong') &&
+          !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge, .edify-cell-hidden');
+      });
+      Array.from(cell.children).forEach(function (child) {
+        if (child.classList.contains('edify-cell-hidden')) return;
+        if (child.matches('span.block, small.block') || (lines.length > 1 && lines.indexOf(child) !== -1)) {
+          child.classList.add('edify-cell-line');
+        }
+        if (child.matches('.flex') && cell.children.length > 1 && !child.classList.contains('edify-cell-mark')) child.classList.add('edify-cell-inline-row');
+      });
+      /* Bare text followed by a paragraph or block span: the block sits inline
+         after the text, with a separator. */
+      var hasText = Array.from(cell.childNodes).some(function (node) {
+        return node.nodeType === 3 && node.textContent.trim() !== '';
+      });
+      if (hasText) {
+        Array.from(cell.children).forEach(function (child) {
+          if (child.matches('p, div, span.block, small') &&
+              !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .edify-cell-hidden, .edify-empty-state')) {
+            child.classList.add('edify-cell-line', 'edify-cell-follows');
+          }
+        });
+      }
+      /* A single wrapper holding two or more lines: its lines sit inline too.
+
+         `.edify-empty-state` is excluded for the same reason `.flex` is: it
+         states its own layout. The guard is by CLASS, not by computed style,
+         so when the hand-rolled empty states became a component on 2026-09-07
+         they stopped carrying `flex flex-col` and started being flattened —
+         the mark and the sentence landed on one line, joined by a middle dot,
+         with the icon squashed out of its square. */
+      if (cell.children.length === 1 && cell.firstElementChild.matches('div, p') &&
+          !cell.firstElementChild.matches('.flex, .grid, .inline-flex, form, .edify-empty-state')) {
+        var inner = Array.from(cell.firstElementChild.children).filter(function (child) {
+          return child.matches('a, span, p, small, div, time, strong') &&
+            !child.matches('.flex, .grid, .inline-flex, form, table, .rounded-control, .btn, .status-pill, .edify-status-badge');
+        });
+        if (inner.length > 1) {
+          cell.firstElementChild.classList.add('edify-cell-wrap');
+          inner.forEach(function (child) { child.classList.add('edify-cell-line'); });
+        }
+      }
+      /* A cell that carries a control closes at 32px around a 24px control. */
+      cell.classList.toggle(
+        'edify-cell-action',
+        Boolean(cell.querySelector(':scope a.rounded-control, :scope button.rounded-control, :scope .btn, :scope .edify-cell-control, :scope > input[type="checkbox"]'))
+      );
+    });
+
+    /* A figure drawn by hand -- a 22px numeral beside a caption -- is a tile.
+       It is marked so consistency.css can give it the one tile design; the
+       caption before the numeral is its label, the one after is its helper,
+       and a tile written value-first still reads label-first. */
+    elementsWithin(root, 'main [class*="text-[22px]"]').forEach(function (numeral) {
+      if (!numeral.classList.contains('font-extrabold')) return;
+      if (numeral.matches('h1, h2')) return;
+      var tile = numeral.parentElement;
+      if (!tile || tile.matches('main, section, article, th, td, li, dd, dt')) return;
+      if (tile.closest('[role="tab"], table, .edify-page-header, .kpi-strip, dialog, [role="dialog"], .mobile-role-home')) return;
+      /* The numeral is one PART of a composed card when its block sits inside a
+         surface beside other blocks — the Reports period card: text block on
+         the left, gauge on the right. The card is the tile; painting its text
+         block as a second tile squeezed a gradient box into 90px with the
+         caption wrapping word by word (owner, 2026-09-05). */
+      var host = tile.parentElement;
+      if (host && host.matches('.edify-surface, [class*="rounded-surface"]') && host.children.length > 1) return;
+      var kids = Array.from(tile.children);
+      if (kids.length < 2 || kids.length > 4) return;
+      if (!kids.every(function (kid) { return kid.matches('p, span, h3, h4, h5, div, small, strong'); })) return;
+      if (kids.some(function (kid) { return kid !== numeral && kid.querySelector('div, p, table, ul, form, button, a'); })) return;
+      var captions = kids.filter(function (kid) { return kid !== numeral && kid.textContent.trim() !== ''; });
+      if (!captions.length) return;
+      tile.classList.add('edify-stat-tile');
+      numeral.classList.add('edify-stat-tile__value');
+      var before = captions.filter(function (caption) {
+        return Boolean(caption.compareDocumentPosition(numeral) & Node.DOCUMENT_POSITION_FOLLOWING);
+      });
+      var after = captions.filter(function (caption) { return before.indexOf(caption) === -1; });
+      if (!before.length && after.length) {
+        after[0].classList.add('edify-stat-tile__label');
+        after.slice(1).forEach(function (caption) { caption.classList.add('edify-stat-tile__helper'); });
+      } else {
+        before.forEach(function (caption) { caption.classList.add('edify-stat-tile__label'); });
+        after.forEach(function (caption) { caption.classList.add('edify-stat-tile__helper'); });
+      }
+      var palette = tile.className + ' ' + numeral.className;
+      var tone = /emerald|green|success/.test(palette) ? 'success'
+        : /amber|yellow|warning/.test(palette) ? 'warning'
+        : /rose|red|danger/.test(palette) ? 'danger'
+        : /sky|blue|primary|info/.test(palette) ? 'info' : '';
+      if (tone) tile.classList.add('edify-stat-tile--' + tone);
+    });
+
     elementsWithin(root, 'main .grid').forEach(function (grid) {
       var directTiles = Array.from(grid.children).filter(function (child) {
         return child.matches(tileSelector);
@@ -279,6 +500,616 @@
     makeScrollRegion(table, label);
   }
 
+  var desktopShell = window.matchMedia('(min-width: 64rem)');
+
+  /* The scroll region a table lives in: the nearest ancestor that scrolls
+     sideways. Tables are fitted to it (below) rather than scrolled in it. */
+  function scrollAncestor(table) {
+    var node = table.parentElement;
+    while (node && node !== document.body) {
+      var overflow = window.getComputedStyle(node).overflowX;
+      if (overflow === 'auto' || overflow === 'scroll') return node;
+      node = node.parentElement;
+    }
+    return null;
+  }
+
+  /* ── TABLES FIT BY TRUNCATING, NEVER BY WRAPPING (owner, 2026-09-06) ──
+     A table wider than its region used to wrap its headings and cells onto
+     a second line. It now behaves like a data grid: rigid columns (numbers,
+     pills, controls, images) keep their width; text columns give up width
+     in proportion to what they have to spare and show an ellipsis, with the
+     full text on hover. Column widths are written to a <colgroup> and the
+     table takes a fixed layout, so the columns sum to the region exactly. */
+  var CONTROL_CELL = 'button, input, select, textarea, progress, .edify-cell-control';
+  var TRUNCATE_PADDING = 8; /* px each cell gives up on either side: 12px -> 8px */
+
+  function fitCandidates(root) {
+    var tables = Array.from((root.querySelectorAll ? root : document).querySelectorAll('main table, .drawer-body table'));
+    var list = [];
+    tables.forEach(function (table) {
+      if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
+      if (table.closest('table') !== table) return;
+      var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
+      if (!region) return;
+      list.push({ table: table, region: region });
+    });
+    return list;
+  }
+
+  function unfitTable(table) {
+    var colgroup = table.querySelector(':scope > colgroup[data-edify-colgroup]');
+    if (colgroup) colgroup.remove();
+    if (table.classList.contains('edify-table--truncate')) {
+      table.classList.remove('edify-table--truncate');
+      table.querySelectorAll('.edify-cell-truncate, .edify-cell-mixed').forEach(function (cell) {
+        cell.classList.remove('edify-cell-truncate', 'edify-cell-mixed');
+        cell.style.removeProperty('--edify-cell-fixed');
+        if (cell.dataset.edifyTitle === 'fit') { cell.removeAttribute('title'); delete cell.dataset.edifyTitle; }
+      });
+      table.querySelectorAll('.edify-cell-truncate-line').forEach(function (line) { line.classList.remove('edify-cell-truncate-line'); });
+      table.querySelectorAll('.edify-cell-truncate-target').forEach(function (target) {
+        target.classList.remove('edify-cell-truncate-target');
+        target.style.removeProperty('--edify-part');
+        if (target.hasAttribute('data-edify-wrapped')) {
+          while (target.firstChild) target.parentNode.insertBefore(target.firstChild, target);
+          target.remove();
+        }
+      });
+    }
+  }
+
+  /* The width a cell's CONTENT takes — not the cell, which a table stretches
+     to its column, and not a wrapper, which stretches with it. It is the
+     span from the leftmost to the rightmost rendered box inside the cell:
+     every line of text and every box with a shape of its own (a pill, a
+     mark, a control, an image), wherever the row rhythm laid it. */
+  var measureRange = document.createRange();
+  var LEAF_BOXES = 'img, svg, input, select, button, textarea, progress, label, a, .rounded-pill, .rounded-full, ' +
+    '.edify-cell-mark, .edify-cell-pill, .edify-cell-control, .rounded-control, .inline-flex, .inline-block, ' +
+    '[class*="badge"], [class*="pill"], [class*="chip"], [class*="btn"]';
+  /* Boxes that keep their width beside truncating text: form controls,
+     images, marks, pills and badges, and links drawn as buttons (a border,
+     a fill, rounded corners). A plain text link, or a word in a flex span
+     beside an icon, is text and may shorten. A pill keeps up to 10rem and
+     shortens beyond that (consistency.css gives it the ellipsis). */
+  var FIXED_BOXES = 'img, svg, input, select, textarea, progress, .rounded-pill, .rounded-full, ' +
+    '.edify-cell-mark, .edify-cell-pill, .rounded-control, ' +
+    ':is(a, button)[class*="rounded"], :is(a, button)[class*="border"], :is(a, button)[class*="bg-"], ' +
+    '[class*="badge"], [class*="pill"], [class*="chip"], [class*="btn"]';
+  var PILL_BOX = '.rounded-pill, .rounded-full, .edify-cell-pill, [class*="badge"], [class*="pill"], [class*="chip"]';
+  var PILL_MAX = 10 * 16;
+  function contentWidth(element, boxesOnly) {
+    var left = Infinity, right = -Infinity;
+    var take = function (rect) {
+      if (!rect || !rect.width) return;
+      if (rect.left < left) left = rect.left;
+      if (rect.right > right) right = rect.right;
+    };
+    if (!boxesOnly) {
+      var walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
+      var node = walker.nextNode();
+      while (node) {
+        /* Text inside a pill is the pill's to measure (a pill is capped). */
+        if (node.textContent.trim() && !(node.parentElement && node.parentElement.closest(PILL_BOX))) {
+          measureRange.selectNodeContents(node);
+          Array.prototype.forEach.call(measureRange.getClientRects(), take);
+        }
+        node = walker.nextNode();
+      }
+    }
+    var stretch = element.clientWidth - (parseFloat(window.getComputedStyle(element).paddingLeft) || 0)
+      - (parseFloat(window.getComputedStyle(element).paddingRight) || 0);
+    element.querySelectorAll(boxesOnly ? FIXED_BOXES : LEAF_BOXES).forEach(function (box) {
+      var rect = box.getBoundingClientRect();
+      /* A box that fills its cell (`w-full`) is as wide as the column, not
+         as wide as its content; what is inside it is measured instead. */
+      if (rect.width >= stretch - 1 && box.children.length) {
+        var inner = contentWidth(box, false);
+        var chrome = (parseFloat(window.getComputedStyle(box).paddingLeft) || 0) + (parseFloat(window.getComputedStyle(box).paddingRight) || 0);
+        take({ left: rect.left, right: rect.left + inner + chrome, width: inner + chrome });
+        return;
+      }
+      if (rect.width > PILL_MAX && box.matches(PILL_BOX) && !box.matches('button, a[class*="btn"]')) {
+        take({ left: rect.left, right: rect.left + PILL_MAX, width: PILL_MAX });
+        return;
+      }
+      take(rect);
+    });
+    return right > left ? Math.ceil(right - left) : 0;
+  }
+
+  /* A figure: a number, a percentage, a date-like run, a currency amount
+     ("UGX 62,000"), a dash. Figures are never truncated. */
+  var FIGURE = /^[A-Z]{0,4}\s?[\d.,%()+\-–—:\/\s$£€]+$/;
+  function figureLike(text) {
+    return text === '' || text.length <= 3 || FIGURE.test(text);
+  }
+
+  /* A cell that cannot give up width: one whose text, apart from what sits
+     inside its controls and pills, is a figure or a word or two. A cell
+     with real text beside a control is a text cell — the control keeps
+     its width (see `mixed`), the text beside it may shorten. */
+  /* A cell's text as a reader sees it: assistive-only text is not on the
+     line and must not decide whether the cell is a figure. */
+  function visibleText(cell) {
+    var hidden = cell.querySelectorAll('.sr-only, .edify-visually-hidden');
+    if (!hidden.length) return cleanText(cell.textContent);
+    var clone = cell.cloneNode(true);
+    clone.querySelectorAll('.sr-only, .edify-visually-hidden').forEach(function (node) { node.remove(); });
+    return cleanText(clone.textContent);
+  }
+
+  /* The parts of a text cell's line (READS ONLY). A part is a child of the
+     cell — or of the one wrapper the cell holds (a flex row of a mark, a
+     name and an id; an inline-flex pair of action buttons). Boxes and
+     action parts keep their width; text parts shorten in proportion to
+     their width, each with its own ellipsis. Null for a cell that is one
+     text part (the cell itself carries the ellipsis) or all boxes. */
+  function isBoxPart(node) {
+    if (node.matches(FIXED_BOXES)) return true;
+    if (node.matches('a, button') && !node.textContent.trim()) return true;
+    return node.children.length > 0 && !node.textContent.trim();
+  }
+  function isActionPart(node) {
+    return !isBoxPart(node) && !!node.querySelector('button, input, select, .edify-cell-control, [class*="btn"]');
+  }
+  function mixedPlan(cell) {
+    var line = cell;
+    var elements = Array.from(cell.children).filter(function (child) {
+      return !child.matches('.sr-only, .edify-visually-hidden') && child.getBoundingClientRect().width > 0;
+    });
+    var bareText = Array.from(cell.childNodes).some(function (node) { return node.nodeType === Node.TEXT_NODE && node.textContent.trim(); });
+    if (elements.length === 1 && !bareText && elements[0].children.length > 1 && !elements[0].matches(FIXED_BOXES)) {
+      line = elements[0];
+    }
+    var parts = [];
+    Array.from(line.childNodes).forEach(function (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (!node.textContent.trim()) return;
+        measureRange.selectNodeContents(node);
+        var rect = measureRange.getBoundingClientRect();
+        if (rect.width > 0) parts.push({ node: node, width: rect.width, keep: false });
+        return;
+      }
+      if (node.nodeType !== Node.ELEMENT_NODE) return;
+      if (node.matches('.sr-only, .edify-visually-hidden')) return;
+      var width = node.getBoundingClientRect().width;
+      if (!width) return;
+      parts.push({ node: node, width: width, keep: isBoxPart(node) || isActionPart(node) });
+    });
+    /* A short part ("View", an id, a date) is kept whole: shortening it
+       leaves nothing readable, and it has little width to give. */
+    parts.forEach(function (part) { if (part.width <= 4 * 16) part.keep = true; });
+    var texts = parts.filter(function (part) { return !part.keep; });
+    if (!texts.length || parts.length < 2) return null;
+    var textWidth = texts.reduce(function (sum, part) { return sum + part.width; }, 0);
+    var fixed = Math.max(0, contentWidth(line) - textWidth);
+    return {
+      cell: cell,
+      line: line === cell ? null : line,
+      fixed: Math.ceil(fixed),
+      targets: texts.map(function (part) { return { node: part.node, share: textWidth ? part.width / textWidth : 1 }; })
+    };
+  }
+
+  function rigidCell(cell) {
+    var text = visibleText(cell);
+    if (figureLike(text)) return true;
+    var boxed = '';
+    cell.querySelectorAll(FIXED_BOXES).forEach(function (box) { boxed += ' ' + cleanText(box.textContent); });
+    var outside = text;
+    cleanText(boxed).split(' ').forEach(function (word) {
+      if (word) outside = outside.replace(word, '');
+    });
+    outside = cleanText(outside.replace(/[·•|,]/g, ' '));
+    return figureLike(outside);
+  }
+
+  function columnPlan(table, region) {
+    var excess = table.scrollWidth - region.clientWidth;
+    if (excess <= 1) return null;
+    var rows = Array.from(table.querySelectorAll(':scope > tbody > tr')).filter(function (row) {
+      return row.children.length && row.getBoundingClientRect().height > 0;
+    });
+    var head = Array.from(table.querySelectorAll(':scope > thead > tr')).filter(function (row) { return row.children.length; });
+    /* The column count is the one most plain body rows agree on (a footer,
+       a group row or an empty-state row with a colspan does not get a
+       vote); with no plain body row, the heading row stands in. */
+    var plainRows = function (list) {
+      return list.filter(function (row) { return !row.querySelector(':scope > [colspan], :scope > [rowspan]'); });
+    };
+    var voters = plainRows(rows);
+    if (!voters.length) voters = plainRows(head);
+    if (!voters.length) return null;
+    var tally = {};
+    voters.forEach(function (row) { tally[row.children.length] = (tally[row.children.length] || 0) + 1; });
+    var count = 0;
+    Object.keys(tally).forEach(function (key) { if (tally[key] > (tally[count] || 0)) count = Number(key); });
+    if (!count) return null;
+    var plain = function (row) { return row.children.length === count && !row.querySelector(':scope > [colspan], :scope > [rowspan]'); };
+    var bodySample = rows.filter(plain).slice(0, 40);
+    var reference = bodySample[0] || head.filter(plain)[0];
+    if (!reference) return null;
+    /* Body rows whose cells span columns (an action cell over two headings)
+       still tell the plan what their columns need: a spanning cell's need
+       is shared across the columns it covers. */
+    var spanned = [];
+    if (!bodySample.length) {
+      rows.slice(0, 40).forEach(function (row) {
+        var index = 0;
+        Array.from(row.children).forEach(function (cell) {
+          var span = Math.max(1, parseInt(cell.getAttribute('colspan') || '1', 10));
+          if (index + span <= count) spanned.push({ cell: cell, from: index, span: span });
+          index += span;
+        });
+      });
+    }
+    var natural = Array.from(reference.children).map(function (cell) { return cell.getBoundingClientRect().width; });
+    var rigid = natural.map(function (width, index) {
+      if (width === 0) return true;
+      if (!bodySample.length) return false;
+      return bodySample.every(function (row) { return rigidCell(row.children[index]); });
+    });
+    /* READS: what each column needs at least — a rigid cell's own content,
+       a text cell's share of its width — before any width is written. A
+       figure column also keeps a short heading whole ("Staff", "Planned"):
+       its soft floor is its heading up to 5.5rem, its hard floor its
+       figures. */
+    var mixed = [];
+    var cellNeed = function (cell) {
+      if (rigidCell(cell)) return contentWidth(cell) + TRUNCATE_PADDING * 2;
+      /* A text cell with more than one part on its line — a name beside a
+         control, a status beside its action — shortens its widest text
+         part; everything else on the line keeps its width. */
+      var plan = mixedPlan(cell);
+      if (plan) {
+        mixed.push(plan);
+        return plan.fixed + TRUNCATE_PADDING * 2 + 16 * plan.targets.length;
+      }
+      return 0;
+    };
+    var need = natural.map(function (width, index) {
+      var most = 0;
+      if (width === 0) return 0;
+      bodySample.forEach(function (row) {
+        var cell = row.children[index];
+        if (rigid[index]) { most = Math.max(most, contentWidth(cell) + TRUNCATE_PADDING * 2); return; }
+        most = Math.max(most, cellNeed(cell));
+      });
+      return most;
+    });
+    spanned.forEach(function (entry) {
+      var share = cellNeed(entry.cell) / entry.span;
+      for (var i = entry.from; i < entry.from + entry.span; i += 1) need[i] = Math.max(need[i], share);
+    });
+    var hardFloor = natural.map(function (width, index) {
+      if (width === 0) return 0;
+      if (rigid[index]) return Math.min(width, Math.max(need[index], 24));
+      var min = index === 0 ? 9 * 16 : 5 * 16;
+      return Math.min(width, Math.max(min, width * 0.4, need[index]));
+    });
+    var softFloor = natural.map(function (width, index) {
+      if (!rigid[index]) return width - TRUNCATE_PADDING;
+      return Math.max(hardFloor[index], Math.min(width - TRUNCATE_PADDING, 5.5 * 16));
+    });
+    /* PLAN, in tiers: the 8px padding gives first; then text columns with
+       room to spare give up to 40%; then long headings over figure columns
+       shorten to 5.5rem; then text columns go to their floors; then long
+       headings to 4rem; only then do short headings give the rest. The
+       region always ends up filled. */
+    var shortFloor = natural.map(function (width, index) {
+      if (!rigid[index]) return width - TRUNCATE_PADDING;
+      return Math.max(hardFloor[index], Math.min(width - TRUNCATE_PADDING, 4 * 16));
+    });
+    var comfortFloor = natural.map(function (width, index) {
+      if (rigid[index]) return width - TRUNCATE_PADDING;
+      return Math.max(hardFloor[index], (width - TRUNCATE_PADDING) * 0.6);
+    });
+    var remaining = excess - TRUNCATE_PADDING * count;
+    var widths = natural.map(function (width) { return Math.max(0, width - TRUNCATE_PADDING); });
+    /* A spanning cell wider than the columns under it grows them first;
+       the growth is paid for below like any other excess. */
+    spanned.forEach(function (entry) {
+      var needTotal = 0, current = 0;
+      for (var i = entry.from; i < entry.from + entry.span; i += 1) { current += widths[i]; needTotal += need[i]; }
+      var deficit = needTotal - current;
+      if (deficit <= 0) return;
+      for (var k = entry.from; k < entry.from + entry.span; k += 1) {
+        widths[k] += deficit * (widths[k] / (current || 1));
+        hardFloor[k] = Math.max(hardFloor[k], widths[k]);
+        comfortFloor[k] = Math.max(comfortFloor[k], widths[k]);
+        softFloor[k] = Math.max(softFloor[k], widths[k]);
+        shortFloor[k] = Math.max(shortFloor[k], widths[k]);
+      }
+      remaining += deficit;
+    });
+    var text = rigid.map(function (flag) { return !flag; });
+    /* The last resort before a table scrolls: text columns go below their
+       floors, to 3rem or a third of their width, whichever is larger. */
+    var lastFloor = natural.map(function (width, index) {
+      if (rigid[index]) return hardFloor[index];
+      return Math.min(hardFloor[index], Math.max(3 * 16, (width - TRUNCATE_PADDING) / 3, need[index]));
+    });
+    var tiers = [
+      { member: text, floor: comfortFloor },
+      { member: rigid, floor: softFloor },
+      { member: text, floor: hardFloor },
+      { member: rigid, floor: shortFloor },
+      { member: rigid, floor: hardFloor },
+      { member: text, floor: lastFloor }
+    ];
+    tiers.forEach(function (tier) {
+      if (remaining <= 0) return;
+      var capacity = 0;
+      widths.forEach(function (width, index) { if (tier.member[index]) capacity += Math.max(0, width - tier.floor[index]); });
+      if (capacity <= 0) return;
+      var share = Math.min(1, remaining / capacity);
+      widths = widths.map(function (width, index) {
+        return tier.member[index] ? width - Math.max(0, width - tier.floor[index]) * share : width;
+      });
+      remaining -= capacity * share;
+    });
+    var shrunk = widths.map(function (width, index) { return width < natural[index] - TRUNCATE_PADDING - 0.5; });
+    return { widths: widths, rigid: rigid, shrunk: shrunk, mixed: mixed, floor: hardFloor, fits: remaining <= 0.5 };
+  }
+
+  function applyPlan(table, plan) {
+    var colgroup = document.createElement('colgroup');
+    colgroup.setAttribute('data-edify-colgroup', '');
+    plan.widths.forEach(function (width, index) {
+      var col = document.createElement('col');
+      col.style.width = Math.max(0, Math.round(width * 100) / 100) + 'px';
+      if (plan.rigid[index]) col.setAttribute('data-edify-rigid', '');
+      col.setAttribute('data-edify-floor', String(Math.round(plan.floor[index])));
+      colgroup.appendChild(col);
+    });
+    table.insertBefore(colgroup, table.firstChild);
+    table.classList.add('edify-table--truncate');
+    plan.mixed.forEach(function (entry) {
+      entry.targets.forEach(function (target) {
+        var node = target.node;
+        if (node.nodeType === Node.TEXT_NODE) {
+          /* A bare run of text becomes a span so it can carry the ellipsis. */
+          var wrap = document.createElement('span');
+          wrap.setAttribute('data-edify-wrapped', '');
+          node.parentNode.insertBefore(wrap, node);
+          wrap.appendChild(node);
+          node = wrap;
+        }
+        node.classList.add('edify-cell-truncate-target');
+        node.style.setProperty('--edify-part', String(Math.round(target.share * 1000) / 1000));
+      });
+      if (entry.line) entry.line.classList.add('edify-cell-truncate-line');
+      entry.cell.classList.add('edify-cell-mixed');
+      entry.cell.style.setProperty('--edify-cell-fixed', entry.fixed + 'px');
+    });
+    var anyShrunk = plan.shrunk.some(Boolean);
+    table.querySelectorAll(':scope > thead > tr, :scope > tbody > tr, :scope > tfoot > tr').forEach(function (row) {
+      var heading = row.parentElement.tagName === 'THEAD';
+      if (row.children.length !== plan.widths.length) {
+        /* A row with its own column count (a colspan group, an action cell
+           over two headings) has no column to read: every heading in it may
+           shorten, and every text cell in it truncates like any other. */
+        Array.from(row.children).forEach(function (cell) {
+          if (heading ? anyShrunk : !rigidCell(cell)) cell.classList.add('edify-cell-truncate');
+        });
+        return;
+      }
+      Array.from(row.children).forEach(function (cell, index) {
+        if (cell.hasAttribute('colspan')) return;
+        if (heading ? plan.shrunk[index] : !plan.rigid[index]) cell.classList.add('edify-cell-truncate');
+      });
+    });
+  }
+
+  function titleTruncatedCells(tables) {
+    runWhenIdle(function () {
+      tables.forEach(function (table) {
+        if (!table.isConnected) return;
+        table.querySelectorAll('.edify-cell-truncate').forEach(function (cell) {
+          if (cell.scrollWidth > cell.clientWidth + 1) {
+            if (!cell.hasAttribute('title')) { cell.title = cleanText(cell.textContent); cell.dataset.edifyTitle = 'fit'; }
+          } else if (cell.dataset.edifyTitle === 'fit') {
+            cell.removeAttribute('title'); delete cell.dataset.edifyTitle;
+          }
+        });
+      });
+    });
+  }
+
+  function fitTableToRegion(table) {
+    var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
+    if (!region || !desktopShell.matches) return;
+    if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
+    unfitTable(table);
+    var plan = columnPlan(table, region);
+    if (!plan) return;
+    applyPlan(table, plan);
+    var overflow = table.scrollWidth - region.clientWidth;
+    if (overflow > 0) settlePlan(table, overflow);
+    titleTruncatedCells([table]);
+  }
+
+  function fitTables(root) {
+    /* Phases — restore, measure every table, plan, write — so the pass
+       forces one layout rather than one per table (2026-09-06). */
+    if (!desktopShell.matches) {
+      fitCandidates(root).forEach(function (c) { unfitTable(c.table); });
+      return;
+    }
+    var candidates = fitCandidates(root);
+    candidates.forEach(function (c) { unfitTable(c.table); });
+    var plans = candidates.map(function (c) { return { table: c.table, region: c.region, plan: columnPlan(c.table, c.region) }; });
+    var fitted = [];
+    plans.forEach(function (entry) {
+      if (!entry.plan) return;
+      applyPlan(entry.table, entry.plan);
+      fitted.push(entry);
+    });
+    /* Borders and rounding can leave a table a few pixels wide of its
+       region; one more read, and those columns give the difference back. */
+    var short = fitted.map(function (entry) { return entry.table.scrollWidth - entry.region.clientWidth; });
+    fitted.forEach(function (entry, index) { if (short[index] > 0) settlePlan(entry.table, short[index]); });
+    if (fitted.length) titleTruncatedCells(fitted.map(function (entry) { return entry.table; }));
+  }
+
+  function settlePlan(table, overflow) {
+    /* Columns give the difference back out of their slack above their
+       floors; a column below its content would overflow the table again. */
+    var cols = Array.from(table.querySelectorAll(':scope > colgroup[data-edify-colgroup] > col'));
+    var widths = cols.map(function (col) { return parseFloat(col.style.width) || 0; });
+    var slack = cols.map(function (col, index) {
+      return Math.max(0, widths[index] - (parseFloat(col.getAttribute('data-edify-floor')) || 0));
+    });
+    var pool = slack.reduce(function (acc, value) { return acc + value; }, 0);
+    if (!pool) return;
+    var share = Math.min(1, overflow / pool);
+    cols.forEach(function (col, index) {
+      col.style.width = Math.round((widths[index] - slack[index] * share) * 100) / 100 + 'px';
+    });
+  }
+
+  /* ── RAILS FIT BY OVERFLOWING INTO "MORE", NEVER BY WRAPPING ──
+     A tab rail wider than its row keeps the leading tabs and the active tab
+     in the rail and moves the rest into a "More" menu at the rail's end —
+     the priority navigation pattern — so a rail is always one 32px row. */
+  var railSelector = '[role="tablist"], .edify-tab-container, [data-edify-tablist], .messages-inbox-tabs, ' +
+    '.pto-tabs, .sp-period-tabs, .spp-tabs, .tt-segmented, .oversight-entity-tabs, ' +
+    '.edify-section-nav__clusters, .edify-section-nav__inner, .fund-requesters__strip';
+  var railItemSelector = 'a, button, [role="tab"]';
+
+  function isActiveRailItem(item) {
+    return item.matches('[aria-selected="true"], [aria-current], [aria-pressed="true"], .is-active, .active');
+  }
+
+  function railMore(rail) {
+    var more = rail.querySelector(':scope > .edify-rail-more');
+    if (more) return more;
+    more = document.createElement('details');
+    more.className = 'edify-rail-more';
+    more.hidden = true;
+    var toggle = document.createElement('summary');
+    toggle.className = 'edify-rail-more__toggle';
+    toggle.setAttribute('aria-haspopup', 'menu');
+    toggle.innerHTML = 'More <span class="edify-rail-more__count"></span>';
+    var menu = document.createElement('div');
+    menu.className = 'edify-rail-more__menu';
+    menu.setAttribute('role', 'menu');
+    more.appendChild(toggle);
+    more.appendChild(menu);
+    rail.appendChild(more);
+    more.addEventListener('toggle', function () {
+      if (!more.open) return;
+      var rect = toggle.getBoundingClientRect();
+      menu.style.top = Math.round(rect.bottom + 4) + 'px';
+      menu.style.right = Math.round(Math.max(8, window.innerWidth - rect.right)) + 'px';
+      var first = menu.querySelector(railItemSelector);
+      if (first) first.focus({ preventScroll: true });
+    });
+    menu.addEventListener('click', function (event) {
+      if (event.target.closest(railItemSelector)) more.open = false;
+    });
+    return more;
+  }
+
+  function railItems(rail) {
+    return Array.from(rail.children).filter(function (child) {
+      return child.matches(railItemSelector) && !child.hidden && !child.classList.contains('edify-rail-more');
+    });
+  }
+
+  function restoreRail(rail) {
+    var more = rail.querySelector(':scope > .edify-rail-more');
+    if (!more) return;
+    var menu = more.querySelector('.edify-rail-more__menu');
+    var moved = Array.from(menu.children);
+    moved.forEach(function (item) {
+      item.classList.remove('edify-rail-more__item');
+      item.removeAttribute('role');
+      if (item.dataset.edifyRailRole) { item.setAttribute('role', item.dataset.edifyRailRole); delete item.dataset.edifyRailRole; }
+      rail.insertBefore(item, more);
+    });
+    /* Original order: every item remembers its index from the first pass. */
+    var items = railItems(rail).sort(function (a, b) { return Number(a.dataset.edifyRailIndex) - Number(b.dataset.edifyRailIndex); });
+    items.forEach(function (item) { rail.insertBefore(item, more); });
+    more.open = false;
+    more.hidden = true;
+  }
+
+  function planRail(rail) {
+    var items = railItems(rail);
+    items.forEach(function (item, index) { if (!item.dataset.edifyRailIndex) item.dataset.edifyRailIndex = String(index + 1); });
+    if (rail.scrollWidth <= rail.clientWidth + 1) return null;
+    var more = railMore(rail);
+    more.hidden = false;
+    var toggleWidth = more.getBoundingClientRect().width;
+    var styles = window.getComputedStyle(rail);
+    var available = rail.clientWidth - toggleWidth - (parseFloat(styles.paddingLeft) || 0) - (parseFloat(styles.paddingRight) || 0) - 1;
+    var gap = parseFloat(styles.columnGap) || 0;
+    var widths = items.map(function (item) { return item.getBoundingClientRect().width; });
+    return { items: items, widths: widths, available: available, gap: gap, more: more };
+  }
+
+  function applyRailPlan(plan) {
+    var activeIndex = plan.items.findIndex(isActiveRailItem);
+    var reserved = activeIndex >= 0 ? plan.widths[activeIndex] + plan.gap : 0;
+    var used = reserved;
+    var visible = [];
+    var full = false;
+    for (var i = 0; i < plan.items.length; i += 1) {
+      /* The active tab stays in the rail wherever it sits in the order;
+         once a tab has not fitted, every later tab (bar the active one)
+         goes to the menu, so the rail keeps the original order. */
+      if (i === activeIndex) { visible.push(i); continue; }
+      if (full || used + plan.widths[i] + plan.gap > plan.available) { full = true; continue; }
+      used += plan.widths[i] + plan.gap;
+      visible.push(i);
+    }
+    var menu = plan.more.querySelector('.edify-rail-more__menu');
+    var moved = 0;
+    plan.items.forEach(function (item, index) {
+      if (visible.indexOf(index) !== -1) return;
+      item.classList.add('edify-rail-more__item');
+      var role = item.getAttribute('role');
+      if (role) item.dataset.edifyRailRole = role;
+      item.setAttribute('role', 'menuitem');
+      menu.appendChild(item);
+      moved += 1;
+    });
+    plan.more.querySelector('.edify-rail-more__count').textContent = String(moved);
+    plan.more.hidden = moved === 0;
+  }
+
+  function fitRails(root) {
+    var rails = Array.from((root.querySelectorAll ? root : document).querySelectorAll(railSelector)).filter(function (rail) {
+      return !rail.closest('.edify-rail-more') && rail.getBoundingClientRect().width > 0;
+    });
+    rails.forEach(restoreRail);
+    if (!desktopShell.matches) return;
+    var plans = rails.map(planRail);
+    plans.forEach(function (plan) { if (plan) applyRailPlan(plan); });
+  }
+
+  document.addEventListener('click', function (event) {
+    document.querySelectorAll('.edify-rail-more[open]').forEach(function (more) {
+      if (!more.contains(event.target)) more.open = false;
+    });
+  });
+  document.addEventListener('keydown', function (event) {
+    if (event.key !== 'Escape') return;
+    document.querySelectorAll('.edify-rail-more[open]').forEach(function (more) { more.open = false; more.querySelector('summary').focus(); });
+  });
+  window.addEventListener('scroll', function () {
+    document.querySelectorAll('.edify-rail-more[open]').forEach(function (more) { more.open = false; });
+  }, { passive: true, capture: true });
+
+  var fitTimer = null;
+  window.addEventListener('resize', function () {
+    window.clearTimeout(fitTimer);
+    fitTimer = window.setTimeout(function () { fitRails(document); fitTables(document); }, 150);
+  }, { passive: true });
+
   function enhanceTables(root) {
     if (root.matches && root.matches('table')) enhanceTable(root);
     root.querySelectorAll('table').forEach(enhanceTable);
@@ -346,7 +1177,8 @@
   }
 
   function enhanceTabList(tablist) {
-    enhanceTabReveal(tablist);
+    /* Revealing the active tab measures the strip; measured after paint. */
+    afterPaint(function () { if (tablist.isConnected) enhanceTabReveal(tablist); });
     if (tablist.dataset.edifyTabsReady === 'true') return;
     tablist.dataset.edifyTabsReady = 'true';
   }
@@ -614,13 +1446,134 @@
     window.setTimeout(function () { target.textContent = message; }, 40);
   }
 
+  /* A filter that offers nothing to choose is not shown.
+
+     The 2026-09-06 filter audit measured every select on every filtered page
+     and found controls that cannot narrow anything: Notifications' Category
+     renders only the categories that user actually has, so it is empty for
+     most people; the Accountant's District select came back with no options
+     at all; School scope, Cluster and Sub-county each offered a single value
+     on their page. A dropdown that opens on one line is a control the reader
+     has to read, consider and dismiss for nothing, and the owner asked for
+     the filter rows to carry only what matters.
+
+     Only genuinely empty controls go: fewer than two options AND nothing
+     currently applied. A select narrowed to one option BY an active filter
+     stays, because hiding it would strand the reader with a filter they can
+     no longer see or clear. The field is hidden, never removed, so it still
+     posts its value and the server sees the same form either way. */
+  var FILTER_CONTAINERS = [
+    '.platform-filter-bar', '.edify-filter-bar', '.school-filters-form',
+    '.school-filter-canvas', '.sp-filter-panel', '.spp-filter-panel',
+    '.spa-filter-panel', '.tt-filter-panel', '[data-component="filter-toolbar"]',
+    '#filters-form', '#core-filters-form', '#analytics-filters-form',
+    '#pl-analytics-filters', '#cd-analytics-filters', '#cluster-filters',
+    '#project-filters', '#debrief-filters', '#visits-filters', '#trainings-filters',
+    '#pd-filters', '#spp-filters', '#spa-filters', '#sp-plan-filters',
+    '#pl-dashboard-filters', '#cb-filters'
+  ].join(', ');
+
+  function filterFieldShell(select) {
+    /* The label, its caption and the select travel together. Walk up while
+       the parent holds nothing but this control, and stop at the bar. */
+    var node = select;
+    var parent = node.parentElement;
+    while (parent && !parent.matches(FILTER_CONTAINERS)) {
+      if (parent.querySelectorAll('select, input:not([type="hidden"]), button, a').length > 1) break;
+      node = parent;
+      parent = node.parentElement;
+    }
+    return node;
+  }
+
+  function hideEmptyFilters(root) {
+    var scope = root === document ? document : root;
+    var bars = scope.querySelectorAll ? scope.querySelectorAll(FILTER_CONTAINERS) : [];
+    bars.forEach(function (bar) {
+      bar.querySelectorAll('select[name]').forEach(function (select) {
+        var applied = select.value && select.value !== 'all' && select.value !== 'All';
+        var empty = select.options.length < 2 && !applied;
+        var shell = filterFieldShell(select);
+        if (empty) {
+          shell.hidden = true;
+          shell.setAttribute('data-edify-filter-empty', '');
+        } else if (shell.hasAttribute('data-edify-filter-empty')) {
+          shell.hidden = false;
+          shell.removeAttribute('data-edify-filter-empty');
+        }
+      });
+    });
+  }
+
+  /* A field that holds a value says so.
+
+     The owner's reference field (2026-09-06) is white when empty and tinted
+     once it has something in it, which is what lets a reader find the empty
+     boxes on a long form without reading a word. CSS can almost do this alone
+     — `:not(:placeholder-shown)` — but only where there IS a placeholder, and
+     a field without one is indistinguishable from a filled field to that
+     selector. Half the platform's inputs have no placeholder, so the tint
+     landed on some filled fields and not others, side by side.
+
+     One attribute, kept honest by delegated listeners, covers every field the
+     same way. It is an attribute rather than a class so it cannot collide with
+     the utility classes templates already carry. */
+  function markFilled(field) {
+    if (!field || field.disabled) return;
+    var type = (field.getAttribute('type') || '').toLowerCase();
+    if (type === 'checkbox' || type === 'radio' || type === 'hidden' ||
+        type === 'submit' || type === 'button' || type === 'reset' ||
+        type === 'file' || type === 'range') return;
+    var value = field.value;
+    if (field.tagName === 'SELECT') {
+      /* A select always has a value, so "filled" means a real choice rather
+         than the leading All/blank option every filter starts on. */
+      var blank = value === '' || value === 'All' || value === 'all';
+      field.toggleAttribute('data-edify-filled', !blank);
+      return;
+    }
+    field.toggleAttribute('data-edify-filled', String(value).trim() !== '');
+  }
+
+  function markFilledFields(root) {
+    var scope = root === document ? document : root;
+    if (!scope.querySelectorAll) return;
+    scope.querySelectorAll('input, select, textarea').forEach(markFilled);
+  }
+
+  if (!window.__edifyFilledFieldsBound) {
+    window.__edifyFilledFieldsBound = true;
+    ['input', 'change'].forEach(function (event) {
+      document.addEventListener(event, function (e) {
+        var el = e.target;
+        if (el && (el.tagName === 'INPUT' || el.tagName === 'SELECT' || el.tagName === 'TEXTAREA')) {
+          markFilled(el);
+        }
+      }, true);
+    });
+  }
+
   function enhanceCritical(root) {
+    /* Writers first, readers last. The marker pass rewrites every cell; a
+       style read after it re-resolves that whole subtree (40-90ms on a
+       dashboard), so the passes that measure — tab reveal, dialog
+       visibility, table fit — run after every pass that only writes, and
+       the page pays that resolution once (2026-09-06). */
     enhanceTables(root);
     enhanceStructuralMarkers(root);
-    enhanceTabs(root);
-    enhanceCustomDialogs(root);
     enhanceFormLabels(root);
     normalizeActionButtonTypes(root);
+    markFilledFields(root);
+    hideEmptyFilters(root);
+    enhanceTabs(root);
+  }
+
+  /* Runs `callback` in the task after the next frame paints. By then the
+     browser has resolved style and layout for that paint, so a pass that
+     only measures (tab reveal, dialog visibility, table fit) reads for free
+     instead of forcing its own resolution ahead of the paint. */
+  function afterPaint(callback) {
+    window.requestAnimationFrame(function () { window.setTimeout(callback, 0); });
   }
 
   function runWhenIdle(callback) {
@@ -649,6 +1602,17 @@
   function enhance(root) {
     enhanceCritical(root);
     scheduleAudit(root);
+    /* The measuring passes wait for the paint the writes above produce:
+       dialog visibility, then — once every table has its region and its
+       cells — fit or scroll. A table that needs fitting scrolls for one
+       frame; the page no longer resolves style three times before it
+       first paints (2026-09-06). */
+    afterPaint(function () {
+      if (root !== document && !root.isConnected) return;
+      enhanceCustomDialogs(root);
+      fitRails(root);
+      fitTables(root);
+    });
   }
 
   function scheduleMutationScan(mutations) {
@@ -670,18 +1634,25 @@
       var dialogRoots = Array.from(pendingDialogRoots);
       pendingEnhanceRoots.clear();
       pendingDialogRoots.clear();
-      enhanceRoots.forEach(function (root) {
-        if (root.isConnected) enhance(root);
-      });
+      /* Dialog visibility is a read; enhance() writes. Reading first means
+         this frame resolves style once for what the mutations dirtied,
+         instead of once for the mutations and again for our own writes
+         (a chart's arrival cost two ~100ms resolutions, 2026-09-06). A
+         dialog that arrived in this frame is still checked, by enhance(). */
       dialogRoots.forEach(function (root) {
         if (root.isConnected) enhanceCustomDialogs(root);
+      });
+      enhanceRoots.forEach(function (root) {
+        if (root.isConnected) enhance(root);
       });
       /* A removed dialog will not appear in a surviving mutation root. */
       Array.from(activeDialogs).forEach(deactivateDialog);
     });
   }
 
+  var fontsReadyAtEnhance = false;
   document.addEventListener('DOMContentLoaded', function () {
+    fontsReadyAtEnhance = Boolean(document.fonts && document.fonts.status === 'loaded');
     enhance(document);
     var observer = new MutationObserver(scheduleMutationScan);
     observer.observe(document.body, {
@@ -693,6 +1664,13 @@
   });
 
   document.addEventListener('htmx:afterSettle', function (event) { enhance(event.target); });
+  /* Web fonts that arrive after the first fit change every column width, so
+     the tables are fitted again; fonts that were already in when the page
+     was enhanced were measured then, and a second pass would only force
+     another style resolution. */
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(function () {
+    if (!fontsReadyAtEnhance) { fitRails(document); fitTables(document); }
+  });
   document.addEventListener('edify:announce', function (event) {
     announce(event.detail && event.detail.message, event.detail && event.detail.priority);
   });

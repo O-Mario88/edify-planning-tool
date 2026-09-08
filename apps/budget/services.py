@@ -8,6 +8,8 @@ and the monthly budget board.
 
 from __future__ import annotations
 
+import re
+
 from datetime import date, timedelta
 
 from django.db import transaction
@@ -16,7 +18,7 @@ from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.core.fy import get_operational_fy
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import activity_country_q, resolve_user_scope
 
 from .models import (
     CostCatalogue,
@@ -46,6 +48,39 @@ _FISCAL_QUARTER_BY_MONTH = {
 
 
 # ── Rate card ────────────────────────────────────────────────────────────────
+def visible_rates(catalogue):
+    """The rows a rate card SHOWS: the canonical registry plus every cost the
+    Country Director added for one activity."""
+    from django.db.models import Q
+
+    return CostSetting.objects.filter(catalogue=catalogue).filter(
+        Q(key__in=CANONICAL_RATE_KEYS) | Q(catalogue_item__isnull=False)
+    )
+
+
+def pricing_rates(catalogue):
+    """The rows a rate card PRICES with: what it shows, plus any row still
+    under a key the 2026-09-06 list renamed, so a card seeded before the
+    list (a saved snapshot's, a test's) answers for the new key."""
+    from django.db.models import Q
+
+    from apps.budget.reference import RATE_ALIASES
+
+    old_keys = {old for olds in RATE_ALIASES.values() for old in olds}
+    return CostSetting.objects.filter(catalogue=catalogue).filter(
+        Q(key__in=CANONICAL_RATE_KEYS | old_keys) | Q(catalogue_item__isnull=False)
+    )
+
+
+def linked_rate_key(catalogue_item, label: str) -> str:
+    """The stable key of a cost added for one activity: the item's code and
+    the cost's name, so two costs on one activity never collide."""
+    slug = re.sub(r"[^a-z0-9]+", "_", (label or "").strip().lower()).strip("_")[:48]
+    if not slug:
+        raise BadRequest("Give the cost a name.")
+    return f"activity:{catalogue_item.stable_code.lower()}:{slug}"
+
+
 def list_cost_settings(principal, query: dict) -> dict:
     # The registry is an allow-list, rather than merely excluding known old
     # keys. This prevents an ad-hoc alias from creating another editable source
@@ -55,19 +90,21 @@ def list_cost_settings(principal, query: dict) -> dict:
     catalogue = active_catalogue(query.get("fy"))
     qs = CostSetting.objects.none()
     if catalogue is not None:
-        qs = CostSetting.objects.filter(
-            catalogue=catalogue,
-            key__in=CANONICAL_RATE_KEYS,
-        ).order_by("label")
+        qs = visible_rates(catalogue).select_related("catalogue_item").order_by("label")
     settings_list = [
         {
             "id": c.id,
             "key": c.key,
             "label": c.label,
+            "unit": c.unit,
             "unitCost": c.unit_cost,
             "approvedMinimum": c.approved_minimum,
             "fy": c.fy,
             "version": c.version,
+            "catalogueItemId": c.catalogue_item_id,
+            "catalogueItemName": c.catalogue_item.display_name
+            if c.catalogue_item_id
+            else None,
         }
         for c in qs
     ]
@@ -91,10 +128,17 @@ def upsert_cost_setting(data: dict, principal) -> dict:
             "This is a retired cost item retained only for historical audit. "
             "Update its canonical Cost Catalogue item instead."
         )
-    if key not in CANONICAL_RATE_KEYS:
+    # A cost added for one activity is keyed "activity:<code>:<name>" and
+    # carries the item; it is as editable as a canonical rate.
+    linked_item = data.get("catalogueItem")
+    if (
+        key not in CANONICAL_RATE_KEYS
+        and linked_item is None
+        and not key.startswith("activity:")
+    ):
         raise BadRequest(
             "Unknown cost item. Cost settings must be registered in the "
-            "canonical Cost Catalogue before they can be edited."
+            "canonical Cost Catalogue or added for an activity before they can be edited."
         )
     label = data.get("label") or key.replace("_", " ").title()
     new_cost = data.get("unitCost")
@@ -123,6 +167,10 @@ def upsert_cost_setting(data: dict, principal) -> dict:
     with transaction.atomic():
         catalogue = CostCatalogue.objects.select_for_update().get(id=catalogue.id)
         existing = CostSetting.objects.filter(key=key, catalogue=catalogue).first()
+        if key not in CANONICAL_RATE_KEYS and existing is None and linked_item is None:
+            raise BadRequest("Unknown cost item. Add it for an activity first.")
+        if existing is not None and existing.catalogue_item_id:
+            linked_item = existing.catalogue_item
         old_minimum = existing.approved_minimum if existing else None
         new_minimum = data.get("approvedMinimum", old_minimum)
         if new_minimum in (None, ""):
@@ -199,19 +247,24 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                     approved_minimum=rate.approved_minimum,
                     geographic_scope=rate.geographic_scope,
                     costing_profile_scope=rate.costing_profile_scope,
+                    catalogue_item=rate.catalogue_item,
                     created_by=principal.user_id,
                 )
             )
         if existing is None:
+            from apps.budget.reference import RATE_UNITS
+
             cloned.append(
                 CostSetting(
                     catalogue=next_catalogue,
                     key=key,
                     label=label,
+                    unit=data.get("unit") or RATE_UNITS.get(key, "per activity"),
                     unit_cost=new_cost,
                     fy=next_catalogue.fy,
                     version=1,
                     approved_minimum=new_minimum,
+                    catalogue_item=linked_item,
                     created_by=principal.user_id,
                 )
             )
@@ -226,6 +279,7 @@ def upsert_cost_setting(data: dict, principal) -> dict:
                 "approved_minimum": existing.approved_minimum,
                 "geographic_scope": existing.geographic_scope,
                 "costing_profile_scope": existing.costing_profile_scope,
+                "catalogue_item": existing.catalogue_item,
                 "created_by": existing.created_by,
             }
             existing.catalogue = next_catalogue
@@ -282,7 +336,39 @@ def upsert_cost_setting(data: dict, principal) -> dict:
         "unitCost": setting.unit_cost,
         "fy": setting.fy,
         "version": setting.version,
+        "catalogueItemId": setting.catalogue_item_id,
     }
+
+
+def add_linked_cost(data: dict, principal) -> dict:
+    """The Country Director adds a cost for one activity (owner, 2026-09-06).
+
+    `data`: catalogueItemId, label, unitCost, approvedMinimum, reason. The
+    cost is keyed to the activity and priced on every schedule of it.
+    """
+    from apps.activity_catalogue.models import ActivityCatalogueItem
+
+    item_id = str(data.get("catalogueItemId") or "").strip()
+    if not item_id:
+        raise BadRequest("Choose the activity this cost belongs to.")
+    item = ActivityCatalogueItem.objects.filter(id=item_id).first()
+    if item is None:
+        raise BadRequest("Choose the activity this cost belongs to.")
+    label = str(data.get("label") or "").strip()
+    key = linked_rate_key(item, label)
+    return upsert_cost_setting(
+        {
+            "key": key,
+            "label": label,
+            "unit": "per activity",
+            "unitCost": data.get("unitCost"),
+            "approvedMinimum": data.get("approvedMinimum"),
+            "reason": data.get("reason"),
+            "fy": data.get("fy"),
+            "catalogueItem": item,
+        },
+        principal,
+    )
 
 
 def cost_setting_history(key: str, principal) -> list[dict]:
@@ -361,6 +447,8 @@ def from_schedule(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
     activities = list(qs.prefetch_related("schedule_cost_lines"))
 
     MONTH_LABELS = {
@@ -538,6 +626,8 @@ def weekly(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
 
     activities = list(
         qs.select_related("school", "cluster").prefetch_related("schedule_cost_lines")
@@ -670,6 +760,8 @@ def board(principal, query: dict) -> dict:
             qs = qs.filter(assigned_partner_id__in=scope.partner_ids)
         else:
             qs = qs.none()
+    else:
+        qs = qs.filter(activity_country_q(scope))
 
     activities = list(qs.prefetch_related("schedule_cost_lines"))
 

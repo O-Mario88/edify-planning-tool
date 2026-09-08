@@ -283,6 +283,10 @@ class BudgetLinesListView(APIView):
                 ).values_list("user_id", flat=True)
                 q |= Q(responsible_user__in=supervised_user_ids)
             qs = qs.filter(q)
+        elif scope.country_scope:
+            from apps.core.scoping import person_country_q
+
+            qs = qs.filter(person_country_q(scope, "responsible_user"))
 
         if request.query_params.get("weekStartDate"):
             qs = qs.filter(week_start_date=request.query_params["weekStartDate"])

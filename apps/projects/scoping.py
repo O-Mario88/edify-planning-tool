@@ -19,7 +19,7 @@ from __future__ import annotations
 from django.db.models import Q
 
 from apps.core.exceptions import Forbidden, NotFoundError
-from apps.core.scoping import resolve_user_scope
+from apps.core.scoping import country_bound, country_staff_ids, resolve_user_scope
 
 from .models import Project
 
@@ -29,6 +29,20 @@ def scoped_projects(principal, base=None):
     qs = base if base is not None else Project.objects.filter(deleted_at__isnull=True)
     scope = resolve_user_scope(principal)
     if scope.country_scope:
+        if country_bound(scope):
+            # A country role reads the projects that reach their country: by
+            # the schools enrolled or by the person running them. A project
+            # with neither is unplaced rather than somebody else's, so it
+            # stays visible until it is — the same rule as an ownerless
+            # cluster.
+            unplaced = Q(school_assignments__isnull=True) & (
+                Q(manager_staff_id__isnull=True) | Q(manager_staff_id="")
+            )
+            qs = qs.filter(
+                Q(school_assignments__school__region__country=scope.country)
+                | Q(manager_staff_id__in=country_staff_ids(scope))
+                | unplaced
+            ).distinct()
         return qs.order_by("name")
 
     staff_id = getattr(principal, "staff_profile_id", None)

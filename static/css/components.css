@@ -80,6 +80,15 @@
   max-width: calc(100vw - 2rem);
 }
 
+/* The popover floats over a form and must hide it. `.edify-surface` gives
+   it the theme's panel colour, which in Blue is translucent glass — so the
+   day grid rendered see-through, with the fields beneath showing between
+   the numbers. Two classes, so this outranks the single-class surface rule
+   whichever stylesheet declares it last. */
+.edify-calendar-popover.edify-surface {
+  background-color: var(--edify-surface-popover, var(--edify-surface-raised)) !important;
+}
+
 .edify-toast-card {
   width: min(22.5rem, calc(100vw - 2rem));
   max-width: calc(100vw - 2rem);
@@ -1228,6 +1237,30 @@ base.html owns card elevation; interactive tiles opt in via .card-interactive. *
   transform: translateY(-1px);
 }
 
+/* Outline variants: a destructive or cautionary act that is not the row's
+   primary action. Same tokens as the solid fills, worn as a border. */
+.btn-outline-danger {
+  background-color: transparent;
+  border-color: var(--edify-danger);
+  color: var(--edify-danger-solid);
+}
+.btn-outline-danger:hover {
+  background-color: var(--edify-danger-solid) !important;
+  border-color: var(--edify-danger-solid);
+  color: var(--edify-danger-on-solid) !important;
+  transform: translateY(-1px);
+}
+.btn-outline-warning {
+  background-color: transparent;
+  border-color: var(--edify-warning);
+  color: var(--edify-warning);
+}
+.btn-outline-warning:hover {
+  background-color: var(--edify-warning) !important;
+  color: #ffffff !important;
+  transform: translateY(-1px);
+}
+
 /* Icon button modifier: Circular */
 .btn-icon {
   border-radius: var(--edify-radius-circle);
@@ -1329,15 +1362,6 @@ select:not([multiple]):not(.select-native) {
   background-repeat: no-repeat;
   background-position: right 0.6rem center;
   background-size: 16px 16px;
-}
-
-/* Empty State component */
-.edify-empty-state {
-  text-align: center;
-  padding: 3rem 1.5rem;
-  background-color: var(--edify-surface-muted);
-  border-radius: var(--edify-radius-md);
-  border: 1px dashed var(--edify-border);
 }
 
 /* Layout & Grid Helpers (Tailwind Fallbacks) */
@@ -1613,10 +1637,14 @@ select:not([multiple]):not(.select-native) {
   word-break: normal;
 }
 
-/* At the smallest supported tile width, the decorative icon is the first
-   thing to yield. Giving its lane back to the label prevents four- and
-   five-line headings without hiding or truncating the actual information. */
-@container kpi-card (max-width: 16rem) {
+/* At the smallest supported tile width, the mark is the first thing to yield.
+   Giving its lane back to the label prevents four- and five-line headings
+   without hiding or truncating the actual information.
+
+   Lowered from 16rem to 11rem on 2026-09-07: the mark leads every metric in
+   the design this now follows, and at 16rem it was disappearing from ordinary
+   six-up laptop trays rather than from the cramped ones this guards. */
+@container kpi-card (max-width: 11rem) {
   .kpi-strip__icon-container {
     display: none;
   }
@@ -1718,6 +1746,14 @@ select:not([multiple]):not(.select-native) {
   }
 }
 
+/* Four tiles, in the band that fits three columns but not four (auto-fit's
+   14rem minimum): two rows of two, never 3 + 1 with an orphan (2026-09-04). */
+@container kpi-strip (min-width: 42rem) and (max-width: 55.99rem) {
+  .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
 @container kpi-strip (min-width: 48rem) {
   .kpi-strip__grid { gap: 0.75rem; }
 
@@ -1761,7 +1797,13 @@ select:not([multiple]):not(.select-native) {
     padding: var(--edify-surface-padding-compact);
     border: 1px solid var(--edify-border);
     border-radius: var(--edify-radius-md);
-    background: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
+    /* background-COLOR, not the shorthand. The shorthand resets
+       `background-image`, so a strip of six or more tiles lost the accent
+       gradient every tile is supposed to carry — 68 of the platform's 124
+       tiles, which is why the design read as "not applied system-wide"
+       (owner, 2026-09-05). The muted ground this rule wants is a colour; the
+       gradient sits on top of it. */
+    background-color: color-mix(in srgb, var(--edify-surface-muted) 72%, transparent);
   }
 }
 
@@ -1797,15 +1839,34 @@ select:not([multiple]):not(.select-native) {
    generous white tray around compact, individually elevated cards. Surplus metrics
    are removed by `professional_kpis` before this CSS sees them; there is no
    carousel, overflow shelf, or hidden second row. */
+/* THE PANEL (owner, 2026-09-07)
+   "I want all the KPI Designs system wide redesigned like the referenced
+   photos… remove the current square designs but keep the gradients."
+   The reference is this platform's own login strip: ONE panel, its metrics
+   separated by hairlines, each led by an icon. So the tray keeps its border,
+   its radius and a gradient, and the tiles inside it stop being tiles — no
+   border, no radius, no shadow, no background of their own.
+
+   "The blue color you see should only apply on blue mode the rest of the modes
+   should retain their themes": every colour here is a token, so the blue theme
+   renders the reference's navy and teal while the light theme stays light. The
+   gradient is expressed as a wash of the surface tokens rather than a fixed
+   pair of blues, for the same reason. */
 .kpi-strip.kpi-strip--executive {
   position: relative;
   overflow: clip;
-  padding: clamp(1.25rem, 0.9rem + 1.1cqi, 1.875rem);
-  border: 1px solid var(--edify-border);
-  border-radius: clamp(1.5rem, 1.25rem + 1cqi, 2rem);
+  padding: clamp(1rem, 0.8rem + 0.7cqi, 1.35rem);
+  border: 1px solid var(--edify-kpi-panel-border);
+  border-radius: var(--edify-radius-surface, 1rem);
   background-color: var(--edify-surface);
-  background-image: none;
-  box-shadow: 0 2px 4px rgb(15 23 42 / 0.06), 0 14px 34px rgb(15 23 42 / 0.08);
+  background-image: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--edify-accent) 7%, var(--edify-surface)),
+    color-mix(in srgb, var(--edify-accent) 2%, var(--edify-surface)) 62%,
+    var(--edify-surface)
+  );
+  box-shadow: inset 0 1px 0 var(--edify-kpi-panel-sheen),
+    0 2px 4px rgb(15 23 42 / 0.05), 0 14px 34px rgb(15 23 42 / 0.07);
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__header {
@@ -1819,39 +1880,55 @@ select:not([multiple]):not(.select-native) {
   white-space: nowrap;
 }
 
+/* The dividers are drawn by every tile carrying a hairline on its inline-start
+   and block-start edges, and the grid then CLIPS the outermost ones: each tile
+   is pulled 1px up and left, so the first column's left rule and the first
+   row's top rule fall outside the grid's box and are never painted. That is
+   the whole mechanism, and it is why no rule here has to know how many columns
+   the tray is running — the column count changes with the metric count and the
+   container width in a dozen places below, and every one of them keeps working.
+   The tray's own padding sits outside this box, so the rules stop short of the
+   panel's border exactly as they do in the reference. */
 .kpi-strip.kpi-strip--executive .kpi-strip__grid {
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 9.5rem), 1fr));
-  gap: clamp(0.875rem, 0.7rem + 0.55cqi, 1.25rem);
+  gap: 0;
+  overflow: clip;
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__item {
-  min-block-size: clamp(7.75rem, 7.3rem + 1.2cqi, 8.75rem);
-  padding: clamp(1rem, 0.85rem + 0.45cqi, 1.25rem);
-  border-color: color-mix(in srgb, var(--edify-border) 82%, transparent);
-  border-radius: clamp(0.875rem, 0.75rem + 0.35cqi, 1.125rem);
-  background-color: color-mix(in srgb, var(--edify-surface) 96%, var(--edify-surface-muted));
-  box-shadow: 0 2px 3px rgb(15 23 42 / 0.12), 0 8px 16px rgb(15 23 42 / 0.08);
-  justify-content: stretch;
+  min-block-size: 0;
+  /* Block padding is what gives the panel its height now that the tiles have
+     no minimum of their own; inline padding is what separates a metric from
+     the hairline beside it. */
+  padding: clamp(0.7rem, 0.6rem + 0.35cqi, 0.95rem) clamp(0.75rem, 0.6rem + 0.5cqi, 1.1rem);
+  border: 0;
+  border-inline-start: 1px solid var(--edify-kpi-divider);
+  border-block-start: 1px solid var(--edify-kpi-divider);
+  border-radius: 0;
+  /* Pulled onto the grid's edge so the outer two rules clip away. */
+  margin-inline-start: -1px;
+  margin-block-start: -1px;
+  background: transparent;
+  box-shadow: none;
+  justify-content: center;
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__item-body {
-  /* The reference tile is three stacked text rows — label, numeral, delta —
-     with the movement pill in the top-right corner. The old layout reserved a
-     whole first row for an icon chip the reference does not have, which is
-     why the label sat mid-card instead of at the top. The pill overlays the
-     corner absolutely and the label's ::before float spacer clears it on the
-     FIRST LINE ONLY — a second label line runs the full tile width. A grid
-     column for the pill was tried first and rejected: it narrowed every
-     label line, and Edify labels run far longer than the reference's. */
+  /* The reference composition: one mark on the left, three text rows on the
+     right — LABEL, the number, and a single caption line. The icon is centred
+     against the whole block rather than pinned to the first row, which is what
+     stops a two-line label from dragging it upward. */
   position: relative;
   display: grid;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-columns: auto minmax(0, 1fr);
   grid-template-areas:
-    "label"
-    "value"
-    "meta";
-  align-content: start;
+    "icon label"
+    "icon value"
+    "icon meta";
+  align-content: center;
+  column-gap: clamp(0.6rem, 0.5rem + 0.3cqi, 0.85rem);
   block-size: 100%;
+  text-align: start;
 }
 
 /* The details wrapper dissolves so label, value and meta slot straight into
@@ -1862,77 +1939,58 @@ select:not([multiple]):not(.select-native) {
 }
 
 .kpi-strip.kpi-strip--executive .kpi-strip__topline {
-  position: absolute;
-  inset-block-start: 0;
-  inset-inline-end: 0;
+  display: contents;
 }
 
-/* First-line clearance for the corner pill. Floats do work inside the
-   label's -webkit-box clamp (verified in-browser); the spacer is one line
-   tall, so only the first line yields. */
-.kpi-strip.kpi-strip--executive .kpi-strip__label::before {
-  content: "";
-  float: right;
-  inline-size: 3.9rem;
-  /* Must be at least as tall as the pill it clears (12px × 1.2 ≈ 14.4px),
-     measured against the label's own 14px line boxes — 1.25em ≈ 17.5px.
-     When this was 1.1em against a padded ~19px pill, the second line of a
-     long label ran under the pill's bottom edge on narrow tiles. */
-  block-size: 1.25em;
-}
-
-/* Below ~15rem the corner slot and a long label cannot share a row: the
-   spacer leaves less width than one unbreakable word ("Verification"), so
-   the whole first line drops beneath the float and grazes the pill — the
-   IA dashboard's six-up tiles at laptop width. The pill takes its own top
-   row instead; the reference's corner composition resumes the moment the
-   tile is wide enough to honour it. */
-@container kpi-card (max-width: 14.99rem) {
-  .kpi-strip.kpi-strip--executive .kpi-strip__item-body {
-    grid-template-areas:
-      "pill"
-      "label"
-      "value"
-      "meta";
-  }
-
-  .kpi-strip.kpi-strip--executive .kpi-strip__topline {
-    position: static;
-    grid-area: pill;
-    justify-self: end;
-    margin-block-end: 0.25rem;
-  }
-
-  .kpi-strip.kpi-strip--executive .kpi-strip__label::before {
-    content: none;
-  }
-}
-
-/* The reference tile carries no icon. The chip markup stays in the template
-   for the variants that do use it; the executive tray simply does not show
-   it, the same way the reference spends that corner on the movement pill. */
+/* THE MARK. Outline glyph on the tile's own accent, no filled chip behind it:
+   a chip on every metric turns a row of four into a row of four badges, which
+   is the "square design" this replaced. */
 .kpi-strip.kpi-strip--executive .kpi-strip__icon-container {
-  display: none;
+  display: inline-flex;
+  grid-area: icon;
+  align-items: center;
+  align-self: center;
+  justify-content: center;
+  /* The reference's mark is 2.2rem and it is what makes the tile read as a
+     metric at a glance; the clamp only gives ground on a genuinely narrow
+     tile. */
+  inline-size: clamp(1.9rem, 1.7rem + 0.7cqi, 2.35rem);
+  block-size: clamp(1.9rem, 1.7rem + 0.7cqi, 2.35rem);
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  box-shadow: none;
+  color: var(--kpi-accent, var(--edify-accent));
 }
 
+.kpi-strip.kpi-strip--executive .kpi-strip__icon-container svg {
+  inline-size: 100%;
+  block-size: 100%;
+  stroke-width: 1.55;
+}
 
-
+/* Small caps, the reference's own treatment: at this size an uppercase label
+   reads as a field name rather than as a sentence competing with the number
+   under it. Still clamped to two lines with an ellipsis — Edify's labels run
+   much longer than the reference's four ("Salesforce Verification Pending"),
+   and hidden rather than clip is what produces the ellipsis inside a
+   -webkit-box clamp. */
 .kpi-strip.kpi-strip--executive .kpi-strip__label {
   display: -webkit-box;
   grid-area: label;
-  min-block-size: 2.4em;
-  margin-block-end: 0.35rem;
-  /* hidden, not clip: with the -webkit-box clamp, hidden is what produces
-     the ellipsis. IA's "Salesforce Verification Pending" was clipping
-     mid-word with no signal that anything was missing. */
+  min-block-size: 0;
+  margin-block-end: 0.15rem;
   overflow: hidden;
   color: var(--edify-text-muted);
-  font-size: var(--edify-text-tile-label-size);
-  font-weight: 500;
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.04em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   line-clamp: 2;
   text-overflow: ellipsis;
+  text-transform: uppercase;
   text-wrap: pretty;
   white-space: normal;
 }
@@ -1967,9 +2025,16 @@ select:not([multiple]):not(.select-native) {
    which is why the card ended at the value and the delta lived only in the
    pill. Both are driven by the same figure, so they cannot contradict each
    other the way a hand-built mockup's can. */
+/* One caption line under the number: the state of the data, then the helper
+   that qualifies it. Wraps rather than truncates — a helper that says which
+   period a figure covers is not worth losing to an ellipsis. */
 .kpi-strip.kpi-strip--executive .kpi-strip__meta {
-  display: block;
+  display: flex;
   grid-area: meta;
+  align-items: baseline;
+  gap: 0.35rem;
+  margin-block-start: 0.15rem;
+  flex-wrap: wrap;
 }
 
 /* A11Y-01. The tint is 30%, not 70%, because helper text is 12px at weight
@@ -2020,6 +2085,26 @@ select:not([multiple]):not(.select-native) {
 @container kpi-strip (min-width: 48rem) and (max-width: 55.99rem) {
   .kpi-strip.kpi-strip--executive .kpi-strip__grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* Exactly four never renders as three and an orphan: a four-metric strip is
+     the platform's most common headline, and at laptop width 3 + 1 left a
+     lone tile in a three-quarter-empty row. Four tracks of ~11rem still clear
+     the 9.5rem tile floor. Five balances as 3 + 2 on twelve tracks. */
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(5)):not(:has(> .kpi-strip__item:nth-child(6))) {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(5)):not(:has(> .kpi-strip__item:nth-child(6))) > .kpi-strip__item {
+    grid-column: span 4;
+  }
+
+  .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(5)):not(:has(> .kpi-strip__item:nth-child(6))) > .kpi-strip__item:nth-child(n + 4) {
+    grid-column: span 6;
   }
 
   /* Exact metric counts fill every row at tablet/workspace widths without
@@ -2191,13 +2276,14 @@ select:not([multiple]):not(.select-native) {
      cards. aspect-ratio needs the height floor removed or the taller of the
      two wins and the row stops being square. */
   .kpi-strip.kpi-strip--executive .kpi-strip__item {
-    aspect-ratio: 1;
+    /* Was aspect-ratio: 1 — a literal square, which is the design the owner
+       asked to remove. A metric is as tall as its three text rows. */
+    aspect-ratio: auto;
     min-block-size: 0;
   }
 
-  /* The old executive design re-showed the icon chip on phones here. The
-     reference tile carries no icon at any width — deleted with the rest of
-     the legacy design. */
+  /* The mark stays at every width: it is what makes a one-up phone tile read
+     as a metric rather than as a stray heading (owner, 2026-09-07). */
 }
 
 /* ── Absent state is prose, not a measurement ────────────────────────────
@@ -2939,7 +3025,8 @@ svg[data-edify-svg-typography] text {
 }
 
 .edify-donut__unit {
-  font-size: 0.42em;
+  /* Scales with the value but never below the 12px floor (tablet pass). */
+  font-size: max(0.42em, var(--edify-text-micro-size));
   font-weight: 500;
   line-height: 1;
   margin-block-start: 0.25em;
@@ -3486,10 +3573,28 @@ search:has(.edify-search-submit) input[type="search"] {
   .edify-admin-support-banner a { margin-inline-start: 0; }
 }
 
+/* A chart's SVG keeps the size the chart engine gave it. Icon rules such as
+   `.ia-panel svg { height: 1em }` reach every SVG in a card, and on the IA
+   dashboard they squashed a 240px chart to 17px once it moved inside a card
+   (2026-09-05). `revert` hands the size back to the engine's attributes. */
+main .apexcharts-canvas > svg.apexcharts-svg {
+  inline-size: revert !important;
+  block-size: revert !important;
+  max-inline-size: none !important;
+}
+
 /* ── ApexCharts reference treatment ───────────────────────────────────────
    Series colors stay data-driven, while the hollow points and black tooltip
-   mirror the platform's chart reference across line and mixed charts. */
-.apexcharts-canvas .apexcharts-marker {
+   mirror the platform's chart reference across line and mixed charts.
+
+   PLOT points only. ApexCharts draws every legend swatch as a path carrying
+   this same `apexcharts-marker` class, so an unscoped rule painted every
+   legend on the platform surface-on-surface — three blank squares beside
+   "Planned  Achieved  Achievement %" (owner, 2026-09-05). The swatch keeps
+   its series fill; the point on the line stays hollow, and its ring carries
+   the series colour (EdifyChartSystem.renderDetached sets it), which is what
+   makes a hollow point visible on a surface-coloured card at all. */
+.apexcharts-canvas .apexcharts-marker:not(.apexcharts-legend-marker) {
   fill: var(--edify-surface);
   stroke-width: 2px;
 }
@@ -3814,23 +3919,54 @@ search:has(.edify-search-submit) input[type="search"] {
      falls — across two district fills, over a boundary, or on a dark choropleth
      band. paint-order draws the stroke behind the fill; without it the outline
      eats inward and the text just reads heavier instead of haloed. */
-  #sr-cam .sr-sl{font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
+  /* A sub-region name is a heading over the districts it covers, and it is the
+     control that opens them: it carries half again the district labels' size
+     so the two levels are told apart at a glance, and it takes pointer events
+     (`#sr-cam text` turns them off for every other label) so it can be pressed
+     (owner, 2026-09-07). The halo thickens with the type — a stroke measured in
+     `em` grows with the glyph, but a heavier weight needs more of it to stay
+     clear of a dark choropleth band underneath. */
+  #sr-cam .sr-sl{font-size:calc(var(--edify-svg-text-micro,var(--edify-text-micro-size)) * 1.55);
                  font-weight:var(--edify-text-display-weight);fill:var(--edify-accent);
                  letter-spacing:.04em;
-                 stroke:var(--edify-on-accent);stroke-width:.16em;stroke-linejoin:round;
-                 paint-order:stroke fill}
+                 stroke:var(--edify-on-accent);stroke-width:.18em;stroke-linejoin:round;
+                 paint-order:stroke fill;
+                 pointer-events:auto;cursor:pointer;
+                 transition:fill .15s ease,opacity .15s ease}
+  /* `--edify-accent-hover` is the platform's darker step for this same accent,
+     the one every primary button moves to on hover. `--edify-primary` is NOT:
+     it resolves to the identical #0e5da3, so a name that used it changed
+     nothing under the pointer. */
+  #sr-cam .sr-sl:hover,
+  #sr-cam .sr-sl:focus-visible{fill:var(--edify-accent-hover);outline:none}
+  /* The keyboard ring goes on the glyphs, not on a box around them: an SVG
+     text node's focus outline is drawn at its bounding box and the camera
+     magnifies it on zoom. */
+  #sr-cam .sr-sl:focus-visible{stroke:var(--edify-accent);stroke-width:.3em}
   #sr-cam .sr-scl{
     font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size));
     font-weight:var(--edify-text-label-weight);fill:var(--edify-map-label);
     letter-spacing:0;stroke:var(--edify-map-label-halo);stroke-width:.2em;
     stroke-linejoin:round;paint-order:stroke fill;
   }
-  /* Place names are operational map content, including on phones. Collision
-     fitting and text halos keep the dense national layer readable without
-     removing district identity from smaller viewports. */
+  /* On a phone the map carries SUB-REGION names only (owner, 2026-09-05:
+     "the map labels on mobile should only show the sub-region ... the screen
+     is too small and looks overcrowded"). All 136 district names at once on a
+     375px canvas overlap into noise, and the sub-region is the level the
+     table beside the map is grouped by anyway. District identity is still one
+     tap away: zoom, the tooltip and the focus panel all name the district.
+     Tracking tightens so the widest name — SOUTH WESTERN, centred on a
+     sub-region that sits against the left edge — stays inside the canvas. */
   @media (max-width:48rem){
-    #sr-cam .sr-dl{display:block}
-    #sr-cam .sr-sl{display:block}
+    #sr-cam .sr-dl{display:none}
+    /* Back to the plain type step here. The enlargement above is there to tell
+       a sub-region name apart from a district name; on a phone there are no
+       district names to tell it apart from, and the canvas is a third as wide,
+       so the same multiplier only runs WEST NILE into ACHOLI and pushes SOUTH
+       WESTERN off the edge. These stay tappable — the base rule's pointer
+       events and cursor are untouched. */
+    #sr-cam .sr-sl{display:block;letter-spacing:0;stroke-width:.2em;
+                   font-size:var(--edify-svg-text-micro,var(--edify-text-micro-size))}
   }
   #sr-cam .sr-school-pins,#sr-cam .sr-subcounty-pin-layer{pointer-events:none}
   #sr-cam .sr-boundary-layer > path{
@@ -3976,16 +4112,40 @@ search:has(.edify-search-submit) input[type="search"] {
 .kpi-strip__item.kpi-strip__item--info,
 .kpi-strip__item.kpi-strip__item--primary { --kpi-accent: var(--edify-accent); }
 .kpi-strip__item.kpi-strip__item--amber,
+.kpi-strip__item.kpi-strip__item--orange,
 .kpi-strip__item.kpi-strip__item--warning { --kpi-accent: var(--edify-warn, #f59e0b); }
+.kpi-strip__item.kpi-strip__item--teal { --kpi-accent: var(--edify-chart-teal, #0d9488); }
 .kpi-strip__item.kpi-strip__item--emerald,
 .kpi-strip__item.kpi-strip__item--green,
 .kpi-strip__item.kpi-strip__item--success { --kpi-accent: var(--edify-success, #10b981); }
 .kpi-strip__item.kpi-strip__item--violet,
 .kpi-strip__item.kpi-strip__item--purple { --kpi-accent: #8b5cf6; }
 .kpi-strip__item.kpi-strip__item--rose,
+.kpi-strip__item.kpi-strip__item--red,
 .kpi-strip__item.kpi-strip__item--danger { --kpi-accent: var(--edify-danger, #ef4444); }
+/* Every tone a caller actually passes needs an accent here, or the tile falls
+   through the gradient rule below with `--kpi-accent` unset and renders as a
+   plain white card beside its coloured siblings — which is what
+   `variant="finance"` did to Budget utilization on the Accountant's home
+   (2026-09-04). test_kpi_tile_tones pins the mapping to the tones in use. */
+.kpi-strip__item.kpi-strip__item--finance { --kpi-accent: var(--edify-accent); }
+.kpi-strip__item.kpi-strip__item--analytics { --kpi-accent: #8b5cf6; }
+.kpi-strip__item.kpi-strip__item--lime { --kpi-accent: var(--edify-success, #10b981); }
+.kpi-strip__item.kpi-strip__item--document,
+.kpi-strip__item.kpi-strip__item--slate,
+.kpi-strip__item.kpi-strip__item--default,
+.kpi-strip__item.kpi-strip__item--neutral { --kpi-accent: var(--edify-text-muted, #64748b); }
 
-.kpi-strip__item[class*="kpi-strip__item--"] {
+/* Every tile, not only a toned one (2026-09-05). A tile rendered without a
+   tone — the Work Plan's six, for instance — matched no accent rule, so
+   `--kpi-accent` was unset and the whole gradient declaration was dropped,
+   leaving a flat white card beside its washed neighbours. A tone still
+   overrides the neutral default above. */
+.kpi-strip__item {
+  --kpi-accent: var(--edify-text-muted, #64748b);
+}
+
+.kpi-strip__item {
   border-color: color-mix(in srgb, var(--kpi-accent) 42%, var(--edify-border));
   background-image:
     radial-gradient(
@@ -4098,5 +4258,605 @@ main .budget-ledger table.budget-ledger-table { border-collapse: collapse; font-
 main .budget-ledger table.budget-ledger-table :is(th, td) { padding: 5px 9px !important; border: 0 !important; font-size: var(--edify-text-body-size) !important; }
 main .budget-ledger table.budget-ledger-table th[scope="row"] { white-space: normal; text-wrap: wrap; }
 main .budget-ledger table.budget-ledger-table .budget-ledger-band > * { background: #145b9a !important; color: #fff !important; }
+/* A band that lives in <thead> must outrank the platform's neutral heading contract (main table thead th). */
+main .budget-ledger table.budget-ledger-table thead .budget-ledger-band > th { background-color: #145b9a !important; color: #fff !important; font-weight: 600 !important; border-block-end: 0 !important; }
 main .budget-ledger table.budget-ledger-table .budget-ledger-subtotal > * { background: #e2f2fa !important; color: #1e293b !important; font-weight: 700 !important; }
 main .budget-ledger table.budget-ledger-table tbody tr:not(.budget-ledger-band):not(.budget-ledger-subtotal) { background: var(--edify-surface, #fff) !important; }
+/* The grand total reads as the loudest row of the ledger. */
+main .budget-ledger table.budget-ledger-table tfoot .budget-ledger-band > * { font-weight: 700 !important; }
+/* Four-column category breakdown (fund detail) in the same dress, without the six-column minimum. */
+main .budget-ledger table.fund-breakdown-table { min-width: 0; }
+main .budget-ledger table.fund-breakdown-table tr > :nth-child(2) { text-align: center; }
+main .budget-ledger table.fund-breakdown-table tr > :nth-child(n+3) { text-align: right; white-space: nowrap; }
+main .budget-ledger table.fund-breakdown-table tfoot th[scope="row"] { text-align: left; }
+main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weight: 600; white-space: normal; }
+.fund-breakdown-table__note { font-size: var(--edify-text-caption-size); font-weight: 500; color: var(--edify-text-muted); margin-inline-start: 0.25rem; }
+.fund-breakdown-table__empty { text-align: center !important; color: var(--edify-text-muted); padding-block: 1.25rem !important; }
+.fund-breakdown-table__adjustment td { color: var(--edify-danger, #dc2626); font-weight: 600; }
+
+
+/* Inset tiles ----------------------------------------------------------------
+   The same tile, inside a panel. A panel's secondary figures (a reconciliation
+   count beside its table, a cash position beside its chart) used to be drawn
+   by hand with utility classes, so every page invented its own tile. They now
+   pass through the one component with variant="inset": the tray chrome and
+   the freshness pill go, the tile itself is unchanged. */
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  margin-block-end: 0;
+  overflow: visible;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__grid {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 8.5rem), 1fr)) !important;
+  /* No gap: the supporting tray is the same panel, and a gap here would put
+     the tiles back into separate cards with the hairlines floating between
+     them (owner, 2026-09-07). */
+  gap: 0 !important;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__grid > .kpi-strip__item {
+  grid-column: auto !important;
+  min-block-size: 0;
+  padding: 0.7rem 0.85rem;
+}
+
+/* A supporting metric is a footnote to the headline above it, so it drops the
+   mark and runs as text alone — the grid column collapses to nothing when the
+   icon is not there to fill it. */
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__topline {
+  display: none;
+}
+
+.kpi-strip.kpi-strip--executive.kpi-strip--supporting .kpi-strip__value {
+  font-size: clamp(1.125rem, 1rem + 1.6cqi, 1.5rem);
+}
+
+
+/* ═══ THE KPI PANEL IS THE LAST WORD ON TILE CHROME ═════════════════════════
+   (owner, 2026-09-07: "remove the current square designs but keep the
+   gradients… I want Tiles overhauls platform-wide not just one page or one
+   role".)
+
+   A metric inside the executive tray is not a card. It has no border of its
+   own, no radius, no surface and no shadow — the panel around it carries all
+   four, and hairlines separate one metric from the next.
+
+   This block asserts !important, and the reason is specificity rather than
+   force. The tray's column count is chosen by a dozen `:has(> .kpi-strip__item
+   :nth-child(N))` rules, and each of those selectors outranks any plain
+   `.kpi-strip--executive .kpi-strip__item` chain — several of them dressed the
+   tile as a card on the way past, which is how a strip of six or more kept its
+   squares while a strip of four lost them. Rather than chase the chrome
+   through every count and breakpoint, the component states its own anatomy
+   once, here, at the end of the file. Layout is deliberately NOT claimed: the
+   count rules keep choosing the columns, and the density rules keep choosing
+   the padding.
+
+   The gradient the owner asked to keep did not go anywhere. It moved from 124
+   individual tiles to the one panel they sit in, where it reads as a single
+   surface instead of as a grid of separately washed boxes. Each metric's tone
+   still shows — in its mark and in its caption — which is where the reference
+   carries it too. */
+.kpi-strip.kpi-strip--executive .kpi-strip__grid {
+  gap: 0 !important;
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item {
+  border-width: 0 !important;
+  border-inline-start-width: 1px !important;
+  border-block-start-width: 1px !important;
+  border-style: solid !important;
+  border-color: var(--edify-kpi-divider) !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* The accent hairline that ran along the top of a toned card belonged to the
+   card. There is no card. */
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item::after {
+  display: none;
+}
+
+/* The movement reads as text on the caption line, not as a chip. The old tile
+   spent its top-right corner on a pill, which is why the pill had a fill and a
+   border to hold that corner together; on the caption line, beside the helper
+   that qualifies it, a boxed number sits in the middle of a sentence (owner,
+   2026-09-07 — the reference caption is one line of coloured text). The colour
+   the pill carried stays: that is what says up from down. */
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item .kpi-strip__trend {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--kpi-trend-color, inherit);
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item .kpi-strip__trend--up {
+  --kpi-trend-color: var(--edify-success-text);
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item .kpi-strip__trend--down {
+  --kpi-trend-color: var(--edify-danger-text);
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item .kpi-strip__trend--fresh {
+  --kpi-trend-color: var(--edify-success-text);
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item .kpi-strip__trend--neutral {
+  --kpi-trend-color: var(--edify-text-muted);
+}
+
+/* Hover and focus land on the metric, not on a card that no longer exists:
+   the whole cell lifts by a wash of its own accent, and the ring stays inside
+   the panel so `overflow: clip` (which is what hides the outermost hairlines)
+   cannot cut it in half. */
+.kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item:is(:hover, :focus-within) {
+  background-color: color-mix(in srgb, var(--kpi-accent, var(--edify-accent)) 7%, transparent) !important;
+}
+
+.kpi-strip.kpi-strip--executive .kpi-strip__item-body--link:focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: -3px;
+  border-radius: var(--edify-radius-sm, 6px);
+}
+
+
+/* ═══ THE SAME PANEL, ONE STEP DOWN ════════════════════════════════════════
+   (owner, 2026-09-07: fold the in-card mini-summaries into the KPI design too.)
+
+   A card's own little grid of numbers — the CD's verification counts, the
+   country budget's month summary, the To-Do status chips — was hand-rolled
+   with Tailwind utilities everywhere it appeared: a tinted box per number,
+   `bg-rose-50 border border-rose-100`, in as many colour pairs as there were
+   moods. Beside a headline tray that had just stopped being boxes, they were
+   the last squares on the page.
+
+   Same anatomy, smaller: one panel, hairlines between the metrics, a small-caps
+   label, the number, an optional caption. Same tokens, so the same rule about
+   themes holds — the blue theme's blues live in the theme, not here.
+
+   The columns are NOT set here. Every one of these grids already declares its
+   own `grid-cols-*` and knows better than a component does how many numbers it
+   is showing; what this claims is the gap, because the hairlines replace it. */
+.edify-metric-panel {
+  display: grid;
+  gap: 0;
+  overflow: clip;
+  border: 1px solid var(--edify-kpi-panel-border);
+  border-radius: var(--edify-radius-md);
+  background-color: var(--edify-surface);
+  background-image: linear-gradient(
+    110deg,
+    color-mix(in srgb, var(--edify-accent) 5%, var(--edify-surface)),
+    var(--edify-surface) 70%
+  );
+}
+
+/* The same trick as the tray: a rule on two edges, and the panel clips the
+   outermost pair. No rule needs to know the column count, which is exactly
+   what lets the templates keep choosing it. */
+.edify-metric {
+  min-inline-size: 0;
+  padding: 0.5rem 0.7rem;
+  border-inline-start: 1px solid var(--edify-kpi-divider);
+  border-block-start: 1px solid var(--edify-kpi-divider);
+  margin-inline-start: -1px;
+  margin-block-start: -1px;
+}
+
+.edify-metric__label {
+  overflow: hidden;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.edify-metric__value {
+  margin-block-start: 0.1rem;
+  color: var(--edify-text);
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+  line-height: 1.25;
+}
+
+/* The unit, the denominator, the qualifier — whatever rides with the number
+   without being it. */
+.edify-metric__value small,
+.edify-metric__unit {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.edify-metric__meta {
+  margin-block-start: 0.1rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+/* Tone colours the NUMBER, never a box behind it — the same choice the tray
+   makes, and the reason these stopped being coloured rectangles. */
+.edify-metric[data-tone="danger"] .edify-metric__value { color: var(--edify-danger-text); }
+.edify-metric[data-tone="warning"] .edify-metric__value { color: var(--edify-warning-text); }
+.edify-metric[data-tone="success"] .edify-metric__value { color: var(--edify-success-text); }
+.edify-metric[data-tone="info"] .edify-metric__value { color: var(--edify-accent); }
+
+/* A metric that leads with its number — the To-Do chips and the CD's funded
+   backlog read count-first — keeps that order and centres, rather than being
+   rewritten into label-first markup at every call site. */
+.edify-metric--count-first {
+  display: flex;
+  flex-direction: column-reverse;
+  justify-content: center;
+  text-align: center;
+}
+
+.edify-metric--count-first .edify-metric__label {
+  margin-block-start: 0;
+}
+
+.edify-metric--count-first .edify-metric__value {
+  margin-block-start: 0;
+  margin-block-end: 0.1rem;
+}
+
+/* A metric that leads with a mark — the country budget's plan sources, where
+   the icon IS the identity and the label only names it. Written in visual
+   order (mark, number, label) rather than reversed, because there is nothing
+   to reverse once three things are stacked. */
+.edify-metric--marked {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  justify-content: center;
+  text-align: center;
+}
+
+.edify-metric__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 1.35rem;
+  block-size: 1.35rem;
+  color: var(--edify-accent);
+}
+
+.edify-metric__mark svg {
+  inline-size: 100%;
+  block-size: 100%;
+}
+
+.edify-metric--marked .edify-metric__value,
+.edify-metric--marked .edify-metric__label {
+  margin-block-start: 0;
+  white-space: normal;
+}
+
+/* Stacked under a mark, the number has to lead the small-caps label under it;
+   at the panel's default step the caps read heavier than the figure. */
+.edify-metric--marked .edify-metric__value,
+.edify-metric--lead .edify-metric__value {
+  font-size: 1.25rem;
+}
+
+/* A metric that carries a share of its own target draws it under the caption.
+   The track and the fill are the platform's chart tokens, so a bar inside a
+   metric and a bar inside a chart are the same bar. */
+.edify-metric__bar {
+  display: block;
+  overflow: hidden;
+  inline-size: 100%;
+  block-size: 0.3rem;
+  margin-block-start: 0.35rem;
+  border-radius: 999px;
+  background: var(--edify-chart-bar-track);
+}
+
+.edify-metric__bar > span {
+  display: block;
+  block-size: 100%;
+  border-radius: 999px;
+  background: var(--edify-chart-series-primary);
+}
+
+/* A metric whose mark sits beside its label rather than above the whole cell —
+   the country budget's six source stats, where the icon identifies where the
+   figure came from. */
+.edify-metric__head {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-inline-size: 0;
+}
+
+.edify-metric__head .edify-metric__mark {
+  flex: 0 0 auto;
+  inline-size: 1.1rem;
+  block-size: 1.1rem;
+}
+
+.edify-metric__head .edify-metric__label {
+  min-inline-size: 0;
+}
+
+/* Some of these values are money strings rather than counts, and long enough
+   to need the room; they take the label's truncation instead of the numeral's
+   tabular figures. */
+.edify-metric__value--text {
+  overflow: hidden;
+  font-size: 0.95rem;
+  font-variant-numeric: normal;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Work that belongs to a metric, under it: the HR Action Center's queues each
+   state how many are waiting and then list the first few with the button that
+   clears them. The metric is the header; this is what it is a header for, and
+   it gets a little air so the rows do not sit on the number. */
+.edify-metric__body {
+  margin-block-start: 0.45rem;
+}
+
+
+/* ═══ NOTHING HERE, AND WHY ════════════════════════════════════════════════
+   (owner, 2026-09-07, after the metric panels: "now do the same for the empty
+   states and prose notes".)
+
+   Two shapes that are not metrics and were hand-rolled anyway.
+
+   An EMPTY STATE is a centred column: a quiet mark, the sentence, and
+   optionally what to do about it. Fifteen pages had written the same one out
+   in Tailwind utilities, down to the same glyph; they share one include now.
+
+   A NOTE is a sentence the page needs to say beside the data — an amount that
+   could not be attributed, a quarter too young to forecast, a request returned
+   for correction. It keeps a tone, because those sentences are not all the
+   same kind of news, but it carries it the way everything else here does: a
+   rule down the inline edge and a wash mixed from the tone token, rather than
+   a flat `bg-amber-50` that only exists on one theme. */
+/* One definition. There were two: this component was declared near the top of
+   the file as a dashed muted panel with no parts, and again here with parts
+   and no panel, so an empty state got the container from one and its anatomy
+   from the other. The dashed panel is kept — it is the platform's established
+   way of saying "this area has nothing in it, and that is not an error". */
+.edify-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  min-block-size: 10rem;
+  padding: clamp(1.75rem, 1.4rem + 1.6cqi, 2.75rem) 1.5rem;
+  border: 1px dashed var(--edify-border-strong);
+  border-radius: var(--edify-radius-lg);
+  background-color: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  text-align: center;
+}
+
+.edify-empty-state__mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  inline-size: 3rem;
+  block-size: 3rem;
+  border: 1px solid var(--edify-kpi-divider);
+  border-radius: var(--edify-radius-md);
+  background-color: color-mix(in srgb, var(--edify-text-muted) 5%, var(--edify-surface));
+  color: var(--edify-text-subtle);
+}
+
+.edify-empty-state__mark svg {
+  inline-size: 1.5rem;
+  block-size: 1.5rem;
+}
+
+.edify-empty-state__title {
+  max-inline-size: 34rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  font-weight: 700;
+  text-wrap: pretty;
+}
+
+.edify-empty-state__message {
+  max-inline-size: 34rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: 600;
+  text-wrap: pretty;
+}
+
+.edify-empty-state__hint {
+  max-inline-size: 34rem;
+  color: var(--edify-text-subtle);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  text-wrap: pretty;
+}
+
+.edify-empty-state--compact {
+  min-block-size: 7rem;
+  padding-block: 1.25rem;
+}
+
+/* THE NOTE. Neutral by default; `data-tone` says what kind of news it is. */
+.edify-note {
+  --edify-note-tone: var(--edify-text-muted);
+  padding: 0.6rem 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--edify-note-tone) 28%, transparent);
+  border-inline-start: 3px solid color-mix(in srgb, var(--edify-note-tone) 62%, transparent);
+  border-radius: var(--edify-radius-sm);
+  background-color: color-mix(in srgb, var(--edify-note-tone) 7%, var(--edify-surface));
+}
+
+.edify-note[data-tone="warning"] { --edify-note-tone: var(--edify-warning-text); }
+.edify-note[data-tone="danger"] { --edify-note-tone: var(--edify-danger-text); }
+.edify-note[data-tone="success"] { --edify-note-tone: var(--edify-success-text); }
+.edify-note[data-tone="info"] { --edify-note-tone: var(--edify-accent); }
+
+.edify-note__title {
+  color: var(--edify-note-tone);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
+.edify-note__body {
+  margin-block-start: 0.15rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+
+/* A note the reader has to agree with: the control sits inside it, on the same
+   line as the sentence, and the whole note is the click target. */
+.edify-note--control {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.edify-note--control > input {
+  flex: 0 0 auto;
+  margin-block-start: 0.15rem;
+}
+
+.edify-note--control .edify-note__body {
+  margin-block-start: 0;
+}
+
+/* A single metric with its mark beside it rather than above — the CD's
+   "Champion school candidates" strip, one number wide enough to sit next to
+   its icon (owner, 2026-09-07: fold the icon-led tiles in too). The mark is
+   centred against both text rows, the same composition the KPI tray uses. */
+.edify-metric--lead {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  grid-template-areas:
+    "mark value"
+    "mark label";
+  align-items: center;
+  column-gap: 0.7rem;
+}
+
+.edify-metric--lead .edify-metric__mark {
+  grid-area: mark;
+  align-self: center;
+  inline-size: 1.75rem;
+  block-size: 1.75rem;
+  color: var(--edify-note-tone, var(--edify-accent));
+}
+
+.edify-metric--lead .edify-metric__value {
+  grid-area: value;
+  margin-block-start: 0;
+}
+
+.edify-metric--lead .edify-metric__label {
+  grid-area: label;
+  white-space: normal;
+}
+
+.edify-metric--lead[data-tone="warning"] .edify-metric__mark { color: var(--edify-warning-text); }
+.edify-metric--lead[data-tone="danger"] .edify-metric__mark { color: var(--edify-danger-text); }
+.edify-metric--lead[data-tone="success"] .edify-metric__mark { color: var(--edify-success-text); }
+
+
+/* ═══ THE METER ════════════════════════════════════════════════════════════
+   (owner, 2026-09-07: "when the users plan and complete, the progress bar and
+   percentage should show clearly".)
+
+   One bar for a milestone's progress against its target, drawn from the plan.
+   Two segments on one track: what is COMPLETED, in the accent, and what is
+   PLANNED but not yet done, in a lighter wash of the same accent behind it —
+   so a plan that is scheduled reads as intent, and a plan that is delivered
+   reads as fact, without a legend. The percentage beside it is completed
+   against target: the number the owner asked to see.
+
+   Tokens only, so every theme draws it in its own colours. */
+.edify-meter {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.5rem;
+  min-inline-size: 6rem;
+}
+
+.edify-meter__track {
+  position: relative;
+  block-size: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background-color: color-mix(in srgb, var(--edify-text-muted) 14%, var(--edify-surface));
+}
+
+.edify-meter__planned,
+.edify-meter__done {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  transition: inline-size 0.3s ease;
+}
+
+.edify-meter__planned {
+  background-color: color-mix(in srgb, var(--edify-accent) 30%, transparent);
+}
+
+.edify-meter__done {
+  background-color: var(--edify-accent);
+}
+
+.edify-meter[data-tone="success"] .edify-meter__done { background-color: var(--edify-success); }
+.edify-meter[data-tone="warning"] .edify-meter__done { background-color: var(--edify-warning); }
+.edify-meter[data-tone="danger"] .edify-meter__done { background-color: var(--edify-danger); }
+
+.edify-meter__value {
+  min-inline-size: 2.6rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-align: end;
+  white-space: nowrap;
+}
+
+/* The words under the bar — "3 done · 5 planned · of 20" — for the places
+   with room for them: the milestone detail and the distribution workspace. */
+.edify-meter__meta {
+  grid-column: 1 / -1;
+  margin-block-start: 0.2rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* No plan to link to: the track stays, empty, and says so. */
+.edify-meter--unlinked .edify-meter__value {
+  color: var(--edify-text-subtle);
+  font-weight: 600;
+}

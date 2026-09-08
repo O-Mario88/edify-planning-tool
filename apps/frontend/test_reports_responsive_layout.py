@@ -10,11 +10,26 @@ def _read(relative_path):
     return (ROOT / relative_path).read_text(encoding="utf-8")
 
 
+def _reports_source() -> str:
+    """The page and the panel it includes, as one document.
+
+    Reports became a tab of the one Analytics page (2026-09-05): the body lives
+    in the panel and the standalone page is a frame around the same panel.
+    """
+
+    return "\n".join(
+        (
+            _read("templates/pages/reports/index.html"),
+            _read("templates/partials/analytics/panels/reports.html"),
+        )
+    )
+
+
 class ReportsResponsiveLayoutContractTest(SimpleTestCase):
     """Dense reporting views compose to the screen instead of looking zoomed."""
 
     def test_report_canvas_aligns_with_the_topbar_and_uses_canonical_headings(self):
-        template = _read("templates/pages/reports/index.html")
+        template = _reports_source()
         css = _read("static/css/platform.css")
 
         self.assertNotIn("max-w-[1500px]", template)
@@ -27,7 +42,6 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         )
         self.assertIn('id="reports-timeline-title"', template)
         self.assertIn('id="reports-core-targets-title"', template)
-        self.assertIn('id="reports-matrix-title"', template)
         self.assertIn('id="reports-insights-title"', template)
         self.assertIn("edify-report-period__heading", template)
         self.assertIn("edify-report-panel--trend lg:col-span-8", template)
@@ -44,14 +58,28 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
             css,
         )
 
+    def test_the_period_matrix_moved_to_the_target_pages(self):
+        """ "Cumulative progress by time period" belongs with the targets it
+        measures: My Target carries it as an accordion, and Team Target inside
+        each team member's row (owner, 2026-09-05)."""
+
+        self.assertNotIn("edify-report-matrix__table", _reports_source())
+        self.assertNotIn("Cumulative progress by time period", _reports_source())
+        shared = _read("templates/partials/targets/_period_matrix.html")
+        self.assertIn("Cumulative progress by time period", shared)
+        for path in (
+            "templates/partials/targets/my_body.html",
+            "templates/partials/targets/team/body.html",
+        ):
+            self.assertIn("partials/targets/_period_matrix.html", _read(path), path)
+
     def test_reports_page_has_no_fixed_desktop_rail_or_equal_height_charts(self):
-        template = _read("templates/pages/reports/index.html")
+        template = _reports_source()
 
         for responsive_hook in (
             "edify-report-workspace",
             "edify-report-timeline",
             "components/kpi_strip.html",
-            "edify-report-matrix__table",
             "edify-report-insight-grid",
             "edify-report-trend-chart",
         ):
@@ -75,14 +103,16 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         self.assertIn("block-size: auto !important;", css)
         self.assertIn("min-inline-size: 70rem !important;", css)
 
-    def test_period_timelines_wrap_across_report_and_target_pages(self):
+    def test_my_target_opens_on_the_progress_table_not_period_cards(self):
+        """Six period cards of the weighted roll-up said "0 / 0" six times when
+        nothing was agreed; the page opens on the progress table with every
+        priority instead (owner, 2026-09-05)."""
         targets = _read("templates/partials/targets/my_body.html")
 
-        self.assertIn("target-period-progression", targets)
-        self.assertIn("flex flex-col lg:flex-row", targets)
-        self.assertNotIn(
-            "overflow-x-auto",
-            targets.split("target-period-progression", 1)[1].split("</div>", 1)[0],
+        self.assertNotIn("target-period-progression", targets)
+        self.assertLess(
+            targets.index("partials/targets/_period_matrix.html"),
+            targets.index("partials/targets/strategic_priority_overview.html"),
         )
 
     def test_shared_section_nav_scrolls_only_when_the_active_link_is_hidden(self):

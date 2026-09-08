@@ -3,6 +3,7 @@
 
 {% block title %}Program Lead Dashboard · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]">
@@ -39,6 +40,7 @@
           hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
           hx-trigger="change delay:80ms" hx-push-url="false"
           class="edify-filter-bar" aria-label="Program lead dashboard filters">
+      <input type="hidden" name="view" value="{{ dashboard_view }}">
       <div class="edify-page-header-control">
         <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
         <select aria-label="Fiscal year" name="fy" class="focus:outline-none">

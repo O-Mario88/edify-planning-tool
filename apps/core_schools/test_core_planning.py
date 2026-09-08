@@ -259,6 +259,11 @@ class CoreSchoolsPlanningTest(TestCase):
         self.assertEqual(self._client(self.ia).get("/core-schools").status_code, 200)
 
     def test_core_schools_sidebar_hidden_from_unauthorized_roles(self):
+        """The sidebar entry belongs to the field roles. The CD and the
+        Accountant reach the page anyway since 2026-09-02 — the Planning Core
+        tab is their door — because a core visit they schedule is filed as a
+        request the school's owner approves (apps.planning.visit_requests).
+        Partners are still refused outright."""
         cd, _ = self._staff("cd@core.org", "Core CD", EdifyRole.COUNTRY_DIRECTOR.value)
         for user in (cd, self.accountant, self.partner_user):
             labels = [
@@ -267,9 +272,13 @@ class CoreSchoolsPlanningTest(TestCase):
                 for i in sec["items"]
             ]
             self.assertNotIn("Core Schools", labels, user.email)
-            self.assertNotEqual(
+        for user in (cd, self.accountant):
+            self.assertEqual(
                 self._client(user).get("/core-schools").status_code, 200, user.email
             )
+        self.assertNotEqual(
+            self._client(self.partner_user).get("/core-schools").status_code, 200
+        )
 
     def test_cceo_sees_only_assigned_core_schools(self):
         html = self._client(self.cceo).get("/core-schools").content.decode()
@@ -814,12 +823,19 @@ class CoreSchoolsPlanningTest(TestCase):
     def test_core_htmx_endpoints_enforce_scope(self):
         resp = self._schedule_visit(client=self._client(self.other_cceo))
         self.assertIn(resp.status_code, (403, 404))  # not their school
-        self.assertNotEqual(
-            self._client(self.accountant)
-            .get(f"/core-schools/schedule-visit?school_id={self.school.school_id}")
-            .status_code,
-            200,
+        # The Accountant opens the drawer since 2026-09-02 — only to ASK: at a
+        # school somebody owns it is the visit-request form the owner must
+        # approve (apps.planning.visit_requests), never a plan of their own.
+        drawer = self._client(self.accountant).get(
+            f"/core-schools/schedule-visit?school_id={self.school.school_id}"
         )
+        self.assertEqual(drawer.status_code, 200)
+        self.assertContains(drawer, 'name="visit_justification"')
+        # Core trainings stay the owner's: refused outright.
+        training = self._client(self.accountant).get(
+            f"/core-schools/schedule-training?school_id={self.school.school_id}"
+        )
+        self.assertEqual(training.status_code, 403)
 
     # ── 24: real completion path advances the slot + package counters ───────
     def _complete_core_activity(self, act, sf_id, extra=None):
@@ -950,9 +966,19 @@ class CoreSchoolsPlanningTest(TestCase):
         self._complete_core_activity(act, "SVE-CORE4")
         CorePlan.objects.filter(id=self.plan.id).update(baseline_average=5.6)
 
-        core = CDDashboardService._core_on_track(FY)
+        cd, _ = self._staff(
+            "cd-core@core.org", "Core CD", EdifyRole.COUNTRY_DIRECTOR.value
+        )
+        core = CDDashboardService._core_on_track(FY, cd)
         self.assertEqual(core["total"], 2)  # both core plans in this fixture
-        self.assertEqual(core["on_track"], 1)  # only the completed + baselined plan
+        # One definition, shared with the Core School Health page: a package
+        # is on track within two slots of done. One visit of nine is behind.
+        self.assertEqual(core["on_track"], 0)
+        from apps.core_schools.leadership_service import core_school_health
+
+        self.assertEqual(
+            core["on_track"], core_school_health(cd, {"fy": FY})["onTrackCount"]
+        )
 
     # ── 25: self-heal SSA gate + audit provenance ────────────────────────────
     def test_self_heal_skips_core_school_without_ssa_record(self):

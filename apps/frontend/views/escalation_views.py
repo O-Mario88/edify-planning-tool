@@ -1,8 +1,9 @@
-"""Escalations — the CD→RVP decision channel.
+"""Escalations — the upward decision channel.
 
 The CD cockpit offered "Escalate to RVP" with no endpoint behind it, and the
-RVP had no inbound surface at all. This is both halves: the CD raises, the RVP
-decides, and the decision comes back with its reasoning attached.
+RVP had no inbound surface at all. This is both halves, one level at a time:
+a CCEO raises to their Programme Lead, a PL to the Country Director, the CD to
+the RVP — and the addressee decides, with the reasoning coming back attached.
 """
 
 from __future__ import annotations
@@ -23,7 +24,10 @@ def escalations_view(request):
         EdifyRole.REGIONAL_VICE_PRESIDENT.value,
         EdifyRole.ADMIN.value,
     )
-    is_cd = role in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value)
+    # The level this principal decides for, if any — PL, CD or RVP. Admin
+    # decides everything through the service's override.
+    decider_level = escalation_service.ADDRESSEE_FOR_ROLE.get(role)
+    can_decide = bool(decider_level) or role == EdifyRole.ADMIN.value
 
     if request.method == "POST":
         action = request.POST.get("action")
@@ -37,12 +41,16 @@ def escalations_view(request):
                         "detail": request.POST.get("detail"),
                         "requested_decision": request.POST.get("requested_decision"),
                         "due_date": request.POST.get("due_date") or None,
+                        "scope_type": request.POST.get("scope_type") or None,
+                        "scope_id": request.POST.get("scope_id") or None,
+                        "scope_name": request.POST.get("scope_name") or None,
                     },
                     request.user,
                 )
+                addressee = escalation_service.ADDRESSEE_LABELS[esc.addressed_role]
                 messages.success(
                     request,
-                    f"Escalated to the RVP — “{esc.subject}”. "
+                    f"Escalated to the {addressee} — “{esc.subject}”. "
                     "They have been notified.",
                 )
             elif action == "acknowledge":
@@ -59,9 +67,9 @@ def escalations_view(request):
                     },
                     request.user,
                 )
+                raiser = esc.raised_by_name or "the raiser"
                 messages.success(
-                    request,
-                    "Decision recorded — the Country Director has been notified.",
+                    request, f"Decision recorded — {raiser} has been notified."
                 )
             else:
                 messages.error(request, "Unknown action.")
@@ -69,12 +77,28 @@ def escalations_view(request):
             messages.error(request, str(exc))
         return redirect("/escalations")
 
+    board = escalation_service.board(request.user)
     return render(
         request,
         "pages/escalations/index.html",
         {
-            "board": escalation_service.board(request.user),
+            "board": board,
+            # From an analytics drill-down: the entity comes along.
+            "prefill": {
+                key: (request.GET.get(key) or "").strip()
+                for key in (
+                    "subject",
+                    "detail",
+                    "category",
+                    "scope_type",
+                    "scope_id",
+                    "scope_name",
+                )
+            },
             "is_rvp": is_rvp,
-            "can_raise": is_cd,
+            "can_raise": bool(board["raise_to"]),
+            "can_decide": can_decide,
+            "decider_level": decider_level,
+            "decider_label": escalation_service.ADDRESSEE_LABELS.get(decider_level),
         },
     )

@@ -7,7 +7,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _read(relative_path):
-    return (ROOT / relative_path).read_text(encoding="utf-8")
+    from apps.frontend.template_families import read_template
+
+    return read_template(ROOT, relative_path)
 
 
 class BarChartSystemContractTest(SimpleTestCase):
@@ -61,6 +63,9 @@ class BarChartSystemContractTest(SimpleTestCase):
             "templates/partials/analytics/cd/performance_vs_target.html",
             "templates/partials/analytics/performance_overview.html",
             "templates/partials/analytics/pl/core_champion.html",
+            "templates/partials/ia/dashboard_body.html",
+            "templates/partials/ssa/performance_workspace.html",
+            "templates/partials/targets/team/body.html",
             "templates/partials/analytics/pl/team_performance.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
@@ -157,7 +162,7 @@ class SharedChartFormTest(SimpleTestCase):
 
         offenders = []
         preset = re.compile(
-            r"EdifyChartSystem\.(formBase|areaTrend|rankedBar|comparisonBar|donut|mixedTrend)"
+            r"EdifyChartSystem\.(formBase|areaTrend|rankedBar|comparisonBar|donut|mixedTrend|lineTrend|gauge)"
         )
         # Since FREEZE-01 charts are built through EdifyChartSystem.renderDetached
         # rather than constructed inline, so `new ApexCharts` alone no longer
@@ -226,3 +231,84 @@ class ReferenceChartFormTest(SimpleTestCase):
 
         block = base.split("mixedTrend: function", 1)[1]
         self.assertIn("enabledOnSeries: columnIndexes", block)
+
+
+class ChartDefectRegressionTest(SimpleTestCase):
+    """Five defects a director saw in the first minute (owner, 2026-09-05).
+
+    Each assertion here is the shape of one of them: invisible legend
+    swatches, an achievement axis running below zero, half-activities on a
+    count axis, "May" trimmed to a dot, and a chart page that never loaded the
+    library it draws with.
+    """
+
+    MIXED_TREND_TEMPLATES = (
+        "templates/pages/dashboards/rvp.html",
+        "templates/partials/dashboards/cd/body.html",
+        "templates/partials/dashboards/pl/body.html",
+        "templates/partials/dashboards/pl/team_performance.html",
+        "templates/partials/analytics/cd/performance_vs_target.html",
+        "templates/partials/analytics/performance_overview.html",
+        "templates/partials/analytics/pl/team_performance.html",
+    )
+
+    def test_legend_swatches_keep_their_series_colour(self):
+        # ApexCharts gives legend swatches the plot marker's class. The hollow
+        # point rule must therefore exclude them, or every legend on the
+        # platform paints surface-on-surface.
+        css = _read("static/css/components.css")
+        self.assertIn(
+            ".apexcharts-canvas .apexcharts-marker:not(.apexcharts-legend-marker) {",
+            css,
+        )
+        self.assertNotIn(".apexcharts-canvas .apexcharts-marker {", css)
+
+    def test_a_hollow_point_wears_its_series_colour_on_the_ring(self):
+        base = _read("templates/base.html")
+        block = base.split("renderDetached: function", 1)[1]
+        self.assertIn("pointRing.strokeColors = options.colors.slice()", block)
+        # No template paints the ring the surface colour any more.
+        for relative_path in self.MIXED_TREND_TEMPLATES:
+            self.assertNotIn(
+                "strokeColors = 'var(--edify-surface)'",
+                _read(relative_path),
+                relative_path,
+            )
+
+    def test_month_axes_never_trim_a_label(self):
+        base = _read("templates/base.html")
+        block = base.split("mixedTrend: function", 1)[1].split("/* FREEZE-01", 1)[0]
+        self.assertIn("trim: false", block)
+        self.assertIn("hideOverlappingLabels: true", block)
+
+    def test_count_and_rate_axes_come_from_the_system(self):
+        base = _read("templates/base.html")
+        self.assertIn("countAxis: function (title, opts)", base)
+        self.assertIn("rateAxis: function (title, opts)", base)
+        count_block = base.split("countAxis: function", 1)[1].split("rateAxis:", 1)[0]
+        self.assertIn("min: 0", count_block)
+        self.assertIn("Number.isInteger(v) ? v : ''", count_block)
+        rate_block = base.split("rateAxis: function", 1)[1].split("/* FREEZE-01", 1)[0]
+        self.assertIn("opposite: true, min: 0, max: 100, tickAmount: 5", rate_block)
+        for relative_path in self.MIXED_TREND_TEMPLATES:
+            source = _read(relative_path)
+            self.assertIn("EdifyChartSystem.countAxis(", source, relative_path)
+            self.assertIn("EdifyChartSystem.rateAxis(", source, relative_path)
+            # The hand-rolled axes are gone, and with them the one that
+            # forgot `min: 0`.
+            self.assertNotIn("max: 100, min: 0", source, relative_path)
+
+    def test_no_analytics_card_carries_a_decorative_period_select(self):
+        # A <select> with one option and no handler is decoration pretending
+        # to be a control. Period is governed by the workspace filter row.
+        for path in ROOT.joinpath("templates/partials/analytics").rglob("*.html"):
+            source = path.read_text(encoding="utf-8")
+            self.assertNotIn("<option>This FY</option>", source, str(path))
+            self.assertNotIn("<option>This Quarter</option>", source, str(path))
+
+    def test_a_chart_that_cannot_draw_says_so_visibly(self):
+        workspace = _read("templates/partials/analytics/impact_workspace.html")
+        self.assertNotIn('class="sr-only" x-ref="status"', workspace)
+        self.assertIn('class="analytics-chart-status" x-ref="status"', workspace)
+        css = _read("static/css/pages/analytics-dashboard.css")
+        self.assertIn(".analytics-chart-status:empty {", css)

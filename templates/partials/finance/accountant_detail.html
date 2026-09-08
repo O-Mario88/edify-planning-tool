@@ -1,0 +1,2 @@
+{% comment %}Selected weekly advance on the Accountant's page: the shared fund detail with the Accountant's actions.{% endcomment %}
+{% include "partials/finance/fund_detail.html" with selected=workspace.selected actions_template="partials/finance/accountant_actions.html" empty_detail_title="Select a request to review it" empty_detail_text="Approved requests appear here when they reach the finance workflow." %}

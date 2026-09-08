@@ -1,0 +1,79 @@
+{% extends "components/drawers/base_drawer.html" %}
+{% block drawer_title %}Edit organisation details{% endblock %}
+{% block drawer_subtitle %}{{ partner.name }}{% if not country_side %} · your organisation's own details{% endif %}{% endblock %}
+{% block drawer_body %}
+{% comment %}
+The organisation edits its own bio data (owner, 2026-09-07), and the roles
+that run the directory edit any organisation. Region and SSA intervention are
+Edify's decision, so a partner login sees them but cannot change them. Same
+contract as the school edit drawer: the form posts back to itself, a rejected
+submit re-renders with the reason, a saved one reloads the profile.
+{% endcomment %}
+<form method="post"
+      action="/partners/{{ partner.id }}/edit-drawer"
+      hx-post="/partners/{{ partner.id }}/edit-drawer"
+      hx-target="#drawer-container"
+      hx-disabled-elt="find button[type='submit']"
+      class="space-y-4 text-[12px] font-semibold text-slate-600">
+  {% csrf_token %}
+  {% if validation_error %}
+  <div role="alert" class="edify-note" data-tone="danger"><p class="edify-note__body">{{ validation_error }}</p></div>
+  {% endif %}
+
+  {% if country_side %}
+  <div>
+    <label for="partner-name" class="block text-[12px] font-semibold text-slate-700 mb-1">Organisation name <span class="text-rose-500">*</span></label>
+    <input id="partner-name" type="text" name="name" required value="{{ partner.name }}" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+  </div>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div>
+      <label for="partner-region" class="block text-[12px] font-semibold text-slate-700 mb-1">Region</label>
+      <select id="partner-region" name="region_name" class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+        <option value="">Not assigned</option>
+        {% for r in regions %}<option value="{{ r.name }}" {% if r.name == partner.region_name %}selected{% endif %}>{{ r.name }}</option>{% endfor %}
+      </select>
+    </div>
+    <div>
+      <label for="partner-intervention" class="block text-[12px] font-semibold text-slate-700 mb-1">SSA intervention</label>
+      <select id="partner-intervention" name="ssa_intervention" class="edify-surface w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+        <option value="">General support</option>
+        {% for val, label in interventions %}<option value="{{ val }}" {% if val == partner.ssa_intervention %}selected{% endif %}>{{ label }}</option>{% endfor %}
+      </select>
+    </div>
+  </div>
+  {% else %}
+  <div class="grid grid-cols-2 gap-x-6 gap-y-3 text-[12px]">
+    <div><p class="edify-profile-field__label">Region</p><p class="edify-profile-field__value mt-0.5">{{ partner.region_name|default:"Not assigned" }}</p></div>
+    <div><p class="edify-profile-field__label">SSA intervention</p><p class="edify-profile-field__value mt-0.5">{{ partner.ssa_intervention_label }}</p></div>
+  </div>
+  <p class="edify-text-caption text-slate-400 font-medium">Region and intervention are set by Edify. Ask your Country Director to change them.</p>
+  {% endif %}
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+    <div>
+      <label for="partner-contact" class="block text-[12px] font-semibold text-slate-700 mb-1">Contact person</label>
+      <input id="partner-contact" type="text" name="contact_person" value="{{ partner.contact_person|default:'' }}" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+    </div>
+    <div>
+      <label for="partner-phone" class="block text-[12px] font-semibold text-slate-700 mb-1">Phone</label>
+      <input id="partner-phone" type="text" name="phone" value="{{ partner.phone|default:'' }}" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+    </div>
+    <div>
+      <label for="partner-email" class="block text-[12px] font-semibold text-slate-700 mb-1">Email</label>
+      <input id="partner-email" type="email" name="email" value="{{ partner.email|default:'' }}" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+    </div>
+    <div>
+      <label for="partner-expertise" class="block text-[12px] font-semibold text-slate-700 mb-1">Expertise</label>
+      <input id="partner-expertise" type="text" name="expertise" value="{{ partner.expertise_areas|join:', ' }}" placeholder="e.g. Literacy, Leadership training" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">
+    </div>
+  </div>
+  <div>
+    <label for="partner-notes" class="block text-[12px] font-semibold text-slate-700 mb-1">Notes</label>
+    <textarea id="partner-notes" name="notes" rows="3" class="w-full rounded-control border border-slate-200 px-3 py-2 text-[13px] font-medium">{{ partner.notes|default:'' }}</textarea>
+  </div>
+  <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-slate-100">
+    <button type="button" @click="$dispatch('close-drawer')" class="btn btn-secondary min-h-9">Cancel</button>
+    <button type="submit" class="btn btn-primary min-h-9">Save details</button>
+  </div>
+</form>
+{% endblock %}

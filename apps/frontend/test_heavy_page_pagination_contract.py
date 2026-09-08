@@ -8,7 +8,13 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class HeavyPagePaginationContractTest(SimpleTestCase):
     def test_core_school_health_bounds_each_independent_table(self):
-        source = (ROOT / "templates/pages/core_schools/leadership.html").read_text()
+        # Core Verification became a tab of the one Analytics page on
+        # 2026-09-05, so its tables live in the panel the view renders. The
+        # standalone page includes this same partial — bounding it here bounds
+        # both.
+        source = (
+            ROOT / "templates/partials/analytics/panels/core_school_health.html"
+        ).read_text()
 
         self.assertIn('{% paginate d.stalledSlots "stalled_page"', source)
         self.assertIn("{% for s in stalled_pager.rows %}", source)
@@ -18,7 +24,10 @@ class HeavyPagePaginationContractTest(SimpleTestCase):
         self.assertIn("{% for r in districts_pager.rows %}", source)
 
     def test_strategic_priorities_bounds_the_expensive_nested_forms(self):
-        source = (ROOT / "templates/pages/hr/priority_configuration.html").read_text()
+        # The page became the Priority Setting TAB of the Priorities page on
+        # 2026-09-07; the markup this bounds moved into the view the rail
+        # swaps, and the page around it is now the rail and nothing else.
+        source = (ROOT / "templates/partials/priorities/setting_view.html").read_text()
 
         self.assertIn('{% paginate milestone_rows "milestones_page" 10', source)
         self.assertIn("{% for item in milestones_pager.rows %}", source)

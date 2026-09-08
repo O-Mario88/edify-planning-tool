@@ -42,9 +42,6 @@ class ActivityCost:
     missing_items: list[str] = field(default_factory=list)
 
 
-DEFAULT_TRAINING_PARTICIPANTS = 25
-
-
 # A cluster session has a deliberately small, predictable cost recipe.  These
 # stable keys are shared by the catalogue, planning preview, saved schedule
 # lines, fund requests and budget reports.  Do not add ad-hoc cluster costs in
@@ -54,11 +51,19 @@ CLUSTER_TRAINING_TYPES = {
     "cluster_training_ssa_collection",
 }
 GROUP_TRAINING_RATE_KEYS = (
-    "group_training_participant_meal_cost_per_head",
     "group_training_facilitation_fee",
     "group_training_venue_cost",
 )
-CLUSTER_MEETING_SNACK_RATE_KEY = "cluster_meeting_participant_meal_cost_per_head"
+TOT_MEALS_RATE_KEY = "tot_trainings_meals"
+# School work that is SSA work: it carries the SSA Support rate.
+SSA_WORK_TYPES = {
+    "baseline_ssa_visit",
+    "school_visit_ssa_collection",
+    "partner_ssa_collection",
+    "ssa_activity",
+}
+# School work at a core school: it carries the core rates.
+CORE_WORK_TYPES = {"core_visit", "core_assessment_visit", "core_training"}
 
 
 def _nonnegative_count(raw) -> int:
@@ -115,9 +120,38 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     """Compute the cost of an activity from the rate card.
 
     `a` keys: activityType, deliveryType, districtType ('primary'|'secondary'),
+    costingKind ('core' | 'onetest' | 'tot' | 'student_conference' |
+    'proprietor_conference', from the catalogue item's costing profile),
     teachersAttended, leadersAttended, otherParticipants, expectedParticipants,
-    nights, projectId.
+    nights, days, projectId.
+
+    The recipe (owner, 2026-09-06 catalogue):
+
+    * A staff school mission is a visit day — transport by district and
+      lunch; a secondary district adds dinner, a night's accommodation and
+      breakfast — plus the activity's own rate: Client Staff Visit, Core
+      Staff Visit, SSA Support or OneTest.
+    * Partner school work is the partner's rate alone: Client or Core Partner
+      Visit for a visit or in-school training; Partner Meetings for a
+      partner-run training or a partner/project activity.
+    * A group session is venue and facilitation per day, printing and
+      photocopying of materials, the staff day, and the session's own rate:
+      Cluster Meetings/Trainings, TOT trainings (which alone feed their
+      participants, at the TOT meals rate), Student or Proprietor Conference.
+    * A field event is a visit day for every day away.
+
+    A rate the owner's list ADDED (see ``OPTIONAL_RATE_KEYS``) is charged only
+    when the card carries it, so a card that predates the list prices as it
+    did; a rate the recipe REQUIRES marks the activity as unfundable when it
+    is missing, never substitutes another.
     """
+    from apps.budget.reference import (
+        OPTIONAL_RATE_KEYS,
+        RATE_LABELS,
+        with_rate_aliases,
+    )
+
+    rates = with_rate_aliases(rates)
     lines: list[CostLine] = []
 
     def add(label: str, key: str, qty: int = 1) -> None:
@@ -134,9 +168,20 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             )
         )
 
-    def add_staff_day(days: int = 1) -> None:
-        if is_partner:
+    def add_rate(key: str, qty: int = 1) -> None:
+        """One of the owner's per-activity or materials rates, by its
+        catalogue label; skipped on a card that does not carry it."""
+        if key in OPTIONAL_RATE_KEYS and key not in rates:
             return
+        add(RATE_LABELS.get(key, key), key, qty)
+
+    def add_staff_visit_day(days: int = 1, nights: int | None = None) -> None:
+        """One staff day away from base — the ONLY recipe for one.
+
+        `nights` exists because a visit day charges accommodation per NIGHT
+        (one by default, the activity may say otherwise) while a multi-day
+        trip carries the full per-diem set per day.
+        """
         from apps.daily_visit_batches.pricing import (
             KEY_LABELS,
             OPTIONAL_KEYS,
@@ -144,172 +189,146 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
 
         profile = "secondary" if is_secondary else "primary"
-        for key in REQUIRED_KEYS[profile]:
-            add(KEY_LABELS[key].replace("shared, ", ""), key, days)
-        for key in OPTIONAL_KEYS[profile]:
-            if key in rates:
-                add(KEY_LABELS[key].replace("shared, ", ""), key, days)
+        nights = days if nights is None else nights
+        for key in REQUIRED_KEYS[profile] + OPTIONAL_KEYS[profile]:
+            if key in OPTIONAL_KEYS[profile] and key not in rates:
+                continue
+            qty = nights if key == "secondary_accommodation_per_night" else days
+            if qty <= 0:
+                continue
+            add(KEY_LABELS[key], key, qty)
+
+    def add_staff_day(days: int = 1) -> None:
+        """The staff day inside a group session — the partner's rate already
+        covers their own travel, so partner delivery adds none."""
+        if is_partner:
+            return
+        add_staff_visit_day(days)
+
+    def add_materials(days: int) -> None:
+        add_rate("printing_training_materials", days)
+        add_rate("photocopying_training_materials", days)
+
+    def add_group_session(days: int, rate_key: str | None, meals: bool = False) -> None:
+        """The one group-session recipe: the session's own rate, participants
+        fed when the session feeds them (TOT trainings), someone facilitates,
+        the room costs money, materials are printed and copied, and the staff
+        member travels."""
+        if rate_key:
+            add_rate(rate_key)
+        if meals:
+            add(
+                RATE_LABELS[TOT_MEALS_RATE_KEY],
+                TOT_MEALS_RATE_KEY,
+                _participants_of(a, 0) * days,
+            )
+        add(
+            RATE_LABELS["group_training_facilitation_fee"],
+            "group_training_facilitation_fee",
+            days,
+        )
+        add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
+        add_materials(days)
+        add_staff_day(days)
 
     is_partner = a.get("deliveryType") == "partner"
     activity_type = a.get("activityType")
     is_secondary = a.get("districtType") == "secondary"
-    # An in-school training is delivered during the same school mission as a
-    # school visit. Its Training record describes the programme result, not a
-    # second journey or a venue-based group training. Price it from the visit
-    # recipe for both staff and partner delivery.
+    kind = a.get("costingKind") or ""
     is_in_school_training = activity_type == "in_school_training"
+    is_core = kind == "core" or activity_type in CORE_WORK_TYPES
+    is_ssa = activity_type in SSA_WORK_TYPES
 
-    # Non-school programme events (conferences, camps, exhibitions, launches)
-    # price from the configurable programme component keys. Days come from the
-    # activity's date range; participants from the PLANNED count. A component
-    # is included only when the CD has configured its rate, except the two
-    # core components (venue + participant meals) which are always demanded so
-    # a missing rate blocks funded scheduling rather than under-costing.
-    # Attendee-side field events (district meetings, boot camps, workshops)
-    # price from the MOU travel per-diems. The profile derives from the
-    # owner's PRIMARY (home) district vs the destination: same district — or
-    # a same-day return — draws transport + lunch; a different district with
-    # an overnight adds accommodation, dinner and breakfast per night.
+    def staff_visit_rate_key() -> str:
+        if kind == "onetest":
+            return "onetest"
+        if is_ssa:
+            return "ssa_support"
+        return "core_staff_visit" if is_core else "client_staff_visit"
+
     if activity_type == "field_event":
-        days = _days_of(a)
-        # Transport accrues PER DAY for every day away — moving between the
-        # venue, lodging and home leg happens daily, not once per trip — in
-        # both the primary and secondary profiles (owner rule, 2026-08-19).
-        if is_secondary:
-            add("Transport (secondary)", "secondary_transport_per_day", days)
-            add("Lunch", "secondary_lunch_per_day", days)
-            # Every secondary away-day carries the full per-diem set —
-            # breakfast, dinner and a night's accommodation PER DAY (owner
-            # rule, 2026-08-19) — matching the secondary visit-day policy.
-            add("Accommodation", "secondary_accommodation_per_night", days)
-            add("Dinner", "secondary_overnight_dinner_per_day", days)
-            add("Breakfast", "secondary_breakfast_per_day", days)
-        else:
-            add("Transport (primary)", "primary_transport_per_day", days)
-            add("Lunch", "primary_lunch_per_day", days)
+        # Attendee-side field work — district meetings, boot camps, workshops.
+        # Every day away carries the full per-diem set, accommodation included
+        # in a secondary district (owner rule, 2026-08-19).
+        add_staff_visit_day(_days_of(a))
 
     elif activity_type == "programme_event":
-        days = _days_of(a)
-        n = _participants_of(a, DEFAULT_TRAINING_PARTICIPANTS)
-        add("Venue", "programme_venue_per_day", days)
-        add("Participant meals", "programme_participant_meal_cost_per_head", n * days)
-        if "programme_facilitation_per_day" in rates:
-            add("Facilitation", "programme_facilitation_per_day", days)
-        if "programme_transport_per_day" in rates:
-            add("Transport", "programme_transport_per_day", days)
-        if "programme_materials_per_participant" in rates:
-            add("Materials", "programme_materials_per_participant", n)
-        if days > 1 and "programme_accommodation_per_night" in rates:
-            add("Accommodation", "programme_accommodation_per_night", days - 1)
+        # A conference or camp: a group session with the conference's own
+        # rate when the catalogue item says whose conference it is.
+        conference = {
+            "student_conference": "student_conference",
+            "proprietor_conference": "proprietor_conference",
+        }.get(kind)
+        add_group_session(_days_of(a), conference)
 
-    # Cluster meetings and cluster trainings use their fixed recipe even when
-    # a partner delivers the session.  The programme budget needs the same
-    # transparent snack/meal/facilitation/venue breakdown in every workflow.
     elif activity_type in CLUSTER_MEETING_TYPES:
-        n = _participants_of(a, 0)
+        # A cluster meeting: the session rate, the room, the materials and
+        # the staff day. Nobody facilitates a meeting.
         days = _days_of(a)
-        add("Participant snacks", CLUSTER_MEETING_SNACK_RATE_KEY, n * days)
-        add("Venue fee", "group_training_venue_cost", days)
+        add_rate("cluster_meetings_trainings")
+        add(RATE_LABELS["group_training_venue_cost"], "group_training_venue_cost", days)
+        add_materials(days)
         add_staff_day(days)
 
     elif activity_type in CLUSTER_TRAINING_TYPES:
-        n = _participants_of(a, 0)
-        days = _days_of(a)
-        add(
-            "Participant meals",
-            "group_training_participant_meal_cost_per_head",
-            n * days,
-        )
-        add("Facilitation fee", "group_training_facilitation_fee", days)
-        add("Venue fee", "group_training_venue_cost", days)
-        add_staff_day(days)
+        add_group_session(_days_of(a), "cluster_meetings_trainings")
 
     elif is_partner:
         # Each partner workflow has one canonical, CD-visible rate. Do not
         # substitute a different activity's rate merely because the required
         # row is missing; `add` will mark that exact item as a blocker.
         if is_in_school_training:
-            key = "partner_visit_lump_sum"
+            key = "core_partner_visit" if is_core else "client_partner_visit"
             basis = "per school mission"
-            label = "Partner visit rate"
-        elif activity_type in TRAINING_TYPES:
-            key = "partner_training_lump_sum"
-            basis = "per training"
-            label = "Partner training rate"
-        elif a.get("projectId"):
-            key = "project_partner_lump_sum"
-            basis = "project-specific"
-            label = "Project partner rate"
-        else:
-            key = "partner_visit_lump_sum"
+        elif activity_type in VISIT_TYPES:
+            key = "core_partner_visit" if is_core else "client_partner_visit"
             basis = "per activity"
-            label = "Partner visit lump sum"
-
-        label_with_basis = f"{label} [Rate basis: {basis}]"
-        add(label_with_basis, key)
-
-    elif activity_type == "baseline_ssa_visit":
-        add("SSA Visit", "ssa_visit_rate")
-
-    elif activity_type == "core_visit":
-        add("Core School Visit", "core_school_visit")
-
-    elif activity_type == "core_training":
-        add("Core School Training", "core_school_training")
+        elif activity_type in TRAINING_TYPES:
+            key = "partner_meetings"
+            basis = "per training"
+        else:
+            key = "partner_meetings"
+            basis = "per meeting"
+        add(f"{RATE_LABELS[key]} [Rate basis: {basis}]", key)
 
     elif activity_type in VISIT_TYPES or is_in_school_training:
-        if is_secondary:
-            add("Transport (secondary)", "secondary_transport_per_day")
-            add("Breakfast", "secondary_breakfast_per_day")
-            add("Lunch", "secondary_lunch_per_day")
-            add("Dinner", "secondary_overnight_dinner_per_day")
-            # A secondary-district visit day is an overnight by policy — the
-            # Daily Visit Batch pool always carries one night's accommodation.
-            nights = a.get("nights")
-            try:
-                nights = 1 if nights is None else max(0, int(nights))
-            except (TypeError, ValueError):
-                nights = 1
-            if nights > 0:
-                add(
-                    "Accommodation",
-                    "secondary_accommodation_per_night",
-                    nights,
-                )
-        else:
-            add("Transport (primary)", "primary_transport_per_day")
-            add("Lunch", "primary_lunch_per_day")
+        # Every school mission by staff is one journey with one recipe, plus
+        # the mission's own rate. A secondary-district visit day is an
+        # overnight by policy: the Daily Visit Batch pool always carries one
+        # night's accommodation unless the activity says otherwise.
+        nights = a.get("nights")
+        try:
+            nights = 1 if nights is None else max(0, int(nights))
+        except (TypeError, ValueError):
+            nights = 1
+        add_rate(staff_visit_rate_key())
+        add_staff_visit_day(1, nights=nights)
     elif activity_type in TRAINING_TYPES:
-        n = _participants_of(a, 0)
-        days = _days_of(a)
-        add(
-            "Participant meals",
-            "group_training_participant_meal_cost_per_head",
-            n * days,
-        )
-        add("Venue fee", "group_training_venue_cost", days)
-        add_staff_day(days)
+        # Every group training is the same session; a TOT training also has
+        # its own rate and feeds its participants.
+        if kind == "tot":
+            add_group_session(_days_of(a), "tot_trainings", meals=True)
+        else:
+            add_group_session(_days_of(a), None)
     elif activity_type in ("partner_activity", "project_activity"):
-        project_key = "project_partner_lump_sum" if a.get("projectId") else None
-        key = project_key or "partner_visit_lump_sum"
-        add("Partner/project lump sum", key)
+        add(
+            f"{RATE_LABELS['partner_meetings']} [Rate basis: per meeting]",
+            "partner_meetings",
+        )
     else:
-        # ssa_activity and anything else default to a staff visit cost.
-        add("Transport", "primary_transport_per_day")
-        add("Lunch", "primary_lunch_per_day")
+        # ssa_activity and anything else: a staff visit day plus its rate.
+        add_rate(staff_visit_rate_key())
+        add_staff_visit_day(1)
+
+    # The costs the Country Director added for this activity's catalogue
+    # item (owner, 2026-09-06): each is one line, whatever the recipe above.
+    for key, label in a.get("linkedRates") or ():
+        add(label, key)
 
     cost_missing = any(line.missing for line in lines)
     amount = sum(line.amount for line in lines)
     missing_items = [line.key for line in lines if line.missing]
-    if any(
-        line.qty == 0
-        and line.key
-        in {
-            "group_training_participant_meal_cost_per_head",
-            CLUSTER_MEETING_SNACK_RATE_KEY,
-        }
-        for line in lines
-    ):
+    if any(line.qty == 0 and line.key == TOT_MEALS_RATE_KEY for line in lines):
         missing_items.append("expectedParticipants")
         cost_missing = True
     return ActivityCost(
@@ -330,7 +349,7 @@ __all__ = [
     "RateCard",
     "CostLine",
     "ActivityCost",
-    "CLUSTER_MEETING_SNACK_RATE_KEY",
+    "TOT_MEALS_RATE_KEY",
     "CLUSTER_MEETING_TYPES",
     "CLUSTER_TRAINING_TYPES",
     "GROUP_TRAINING_RATE_KEYS",

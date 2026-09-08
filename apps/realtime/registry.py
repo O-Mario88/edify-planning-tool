@@ -124,6 +124,18 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="loan_tracking_notifications",
+        description="Reminds staff about due loan applications and repayments, and delivers the prior-month report to RVPs.",
+        cron="daily 07:15 Africa/Nairobi",
+        cron_kwargs={"hour": 7, "minute": 15},
+        expected_runtime_seconds=60,
+        max_interval_minutes=60 * 30,
+        idempotent=True,
+        idempotency_note="LoanTrackingDeliveryLog permanently dedupes each recipient, subject, and reminder/report period.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="school_action_sweep",
         description=(
             "Closes delegated school actions whose underlying condition has "
@@ -376,6 +388,30 @@ JOB_REGISTRY: list[JobSpec] = [
         # control.
         retryable=False,
         max_retries=0,
+    ),
+    JobSpec(
+        name="ia_verification_digest",
+        description="Morning line per Impact Assessment officer: work waiting for verification and what is past the 24h SLA.",
+        cron="daily 07:15 Africa/Nairobi",
+        cron_kwargs={"hour": 7, "minute": 15},
+        expected_runtime_seconds=30,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note="One digest per verifier per day, deduped by source_event_id.",
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
+        name="verification_sampling",
+        description="Weekly draw of a share of last week's verified activities for a second-verifier sample check.",
+        cron="weekly Mon 06:30 Africa/Nairobi",
+        cron_kwargs={"day_of_week": "mon", "hour": 6, "minute": 30},
+        expected_runtime_seconds=30,
+        max_interval_minutes=60 * 24 * 8,
+        idempotent=True,
+        idempotency_note="Seeded by the draw date and unique per activity; a re-run draws nothing new.",
+        retryable=True,
+        max_retries=2,
     ),
 ]
 

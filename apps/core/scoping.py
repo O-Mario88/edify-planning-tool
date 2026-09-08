@@ -59,6 +59,18 @@ COUNTRY_SCHEDULING_ROLES = {
     EdifyRole.ADMIN.value,
 }
 SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
+# Country roles with no portfolio of their own. They never plan *directly*
+# into a CCEO's or Programme Lead's schools or clusters — a visit they need at
+# somebody else's school is scheduled the ordinary way, carries the reason for
+# it, and waits for that owner's approval before it takes effect. The Country
+# Director and Impact Assessment keep their direct authority over targets
+# nobody owns (COUNTRY_SCHEDULING_ROLES); the Accountant, who schedules
+# nothing of their own, can only ask. See apps.planning.visit_requests.
+VISIT_REQUEST_ROLES = {
+    EdifyRole.COUNTRY_DIRECTOR.value,
+    EdifyRole.IMPACT_ASSESSMENT.value,
+    EdifyRole.PROGRAM_ACCOUNTANT.value,
+}
 
 
 @dataclass
@@ -69,6 +81,10 @@ class UserScope:
     active_role: str
     permissions: list[str] = field(default_factory=list)
     country_scope: bool = False
+    # The country a country-scoped role is bounded to, read from their staff
+    # profile. Empty means "not bounded": Admin, or a country role with no
+    # country on file, which keeps today's deployment-wide reach.
+    country: str = ""
     region_ids: list[str] = field(default_factory=list)
     district_ids: list[str] = field(default_factory=list)
     cluster_ids: list[str] = field(default_factory=list)
@@ -487,11 +503,21 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
                 managed_staff_ids = _uniq([*managed_staff_ids, *supervised_staff_ids])
 
+    country = ""
+    if country_scope and role != EdifyRole.ADMIN.value and staff_id:
+        # `staff_profile_id` above already fetched and cached the reverse
+        # one-to-one, so this is a free attribute read, not a second query.
+        try:
+            country = (user.staff_profile.country or "").strip()
+        except Exception:  # noqa: BLE001 - no profile, no country
+            country = ""
+
     return UserScope(
         user_id=user.user_id,
         active_role=role,
         permissions=perms,
         country_scope=country_scope,
+        country=country,
         region_ids=region_ids,
         district_ids=district_ids,
         cluster_ids=cluster_ids,
@@ -663,7 +689,17 @@ def cluster_in_scope(scope: UserScope, cluster, *, direct_only: bool = False) ->
     # the question one record at a time.
     if getattr(cluster, "deleted_at", None) is not None:
         return False
-    if scope.country_scope or scope.can_view_summary_only:
+    if scope.country_scope:
+        if not country_bound(scope):
+            return True
+        cluster_model = _get_cluster_model()
+        return bool(
+            cluster_model
+            and cluster_model.objects.filter(
+                cluster_country_q(scope), id=getattr(cluster, "id", None)
+            ).exists()
+        )
+    if scope.can_view_summary_only:
         return True
     # Which of the two portfolios the question is about. `cluster_ids` and
     # `district_ids` are both derived from the own+team school union, so
@@ -718,7 +754,9 @@ def cluster_queryset(scope: UserScope, base=None, *, direct_only: bool = False):
 
     qs = base if base is not None else cluster_model.objects.all()
     qs = qs.filter(deleted_at__isnull=True)
-    if scope.country_scope or scope.can_view_summary_only:
+    if scope.country_scope:
+        return qs.filter(cluster_country_q(scope))
+    if scope.can_view_summary_only:
         return qs
     in_cluster_ids = scope.own_cluster_ids if direct_only else scope.cluster_ids
     in_district_ids = scope.own_district_ids if direct_only else scope.district_ids
@@ -742,6 +780,74 @@ def _operationally_active(qs):
     return qs.filter(
         deleted_at__isnull=True,
         operational_status__in=("active", "reopened"),
+    )
+
+
+# ── Country boundary ─────────────────────────────────────────────────────────
+# "Country scope" used to mean the whole deployment. A Country Director,
+# Impact Assessment officer or Accountant is bounded to *their* country: the
+# one on their staff profile, matched against the region a school or cluster
+# sits in and the profile of whoever is responsible for an activity. Admin and
+# a country role with no country on file stay deployment-wide, so a single-
+# country deployment behaves exactly as before.
+def country_bound(scope: UserScope) -> bool:
+    return bool(scope.country_scope and scope.country)
+
+
+def school_country_q(scope: UserScope, prefix: str = "") -> Q:
+    """Q for a School queryset (or one reached through ``prefix``)."""
+    if not country_bound(scope):
+        return Q()
+    return Q(**{f"{prefix}region__country": scope.country})
+
+
+def cluster_country_q(scope: UserScope, prefix: str = "") -> Q:
+    """A cluster carries its own region and a district; either places it."""
+    if not country_bound(scope):
+        return Q()
+    return Q(**{f"{prefix}region__country": scope.country}) | Q(
+        **{f"{prefix}district__region__country": scope.country}
+    )
+
+
+def country_staff_ids(scope: UserScope):
+    """Staff profile ids in the scope's country, as an unevaluated subquery."""
+    from apps.accounts.models import StaffProfile
+
+    return StaffProfile.objects.filter(country=scope.country).values("id")
+
+
+def country_user_ids(scope: UserScope):
+    """User ids of the staff in the scope's country, unevaluated.
+
+    Finance records (fund requests, weekly requests, cost lines) hang off a
+    responsible *user*, not a school, so the country boundary reaches them
+    through the person.
+    """
+    from apps.accounts.models import StaffProfile
+
+    return StaffProfile.objects.filter(country=scope.country).values("user_id")
+
+
+def person_country_q(scope: UserScope, field: str) -> Q:
+    """Q bounding a user-id field to the scope's country (no-op unbounded)."""
+    if not country_bound(scope):
+        return Q()
+    return Q(**{f"{field}__in": country_user_ids(scope)})
+
+
+def activity_country_q(scope: UserScope) -> Q:
+    """An activity is in the country through its school, its cluster, or —
+    when it has neither — the person responsible for it."""
+    if not country_bound(scope):
+        return Q()
+    return (
+        school_country_q(scope, "school__")
+        | cluster_country_q(scope, "cluster__")
+        | (
+            Q(school__isnull=True, cluster__isnull=True)
+            & Q(responsible_staff_id__in=country_staff_ids(scope))
+        )
     )
 
 
@@ -784,7 +890,7 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
         if not getattr(settings, "ALLOW_CD_OPERATIONAL_PLANNING", False):
             return qs.none()
     if scope.country_scope:
-        return qs
+        return qs.filter(school_country_q(scope))
     if scope.can_view_summary_only:
         return qs.none()
     if direct_only:
@@ -851,6 +957,19 @@ def may_plan_school(scope: UserScope, school) -> bool:
     return bool(scope.own_school_ids) and school_id in scope.own_school_ids
 
 
+def may_request_school_visit(scope: UserScope, school) -> bool:
+    """Whether this person may ask the school's owner for a visit.
+
+    The request path, not the planning path: a Country Director, Impact
+    Assessment or the Accountant reaching a school that belongs to a CCEO or
+    Programme Lead. `may_plan_school` stays the answer for everyone who owns
+    what they are planning in.
+    """
+    # Any school: where it has an owner the visit waits for their approval,
+    # where it has none it is simply scheduled (owner, 2026-09-02).
+    return getattr(scope, "active_role", None) in VISIT_REQUEST_ROLES
+
+
 def assert_may_plan_school(principal, school) -> None:
     """Raise Forbidden unless `principal` may plan operational work at `school`."""
     from apps.core.exceptions import Forbidden
@@ -885,6 +1004,7 @@ def scope_cache_fingerprint(scope: UserScope) -> str:
         {
             "role": scope.active_role,
             "country": scope.country_scope,
+            "country_name": scope.country,
             "summary_only": scope.can_view_summary_only,
             "own": sorted(scope.own_school_ids),
             "team": sorted(scope.team_school_ids),
@@ -947,7 +1067,7 @@ def scoped_school_queryset(scope: UserScope, base=None):
         else school_model.objects.filter(deleted_at__isnull=True)
     )
     if scope.country_scope:
-        return qs
+        return qs.filter(school_country_q(scope))
     if scope.can_view_summary_only:
         if scope.rvp_region_scoped:
             return qs.filter(region_id__in=scope.region_ids)
@@ -960,7 +1080,9 @@ def scoped_school_queryset(scope: UserScope, base=None):
 def aggregate_school_filter(scope: UserScope) -> Q:
     """An ORM Q to apply to aggregate analytics. Summary-only roles see
     country-wide counts (their purpose) but never row-level detail."""
-    if scope.country_scope or scope.can_view_summary_only:
+    if scope.country_scope:
+        return school_country_q(scope)
+    if scope.can_view_summary_only:
         return Q()
     if scope.school_ids:
         return Q(id__in=scope.school_ids)

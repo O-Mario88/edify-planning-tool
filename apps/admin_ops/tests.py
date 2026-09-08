@@ -512,6 +512,19 @@ class AdminWorkspaceTests(AdminOpsTestBase):
 
 
 class MaintenanceTests(AdminOpsTestBase):
+    """The seeded schedule goes first, so every count below is this test's own.
+
+    `admin_ops.apps.MAINTENANCE_TEMPLATES` is reference data: `post_migrate`
+    puts all four rows back into every test database, and each comes due on its
+    own calendar — "Weekly backup verification" fell due on 2026-09-04. Counting
+    what `generate_due()` returns while those rows sit in the table counts the
+    platform's schedule alongside the template the test just wrote, so the
+    number drifts with the date the suite runs rather than with the code.
+    """
+
+    def setUp(self):
+        MaintenanceTemplate.objects.all().delete()
+
     def test_a_due_template_generates_scheduled_admin_work(self):
         from apps.admin_ops.services import MaintenanceService
 
@@ -549,6 +562,9 @@ class MaintenanceTests(AdminOpsTestBase):
             next_due_date=timezone.localdate() + timedelta(days=5),
         )
         self.assertEqual(MaintenanceService.generate_due(), 0)
+        self.assertFalse(
+            AdminOperationsWorkItem.objects.filter(title="Restore rehearsal").exists()
+        )
 
     def test_the_generation_job_is_registered_and_monitored(self):
         from apps.realtime.registry import get_spec
@@ -811,6 +827,14 @@ class AdminOpsHealthTests(AdminOpsTestBase):
         return {c["key"]: c for c in admin_ops_health()["checks"]}
 
     def test_health_is_green_on_a_healthy_platform(self):
+        # The seeded maintenance schedule carries fixed first-due dates; on a
+        # healthy platform the generation job has advanced them, so a test
+        # that asserts health brings them to today rather than failing once
+        # the calendar passes the seed (2026-09-06).
+        from apps.admin_ops.models import MaintenanceTemplate
+        from django.utils import timezone as _tz
+
+        MaintenanceTemplate.objects.update(next_due_date=_tz.localdate())
         for check in self._checks().values():
             with self.subTest(check["key"]):
                 self.assertEqual(check["severity"], "ok")

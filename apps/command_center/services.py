@@ -130,11 +130,18 @@ def alerts(principal) -> list[dict]:
 
 
 def alerts_summary(principal) -> dict:
-    qs = CommandCenterAlert.objects.filter(status="open")
+    from django.db.models import Count, Q
+
+    # One aggregate: this runs on every authenticated request (2026-09-06).
+    counts = CommandCenterAlert.objects.filter(status="open").aggregate(
+        total=Count("id"),
+        urgent=Count("id", filter=Q(severity="urgent")),
+        high=Count("id", filter=Q(severity="high")),
+    )
     return {
-        "total": qs.count(),
-        "urgent": qs.filter(severity="urgent").count(),
-        "high": qs.filter(severity="high").count(),
+        "total": counts["total"] or 0,
+        "urgent": counts["urgent"] or 0,
+        "high": counts["high"] or 0,
     }
 
 

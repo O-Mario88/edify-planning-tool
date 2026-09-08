@@ -12,7 +12,7 @@
     <table class="w-full min-w-[900px] edify-text-caption">
       <thead>
         <tr class="border-b border-slate-100 text-slate-400 font-semibold uppercase tracking-wider edify-text-caption">
-          <th class="py-2 px-3 text-left sticky left-0 edify-surface z-10">Staff · Performance Priority</th>
+          <th class="py-2 px-3 text-left edify-frozen-cell">Staff · Performance Priority</th>
           {% for h in heads_pager.rows %}
           <th class="py-2 px-2 text-center border-l border-slate-100{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}" colspan="3">
             <span class="block text-slate-600 font-bold">{{ h.label }}</span>
@@ -21,7 +21,7 @@
           {% endfor %}
         </tr>
         <tr class="border-b border-slate-100 text-slate-400 font-bold edify-text-caption uppercase">
-          <th class="py-1 px-3 sticky left-0 edify-surface z-10"></th>
+          <th class="py-1 px-3 edify-frozen-cell"></th>
           {% for h in heads_pager.rows %}
           <th class="py-1 text-center border-l border-slate-100{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">Tgt</th><th class="py-1 text-center{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">Ach</th><th class="py-1 text-center{% if h.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">%</th>
           {% endfor %}
@@ -30,7 +30,7 @@
       <tbody class="divide-y divide-slate-50 font-semibold text-slate-700">
         {% for r in rows %}
         <tr class="hover:bg-slate-50/50">
-          <td class="py-1.5 px-3 sticky left-0 edify-surface z-10 whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}{% if r.area_source %} · {{ r.area_source }}{% endif %}</span></td>
+          <td class="py-1.5 px-3 edify-frozen-cell whitespace-nowrap">{{ r.staff }} <span class="text-slate-400 font-medium">· {{ r.area }}{% if r.area_source %} · {{ r.area_source }}{% endif %}</span></td>
           {% for c in r.cells %}
           <td class="py-1.5 text-center tabular-nums border-l border-slate-50{% if c.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">{{ c.t }}</td>
           <td class="py-1.5 text-center tabular-nums text-emerald-600{% if c.key == quarter %} bg-[var(--edify-teal-light)]{% endif %}">{{ c.a }}</td>

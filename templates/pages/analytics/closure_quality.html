@@ -1,22 +1,19 @@
 {% extends "layouts/shell.html" %}
 {% load static %}
+{% comment %}
+Closure Quality became a tab of the one Analytics page on 2026-09-05: the view
+renders `partials/analytics/panels/closure_quality.html` through
+`render_analytics_section`, so the workspace header, filter row, tiles and
+tablist are written once in `pages/analytics/workspace.html`.
+
+This standalone page is kept as the section's own frame and includes the very
+same panel, so the two can never drift apart.
+{% endcomment %}
 
 {% block title %}Closure Quality · Edify{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260809layout8">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260906tablet4">{% endblock %}
 
 {% block shell_content %}
-{% comment %}
-The IA lens on closure.
-
-Deliberately a worklist with a summary above it rather than a chart wall. The
-question here is not how many schools the country lost — leadership asks that —
-but which of these records should not be believed, because a duplicate counted
-as a closure reports a school loss that never happened and every figure built
-on top of it inherits the error.
-
-Every tile counts rows that are listed further down the page, so a number can
-be followed to the closures it describes.
-{% endcomment %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-analytics-enterprise>
 
   <header class="edify-page-header">
@@ -27,32 +24,9 @@ be followed to the closures it describes.
     </div>
   </header>
 
-    <form class="edify-filter-bar"
-          aria-label="Closure quality filters"
-          hx-get="/analytics/closure-quality"
-          hx-target="#closure-quality-body"
-          hx-swap="innerHTML"
-          hx-trigger="change"
-          hx-push-url="true">
-      <label class="edify-page-header-control">
-        <span class="edify-text-caption font-semibold uppercase tracking-wider edify-text-subtle">Period</span>
-        <select name="period" aria-label="Period" class="focus:outline-none">
-          {% comment %}
-          All time is the default on purpose. A data-quality queue that hid last
-          year's unresolved duplicates behind a period filter would show a clean
-          desk that is only clean because of where the window starts.
-          {% endcomment %}
-          <option value="all" {% if period != "fy" %}selected{% endif %}>All time</option>
-          <option value="fy" {% if period == "fy" %}selected{% endif %}>FY {{ fy }}</option>
-        </select>
-      </label>
-    </form>
-
   {% include "partials/analytics/section_nav.html" %}
   {% include "components/analytics_decision_frame.html" with question="Which closure records should not yet be trusted, and who needs to correct them?" evidence="Closure reasons, dates, enrolment and reopen history" freshness="Live closure ledger" confidence="Exceptions are explicitly flagged" %}
 
-  <div id="closure-quality-body">
-    {% include "partials/analytics/closure_quality_workspace.html" %}
-  </div>
+  {% include "partials/analytics/panels/closure_quality.html" %}
 </div>
 {% endblock %}

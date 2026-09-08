@@ -631,21 +631,20 @@ def _recalculate_and_write_lines(
             )
             for key, amount in alloc.items()
         ]
-        # Trainings and cluster sessions carry their activity-specific
-        # components (venue, facilitation, participant meals/snacks) ON TOP
-        # of their per-diem pool share — those belong to the session, not to
-        # the person's day. Visits and field events are pure pool shares.
-        from .pricing import POOL_PLUS_RECIPE_TYPES
+        # Every member carries its activity-specific components ON TOP of its
+        # per-diem pool share: a session's venue, facilitation and materials;
+        # a visit's own rate (Client/Core Staff Visit, SSA Support, OneTest)
+        # and any cost the Country Director linked to its catalogue item
+        # (owner's catalogue, 2026-09-06). Only the daily staff lines are
+        # shared; the recipe's copies of those are replaced by the pool.
+        from apps.budget.costing import cost_for_activity
+        from apps.budget.costing_service import _with_linked_rates
 
-        recipe_missing: list[str] = []
-        if activity.activity_type in POOL_PLUS_RECIPE_TYPES:
-            from apps.budget.costing import cost_for_activity
-
-            own = cost_for_activity(_profiled_input(costing_input), rates)
-            # The pure recipe also serves standalone previews. Replace its
-            # daily staff lines with the shared amounts, keeping session costs.
-            lines.extend(line for line in own.lines if line.key not in KEY_LABELS)
-            recipe_missing = [key for key in own.missing_items if key not in KEY_LABELS]
+        own = cost_for_activity(
+            _with_linked_rates(_profiled_input(costing_input), _settings_by_key), rates
+        )
+        lines.extend(line for line in own.lines if line.key not in KEY_LABELS)
+        recipe_missing = [key for key in own.missing_items if key not in KEY_LABELS]
         cost = ActivityCost(
             amount=sum(line.amount for line in lines),
             lines=lines,

@@ -21,6 +21,7 @@ so it is a faithful stand-in for proving the counting logic itself.
 from __future__ import annotations
 
 import threading
+import uuid
 from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 
@@ -29,6 +30,18 @@ from django.test import SimpleTestCase
 
 from apps.core import throttling
 from apps.core.throttling import _hit, _window, reset_throttle_state
+
+
+def _key(name: str) -> str:
+    """A throttle key no other test run can touch.
+
+    Dev points the cache at a real Redis, so `manage.py test --parallel` gives
+    every worker the SAME counter — two workers running this module at once
+    both counted into `route:burst` and the concurrency assertion failed on
+    whichever one lost the race. The keys are per-run now; what these tests
+    prove, that counting is atomic in a shared cache, is unchanged (2026-09-06).
+    """
+    return f"route:{name}:{uuid.uuid4().hex[:12]}"
 
 
 class InProcessWindowTest(SimpleTestCase):
@@ -43,17 +56,19 @@ class InProcessWindowTest(SimpleTestCase):
         self.addCleanup(self.patcher.stop)
 
     def test_the_limit_is_enforced(self):
-        allowed = [_hit("route:1.2.3.4", window_ms=60_000, limit=5) for _ in range(8)]
+        key = _key("1.2.3.4")
+        allowed = [_hit(key, window_ms=60_000, limit=5) for _ in range(8)]
         self.assertEqual(
             allowed.count(True), 5, "exactly the configured number get through"
         )
         self.assertEqual(allowed.count(False), 3)
 
     def test_distinct_clients_do_not_share_a_budget(self):
+        first, second = _key("10.0.0.1"), _key("10.0.0.2")
         for _ in range(5):
-            _hit("route:10.0.0.1", window_ms=60_000, limit=5)
+            _hit(first, window_ms=60_000, limit=5)
         self.assertTrue(
-            _hit("route:10.0.0.2", window_ms=60_000, limit=5),
+            _hit(second, window_ms=60_000, limit=5),
             "one address exhausting its limit must not block another",
         )
 
@@ -72,7 +87,8 @@ class SharedCacheWindowTest(SimpleTestCase):
         self.addCleanup(cache.clear)
 
     def test_the_limit_is_enforced_in_the_cache(self):
-        allowed = [_hit("route:5.6.7.8", window_ms=60_000, limit=5) for _ in range(8)]
+        key = _key("5.6.7.8")
+        allowed = [_hit(key, window_ms=60_000, limit=5) for _ in range(8)]
         self.assertEqual(allowed.count(True), 5)
         self.assertEqual(allowed.count(False), 3)
 
@@ -80,8 +96,9 @@ class SharedCacheWindowTest(SimpleTestCase):
         """Otherwise the count would be split across two places and neither
         would be the truth."""
         _window._hits.clear()  # noqa: SLF001
+        key = _key("9.9.9.9")
         for _ in range(3):
-            _hit("route:9.9.9.9", window_ms=60_000, limit=5)
+            _hit(key, window_ms=60_000, limit=5)
         self.assertEqual(
             len(_window._hits),  # noqa: SLF001
             0,
@@ -96,13 +113,23 @@ class SharedCacheWindowTest(SimpleTestCase):
         """
         threads = 20
         limit = 5
+        key = _key("burst")
         barrier = threading.Barrier(threads)
+        # The counter buckets by wall-clock window, and twenty threads released
+        # on a loaded machine can straddle a bucket boundary — which the fixed
+        # window allows (up to 2x the limit across two adjacent windows) and
+        # which made this fail under a full parallel run. The clock is pinned so
+        # the test measures the thing it is about: whether the counter is atomic
+        # when every thread hits ONE window at once (2026-09-07).
+        self.enterContext(
+            mock.patch.object(throttling.time, "time", return_value=1_780_000_000.0)
+        )
         results: list[bool] = []
         lock = threading.Lock()
 
         def worker(_i):
             barrier.wait(timeout=30)
-            ok = _hit("route:burst", window_ms=60_000, limit=limit)
+            ok = _hit(key, window_ms=60_000, limit=limit)
             with lock:
                 results.append(ok)
 
@@ -120,13 +147,13 @@ class SharedCacheWindowTest(SimpleTestCase):
         with mock.patch.object(
             throttling, "_shared_hit", side_effect=lambda k, **kw: _window.hit(k, **kw)
         ):
-            self.assertTrue(_hit("route:degraded", window_ms=60_000, limit=2))
+            self.assertTrue(_hit(_key("degraded"), window_ms=60_000, limit=2))
 
         with mock.patch(
             "django.core.cache.cache.add", side_effect=RuntimeError("down")
         ):
             self.assertTrue(
-                _hit("route:degraded-2", window_ms=60_000, limit=2),
+                _hit(_key("degraded-2"), window_ms=60_000, limit=2),
                 "a cache failure must fall back to the in-process window",
             )
 
@@ -136,15 +163,16 @@ class ResetHelperTest(SimpleTestCase):
     throttle state into each other depending on whether Redis is running."""
 
     def test_reset_clears_the_shared_cache_too(self):
+        key = _key("reset-me")
         with mock.patch.object(throttling, "_cache_is_shared", return_value=True):
             cache.clear()
             for _ in range(5):
-                _hit("route:reset-me", window_ms=60_000, limit=5)
-            self.assertFalse(_hit("route:reset-me", window_ms=60_000, limit=5))
+                _hit(key, window_ms=60_000, limit=5)
+            self.assertFalse(_hit(key, window_ms=60_000, limit=5))
 
-            reset_throttle_state(["route:reset-me"])
+            reset_throttle_state([key])
             self.assertTrue(
-                _hit("route:reset-me", window_ms=60_000, limit=5),
+                _hit(key, window_ms=60_000, limit=5),
                 "after a reset the key must start from zero again",
             )
         cache.clear()

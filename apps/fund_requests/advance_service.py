@@ -47,7 +47,10 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
             ]
         ).delete()
         return
-    lines = list(activity.schedule_cost_lines.all())
+    # A line worth nothing funds nothing: the 2026-09-06 catalogue's
+    # per-activity rates default to 0 until the Country Director sets them,
+    # and a zero-shilling advance was one more advance to account for.
+    lines = list(activity.schedule_cost_lines.exclude(amount=0))
     line_ids = {line.id for line in lines}
 
     # The bulk-delete + per-line create/update must be atomic: a failure midway
@@ -611,7 +614,7 @@ def pl_approve_accountability(advance_id: str, principal) -> dict:
     claim = adv.status == AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED
     _notify(
         [adv.responsible_user_id],
-        "advance_accountability_pl_approved",
+        "accountability_pl_approved",
         "Accountability approved by your Program Lead",
         (
             "Your reimbursement claim was approved and sent to the Accountant."
@@ -667,7 +670,7 @@ def pl_return_accountability(advance_id: str, data: dict, principal) -> dict:
     )
     _notify(
         [adv.responsible_user_id],
-        "advance_accountability_returned",
+        "accountability_pl_returned",
         "Accountability returned by your Program Lead",
         f"Correct and resubmit. Reason: {reason}",
         adv,
