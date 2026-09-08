@@ -34,14 +34,14 @@
 # never committed to git.
 #
 # ── Recurring cost ceiling ────────────────────────────────────────────────────
-# This production shape is intentionally capped at USD 37/month before tax:
+# This production shape is intentionally capped below USD 37/month before tax:
 #
-#   web (1 GiB shared)         $12/month
+#   web (1 GiB fixed)          $10/month
 #   scheduler (512 MiB)         $5/month
-#   managed PostgreSQL (1 GiB) $15/month
+#   managed PostgreSQL (1 GiB) $15.15/month
 #   one Spaces subscription     $5/month
-#                                ----------
-#                                $37/month
+#                                ------------
+#                                $35.15/month
 #
 # The pre-deploy migration job is billed only for the seconds it runs, so its
 # short deployment-time charge can put an individual invoice a few cents above
@@ -236,13 +236,13 @@ services:
       branch: main
       deploy_on_push: true
 
-    # The 1 GiB shared tier is the largest web service that keeps the complete
+    # The fixed 1 GiB tier is the largest web service that keeps the complete
     # production estate under the $37 ceiling. Run one Gunicorn worker so the
     # normal application stays within that memory envelope. LibreOffice-backed
     # DOCX→PDF rendition is the pressure point: its memory alert is intentionally
     # retained, and repeated OOMs are the objective trigger for a budget review.
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-1gb
+    instance_size_slug: apps-s-1vcpu-1gb-fixed
 
     # App Platform routes public traffic to this port and injects it as $PORT,
     # which the image's CMD binds Daphne to.
