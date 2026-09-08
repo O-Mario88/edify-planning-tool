@@ -4040,8 +4040,8 @@ main .school-filter-grid > div {
   --edify-field-border: color-mix(in srgb, var(--edify-border-strong) 78%, transparent);
 }
 
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea),
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content) {
   border: 1px solid var(--edify-field-border) !important;
   border-radius: var(--edify-radius-sm) !important;
   background-color: var(--edify-surface-raised) !important;
@@ -4059,8 +4059,8 @@ main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):no
    on some boxes and not others, side by side. The attribute treats every field
    the same, a select included, where "filled" means a real choice rather than
    the leading All option every filter starts on. */
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled],
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled] {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content)[data-edify-filled],
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content)[data-edify-filled] {
   border-color: var(--edify-border-strong) !important;
   background-color: var(--edify-field-filled) !important;
 }
@@ -4073,15 +4073,15 @@ main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):no
 
 /* Focus keeps the platform's ring: the reference does not show a focus state,
    and the ring is what carries the accessibility contract. */
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible),
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible) {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):is(:focus, :focus-visible),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):is(:focus, :focus-visible) {
   border-color: var(--edify-accent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-accent) 18%, transparent) !important;
   outline: 0 !important;
 }
 
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled,
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):disabled,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):disabled {
   border-color: var(--edify-field-border) !important;
   background-color: var(--edify-surface-muted) !important;
   color: var(--edify-text-disabled) !important;
@@ -4090,8 +4090,8 @@ main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):no
 /* A field that failed validation says so on its own edge, not only in a message
    below it. `:user-invalid` waits until the person has actually interacted, so
    an untouched required field is not painted red on arrival. */
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid,
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):user-invalid,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):user-invalid {
   border-color: var(--edify-danger, #b42318) !important;
 }
 
@@ -4109,3 +4109,49 @@ main textarea,
   .context-metrics .context-metrics__value > span[aria-hidden="true"] {
   font-weight: 700 !important;
 }
+
+/* Table content is ink on the table surface. Only action buttons keep a
+   bounded treatment. Structural markers also cover HTMX-inserted rows. */
+:root :is(main, .drawer-body, [role="dialog"])
+  table.edify-plain-table.edify-plain-table.edify-plain-table :is(thead, tbody, tfoot, tr, th, td) {
+  border: 0 !important;
+  box-shadow: none !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is(.text-white, .edify-table-status, [class*="badge"], [class*="pill"], [class*="chip"]) {
+  color: var(--edify-text) !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="success"], [class*="text-emerald"], [class*="text-green"], [class*="bg-emerald"], [class*="bg-green"]) {
+  color: var(--edify-success-text) !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="danger"], [class*="text-rose"], [class*="text-red"], [class*="bg-rose"], [class*="bg-red"]) {
+  color: var(--edify-danger-text) !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="warning"], [class*="text-amber"], [class*="text-orange"], [class*="bg-amber"], [class*="bg-orange"]) {
+  color: var(--edify-warning-text) !important;
+}
+/* Preserve keyboard location without permanently boxing editable content. */
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is(input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table
+  .edify-table-plain-content:is(.edify-table-status, [class*="badge"], [class*="pill"], [class*="chip"]) {
+  display: inline-flex !important;
+  align-items: center;
+  flex-direction: row !important;
+  gap: 0.25rem;
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+:root table.edify-plain-table .edify-table-plain-content:is(input, select, textarea):disabled { color: var(--edify-text-disabled) !important; }
+:root table.edify-plain-table .edify-table-plain-content:is(input, select, textarea):user-invalid { color: var(--edify-danger-text) !important; }

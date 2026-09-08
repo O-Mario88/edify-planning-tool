@@ -75,7 +75,7 @@ dashboard renders.{% endcomment %}
 {% endfor %}
 <!-- Status -->
 <td class="px-6 py-4 text-center" data-label="Status">
-<span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold tracking-wider bg-slate-900 text-white border border-slate-950">
+<span class="edify-table-status" data-tone="{% if req.status == 'disbursed' or req.status == 'approved' or req.status == 'accountant_approved' or req.status == 'accounted' or req.status == 'closed' %}success{% elif req.status == 'rejected' or 'returned' in req.status %}danger{% else %}warning{% endif %}">
 {{ req.status|status_label }}
 </span>
 </td>

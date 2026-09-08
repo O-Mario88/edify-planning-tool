@@ -89,6 +89,24 @@
    * relationships once into ordinary classes instead. HTMX-added roots pass
    * through this same enhancer, so the markers remain correct after swaps. */
   function enhanceStructuralMarkers(root) {
+    var contentTables = elementsWithin(root, 'main table, .drawer-body table, [role="dialog"] table');
+    var containingTable = root.closest && root.closest('table.edify-plain-table');
+    if (containingTable && contentTables.indexOf(containingTable) < 0) contentTables.push(containingTable);
+    contentTables.forEach(function (table) {
+      table.classList.add('edify-plain-table');
+      table.querySelectorAll('button, [role="button"], summary, a.btn, a[class*="btn-"], a.rounded-control, [data-record-action] a').forEach(function (action) {
+        action.classList.add('edify-table-action');
+      });
+      table.querySelectorAll('td *, th *').forEach(function (element) {
+        var popup = element.closest('[role="dialog"], [role="menu"], .row-menu, [popover]');
+        var plain = element.namespaceURI === 'http://www.w3.org/1999/xhtml'
+          && !element.matches('table, thead, tbody, tfoot, tr, td, th, script, style, template')
+          && !element.closest('.edify-table-action')
+          && !(popup && table.contains(popup))
+          && !element.matches('input[type="checkbox"], input[type="radio"], input[type="submit"], input[type="button"], input[type="reset"], input[type="hidden"]');
+        element.classList.toggle('edify-table-plain-content', plain);
+      });
+    });
     elementsWithin(root, filterToolbarSelector).forEach(function (toolbar) {
       toolbar.classList.toggle(
         'edify-has-work-plan-filter-popover',

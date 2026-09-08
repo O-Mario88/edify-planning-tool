@@ -156,5 +156,29 @@
     "source_tests_covered": 154,
     "source_verification": "153 passed initially; updated expected light canvas and reran all 72 design-quality tests successfully.",
     "subtle_text_canvas_contrast": 4.738
+  },
+  "plain_table_policy": {
+    "page_variants": 88,
+    "theme_viewport_checks": 528,
+    "widths": [
+      390,
+      1290
+    ],
+    "themes": [
+      "Light",
+      "Dark",
+      "Edify Blue"
+    ],
+    "cross_browser_checks": [
+      "finance queues and statuses",
+      "dynamic table content, action styling and keyboard focus"
+    ],
+    "engines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ],
+    "queue_interaction_tests_passed": 18,
+    "shared_style_inventory_tests_passed": 114
   }
 }

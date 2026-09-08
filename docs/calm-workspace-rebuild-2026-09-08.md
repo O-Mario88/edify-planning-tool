@@ -60,3 +60,13 @@ The live suite uses the local seeded QA accounts and refuses to accept pending l
 The focused responsive suite covers login at 390, 768, 1048, 1290 and 1600px, and Planning/Personal Time Off at 390, 768, 1048 and 1600px in all three themes, including opening the leave request drawer. Regression test: `e2e/workspace-polish.spec.js`.
 
 Verification passed in Chromium, Firefox and WebKit. The source/login/inventory suite covered 154 tests; its old canvas-colour assertion was updated and the complete 72-test design-quality module passed on rerun. Subtle text contrast on the new canvas is 4.74:1. The regenerated inventory identifies 142 shared strip surfaces.
+
+## Plain table content and partner finance queues
+
+Partner Payments now contains partner-delivered activities and partner invoices only; the embedded transport-provider queue was removed. Its existing payment records are preserved. Finance Approval History uses semantic status text instead of a black filled pill.
+
+The shared table enhancer removes decorative borders, fills and shadows from cell content, including editable text fields. Status labels use readable theme colours, while action buttons keep their styling. Native selection controls, floating menus and keyboard focus remain functional. The same markers are applied after HTMX updates. Table grid lines and row/header fills now use one plain surface.
+
+Regression coverage is in `e2e/plain-table-content.spec.js` and the partner queue tests in `apps/fund_requests/test_finance_operating.py`.
+
+Plain-table verification: 528 settled layout checks across 88 rendered page variants; finance and dynamically inserted table content verified in Chromium, Firefox and WebKit; 18 queue/interactions tests and 114 shared-style/inventory tests passed.

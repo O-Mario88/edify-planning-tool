@@ -2527,7 +2527,7 @@
    "audit_id": "KPI-SOURCE-127",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1396,
+   "line": 1374,
    "label": "Week",
    "keys": [
     "label",
@@ -2544,7 +2544,7 @@
    "audit_id": "KPI-SOURCE-128",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1397,
+   "line": 1375,
    "label": "Amount",
    "keys": [
     "label",
@@ -2561,7 +2561,7 @@
    "audit_id": "KPI-SOURCE-129",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1398,
+   "line": 1376,
    "label": "Name",
    "keys": [
     "label",

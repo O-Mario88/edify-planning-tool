@@ -527,27 +527,6 @@ def partner_payments_view(request):
         act.advance_paid = paid
         act.balance_due = max(planned - paid, 0)
 
-    # §9.1 — the transport company's pending obligations, one per mission
-    # day. Settled here, never combined with a staff allowance transfer.
-    from apps.fund_requests.finance_models import TransportPayment
-
-    transport_queue = list(
-        TransportPayment.objects.filter(status="pending")
-        .select_related("batch")
-        .order_by("batch__visit_date")
-    )
-    staff_names = {}
-    if transport_queue:
-        from apps.accounts.models import User as _User
-
-        staff_names = dict(
-            _User.objects.filter(
-                id__in={t.batch.responsible_user for t in transport_queue}
-            ).values_list("id", "name")
-        )
-    for t_pay in transport_queue:
-        t_pay.staff_name = staff_names.get(t_pay.batch.responsible_user, "Staff")
-
     # Partner-submitted invoices drive the MOU instalments now: the
     # accountant downloads each invoice and pays the system-derived payable.
     from apps.fund_requests.finance_models import PartnerInvoice
@@ -583,7 +562,6 @@ def partner_payments_view(request):
         "payments": payments,
         "advance_queue": advance_queue,
         "invoice_queue": invoice_queue,
-        "transport_queue": transport_queue,
         "methods": ["Mobile Money", "Bank Transfer", "Cheque"],
     }
     return render(request, "pages/accounts/partner_payments.html", context)

@@ -571,6 +571,34 @@ class FinanceOperatingSystemTest(TestCase):
         ids = {a.id for a in resp.context["advances"]}
         self.assertNotIn(self.staff_activity.id, ids)
 
+    def test_partner_queue_excludes_staff_and_transport_obligations(self):
+        from apps.daily_visit_batches.models import DailyVisitBatch
+        from apps.fund_requests.finance_models import TransportPayment
+
+        batch = DailyVisitBatch.objects.create(
+            responsible_user="cceo_user", visit_date=date(2026, 7, 15),
+            district_type="primary",
+        )
+        transport = TransportPayment.objects.create(
+            batch=batch, provider_name="Transport-only supplier", amount=50000,
+        )
+        self.staff_activity.status = "ia_verified"
+        self.staff_activity.payment_status = "none"
+        self.staff_activity.save(update_fields=["status", "payment_status"])
+        self.partner_activity.payment_status = "none"
+        self.partner_activity.save(update_fields=["payment_status"])
+        response = self._accountant_client().get("/accounts/partner-payments/")
+        self.assertEqual(response.status_code, 200)
+        for queue in ("payments", "advance_queue"):
+            self.assertTrue(all(a.delivery_type == "partner" for a in response.context[queue]))
+            self.assertNotIn(self.staff_activity.id, {a.id for a in response.context[queue]})
+        self.assertIn(self.partner_activity.id, {a.id for a in response.context["advance_queue"]})
+        self.assertNotIn("transport_queue", response.context)
+        self.assertNotContains(response, "Transport Provider Payments")
+        self.assertNotContains(response, "Transport-only supplier")
+        transport.refresh_from_db()
+        self.assertEqual(transport.status, "pending")
+
     def test_partner_payments_queue_covers_both_real_pre_payment_states(self):
         self._make_partner_activity_verification_eligible()
         client = self._accountant_client()
