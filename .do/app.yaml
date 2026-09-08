@@ -80,7 +80,7 @@ alerts:
 #   A     @     172.66.0.96
 #   AAAA  @     2606:4700:7::60
 #   AAAA  @     2a06:98c1:58::60
-#   CNAME www   edifyplanning.app.
+#   CNAME www   edify-production-jct7s.ondigitalocean.app.
 #
 # Values are DigitalOcean's published static ingress records, shared across App
 # Platform apps and routed by Host header:

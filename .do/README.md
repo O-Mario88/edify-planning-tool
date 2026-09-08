@@ -50,7 +50,8 @@ evidence, not an input spec; export the live spec again before every change.
   ($15.15/month), bound to the app as `db`
 - private Spaces bucket `edify-production-private-fra` in `fra1` ($5/month)
 - `edifyplanning.app` is PRIMARY and `www.edifyplanning.app` is an ALIAS; DNS
-  remains at GoDaddy
+  remains at GoDaddy, with `www` targeting
+  `edify-production-jct7s.ondigitalocean.app`
 
 The recurring total is **$35.15/month before tax**. Do not add a standby,
 staging app, managed cache, dedicated egress IP, or paid log destination without
