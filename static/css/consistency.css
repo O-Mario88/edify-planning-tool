@@ -4213,3 +4213,100 @@ main textarea,
   border-color: transparent !important;
   box-shadow: none !important;
 }
+
+/* Compact centred workflows. Size tiers reflect form complexity rather than
+   the available monitor width; scrolling handles long forms. */
+:root {
+  --drawer-width-sm: 26rem;
+  --drawer-width-md: 35rem;
+  --drawer-width-lg: 43rem;
+  --drawer-width-xl: 50rem;
+  --drawer-width-workspace: 60rem;
+}
+@media (min-width: 48rem) {
+  :root { --edify-drawer-inset: clamp(2rem, 6vh, 4rem); }
+  .drawer-surface.drawer-surface,
+  .edify-popup-dialog .edify-popup-dialog__surface {
+    min-block-size: 0 !important;
+    max-block-size: min(52rem, calc(100dvh - 2 * var(--edify-drawer-inset))) !important;
+  }
+  .edify-popup-dialog .edify-popup-dialog__surface {
+    inline-size: min(100%, var(--drawer-width-lg)) !important;
+    max-inline-size: var(--drawer-width-lg) !important;
+  }
+  .edify-popup-dialog--wide .edify-popup-dialog__surface {
+    inline-size: min(100%, var(--drawer-width-workspace)) !important;
+    max-inline-size: var(--drawer-width-workspace) !important;
+  }
+  .drawer-surface.drawer-surface .drawer-header {
+    min-block-size: 0 !important;
+    padding: .875rem 3rem .75rem 1.25rem !important;
+  }
+  .drawer-surface.drawer-surface .drawer-body { padding: .5rem 1.25rem 0 !important; }
+  .drawer-surface.drawer-surface .drawer-body:not(:has(.drawer-footer)) { padding-block-end: 1.25rem !important; }
+  .drawer-surface.drawer-surface .drawer-footer {
+    margin: .875rem -1.25rem 0 !important;
+    padding: .75rem 1.25rem !important;
+  }
+  .drawer-surface.drawer-surface .drawer-close-btn {
+    inset-block-start: .75rem !important;
+    inset-inline-end: .75rem !important;
+    inline-size: 2rem !important;
+    block-size: 2rem !important;
+  }
+}
+@media (min-width: 48rem) {
+  .pto-drawer-shell.pto-drawer-shell {
+    inset: 0 !important;
+    margin: auto !important;
+    padding: 0 !important;
+    inline-size: min(var(--drawer-width-md), calc(100vw - 4rem)) !important;
+    block-size: min(48rem, calc(100dvh - 4rem)) !important;
+  }
+  .pto-drawer-shell .pto-drawer-panel {
+    max-inline-size: none;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-drawer-radius, 1rem);
+    overflow: hidden;
+  }
+}
+.drawer-surface.drawer-surface.drawer-surface {
+  inline-size: calc(100% - 2 * var(--edify-drawer-inset)) !important;
+  min-inline-size: 0 !important;
+}
+/* Choice cards retain their title/description hierarchy in a narrow dialog. */
+.drawer-surface .drawer-body button:has(> span + span) {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: .25rem !important;
+  height: auto !important;
+  white-space: normal !important;
+  text-align: left !important;
+}
+:root :is(.drawer-surface, .edify-popup-dialog__surface) input:is([type="radio"], [type="checkbox"]) {
+  width: 1rem !important;
+  height: 1rem !important;
+  inline-size: 1rem !important;
+  block-size: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  min-inline-size: 1rem !important;
+  min-block-size: 1rem !important;
+  padding: 0 !important;
+  flex: 0 0 1rem;
+}
+@media (min-width: 48rem) {
+  :root :is(.drawer-surface, .edify-popup-dialog__surface)
+    :is(input[type="text"], input[type="email"], input[type="number"], input[type="tel"], input[type="date"], select) {
+    min-height: 2.25rem !important;
+    min-block-size: 2.25rem !important;
+    height: 2.25rem !important;
+    padding-block: .375rem !important;
+  }
+  .drawer-surface .cluster-create-fields { padding: .75rem 0 1rem; gap: .875rem; }
+  .drawer-surface .cluster-create-basics { gap: .875rem; }
+}
+@container drawer (min-width: 40rem) {
+  .cluster-create-basics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

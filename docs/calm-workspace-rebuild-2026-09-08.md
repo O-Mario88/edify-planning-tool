@@ -82,3 +82,9 @@ Verification: the rendered-table sweep covers 88 page variants across three widt
 In Light mode, local table title bars use a blue background with white heading text. Column headings use the same blue ink while retaining their existing surface colour. Shared structural enhancement finds local title bars on initial render and HTMX refresh without changing page headings or filter forms. Dark and Blue theme treatments remain scoped separately.
 
 The Accountant landing workspace now renders finance operations directly. The map tab, map partial and map asset include were removed; old map URLs, saved preferences and HTMX shell requests resolve to the operational queue. Other roles retain their maps. Regression checks cover the role behaviour, shared UI contracts, theme/viewport styling and browser rendering.
+
+### Compact centred drawers — 9 September
+
+Shared drawer widths now cap at 416/560/688/800/960px for small through workspace tiers. Desktop dialogs retain a viewport inset and scroll within a height cap; headers, body padding, close controls and footer shelves are tighter. Legacy workflow popups share the cap, and the separate leave drawer is centred on desktop. Cluster creation no longer overrides the phone inset. Scheduling choice labels and descriptions stack cleanly.
+
+Browser regression coverage opens scheduling, the legacy core-visit form, assignment and cluster creation at 390/768/1290/1920px, checks centring and overflow, and closes each dialog. A separate check verifies desktop leave-dialog centring.
