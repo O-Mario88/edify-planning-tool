@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load frontend_filters %}
 
 {% block title %}IA Review Workspace - Edify{% endblock %}
@@ -287,20 +289,20 @@ No evidence uploads available for this activity.
 {{ checks.attendance_desc }}
 </p>
 
-<div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-2">
-<div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
-<span class="edify-text-caption uppercase font-bold text-slate-400">Teachers</span>
-<span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.teachers_attended|default:0 }}</span>
-</div>
-<div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
-<span class="edify-text-caption uppercase font-bold text-slate-400">School Leaders</span>
-<span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.leaders_attended|default:0 }}</span>
-</div>
-<div class="bg-slate-50 border border-slate-100 p-3 rounded-surface text-center">
-<span class="edify-text-caption uppercase font-bold text-slate-400">Others</span>
-<span class="text-[20px] font-semibold text-slate-800 mt-1 block">{{ act.other_participants|default:0 }}</span>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{% kpi_label %}Teachers{% endkpi_label %}
+{{ act.teachers_attended|default:0 }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}School Leaders{% endkpi_label %}
+{{ act.leaders_attended|default:0 }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Others{% endkpi_label %}
+{{ act.other_participants|default:0 }}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 <!-- School-level Attended vs Absent list -->
 {% if cluster_schools %}

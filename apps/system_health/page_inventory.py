@@ -970,10 +970,10 @@ def _header_variant(source: str, kind: str) -> str:
 
 
 def _kpi_count(source: str) -> str:
-    strips = source.count("components/kpi_strip.html")
-    if strips == 0:
+    summaries = source.count("components/context_metrics.html")
+    if summaries == 0:
         return "0"
-    return f"runtime-registered; {strips} strip(s), platform maximum 6"
+    return f"runtime-registered; {summaries} contextual summary/summaries"
 
 
 def _card_count(source: str) -> int:

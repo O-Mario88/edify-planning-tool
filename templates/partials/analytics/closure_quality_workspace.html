@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load frontend_filters table_pagination %}
 {% comment %}
 The body of the closure-quality page, swapped on its own when the period
@@ -13,64 +15,64 @@ loses focus mid-interaction.
   <section aria-labelledby="cq-summary" class="space-y-3">
     <h2 id="cq-summary" class="sr-only">Summary</h2>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closures recorded</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.recorded|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Schools that stopped operating</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Stranded duplicates</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.stranded_duplicates|intcomma }}</p>
+    {% kpi_strip %}
+      {% kpi_metric %}
+        {% kpi_label %}Closures recorded{% endkpi_label %}
+        {{ summary.recorded|intcomma }}
+        {% kpi_helper %}Schools that stopped operating{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Stranded duplicates{% endkpi_label %}
+        {{ summary.stranded_duplicates|intcomma }}
         {% comment %}
         Not a closure reason — the service refuses to record one of those. This
         is a school closed while its own duplicate flag was still open, which
         strands the merge: the record leaves the directory unreconciled.
         {% endcomment %}
-        <p class="edify-text-caption edify-text-muted">Closed before the duplicate flag was resolved</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Reopened</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">
+        {% kpi_helper %}Closed before the duplicate flag was resolved{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Reopened{% endkpi_label %}
+        {{ summary.reopened|intcomma }}
+        {% kpi_helper %}
           {% if summary.reopening_rate is not None %}{{ summary.reopening_rate }}% of recorded closures{% else %}No closures to compare{% endif %}
-        </p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Recording lag</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">
+        {% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Recording lag{% endkpi_label %}
+
           {% if summary.average_recording_lag is not None %}{{ summary.average_recording_lag }}<span class="text-sm font-semibold edify-text-muted"> days</span>{% else %}—{% endif %}
-        </p>
-        <p class="edify-text-caption edify-text-muted">Average between closing and being recorded</p>
-      </div>
-    </div>
+
+        {% kpi_helper %}Average between closing and being recorded{% endkpi_helper %}
+      {% endkpi_metric %}
+    {% endkpi_strip %}
 
     {% comment %}
     The second row is the honest-gap row: things the data cannot tell you, said
     out loud rather than absorbed into the totals above.
     {% endcomment %}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">No enrolment recorded</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.missing_enrollment|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Cannot say what the programme lost</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Closed unconfirmed</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.weak_ground|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Absence of evidence, not evidence of closure</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Recorded late</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.stale_recordings|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">More than {{ stale_days }} days after closing</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Enrolment removed</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.enrollment_removed|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Learners, at the moment each school closed</p>
-      </div>
-    </div>
+    {% kpi_strip %}
+      {% kpi_metric %}
+        {% kpi_label %}No enrolment recorded{% endkpi_label %}
+        {{ summary.missing_enrollment|intcomma }}
+        {% kpi_helper %}Cannot say what the programme lost{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Closed unconfirmed{% endkpi_label %}
+        {{ summary.weak_ground|intcomma }}
+        {% kpi_helper %}Absence of evidence, not evidence of closure{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Recorded late{% endkpi_label %}
+        {{ summary.stale_recordings|intcomma }}
+        {% kpi_helper %}More than {{ stale_days }} days after closing{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Enrolment removed{% endkpi_label %}
+        {{ summary.enrollment_removed|intcomma }}
+        {% kpi_helper %}Learners, at the moment each school closed{% endkpi_helper %}
+      {% endkpi_metric %}
+    {% endkpi_strip %}
   </section>
 
   {# ── The worklist ───────────────────────────────────────────────────────── #}

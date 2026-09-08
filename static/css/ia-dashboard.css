@@ -3,36 +3,6 @@
   color: var(--edify-text);
 }
 
-/* The IA workload carries unusually long operational labels. It uses the
-   platform KPI grid unchanged; only label wrapping is specialized here. */
-.ia-dashboard .kpi-strip {
-  container-name: kpi-strip ia-report-kpis;
-}
-
-.ia-dashboard .kpi-strip__label {
-  max-inline-size: 100%;
-  overflow: visible;
-  text-overflow: clip;
-  text-wrap: nowrap;
-  white-space: nowrap;
-}
-
-@container ia-report-kpis (max-width: 34rem) {
-  .ia-dashboard .kpi-strip__grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-  }
-
-  .ia-dashboard .kpi-strip__label {
-    display: -webkit-box;
-    overflow: hidden;
-    line-height: 1.25;
-    text-wrap: pretty;
-    white-space: normal;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
-  }
-}
-
 .ia-dashboard svg {
   width: 1.1rem;
   height: 1.1rem;
@@ -1717,4 +1687,3 @@
 /* The lead's consolidated row heads the team table. */
 .ia-monitor-table__lead td { background: color-mix(in oklab, var(--edify-accent) 6%, var(--edify-surface)); font-weight: 600; }
 .ia-monitor-table__lead td:first-child { border-inline-start: 3px solid var(--edify-accent); }
-

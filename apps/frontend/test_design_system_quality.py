@@ -444,7 +444,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-button-primary-treatment: none",
             "--edify-button-secondary-treatment: none",
             "--edify-card-surface: var(--edify-surface)",
-            "--edify-card-border: #2d3d49",
+            "--edify-card-border: var(--edify-border)",
             "--edify-table-header: #1a2833",
             "--edify-table-row-alt: #14212b",
             "--edify-table-row-hover: #1b3446",
@@ -493,9 +493,9 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         blue_tokens = tokens.split(":root.theme-blue {", 1)[1].split("\n}", 1)[0]
 
         for declaration in (
-            "--edify-surface: rgba(5, 54, 96, 0.58)",
-            "--edify-surface-muted: rgba(5, 54, 96, 0.58)",
-            "--edify-surface-raised: rgba(5, 54, 96, 0.58)",
+            "--edify-surface: #10385b",
+            "--edify-surface-muted: #123d62",
+            "--edify-surface-raised: #154267",
             "--edify-border: rgba(123, 189, 232, 0.32)",
             "--edify-surface-treatment: none",
             "--edify-glass-tile-treatment: none",
@@ -504,7 +504,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-button-secondary-treatment: none",
             "--edify-glass-blur: 0px",
             "--edify-card-surface: var(--edify-surface)",
-            "--edify-card-border: transparent",
+            "--edify-card-border: var(--edify-border)",
             "--edify-card-shadow:",
             "--edify-card-shadow-hover:",
             "--edify-card-backdrop-filter: none",
@@ -607,10 +607,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             (
                 "templates/pages/documents/canonical_document.html",
                 "agreement-masthead edify-inverse-surface",
-            ),
-            (
-                "templates/pages/dashboards/special_projects.html",
-                "edify-inverse-surface bg-[var(--edify-primary-active)]",
             ),
             (
                 "templates/partials/core_schools/champion_review_drawer.html",
@@ -801,7 +797,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "--edify-brand-primary: var(--brand-primary)",
             "--edify-brand-primary-hover: var(--brand-primary-hover)",
             "--edify-brand-secondary: #ef564b",
-            "--edify-bg: #e3f2fa",
+            "--edify-bg: #f4f6f8",
             "--edify-section-bg: #f2f5f6",
             "--edify-surface: #f8fafb",
             "--edify-surface-raised: #ffffff",
@@ -821,7 +817,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         )
         self.assertIn(":root:not(.theme-blue):not(.theme-dark)", platform)
         self.assertIn("getPropertyValue('--edify-bg')", base)
-        self.assertNotIn("#e3f2fa", base)
+        self.assertNotIn("#f4f6f8", base)
 
     def test_light_workspace_text_hierarchy_meets_high_contrast_standard(self):
         tokens = _read("static/css/design-system.css")
@@ -838,11 +834,11 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         # Body-text steps clear AA on the card plane they actually sit on.
         # (#6b7b84 is the disabled step, which WCAG exempts from the minimum.)
         # #5a6b75 is the subtle step. It was #5f707a until the canvas became
-        # the tinted #e3f2fa, against which it measured 4.49:1 — under AA by a
+        # the tinted #f4f6f8, against which it measured 4.49:1 — under AA by a
         # hundredth, which is still under. This assertion is what caught it.
         for colour in ("#17232b", "#3f515c", "#5a6b75"):
             self.assertGreaterEqual(_contrast_ratio(colour, "#f8fafb"), 4.5)
-            self.assertGreaterEqual(_contrast_ratio(colour, "#e3f2fa"), 4.5)
+            self.assertGreaterEqual(_contrast_ratio(colour, "#f4f6f8"), 4.5)
 
         # Primary brand must stay legible under white button labels in every
         # interaction state.
@@ -885,19 +881,19 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             ".edify-risk-card, .card-alert",
         ):
             self.assertIn(selector, platform)
-        self.assertIn(".kpi-strip__item", _read("static/css/components.css"))
+        self.assertIn(".context-metrics__fact", _read("static/css/components.css"))
 
-    def test_kpi_labels_use_the_shared_strip_hierarchy(self):
-        tokens = _read("static/css/design-system.css")
-        platform = _read("static/css/platform.css")
+    def test_metric_labels_use_the_shared_context_hierarchy(self):
         components = _read("static/css/components.css")
+        context = components[components.index("CONTEXT METRICS") :]
 
-        self.assertIn("--edify-kpi-label-weight: 600", tokens)
-        self.assertIn("--edify-kpi-label-tracking:", tokens)
-        self.assertIn("KPI label typography", platform)
-        self.assertIn("text-transform: none !important", platform)
-        self.assertIn(".kpi-strip__label {", components)
-        self.assertIn("text-transform: uppercase", components)
+        self.assertIn(".context-metrics__label {", context)
+        self.assertIn("font-weight: 500;", context)
+        self.assertIn(".context-metrics__value {", context)
+        self.assertIn("font-variant-numeric: tabular-nums;", context)
+        label = context[context.index(".context-metrics__label {") :]
+        label = label[: label.index("\n}")]
+        self.assertNotIn("text-transform: uppercase", label)
 
         for template in (
             "templates/partials/professional_development/body.html",
@@ -910,7 +906,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/partials/debriefs/dashboard_body.html",
             "templates/pages/projects/index.html",
         ):
-            self.assertIn("components/kpi_strip.html", _read(template), template)
+            self.assertIn("components/context_metrics.html", _read(template), template)
 
         program_lead_dashboard = _read("templates/partials/dashboards/pl/body.html")
         self.assertNotIn(

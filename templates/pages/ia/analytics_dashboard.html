@@ -6,7 +6,7 @@
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 {% block feature_css %}
 {% include "partials/vendor/dashboard_map.html" %}
-<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260905reach5">
+<link rel="stylesheet" href="{% static 'css/ia-dashboard.css' %}?v=20260908context1">
 <link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260906tablet4">
 {% endblock %}
 
@@ -56,7 +56,7 @@
   definition, period and drilldown live with the metric rather than in this
   template. Replaces the page-local `ia-metric` tiles.
   {% endcomment %}
-  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Verification workload" %}
+  {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Verification workload" %}
 
   <div class="mobile-home-only">
     <section class="mobile-home-section" aria-labelledby="ia-mobile-queue-title">

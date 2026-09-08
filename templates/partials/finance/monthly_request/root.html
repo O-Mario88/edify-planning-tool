@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load table_pagination %}
 {% if action_error %}
 <div class="mb-4 flex items-start gap-2 rounded-surface border border-rose-200 bg-rose-50 px-4 py-3 text-[12px] font-semibold text-rose-800" role="alert">
@@ -53,11 +55,7 @@
   </section>
   {% else %}
   <section class="grid grid-cols-2 gap-3 lg:grid-cols-4" aria-label="Monthly request progress">
-    <div class="rounded-surface border p-4 {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
-      <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">Team budget</p>
-      <p class="mt-1 text-[20px] font-bold tabular-nums">{{ shown_total_fmt }}</p>
-      <p class="mt-1 edify-text-caption font-semibold {% if request_state == 'not_fetched' or request_state == 'draft' or request_state == 'returned_by_cd' %}edify-primary-on-solid{% else %}text-slate-500{% endif %}">{% if request_state == 'not_fetched' %}Ready to review{% elif request_state == 'returned_by_cd' %}Update needed{% else %}Review and submit{% endif %}</p>
-    </div>
+    {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Team budget{% endkpi_label %}{{ shown_total_fmt }}{% kpi_helper %}{% if request_state == "not_fetched" %}Ready to review{% elif request_state == "returned_by_cd" %}Update needed{% else %}Review and submit{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
     <div class="rounded-surface border p-4 {% if request_state == 'submitted_to_cd' %}edify-selected-surface{% else %}border-slate-200 edify-surface text-slate-800{% endif %}">
       <p class="edify-text-caption font-bold uppercase tracking-wider {% if request_state == 'submitted_to_cd' %}edify-primary-on-solid{% else %}text-slate-400{% endif %}">CD review</p>
       <p class="mt-1 text-[20px] font-bold">{% if request_state == 'approved_by_cd' %}Approved{% elif request_state == 'submitted_to_cd' %}In review{% else %}Next{% endif %}</p>
@@ -109,10 +107,7 @@
         {% if request_state == 'returned_by_cd' and fund_request.review_note %}<p class="mt-2 text-[12px] font-bold text-rose-700">Country Director’s note: {{ fund_request.review_note }}</p>{% endif %}
       </div>
       <div class="flex shrink-0 flex-col gap-2 sm:flex-row sm:items-center">
-        <div class="rounded-control border edify-primary-border edify-surface px-3 py-2 text-left shadow-sm sm:text-right">
-          <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Request total</p>
-          <p class="text-[20px] font-bold tabular-nums text-slate-800">{{ shown_total_fmt }}</p>
-        </div>
+        {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Request total{% endkpi_label %}{{ shown_total_fmt }}{% endkpi_metric %}{% endkpi_strip %}
         <div class="flex flex-col gap-2 sm:flex-row">
           {% if can_submit_to_rvp %}
           <button hx-post="/accounts/monthly-request/action" hx-target="#monthly-request-root" hx-swap="innerHTML" hx-vals='{"action":"submit_to_rvp","fy":"{{ fy }}","month":"{{ month }}"}' class="edify-action-button primary h-10 justify-center gap-2 px-4 text-[12px] shadow-sm">

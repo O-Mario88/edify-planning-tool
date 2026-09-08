@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 <section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5 space-y-4"
          aria-labelledby="{{ section_id }}">
   <header>
@@ -23,11 +25,7 @@
       <p class="mt-3 edify-text-caption leading-5 text-slate-500">
         {% for intervention in row.targetInterventions %}{{ intervention }}{% if not forloop.last %} · {% endif %}{% empty %}No intervention declared{% endfor %}
       </p>
-      <dl class="mt-4 grid grid-cols-3 gap-2">
-        <div><dt class="edify-text-caption font-semibold text-slate-400">Schools</dt><dd class="mt-0.5 text-[14px] font-extrabold tabular-nums text-slate-700">{{ row.schoolCount }}</dd></div>
-        <div><dt class="edify-text-caption font-semibold text-slate-400">Activities</dt><dd class="mt-0.5 text-[14px] font-extrabold tabular-nums text-slate-700">{{ row.activityCount }}</dd></div>
-        <div><dt class="edify-text-caption font-semibold text-slate-400">Completed</dt><dd class="mt-0.5 text-[14px] font-extrabold tabular-nums text-slate-700">{{ row.completedActivityCount }}</dd></div>
-      </dl>
+      {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Schools{% endkpi_label %}{{ row.schoolCount }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Activities{% endkpi_label %}{{ row.activityCount }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Completed{% endkpi_label %}{{ row.completedActivityCount }}{% endkpi_metric %}{% endkpi_strip %}
       <div class="mt-4 flex items-center justify-between gap-3 border-t border-slate-200/70 pt-3">
         <span class="edify-text-caption text-slate-400">
           {% for category in row.schoolTypeBreakdown %}{{ category.count }} {{ category.label }}{% if not forloop.last %} · {% endif %}{% empty %}No schools assigned{% endfor %}

@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}Weekly Debrief Report · Edify{% endblock %}
 
@@ -47,16 +49,16 @@
   {% with s=report.snapshot t=report.snapshot.totals %}
 
   <!-- Week at a glance -->
-  <section class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-5">
+  {% kpi_strip %}
     {% if report.scope_kind == 'pl_team' %}
-    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Reporting</p><p class="text-[20px] font-bold edify-text">{{ t.reporting }}<span class="text-[12px] edify-text-muted font-semibold"> / {{ t.members }}</span></p></div>
+    {% kpi_metric %}{% kpi_label %}Reporting{% endkpi_label %}{{ t.reporting }}<span class="text-[12px] edify-text-muted font-semibold"> / {{ t.members }}</span>{% endkpi_metric %}
     {% else %}
-    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">PL Reports</p><p class="text-[20px] font-bold edify-text">{{ t.pl_reports_included }}<span class="text-[12px] edify-text-muted font-semibold"> in · {{ t.pl_reports_missing }} missing</span></p></div>
+    {% kpi_metric %}{% kpi_label %}PL Reports{% endkpi_label %}{{ t.pl_reports_included }}<span class="text-[12px] edify-text-muted font-semibold"> in · {{ t.pl_reports_missing }} missing</span>{% endkpi_metric %}
     {% endif %}
-    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Debriefs</p><p class="text-[20px] font-bold edify-text">{{ t.debriefs }}</p></div>
-    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Schools</p><p class="text-[20px] font-bold edify-text">{{ t.schools_supported }}</p></div>
-    <div class="edify-surface rounded-surface border border-slate-200 p-3"><p class="edify-text-caption font-semibold edify-text-muted uppercase tracking-wide">Activities</p><p class="text-[20px] font-bold edify-text">{% if t.activities_worked is not None %}{{ t.activities_worked }}{% elif t.direct_debriefs is not None %}{{ t.direct_debriefs }}{% else %}—{% endif %}</p></div>
-  </section>
+    {% kpi_metric %}{% kpi_label %}Debriefs{% endkpi_label %}{{ t.debriefs }}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Schools{% endkpi_label %}{{ t.schools_supported }}{% endkpi_metric %}
+    {% kpi_metric %}{% kpi_label %}Activities{% endkpi_label %}{% if t.activities_worked is not None %}{{ t.activities_worked }}{% elif t.direct_debriefs is not None %}{{ t.direct_debriefs }}{% else %}—{% endif %}{% endkpi_metric %}
+  {% endkpi_strip %}
 
   {% if s.missing_teams %}
   <div class="mb-5 p-3 rounded-surface border text-[12px] font-semibold edify-warning-soft edify-warning-border" style="color: var(--edify-warning-text)">

@@ -1234,3 +1234,16 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
     border-width: 2px;
   }
 }
+
+/* Keep the same live KPI strip available below sign-in on smaller screens. */
+@media (max-width: 70rem) {
+  .login-brand, .login-brand__content { display: contents; }
+  .login-brand > :not(.login-brand__content),
+  .login-brand__content > :not(.context-metrics) { display: none; }
+  .login-access { order: 1; }
+  .login-brand__content > .context-metrics {
+    order: 2;
+    width: calc(100% - 3rem);
+    margin: 0 1.5rem 1.5rem;
+  }
+}

@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}Fiscal Year Overview — Edify{% endblock %}
 
@@ -13,12 +15,12 @@
 </div>
 </div>
 
-<div class="grid grid-cols-2 sm:grid-cols-4 gap-4">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold edify-primary-text">{{ total_schools }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Total Schools</p></div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-emerald-600">{{ ssa_done }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">SSA Done</p></div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-rose-500">{{ ssa_pending }}</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">SSA Pending</p></div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center"><p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p><p class="edify-text-caption font-bold text-slate-400 uppercase mt-1">Activity Rate</p></div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}{{ total_schools }}{% kpi_label %}Total Schools{% endkpi_label %}{% endkpi_metric %}
+{% kpi_metric %}{{ ssa_done }}{% kpi_label %}SSA Done{% endkpi_label %}{% endkpi_metric %}
+{% kpi_metric %}{{ ssa_pending }}{% kpi_label %}SSA Pending{% endkpi_label %}{% endkpi_metric %}
+{% kpi_metric %}{{ completion_rate }}%{% kpi_label %}Activity Rate{% endkpi_label %}{% endkpi_metric %}
+{% endkpi_strip %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-6 shadow-sm"><h2 class="text-[14px] font-semibold mb-3">FY{{ fy }} Summary</h2><p class="text-[12px] text-slate-600">{{ total_activities }} total activities · {{ completed_activities }} completed · {{ completion_rate }}% completion rate</p></div>
 
 </div>

@@ -414,7 +414,7 @@ main #filters-form .school-filter-grid > * {
  * wrapping, and no more than two visible lines on narrow screens. */
 @media (min-width: 64rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2rem;
+    --edify-action-button-block-size: 2.5rem;
     --edify-action-button-padding-inline: 0.625rem;
     --edify-action-button-icon-size: 0.875rem;
     --edify-action-button-radius: var(--radius-control);
@@ -521,7 +521,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 63.999rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2rem;
+    --edify-action-button-block-size: 2.5rem;
     --edify-action-button-padding-inline: 0.75rem;
     --edify-action-button-icon-size: 0.9375rem;
     --edify-action-button-radius: var(--radius-control);
@@ -704,7 +704,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 36rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2rem;
+    --edify-action-button-block-size: 2.5rem;
     --edify-action-button-padding-inline: 0.5rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
@@ -712,12 +712,12 @@ main #filters-form .school-filter-grid > * {
     --edify-text-display-size: 1.125rem;
     --edify-text-heading-size: 0.9375rem;
     --edify-text-title-size: 0.875rem;
-    --edify-text-body-size: 0.75rem;
-    --edify-text-label-size: 0.75rem;
+    --edify-text-body-size: 0.875rem;
+    --edify-text-label-size: 0.8125rem;
     --edify-text-card-heading-size: 0.9375rem;
     --edify-text-card-title-size: 0.875rem;
     --edify-text-tile-value-size: 1rem;
-    --edify-text-table-size: 0.75rem;
+    --edify-text-table-size: 0.8125rem;
   }
 
   .edify-shell :is(a, button, summary):is(
@@ -756,7 +756,7 @@ main #filters-form .school-filter-grid > * {
 
 @media (max-width: 22.5rem) {
   :root:root:root {
-    --edify-action-button-block-size: 2rem;
+    --edify-action-button-block-size: 2.5rem;
     --edify-action-button-padding-inline: 0.45rem;
     --edify-action-button-icon-size: 0.75rem;
     --edify-action-button-radius: var(--radius-control);
@@ -764,8 +764,8 @@ main #filters-form .school-filter-grid > * {
     --edify-text-display-size: 1rem;
     --edify-text-heading-size: 0.875rem;
     --edify-text-title-size: 0.75rem;
-    --edify-text-body-size: 0.75rem;
-    --edify-text-label-size: 0.75rem;
+    --edify-text-body-size: 0.875rem;
+    --edify-text-label-size: 0.8125rem;
     --edify-text-card-heading-size: 0.875rem;
     --edify-text-card-title-size: 0.8125rem;
     --edify-text-tile-value-size: 0.9375rem;

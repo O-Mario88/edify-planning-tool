@@ -1,4 +1,4 @@
-"""A machine-readable inventory of every KPI tile the platform builds.
+"""A machine-readable inventory of every metric summary the platform builds.
 
 Like ``page_inventory``, this derives its facts from source rather than from a
 hand-kept list, so it cannot quietly drift away from the product. It exists
@@ -216,7 +216,7 @@ class KpiInventory:
 
 
 KPI_INCLUDE_RE = re.compile(
-    r'{%\s*include\s+["\']components/kpi_strip\.html["\'](?P<args>.*?)%}',
+    r'{%\s*include\s+["\']components/context_metrics\.html["\'](?P<args>.*?)%}',
     re.DOTALL,
 )
 LEGACY_KPI_RE = re.compile(
@@ -344,6 +344,9 @@ def _template_sites() -> list[KpiTemplateSite]:
     for path in sorted(TEMPLATE_ROOT.rglob("*.html")):
         source = path.read_text(encoding="utf-8")
         relative = path.relative_to(PROJECT_ROOT).as_posix()
+        if relative == "templates/components/kpi_strip.html":
+            # Compatibility forwarding is not a rendered page-level surface.
+            continue
         for match in KPI_INCLUDE_RE.finditer(source):
             args = match.group("args")
             found.append(
@@ -351,12 +354,19 @@ def _template_sites() -> list[KpiTemplateSite]:
                     relative,
                     source.count("\n", 0, match.start()) + 1,
                     _argument(args, "items") or "unknown",
-                    _argument(args, "variant") or "unclassified",
+                    "context",
                     "shared-component",
                 )
             )
 
-        if relative != "templates/components/kpi_strip.html":
+        for match in re.finditer(r"{%\s*kpi_strip\s*%}", source):
+            found.append((relative, source.count("\n", 0, match.start()) + 1,
+                          "template-authored-metrics", "context", "shared-component"))
+
+        if relative not in {
+            "templates/components/context_metrics.html",
+            "templates/components/kpi_strip.html",
+        }:
             for match in LEGACY_KPI_RE.finditer(source):
                 opening_tag = match.group(0)
                 found.append(
@@ -382,16 +392,15 @@ def _template_sites() -> list[KpiTemplateSite]:
         if presentation == "context":
             recommendation = "convert"
             reason = (
-                "Operational context supports the workflow but does not warrant "
-                "independent headline tiles."
+                "All metric summaries use the shared responsive performance strip."
             )
-            replacement = "compact context summary"
+            replacement = "compact performance strip"
             status = "completed"
         elif presentation == "executive":
-            recommendation = "retain"
-            reason = "Dashboard or analytical headline metrics support a cross-record decision."
-            replacement = "primary KPI group"
-            status = "completed"
+            recommendation = "convert"
+            reason = "Headline KPI card groups are retired across the platform."
+            replacement = "contextual metric summary"
+            status = "pending"
         elif presentation == "supporting":
             recommendation = "relocate"
             reason = "Secondary analysis belongs after the primary analytical question."
@@ -430,17 +439,9 @@ def _template_sites() -> list[KpiTemplateSite]:
                     if source_pattern == "shared-component"
                     else "legacy KPI strip or tile grid"
                 ),
-                new_prominent_kpi_limit=6 if presentation == "executive" else 0,
-                mobile_result=(
-                    "At most six distinct headline metrics; the tray reflows without horizontal scrolling"
-                    if presentation == "executive"
-                    else "Single-column context summary with no horizontal carousel"
-                ),
-                accessibility_result=(
-                    "Semantic list with accessible labels and no hidden overflow controls"
-                    if presentation == "executive"
-                    else "Semantic definition list with labelled drill-down links"
-                ),
+                new_prominent_kpi_limit=0,
+                mobile_result="Two visible metrics on mobile, four on tablet; remaining metrics are scrollable",
+                accessibility_result="Semantic list, labelled drilldowns, keyboard scrolling, and range navigation",
                 recommendation=recommendation,
                 reason=reason,
                 replacement_pattern=replacement,

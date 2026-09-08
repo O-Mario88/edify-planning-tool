@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% comment %}
 The Target Distribution view of the Priorities page: the Uganda master and
 its distribution to Program Leads and CCEOs.
@@ -70,12 +72,7 @@ styled only the view you happened to enter from.{% endcomment %}
           {% else %}Work the queue in order. Each milestone must reconcile to zero before it can lock for the financial year.{% endif %}
         </p>
       </div>
-      <div class="ia-command__metric">
-        <span class="ia-command__metric-label">Remaining to distribute</span>
-        <strong>{{ kpis.remainingTarget|floatformat:"-2"|intcomma }}</strong>
-        <progress class="ia-command__progress" value="{{ kpis.distributionPct }}" max="100">{{ kpis.distributionPct }}%</progress>
-        <small>{{ kpis.locked }} of {{ kpis.fieldCascade }} milestones locked · {{ kpis.distributionPct }}% allocated</small>
-      </div>
+      {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Remaining to distribute{% endkpi_label %}{{ kpis.remainingTarget|floatformat:"-2"|intcomma }}{% kpi_helper %}{{ kpis.locked }} of {{ kpis.fieldCascade }} milestones locked · {{ kpis.distributionPct }}% allocated{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
       <div class="ia-command__action">
         {% if can_distribute %}
           {% if published and next_distribution %}
@@ -123,20 +120,20 @@ styled only the view you happened to enter from.{% endcomment %}
     </div>
   </section>
 
-  <section class="ia-insights" aria-label="Uganda master intelligence">
-    <article class="ia-insight">
-      <div class="ia-insight__head"><span class="ia-insight__label">Master scope</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 5h16v14H4zM8 9h8M8 13h5"/></svg></span></div>
-      <strong class="ia-insight__value">{{ kpis.milestones }}</strong>
-      <div class="ia-insight__meta"><span>milestones across <strong>{{ kpis.priorityGroups }}</strong> groups</span><span>Uganda additive target <strong>{{ kpis.totalTarget|floatformat:"-2"|intcomma }}</strong></span></div>
-    </article>
-    <article class="ia-insight">
-      <div class="ia-insight__head"><span class="ia-insight__label">Allocation health</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19V9m6 10V5m6 14v-7m4 7H2"/></svg></span></div>
-      <strong class="ia-insight__value">{{ kpis.allocatedTarget|floatformat:"-2"|intcomma }}</strong>
-      <div class="ia-insight__meta"><span>of <strong>{{ kpis.distributableTarget|floatformat:"-2"|intcomma }}</strong> distributable</span><span><strong>{{ kpis.actionableMilestones }}</strong> still actionable</span><span><strong>{{ kpis.countryProjectTarget|floatformat:"-2"|intcomma }}</strong> country/project owned</span></div>
-    </article>
-    <article class="ia-insight">
-      <div class="ia-insight__head"><span class="ia-insight__label">Country delivery</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 3 4 14h6l-1 7 9-11h-6z"/></svg></span></div>
-      <strong class="ia-insight__value">{% if kpis.deliveryPct != None %}{{ kpis.deliveryPct }}%{% else %}—{% endif %}</strong>
+  {% kpi_strip %}
+    {% kpi_metric %}
+      <div class="ia-insight__head">{% kpi_label %}Master scope{% endkpi_label %}<span class="ia-insight__icon" aria-hidden="true"></span></div>
+      {{ kpis.milestones }}
+      {% kpi_helper %}<span>milestones across <strong>{{ kpis.priorityGroups }}</strong> groups</span><span>Uganda additive target <strong>{{ kpis.totalTarget|floatformat:"-2"|intcomma }}</strong></span>{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      <div class="ia-insight__head">{% kpi_label %}Allocation health{% endkpi_label %}<span class="ia-insight__icon" aria-hidden="true"></span></div>
+      {{ kpis.allocatedTarget|floatformat:"-2"|intcomma }}
+      {% kpi_helper %}<span>of <strong>{{ kpis.distributableTarget|floatformat:"-2"|intcomma }}</strong> distributable</span><span><strong>{{ kpis.actionableMilestones }}</strong> still actionable</span><span><strong>{{ kpis.countryProjectTarget|floatformat:"-2"|intcomma }}</strong> country/project owned</span>{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      <div class="ia-insight__head">{% kpi_label %}Country delivery{% endkpi_label %}<span class="ia-insight__icon" aria-hidden="true"></span></div>
+      {% if kpis.deliveryPct != None %}{{ kpis.deliveryPct }}%{% else %}—{% endif %}
       {% comment %}
       The CD/IA master tracker headline. Verified units only, read from the
       same period rows every IA verification credits, so this figure moves
@@ -145,15 +142,14 @@ styled only the view you happened to enter from.{% endcomment %}
       differ, so a summed country percentage would be fabricated); they are
       tracked per holder in the table below.
       {% endcomment %}
-      <div class="ia-insight__meta"><span><strong>{{ kpis.verifiedActual|floatformat:"-2"|intcomma }}</strong> verified of <strong>{{ kpis.verifiedPlan|floatformat:"-2"|intcomma }}</strong> planned units</span><span><strong>{{ kpis.milestonesDelivering }}</strong> of <strong>{{ kpis.milestonesTracking }}</strong> tracked milestones delivering</span></div>
-    </article>
-    <article class="ia-insight">
-      <div class="ia-insight__head"><span class="ia-insight__label">Portfolio mix</span><span class="ia-insight__icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 8h14v11H5zM8 8V5h8v3"/></svg></span></div>
-      <strong class="ia-insight__value">{{ kpis.coreTarget|add:kpis.clientTarget|floatformat:"-2"|intcomma }}</strong>
-      <progress class="ia-portfolio-meter" value="{{ kpis.corePct }}" max="100">Core {{ kpis.corePct }}%</progress>
-      <div class="ia-portfolio-legend"><span>Core {{ kpis.coreTarget|floatformat:"-2"|intcomma }} · {{ kpis.corePct }}%</span><span>Client {{ kpis.clientTarget|floatformat:"-2"|intcomma }} · {{ kpis.clientPct }}%</span></div>
-    </article>
-  </section>
+      {% kpi_helper %}<span><strong>{{ kpis.verifiedActual|floatformat:"-2"|intcomma }}</strong> verified of <strong>{{ kpis.verifiedPlan|floatformat:"-2"|intcomma }}</strong> planned units</span><span><strong>{{ kpis.milestonesDelivering }}</strong> of <strong>{{ kpis.milestonesTracking }}</strong> tracked milestones delivering</span>{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      <div class="ia-insight__head">{% kpi_label %}Portfolio mix{% endkpi_label %}<span class="ia-insight__icon" aria-hidden="true"></span></div>
+      {{ kpis.coreTarget|add:kpis.clientTarget|floatformat:"-2"|intcomma }}
+      {% kpi_helper %}Core {{ kpis.coreTarget|floatformat:"-2"|intcomma }} · {{ kpis.corePct }}% · Client {{ kpis.clientTarget|floatformat:"-2"|intcomma }} · {{ kpis.clientPct }}%{% endkpi_helper %}
+    {% endkpi_metric %}
+  {% endkpi_strip %}
 
   {% if is_cd and not published %}
   <aside class="ia-master-alert" aria-label="Master publication">

@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}{{ project.name }} — Edify Command Center{% endblock %}
 
@@ -23,8 +25,31 @@ Project
 </div>
 </div>
 
+{% include "partials/projects/workspace_nav.html" with workspace_project=project workspace_active="overview" %}
+
+<section class="card overflow-hidden" aria-labelledby="project-delivery-overview-title">
+  <header class="flex flex-col gap-3 border-b border-[var(--edify-border)] bg-slate-50/50 p-5 sm:flex-row sm:items-start sm:justify-between">
+    <div><p class="edify-page-eyebrow">Delivery overview</p><h2 id="project-delivery-overview-title" class="mt-1 text-[17px] font-extrabold text-slate-900">{{ project.name }}</h2><p class="mt-1 text-[12px] text-slate-500">{{ project.code|default:"No project code" }} · {{ project.get_category_display }} · {{ project.get_school_focus_display }}</p></div>
+    <span class="edify-badge" data-tone="{{ project_summary.status_tone }}">{{ project_summary.status }}</span>
+  </header>
+  <div class="grid gap-px bg-[var(--edify-border)] sm:grid-cols-2 xl:grid-cols-4">
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Coordinator</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.coordinator }}</p></div>
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Target interventions</p><p class="mt-1 text-[13px] font-bold text-slate-800">{% for item in project_summary.interventions %}{{ item }}{% if not forloop.last %}, {% endif %}{% empty %}Not set{% endfor %}</p></div>
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Measurement window</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.measurement_window }}</p></div>
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Budget ceiling</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.budget_ceiling }}</p></div>
+  </div>
+  <div class="p-5" id="budget-execution">
+{% kpi_strip %}
+{% kpi_metric %}{% kpi_label %}Delivery progress{% endkpi_label %}{{ project_summary.completion }}%{% kpi_helper %}{{ project_summary.activity_closed }} of {{ project_summary.activity_total }} activities closed{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Planned budget{% endkpi_label %}{{ project_summary.planned_budget }}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Budget remaining{% endkpi_label %}{{ project_summary.budget_remaining }}{% endkpi_metric %}
+{% endkpi_strip %}
+</div>
+  <div class="border-t border-[var(--edify-border)] p-5"><p class="edify-profile-field__label">Latest leadership decision</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.status }} · {{ project_summary.decision_maker }}{% if project_summary.decision_date %} · {{ project_summary.decision_date|date:"j M Y" }}{% endif %}</p><p class="mt-1 text-[12px] leading-5 text-slate-500">{{ project_summary.decision_reason }}</p></div>
+</section>
+
 <!-- Unified KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Project context" %}
+{% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Project context" %}
 
 <div class="grid gap-4 xl:grid-cols-2">
 {% if can_assign_staff %}
@@ -90,7 +115,7 @@ Project
 
 <div class="grid lg:grid-cols-3 gap-6 items-start">
 <div class="lg:col-span-2 space-y-6">
-<div class="card overflow-hidden">
+<div id="participating-schools" class="card overflow-hidden scroll-mt-24">
 <div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">Participating Schools</h2>
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools</span>

@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load frontend_filters %}
 
 {% block title %}Projects — Edify{% endblock %}
@@ -106,7 +108,7 @@
 {% else %}
 
 <!-- ============================ KPI STRIP ============================ -->
-{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Project portfolio context" %}
+{% include "components/context_metrics.html" with items=kpis variant="executive" title="Project portfolio context" %}
 
 <!-- ============================ MAIN GRID ============================ -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
@@ -128,15 +130,15 @@
       </div>
       <a href="/fund-requests/weekly" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">Fund Requests →</a>
     </div>
-    <div class="text-[22px] font-extrabold text-slate-800 tracking-tight">{{ budget_summary.total }}</div>
-    <div class="edify-metric-panel grid grid-cols-2">
+    {% kpi_strip %}
+      {% kpi_metric %}{% kpi_label %}Total budget{% endkpi_label %}{{ budget_summary.total }}{% endkpi_metric %}
       {% for b in budget_summary.buckets %}
-      <div class="edify-metric">
-        <p class="edify-metric__label">{{ b.label }}</p>
-        <p class="edify-metric__value">{{ b.value }}</p>
-      </div>
+      {% kpi_metric %}
+        {% kpi_label %}{{ b.label }}{% endkpi_label %}
+        {{ b.value }}
+      {% endkpi_metric %}
       {% endfor %}
-    </div>
+    {% endkpi_strip %}
     <div>
       <div class="flex items-center justify-between mb-1.5">
         <span class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Budget Utilization</span>

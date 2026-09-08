@@ -1420,7 +1420,7 @@ main :is(
   section.edify-surface[class*="rounded"],
   article.edify-surface[class*="rounded"],
   aside.edify-surface[class*="rounded"]
-):not(.p-0):not([data-edify-padding="flush"]):not(.edify-structured-surface) {
+):not(.p-0):not([data-edify-padding="flush"]):not(.edify-structured-surface):not(.kpi-strip__item) {
   padding: var(--edify-surface-padding) !important;
 }
 
@@ -1768,18 +1768,7 @@ main :is(
   .spp-header,
   .spa-header
 ) {
-  /* These sixteen header classes now receive the canonical tonal surface
-     instead of having every surface stripped from them.
-
-     The previous rule set all of this to transparent/0/none, which was the
-     right call when the goal was removing heavy header cards — but it also
-     meant the one header everybody liked (the Program Lead Dashboard's quiet
-     tonal band) could not be shared: any page adopting it had its surface
-     flattened by this bridge. Inverting the bridge is what carries that band
-     to every page at once, without touching sixteen templates.
-
-     Still stripped: backdrop-filter. A blur behind a surface this close in
-     tone to the canvas buys nothing and costs a compositor layer per page. */
+  /* Feature header families share the same flat canvas treatment. */
   background: var(--page-header-surface) !important;
   background-image: none !important;
   border: 1px solid var(--page-header-border) !important;
@@ -1818,8 +1807,7 @@ main :is(
   .spp-header,
   .spa-header
 ) {
-  /* Canonical padding, not zero. Zero would put the title hard against the
-     surface edge now that these carry the tonal surface again. */
+  /* The page wrapper supplies the gutter; headers stay aligned with data. */
   padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem) !important;
   margin-inline: 0 !important;
   /* Through a variable, because the families that turn the header into a
@@ -2534,7 +2522,7 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
 
 /* Links styled as controls are actions, not headings. This deliberately has
    enough specificity to retire legacy button-family !important rules. */
-main :is(a, button, input):is(
+main :is(a, button, input, summary):is(
   .btn,
   [class*="btn-"],
   [class*="button"],
@@ -2669,6 +2657,10 @@ main :is(.apexcharts-datalabel-value) {
   font-variant-numeric: tabular-nums;
 }
 
+/* Explicit numeric/centred columns take precedence over the heading default. */
+:where(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :where(table thead th) { text-align: start; }
+
 /* Reclaim the heading role after legacy `.edify-text-caption` utilities. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) thead th {
@@ -2679,7 +2671,6 @@ main :is(.apexcharts-datalabel-value) {
   font-size: var(--edify-text-table-heading-size) !important;
   font-weight: var(--edify-table-header-weight) !important;
   line-height: 1.3 !important;
-  text-align: start;
   text-transform: none !important;
   vertical-align: middle;
 }
@@ -2794,13 +2785,13 @@ main :is(.apexcharts-datalabel-value) {
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  .edify-record-table :is([data-align="end"], [data-type="number"], .edify-table__numeric) {
+  table :is([data-align="end"], [data-type="number"], .edify-table__numeric, .text-right) {
   text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  .edify-record-table :is([data-align="center"], [data-type="boolean"], .edify-table__boolean) {
+  table :is([data-align="center"], [data-type="boolean"], .edify-table__boolean, .text-center) {
   text-align: center;
 }
 
@@ -3192,8 +3183,8 @@ main table tbody > tr:only-child > td[colspan] > :is(
   }
 
   main .edify-page-header {
-    --page-header-padding-y: 0.75rem;
-    --page-header-padding-x: 0.75rem;
+    --page-header-padding-y: 0px;
+    --page-header-padding-x: 0px;
   }
 }
 
@@ -4100,4 +4091,12 @@ main textarea,
 .drawer-surface textarea {
   padding-block: 0.55rem !important;
   line-height: 1.45 !important;
+}
+
+/* Performance values are the focal point within the compact shared strip. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .context-metrics .context-metrics__value,
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .context-metrics .context-metrics__value > span[aria-hidden="true"] {
+  font-weight: 700 !important;
 }

@@ -32,7 +32,7 @@
 {% legacy_kpi_item "Overdue activities" overdue_count helper="Needs recovery" tone="danger" icon="warning" as overdue_kpi %}
 {% legacy_kpi_item "Completed activities" completed_count helper="Current reporting scope" tone="success" icon="check" as completed_kpi %}
 {% collect_kpi_items overdue_kpi completed_kpi as staff_activity_kpis %}
-{% include "components/kpi_strip.html" with items=staff_activity_kpis variant="executive" density="compact" title="Activity headline" %}
+{% include "components/context_metrics.html" with items=staff_activity_kpis variant="executive" density="compact" title="Activity headline" %}
 
 <!-- Annual SSA Progress (Assigned Schools) -->
 {% if staff_progress %}

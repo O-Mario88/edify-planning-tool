@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% comment %}To-Do Command Center. Params: todos, todo_counts, todo_total{% endcomment %}
 <div class="card p-5 space-y-4">
   <div class="flex items-center justify-between pb-2 border-b border-slate-100">
@@ -11,24 +13,24 @@
   {% comment %}One panel with hairlines, not four coloured boxes (owner,
   2026-09-07). The tone is on the number now; a count of zero carries no tone
   at all, because "0 blocked" is not a warning.{% endcomment %}
-  <div class="edify-metric-panel grid grid-cols-4">
-    <div class="edify-metric edify-metric--count-first" {% if todo_counts.critical %}data-tone="danger"{% endif %}>
-      <p class="edify-metric__label">Critical</p>
-      <p class="edify-metric__value">{{ todo_counts.critical }}</p>
-    </div>
-    <div class="edify-metric edify-metric--count-first" {% if todo_counts.due_today %}data-tone="warning"{% endif %}>
-      <p class="edify-metric__label">Due today</p>
-      <p class="edify-metric__value">{{ todo_counts.due_today }}</p>
-    </div>
-    <div class="edify-metric edify-metric--count-first" {% if todo_counts.waiting_me %}data-tone="info"{% endif %}>
-      <p class="edify-metric__label">Waiting on me</p>
-      <p class="edify-metric__value">{{ todo_counts.waiting_me }}</p>
-    </div>
-    <div class="edify-metric edify-metric--count-first" {% if todo_counts.blocked %}data-tone="danger"{% endif %}>
-      <p class="edify-metric__label">Blocked</p>
-      <p class="edify-metric__value">{{ todo_counts.blocked }}</p>
-    </div>
-  </div>
+  {% kpi_strip %}
+    {% kpi_metric %}
+      {% kpi_label %}Critical{% endkpi_label %}
+      {{ todo_counts.critical }}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Due today{% endkpi_label %}
+      {{ todo_counts.due_today }}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Waiting on me{% endkpi_label %}
+      {{ todo_counts.waiting_me }}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Blocked{% endkpi_label %}
+      {{ todo_counts.blocked }}
+    {% endkpi_metric %}
+  {% endkpi_strip %}
 
   <!-- Top To-Dos -->
   <div class="divide-y divide-slate-50">

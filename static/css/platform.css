@@ -446,7 +446,7 @@ main :where(.btn, .edify-action-button,
 /* The platform has a single action-button contract. Legacy button classes
    still work, but resolve to the same readable type, pill geometry and
    primary/secondary hierarchy as the shared school actions. */
-main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
+main :is(a, button, input, summary):is(.btn, .edify-action-button, .btn-premium-primary,
   .btn-premium-secondary, .school-record-action) {
   display: inline-flex;
   align-items: center;
@@ -462,7 +462,7 @@ main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
   text-transform: none !important;
 }
 
-main :is(a, button, input):is(.btn, .edify-action-button, .btn-premium-primary,
+main :is(a, button, input, summary):is(.btn, .edify-action-button, .btn-premium-primary,
   .btn-premium-secondary, .school-record-action) svg {
   inline-size: var(--edify-action-button-icon-size);
   block-size: var(--edify-action-button-icon-size);
@@ -1117,33 +1117,16 @@ main .edify-section-nav {
   background: transparent !important;
 }
 
-/* The dashboard view rail (Map | Operations, 2026-09-05) has two tabs.
-
-   The segmented contract shares the rail's width between its tabs, which is
-   right for fourteen Analytics sections and wrong for two: it painted two
-   half-width blue slabs. The answer to that was to shrink the whole rail to
-   its labels — which fixed the slabs and created a different problem. A 306px
-   control adrift at the left of a 1120px column, hard against the panel below
-   it, reads as two buttons dropped on the page rather than as the tab bar for
-   the content underneath (owner, 2026-09-07: "the tabs are not professionally
-   placed where they are supposed to be").
-
-   Both are avoidable at once, and Analytics already shows how: the BAR spans
-   the content column, and the TABS keep their own width at its left. Eight
-   sections there occupy 112px each of a 1120px bar and the remainder stays as
-   track — nothing stretches, and the bar still reads as one object belonging
-   to the panel it switches. Specificity above the `:where()` contract, so
-   these `!important`s win. */
+/* Dashboard view switchers fit their equal-width tabs on larger screens.
+   Keep the panel gap below, without an empty track spanning the content. */
 main .dashboard-view-nav { border-block-end: 0; }
 @media (min-width: 48rem) {
   main .dashboard-view-nav .edify-section-nav__inner {
     display: flex !important;
-    inline-size: 100% !important;
+    inline-size: fit-content !important;
     max-inline-size: 100%;
   }
-  /* `0 0 auto` is what keeps two tabs from becoming two half-width slabs when
-     the bar is full width, and one width for both keeps them even whatever
-     their labels: "Map" and "Operations" are three letters and ten. */
+  /* Equal widths keep short and long labels balanced. */
   main .dashboard-view-nav .edify-section-nav__link {
     flex: 0 0 auto !important;
     inline-size: 9.5rem !important;
@@ -5052,18 +5035,6 @@ main table thead .edify-frozen-cell { z-index: 2; }
      laptop's 1200px+ workspace drop a column here instead of squeezing.
    ═══════════════════════════════════════════════════════════════════════ */
 @media (min-width: 48rem) and (max-width: 63.999rem) {
-  /* `!important` because the strip's own container-query bands select with
-     `:has()` chains whose specificity outranks any plain selector here. */
-  main .kpi-strip.kpi-strip--executive .kpi-strip__grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  }
-  /* Four tiles sit in one row rather than three and an orphan. */
-  main .kpi-strip.kpi-strip--executive .kpi-strip__grid:has(> .kpi-strip__item:nth-child(4)):not(:has(> .kpi-strip__item:nth-child(5))) {
-    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
-  }
-  main .kpi-strip.kpi-strip--executive .kpi-strip__grid > .kpi-strip__item:last-child:nth-child(odd) {
-    grid-column: auto !important;
-  }
   main .mobile-home-stack {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 0.75rem;
@@ -5146,7 +5117,7 @@ main table thead .edify-frozen-cell { z-index: 2; }
   main :is(select, textarea, input:not([type="checkbox"]):not([type="radio"]):not([type="hidden"]):not([type="range"])) {
     border-radius: var(--edify-radius-sm) !important;
   }
-  main :is(button, a.btn, a[class*="btn"], a[class*="button"]):not(.rounded-pill):not(.rounded-full):not([class*="pill"]):not([role="tab"]):not(.edify-section-nav__link):not(.edify-section-nav__cluster) {
+  main :is(button, summary.btn, a.btn, a[class*="btn"], a[class*="button"]):not(.rounded-pill):not(.rounded-full):not([class*="pill"]):not([role="tab"]):not(.edify-section-nav__link):not(.edify-section-nav__cluster):not(.edify-tab-btn, [data-edify-tab], .messages-inbox-tab, .pto-tabs > button, .sp-period-tabs > button, .spp-tabs > button, .tt-segmented > button, .oversight-entity-tabs__link) {
     border-radius: var(--edify-radius-sm) !important;
   }
   /* A single-line button written with `py-2` measured 34px beside the
@@ -5180,3 +5151,8 @@ main table thead .edify-frozen-cell { z-index: 2; }
     flex: 0 0 auto !important;
   }
 }
+
+/* Data provenance stays available without leading the operational page. */
+.platform-analytics-note { display: block; padding: 0; border: 0; background: transparent; }
+.platform-analytics-note > summary { cursor: pointer; width: fit-content; padding-block: 4px; }
+.platform-analytics-note__body { display: grid; gap: 4px; padding: 8px 12px; margin-block: 4px; border-inline-start: 2px solid var(--edify-border); }

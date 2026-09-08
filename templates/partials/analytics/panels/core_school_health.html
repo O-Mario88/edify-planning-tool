@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load table_pagination %}
 {% comment %}
 The Core Verification tab — core-package health for CD and RVP.
@@ -30,25 +32,25 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </div>
 {% else %}
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ d.totalPlans }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Core packages</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-emerald-700 leading-none tabular-nums">{{ d.onTrackCount }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">On track</p>
-</div>
-<div class="edify-surface rounded-surface border {% if d.behindCount %}border-amber-200 bg-amber-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
-<p class="text-[24px] font-extrabold {% if d.behindCount %}text-amber-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ d.behindCount }}</p>
-<p class="edify-text-caption {% if d.behindCount %}text-amber-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">Behind schedule</p>
-</div>
-<div class="edify-surface rounded-surface border {% if d.blockedSlotCount %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
-<p class="text-[24px] font-extrabold {% if d.blockedSlotCount %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ d.blockedSlotCount }}</p>
-<p class="edify-text-caption {% if d.blockedSlotCount %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">Slots stuck at the gate</p>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">need SF ID or evidence</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{{ d.totalPlans }}
+{% kpi_label %}Core packages{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ d.onTrackCount }}
+{% kpi_label %}On track{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ d.behindCount }}
+{% kpi_label %}Behind schedule{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ d.blockedSlotCount }}
+{% kpi_label %}Slots stuck at the gate{% endkpi_label %}
+{% kpi_helper %}need SF ID or evidence{% endkpi_helper %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 {% if d.measuredCount %}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm px-5 py-4">

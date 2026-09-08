@@ -8,6 +8,6 @@ section; a link in the body loads exactly when it is needed and nowhere else.
 {% endcomment %}
 <link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260823aura1">
 <div class="hcos-workspace hcos-workspace--panel" data-mobile-family="performance">
-  {% include "components/kpi_strip.html" with items=metrics variant="executive" title=title|add:" context" %}
+  {% include "components/context_metrics.html" with items=metrics variant="executive" title=title|add:" context" %}
   {% include "partials/hr/module_register.html" %}
 </div>

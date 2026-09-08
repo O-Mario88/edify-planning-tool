@@ -1,24 +1,7 @@
-{% load frontend_filters %}
+{% load frontend_filters kpi_metrics %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3 flex flex-col">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">L. Donor / Reporting Snapshot</h3>
-  <div class="space-y-2 flex-1">
-    {% for m in donor_snapshot.metrics %}
-    <div class="flex items-center justify-between rounded-surface border border-slate-100 px-3 py-2">
-      <div class="min-w-0">
-        <p class="edify-text-caption font-semibold text-slate-600 truncate">{{ m.label }}</p>
-        {% if m.prev is not None %}<p class="edify-text-caption font-medium text-slate-400">{{ m.prev_label|default:"Prev" }}: {{ m.prev }}</p>{% endif %}
-      </div>
-      <div class="text-right shrink-0 pl-2">
-        <p class="text-[15px] font-bold text-slate-800 tabular-nums leading-none">{{ m.value }}</p>
-        {% if m.delta_pct is not None %}
-        <p class="edify-text-caption font-bold {% if m.up %}text-emerald-600{% else %}text-rose-600{% endif %}">
-          {% if m.up %}&#9650;{% else %}&#9660;{% endif %}{{ m.delta_pct }}%
-        </p>
-        {% endif %}
-      </div>
-    </div>
-    {% endfor %}
-  </div>
+  {% kpi_strip %}{% for m in donor_snapshot.metrics %}{% kpi_metric %}{% kpi_label %}{{ m.label }}{% endkpi_label %}{{ m.value }}{% kpi_helper %}{% if m.prev is not None %}{{ m.prev_label|default:"Prev" }}: {{ m.prev }}{% endif %}{% if m.delta_pct is not None %} · {% if m.up %}↗{% else %}↘{% endif %} {{ m.delta_pct }}%{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endfor %}{% endkpi_strip %}
   <a href="/analytics/program-lead/drilldown?drill=risk&fy={{ fy }}"
      hx-get="/analytics/program-lead/drilldown?drill=donor&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}"
      hx-target="#drawer-container" hx-swap="innerHTML"

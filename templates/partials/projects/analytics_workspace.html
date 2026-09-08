@@ -1,4 +1,4 @@
-{% if is_htmx %}<a id="spa-export" class="spa-button spa-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a><a id="spa-snapshot" class="spa-button spa-button--secondary" href="{{ snapshot_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="document" %} Download Snapshot</a>{% endif %}
+{% if is_htmx and can_export %}<a id="spa-export" class="spa-button spa-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a><a id="spa-snapshot" class="spa-button spa-button--secondary" href="{{ snapshot_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="document" %} Download Snapshot</a>{% endif %}
 
 {# Shared country geography; project impact cards below retain project scope. #}
 {% include "partials/analytics/regional_performance.html" %}
@@ -6,6 +6,7 @@
 {% if not has_projects %}
 <section class="spa-empty"><span>{% include "partials/projects/planning_icon.html" with name="folder" %}</span><h2>No special projects are assigned to your role</h2><p>Impact intelligence starts with schools assigned from the School Directory and project-stamped delivery.</p><a class="spa-button spa-button--primary" href="/projects/planning">Open Project Planning</a></section>
 {% else %}
+{% include "partials/projects/workspace_nav.html" with workspace_active="impact" %}
 <form id="spa-filters" class="spa-filter-panel" method="get" action="/projects/analytics" hx-get="/projects/analytics" hx-target="#spa-workspace" hx-swap="innerHTML" hx-push-url="true" hx-trigger="change, submit">
   <label for="spa-fy"><span>Fiscal Year</span><select id="spa-fy" name="fy">{% for option in fy_options %}<option value="{{ option }}" {% if selected.fy == option %}selected{% endif %}>FY {{ option }}</option>{% endfor %}</select></label>
   <label for="spa-district"><span>District</span><select id="spa-district" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
@@ -19,7 +20,7 @@
 {% if not has_results %}
 <section class="spa-empty spa-empty--compact"><span>{% include "partials/projects/planning_icon.html" with name="search" %}</span><h2>No verified project impact matches these filters</h2><p>Try a wider filter or complete the project planning, delivery, evidence, IA review, and annual SSA follow-up workflow.</p><a href="/projects/analytics" class="spa-button spa-button--secondary">Clear Filters</a></section>
 {% else %}
-{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Special project impact summary" %}
+{% include "components/context_metrics.html" with items=kpis variant="executive" title="Special project impact summary" %}
 
 <div class="spa-layout">
   <div class="spa-main">

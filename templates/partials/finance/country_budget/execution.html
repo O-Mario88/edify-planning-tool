@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% comment %}
 Plan vs actual, the System A/B reconciliation, and the quarter forecast.
 
@@ -21,32 +23,29 @@ says so rather than showing a zero that reads as a fact.
   one panel with hairlines rather than four tinted boxes (owner, 2026-09-07).
   Variance keeps its own panel below because it is a conclusion about the four,
   not a fifth one — and it is the only figure here that can be bad.{% endcomment %}
-  <div class="edify-metric-panel grid grid-cols-2">
-    <div class="edify-metric">
-      <p class="edify-metric__label">Approved</p>
-      <p class="edify-metric__value">{{ reconciliation.approved_fmt }}</p>
-    </div>
-    <div class="edify-metric">
-      <p class="edify-metric__label">Committed</p>
-      <p class="edify-metric__value">{{ reconciliation.committed_fmt }}</p>
-    </div>
-    <div class="edify-metric" data-tone="info">
-      <p class="edify-metric__label">Disbursed</p>
-      <p class="edify-metric__value">{{ reconciliation.disbursed_fmt }}</p>
-      <p class="edify-metric__meta">{{ reconciliation.utilisationPct }}% of approved</p>
-    </div>
-    <div class="edify-metric" data-tone="success">
-      <p class="edify-metric__label">Accounted</p>
-      <p class="edify-metric__value">{{ reconciliation.accounted_fmt }}</p>
-      {% if reconciliation.returnedTotal %}<p class="edify-metric__meta">{{ reconciliation.returned_fmt }} returned</p>{% endif %}
-    </div>
-  </div>
+  {% kpi_strip %}
+    {% kpi_metric %}
+      {% kpi_label %}Approved{% endkpi_label %}
+      {{ reconciliation.approved_fmt }}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Committed{% endkpi_label %}
+      {{ reconciliation.committed_fmt }}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Disbursed{% endkpi_label %}
+      {{ reconciliation.disbursed_fmt }}
+      {% kpi_helper %}{{ reconciliation.utilisationPct }}% of approved{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Accounted{% endkpi_label %}
+      {{ reconciliation.accounted_fmt }}
+      {% if reconciliation.returnedTotal %}{% kpi_helper %}{{ reconciliation.returned_fmt }} returned{% endkpi_helper %}{% endif %}
+    {% endkpi_metric %}
+  {% endkpi_strip %}
 
   <div class="edify-metric-panel mt-2.5">
-    <div class="edify-metric" {% if reconciliation.isOverspend %}data-tone="danger"{% endif %}>
-      <p class="edify-metric__label">Variance vs approved</p>
-      <p class="edify-metric__value">{{ reconciliation.variance_fmt }} <span class="edify-metric__unit">{{ reconciliation.variance_label }}</span></p>
-    </div>
+    {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Variance vs approved{% endkpi_label %}{{ reconciliation.variance_fmt }} <span class="edify-metric__unit">{{ reconciliation.variance_label }}</span>{% endkpi_metric %}{% endkpi_strip %}
   </div>
 
   {% if reconciliation.unattributedCount %}

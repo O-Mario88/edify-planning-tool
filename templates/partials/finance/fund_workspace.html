@@ -66,9 +66,9 @@ workspace, so the roles differ only where their work differs.
   </div>
 
   {% if kpis %}
-  {% include "components/kpi_strip.html" with items=kpis variant="executive" title=workspace.kpi_title %}
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title=workspace.kpi_title %}
   {% else %}
-  {% include "components/kpi_strip.html" with items=workspace.kpis variant="executive" title=workspace.kpi_title %}
+  {% include "components/context_metrics.html" with items=workspace.kpis variant="executive" title=workspace.kpi_title %}
   {% endif %}
 
   {% if workspace.empty %}

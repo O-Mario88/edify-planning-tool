@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load frontend_filters %}
 
 {% block title %}Weekly Request details - Edify Command Center{% endblock %}
@@ -64,10 +66,7 @@ Week: {{ req.weekStartDate }} to {{ req.weekEndDate }} &bull; Owner: <span class
 <!-- Actions Sidebar Panel -->
 <div class="space-y-6">
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm space-y-4">
-<div>
-<p class="edify-text-caption uppercase font-bold text-slate-400 tracking-wider">Total Request Amount</p>
-<p class="text-[24px] font-semibold text-[var(--edify-accent)] mt-0.5">{{ req.totalAmount|ugx }}</p>
-</div>
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Total request amount{% endkpi_label %}{{ req.totalAmount|ugx }}{% endkpi_metric %}{% endkpi_strip %}
 
 <!-- Confirm action (CCEO / Owner) -->
 {% if req.status == 'pending_responsible_confirmation' or req.status == 'not_requested' %}

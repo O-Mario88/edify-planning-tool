@@ -173,18 +173,13 @@ class DashboardViewRailTest(SimpleTestCase):
         self.markup = _read("templates/partials/dashboards/_view_tabs.html")
         self.css = _read("static/css/platform.css")
 
-    def test_the_bar_spans_the_content_column(self):
-        """It was shrunk to `max-content` to stop two tabs becoming two
-        half-width slabs, which left a 306px control adrift at the left of a
-        1120px column. Analytics solves both at once: a full-width bar whose
-        tabs keep their own width."""
-        band = self.css[self.css.index("The dashboard view rail (Map | Operations") :]
+    def test_dashboard_switch_fits_its_tabs(self):
+        band = self.css[self.css.index("Dashboard view switchers fit") :]
         band = band[: band.index("@media (max-width: 48rem)")]
-        self.assertIn("inline-size: 100% !important;", band)
-        self.assertNotIn("max-content", band)
+        self.assertIn("inline-size: fit-content !important;", band)
 
     def test_the_tabs_do_not_stretch_to_fill_it(self):
-        band = self.css[self.css.index("The dashboard view rail (Map | Operations") :]
+        band = self.css[self.css.index("Dashboard view switchers fit") :]
         self.assertIn("flex: 0 0 auto !important;", band)
         self.assertIn("min-inline-size: 9.5rem !important;", band)
 
@@ -292,9 +287,9 @@ class TabsDoNotStretchTest(SimpleTestCase):
         the bar against a square edge — identical widths reading as different
         shapes."""
         block = self.interactions[
-            self.interactions.index("A rail is a track of equal chips") :
+            self.interactions.index("Connected segments:") :
         ]
-        self.assertIn("@media (min-width: 48rem)", block)
+        self.assertIn("border-radius: 0 !important;", block)
         self.assertIn(
             "border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;",
             block,

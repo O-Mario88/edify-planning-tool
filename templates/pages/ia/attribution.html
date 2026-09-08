@@ -37,7 +37,7 @@
   {% legacy_kpi_item "Confirmed share" confirmed_share_label helper=confirmed_helper tone=confirmed_tone icon="signoff" as confirmed_kpi %}
   {% legacy_kpi_item "Interventions improving" improving helper=improving_helper tone="success" icon="chart" as improving_kpi %}
   {% collect_kpi_items scope_kpi measured_kpi confirmed_kpi improving_kpi as attribution_kpis %}
-  {% include "components/kpi_strip.html" with items=attribution_kpis variant="executive" title="Measurement base" %}
+  {% include "components/context_metrics.html" with items=attribution_kpis variant="executive" title="Measurement base" %}
   <p class="edify-text-caption text-slate-500">Movement is the average score change per intervention across schools with a confirmed assessment in both years. Unconfirmed assessments are excluded, never assumed.</p>
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">

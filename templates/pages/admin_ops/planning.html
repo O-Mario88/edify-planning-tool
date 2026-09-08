@@ -11,7 +11,7 @@
   {% legacy_kpi_item "Open incidents" open_incidents|length helper="Needs platform response" tone="danger" icon="warning" as incident_kpi %}
   {% legacy_kpi_item "Tickets awaiting triage" untriaged_tickets|length helper="Needs an owner" tone="warning" icon="clock" as triage_kpi %}
   {% collect_kpi_items incident_kpi triage_kpi as planning_kpis %}
-  {% include "components/kpi_strip.html" with items=planning_kpis variant="executive" density="compact" title="Planning attention" %}
+  {% include "components/context_metrics.html" with items=planning_kpis variant="executive" density="compact" title="Planning attention" %}
 
   <section class="card p-4 space-y-3" aria-labelledby="admin-backlog-title">
     <h2 id="admin-backlog-title" class="text-[14px] font-extrabold text-slate-800">Unscheduled Platform Work</h2>

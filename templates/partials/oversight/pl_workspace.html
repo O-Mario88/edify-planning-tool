@@ -11,19 +11,19 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
 <section class="space-y-4">
 
   {# ── Headline numbers, folded from the full item list ─────────────────── #}
-  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Team planning context" %}
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title="Team planning context" %}
 
   {# ── Narrowing and taking the view away with you ──────────────────────── #}
   <div class="flex flex-wrap items-center justify-between gap-2">
     <details class="oversight-filters">
-      <summary class="btn h-9 inline-flex items-center cursor-pointer">
+      <summary class="btn btn-ghost h-9 inline-flex items-center cursor-pointer">
         Filters{% if advanced %} ({{ advanced|length }}){% endif %}
       </summary>
       <div class="card p-4 mt-2 max-w-md">
         {% include "partials/oversight/filter_drawer.html" with target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
       </div>
     </details>
-    <a class="btn h-8 inline-flex items-center"
+    <a class="btn btn-ghost h-8 inline-flex items-center"
        href="/team-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}&owner={{ owner }}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
       Export CSV
     </a>

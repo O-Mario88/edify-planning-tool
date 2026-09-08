@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}My Profile — Edify{% endblock %}
 
@@ -27,20 +29,20 @@
 </div>
 
 <!-- Stats Strip -->
-<div class="grid grid-cols-3 gap-4">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold edify-primary-text">{{ total_activities }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Total Activities</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-emerald-600">{{ completed }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completed</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-violet-600">{{ completion_rate }}%</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Completion Rate</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{{ total_activities }}
+{% kpi_label %}Total Activities{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ completed }}
+{% kpi_label %}Completed{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ completion_rate }}%
+{% kpi_label %}Completion Rate{% endkpi_label %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 <!-- Account Details -->
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">

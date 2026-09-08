@@ -52,7 +52,7 @@ styled only the view you happened to enter from.{% endcomment %}
   {% legacy_kpi_item "Needs definition" needs_definition_count helper="RVP metric or target decision required" tone="warning" icon="warning" as definition_kpi %}
   {% legacy_kpi_item "Allocations" allocation_count helper="Approved country, team or staff targets" tone="success" icon="users" as allocation_kpi %}
   {% collect_kpi_items groups_kpi milestones_kpi definition_kpi allocation_kpi as priority_cycle_kpis %}
-  {% include "components/kpi_strip.html" with items=priority_cycle_kpis variant="executive" title="Priority cycle headline" %}
+  {% include "components/context_metrics.html" with items=priority_cycle_kpis variant="executive" title="Priority cycle headline" %}
 
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="governance-path-title">
     <div class="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">

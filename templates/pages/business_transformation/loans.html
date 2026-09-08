@@ -59,7 +59,7 @@
     {% include "components/button.html" with label="Apply filters" type="submit" variant="primary" size="lg" %}
   </form>
 
-  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Uganda loan scorecard" %}
+  {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Uganda loan scorecard" %}
 
   {% if not mfi_user %}
   {% paginate applications "applications_page" as applications_pager %}

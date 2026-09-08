@@ -4,7 +4,7 @@ role-scoped queryset — see apps/debriefs/dashboard_service.py.{% endcomment %}
 <div class="space-y-4">
 
   <!-- KPI Strip -->
-  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Debrief context" %}
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title="Debrief context" %}
 
   <!-- Row: Trend + Activity Type -->
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">

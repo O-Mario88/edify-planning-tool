@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load table_pagination %}
 
 {% block title %}SSA Scores — Edify{% endblock %}
@@ -39,20 +41,20 @@ class="flex items-center gap-1.5 px-3 py-2 border border-slate-200 hover:bg-slat
 </div>
 {% endif %}
 </div>
-<div class="grid grid-cols-3 gap-4">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold edify-primary-text">{{ avg_score }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">National Average</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-emerald-600">{{ schools_with_ssa }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Schools Assessed</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm text-center">
-<p class="text-[28px] font-semibold text-rose-500">{{ total_schools|add:"-"|add:schools_with_ssa|default:"0" }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider mt-1">Pending SSA</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{{ avg_score }}
+{% kpi_label %}National Average{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ schools_with_ssa }}
+{% kpi_label %}Schools Assessed{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ total_schools|add:"-"|add:schools_with_ssa|default:"0" }}
+{% kpi_label %}Pending SSA{% endkpi_label %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm overflow-hidden">
 {% if records %}

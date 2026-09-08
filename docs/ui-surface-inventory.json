@@ -1,0 +1,2536 @@
+{
+  "design": "Calm workspace",
+  "pages": [
+    {
+      "template": "pages/accounts/accountability.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/accountability.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/activity_evidence.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/activity_evidence.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/activity_finance_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/activity_finance_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/approval_history.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/approval_history.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/audit_log.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/audit_log.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/batch_payments.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/batch_payments.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/blocked.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/blocked.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/budget_amendments.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/budget_amendments.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/cleared.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/cleared.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/dashboard.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/dashboard.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/accounts/monthly_request.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/monthly_request.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/partner_payments.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/partner_payments.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/ready_for_advance.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/ready_for_advance.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/reimbursements.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/reimbursements.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/returned.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/returned.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/variance_review.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/variance_review.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/accounts/weekly_requests.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/accounts/weekly_requests.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/actions/workspace.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/actions/workspace.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin/audit_log.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/audit_log.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/data_quality_center.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/data_quality_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/duplicate_review.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/duplicate_review.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/notifications_mgmt.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/notifications_mgmt.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/page_access_matrix.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/page_access_matrix.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/region_district_setup.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/region_district_setup.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/roles_permissions.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/roles_permissions.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/school_upload_history.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/school_upload_history.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/staff_setup_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/staff_setup_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/unmatched_ssa_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/unmatched_ssa_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/user_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/user_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/users.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/users.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin/workflow_rules.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin/workflow_rules.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin_ops/_header.html",
+      "family": "embedded fragment",
+      "inheritance": [
+        "pages/admin_ops/_header.html"
+      ],
+      "shared_design_system": false,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin_ops/_work_section.html",
+      "family": "embedded fragment",
+      "inheritance": [
+        "pages/admin_ops/_work_section.html"
+      ],
+      "shared_design_system": false,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/data_repair.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/data_repair.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/incident_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/incident_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin_ops/incidents.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/incidents.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/maintenance.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/maintenance.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/my_plan.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/my_plan.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/planning.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/planning.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/report_problem.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/report_problem.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/admin_ops/support_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/support_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/admin_ops/team_plans.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/admin_ops/team_plans.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/analytics/cd_analytics.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/cd_analytics.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/closure_impact.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/closure_impact.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/closure_quality.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/closure_quality.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/declining_schools.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/declining_schools.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/impact.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/impact.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/pl_analytics.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/pl_analytics.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/publishing_status.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/publishing_status.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/visit_effectiveness.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/visit_effectiveness.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/analytics/workspace.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/analytics/workspace.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/audit/decision_log.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/audit/decision_log.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/auth/change_password.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/auth/change_password.html",
+        "layouts/auth.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/auth/login.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/auth/login.html",
+        "layouts/login.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/auth/mfa_verify.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/auth/mfa_verify.html",
+        "layouts/login.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/auth/reset_password.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/auth/reset_password.html",
+        "layouts/login.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/budget/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/budget/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/budgets/monthly.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/budgets/monthly.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/business_transformation/financial_health.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/business_transformation/financial_health.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/business_transformation/government_requirements.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/business_transformation/government_requirements.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/business_transformation/impact_reports.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/business_transformation/impact_reports.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/business_transformation/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/business_transformation/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/business_transformation/loan_application_public.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/business_transformation/loan_application_public.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/business_transformation/loans.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/business_transformation/loans.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/business_transformation/mfi_portal.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/business_transformation/mfi_portal.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/calendar/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/calendar/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/closure/activity_closure_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/closure/activity_closure_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/closure/activity_timeline.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/closure/activity_timeline.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/closure/blocked_closure.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/closure/blocked_closure.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/closure/completed_activities.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/closure/completed_activities.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/closure/completed_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/closure/completed_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/closure/readiness_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/closure/readiness_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/clusters/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/clusters/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/clusters/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/clusters/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/completed_activities/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/completed_activities/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/core_schools/champion_candidates.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/core_schools/champion_candidates.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/core_schools/champions.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/core_schools/champions.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/core_schools/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/core_schools/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/core_schools/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/core_schools/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/core_schools/leadership.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/core_schools/leadership.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/cost_settings/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/cost_settings/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/coverage/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/coverage/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/cceo.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/cceo.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/cd.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/cd.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/hr.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/hr.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/main.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/main.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/pl.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/pl.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/rvp.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/rvp.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/special_projects.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/special_projects.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/debriefs/dashboard.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/debriefs/dashboard.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/debriefs/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/debriefs/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/debriefs/submit.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/debriefs/submit.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/debriefs/weekly_report.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/debriefs/weekly_report.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/decisions/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/decisions/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/disbursements/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/disbursements/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/districts/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/districts/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/districts/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/districts/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/_safeguarding_policy_source.html",
+      "family": "embedded fragment",
+      "inheritance": [
+        "pages/documents/_safeguarding_policy_source.html"
+      ],
+      "shared_design_system": false,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/documents/agreement_center.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/documents/agreement_center.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/canonical_document.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/documents/canonical_document.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/documents/compliance.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/documents/compliance.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/manage_document.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/documents/manage_document.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/new_document.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/documents/new_document.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/restricted.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/documents/restricted.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/upload_center.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/documents/upload_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/documents/viewer.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/documents/viewer.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/escalations/_table.html",
+      "family": "embedded fragment",
+      "inheritance": [
+        "pages/escalations/_table.html"
+      ],
+      "shared_design_system": false,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/escalations/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/escalations/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/evidence/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/evidence/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/evidence/returned.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/evidence/returned.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/finance/country_budget.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/finance/country_budget.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/finance/country_budget_history.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/finance/country_budget_history.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/finance/country_budget_submission.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/finance/country_budget_submission.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/finance/fund_allocation.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/finance/fund_allocation.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/fund_approvals/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/fund_approvals/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/fund_requests/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/fund_requests/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/fund_requests/weekly.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/fund_requests/weekly.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/fy/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/fy/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/help/article.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/article.html",
+        "layouts/help_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/category.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/category.html",
+        "layouts/help_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/edit_article.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/edit_article.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/help/glossary.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/glossary.html",
+        "layouts/help_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/index.html",
+        "layouts/help_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/manage.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/manage.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/help/manual_export.html",
+      "family": "print document",
+      "inheritance": [
+        "pages/help/manual_export.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/print_article.html",
+      "family": "print document",
+      "inheritance": [
+        "pages/help/print_article.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/release_notes.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/release_notes.html",
+        "layouts/help_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/help/search.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/help/search.html",
+        "layouts/help_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/hr/conversation_document.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/conversation_document.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/extra_work.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/extra_work.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/hr_today.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/hr_today.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/module_workspace.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/module_workspace.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/my_performance.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/my_performance.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/performance_console.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/performance_console.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/performance_conversation.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/performance_conversation.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/priorities_master.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/priorities_master.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/hr/priority_configuration.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/priority_configuration.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/hr/professional_development_dashboard.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/professional_development_dashboard.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/ssa_mapping.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/ssa_mapping.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/strategic_priorities.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/strategic_priorities.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/hr/target_distribution.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/target_distribution.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/hr/team_target_distribution.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/team_target_distribution.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/ia/activity_timeline.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/activity_timeline.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/analytics_dashboard.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/analytics_dashboard.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/attribution.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/attribution.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/compare_evidence.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/compare_evidence.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/duplicate_review.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/duplicate_review.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/notifications.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/notifications.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/partials/queue_table.html",
+      "family": "embedded fragment",
+      "inheritance": [
+        "pages/ia/partials/queue_table.html"
+      ],
+      "shared_design_system": false,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/ia/partner_evidence_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/partner_evidence_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/partner_review.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/partner_review.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/returned_activities.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/returned_activities.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/review_workspace.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/review_workspace.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
+      "template": "pages/ia/verification_analytics.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/verification_analytics.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/verification_history.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/verification_history.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/verification_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/verification_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ia/verification_samples.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ia/verification_samples.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/leave_approvals.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/leave_approvals.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/leave_calendar.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/leave_calendar.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/leave_coverage.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/leave_coverage.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/leave_policies.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/leave_policies.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/leave_tracker.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/leave_tracker.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/personal_time_off.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/personal_time_off.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/public_holidays.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/public_holidays.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/leave/team_availability.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/leave/team_availability.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/map/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/map/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/messages/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/messages/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/messages/new.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/messages/new.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/my_plan/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/my_plan/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/my_plan/evidence_packet.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/my_plan/evidence_packet.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/my_plan/ia_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/my_plan/ia_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/my_plan/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/my_plan/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/my_plan/pl_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/my_plan/pl_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/my_team/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/my_team/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/notifications/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/notifications/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/offline.html",
+      "family": "public or authentication",
+      "inheritance": [
+        "pages/offline.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/oversight/country_planning.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/oversight/country_planning.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/oversight/partner_oversight.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/oversight/partner_oversight.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/oversight/team_planning.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/oversight/team_planning.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/activities.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/activities.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/activity_workroom.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/activity_workroom.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/assigned_list.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/assigned_list.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/assignment_detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/assignment_detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/assignments.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/assignments.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/completed_payments.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/completed_payments.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/evidence.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/evidence.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/my_plan.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/my_plan.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/schools.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/schools.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partner/today.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partner/today.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partners/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partners/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/partners/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/partners/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/planning/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/planning/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/planning/schedule.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/planning/schedule.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/planning/visit_requests.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/planning/visit_requests.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/professional_development/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/professional_development/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/profile/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/profile/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/projects/analytics.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/projects/analytics.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/projects/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/projects/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/projects/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/projects/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/projects/my_plan.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/projects/my_plan.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/projects/planning.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/projects/planning.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/quality_checks/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/quality_checks/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/reports/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/reports/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/schools/closed.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/schools/closed.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/schools/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/schools/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/schools/import_result.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/schools/import_result.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/schools/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/schools/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/schools/upload.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/schools/upload.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/schools/upload_preview.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/schools/upload_preview.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/search/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/search/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/settings/activity_catalogue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/settings/activity_catalogue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/settings/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/settings/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/manual_entry.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/manual_entry.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/performance.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/performance.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/upload_center.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/upload_center.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/upload_preview.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/upload_preview.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/upload_result.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/upload_result.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/ssa/verification_queue.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/ssa/verification_queue.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/staff/detail.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/staff/detail.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/staff/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/staff/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/system_health/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/system_health/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/targets/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/targets/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/targets/team.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/targets/team.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/today/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/today/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/todos/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/todos/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/trainings/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/trainings/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/visits/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/visits/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/work_plan/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/work_plan/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    }
+  ],
+  "summary": {
+    "embedded fragment": 5,
+    "print document": 2,
+    "public or authentication": 9,
+    "workspace": 215
+  }
+}

@@ -110,6 +110,45 @@ class SpecialProjectMyPlanPageTests(TestCase):
         values.update(overrides)
         return Activity.objects.create(**values)
 
+    def test_coordinator_home_consolidates_only_their_project_actions(self):
+        from apps.notifications.models import Notification
+
+        Notification.objects.create(
+            recipient_id=self.user_a.id,
+            title="Confirm partner delivery date",
+            body="The partner needs a confirmed delivery date.",
+            target_route=f"/projects/planning?project={self.project_a.id}",
+            action_label="Confirm",
+            action_required=True,
+            priority="high",
+        )
+        self.client.force_login(self.user_a)
+
+        response = self.client.get("/dashboard")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "What needs my attention today?")
+        self.assertContains(response, "Project Alpha")
+        self.assertContains(response, "Partner confirmation pending")
+        self.assertContains(response, "Confirm partner delivery date")
+        self.assertNotContains(response, "Project Beta")
+
+    def test_coordinator_exports_are_available_and_project_scoped(self):
+        self.client.force_login(self.user_a)
+
+        for url in (
+            "/projects/planning?export=csv",
+            "/projects/my-plan?export=csv",
+            "/projects/analytics?export=csv",
+        ):
+            with self.subTest(url=url):
+                response = self.client.get(url)
+                self.assertEqual(response.status_code, 200)
+                self.assertIn("attachment", response["Content-Disposition"])
+                body = response.content.decode()
+                self.assertIn("Project Alpha", body)
+                self.assertNotIn("Project Beta", body)
+
     def test_page_is_project_manager_scoped_and_partner_work_is_read_only(self):
         self.client.force_login(self.user_a)
         response = self.client.get("/projects/my-plan")

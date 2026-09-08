@@ -1,17 +1,19 @@
+
+{% load kpi_metrics %}
 {% load frontend_filters %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">H. Activity Tracking</h3>
-  <div class="edify-metric-panel grid grid-cols-2 sm:grid-cols-3">
+  {% kpi_strip %}
     {% for c in activity_tracking.cards %}
-    <div class="edify-metric">
-      <p class="edify-metric__label" title="{{ c.label }}">{{ c.label }}</p>
-      <p class="edify-metric__value">{{ c.done }} <span class="edify-metric__unit">/ {{ c.planned }}</span></p>
-      <p class="edify-metric__meta">{{ c.pct }}% delivered</p>
+    {% kpi_metric %}
+      {% kpi_label %}{{ c.label }}{% endkpi_label %}
+      {{ c.done }} <span class="edify-metric__unit">/ {{ c.planned }}</span>
+      {% kpi_helper %}{{ c.pct }}% delivered{% endkpi_helper %}
       <div class="edify-metric__bar" role="presentation">
         <span style="width: {{ c.pct }}%"></span>
       </div>
-    </div>
+    {% endkpi_metric %}
     {% endfor %}
-  </div>
+  {% endkpi_strip %}
   <p class="edify-text-caption text-slate-400 font-medium pt-0.5">Completed / planned across the team's valid workflow states.</p>
 </div>

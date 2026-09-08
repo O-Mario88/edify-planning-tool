@@ -22,23 +22,17 @@ class MobileFoundationContractTest(SimpleTestCase):
             base.index("css/components/mobile-patterns.css"),
         )
 
-    def test_phone_kpis_are_compact_without_horizontal_scroll(self):
+    def test_phone_context_metrics_scroll_within_the_strip(self):
         components = _read("static/css/components.css")
-        consistency = _read("static/css/consistency.css")
-        template = _read("templates/components/kpi_strip.html")
-        compact_grid = "grid-template-columns: repeat(2, minmax(0, 1fr)) !important"
+        template = _read("templates/components/context_metrics.html")
+        context = components[components.index("CONTEXT METRICS") :]
 
-        self.assertIn(compact_grid, components)
-        # The consistency.css twin covered the legacy KPI families
-        # (edify-kpi-strip, admin/partner/tt/sp grids). Those classes have no
-        # template usage and their CSS is deleted — the shared component's
-        # copy above is the one that styles every live strip.
-        self.assertIn("min-height: 5.75rem", components)
-        self.assertIn("last-child:nth-child(odd)", components)
+        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("flex-direction: column;", context)
         self.assertIn("data-mobile-summary", template)
-        self.assertIn('<h2 class="kpi-strip__title">', template)
-        self.assertNotIn('<h4 class="kpi-strip__title">', template)
-        self.assertNotIn("scroll-snap-type: inline mandatory", components)
+        self.assertIn('<h2 class="context-metrics__title">', template)
+        self.assertIn("overflow-x: auto", context)
+        self.assertIn("scroll-snap", context)
 
     def test_filter_sheet_uses_native_dialog_and_safari_fallback(self):
         template = _read("templates/components/mobile_filter_sheet.html")

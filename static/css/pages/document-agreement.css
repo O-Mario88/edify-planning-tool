@@ -24,13 +24,11 @@
   }
   .agreement-page {
     min-height: 100vh;
-    background:
-      radial-gradient(circle at 12% 12%, rgba(23, 105, 170, .055), transparent 28rem),
-      var(--agreement-paper);
+    background: var(--agreement-paper);
     color: var(--agreement-ink);
   }
   .agreement-masthead {
-    background: linear-gradient(115deg, var(--edify-primary) 0%, var(--edify-primary-strong, var(--edify-primary)) 58%, var(--edify-accent) 100%);
+    background: var(--edify-primary);
   }
   .agreement-logo {
     filter: brightness(0) invert(1);

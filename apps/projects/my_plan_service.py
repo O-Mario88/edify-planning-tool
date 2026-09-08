@@ -617,6 +617,10 @@ def get_my_plan(principal, filters=None) -> dict:
         "has_projects": bool(project_ids),
         "has_activities": bool(activities),
         "projects": projects,
+        "workspace_project": next(
+            (project for project in projects if str(project.id) == selected_project),
+            None,
+        ),
         "regions": regions,
         "districts": district_options,
         "partners": partner_options,

@@ -78,7 +78,7 @@ class PhaseTwoMobileRoleHomeContractTest(SimpleTestCase):
             "templates/pages/dashboards/main.html",
         ):
             with self.subTest(path=path):
-                self.assertEqual(_read(path).count("components/kpi_strip.html"), 1)
+                self.assertEqual(_read(path).count("components/context_metrics.html"), 1)
 
     def test_role_views_select_real_permission_scoped_primary_actions(self):
         dashboard = _read("apps/frontend/views/dashboard_views.py")

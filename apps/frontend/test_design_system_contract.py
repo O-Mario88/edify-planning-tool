@@ -177,59 +177,32 @@ class DesignSystemContractTest(SimpleTestCase):
         self.assertIn("border: 1px solid var(--brand-primary-border);", sidebar)
         self.assertIn("background: var(--brand-primary-soft);", sidebar)
 
-    def test_primary_chart_series_and_primary_kpi_icon_use_brand_tokens(self):
+    def test_primary_chart_series_and_context_focus_use_brand_tokens(self):
         tokens = (ROOT / "static/css/design-system.css").read_text()
         components = (ROOT / "static/css/components.css").read_text()
 
         self.assertIn("--edify-chart-blue: var(--brand-primary);", tokens)
         self.assertIn("--edify-chart-blue-soft: var(--brand-primary-soft);", tokens)
-        self.assertIn(".kpi-strip__icon-container--primary {", components)
-        self.assertIn("color: var(--brand-primary);", components)
+        context = components[components.index("CONTEXT METRICS") :]
+        self.assertIn(".context-metrics__link:focus-visible", context)
+        self.assertIn("outline: 2px solid var(--edify-accent);", context)
 
-    def test_kpi_strip_is_a_unified_executive_summary(self):
-        """KPI strips follow the active theme and wrap on mobile, never scroll.
-
-        Each metric reads as its own themed card (white in Light, dark in Dark,
-        blue glass in Blue) via design tokens — no hardcoded navy panel — and
-        narrow screens use a compact two-column summary instead of a carousel.
-        """
+    def test_context_metrics_are_a_unified_non_card_summary(self):
+        """Metrics use one theme-aware strip with contained mobile scrolling."""
 
         components = (ROOT / "static/css/components.css").read_text()
-        template = (ROOT / "templates/components/kpi_strip.html").read_text()
-        legacy_css = (ROOT / "static/css/custom.css").read_text()
+        template = (ROOT / "templates/components/context_metrics.html").read_text()
+        context = components[components.index("CONTEXT METRICS") :]
 
-        # The component and its grid/item anatomy still anchor the contract.
-        self.assertIn(".kpi-strip {", components)
-        self.assertIn(".kpi-strip__item {", components)
-        self.assertIn('class="kpi-strip__grid" role="list"', template)
+        self.assertIn(".context-metrics {", context)
+        self.assertIn('class="context-metrics__sentence" role="list"', template)
         self.assertIn('role="listitem"', template)
-
-        # Items render as themed cards driven by design tokens, so the strip
-        # follows the active workspace instead of a fixed navy panel.
-        self.assertIn("background-color: var(--edify-surface)", components)
-        self.assertIn("border: 1px solid var(--edify-border)", components)
-
-        # The hardcoded navy palette is gone entirely.
-        for navy_hex in ("#052d50", "#0a4169", "#07385f"):
-            self.assertNotIn(navy_hex, components)
-        self.assertNotIn("--edify-kpi-strip-background:", components)
-        # No theme may force the strip onto the navy panel. (A scoped blue-theme
-        # enhancement of the icon chips is fine; the combined navy override that
-        # pinned both themes to --edify-kpi-strip-background must not return.)
-        self.assertNotIn("background: var(--edify-kpi-strip-background)", components)
-
-        # Mobile never scrolls a strip sideways: a compact 2x2 summary keeps
-        # the operating queue in the first viewport and gives labels two lines.
-        self.assertNotIn("scroll-snap-type: inline mandatory", components)
-        self.assertIn(
-            "grid-template-columns: repeat(2, minmax(0, 1fr)) !important",
-            components,
-        )
-        self.assertIn("-webkit-line-clamp: 2", components)
-
-        # Legacy overrides must not sneak the navy treatment back in.
-        self.assertNotIn(".dark .kpi-strip", legacy_css)
-        self.assertNotIn(".glass .kpi-strip", legacy_css)
+        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("color: var(--edify-text);", context)
+        self.assertNotIn('data-component="kpi-card"', template)
+        self.assertIn("box-shadow:", context)
+        self.assertNotIn("background-image:", context)
+        self.assertNotIn("grid-template-columns:", context)
 
     def test_popup_drawers_use_the_centered_dialog_contract(self):
         """Actions must never fall back to a full-height right-side drawer."""
@@ -535,14 +508,13 @@ class DesignSystemContractTest(SimpleTestCase):
         ):
             self.assertIn(declaration, contract)
 
-    def test_every_retained_headline_uses_the_shared_kpi_tray(self):
-        """Summary surfaces share one bounded renderer, never local card grids."""
+    def test_every_retained_headline_uses_the_context_summary(self):
+        """Summary facts share one renderer, never local card grids."""
 
-        component = (ROOT / "templates/components/kpi_strip.html").read_text()
-        self.assertIn("data-edify-summary-kpi", component)
+        component = (ROOT / "templates/components/context_metrics.html").read_text()
+        self.assertIn("data-context-metrics", component)
 
         headline_summaries = (
-            "templates/pages/dashboards/special_projects.html",
             "templates/partials/analytics/panels/reports.html",
             "templates/pages/notifications/index.html",
             "templates/pages/todos/index.html",
@@ -561,8 +533,13 @@ class DesignSystemContractTest(SimpleTestCase):
         )
         for source in headline_summaries:
             template = (ROOT / source).read_text()
-            self.assertIn("components/kpi_strip.html", template, source)
+            self.assertIn("components/context_metrics.html", template, source)
             self.assertIn('variant="executive"', template, source)
+
+        coordinator = (
+            ROOT / "templates/pages/dashboards/special_projects.html"
+        ).read_text()
+        self.assertNotIn("components/context_metrics.html", coordinator)
 
         period_selector = (
             ROOT / "templates/pages/finance/fund_allocation.html"
@@ -675,7 +652,10 @@ class DesignSystemContractTest(SimpleTestCase):
         # Pages that render outside the app shell own their own main landmark:
         # `base.html` declares none, so without it these have no main at all.
         # The rule this test enforces is "no *second* main inside the shell's".
-        standalone = {pages / "documents/canonical_document.html"}
+        standalone = {
+            pages / "documents/canonical_document.html",
+            pages / "offline.html",
+        }
 
         for page in pages.rglob("*.html"):
             if page in standalone:

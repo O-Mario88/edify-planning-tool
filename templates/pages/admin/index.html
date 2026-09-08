@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}Admin Dashboard — Edify{% endblock %}
 
@@ -49,16 +51,16 @@ class="flex items-center gap-1.5 px-3 py-2  hover:bg-slate-50 text-slate-600 hov
 </svg>
 </div>
 </div>
-<div class="grid grid-cols-2 gap-3 text-center">
-<div class="bg-slate-50 rounded-surface p-2.5">
-<p class="text-[22px] font-extrabold tracking-tight">{{ user_count }}</p>
-<p class="edify-text-caption font-bold text-slate-400 uppercase mt-0.5">Total Users</p>
-</div>
-<div class="bg-emerald-50/50 rounded-surface p-2.5">
-<p class="text-[22px] font-extrabold tracking-tight text-emerald-700">{{ active_users }}</p>
-<p class="edify-text-caption font-bold text-emerald-600 uppercase mt-0.5">Active</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{{ user_count }}
+{% kpi_label %}Total Users{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ active_users }}
+{% kpi_label %}Active{% endkpi_label %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 <div class="text-[12px] font-bold text-slate-500 flex justify-between">
 <span>Pending Invites: <strong class="text-slate-700">{{ pending_invites }}</strong></span>
 <span>Suspended: <strong class="text-rose-600">{{ suspended_users }}</strong></span>

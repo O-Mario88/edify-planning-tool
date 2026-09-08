@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}Import Results — Edify{% endblock %}
 
@@ -37,24 +39,24 @@ Resolve Data Quality Issues
 </div>
 
 <!-- Metrics overview cards -->
-<div class="grid grid-cols-2 gap-4">
-<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Created (New)</span>
-<p class="text-[22px] font-extrabold tracking-tight">{{ stats.created }}</p>
-</div>
-<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Updated (Upserts)</span>
-<p class="text-[22px] font-extrabold tracking-tight">{{ stats.updated }}</p>
-</div>
-<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Clean Records</span>
-<p class="text-[28px] font-semibold text-emerald-600">{{ stats.clean }}</p>
-</div>
-<div class="edify-surface p-5 rounded-surface border border-slate-100 shadow-sm space-y-1">
-<span class="edify-text-caption font-bold uppercase tracking-wider {% if stats.blocked %}text-rose-600{% else %}text-slate-400{% endif %}">Blocked / Ignored</span>
-<p class="text-[28px] font-semibold {% if stats.blocked %}text-rose-600{% else %}text-slate-400{% endif %}">{{ stats.blocked }}</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{% kpi_label %}Created (New){% endkpi_label %}
+{{ stats.created }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Updated (Upserts){% endkpi_label %}
+{{ stats.updated }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Clean Records{% endkpi_label %}
+{{ stats.clean }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Blocked / Ignored{% endkpi_label %}
+{{ stats.blocked }}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 </div>
 {% endblock %}

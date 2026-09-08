@@ -24,7 +24,7 @@ New Staff Member
 {% legacy_kpi_item "Pending onboarding" kpis.pending_onboarding helper="Needs HR completion" tone="warning" icon="clock" as onboarding_kpi %}
 {% legacy_kpi_item "High-risk staff" kpis.high_risk helper="Needs intervention" tone="danger" icon="warning" as risk_kpi %}
 {% collect_kpi_items onboarding_kpi risk_kpi as workforce_kpis %}
-{% include "components/kpi_strip.html" with items=workforce_kpis variant="executive" density="compact" title="Workforce attention" %}
+{% include "components/context_metrics.html" with items=workforce_kpis variant="executive" density="compact" title="Workforce attention" %}
 
 <!-- Main Content Card -->
 <div class="card">

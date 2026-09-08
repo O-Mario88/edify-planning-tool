@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load frontend_filters table_pagination %}
 {% comment %}
 The body of the country closure page, swapped on its own when the period or
@@ -11,71 +13,71 @@ grouping changes — so the header keeps the control that fired the request.
   <section aria-labelledby="ci-summary" class="space-y-3">
     <h2 id="ci-summary" class="sr-only">Summary</h2>
 
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Schools lost</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.schools_lost|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">
+    {% kpi_strip %}
+      {% kpi_metric %}
+        {% kpi_label %}Schools lost{% endkpi_label %}
+        {{ summary.schools_lost|intcomma }}
+        {% kpi_helper %}
           {% if summary.reopened %}{{ summary.reopened }} reopened and no longer counted as lost{% else %}Still closed{% endif %}
-        </p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Learners removed</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.learners_lost|intcomma }}</p>
+        {% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Learners removed{% endkpi_label %}
+        {{ summary.learners_lost|intcomma }}
         {% comment %}
         The coverage is stated with the number, never after it. A bare total
         implies a completeness this data does not have: some closed schools
         carry no enrolment count at all, and reporting their learners as zero
         would understate the loss with total confidence.
         {% endcomment %}
-        <p class="edify-text-caption edify-text-muted">
+        {% kpi_helper %}
           Across {{ summary.schools_counted|intcomma }} of {{ summary.schools_lost|intcomma }} closed schools
           {% if summary.schools_without_enrollment %}
           · <span class="font-semibold">{{ summary.schools_without_enrollment }} had no count</span>
           {% endif %}
-        </p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Districts affected</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.districts_affected|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">
+        {% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Districts affected{% endkpi_label %}
+        {{ summary.districts_affected|intcomma }}
+        {% kpi_helper %}
           {% if summary.average_school_size %}Average closed school held {{ summary.average_school_size|intcomma }} learners{% else %}No enrolment counts recorded{% endif %}
-        </p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Budget released</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.budget_released|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">UGX, from work that will not now happen</p>
-      </div>
-    </div>
+        {% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Budget released{% endkpi_label %}
+        {{ summary.budget_released|intcomma }}
+        {% kpi_helper %}UGX, from work that will not now happen{% endkpi_helper %}
+      {% endkpi_metric %}
+    {% endkpi_strip %}
 
     {% comment %}
     What closure did to the plan. Leadership's distinct question: the losses
     above are about schools, these are about the work that was already
     committed to them.
     {% endcomment %}
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Activities cancelled</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.activities_cancelled|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Planned visits and trainings stopped</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Partner work withdrawn</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.partners_withdrawn|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Assignments taken back from partners</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Awaiting finance</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.awaiting_finance|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Money already moved — settled, not cancelled</p>
-      </div>
-      <div class="card p-4">
-        <p class="edify-text-caption uppercase tracking-wider edify-text-subtle font-semibold">Reopened</p>
-        <p class="text-[22px] font-extrabold tracking-tight tabular-nums">{{ summary.reopened|intcomma }}</p>
-        <p class="edify-text-caption edify-text-muted">Operating again, excluded from the losses</p>
-      </div>
-    </div>
+    {% kpi_strip %}
+      {% kpi_metric %}
+        {% kpi_label %}Activities cancelled{% endkpi_label %}
+        {{ summary.activities_cancelled|intcomma }}
+        {% kpi_helper %}Planned visits and trainings stopped{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Partner work withdrawn{% endkpi_label %}
+        {{ summary.partners_withdrawn|intcomma }}
+        {% kpi_helper %}Assignments taken back from partners{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Awaiting finance{% endkpi_label %}
+        {{ summary.awaiting_finance|intcomma }}
+        {% kpi_helper %}Money already moved — settled, not cancelled{% endkpi_helper %}
+      {% endkpi_metric %}
+      {% kpi_metric %}
+        {% kpi_label %}Reopened{% endkpi_label %}
+        {{ summary.reopened|intcomma }}
+        {% kpi_helper %}Operating again, excluded from the losses{% endkpi_helper %}
+      {% endkpi_metric %}
+    {% endkpi_strip %}
   </section>
 
   {# ── Where ──────────────────────────────────────────────────────────────── #}

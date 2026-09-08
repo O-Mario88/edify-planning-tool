@@ -11,7 +11,7 @@
   {% legacy_kpi_item "Awaiting triage" counts.untriaged helper="Needs an owner" tone="warning" icon="clock" as triage_kpi %}
   {% legacy_kpi_item "Open tickets" counts.open helper="Active support workload" tone="primary" icon="document" as open_kpi %}
   {% collect_kpi_items triage_kpi open_kpi as support_kpis %}
-  {% include "components/kpi_strip.html" with items=support_kpis variant="executive" density="compact" title="Support attention" %}
+  {% include "components/context_metrics.html" with items=support_kpis variant="executive" density="compact" title="Support attention" %}
 
   <div class="card divide-y divide-slate-50">
     {% for ticket in tickets %}

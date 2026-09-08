@@ -33,7 +33,7 @@
   {% legacy_kpi_item "Return rate" return_rate_label helper="of decisions" tone=return_rate_tone icon="target" as rate_kpi %}
   {% legacy_kpi_item "Verifiers active" verifiers|length helper="in this window" tone="primary" icon="users" as verifiers_kpi %}
   {% collect_kpi_items decisions_kpi returned_kpi rate_kpi verifiers_kpi as analytics_kpis %}
-  {% include "components/kpi_strip.html" with items=analytics_kpis variant="executive" title="Verification quality" %}
+  {% include "components/context_metrics.html" with items=analytics_kpis variant="executive" title="Verification quality" %}
 
   <div class="grid gap-4 lg:grid-cols-2">
     <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">

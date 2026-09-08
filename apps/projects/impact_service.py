@@ -1069,6 +1069,14 @@ def get_analytics(
         "regions": region_options,
         "districts": district_options,
         "projects": scoped_projects,
+        "workspace_project": next(
+            (
+                project
+                for project in scoped_projects
+                if str(project.id) == selected_project
+            ),
+            None,
+        ),
         "partner_options": partner_options,
         "intervention_options": SsaIntervention.choices,
         "impact_statuses": [

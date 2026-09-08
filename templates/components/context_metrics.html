@@ -1,0 +1,64 @@
+{% load kpi_metrics %}
+{% if items %}
+{% professional_kpis items variant density as professional_items %}
+<section class="context-metrics{% if variant and variant != 'executive' %} context-metrics--{{ variant }}{% endif %}"
+         data-mobile-summary
+         data-context-metrics
+         data-kpi-count="{{ professional_items|length }}"
+         aria-label="{{ title|default:'Performance overview' }}">
+  {% if title or subtitle %}
+  <header class="context-metrics__header">
+    {% if title %}<h2 class="context-metrics__title">{{ title }}</h2>{% endif %}
+    {% if subtitle %}<p class="context-metrics__subtitle">{{ subtitle }}</p>{% endif %}
+  </header>
+  {% endif %}
+
+  <div class="context-metrics__sentence" role="list" tabindex="0" aria-label="Performance metrics; scroll to explore">
+    {% for item in professional_items %}
+    <span class="context-metrics__fact{% if item.data_state and not item.is_measured %} context-metrics__fact--pending{% endif %}"
+          role="listitem"
+          data-component="context-metric"
+          {% if item.metric_key %}data-metric-key="{{ item.metric_key }}"{% endif %}
+          {% if item.period %}data-metric-period="{{ item.period }}"{% endif %}
+          {% if item.scope %}data-metric-scope="{{ item.scope }}"{% endif %}
+          {% if item.data_state %}data-metric-state="{{ item.data_state }}"{% endif %}
+          {% if item.tooltip %}title="{{ item.tooltip }}"{% elif item.definition %}title="{{ item.definition }}"{% endif %}>
+      {% if item.hx_get %}
+      <button type="button" hx-get="{{ item.hx_get }}" hx-target="#drawer-container" hx-swap="innerHTML" class="context-metrics__link">
+      {% elif drilldown_mode == "program_lead" and item.link %}
+      <button type="button" hx-get="/analytics/program-lead/drilldown{{ item.link }}&fy={{ fy }}{% if quarter %}&quarter={{ quarter }}{% endif %}" hx-target="#drawer-container" hx-swap="innerHTML" class="context-metrics__link">
+      {% elif drilldown_mode == "program_lead_dashboard" and item.link %}
+      <a href="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}" hx-get="/dashboard/pl-drilldown{{ item.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="context-metrics__link">
+      {% elif item.drilldown_url %}
+      <a href="{{ item.drilldown_url }}" class="context-metrics__link">
+      {% elif item.link %}
+      <a href="{{ item.link }}" class="context-metrics__link"{% if item.current %} aria-current="{{ item.current }}"{% endif %}>
+      {% else %}
+      <span class="context-metrics__text">
+      {% endif %}
+
+        {% if item.accessible_description %}<span class="sr-only">{{ item.accessible_description }}</span>{% endif %}
+        <span class="context-metrics__label"{% if item.accessible_description %} aria-hidden="true"{% endif %}>{% firstof item.label item.canonical_label %}</span>
+        {% kpi_value item as formatted_value %}
+        <strong class="context-metrics__value{% if formatted_value.compact %} context-metrics__value--compact{% endif %}" title="{{ formatted_value.exact }}"{% if item.accessible_description %} aria-hidden="true"{% endif %}>{% if formatted_value.compact %}<span class="sr-only">{{ formatted_value.exact }}</span><span aria-hidden="true">{{ formatted_value.display }}</span>{% else %}{{ formatted_value.display }}{% endif %}</strong>
+        {% if item.helper %}<span class="context-metrics__helper" title="{{ item.helper }}" data-tone="{{ item.tone }}">{{ item.helper }}</span>{% endif %}
+
+      {% if item.hx_get %}</button>
+      {% elif drilldown_mode == "program_lead" and item.link %}</button>
+      {% elif drilldown_mode == "program_lead_dashboard" and item.link %}</a>
+      {% elif item.drilldown_url %}</a>
+      {% elif item.link %}</a>
+      {% else %}</span>
+      {% endif %}
+    </span>
+    {% endfor %}
+  </div>
+  <div class="context-metrics__navigation" hidden>
+    <div class="context-metrics__track" aria-hidden="true"><span class="context-metrics__thumb"></span></div>
+    <div class="context-metrics__navigation-row">
+      <span class="context-metrics__range" aria-live="polite" aria-atomic="true"></span>
+      <button type="button" class="context-metrics__next">Swipe for more <span aria-hidden="true">→</span></button>
+    </div>
+  </div>
+</section>
+{% endif %}

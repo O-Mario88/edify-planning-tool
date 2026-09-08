@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load static %}
 {% comment %}
 The IA dashboard's operations: verification queue, open queues, needs
@@ -309,12 +311,7 @@ Verification Quality tab has no Map view, so they belong here for it.
           </div>
           <a href="/evidence/" class="ia-text-link">Review evidence <span aria-hidden="true">→</span></a>
         </header>
-        <dl class="ia-evidence__summary">
-          <div><dt>Submitted</dt><dd>{{ evidence_totals.submitted }}</dd></div>
-          <div data-tone="success"><dt>Accepted</dt><dd>{{ evidence_totals.verified }}</dd></div>
-          <div data-tone="warning"><dt>Returned</dt><dd>{{ evidence_totals.returned }}</dd></div>
-          <div data-tone="danger"><dt>Rejected</dt><dd>{{ evidence_totals.rejected }}</dd></div>
-        </dl>
+        {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Submitted{% endkpi_label %}{{ evidence_totals.submitted }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Accepted{% endkpi_label %}{{ evidence_totals.verified }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Returned{% endkpi_label %}{{ evidence_totals.returned }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Rejected{% endkpi_label %}{{ evidence_totals.rejected }}{% endkpi_metric %}{% endkpi_strip %}
         <div class="ia-evidence-table">
           <div class="ia-evidence-table__header">
             <span>Evidence type</span><span>Submitted</span><span>Accepted</span><span>Returned</span>
@@ -339,21 +336,8 @@ Verification Quality tab has no Map view, so they belong here for it.
             <p>Conditions weakening reporting confidence</p>
           </div>
         </header>
-        <ul class="ia-integrity-list">
-          {% for metric in dq_metrics %}
-          <li>
-            <span>{{ metric.label }}</span>
-            <strong data-tone="{% if metric.value %}warning{% else %}success{% endif %}">{{ metric.value }}</strong>
-          </li>
-          {% endfor %}
-        </ul>
-        <div class="ia-correction-cycle">
-          <span class="ia-correction-cycle__value">{{ returned_open_school_cnt }}</span>
-          <span>
-            <strong>schools awaiting correction</strong>
-            <small>{% if avg_resolution_days is not None %}Average resolution {{ avg_resolution_days }} days{% else %}No completed correction cycle yet{% endif %}</small>
-          </span>
-        </div>
+        {% kpi_strip %}{% for metric in dq_metrics %}{% kpi_metric %}{% kpi_label %}{{ metric.label }}{% endkpi_label %}{{ metric.value }}{% endkpi_metric %}{% endfor %}{% kpi_metric %}{% kpi_label %}Schools awaiting correction{% endkpi_label %}{{ returned_open_school_cnt }}{% kpi_helper %}{% if avg_resolution_days is not None %}Average resolution {{ avg_resolution_days }} days{% else %}No completed correction cycle yet{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
+
         <a href="/ia/returned/" class="btn h-8">Review returned records <span aria-hidden="true">→</span></a>
       </article>
     </div>
@@ -437,22 +421,16 @@ Verification Quality tab has no Map view, so they belong here for it.
     </div>
   </section>
 
-  <a href="/debriefs" class="ia-field-signals">
+  <section class="ia-field-signals">
     <div class="ia-field-signals__heading">
       <span class="ia-field-signals__icon" aria-hidden="true">{% include "partials/dashboards/admin/_icon.html" with name="attention" only %}</span>
       <span>
-        <strong>Field quality signals</strong>
+        <strong><a href="/debriefs">Field quality signals →</a></strong>
         <small>Reported through field debriefs in the last {{ field_debrief_intel.days }} days</small>
       </span>
     </div>
-    <dl>
-      <div><dt>Debriefs</dt><dd>{{ field_debrief_intel.total }}</dd></div>
-      <div data-tone="{% if field_debrief_intel.critical %}danger{% else %}neutral{% endif %}"><dt>Critical risk</dt><dd>{{ field_debrief_intel.critical }}</dd></div>
-      <div data-tone="{% if field_debrief_intel.action_required %}warning{% else %}neutral{% endif %}"><dt>Action required</dt><dd>{{ field_debrief_intel.action_required }}</dd></div>
-      <div data-tone="{% if field_debrief_intel.escalated %}danger{% else %}neutral{% endif %}"><dt>Escalated</dt><dd>{{ field_debrief_intel.escalated }}</dd></div>
-    </dl>
-    <span class="ia-field-signals__arrow" aria-hidden="true">→</span>
-  </a>
+    <div class="min-w-0">{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Debriefs{% endkpi_label %}{{ field_debrief_intel.total }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Critical risk{% endkpi_label %}{{ field_debrief_intel.critical }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Action required{% endkpi_label %}{{ field_debrief_intel.action_required }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Escalated{% endkpi_label %}{{ field_debrief_intel.escalated }}{% endkpi_metric %}{% endkpi_strip %}</div>
+    </section>
     </div>
   </details>
   </div>

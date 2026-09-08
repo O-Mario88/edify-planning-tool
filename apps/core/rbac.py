@@ -737,6 +737,9 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.COST_AMENDMENT_REQUEST,
         P.PARTNER_VIEW,
         P.ANALYTICS_VIEW,
+        # Project exports are constrained by the same coordinator project
+        # scope as the on-screen planning and impact services.
+        P.EXPORT,
         P.STRATEGIC_PRIORITIES_VIEW,
         P.MILESTONES_VIEW_PROGRESS,
     ],

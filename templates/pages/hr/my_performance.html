@@ -94,7 +94,7 @@ the heading on screen would be the worse of the two.
     {% legacy_kpi_item "Conversation window" "None open" helper="HR schedules the next window" tone="neutral" icon="calendar" as window_kpi %}
   {% endif %}
   {% collect_kpi_items agreement_kpi progress_kpi window_kpi as performance_kpis %}
-  {% include "components/kpi_strip.html" with items=performance_kpis variant="executive" title="Performance headline" %}
+  {% include "components/context_metrics.html" with items=performance_kpis variant="executive" title="Performance headline" %}
 
   {# ── Tabs ──────────────────────────────────────────────────────────── #}
   <nav data-edify-tablist class="flex flex-wrap" aria-label="Performance sections">
