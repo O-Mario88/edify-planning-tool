@@ -27,7 +27,7 @@ ruff==0.8.4
 shapely==2.1.2
 
 # Debugging.
-django-debug-toolbar==4.4.6
+django-debug-toolbar==7.1.1
 ipdb==0.13.13
 
 # Security tool chains (mandate §56). These were specified as required gates
