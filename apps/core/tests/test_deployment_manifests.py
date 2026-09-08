@@ -106,11 +106,18 @@ class AppPlatformSpecTests(SimpleTestCase):
         self.assertEqual(web["instance_count"], 1)
         self.assertEqual(_envs(web).get("WEB_CONCURRENCY"), "1")
         self.assertEqual(worker["instance_size_slug"], "apps-s-1vcpu-0.5gb")
-        self.assertEqual(database["size"], "db-s-1vcpu-1gb")
-        self.assertEqual(database["num_nodes"], 1)
+        self.assertTrue(database["production"])
+        self.assertEqual(database["cluster_name"], "edify-production-db")
+        self.assertNotIn(
+            "size",
+            database,
+            "An attached production cluster is sized in the database control "
+            "plane; App Platform rejects size on this binding.",
+        )
+        self.assertNotIn("num_nodes", database)
 
-        # $10 web + $5 worker + $15 managed PostgreSQL + $5 Spaces.
-        self.assertLessEqual(10 + 5 + 15 + 5, 37)
+        # $10 web + $5 worker + $15.15 managed PostgreSQL + $5 Spaces.
+        self.assertLessEqual(10 + 5 + 15.15 + 5, 37)
 
 
 class StagingAppPlatformSpecTests(SimpleTestCase):
