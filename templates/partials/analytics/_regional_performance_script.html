@@ -211,6 +211,13 @@ window.subregionMap = function (){
       pin.appendChild(dot);
     },
 
+    fitViewport(){
+      const viewport = this.$el.querySelector('.sr-map-viewport');
+      if (!viewport) return;
+      const top = viewport.getBoundingClientRect().top + window.scrollY;
+      const height = Math.max(220, Math.min(560, window.innerHeight - top - 24));
+      this.$el.style.setProperty('--map-viewport-height', height + 'px');
+    },
     async load(){
       // district_insight ships an object keyed by district name, already in
       // the shape the card needs -- no re-indexing. (It replaced an array;
@@ -244,6 +251,7 @@ window.subregionMap = function (){
         if (this.$refs.svg) this.$refs.svg.replaceChildren();
         this.draw();
         this.ready = true;
+        this.$nextTick(() => this.fitViewport());
       } catch (err) {
         this.attempts += 1;
         if (this.attempts <= 1) {

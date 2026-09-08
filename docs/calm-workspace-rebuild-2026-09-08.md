@@ -88,3 +88,7 @@ The Accountant landing workspace now renders finance operations directly. The ma
 Shared drawer widths now cap at 416/560/688/800/960px for small through workspace tiers. Desktop dialogs retain a viewport inset and scroll within a height cap; headers, body padding, close controls and footer shelves are tighter. Legacy workflow popups share the cap, and the separate leave drawer is centred on desktop. Cluster creation no longer overrides the phone inset. Scheduling choice labels and descriptions stack cleanly.
 
 Browser regression coverage opens scheduling, the legacy core-visit form, assignment and cluster creation at 390/768/1290/1920px, checks centring and overflow, and closes each dialog. A separate check verifies desktop leave-dialog centring.
+
+### Landscape map layout — 9 September
+
+Desktop maps now use the viewport height available beneath the dashboard header instead of a width-driven square. The SVG preserves the full geographic extent, and the distribution panel sits alongside from 1024px with its own bounded list. Resizing recalculates the height. Short laptop screens show sub-region names in the national overview; district labels remain available in focused views and hover details. Browser checks cover 1024×768, 1280×720, 1366×768, 1440×900 and 1920×1080.
