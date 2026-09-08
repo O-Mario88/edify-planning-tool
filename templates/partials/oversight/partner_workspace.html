@@ -123,7 +123,7 @@ schedule, and none edits a CCEO's record.
         <div class="min-w-0">
           {% comment %}The organisation's name opens its profile (owner,
           2026-09-07), the way a school's name does from every table.{% endcomment %}
-          <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{% if group.id %}<a href="/partners/{{ group.id }}" class="hover:underline">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}</h2>
+          <h2 id="partner-{{ forloop.counter }}" class="text-sm font-semibold">{% if group.profile_url %}<a href="{{ group.profile_url }}" class="hover:underline">{{ group.name }}</a>{% else %}{{ group.name }}{% endif %}</h2>
           {% comment %}
           Who to call, carried over when the Partners directory merged into
           this page. Every control here asks somebody to act, and for a partner

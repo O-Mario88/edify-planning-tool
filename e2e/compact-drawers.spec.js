@@ -14,15 +14,21 @@ test('scheduling, assignment and cluster creation stay centred and contained',as
   let surface=page.locator('.drawer-surface.active');await expect(surface).toBeVisible();
   if(flow.nested){await surface.locator(flow.nested).first().click();surface=page.locator('.edify-popup-dialog__surface');await expect(surface.locator('form')).toBeVisible();}
   await page.addStyleTag({content:'*,*::before,*::after{transition:none!important;animation:none!important}'});
-  for(const width of [390,768,1290,1920]){
-   await page.setViewportSize({width,height:900});
+  for(const [width,height] of [[390,844],[768,900],[1280,720],[1366,768],[1920,1080]]){
+   await page.setViewportSize({width,height});
    const r=await surface.boundingBox();
    expect(r.x).toBeGreaterThanOrEqual(8);expect(r.y).toBeGreaterThanOrEqual(8);
    expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);
-   expect(Math.abs(r.y+r.height/2-450)).toBeLessThan(2);
-   expect(r.height).toBeLessThanOrEqual(880);
+   expect(Math.abs(r.y+r.height/2-height/2)).toBeLessThan(2);
+   expect(r.height).toBeLessThanOrEqual(height-16);
    if(width>=768)expect(r.width).toBeLessThanOrEqual(800);
    expect(await surface.evaluate(e=>e.scrollWidth-e.clientWidth)).toBeLessThanOrEqual(2);
+   const submit=surface.locator('button[type="submit"]').last();
+   if(await submit.count() && await submit.isVisible()){
+    await submit.scrollIntoViewIfNeeded();const action=await submit.boundingBox();
+    expect(action.y).toBeGreaterThanOrEqual(0);
+    expect(action.y+action.height).toBeLessThanOrEqual(height);
+   }
   }
   await page.setViewportSize({width:1290,height:900});
   await page.screenshot({path:'/tmp/drawer-'+(flow.nested?'visit':flow.url.includes('clusters')?'cluster':flow.selector.includes('assign')?'assign':'schedule')+'.png'});
@@ -37,7 +43,13 @@ test('leave drawer is centred on desktop',async({page})=>{
  await page.getByRole('button',{name:'Request leave',exact:true}).first().click();
  const panel=page.locator('.pto-drawer-panel');await expect(panel).toBeVisible();
  await page.addStyleTag({content:'*{animation:none!important;transition:none!important}'});
- const r=await panel.boundingBox();expect(r.width).toBeLessThanOrEqual(560);
- expect(Math.abs(r.x+r.width/2-720)).toBeLessThan(2);
- expect(r.y).toBeGreaterThanOrEqual(30);
+ for(const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080]]){
+  await page.setViewportSize({width,height});
+  const r=await panel.boundingBox();expect(r.width).toBeLessThanOrEqual(560);
+  expect(Math.abs(r.x+r.width/2-width/2)).toBeLessThan(2);
+  expect(Math.abs(r.y+r.height/2-height/2)).toBeLessThan(2);
+  expect(r.y).toBeGreaterThanOrEqual(8);
+  expect(r.y+r.height).toBeLessThanOrEqual(height-8);
+  expect(await panel.evaluate(e=>e.scrollWidth-e.clientWidth)).toBeLessThanOrEqual(2);
+ }
 });

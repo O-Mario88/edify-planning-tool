@@ -19,14 +19,7 @@
 
     <!-- Search & Filters -->
     <form id="leave-approvals-filters" method="GET" class="edify-filter-bar" aria-label="Leave approval filters">
-      <div class="relative">
-        {% comment %}Search moved to the top bar.{% endcomment %}
-        <span class="absolute left-2.5 top-2.5 text-slate-400">
-          <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-          </svg>
-        </span>
-      </div>
+      {% comment %}Search is provided by the persistent top bar.{% endcomment %}
 
       <span class="edify-filter-label">Type</span>
       <select aria-label="Type"
@@ -88,7 +81,7 @@
         <span class="edify-text-caption font-bold text-slate-400">Sort: Oldest First</span>
       </div>
 
-      <div class="divide-y overflow-y-auto max-h-[700px]" style="divide-color:var(--edify-border);">
+      <div class="leave-approval-queue divide-y overflow-y-auto max-h-[700px]" style="divide-color:var(--edify-border);">
         {% for r in requests %}
         <article
           class="p-4 hover:bg-slate-50/50 cursor-pointer transition relative group {% if r.id == selected_leave.id %}edify-primary-tint-5{% endif %}"

@@ -3141,6 +3141,8 @@ main :is(div, section, article, p, li).edify-empty-copy:is(
   [class~="p-8"],
   [class~="p-12"],
   [class~="p-16"],
+  [class~="p-20"],
+  [class~="py-20"],
   [class~="py-8"],
   [class~="py-12"],
   [class~="py-16"]
@@ -4310,3 +4312,33 @@ main textarea,
 @container drawer (min-width: 40rem) {
   .cluster-create-basics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Short, wide laptops need less structural whitespace, not smaller text. */
+@media (min-width: 64rem) and (max-height: 50rem) {
+  main .analytics-metrics-disclosure > summary {
+    min-block-size: 2rem;
+    padding-block: .375rem;
+  }
+  main .leave-approval-queue {
+    max-block-size: max(12rem, calc(100dvh - 18rem));
+  }
+}
+/* Status filters must move below a long panel heading, never be squeezed
+   under the card's clipped edge when a laptop window narrows. */
+main .tt-panel__header { flex-wrap: wrap; }
+main .tt-panel__header > div:first-child { min-inline-size: 0; }
+main .tt-panel__header .tt-segmented {
+  flex-shrink: 0;
+  max-inline-size: 100%;
+}
+
+/* Empty queues retain their heading and status without displacing active work. */
+main .hr-today-queue--empty { padding-block: .75rem; }
+main .hr-today-queue--empty .edify-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+}
+main .hr-today-queue--empty .edify-section__description { margin: 0; }

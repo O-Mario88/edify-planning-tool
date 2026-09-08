@@ -6756,7 +6756,7 @@
   {
    "audit_id": "KPI-SURFACE-037",
    "template": "templates/pages/leave/leave_approvals.html",
-   "line": 79,
+   "line": 72,
    "source_pattern": "shared-component",
    "items_expression": "leave_kpi_items",
    "presentation": "context",
