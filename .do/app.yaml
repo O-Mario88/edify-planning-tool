@@ -80,7 +80,7 @@ alerts:
 #   A     @     172.66.0.96
 #   AAAA  @     2606:4700:7::60
 #   AAAA  @     2a06:98c1:58::60
-#   CNAME www   edify-planning-app-gu9a6.ondigitalocean.app.
+#   CNAME www   edifyplanning.app.
 #
 # Values are DigitalOcean's published static ingress records, shared across App
 # Platform apps and routed by Host header:
@@ -162,9 +162,7 @@ databases:
     engine: PG
     version: "16"
     production: true
-    cluster_name: edify-db
-    size: db-s-1vcpu-1gb
-    num_nodes: 1
+    cluster_name: edify-production-db
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 # Migrations run here, once, before the new web containers take traffic. The web
