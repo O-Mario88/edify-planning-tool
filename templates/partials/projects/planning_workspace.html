@@ -33,6 +33,8 @@
 
 {% include "components/context_metrics.html" with items=kpis variant="executive" title="Project planning context" %}
 
+<details class="spp-readiness">
+<summary>Readiness guidance</summary>
 <section class="spp-band-grid" aria-label="Planning readiness bands">
   {% for item in band_cards %}
   <article class="spp-band spp-tone--{{ item.tone }}">
@@ -41,6 +43,7 @@
   </article>
   {% endfor %}
 </section>
+</details>
 
 <div class="spp-work-layout">
   <section class="spp-card spp-queue" aria-labelledby="spp-queue-title">

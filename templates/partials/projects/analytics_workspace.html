@@ -1,7 +1,6 @@
 {% if is_htmx and can_export %}<a id="spa-export" class="spa-button spa-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a><a id="spa-snapshot" class="spa-button spa-button--secondary" href="{{ snapshot_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="document" %} Download Snapshot</a>{% endif %}
 
-{# Shared country geography; project impact cards below retain project scope. #}
-{% include "partials/analytics/regional_performance.html" %}
+{# Project-scoped evidence leads this workspace; country geography lives on the dashboard. #}
 
 {% if not has_projects %}
 <section class="spa-empty"><span>{% include "partials/projects/planning_icon.html" with name="folder" %}</span><h2>No special projects are assigned to your role</h2><p>Impact intelligence starts with schools assigned from the School Directory and project-stamped delivery.</p><a class="spa-button spa-button--primary" href="/projects/planning">Open Project Planning</a></section>

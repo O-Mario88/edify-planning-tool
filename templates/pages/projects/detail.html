@@ -1,11 +1,11 @@
 {% extends "layouts/shell.html" %}
-{% load kpi_metrics %}
+{% load kpi_metrics table_pagination %}
 
 
 {% block title %}{{ project.name }} — Edify Command Center{% endblock %}
 
 {% block shell_content %}
-<div class="edify-profile-page edify-page-canvas space-y-4">
+<div class="edify-profile-page project-detail edify-page-canvas space-y-4">
 
 <!-- Page Header -->
 <div class="edify-page-header">
@@ -27,17 +27,11 @@ Project
 
 {% include "partials/projects/workspace_nav.html" with workspace_project=project workspace_active="overview" %}
 
-<section class="card overflow-hidden" aria-labelledby="project-delivery-overview-title">
+<section class="card project-delivery-overview overflow-hidden" aria-labelledby="project-delivery-overview-title">
   <header class="flex flex-col gap-3 border-b border-[var(--edify-border)] bg-slate-50/50 p-5 sm:flex-row sm:items-start sm:justify-between">
-    <div><p class="edify-page-eyebrow">Delivery overview</p><h2 id="project-delivery-overview-title" class="mt-1 text-[17px] font-extrabold text-slate-900">{{ project.name }}</h2><p class="mt-1 text-[12px] text-slate-500">{{ project.code|default:"No project code" }} · {{ project.get_category_display }} · {{ project.get_school_focus_display }}</p></div>
+    <div><h2 id="project-delivery-overview-title" class="text-[15px] font-semibold">Delivery overview</h2><p class="mt-1 text-[12px] text-slate-500">{{ project.code|default:"No project code" }} · {{ project.get_category_display }} · {{ project.get_school_focus_display }}</p></div>
     <span class="edify-badge" data-tone="{{ project_summary.status_tone }}">{{ project_summary.status }}</span>
   </header>
-  <div class="grid gap-px bg-[var(--edify-border)] sm:grid-cols-2 xl:grid-cols-4">
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Coordinator</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.coordinator }}</p></div>
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Target interventions</p><p class="mt-1 text-[13px] font-bold text-slate-800">{% for item in project_summary.interventions %}{{ item }}{% if not forloop.last %}, {% endif %}{% empty %}Not set{% endfor %}</p></div>
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Measurement window</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.measurement_window }}</p></div>
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Budget ceiling</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.budget_ceiling }}</p></div>
-  </div>
   <div class="p-5" id="budget-execution">
 {% kpi_strip %}
 {% kpi_metric %}{% kpi_label %}Delivery progress{% endkpi_label %}{{ project_summary.completion }}%{% kpi_helper %}{{ project_summary.activity_closed }} of {{ project_summary.activity_total }} activities closed{% endkpi_helper %}{% endkpi_metric %}
@@ -45,7 +39,15 @@ Project
 {% kpi_metric %}{% kpi_label %}Budget remaining{% endkpi_label %}{{ project_summary.budget_remaining }}{% endkpi_metric %}
 {% endkpi_strip %}
 </div>
+  <details class="project-detail-context"><summary>Project details and latest decision</summary>
+  <div class="grid gap-px bg-[var(--edify-border)] sm:grid-cols-2 xl:grid-cols-4">
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Coordinator</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.coordinator }}</p></div>
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Target interventions</p><p class="mt-1 text-[13px] font-bold text-slate-800">{% for item in project_summary.interventions %}{{ item }}{% if not forloop.last %}, {% endif %}{% empty %}Not set{% endfor %}</p></div>
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Measurement window</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.measurement_window }}</p></div>
+    <div class="bg-white p-4"><p class="edify-profile-field__label">Budget ceiling</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.budget_ceiling }}</p></div>
+  </div>
   <div class="border-t border-[var(--edify-border)] p-5"><p class="edify-profile-field__label">Latest leadership decision</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.status }} · {{ project_summary.decision_maker }}{% if project_summary.decision_date %} · {{ project_summary.decision_date|date:"j M Y" }}{% endif %}</p><p class="mt-1 text-[12px] leading-5 text-slate-500">{{ project_summary.decision_reason }}</p></div>
+  </details>
 </section>
 
 <!-- Unified KPI Strip -->
@@ -53,8 +55,8 @@ Project
 
 <div class="grid gap-4 xl:grid-cols-2">
 {% if can_assign_staff %}
-<section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="assign-project-staff-title">
-  <h2 id="assign-project-staff-title" class="text-[15px] font-extrabold text-slate-800">Assign as Staff Priority</h2>
+<details class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="assign-project-staff-title">
+  <summary><h2 id="assign-project-staff-title" class="text-[15px] font-extrabold text-slate-800">Assign as Staff Priority</h2></summary>
   <p class="mt-1 text-[12px] leading-5 text-slate-500">Special Project Coordinators, IA, the Country Director, and Admin can assign this Project to individuals or complete CCEO/PL role groups.</p>
   <form method="post" action="/projects/{{ project.id }}/staff/assign" class="mt-4 space-y-3">
     {% csrf_token %}
@@ -87,12 +89,12 @@ Project
     </div>
     <button type="submit" class="bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white rounded-control px-4 py-2 text-[12px] font-bold transition-all">Assign Project priority</button>
   </form>
-</section>
+</details>
 {% endif %}
 
 {% if can_add_schools %}
-<section class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="add-project-school-title">
-  <h2 id="add-project-school-title" class="text-[15px] font-extrabold text-slate-800">Add Schools to This Priority</h2>
+<details class="edify-surface border border-[var(--border-card)] rounded-overlay shadow-sm p-5" aria-labelledby="add-project-school-title">
+  <summary><h2 id="add-project-school-title" class="text-[15px] font-extrabold text-slate-800">Add Schools to This Priority</h2></summary>
   <p class="mt-1 text-[12px] leading-5 text-slate-500">Client Schools may join one active Project. Core Schools may join up to four. SSA need and Project school focus are validated on save.</p>
   <form method="post" action="/projects/{{ project.id }}/schools/assign" class="mt-4 space-y-3">
     {% csrf_token %}
@@ -109,11 +111,11 @@ Project
     </label>
     <button type="submit" class="bg-[var(--color-edify-primary)] hover:bg-[var(--color-edify-dark)] text-white rounded-control px-4 py-2 text-[12px] font-bold transition-all">Add School</button>
   </form>
-</section>
+</details>
 {% endif %}
 </div>
 
-<div class="grid lg:grid-cols-3 gap-6 items-start">
+<div class="edify-record-workspace grid lg:grid-cols-3 gap-6 items-start">
 <div class="lg:col-span-2 space-y-6">
 <div id="participating-schools" class="card overflow-hidden scroll-mt-24">
 <div class="px-5 py-4 border-b border-[var(--edify-border)] bg-slate-50/50 flex items-center justify-between">
@@ -121,27 +123,22 @@ Project
 <span class="px-2.5 py-0.5 rounded-pill edify-text-caption font-semibold edify-primary-soft edify-primary-text border edify-primary-border">{{ school_assignments|length }} Schools</span>
 </div>
 
-<div class="divide-y divide-[var(--edify-border)]">
-{% if school_assignments %}
-{% for sa in school_assignments %}
-<div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition-colors group">
-<div>
-<h4 class="text-[14px] font-semibold text-slate-800 group-hover:text-[var(--edify-accent)] transition-colors">{{ sa.school.name }}</h4>
-<p class="text-[12px] text-slate-500 font-semibold mt-0.5">ID: {{ sa.school_id }} &bull; Added to project</p>
-</div>
-<a href="/schools/{{ sa.school_id }}" class="btn btn-smooth h-8 shadow-sm">
-View Profile
-</a>
-</div>
-{% endfor %}
-{% else %}
-<div class="p-12 text-center flex flex-col items-center justify-center space-y-3">
-<div class="h-12 w-12 rounded-pill bg-slate-50 flex items-center justify-center border border-[var(--edify-border)]">
-<svg class="h-6 w-6 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>
-</div>
-<p class="text-[14px] font-bold text-slate-500">No schools assigned to this project yet.</p>
-</div>
-{% endif %}
+<div class="overflow-x-auto">
+{% paginate school_assignments "schools_page" as schools_pager %}
+<table class="edify-record-table w-full">
+  <caption class="sr-only">Participating schools in {{ project.name }}</caption>
+  <thead><tr><th scope="col">School</th><th scope="col">School ID</th><th scope="col">Action</th></tr></thead>
+  <tbody>
+    {% for sa in schools_pager.rows %}
+    <tr>
+      <td data-record-title>{{ sa.school.name }}</td>
+      <td>{{ sa.school.school_id|default:"—" }}</td>
+      <td data-record-action><a href="/schools/{{ sa.school_id }}" class="btn btn-secondary">View Profile</a></td>
+    </tr>
+    {% empty %}<tr><td colspan="3">No schools assigned to this project yet.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% include "components/table_pager.html" with pager=schools_pager param="schools_page" %}
 </div>
 </div>
 

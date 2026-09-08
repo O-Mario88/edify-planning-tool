@@ -6,7 +6,7 @@
 {% block title %}Projects — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="edify-page-canvas space-y-5" data-mobile-family="directory">
+<div class="edify-page-canvas project-portfolio space-y-5" data-mobile-family="directory">
 
 {% comment %}
   CCEO / Program Lead Projects page — a role-scoped operational view of the
@@ -110,7 +110,9 @@
 <!-- ============================ KPI STRIP ============================ -->
 {% include "components/context_metrics.html" with items=kpis variant="executive" title="Project portfolio context" %}
 
-<!-- ============================ MAIN GRID ============================ -->
+{% include "partials/projects/portfolio_list.html" %}
+
+<!-- Supporting context follows the full-width project queue. -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
   <!-- ───────────── LEFT (2/3): Project table ───────────── -->
@@ -119,7 +121,7 @@
   {% comment %}Project table + mobile cards. Swapped in place by the
      #project-filters form via HTMX (hx-target="#project-list"). Extracted so the
      filtered state can re-render without the surrounding page chrome.{% endcomment %}
-  {% include "partials/projects/portfolio_list.html" %}
+
 
   <!-- =========== BUDGET & EXECUTION =========== -->
   <div class="card p-5 space-y-4">

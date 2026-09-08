@@ -4178,7 +4178,7 @@ main textarea,
   min-inline-size: 1.5rem !important;
   padding: 0 .5rem !important;
   gap: .25rem !important;
-  font-size: .6875rem !important;
+  font-size: var(--edify-text-micro-size) !important;
   font-weight: 600 !important;
   line-height: 1 !important;
   white-space: nowrap !important;
@@ -4245,7 +4245,7 @@ main textarea,
     padding: .875rem 3rem .75rem 1.25rem !important;
   }
   .drawer-surface.drawer-surface .drawer-body { padding: .5rem 1.25rem 0 !important; }
-  .drawer-surface.drawer-surface .drawer-body:not(:has(.drawer-footer)) { padding-block-end: 1.25rem !important; }
+  .drawer-surface.drawer-surface .drawer-body:not(.edify-has-drawer-footer) { padding-block-end: 1.25rem !important; }
   .drawer-surface.drawer-surface .drawer-footer {
     margin: .875rem -1.25rem 0 !important;
     padding: .75rem 1.25rem !important;
@@ -4277,7 +4277,7 @@ main textarea,
   min-inline-size: 0 !important;
 }
 /* Choice cards retain their title/description hierarchy in a narrow dialog. */
-.drawer-surface .drawer-body button:has(> span + span) {
+.drawer-surface .drawer-body button.edify-stacked-label-button {
   display: flex !important;
   flex-direction: column !important;
   align-items: flex-start !important;
@@ -4342,3 +4342,100 @@ main .hr-today-queue--empty .edify-section {
   gap: .25rem 1rem;
 }
 main .hr-today-queue--empty .edify-section__description { margin: 0; }
+
+/* Project workspaces: queues own the width, supporting context follows them.
+   Keep these structural rules after the shared toolbar/card compatibility layer. */
+main :is(.spp-work-layout, .sp-plan-layout, .spa-layout) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: .75rem;
+}
+main :is(.spp-rail, .sp-insights, .spa-insights) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  align-items: start;
+  gap: .75rem;
+}
+main :is(.spp-card__titlebar, .sp-card__header, .spa-card > header) {
+  min-height: 0;
+  padding: .625rem .875rem;
+  flex-wrap: wrap;
+  gap: .375rem .75rem;
+}
+main .spp-band-grid { gap: 0; border: 1px solid var(--edify-border); border-radius: .5rem; overflow: hidden; }
+main .spp .spp-band {
+  min-height: 0;
+  padding: .625rem .875rem;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: var(--edify-surface);
+  gap: .625rem;
+}
+main .spp-band + .spp-band { border-inline-start: 1px solid var(--edify-border); }
+main .spp-band__icon { width: 1.75rem; height: 1.75rem; }
+main .spp-band > div { grid-template-columns: 1fr auto; column-gap: .75rem; align-items: baseline; width: 100%; }
+main .spp-band strong { font-size: 1.125rem; }
+main .spp-band p { grid-column: 1 / -1; }
+main #spp-filters, main #sp-plan-filters { display: block !important; padding: 0; margin-bottom: .75rem; }
+main #spp-filters .spp-filter-grid--primary {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: .5rem;
+}
+main #sp-plan-filters .sp-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: .5rem;
+}
+main #sp-plan-filters .sp-field--wide { grid-column: auto; }
+main :is(#spp-filters, #sp-plan-filters) label { width: auto !important; min-width: 0 !important; max-width: none !important; }
+main :is(#spp-filters, #sp-plan-filters) select { width: 100%; min-width: 0; }
+main .spp-filter-reset { min-height: 2.5rem; }
+main .spp-filter-reset .htmx-indicator:not(.htmx-request),
+main .sp-filter-panel__footer .htmx-indicator:not(.htmx-request) { display: none; }
+main .sp-filter-panel__footer { float: right; margin-top: .375rem; padding: 0; min-height: 0; }
+main :is(.spp-more-filters, .sp-more-filters) { margin-top: .375rem; padding: 0; border: 0; }
+main :is(.spp-more-filters, .sp-more-filters) > summary { cursor: pointer; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 650; padding-block: .25rem; }
+main .sp-more-filters[open] .sp-filter-grid { margin-top: .5rem; clear: both; }
+main .spp-delivery-tiles > div { min-height: 0; }
+main .spa-detail-grid { grid-template-columns: minmax(0, 1fr); }
+/* An explicit Alpine hidden state must beat structural display utilities,
+   including mixed table-cell layouts and toolbar compatibility styles. */
+[x-show][style*="display: none"], [x-show\.important][style*="display: none"] { display: none !important; }
+@media (max-width: 47.999rem) {
+  main #spp-filters .spp-filter-grid--primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main #spp-filters .spp-filter-reset { grid-column: auto; justify-content: flex-start; }
+  main .spp-band-grid { grid-template-columns: minmax(0, 1fr); }
+  main .spp-band + .spp-band { border-inline-start: 0; border-top: 1px solid var(--edify-border); }
+  main .spp-band p { margin: 0; }
+}
+
+main .spp-card__titlebar > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem; }
+main .spa-insights { position: static; }
+main .sp-period-bar { flex-wrap: wrap; gap: .5rem .75rem; }
+main .sp-period-tabs { flex: 0 0 auto; max-width: 100%; }
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  main #sp-plan-filters .sp-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 47.999rem) {
+  main #sp-plan-filters .sp-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+main .spp-readiness > summary { cursor: pointer; padding-block: .25rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 650; }
+main .spp-readiness[open] > summary { margin-bottom: .5rem; }
+/* Profile queues need the same reading width as their directory, especially
+   while the navigation rail occupies part of a laptop display. */
+@media (min-width: 64rem) and (max-width: 99.999rem) {
+  main .edify-record-workspace { grid-template-columns: minmax(0, 1fr); }
+  main .edify-record-workspace > div { grid-column: auto; min-width: 0; }
+}
+main .project-delivery-overview > header,
+main .project-delivery-overview #budget-execution { padding: .75rem; }
+main .project-detail-context > summary { padding: .625rem .75rem; cursor: pointer; font-size: var(--edify-text-micro-size); font-weight: 650; color: var(--edify-accent-text); }
+main .project-detail details[aria-labelledby] { padding: .75rem; }
+main .project-detail details[aria-labelledby] > summary { cursor: pointer; color: var(--edify-accent-text); }
+main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: .875rem; }
+main .project-detail-context > .grid > div,
+main .project-detail-context > .border-t { padding: .75rem; }
+main #sp-plan-filters { display: flow-root !important; }

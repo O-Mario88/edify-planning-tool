@@ -118,13 +118,19 @@
         action.classList.add('edify-table-action');
       });
       table.querySelectorAll('td *, th *').forEach(function (element) {
-        var popup = element.closest('[role="dialog"], [role="menu"], .row-menu, [popover]');
+        var popup = element.closest('[role="dialog"], [role="menu"], .row-menu, [popover], [x-show].absolute, [x-show].fixed');
         var plain = element.namespaceURI === 'http://www.w3.org/1999/xhtml'
           && !element.matches('table, thead, tbody, tfoot, tr, td, th, script, style, template')
           && !element.closest('.edify-table-action')
           && !(popup && table.contains(popup))
           && !element.matches('input[type="checkbox"], input[type="radio"], input[type="submit"], input[type="button"], input[type="reset"], input[type="hidden"]');
         element.classList.toggle('edify-table-plain-content', plain);
+      });
+    });
+    elementsWithin(root, '.drawer-body').forEach(function (body) {
+      body.classList.toggle('edify-has-drawer-footer', Boolean(body.querySelector('.drawer-footer')));
+      body.querySelectorAll('button').forEach(function (button) {
+        button.classList.toggle('edify-stacked-label-button', Boolean(button.querySelector(':scope > span + span')));
       });
     });
     elementsWithin(root, filterToolbarSelector).forEach(function (toolbar) {
@@ -962,7 +968,7 @@
     if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
     unfitTable(table);
     var plan = columnPlan(table, region);
-    if (!plan) return;
+    if (!plan || !plan.fits) return;
     applyPlan(table, plan);
     var overflow = table.scrollWidth - region.clientWidth;
     if (overflow > 0) settlePlan(table, overflow);
@@ -981,7 +987,7 @@
     var plans = candidates.map(function (c) { return { table: c.table, region: c.region, plan: columnPlan(c.table, c.region) }; });
     var fitted = [];
     plans.forEach(function (entry) {
-      if (!entry.plan) return;
+      if (!entry.plan || !entry.plan.fits) return;
       applyPlan(entry.table, entry.plan);
       fitted.push(entry);
     });

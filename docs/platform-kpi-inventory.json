@@ -7041,7 +7041,7 @@
   {
    "audit_id": "KPI-SURFACE-046",
    "template": "templates/pages/projects/detail.html",
-   "line": 42,
+   "line": 36,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -7070,7 +7070,7 @@
   {
    "audit_id": "KPI-SURFACE-047",
    "template": "templates/pages/projects/detail.html",
-   "line": 52,
+   "line": 54,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
@@ -7128,7 +7128,7 @@
   {
    "audit_id": "KPI-SURFACE-049",
    "template": "templates/pages/projects/index.html",
-   "line": 133,
+   "line": 135,
    "source_pattern": "shared-component",
    "items_expression": "template-authored-metrics",
    "presentation": "context",
@@ -9377,7 +9377,7 @@
   {
    "audit_id": "KPI-SURFACE-133",
    "template": "templates/partials/projects/analytics_workspace.html",
-   "line": 23,
+   "line": 22,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -9406,7 +9406,7 @@
   {
    "audit_id": "KPI-SURFACE-134",
    "template": "templates/partials/projects/my_plan_workspace.html",
-   "line": 47,
+   "line": 54,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
