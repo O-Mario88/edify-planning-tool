@@ -265,7 +265,7 @@ class AppPlatformSpecTest(SimpleTestCase):
         self.assertEqual(len(services), 1, "expected exactly one web service")
         web = services[0]
         self.assertEqual(web["dockerfile_path"], "Dockerfile")
-        self.assertEqual(web["http_port"], 8080)
+        self.assertEqual(web["http_port"], 4000)
 
     def test_spec_probes_readiness_not_liveness(self):
         """A load balancer must not send traffic to an instance whose
