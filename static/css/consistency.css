@@ -1081,9 +1081,9 @@ main :is(
   [data-component="filter-toolbar"]
 ) > .edify-filter-field {
   display: flex;
-  flex: 1 0 7.5rem;
-  min-inline-size: 7.5rem;
-  max-inline-size: none;
+  flex: 1 0 7.5rem !important;
+  min-inline-size: 7.5rem !important;
+  max-inline-size: 100% !important;
   flex-direction: column;
   align-items: stretch;
   gap: 0.25rem;
@@ -1092,6 +1092,15 @@ main :is(
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* Legacy selects carry fixed widths and intrinsic option widths. Keep the
+   actual control inside its field so adjacent filters retain their gap. */
+main .edify-filter-field > :is(select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea) {
+  box-sizing: border-box;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
 }
 
 /* A toolbar with one selector (a fiscal-year switch, say) must not stretch
@@ -1125,8 +1134,8 @@ main :is(
   #cluster-filters,
   [data-component="filter-toolbar"]
 ) > .edify-filter-field.platform-filter-compact {
-  flex: 0 1 20rem;
-  max-inline-size: 20rem;
+  flex: 0 1 20rem !important;
+  max-inline-size: min(20rem, 100%) !important;
 }
 
 /* Search fields routinely carry longer labels and query text than compact
