@@ -92,3 +92,11 @@ Browser regression coverage opens scheduling, the legacy core-visit form, assign
 ### Landscape map layout — 9 September
 
 Desktop maps now use the viewport height available beneath the dashboard header instead of a width-driven square. The SVG preserves the full geographic extent, and the distribution panel sits alongside from 1024px with its own bounded list. Resizing recalculates the height. Short laptop screens show sub-region names in the national overview; district labels remain available in focused views and hover details. Browser checks cover 1024×768, 1280×720, 1366×768, 1440×900 and 1920×1080.
+
+### Map startup and time-aware greeting — 9 September
+
+Removed staggered district and school-marker entrance animations, which delayed the last district's appearance by about one second. The national overview fetches only district geometry; the sub-county index is fetched on zoom. Immutable geometry is kept outside Alpine's deep reactive proxies, and concurrent initialization cannot duplicate a load. Zoom, school totals, tooltips and scoped detail requests retain their existing behavior.
+
+The CCEO greeting uses the device's local hour (morning 05:00–11:59, afternoon 12:00–16:59, evening otherwise), renders the authenticated user's name, and refreshes each minute and on tab/window restoration. Its neutral server fallback is “Welcome.”
+
+Regression coverage: `e2e/map-loading-greeting.spec.js` verifies simultaneous rendering, deferred detail fetching, successful zoom/back navigation, the actual user name, a live noon transition and evening refresh. The landscape map suite also passes in Chromium, Firefox and WebKit. The regional-map source contracts pass all 27 tests.

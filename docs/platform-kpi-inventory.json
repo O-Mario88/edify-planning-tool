@@ -6226,7 +6226,7 @@
   {
    "audit_id": "KPI-SURFACE-019",
    "template": "templates/pages/dashboards/cceo.html",
-   "line": 25,
+   "line": 27,
    "source_pattern": "shared-component",
    "items_expression": "kpi_strip_items",
    "presentation": "context",
