@@ -1264,7 +1264,12 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
   .login-brand .context-metrics__navigation-row { color: #174b79; }
 }
 
-.login-brand .impact-card__title, .login-brand .impact-item h3 { color: #fff !important; }
+.login-brand .impact-item h3 { color: #fff !important; }
+.login-brand .impact-card__title {
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-style: italic;
+}
 @media (max-width: 70rem) {
   .login-shell { align-content: center; gap: 16px; }
   .login-access { min-height: auto; padding: 24px 12px 0; background: transparent; }
