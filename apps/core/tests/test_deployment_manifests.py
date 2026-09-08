@@ -94,6 +94,31 @@ class AppPlatformSpecTests(SimpleTestCase):
             with self.subTest(component=component["name"]):
                 self.assertEqual(_envs(component).get("RUN_MIGRATIONS"), "false")
 
+    def test_recurring_compute_stays_inside_the_37_dollar_ceiling(self):
+        """Prevent the expensive staging/HA shape from returning unnoticed."""
+
+        spec = _app_platform_spec()
+        web = next(service for service in spec["services"] if service["name"] == "web")
+        worker = spec["workers"][0]
+        database = next(db for db in spec["databases"] if db["name"] == "db")
+
+        self.assertEqual(web["instance_size_slug"], "apps-s-1vcpu-1gb-fixed")
+        self.assertEqual(web["instance_count"], 1)
+        self.assertEqual(_envs(web).get("WEB_CONCURRENCY"), "1")
+        self.assertEqual(worker["instance_size_slug"], "apps-s-1vcpu-0.5gb")
+        self.assertTrue(database["production"])
+        self.assertEqual(database["cluster_name"], "edify-production-db")
+        self.assertNotIn(
+            "size",
+            database,
+            "An attached production cluster is sized in the database control "
+            "plane; App Platform rejects size on this binding.",
+        )
+        self.assertNotIn("num_nodes", database)
+
+        # $10 web + $5 worker + $15.15 managed PostgreSQL + $5 Spaces.
+        self.assertLessEqual(10 + 5 + 15.15 + 5, 37)
+
 
 class StagingAppPlatformSpecTests(SimpleTestCase):
     def test_staging_runtime_is_pooled_but_migrations_are_direct(self):

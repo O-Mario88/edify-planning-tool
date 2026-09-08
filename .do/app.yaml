@@ -32,6 +32,23 @@
 # The secrets below are deliberately NOT real values. Fill them in the console's
 # environment-variable editor (or with `doctl`) so they are stored encrypted and
 # never committed to git.
+#
+# ── Recurring cost ceiling ────────────────────────────────────────────────────
+# This production shape is intentionally capped below USD 37/month before tax:
+#
+#   web (1 GiB fixed)          $10/month
+#   scheduler (512 MiB)         $5/month
+#   managed PostgreSQL (1 GiB) $15.15/month
+#   one Spaces subscription     $5/month
+#                                ------------
+#                                $35.15/month
+#
+# The pre-deploy migration job is billed only for the seconds it runs, so its
+# short deployment-time charge can put an individual invoice a few cents above
+# the recurring target. Do not add a standby, staging app, managed cache,
+# dedicated egress IP, or paid log destination without an explicit budget
+# increase. The trade-off is one web process and no shared cache;
+# database-backed sessions, account lockout and job locks remain durable.
 
 name: edify-planning-tool
 
@@ -63,7 +80,7 @@ alerts:
 #   A     @     172.66.0.96
 #   AAAA  @     2606:4700:7::60
 #   AAAA  @     2a06:98c1:58::60
-#   CNAME www   edify-planning-app-gu9a6.ondigitalocean.app.
+#   CNAME www   edify-production-jct7s.ondigitalocean.app.
 #
 # Values are DigitalOcean's published static ingress records, shared across App
 # Platform apps and routed by Host header:
@@ -145,9 +162,7 @@ databases:
     engine: PG
     version: "16"
     production: true
-    cluster_name: edify-db
-    size: db-s-1vcpu-1gb
-    num_nodes: 1
+    cluster_name: edify-production-db
 
 # ── Migrations ───────────────────────────────────────────────────────────────
 # Migrations run here, once, before the new web containers take traffic. The web
@@ -163,7 +178,9 @@ jobs:
       branch: main
       deploy_on_push: true
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-1gb
+    # Jobs are billed only while running. The migration workload is serial and
+    # does not need the 1 GiB scalable tier.
+    instance_size_slug: apps-s-1vcpu-0.5gb
     run_command: python manage.py migrate_locked --noinput
     envs:
       - key: DJANGO_SETTINGS_MODULE
@@ -217,15 +234,17 @@ services:
       branch: main
       deploy_on_push: true
 
-    # numpy/pandas/scipy plus headless LibreOffice need real memory. 2 GB is the
-    # smallest size this image runs comfortably in; 1 GB risks OOM during a
-    # DOCX→PDF rendition.
+    # The fixed 1 GiB tier is the largest web service that keeps the complete
+    # production estate under the $37 ceiling. Run one Gunicorn worker so the
+    # normal application stays within that memory envelope. LibreOffice-backed
+    # DOCX→PDF rendition is the pressure point: its memory alert is intentionally
+    # retained, and repeated OOMs are the objective trigger for a budget review.
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-2gb
+    instance_size_slug: apps-s-1vcpu-1gb-fixed
 
     # App Platform routes public traffic to this port and injects it as $PORT,
     # which the image's CMD binds Daphne to.
-    http_port: 8080
+    http_port: 4000
 
     # Liveness vs readiness matters here: /api/health/live answers without
     # touching the database, /api/health/ready checks dependencies. App Platform
@@ -289,6 +308,8 @@ services:
       # Set to "true" for the FIRST deploy only, then set it back to "false".
       - key: RUN_SEED
         value: "false"
+      - key: WEB_CONCURRENCY
+        value: "1"
 
       # ── Secrets — replace every one of these ───────────────────────────────
       # Generate with: openssl rand -hex 32
@@ -480,7 +501,7 @@ workers:
       branch: main
       deploy_on_push: true
     instance_count: 1
-    instance_size_slug: apps-s-1vcpu-1gb
+    instance_size_slug: apps-s-1vcpu-0.5gb
     run_command: python manage.py runscheduler
     alerts:
       - rule: CPU_UTILIZATION
