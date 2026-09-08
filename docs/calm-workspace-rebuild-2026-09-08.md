@@ -70,3 +70,9 @@ The shared table enhancer removes decorative borders, fills and shadows from cel
 Regression coverage is in `e2e/plain-table-content.spec.js` and the partner queue tests in `apps/fund_requests/test_finance_operating.py`.
 
 Plain-table verification: 528 settled layout checks across 88 rendered page variants; finance and dynamically inserted table content verified in Chromium, Firefox and WebKit; 18 queue/interactions tests and 114 shared-style/inventory tests passed.
+
+### Compact school, cluster and table actions — 9 September
+
+School record lists previously inherited the 40px page-action size, unlike condensed table controls. Record rows, legacy school cards, cluster cards and enhanced table actions now share a 24px height, 12px icons, 11px labels and 8px horizontal padding. The rule is scoped to records; page actions, drawer footers, disclosure overlays and floating menus retain their existing sizing. Theme colours, accessible names and HTMX actions are preserved.
+
+Verification: the rendered-table sweep covers 88 page variants across three widths (390, 768, 1290) and three themes, checking height and vertical clipping. Live Schools, Core Schools and Clusters checks also cover those widths and themes, and exercise keyboard activation of the core-school scheduling drawer.

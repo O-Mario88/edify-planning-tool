@@ -4155,3 +4155,38 @@ main textarea,
 
 :root table.edify-plain-table .edify-table-plain-content:is(input, select, textarea):disabled { color: var(--edify-text-disabled) !important; }
 :root table.edify-plain-table .edify-table-plain-content:is(input, select, textarea):user-invalid { color: var(--edify-danger-text) !important; }
+
+/* Compact record actions: shared by semantic tables and school/cluster lists.
+   Keep the sizing local so drawer footers and page actions retain their scale. */
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table)
+  :is(.school-record-action, .edify-table-action):not([role="menuitem"]):not([role="menu"] *, .row-menu *, [popover] *) {
+  --edify-action-button-block-size: 1.5rem;
+  --edify-action-button-icon-size: .75rem;
+  --edify-action-button-padding-inline: .5rem;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: 1.5rem !important;
+  block-size: 1.5rem !important;
+  min-height: 1.5rem !important;
+  min-block-size: 1.5rem !important;
+  max-block-size: 1.5rem !important;
+  min-inline-size: 1.5rem !important;
+  padding: 0 .5rem !important;
+  gap: .25rem !important;
+  font-size: .6875rem !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table)
+  :is(.school-record-action, .edify-table-action):not([role="menuitem"]):not([role="menu"] *, .row-menu *, [popover] *) svg {
+  width: .75rem !important;
+  height: .75rem !important;
+  inline-size: .75rem !important;
+  block-size: .75rem !important;
+  flex-shrink: 0;
+}
