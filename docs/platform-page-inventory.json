@@ -9412,24 +9412,34 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5804,
+      "bytes": 21303,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
       ],
-      "findings": [],
-      "forms": 0,
-      "htmx_controls": 0,
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "forms": 1,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "My Body",
       "purpose": "Reusable my body interface primitive",
-      "responsive_behavior": "inherits containing page contract",
+      "responsive_behavior": "explicit responsive contract",
       "states": [
-        "default"
+        "default",
+        "open"
       ],
-      "tables": 1,
+      "tables": 2,
       "template": "partials/targets/my_body.html",
-      "variants": []
+      "variants": [
+        "{{ row.classification.tone }}"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -46518,11 +46528,11 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.1,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.my_targets_view",
       "card_count": 0,
-      "charts": false,
+      "charts": true,
       "drawers": true,
       "evidence": [
         "template:partials/targets/my_body.html",
@@ -46531,11 +46541,20 @@
         "permission:my_target"
       ],
       "filters": "canvas-level shared filter bar",
-      "findings": [],
-      "fix_status": "fixed",
+      "findings": [
+        {
+          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
+          "finding_id": "UI-FINDING-C326266F7B",
+          "key": "legacy-white-surface",
+          "recommended_action": "Use the semantic card, elevated or muted surface token.",
+          "severity": "medium"
+        }
+      ],
+      "fix_status": "pending",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
+        "GET /my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}",
         "GET /my-targets"
       ],
       "implementation_status": "existing-routed-surface",
@@ -46553,7 +46572,7 @@
       "primary_action": "My Targets",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "My Targets \u2014 the personal performance operating page.",
-      "remediation": "No automated remediation outstanding",
+      "remediation": "Use the semantic card, elevated or muted surface token.",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -61549,13 +61568,13 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-8F0C3311A9",
-      "page_title": "Uganda Master Priority Plan \u00b7 Edify",
+      "page_title": "Priorities",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "target_distribution",
       "primary_action": "Target Distribution",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Operate target distribution within the frontend workflow.",
+      "purpose": "Operate priorities within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -81767,7 +81786,7 @@
       "critical": 0,
       "high": 0,
       "low": 0,
-      "medium": 0
+      "medium": 1
     },
     "tablet_contract_pass": 418,
     "test_referenced": 560,

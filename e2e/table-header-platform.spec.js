@@ -6,7 +6,8 @@ test.use({video:'off',trace:'off',serviceWorkers:'block'});
 test('light table headers across platform pages',async({page},info)=>{
  test.setTimeout(360000);
  const root=path.resolve(__dirname,'..'),dir=path.join(root,'test-results/kpi-platform-crawl');
- const files=fs.readdirSync(dir).filter(f=>/^Admin-.*\.html$/.test(f));
+ test.skip(!fs.existsSync(dir), 'Requires test-results/kpi-platform-crawl');
+ const files=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>/^Admin-.*\.html$/.test(f)):[];
  const server=await snapshotServer(root),issues=[];let checked=0;
  try{for(const file of files){
   const html=fs.readFileSync(path.join(dir,file),'utf8');if(!html.includes('<table')&&!html.includes('school-record-action'))continue;

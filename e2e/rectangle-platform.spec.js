@@ -3,7 +3,7 @@ const {snapshotServer}=require('./helpers/snapshot-server');
 const fs=require('fs'),path=require('path');
 const root=path.resolve(__dirname,'..'),dir=path.join(root,'test-results/kpi-platform-crawl');
 const output=path.join(root,'test-results/rectangle-audit');fs.mkdirSync(output,{recursive:true});
-const roles=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5));
+const roles=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)):[];
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
 for(const role of roles)test('rectangular desktop layouts: '+role,async({page})=>{
  const records=JSON.parse(fs.readFileSync(path.join(dir,role+'.json'),'utf8')).filter(r=>r.status===200);

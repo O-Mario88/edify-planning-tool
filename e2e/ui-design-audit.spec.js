@@ -2,8 +2,8 @@ const {test,expect}=require('@playwright/test');
 const fs=require('node:fs');const path=require('node:path');
 const root=path.resolve(__dirname,'..');const dir=path.join(root,'test-results/kpi-platform-crawl');
 const out=path.join(root,'test-results/ui-design-audit');fs.mkdirSync(out,{recursive:true});
-const roles=fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5));
-const files=fs.readdirSync(dir).filter(f=>f.endsWith('.html'));
+const roles=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)):[];
+const files=fs.existsSync(dir)?fs.readdirSync(dir).filter(f=>f.endsWith('.html')):[];
 const selected=new Set(roles.map(role=>['dashboard','today','accounts'].map(route=>`${role}-_${route}.html`).find(f=>files.includes(f))).filter(Boolean));
 for(const file of ['BusinessTransformationOfficer-_business-transformation_overview.html','ImpactAssessment-_ia_dashboard_.html','MfiLoanOfficer-_mfi-portal.html','MfiPartnerAdmin-_loans.html','PartnerAdmin-_my-plan.html','PartnerFieldOfficer-_my-plan.html']) if(files.includes(file)) selected.add(file);
 for(const term of ['team-planning','schools.html','projects.html','analytics.html','budget.html','staff','priorities.html','fund-requests','core-schools.html','monthly','profile.html','targets']) {

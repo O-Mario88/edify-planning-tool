@@ -16,7 +16,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Partials and drawers: **179**
 - Permission-gated surfaces: **589**
 - Referenced by automated tests: **560**
-- Findings: critical **0**, high **0**, medium **0**, low **0**
+- Findings: critical **0**, high **0**, medium **1**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
 
@@ -431,7 +431,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-94B9DA355F | /my-professional-development/request/<str:request_id>/action | Pd Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-E1DCBDF21B | /my-professional-development/request/<str:request_id>/certificate | Pd Certificate Upload | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-DB37D19B27 | /my-professional-development/request/<str:request_id>/evidence | Pd Evidence Upload | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-17269F5939 | /my-targets | My Targets | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-17269F5939 | /my-targets | My Targets | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 1 | referenced by automated test |
 | UI-PAGE-51EB10E6E7 | /my-targets/area-drawer | My Targets Area Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-26D49EB5F1 | /my-targets/export | My Targets Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-80804A5F4B | /my-targets/mscs | My Targets Mscs | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -591,7 +591,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-FCFA103796 | /support | Report a Problem | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-BE2BCC13AA | /support/client-defect | Client Defect Beacon | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-79D481D180 | /system-health | System Health & Integrity - Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-8F0C3311A9 | /target-distribution | Uganda Master Priority Plan · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-8F0C3311A9 | /target-distribution | Priorities | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C07C292D78 | /target-distribution/action | Target Distribution Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-50DEAE07D8 | /target-distribution/form | Target Distribution Form | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-22B9E5A23B | /target-distribution/import | Target Distribution Import | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

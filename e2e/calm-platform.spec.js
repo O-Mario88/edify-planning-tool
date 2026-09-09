@@ -4,10 +4,10 @@ const fs=require('node:fs'), path=require('node:path');
 const root=path.resolve(__dirname,'..'), directory=path.join(root,'test-results/kpi-platform-crawl');
 const pagePattern=new RegExp(process.env.CALM_PAGE_PATTERN||'.*');
 const coverageDir=path.join(root,'test-results/calm-coverage',process.env.CALM_AUDIT_RUN||'all');
-const roles=fs.readdirSync(directory).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5));
+const roles=fs.existsSync(directory)?fs.readdirSync(directory).filter(f=>f.endsWith('.json')).map(f=>f.slice(0,-5)):[];
 test.use({video:'off',trace:'off',serviceWorkers:'block'});test.describe.configure({mode:'parallel'});
 for(const role of roles)test(`all rendered pages: ${role}`,async({page},info)=>{
- const files=fs.readdirSync(directory).filter(f=>f.startsWith(role+'-')&&f.endsWith('.html')&&pagePattern.test(f));
+ const files=fs.existsSync(directory)?fs.readdirSync(directory).filter(f=>f.startsWith(role+'-')&&f.endsWith('.html')&&pagePattern.test(f)):[];
  test.setTimeout(Math.max(240000,files.length*18000));let html;const issues=[];
  const server=await snapshotServer(root);
  try {

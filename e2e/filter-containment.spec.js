@@ -5,7 +5,8 @@ const root=path.resolve(__dirname,'..'),directory=path.join(root,'test-results/k
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
 test('filter controls stay inside their fields and never overlap',async({page},info)=>{
  test.setTimeout(240000);
- const files=fs.readdirSync(directory).filter(f=>f.endsWith('.html')&&/^(Admin|CCEO|Accountant|ProjectCoordinator)-/.test(f)&&/(planning|schools|analytics|projects|accounts|budget|clusters|partner|debrief|training|visits)/.test(f));
+ test.skip(!fs.existsSync(directory), 'Requires test-results/kpi-platform-crawl');
+ const files=fs.existsSync(directory)?fs.readdirSync(directory).filter(f=>f.endsWith('.html')&&/^(Admin|CCEO|Accountant|ProjectCoordinator)-/.test(f)&&/(planning|schools|analytics|projects|accounts|budget|clusters|partner|debrief|training|visits)/.test(f)):[];
  const server=await snapshotServer(root),issues=[];let checks=0;
  try{
  for(const file of files){

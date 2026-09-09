@@ -1215,7 +1215,12 @@ SIDEBAR_ITEMS = [
                 # consumes their own figure.
                 "label": "Priorities",
                 "url": "/priorities",
-                "page_key": "my_performance",
+                "page_key": "priorities_master",
+                "role_urls": {
+                    IA: "/target-distribution",
+                    CD: "/target-distribution",
+                    ADMIN: "/target-distribution",
+                },
             },
             {
                 "label": "Extra Work",
@@ -1515,9 +1520,9 @@ SIDEBAR_ITEMS = [
                 # tabs… the idea is to reduce to many menu links"), so this
                 # slot is the personal agreement for everyone, and the pair of
                 # entries that existed to undo the override is one entry again.
-                "label": "Performance Conversations",
-                "url": "/performance-conversation",
-                "page_key": "performance_conversations",
+                "label": "My Performance Agreement",
+                "url": "/my-performance",
+                "page_key": "my_performance",
             },
             {
                 "label": "My Targets",
