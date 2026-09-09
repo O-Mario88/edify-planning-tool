@@ -139,12 +139,13 @@ class ServiceWorkerTest(TestCase):
             self.assertIn("req.mode === 'navigate'", body)
             self.assertIn(
                 "fetch(req).catch(() => caches.match(OFFLINE_URL, "
-                "{ cacheName: OFFLINE_CACHE }))",
+                "{ cacheName: OFFLINE_CACHE })",
                 body,
             )
             # Activation must spare the fallback's cache or every deploy
             # would delete the page it just precached.
             self.assertIn("k !== CACHE && k !== OFFLINE_CACHE", body)
+            self.assertIn('data-navigation-failed="true"', body)
             # Background Sync wakes open pages to replay the outbox.
             self.assertIn("event.tag !== OUTBOX_SYNC_TAG", body)
             self.assertIn("'edify-outbox-replay'", body)

@@ -10,6 +10,19 @@
   if (window.__edifyMicroUXInstalled) return;
   window.__edifyMicroUXInstalled = true;
 
+  // A top-bar search can include a separate filter form. Keep that association
+  // bidirectional: changing a filter must not silently clear the visible query.
+  document.addEventListener('htmx:configRequest', function (event) {
+    var detail = event.detail;
+    if (!detail || String(detail.verb).toLowerCase() !== 'get') return;
+    var filter = detail.elt && detail.elt.closest('form[id]');
+    var input = document.querySelector('.edify-topbar__search input[type="search"]');
+    var search = input && input.closest('form[hx-include]');
+    if (!filter || !search || !input.name) return;
+    var includes = search.getAttribute('hx-include').split(',').map(function (s) { return s.trim(); });
+    if (includes.indexOf('#' + filter.id) !== -1) detail.parameters[input.name] = input.value;
+  });
+
   var dialogStates = new WeakMap();
   var activeDialogs = new Set();
   var generatedId = 0;

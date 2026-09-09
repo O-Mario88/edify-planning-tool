@@ -103,7 +103,7 @@
 {% if not has_projects %}
 <!-- No projects in the caller's scope -->
 <div class="card p-12">
-  {% include "components/empty_state.html" with title="No projects in your scope yet" message="When a project is assigned to you, its cohort, planning queue, budget and impact appear here — all driven by the same planning engine." icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" %}
+  {% include "components/empty_state.html" with title="No projects in your scope yet" message="When a project is assigned to you, its cohort, planning queue, budget and impact appear here — all driven by the same planning engine." icon_path="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" %}
 </div>
 {% else %}
 
@@ -179,7 +179,7 @@
       </div>
       {% endfor %}
     {% else %}
-      {% include "components/empty_state.html" with title="No verified deliveries yet" message="Intervention impact appears here once activities are delivered and verified." icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" %}
+      {% include "components/empty_state.html" with title="No verified deliveries yet" message="Intervention impact appears here once activities are delivered and verified." icon_path="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" %}
     {% endif %}
     <a href="/projects/analytics" class="block text-center text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline pt-1">View full Impact Analytics →</a>
   </div>

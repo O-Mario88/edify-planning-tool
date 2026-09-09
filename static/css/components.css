@@ -29,7 +29,9 @@
   font-weight: var(--edify-text-micro-weight);
   line-height: var(--edify-text-micro-leading);
   letter-spacing: var(--edify-text-micro-tracking);
-  white-space: nowrap;
+  white-space: normal;
+  max-inline-size: 100%;
+  overflow-wrap: anywhere;
 }
 
 .edify-badge[data-tone="success"] {
@@ -5083,6 +5085,12 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   color: var(--edify-text-subtle);
   font-weight: 600;
 }
+
+/* Priority groups share the available width; long metadata stays inside cards. */
+.priority-portfolio__groups { display: grid; gap: 12px; }
+.priority-portfolio__group { min-inline-size: 0; padding: 12px 0; border-top: 1px solid var(--edify-border); }
+.priority-portfolio__items { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: 8px; margin-top: 8px; }
+.priority-portfolio__items > li { min-inline-size: 0; overflow-wrap: anywhere; }
 
 /* ═══ CONTEXT METRICS — shared compact performance strip ═══════════════ */
 .context-metrics {

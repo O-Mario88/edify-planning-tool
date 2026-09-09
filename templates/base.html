@@ -74,17 +74,17 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260909anomalies1">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260909perf3">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260909anomalies1">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260909anomalies1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260909perf3">
-<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260909anomalies1">
+<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260909anomalies1">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,20 +98,20 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260909anomalies1">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260909perf3">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260909anomalies1">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260909perf3">{% endblock %}
-<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260909perf3">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260909anomalies1">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260909anomalies1">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260909anomalies1">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -168,7 +168,7 @@ other page was relying on them.
 {% comment %}Field outbox: a CCEO's start/complete/evidence actions survive a
 dead signal -- stored on the phone, replayed when it reconnects. Loaded after
 csrf-sync.js, whose cookie reading it mirrors at replay time.{% endcomment %}
-<script defer src="{% static 'js/field-outbox.js' %}?v=20260904outbox2"></script>
+<script defer src="{% static 'js/field-outbox.js' %}?v=20260909outbox4"></script>
 <script defer src="{% static 'js/platform-defect-beacon.js' %}?v=20260827responsiveness1"></script>
 {% comment %}One pending state for every HTMX mutation on the platform. Installs
 document-level lifecycle handlers, so no template needs hx-disabled-elt.
@@ -218,7 +218,7 @@ controller exists by the time a drawer's x-init runs.
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
 <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260909perf3"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260909anomalies1"></script>
 
 {% comment %}
 Keeps the reader where they were. The shell gives the workspace its own
@@ -727,7 +727,7 @@ Loaded after the chart system, whose teardown it calls before parking a panel.
           if (lazy.cancelled || !el.isConnected) { return; }
           var drawn = system._renderDetachedNow(el, options);
           lazy.destroy = function () { if (drawn && drawn.destroy) { drawn.destroy(); } };
-        });
+        }, { timeout: 1000 });
       }, { rootMargin: '200px 0px' });
       observer.observe(el);
       return lazy;

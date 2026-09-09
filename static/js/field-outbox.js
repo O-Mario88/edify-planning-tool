@@ -213,14 +213,22 @@
     if (replaying || !navigator.onLine) return Promise.resolve();
     replaying = true;
     sent = 0;
-    return listAll().then(function (entries) {
-      // In order, halting at the first entry that cannot be delivered: a
-      // later action often depends on an earlier one (complete after start).
-      return entries.filter(function (e) { return e.status !== 'attention'; })
-        .reduce(function (chain, entry) {
-          return chain.then(function (halted) { return halted || send(entry); });
-        }, Promise.resolve(false));
-    }).then(function () {
+    function sendQueued() {
+      return listAll().then(function (entries) {
+        // Read inside the cross-tab lock: another tab may already have sent
+        // these entries while this tab was waiting for its turn.
+        return entries.filter(function (e) { return e.status !== 'attention'; })
+          .reduce(function (chain, entry) {
+            return chain.then(function (halted) { return halted || send(entry); });
+          }, Promise.resolve(false));
+      });
+    }
+    // Background Sync wakes every open tab. A per-page boolean alone allowed
+    // them to POST the same saved action concurrently.
+    var delivery = navigator.locks
+      ? navigator.locks.request('edify-field-outbox-replay', sendQueued)
+      : sendQueued();
+    return delivery.then(function () {
       replaying = false;
       if (sent) notify('Sent ' + sent + ' saved ' + (sent === 1 ? 'action' : 'actions') + '.');
       return refresh();
@@ -318,16 +326,23 @@
   // The fallback page is titled for the moment it is usually seen. Reached
   // deliberately, online, it is the place to review what is still queued.
   function retitle() {
-    if (!navigator.onLine || !document.querySelector('[data-offline-page]')) return;
-    document.querySelector('[data-offline-title]').textContent = 'Pending uploads';
-    document.querySelector('[data-offline-description]').textContent =
-      'You are back online. Actions saved on this phone are listed below; they send in the order you did them.';
+    var page = document.querySelector('[data-offline-page]');
+    if (!page) return;
+    var online = navigator.onLine && !page.hasAttribute('data-navigation-failed');
+    document.querySelector('[data-offline-title]').textContent = online ? 'Pending uploads' : 'You are offline';
+    document.querySelector('[data-offline-description]').textContent = online
+      ? 'Actions saved on this device are listed below and send in the order you saved them.'
+      : 'Your saved actions are kept on this device and will send when the connection returns.';
   }
 
   /* -- lifecycle --------------------------------------------------------- */
 
-  window.addEventListener('online', function () { refresh().then(replay); });
-  window.addEventListener('offline', function () { refresh(); });
+  window.addEventListener('online', function () {
+    var page = document.querySelector('[data-offline-page]');
+    if (page) page.removeAttribute('data-navigation-failed');
+    retitle(); refresh().then(replay);
+  });
+  window.addEventListener('offline', function () { retitle(); refresh(); });
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.addEventListener('message', function (event) {
       if (event.data && event.data.type === 'edify-outbox-replay') replay();

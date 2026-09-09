@@ -212,7 +212,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 1750,
+      "bytes": 1773,
       "deprecated_alternatives": [],
       "example_pages": [
         "/accounts",
@@ -9384,7 +9384,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1906,
+      "bytes": 1813,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -9395,7 +9395,7 @@
       "kind": "application-partial",
       "name": "Priority Portfolio",
       "purpose": "Reusable priority portfolio interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default"
       ],

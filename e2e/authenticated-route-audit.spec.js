@@ -205,6 +205,8 @@ for (const [accountRole, inventoryRole, email, password] of roleAccounts) {
         }));
         return {
           unindexed: [...unindexed],
+          emptyIconText: [...document.querySelectorAll('.edify-empty-state__mark')].map(e=>e.textContent.trim()).filter(Boolean),
+          overflowingBadges: [...document.querySelectorAll('.edify-badge')].filter(e=>e.getBoundingClientRect().width>0 && e.scrollWidth>e.clientWidth+2).map(e=>e.textContent.trim()),
           title: document.title,
           domNodes: document.querySelectorAll('*').length,
           horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
@@ -215,6 +217,8 @@ for (const [accountRole, inventoryRole, email, password] of roleAccounts) {
       const unlabeledVisibleControls = pageRecord.controls.filter(control =>
         control.visible && !control.disabled && !control.label && !['select', 'form'].includes(control.tag)
       );
+      if (pageRecord.emptyIconText.length) errors.push(`${route}: empty-state glyph rendered as text: ${pageRecord.emptyIconText.join('; ')}`);
+      if (pageRecord.overflowingBadges.length) errors.push(`${route}: overflowing status labels: ${pageRecord.overflowingBadges.join('; ')}`);
       if (pageRecord.unindexed.length) errors.push(`${route}: unindexed class patterns: ${pageRecord.unindexed.join("; ")}`);
       if (status >= 400) errors.push(`${route}: HTTP ${status}`);
       if (finalPath.startsWith('/policy-agreement') || finalPath.startsWith('/documents/') || finalPath === '/login') {

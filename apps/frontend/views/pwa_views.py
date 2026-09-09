@@ -155,7 +155,16 @@ self.addEventListener('fetch', (event) => {
   // rendered for a user.
   if (req.mode === 'navigate') {
     event.respondWith(
-      fetch(req).catch(() => caches.match(OFFLINE_URL, { cacheName: OFFLINE_CACHE }))
+      fetch(req).catch(() => caches.match(OFFLINE_URL, { cacheName: OFFLINE_CACHE })
+        .then((res) => res.text().then((html) => {
+          const headers = new Headers(res.headers);
+          headers.delete('Content-Length');
+          headers.delete('Content-Encoding');
+          return new Response(
+            html.replace('data-offline-page>', 'data-offline-page data-navigation-failed="true">'),
+            { headers }
+          );
+        })))
     );
     return;
   }
@@ -241,13 +250,21 @@ def static_version() -> str:
     if override:
         return override[:12]
 
-    # The manifest lists every asset and its content hash, so hashing it gives
-    # one token that moves whenever any asset does.
+    # The cached fallback is HTML too. Template-only edits (and development
+    # without a manifest) must replace it rather than pinning an old screen.
+    digest = hashlib.sha256(b"edify-offline-v2")
+    for relative in (
+        "templates/base.html",
+        "templates/pages/offline.html",
+        "static/js/field-outbox.js",
+    ):
+        digest.update((Path(settings.BASE_DIR) / relative).read_bytes())
     manifest = Path(settings.STATIC_ROOT or "") / "staticfiles.json"
     try:
-        return hashlib.sha256(manifest.read_bytes()).hexdigest()[:12]
+        digest.update(manifest.read_bytes())
     except OSError:
-        return "unversioned"
+        pass
+    return digest.hexdigest()[:12]
 
 
 @require_GET
@@ -284,4 +301,13 @@ def offline(request):
     token once the page runs. What the page *can* show is local to the device:
     the outbox in IndexedDB, listed by field-outbox.js.
     """
-    return render(request, "pages/offline.html", {"csrf_token": ""})
+    from django.conf import settings
+
+    # This trusted application script must travel with the cached fallback:
+    # an uncached external script cannot read the local queue while offline.
+    script = (Path(settings.BASE_DIR) / "static/js/field-outbox.js").read_text()
+    return render(
+        request,
+        "pages/offline.html",
+        {"csrf_token": "", "field_outbox_script": script},
+    )
