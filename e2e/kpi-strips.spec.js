@@ -7,8 +7,15 @@ const { execFileSync } = require('node:child_process');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
+function resolvePython() {
+  if (process.env.PYTHON) return process.env.PYTHON;
+  const venvPython = path.join(root, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+  if (fs.existsSync(venvPython)) return venvPython;
+  return 'python';
+}
+const pythonBin = resolvePython();
 // Render the real Django component without touching a database or requiring a login.
-const markup = execFileSync(path.join(root, '.venv/bin/python'), ['-c', `
+const markup = execFileSync(pythonBin, ['-c', `
 import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.dev')
 import django
@@ -96,7 +103,7 @@ test('strip has accessible names and sufficient contrast in every theme', async 
   }
 });
 
-const platformFixtures = JSON.parse(execFileSync(path.join(root, '.venv/bin/python'), [path.join(root, 'scripts/render_kpi_test_fixtures.py')], { cwd: root, env: { ...process.env, PYTHONPATH: root }, encoding: 'utf8' }));
+const platformFixtures = JSON.parse(execFileSync(pythonBin, [path.join(root, 'scripts/render_kpi_test_fixtures.py')], { cwd: root, env: { ...process.env, PYTHONPATH: root }, encoding: 'utf8' }));
 for (const [name, html] of Object.entries(platformFixtures)) {
   test(`platform ${name}: populated data across all themes and sizes`, async ({ page }, testInfo) => {
     for (const theme of ['theme-light', 'theme-dark', 'theme-blue']) {
@@ -122,7 +129,7 @@ for (const [name, html] of Object.entries(platformFixtures)) {
 }
 
 test('public sign-in retains its live strip on mobile, tablet and desktop', async ({ page }, testInfo) => {
-  const document = execFileSync(path.join(root, '.venv/bin/python'), [path.join(root, 'scripts/render_kpi_test_fixtures.py'), '--login-page'], { cwd: root, env: { ...process.env, PYTHONPATH: root }, encoding: 'utf8' });
+  const document = execFileSync(pythonBin, [path.join(root, 'scripts/render_kpi_test_fixtures.py'), '--login-page'], { cwd: root, env: { ...process.env, PYTHONPATH: root }, encoding: 'utf8' });
   for (const width of [390, 768, 1600]) {
     await page.unrouteAll();
     await render(page, 'theme-light', width, document, true);

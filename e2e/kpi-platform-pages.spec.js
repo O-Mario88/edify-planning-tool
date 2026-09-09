@@ -5,7 +5,14 @@ test.use({ video: 'off', trace: 'off' });
 test.describe.configure({ mode: 'parallel' });
 const root = path.resolve(__dirname, '..');
 const { execFileSync } = require('node:child_process');
-const expectedRoles = JSON.parse(execFileSync(path.join(root, '.venv/bin/python'), ['-c', `import os,json; os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings.dev'); import django; django.setup(); from apps.core.rbac import EdifyRole; print(json.dumps(EdifyRole.values()))`], { cwd: root, encoding: 'utf8' })).map(role => role.replace(/[^a-zA-Z0-9_-]/g, '_')).sort();
+function resolvePython() {
+  if (process.env.PYTHON) return process.env.PYTHON;
+  const venvPython = path.join(root, '.venv', process.platform === 'win32' ? 'Scripts/python.exe' : 'bin/python');
+  if (fs.existsSync(venvPython)) return venvPython;
+  return 'python';
+}
+const pythonBin = resolvePython();
+const expectedRoles = JSON.parse(execFileSync(pythonBin, ['-c', `import os,json; os.environ.setdefault('DJANGO_SETTINGS_MODULE','config.settings.dev'); import django; django.setup(); from apps.core.rbac import EdifyRole; print(json.dumps(EdifyRole.values()))`], { cwd: root, encoding: 'utf8' })).map(role => role.replace(/[^a-zA-Z0-9_-]/g, '_')).sort();
 const directory = path.join(root, 'test-results/kpi-platform-crawl');
 // Produced by the signed-in all-role Django crawl against an isolated test DB.
 const reports = fs.existsSync(directory) ? fs.readdirSync(directory).filter(f => f.endsWith('.json')) : [];
