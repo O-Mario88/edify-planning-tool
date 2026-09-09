@@ -24,7 +24,6 @@ class BarChartSystemContractTest(SimpleTestCase):
         "templates/partials/analytics/pl/team_performance.html",
         "templates/partials/dashboards/cd/body.html",
         "templates/partials/dashboards/pl/body.html",
-        "templates/partials/dashboards/pl/team_performance.html",
         "templates/pages/dashboards/rvp.html",
     )
 
@@ -70,7 +69,6 @@ class BarChartSystemContractTest(SimpleTestCase):
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
             "templates/partials/dashboards/pl/body.html",
-            "templates/partials/dashboards/pl/team_performance.html",
             "templates/partials/debriefs/dashboard_body.html",
             "templates/partials/targets/my_body.html",
             "templates/pages/dashboards/rvp.html",
@@ -246,7 +244,6 @@ class ChartDefectRegressionTest(SimpleTestCase):
         "templates/pages/dashboards/rvp.html",
         "templates/partials/dashboards/cd/body.html",
         "templates/partials/dashboards/pl/body.html",
-        "templates/partials/dashboards/pl/team_performance.html",
         "templates/partials/analytics/cd/performance_vs_target.html",
         "templates/partials/analytics/performance_overview.html",
         "templates/partials/analytics/pl/team_performance.html",

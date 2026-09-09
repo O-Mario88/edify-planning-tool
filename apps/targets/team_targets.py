@@ -1188,6 +1188,23 @@ class PLTeamTargetsService:
 
         project_priorities = team_project_priorities(users=team, fy=fy)
 
+        from apps.hr.accountability import (
+            allocation_priorities,
+            allocation_period_matrix,
+        )
+
+        distributed = allocation_priorities(pl_user, fy)
+        contract_members = []
+        for member_user in [pl_user, *team]:
+            matrix = allocation_period_matrix(member_user, fy, month_of_fy)
+            contract_members.append(
+                {
+                    "name": member_user.name,
+                    "role": member_user.active_role,
+                    "matrix": matrix,
+                }
+            )
+
         return {
             "fy": fy,
             "fy_label": f"FY {int(fy) - 1}/{str(fy)[-2:]}",
@@ -1198,6 +1215,8 @@ class PLTeamTargetsService:
             "team_size": len(members),
             "overall_team_size": len(all_team),
             "filters_active": bool(category != "overall" or district or team_member),
+            "distributed": distributed,
+            "contract_members": contract_members,
             "selected_category": category,
             "selected_category_label": selected_category_label,
             "selected_district": district,

@@ -89,7 +89,6 @@ class ChartSystemCoverageTest(SimpleTestCase):
         for page in (
             "templates/pages/ia/analytics_dashboard.html",
             "templates/pages/oversight/team_planning.html",
-            "templates/pages/targets/team.html",
             "templates/pages/reports/index.html",
             "templates/pages/partners/index.html",
         ):

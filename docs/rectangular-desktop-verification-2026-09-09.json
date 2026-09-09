@@ -1,0 +1,252 @@
+{
+  "viewports": [
+    [
+      1280,
+      720
+    ],
+    [
+      1366,
+      768
+    ],
+    [
+      1920,
+      1080
+    ]
+  ],
+  "theme": "light",
+  "role_count": 14,
+  "role_route_combinations": 1087,
+  "checks": 3261,
+  "issues": 0,
+  "roles": [
+    {
+      "role": "Accountant",
+      "pages": 74,
+      "aliases": 26,
+      "completed": 74,
+      "checks": 222,
+      "issues": []
+    },
+    {
+      "role": "Admin",
+      "pages": 191,
+      "aliases": 32,
+      "completed": 191,
+      "checks": 573,
+      "issues": []
+    },
+    {
+      "role": "BusinessTransformationOfficer",
+      "pages": 36,
+      "aliases": 6,
+      "completed": 36,
+      "checks": 108,
+      "issues": []
+    },
+    {
+      "role": "CCEO",
+      "pages": 79,
+      "aliases": 13,
+      "completed": 79,
+      "checks": 237,
+      "issues": []
+    },
+    {
+      "role": "CountryDirector",
+      "pages": 117,
+      "aliases": 19,
+      "completed": 117,
+      "checks": 351,
+      "issues": []
+    },
+    {
+      "role": "HumanResources",
+      "pages": 79,
+      "aliases": 15,
+      "completed": 79,
+      "checks": 237,
+      "issues": []
+    },
+    {
+      "role": "ImpactAssessment",
+      "pages": 107,
+      "aliases": 16,
+      "completed": 107,
+      "checks": 321,
+      "issues": []
+    },
+    {
+      "role": "MfiLoanOfficer",
+      "pages": 31,
+      "aliases": 6,
+      "completed": 31,
+      "checks": 93,
+      "issues": []
+    },
+    {
+      "role": "MfiPartnerAdmin",
+      "pages": 31,
+      "aliases": 6,
+      "completed": 31,
+      "checks": 93,
+      "issues": []
+    },
+    {
+      "role": "PartnerAdmin",
+      "pages": 48,
+      "aliases": 5,
+      "completed": 48,
+      "checks": 144,
+      "issues": []
+    },
+    {
+      "role": "PartnerFieldOfficer",
+      "pages": 48,
+      "aliases": 5,
+      "completed": 48,
+      "checks": 144,
+      "issues": []
+    },
+    {
+      "role": "Program_Lead",
+      "pages": 101,
+      "aliases": 17,
+      "completed": 101,
+      "checks": 303,
+      "issues": []
+    },
+    {
+      "role": "ProjectCoordinator",
+      "pages": 71,
+      "aliases": 12,
+      "completed": 71,
+      "checks": 213,
+      "issues": []
+    },
+    {
+      "role": "RegionalVicePresident",
+      "pages": 74,
+      "aliases": 15,
+      "completed": 74,
+      "checks": 222,
+      "issues": []
+    }
+  ],
+  "live_account_blocks": {
+    "reason": "Required safeguarding agreement; not accepted or bypassed",
+    "roles": [
+      "RegionalVicePresident",
+      "HumanResources",
+      "ProjectCoordinator",
+      "PartnerAdmin",
+      "PartnerFieldOfficer",
+      "BusinessTransformationOfficer",
+      "MfiPartnerAdmin",
+      "MfiLoanOfficer"
+    ]
+  },
+  "backend_tests": {
+    "route_crawl": 3,
+    "density_filter_contracts": 23,
+    "partner_grouping": 5
+  },
+  "firefox_webkit_drawer_map_tests": 6,
+  "live_verified": {
+    "account_count": 6,
+    "checks": 186,
+    "accounts": [
+      {
+        "account": "cd",
+        "checks": 12,
+        "pages": [
+          "/budget",
+          "/dashboard"
+        ],
+        "themes": [
+          "dark",
+          "light",
+          "theme-blue"
+        ]
+      },
+      {
+        "account": "cceo",
+        "checks": 42,
+        "pages": [
+          "/clusters",
+          "/clusters/cmtlflhip00djpsecdhrf",
+          "/core-schools",
+          "/dashboard",
+          "/planning",
+          "/schools",
+          "/schools/1598"
+        ],
+        "themes": [
+          "dark",
+          "light",
+          "theme-blue"
+        ]
+      },
+      {
+        "account": "pl1",
+        "checks": 12,
+        "pages": [
+          "/dashboard",
+          "/team-planning-oversight/"
+        ],
+        "themes": [
+          "dark",
+          "light",
+          "theme-blue"
+        ]
+      },
+      {
+        "account": "ia",
+        "checks": 6,
+        "pages": [
+          "/ia/dashboard/"
+        ],
+        "themes": [
+          "dark",
+          "light",
+          "theme-blue"
+        ]
+      },
+      {
+        "account": "accountant",
+        "checks": 12,
+        "pages": [
+          "/accounts",
+          "/accounts/partner-payments/"
+        ],
+        "themes": [
+          "dark",
+          "light",
+          "theme-blue"
+        ]
+      },
+      {
+        "account": "admin",
+        "checks": 102,
+        "pages": [
+          "/admin-panel/users",
+          "/analytics",
+          "/dashboard",
+          "/hr-today",
+          "/leave/approvals/",
+          "/partner-oversight/",
+          "/partners/cmtlfgfi400e4dvdlilx6",
+          "/projects",
+          "/projects/cmtlflhhi00tkk7ecdhv6",
+          "/staff",
+          "/staff/cmtlffj830092n6dlil2d",
+          "/team-targets"
+        ],
+        "themes": [
+          "dark",
+          "light",
+          "theme-blue"
+        ]
+      }
+    ]
+  }
+}

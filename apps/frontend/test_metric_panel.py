@@ -27,20 +27,16 @@ from django.test import SimpleTestCase
 
 from .test_design_system_quality import _read
 
-# Every template whose metric grid was folded onto the shared panel. The two
-# marked (orphaned) are not rendered by any view today — the unified /budget
-# page replaced the country budget's own, and nothing includes the To-Do
-# command centre — but they are still read by contract tests, and leaving them
-# in the old style would make them a template to copy from.
+# These summaries now use the shared KPI strip. Remaining workqueue panels
+# retain their own bodies, forms and actions below the metric.
 CONVERTED = (
     "templates/pages/projects/index.html",
     "templates/partials/dashboards/cd/operations.html",
     "templates/partials/dashboards/pl/operations.html",
     "templates/partials/analytics/pl/activity_tracking.html",
     "templates/partials/hr/pd_dashboard/body.html",
-    "templates/partials/finance/country_budget/root.html",  # orphaned
-    "templates/partials/finance/country_budget/execution.html",  # orphaned
-    "templates/partials/todos/command_center.html",  # orphaned
+    "templates/partials/finance/country_budget/root.html",
+    "templates/partials/finance/country_budget/execution.html",
     # The icon-led tiles (owner, 2026-09-07: "fold in those tiles too"): three
     # impact summaries whose tinted boxes each carried a filled icon chip.
     "templates/partials/analytics/cd/impact_summary.html",
@@ -137,7 +133,7 @@ class MetricPanelTest(SimpleTestCase):
         for template in CONVERTED:
             with self.subTest(template=template):
                 source = _read(template)
-                self.assertIn("edify-metric-panel", source)
+                self.assertIn("{% kpi_strip", source)
                 # Only a tinted box holding a METRIC is an offender. The same
                 # markup is also how this codebase writes an empty-state icon
                 # holder (a `w-12 h-12` square around an svg) and a prose note
@@ -156,24 +152,23 @@ class MetricPanelTest(SimpleTestCase):
                 self.assertEqual(offenders, [])
 
     def test_a_metric_can_lead_with_its_mark_beside_it(self):
-        """One number wide enough to sit next to its icon — the CD's Champion
-        strip — composes like the KPI tray: the mark centred against both text
-        rows, on the metric's own tone."""
+        from django.template.loader import render_to_string
 
-        css = _read("static/css/components.css")
-        lead = css[css.index(".edify-metric--lead {") :]
-        lead = lead[: lead.index("\n}")]
-        self.assertIn("grid-template-columns: auto minmax(0, 1fr);", lead)
-        self.assertIn('"mark value"', lead)
-        self.assertIn('"mark label"', lead)
-        self.assertIn(
-            '.edify-metric--lead[data-tone="warning"] .edify-metric__mark { color: var(--edify-warning-text); }',
-            css,
+        rendered = render_to_string(
+            "partials/analytics/cd/impact_summary.html",
+            {
+                "impact_summary": {
+                    "students_impacted": 120,
+                    "teachers_trained": 25,
+                    "leaders_trained": 8,
+                    "schools_improved": 4,
+                    "champion_candidates": 7,
+                }
+            },
         )
-        self.assertIn(
-            'class="edify-metric edify-metric--lead" data-tone="warning"',
-            _read("templates/partials/analytics/cd/impact_summary.html"),
-        )
+        self.assertEqual(rendered.count('data-component="context-metric"'), 5)
+        self.assertIn("Champion school candidates", rendered)
+        self.assertRegex(rendered, r'class="context-metrics__value"[^>]*>\s*7\s*</')
 
     def test_the_prose_normaliser_leaves_component_type_alone(self):
         """consistency.css flattens every <p> in a page to body size. A
@@ -207,12 +202,16 @@ class MetricPanelTest(SimpleTestCase):
         for template in CONVERTED:
             with self.subTest(template=template):
                 source = _read(template)
-                cells = source.count('class="edify-metric ') + source.count(
-                    'class="edify-metric"'
+                metrics = re.findall(
+                    r"{% kpi_metric(?: [^%]*)? %}(.*?){% endkpi_metric %}", source, re.S
                 )
-                self.assertGreater(cells, 0)
-                self.assertGreaterEqual(source.count("edify-metric__label"), 1)
-                self.assertGreaterEqual(source.count("edify-metric__value"), 1)
+                self.assertGreater(len(metrics), 0)
+                for metric in metrics:
+                    self.assertIn("{% kpi_label %}", metric)
+                    value = re.sub(
+                        r"{% kpi_label %}.*?{% endkpi_label %}", "", metric, flags=re.S
+                    )
+                    self.assertTrue(value.strip(), template)
 
 
 class HrActionCentreTest(SimpleTestCase):

@@ -19,10 +19,10 @@
     <div class="sp-plan__header-tools">
       {% comment %}Search moved to the top bar (topbar_search) — one persistent search per page.{% endcomment %}
       <div class="sp-plan__actions">
-        <a id="sp-plan-export-link" class="sp-button sp-button--secondary" href="{{ export_url }}" aria-label="Export filtered project plan as CSV">
+        {% if can_export %}<a id="sp-plan-export-link" class="sp-button sp-button--secondary" href="{{ export_url }}" aria-label="Export filtered project plan as CSV">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M5 17v3h14v-3"></path></svg>
           Export
-        </a>
+        </a>{% endif %}
         <button class="sp-button sp-button--secondary" type="button" @click="filtersOpen = !filtersOpen" :aria-expanded="filtersOpen">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M4 5h16l-6 7v5l-4 2v-7z"></path></svg>
           Filters

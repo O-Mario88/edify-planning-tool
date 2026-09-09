@@ -37,7 +37,7 @@
   {% legacy_kpi_item "Overdue" counts.overdue helper="Past the required date" tone="danger" icon="calendar" as overdue_kpi %}
   {% legacy_kpi_item "Waiting on me" counts.waiting_me helper="Your decision is next" tone="primary" icon="target" as waiting_kpi %}
   {% collect_kpi_items critical_kpi due_kpi overdue_kpi waiting_kpi as todo_kpis %}
-  {% include "components/kpi_strip.html" with items=todo_kpis variant="executive" title="Work requiring attention" %}
+  {% include "components/context_metrics.html" with items=todo_kpis variant="executive" title="Work requiring attention" %}
 
   {% if total %}
   <!-- Filters -->

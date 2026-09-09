@@ -15,6 +15,8 @@ invented country rows.
 
 from __future__ import annotations
 
+import json
+
 from apps.core.metrics import render_precomputed_metric_for_source
 
 
@@ -66,7 +68,12 @@ class RVPDashboardService:
         )
 
         fy = fy or get_operational_fy()
-        cd = resolve_cd_scope(fy)
+        from apps.core.scoping import resolve_user_scope
+
+        country = resolve_user_scope(user).country or getattr(
+            getattr(user, "staff_profile", None), "country", ""
+        )
+        cd = resolve_cd_scope(fy, country=country)
         acts = _country_activities(cd)
         # Same validated-ledger read as CD Analytics/CD Dashboard — refresh
         # first so the RVP never inherits a staler number than the country
@@ -150,9 +157,9 @@ class RVPDashboardService:
             card(
                 "target",
                 "Regional Target Achievement",
-                f"{overall_pct}%",
+                f"{overall_pct}%" if overall_pct is not None else "No Target Set",
                 "primary",
-                "weighted five-area validated ledger",
+                "approved country allocations · verified delivery",
             ),
             card(
                 "map",
@@ -166,7 +173,7 @@ class RVPDashboardService:
                 "Country Directors On Track",
                 f"{on_track_cds} / {len(cds)}",
                 "success" if on_track_cds == len(cds) and cds else "warning",
-                "performance + finance thresholds",
+                "verified country delivery",
             ),
             card(
                 "clock",
@@ -388,19 +395,15 @@ class RVPDashboardService:
             MONTH_LABELS,
             FinancialYearCalendarService as Cal,
         )
-        from apps.targets.models import TargetAchievementLedger
+        from apps.hr.accountability import allocation_priorities
 
         planned, completed, verified, achievement = [], [], [], []
-        validated_by_month = {
-            r["credited_month"]: r["n"]
-            for r in TargetAchievementLedger.objects.filter(
-                fy=fy, validation_status="validated"
+        monthly_contracts = [
+            allocation_priorities(
+                None, fy, country=cd.country, month=m, include_plans=False
             )
-            .values("credited_month")
-            .annotate(n=Count("id"))
-        }
-        _, _, total_target = CDAnalyticsService._weighted_overall(cd)
-        monthly_target = (total_target / 12.0) if total_target else 0
+            for m in range(1, 13)
+        ]
 
         # Twelve months used to mean thirty-six COUNT queries -- three per
         # month, in a loop -- to draw one chart. This is the same grouped shape
@@ -426,14 +429,14 @@ class RVPDashboardService:
             planned.append(row.get("planned", 0))
             completed.append(row.get("completed", 0))
             verified.append(row.get("verified", 0))
-            v = validated_by_month.get(m, 0)
-            achievement.append(round(v / monthly_target * 100) if monthly_target else 0)
+            achievement.append(monthly_contracts[m - 1]["pct"])
         return {
             "labels": MONTH_LABELS,
             "planned": planned,
             "completed": completed,
             "verified": verified,
             "achievement": achievement,
+            "achievement_json": json.dumps(achievement),
         }
 
     # ── §8 region ranking (multi-factor, never % alone) ──────────────────────
@@ -576,14 +579,12 @@ class RVPDashboardService:
             roles__contains=["CountryDirector"],
             status="active",
             deleted_at__isnull=True,
+            **({"staff_profile__country": cd.country} if cd.country else {}),
         ):
-            score = round(
-                overall_pct * 0.4
-                + _pct(ver, done) * 0.2
-                + _pct(sf_have, done) * 0.2
-                + min(util, 100) * 0.2
-            )
-            if score >= 75:
+            score = overall_pct
+            if score is None:
+                risk, tone = "Not configured", "neutral"
+            elif score >= 75:
                 risk, tone = "Strong", "success"
             elif score >= 60:
                 risk, tone = "On Track", "success"
@@ -596,7 +597,8 @@ class RVPDashboardService:
                     "user_id": u.id,
                     "name": u.name,
                     "initials": (u.name or "??")[:2].upper(),
-                    "country": "Uganda",
+                    "country": cd.country
+                    or getattr(getattr(u, "staff_profile", None), "country", ""),
                     "target_pct": overall_pct,
                     "completed": done,
                     "verified_rate": _pct(ver, done),
@@ -765,7 +767,7 @@ class RVPDashboardService:
                     "id": p.id,
                     "name": p.name,
                     "code": p.code or "—",
-                    "country": "Uganda",
+                    "country": cd.country,
                     "goal": p.get_category_display(),
                     "intervention": p.intervention or "—",
                     "budget": _ugx_compact(budget),

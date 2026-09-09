@@ -17,7 +17,7 @@ from __future__ import annotations
 from html.parser import HTMLParser
 
 from django.contrib.auth import get_user_model
-from django.test import Client, SimpleTestCase, TestCase
+from django.test import Client, SimpleTestCase, TestCase, override_settings
 from django.urls import get_resolver
 
 from apps.core.rbac import EdifyRole
@@ -64,19 +64,13 @@ LEGACY_KPI_CLASSES = frozenset(
         "tt-kpi-strip",
     }
 )
-REQUIRED_KPI_CARD_PARTS = frozenset(
-    {
-        "kpi-strip__topline",
-        "kpi-strip__icon-container",
-        "kpi-strip__item-details",
-        "kpi-strip__label",
-        "kpi-strip__value",
-    }
+REQUIRED_CONTEXT_METRIC_PARTS = frozenset(
+    {"context-metrics__label", "context-metrics__value"}
 )
 
 
 class _KpiVisualAuditParser(HTMLParser):
-    """Validate the rendered KPI DOM without depending on browser selectors."""
+    """Validate contextual metric DOM without browser selectors."""
 
     _void_tags = frozenset(
         {
@@ -100,7 +94,7 @@ class _KpiVisualAuditParser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.stack: list[dict] = []
         self.issues: list[str] = []
-        self.total_card_count = 0
+        self.total_metric_count = 0
 
     def handle_starttag(self, tag, attrs):
         attributes = dict(attrs)
@@ -109,34 +103,37 @@ class _KpiVisualAuditParser(HTMLParser):
         if legacy:
             self.issues.append(f"legacy KPI class rendered: {', '.join(legacy)}")
 
-        is_summary = "data-edify-summary-kpi" in attributes
-        if "kpi-strip" in classes and "kpi-strip--executive" not in classes:
-            self.issues.append("KPI strip rendered without kpi-strip--executive")
-        if is_summary and not {"kpi-strip", "kpi-strip--executive"} <= classes:
-            self.issues.append("approved KPI summary is missing executive tray classes")
+        is_summary = "data-context-metrics" in attributes
+        if "kpi-strip" in classes or "data-edify-summary-kpi" in attributes:
+            self.issues.append("retired KPI strip rendered")
+        if is_summary and "context-metrics" not in classes:
+            self.issues.append("metric summary is missing its context class")
 
-        current_card = next(
-            (node for node in reversed(self.stack) if node["is_card"]), None
+        current_metric = next(
+            (node for node in reversed(self.stack) if node["is_metric"]), None
         )
-        if current_card is not None:
-            current_card["parts"].update(classes & REQUIRED_KPI_CARD_PARTS)
+        if current_metric is not None:
+            current_metric["parts"].update(classes & REQUIRED_CONTEXT_METRIC_PARTS)
 
-        is_card = attributes.get("data-component") == "kpi-card"
-        if is_card:
-            self.total_card_count += 1
+        if attributes.get("data-component") == "kpi-card":
+            self.issues.append("retired KPI card rendered")
+
+        is_metric = attributes.get("data-component") == "context-metric"
+        if is_metric:
+            self.total_metric_count += 1
             summary = next(
                 (node for node in reversed(self.stack) if node["is_summary"]), None
             )
             if summary is None:
-                self.issues.append("KPI card rendered outside the approved tray")
+                self.issues.append("context metric rendered outside its summary")
             else:
-                summary["card_count"] += 1
+                summary["metric_count"] += 1
 
         node = {
             "tag": tag,
             "is_summary": is_summary,
-            "card_count": 0,
-            "is_card": is_card,
+            "metric_count": 0,
+            "is_metric": is_metric,
             "parts": set(),
         }
         self.stack.append(node)
@@ -166,31 +163,16 @@ class _KpiVisualAuditParser(HTMLParser):
         self.close()
         while self.stack:
             self._finish_node(self.stack.pop())
-        # FE-02, decided: no headline cap. This used to flag any page rendering
-        # more than six KPI cards, and it was flagging the fix rather than a
-        # fault -- /clusters, /debriefs, /my-plan, /planning, /schools,
-        # /core-schools and /my-professional-development each register seven or
-        # eight metrics, and every one of them was losing the surplus off the
-        # end of a six-slot tray with nothing on screen to say so.
-        #
-        # A cap is not what this crawl should police. What matters is that
-        # every card the page renders is a complete card, which _finish_node
-        # below still checks part by part, and that the mobile tray keeps its
-        # real two-card width, which its own test covers.
+        # Context facts have no arbitrary cap; the component wraps as prose.
 
     def _finish_node(self, node):
-        if node["is_summary"] and node["card_count"] == 0:
-            # The replacement for the old "more than six" rule. An empty
-            # headline tray is the failure worth catching now: a page that
-            # registered metrics and rendered none of them has lost all of
-            # them, which is the same defect the cap used to cause, at its
-            # limit.
-            self.issues.append("executive tray rendered no cards at all")
-        if node["is_card"]:
-            missing = sorted(REQUIRED_KPI_CARD_PARTS - node["parts"])
+        if node["is_summary"] and node["metric_count"] == 0:
+            self.issues.append("context summary rendered no metrics at all")
+        if node["is_metric"]:
+            missing = sorted(REQUIRED_CONTEXT_METRIC_PARTS - node["parts"])
             if missing:
                 self.issues.append(
-                    "KPI card is missing approved visual parts: " + ", ".join(missing)
+                    "context metric is missing required parts: " + ", ".join(missing)
                 )
 
 
@@ -201,84 +183,59 @@ class KpiVisualAuditParserTests(SimpleTestCase):
         parser.finish()
         return parser.issues
 
-    def test_approved_executive_tile_passes(self):
+    def test_approved_context_summary_passes(self):
         html = """
-        <section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>
-          <div class="kpi-strip__grid">
-            <div class="kpi-strip__item" data-component="kpi-card">
-              <span class="kpi-strip__topline">
-                <span class="kpi-strip__icon-container"></span>
-              </span>
-              <span class="kpi-strip__item-details">
-                <span class="kpi-strip__label">Orders</span>
-                <span class="kpi-strip__value">892</span>
-              </span>
-            </div>
+        <section class="context-metrics" data-context-metrics>
+          <div class="context-metrics__sentence">
+            <span class="context-metrics__fact" data-component="context-metric">
+              <strong class="context-metrics__value">892</strong>
+              <span class="context-metrics__label">Orders</span>
+            </span>
           </div>
         </section>
         """
         self.assertEqual(self._issues(html), [])
 
-    def test_legacy_or_uncontained_tiles_fail(self):
+    def test_legacy_or_uncontained_metrics_fail(self):
         issues = self._issues(
-            '<div class="admin-kpi-strip"><div data-component="kpi-card"></div></div>'
+            '<div class="admin-kpi-strip"><span data-component="context-metric"></span></div>'
         )
         self.assertTrue(any("legacy KPI class" in issue for issue in issues))
-        self.assertTrue(any("outside the approved tray" in issue for issue in issues))
+        self.assertTrue(any("outside its summary" in issue for issue in issues))
 
-    CARD = """
-        <div data-component="kpi-card">
-          <span class="kpi-strip__topline"><span class="kpi-strip__icon-container"></span></span>
-          <span class="kpi-strip__item-details"><span class="kpi-strip__label"></span><span class="kpi-strip__value"></span></span>
-        </div>
+    FACT = """
+        <span class="context-metrics__fact" data-component="context-metric">
+          <strong class="context-metrics__value"></strong>
+          <span class="context-metrics__label"></span>
+        </span>
         """
 
-    def test_seven_tiles_is_no_longer_a_fault(self):
-        """FE-02, decided: the count follows the work.
-
-        This asserted that seven cards raised "maximum is 6", and across the
-        real crawl it was flagging seven live pages — /clusters, /debriefs,
-        /my-plan, /planning, /schools, /core-schools and
-        /my-professional-development — each of which registers seven or eight
-        metrics. The cap was not protecting them; it was the reason they were
-        losing one or two apiece with nothing on screen to say so.
-        """
+    def test_seven_context_facts_is_not_a_fault(self):
         issues = self._issues(
-            '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
-            + self.CARD * 7
+            '<section class="context-metrics" data-context-metrics>'
+            + self.FACT * 7
             + "</section>"
         )
         self.assertEqual(
             [issue for issue in issues if "maximum" in issue],
             [],
-            "the crawl is capping the headline tray again",
+            "the crawl is capping the context summary",
         )
 
-    def test_a_tray_that_renders_nothing_is_still_a_fault(self):
-        """The rule that replaced the cap.
-
-        Removing the maximum must not leave the crawl indifferent to what the
-        tray does. An empty headline tray is the old defect at its limit: a
-        page that registered metrics and shows none of them has lost all of
-        them.
-        """
+    def test_an_empty_summary_is_still_a_fault(self):
         issues = self._issues(
-            '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
-            "</section>"
+            '<section class="context-metrics" data-context-metrics>' "</section>"
         )
-        self.assertIn("executive tray rendered no cards at all", issues)
+        self.assertIn("context summary rendered no metrics at all", issues)
 
-    def test_every_card_must_still_be_a_complete_card(self):
-        """Uncapped is not unpoliced: each card is still checked part by part."""
+    def test_every_metric_must_still_be_complete(self):
         issues = self._issues(
-            '<section class="kpi-strip kpi-strip--executive" data-edify-summary-kpi>'
-            + self.CARD * 7
-            + '<div data-component="kpi-card"></div>'
+            '<section class="context-metrics" data-context-metrics>'
+            + self.FACT * 7
+            + '<span data-component="context-metric"></span>'
             + "</section>"
         )
-        self.assertTrue(
-            any("missing approved visual parts" in issue for issue in issues)
-        )
+        self.assertTrue(any("missing required parts" in issue for issue in issues))
 
 
 def _zero_argument_routes() -> list[str]:
@@ -328,6 +285,14 @@ def _zero_argument_routes() -> list[str]:
     return sorted(routes)
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "kpi-platform-crawl",
+        }
+    }
+)
 class RouteCrawlTest(TestCase):
     """One signed-in user per role, walking every argument-free page."""
 
@@ -357,6 +322,14 @@ class RouteCrawlTest(TestCase):
         client.force_login(self.users[role])
 
         failures = []
+        import json
+        from pathlib import Path
+        from django.conf import settings
+        import re
+
+        audit_dir = Path(settings.BASE_DIR) / "test-results/kpi-platform-crawl"
+        audit_dir.mkdir(parents=True, exist_ok=True)
+        records = []
         for url in self.routes:
             try:
                 response = client.get(url)
@@ -374,7 +347,21 @@ class RouteCrawlTest(TestCase):
                 response.content.decode(response.charset or "utf-8", errors="replace")
             )
             parser.finish()
+            records.append(
+                {
+                    "url": url,
+                    "status": response.status_code,
+                    "metrics": parser.total_metric_count,
+                    "issues": parser.issues,
+                }
+            )
+            if response.status_code == 200 and b"<html" in response.content:
+                filename = re.sub(r"[^a-zA-Z0-9_-]", "_", role + "-" + url) + ".html"
+                (audit_dir / filename).write_bytes(response.content)
             failures.extend(f"{url} → {issue}" for issue in parser.issues)
+        (audit_dir / (re.sub(r"[^a-zA-Z0-9_-]", "_", role) + ".json")).write_text(
+            json.dumps(records, indent=2)
+        )
         return failures
 
     def test_the_route_table_is_worth_crawling(self):

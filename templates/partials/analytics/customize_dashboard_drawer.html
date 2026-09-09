@@ -29,7 +29,7 @@
   <fieldset class="space-y-2">
     <legend class="font-bold text-slate-700">Display density</legend>
     <label class="min-h-11 flex items-center gap-2 rounded-control border border-slate-200 px-3 cursor-pointer"><input type="radio" name="layout" value="grid"{% if form.layout.value == "grid" or not form.layout.value %} checked{% endif %}><span>Standard grid</span></label>
-    <label class="min-h-11 flex items-center gap-2 rounded-control border border-slate-200 px-3 cursor-pointer"><input type="radio" name="layout" value="compact"{% if form.layout.value == "compact" %} checked{% endif %}><span>Compact KPI strip</span></label>
+    <label class="min-h-11 flex items-center gap-2 rounded-control border border-slate-200 px-3 cursor-pointer"><input type="radio" name="layout" value="compact"{% if form.layout.value == "compact" %} checked{% endif %}><span>Compact metric summary</span></label>
     {% if form.layout.errors %}<p class="text-rose-600" role="alert">{{ form.layout.errors|join:", " }}</p>{% endif %}
   </fieldset>
 

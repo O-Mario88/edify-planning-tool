@@ -237,6 +237,25 @@ class ScopeTest(PartnerOversightFixture):
             whole["scheduled_budget"],
         )
 
+    def test_archived_and_missing_profiles_keep_history_without_dead_links(self):
+        from django.utils import timezone
+
+        self.assign(partner=self.partner)
+        items = svc.build_items(self.pl_user, fy=self.fy)
+        active = svc.group_by_partner(items)[0]
+        self.assertEqual(active["profile_url"], f"/partners/{self.partner.id}")
+
+        Partner.all_objects.filter(pk=self.partner.pk).update(deleted_at=timezone.now())
+        archived = svc.group_by_partner(items)[0]
+        self.assertEqual(archived["profile_url"], "")
+        self.assertEqual(archived["items"], active["items"])
+        self.assertEqual(archived["summary"], active["summary"])
+
+        items[0].partner_id = "missing-partner"
+        missing = svc.group_by_partner(items)[0]
+        self.assertEqual(missing["profile_url"], "")
+        self.assertEqual(len(missing["items"]), 1)
+
 
 class NextActionOwnerTest(PartnerOversightFixture):
     def test_the_owner_moves_along_the_workflow(self):

@@ -45,10 +45,8 @@ class GlobalSurfaceRefreshTest(SimpleTestCase):
                 f"another theme's value",
             )
 
-        # The light grounds stay borderless: there, elevation alone separates
-        # a card and an added edge reads as a box. Two of the three, because
-        # dark is the deliberate exception documented above.
-        self.assertGreaterEqual(tokens.count("--edify-card-border: transparent"), 2)
+        # Every theme resolves its card edge through its own semantic border.
+        self.assertEqual(tokens.count("--edify-card-border: var(--edify-border)"), 3)
 
     def test_shared_bridge_covers_legacy_and_modern_surface_families(self):
         bridge = _read("static/css/consistency.css")

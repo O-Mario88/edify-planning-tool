@@ -42,7 +42,7 @@
   {% legacy_kpi_item "Action required" kpis.action_required helper="Unread items needing a response" tone="warning" icon="target" as action_kpi %}
   {% legacy_kpi_item "Critical tasks" kpis.critical helper="Highest-priority notifications" tone="danger" icon="warning" as critical_kpi %}
   {% collect_kpi_items action_kpi critical_kpi as notification_kpis %}
-  {% include "components/kpi_strip.html" with items=notification_kpis variant="executive" density="compact" title="Notification attention" %}
+  {% include "components/context_metrics.html" with items=notification_kpis variant="executive" density="compact" title="Notification attention" %}
 
   <!-- Filters & Search Toolbar — on the page background, per the platform filter-bar contract (consistency.css). -->
     <form id="notifications-filters" method="get" action="/notifications" class="platform-filter-bar space-y-4">

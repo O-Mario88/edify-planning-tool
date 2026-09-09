@@ -1,0 +1,16 @@
+{% if workspace_project %}
+<nav class="edify-section-nav" aria-label="{{ workspace_project.name }} project workspace">
+  <div class="edify-section-nav__inner">
+    <span class="edify-section-nav__eyebrow">{{ workspace_project.name }}</span>
+    <span class="edify-section-nav__rule" aria-hidden="true"></span>
+    <a class="edify-section-nav__link{% if workspace_active == 'overview' %} is-active{% endif %}" href="/projects/{{ workspace_project.id }}">Overview</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'schools' %} is-active{% endif %}" href="/projects/{{ workspace_project.id }}#participating-schools">Schools</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'plan' %} is-active{% endif %}" href="/projects/planning?project={{ workspace_project.id }}">Plan</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'activities' %} is-active{% endif %}" href="/projects/my-plan?project={{ workspace_project.id }}">Activities</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'partners' %} is-active{% endif %}" href="/projects/planning?project={{ workspace_project.id }}&amp;partner_type=partner">Partners</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'budget' %} is-active{% endif %}" href="/projects/{{ workspace_project.id }}#budget-execution">Budget</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'impact' %} is-active{% endif %}" href="/projects/analytics?project={{ workspace_project.id }}">Impact</a>
+    <a class="edify-section-nav__link{% if workspace_active == 'issues' %} is-active{% endif %}" href="/projects/my-plan?project={{ workspace_project.id }}#project-attention">Issues</a>
+  </div>
+</nav>
+{% endif %}

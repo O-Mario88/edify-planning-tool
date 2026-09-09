@@ -30,6 +30,7 @@ from dataclasses import dataclass, field
 from datetime import date
 
 from django.db.models import Q
+from django.urls import reverse
 
 # Where an assignment is in its life. The partner's scheduling decision is the
 # hinge: everything before it is a handover, everything after is delivery.
@@ -843,6 +844,12 @@ def _attach_partner_identity(groups: list[dict]) -> None:
         partner = by_id.get(group.get("id"))
         if partner is None:
             continue
+        # Historical work remains visible after an organisation is archived,
+        # but its live profile deliberately rejects archived records.
+        if partner.deleted_at is None:
+            group["profile_url"] = reverse(
+                "frontend:partner_detail", kwargs={"partner_id": partner.id}
+            )
         group["contact_person"] = partner.contact_person or ""
         group["phone"] = partner.phone or ""
         group["region_name"] = partner.region_name or ""
@@ -863,6 +870,7 @@ def group_by_partner(items) -> list[dict]:
         groups.append(
             {
                 "id": partner_id,
+                "profile_url": "",
                 "name": partner_name or "Unnamed partner",
                 "items": group_items,
                 "summary": summarize(group_items),

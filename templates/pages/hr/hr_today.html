@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load frontend_filters %}
 
 {% block title %}HR Today · Edify{% endblock %}
@@ -25,19 +27,18 @@
   Four headline numbers, no more (§6.3). Each one is the length of the queue
   directly beneath it, so the count and the list can never disagree.
   {% endcomment %}
-  <div class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  {% kpi_strip %}
     {% for card in cards %}
-    <a href="#queue-{{ card.key }}"
-       class="edify-surface rounded-surface border border-[var(--border-card)] p-4 shadow-sm transition-colors hover:border-[var(--border-strong)]">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">{{ card.label }}</p>
-      <p class="mt-1 text-[28px] font-bold leading-none tabular-nums edify-text">{{ card.count }}</p>
-      <p class="mt-1.5 edify-text-caption font-semibold text-slate-500">{{ card.helper }}</p>
-    </a>
+    {% kpi_metric %}{% kpi_link %}#queue-{{ card.key }}{% endkpi_link %}
+      {% kpi_label %}{{ card.label }}{% endkpi_label %}
+      {{ card.count }}
+      {% kpi_helper %}{{ card.helper }}{% endkpi_helper %}
+    {% endkpi_metric %}
     {% endfor %}
-  </div>
+  {% endkpi_strip %}
 
   {% for group in groups %}
-  <section id="queue-{{ group.key }}" class="edify-surface rounded-surface border border-[var(--border-card)] shadow-sm p-5 space-y-3">
+  <section id="queue-{{ group.key }}" class="hr-today-queue{% if not group.items %} hr-today-queue--empty{% endif %} edify-surface rounded-surface border border-[var(--border-card)] shadow-sm p-5 space-y-3">
     <div class="edify-section">
       <h2 class="edify-section__heading">{{ group.label }}</h2>
       <p class="edify-section__description">
@@ -81,8 +82,6 @@
       {{ group.overflow }} more in this queue. Clear these first — each one links straight to the record.
     </p>
     {% endif %}
-    {% else %}
-    <p class="edify-text-caption font-semibold text-slate-400">Nothing in this queue right now.</p>
     {% endif %}
   </section>
   {% endfor %}

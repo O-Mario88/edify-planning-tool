@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load frontend_filters %}
 <div class="analytics-impact-card edify-surface rounded-surface p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
@@ -15,20 +17,20 @@
 2026-09-07). Four grey boxes were four separate things; the page's own
 container query still chooses two or four columns, and the panel supplies the
 gap by replacing it.{% endcomment %}
-<div class="edify-metric-panel analytics-impact-metrics grid">
-<div class="edify-metric">
-<p class="edify-metric__label">Teachers trained</p>
-<p class="edify-metric__value">{{ impact_summary.teachers_trained }}</p>
-<p class="edify-metric__meta">Workshops &amp; in-school</p>
-</div>
-<div class="edify-metric">
-<p class="edify-metric__label">Leaders trained</p>
-<p class="edify-metric__value">{{ impact_summary.leaders_trained }}</p>
-<p class="edify-metric__meta">Management &amp; financials</p>
-</div>
-<div class="edify-metric" data-tone="info">
-<p class="edify-metric__label">Students impacted</p>
-<p class="edify-metric__value">
+{% kpi_strip %}
+{% kpi_metric %}
+{% kpi_label %}Teachers trained{% endkpi_label %}
+{{ impact_summary.teachers_trained }}
+{% kpi_helper %}Workshops &amp; in-school{% endkpi_helper %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Leaders trained{% endkpi_label %}
+{{ impact_summary.leaders_trained }}
+{% kpi_helper %}Management &amp; financials{% endkpi_helper %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Students impacted{% endkpi_label %}
+
 {% if impact_summary.students_impacted >= 1000000 %}
 {{ impact_summary.students_impacted|divide:1000000|floatformat:2 }}M
 {% elif impact_summary.students_impacted >= 1000 %}
@@ -36,14 +38,14 @@ gap by replacing it.{% endcomment %}
 {% else %}
 {{ impact_summary.students_impacted }}
 {% endif %}
-</p>
-<p class="edify-metric__meta">Total school enrollment</p>
-</div>
-<div class="edify-metric" data-tone="success">
-<p class="edify-metric__label">Schools improved</p>
-<p class="edify-metric__value">+{{ impact_summary.schools_improved }}</p>
-<p class="edify-metric__meta">&gt;0.05 SSA delta vs prior FY</p>
-</div>
-</div>
+
+{% kpi_helper %}Total school enrollment{% endkpi_helper %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Schools improved{% endkpi_label %}
++{{ impact_summary.schools_improved }}
+{% kpi_helper %}&gt;0.05 SSA delta vs prior FY{% endkpi_helper %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 </div>
 </div>

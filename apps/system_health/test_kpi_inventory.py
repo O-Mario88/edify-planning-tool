@@ -64,11 +64,19 @@ class InventoryTests(SimpleTestCase):
 
         path = Path(settings.BASE_DIR) / "docs/platform-kpi-inventory.json"
         checked_in = json.loads(path.read_text(encoding="utf-8"))
-        self.assertEqual(
-            checked_in,
-            json.loads(json.dumps(self.inventory.as_dict())),
-            "platform-kpi-inventory.json is stale; run build_kpi_inventory",
-        )
+        actual = json.loads(json.dumps(self.inventory.as_dict()))
+        # Compare records separately: a whole-manifest diff is quadratic and
+        # hides the useful location in megabytes of nearly identical output.
+        self.assertEqual(set(checked_in), set(actual))
+        for key, value in actual.items():
+            with self.subTest(section=key):
+                if isinstance(value, list):
+                    self.assertEqual(len(checked_in[key]), len(value))
+                    for index, record in enumerate(value):
+                        with self.subTest(record=index):
+                            self.assertEqual(checked_in[key][index], record)
+                else:
+                    self.assertEqual(checked_in[key], value)
 
     def test_every_site_records_where_it_was_found(self):
         for site in self.inventory.tiles():
@@ -132,12 +140,7 @@ class InventoryTests(SimpleTestCase):
         # figures are measured from the real template tag now, which is why
         # this assertion moves by itself if a cap ever comes back.
         self.assertIsNone(summary["professional_headline_limit"])
-        self.assertEqual(
-            summary["professional_compact_limit"],
-            2,
-            "the compact tray's limit is a layout fact -- two cards is its "
-            "real width -- so unlike the dashboard cap it stays",
-        )
+        self.assertIsNone(summary["professional_compact_limit"])
         self.assertIsNone(summary["professional_category_limit"])
         self.assertEqual(summary["supporting_metric_disclosures"], 0)
 
@@ -161,16 +164,16 @@ class InventoryTests(SimpleTestCase):
 
     def test_every_rendered_summary_declares_its_information_hierarchy(self):
         self.assertGreater(len(self.inventory.template_sites), 40)
-        unclassified = [
+        non_contextual = [
             site
             for site in self.inventory.template_sites
-            if site.presentation not in {"executive", "supporting"}
+            if site.presentation != "context"
         ]
         self.assertEqual(
-            unclassified,
+            non_contextual,
             [],
-            "Every KPI include must choose executive or supporting; "
-            "an implicit tile grid has no auditable page-level decision.",
+            "Every system summary must use contextual presentation; "
+            "headline KPI strips and implicit tile grids are retired.",
         )
 
     def test_registered_metric_decisions_carry_the_required_audit_fields(self):
@@ -230,22 +233,21 @@ class InventoryTests(SimpleTestCase):
             "assignment_detail.html",
         ):
             source = (templates / name).read_text(encoding="utf-8")
-            self.assertNotIn("components/kpi_strip.html", source, name)
+            self.assertNotIn("components/context_metrics.html", source, name)
             self.assertNotIn("edify-kpi-strip", source, name)
 
     def test_shared_component_has_one_visual_renderer(self):
         from pathlib import Path
 
         root = Path(settings.BASE_DIR)
-        component = (root / "templates/components/kpi_strip.html").read_text(
+        component = (root / "templates/components/context_metrics.html").read_text(
             encoding="utf-8"
         )
 
-        self.assertNotIn('variant == "context"', component)
-        self.assertNotIn("kpi-context-summary", component)
-        self.assertNotIn('data-component="context-metric"', component)
-        self.assertIn("kpi-strip--executive", component)
-        self.assertIn('data-component="kpi-card"', component)
+        self.assertIn('data-component="context-metric"', component)
+        self.assertIn("context-metrics__sentence", component)
+        self.assertNotIn('data-component="kpi-card"', component)
+        self.assertNotIn("kpi-strip__", component)
 
     def test_the_executive_renderer_drops_nothing(self):
         """FE-02, decided: the tray shows what the page registered.
@@ -271,11 +273,11 @@ class InventoryTests(SimpleTestCase):
             {"label": f"Metric {number}", "value": number} for number in range(1, 8)
         ]
         html = render_to_string(
-            "components/kpi_strip.html",
+            "components/context_metrics.html",
             {"items": items, "variant": "executive", "title": "Decision metrics"},
         )
 
-        self.assertEqual(html.count('data-component="kpi-card"'), 7)
+        self.assertEqual(html.count('data-component="context-metric"'), 7)
         for number in range(1, 8):
             self.assertIn(f"Metric {number}", html)
         self.assertNotIn("kpi-supporting-metrics", html)
@@ -305,17 +307,18 @@ class InventoryTests(SimpleTestCase):
             "registered -- otherwise something went missing again",
         )
 
-    def test_every_remaining_kpi_card_uses_the_shared_tray_visual(self):
+    def test_every_remaining_metric_uses_the_shared_context_visual(self):
         from pathlib import Path
 
         root = Path(settings.BASE_DIR)
-        component = (root / "templates/components/kpi_strip.html").read_text()
+        component = (root / "templates/components/context_metrics.html").read_text()
         styles = (root / "static/css/components.css").read_text()
 
-        self.assertIn("kpi-strip--executive", component)
-        self.assertIn(".kpi-strip.kpi-strip--executive {", styles)
-        self.assertIn("overflow: clip;", styles)
-        self.assertIn("grid-template-columns: repeat(6, minmax(0, 1fr));", styles)
+        context = styles[styles.index("CONTEXT METRICS") :]
+        self.assertIn("context-metrics__sentence", component)
+        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("box-shadow:", context)
+        self.assertNotIn("grid-template-columns:", context)
 
     def test_compact_or_mobile_tray_has_at_most_two_items(self):
         from django.template.loader import render_to_string
@@ -324,23 +327,23 @@ class InventoryTests(SimpleTestCase):
             {"label": f"Metric {number}", "value": number} for number in range(1, 5)
         ]
         html = render_to_string(
-            "components/kpi_strip.html",
+            "components/context_metrics.html",
             {"items": items, "variant": "executive", "density": "compact"},
         )
-        self.assertEqual(html.count('data-component="kpi-card"'), 2)
+        self.assertEqual(html.count('data-component="context-metric"'), len(items))
 
-    def test_obsolete_context_variant_cannot_bypass_the_tile_renderer(self):
+    def test_context_variant_cannot_recreate_tile_markup(self):
         from django.template.loader import render_to_string
 
         items = [{"label": "Planned", "value": 4}, {"label": "Verified", "value": 2}]
         html = render_to_string(
-            "components/kpi_strip.html",
+            "components/context_metrics.html",
             {"items": items, "variant": "context", "title": "Plan progress"},
         )
 
-        self.assertEqual(html.count('data-component="kpi-card"'), 2)
-        self.assertNotIn('data-component="context-metric"', html)
-        self.assertIn("kpi-strip--executive", html)
+        self.assertEqual(html.count('data-component="context-metric"'), 2)
+        self.assertNotIn('data-component="kpi-card"', html)
+        self.assertNotIn("kpi-strip__", html)
 
 
 class ScanFidelityTests(SimpleTestCase):

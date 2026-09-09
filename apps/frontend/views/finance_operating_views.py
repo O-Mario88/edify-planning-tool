@@ -378,46 +378,17 @@ def accountant_dashboard_view(request):
         "hx_target": "#accounts-root",
         "hx_trigger": "keyup changed delay:250ms, search",
     }
-    from apps.frontend.views.dashboard_view_state import (
-        dashboard_view_tabs,
-        remember_dashboard_view,
-        resolve_dashboard_view,
-    )
-
-    dashboard_view, view_explicit = resolve_dashboard_view(
-        request, role_key="accountant", default="operations"
-    )
-    context["dashboard_view"] = dashboard_view
-    context["dashboard_tabs"] = dashboard_view_tabs(
-        request,
-        active=dashboard_view,
-        panel_id="accountant-dashboard-view",
-        view_template="partials/finance/accountant_view.html",
-        tabs=[
-            ("operations", "Operations", "Money movement: disburse, reconcile, chase"),
-            ("map", "Map", "The country map and its distribution table"),
-        ],
-        base_url="/accounts",
-        keep=("q",),
-    )
-    if dashboard_view == "map":
-        from apps.analytics.country_map_context import country_map_context
-
-        context.update(country_map_context(fy))
-    if request.headers.get("HX-Target") == "accountant-dashboard-view-shell":
-        response = render(
-            request,
-            "partials/dashboards/_view_tabs.html",
-            {**context, "dashboard_tabs_inner": True},
-        )
-    elif request.headers.get("HX-Target") == "accounts-root":
+    # Finance is an operations-only workspace, including legacy map links.
+    context["dashboard_view"] = "operations"
+    if request.headers.get("HX-Target") in (
+        "accountant-dashboard-view-shell",
+        "accounts-root",
+    ):
         response = render(request, "partials/finance/accountant_root.html", context)
     elif request.headers.get("HX-Request") == "true" and request.GET.get("selected"):
         response = render(request, "partials/finance/accountant_detail.html", context)
     else:
         response = render(request, "pages/accounts/dashboard.html", context)
-    if view_explicit:
-        remember_dashboard_view(response, role_key="accountant", view=dashboard_view)
     return response
 
 
@@ -527,27 +498,6 @@ def partner_payments_view(request):
         act.advance_paid = paid
         act.balance_due = max(planned - paid, 0)
 
-    # §9.1 — the transport company's pending obligations, one per mission
-    # day. Settled here, never combined with a staff allowance transfer.
-    from apps.fund_requests.finance_models import TransportPayment
-
-    transport_queue = list(
-        TransportPayment.objects.filter(status="pending")
-        .select_related("batch")
-        .order_by("batch__visit_date")
-    )
-    staff_names = {}
-    if transport_queue:
-        from apps.accounts.models import User as _User
-
-        staff_names = dict(
-            _User.objects.filter(
-                id__in={t.batch.responsible_user for t in transport_queue}
-            ).values_list("id", "name")
-        )
-    for t_pay in transport_queue:
-        t_pay.staff_name = staff_names.get(t_pay.batch.responsible_user, "Staff")
-
     # Partner-submitted invoices drive the MOU instalments now: the
     # accountant downloads each invoice and pays the system-derived payable.
     from apps.fund_requests.finance_models import PartnerInvoice
@@ -583,7 +533,6 @@ def partner_payments_view(request):
         "payments": payments,
         "advance_queue": advance_queue,
         "invoice_queue": invoice_queue,
-        "transport_queue": transport_queue,
         "methods": ["Mobile Money", "Bank Transfer", "Cheque"],
     }
     return render(request, "pages/accounts/partner_payments.html", context)

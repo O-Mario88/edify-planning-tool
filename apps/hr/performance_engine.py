@@ -102,6 +102,25 @@ def live_progress(priority) -> dict:
 
     owner = _owner_ids_for(staff)
     school_ids = _assigned_school_ids(staff)
+    from apps.hr.contribution_scope import scope_activities
+
+    role = getattr(staff.user, "active_role", "")
+    delivery = Activity.objects.filter(
+        fy=fy, deleted_at__isnull=True, status__in=IA_VERIFIED_STATUSES
+    )
+    if role in {"CountryDirector", "RegionalVicePresident"}:
+        from apps.schools.models import School
+
+        delivery = scope_activities(delivery, country=staff.country)
+        school_ids = School.objects.filter(
+            deleted_at__isnull=True, region__country=staff.country
+        ).values("id")
+    else:
+        delivery = scope_activities(
+            delivery, staff=staff, include_team=role == "Program Lead"
+        )
+        if role == "Program Lead":
+            school_ids = set(school_ids) | set(_supervised_school_ids(staff))
     actual = 0
 
     if key == "ssa_coverage":
@@ -122,7 +141,7 @@ def live_progress(priority) -> dict:
         # figure moves only when the team's work is actually verified.
         actual = (
             SsaRecord.objects.filter(
-                school_id__in=_supervised_school_ids(staff),
+                school_id__in=school_ids,
                 fy=fy,
                 verification_status="confirmed",
                 deleted_at__isnull=True,
@@ -142,44 +161,21 @@ def live_progress(priority) -> dict:
             deleted_at__isnull=True,
         ).count()
     elif key == "direct_visits":
-        # Direct execution only — partner-delivered work NEVER counts here.
-        actual = (
-            Activity.objects.filter(
-                responsible_staff_id__in=owner,
-                activity_type__in=["school_visit", "core_visit"],
-                status__in=IA_VERIFIED_STATUSES,
-                fy=fy,
-                deleted_at__isnull=True,
-            )
-            .exclude(delivery_type="partner")
-            .count()
-        )
-    elif key == "trainings":
-        actual = (
-            Activity.objects.filter(
-                responsible_staff_id__in=owner,
-                activity_type__in=[
-                    "training",
-                    "in_school_training",
-                    "school_improvement_training",
-                    "core_training",
-                    "cluster_training",
-                ],
-                status__in=IA_VERIFIED_STATUSES,
-                fy=fy,
-                deleted_at__isnull=True,
-            )
-            .exclude(delivery_type="partner")
-            .count()
-        )
-    elif key == "cluster_meetings":
-        actual = Activity.objects.filter(
-            responsible_staff_id__in=owner,
-            activity_type="cluster_meeting",
-            status__in=IA_VERIFIED_STATUSES,
-            fy=fy,
-            deleted_at__isnull=True,
+        actual = delivery.filter(
+            activity_type__in=["school_visit", "core_visit"]
         ).count()
+    elif key == "trainings":
+        actual = delivery.filter(
+            activity_type__in=[
+                "training",
+                "in_school_training",
+                "school_improvement_training",
+                "core_training",
+                "cluster_training",
+            ]
+        ).count()
+    elif key == "cluster_meetings":
+        actual = delivery.filter(activity_type="cluster_meeting").count()
     elif key == "core_slots":
         from apps.core_schools.models import CoreActivitySlot
 
@@ -939,10 +935,33 @@ def take_snapshot(review, window: str, *, known_missing: bool = False):
                 ],
             }
         )
+    from apps.hr.accountability import allocation_priorities
+
+    contract = allocation_priorities(review.staff.user, review.fy)
+    distributed_rows = [
+        {
+            "milestoneId": row["id"],
+            "milestone": row["title"],
+            "allocationIds": row["allocation_ids"],
+            "scope": row["scope"],
+            "target": float(row["target"]),
+            "actual": float(row["actual"]),
+            "pct": row["pct"],
+            "unit": row["unit"],
+            "weight": row["weight"],
+        }
+        for row in contract["rows"]
+    ]
     return PerformanceSnapshot.objects.create(
         review=review,
         window=window,
-        data={"priorities": rows, "strategicMilestones": milestone_rows},
+        data={
+            "priorities": rows,
+            "strategicMilestones": milestone_rows,
+            "distributedPriorities": distributed_rows,
+            "distributedAchievement": contract["pct"],
+            "accountabilityScope": contract["scope"],
+        },
     )
 
 
@@ -1459,7 +1478,10 @@ def conversation_document(review, window: str, principal) -> dict:
         principal,
         {"window": window, "snapshot_id": snap.id},
     )
+    from .accountability import snapshot_contract
+
     return {
+        "distributed": snapshot_contract(snap.data),
         "review": review,
         "staff": review.staff,
         "window": window,

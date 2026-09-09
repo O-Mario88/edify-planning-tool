@@ -3,16 +3,15 @@
 
 {% block title %}Team Oversight · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
-{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260808people2">{% endblock %}
+{% block feature_css %}<link rel="stylesheet" href="{% static 'css/pages/oversight-workspace.css' %}?v=20260908calm1">{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="oversight" data-oversight-workspace>
 
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
-      <p class="edify-page-eyebrow">Supervision</p>
       <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif country_lens %}Review each Programme Lead, then open the work owned by the PL and every CCEO they supervise.{% else %}Move between your work and each supervised CCEO while status remains visible in the table.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">
@@ -21,6 +20,9 @@
       <span aria-hidden="true">·</span>
       <span>Updated {{ last_refreshed|date:"H:i" }}</span>
     </div>
+    {% endif %}
+    {% if active_oversight_view != "targets" %}
+    {% include "partials/oversight/period_filter_bar.html" with filter_label="Team oversight period" target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
     {% endif %}
   </header>
 
@@ -43,7 +45,7 @@
     {% include "partials/targets/team/workspace.html" %}
   </section>
   {% else %}
-    {% include "partials/oversight/period_filter_bar.html" with filter_label="Team oversight period" target_url="/team-planning-oversight/" target_id="#oversight-workspace" %}
+
 
     <div id="oversight-workspace">
       {% if country_lens %}

@@ -1,0 +1,184 @@
+{
+  "date": "2026-09-08",
+  "page_source_inventory": {
+    "embedded fragment": 5,
+    "print document": 2,
+    "public or authentication": 9,
+    "workspace": 215
+  },
+  "browser_sweep": {
+    "engine": "Chromium",
+    "viewport_widths": [
+      390,
+      768,
+      1600
+    ],
+    "themes": [
+      "Light",
+      "Dark",
+      "Edify Blue"
+    ],
+    "role_count": 14,
+    "page_variants": 1280,
+    "layout_checks": 11520,
+    "issues": 0,
+    "roles": [
+      {
+        "role": "Accountant",
+        "pages": 100,
+        "layouts": 900,
+        "issues": 0
+      },
+      {
+        "role": "Admin",
+        "pages": 223,
+        "layouts": 2007,
+        "issues": 0
+      },
+      {
+        "role": "BusinessTransformationOfficer",
+        "pages": 42,
+        "layouts": 378,
+        "issues": 0
+      },
+      {
+        "role": "CCEO",
+        "pages": 92,
+        "layouts": 828,
+        "issues": 0
+      },
+      {
+        "role": "CountryDirector",
+        "pages": 136,
+        "layouts": 1224,
+        "issues": 0
+      },
+      {
+        "role": "HumanResources",
+        "pages": 94,
+        "layouts": 846,
+        "issues": 0
+      },
+      {
+        "role": "ImpactAssessment",
+        "pages": 123,
+        "layouts": 1107,
+        "issues": 0
+      },
+      {
+        "role": "MfiLoanOfficer",
+        "pages": 37,
+        "layouts": 333,
+        "issues": 0
+      },
+      {
+        "role": "MfiPartnerAdmin",
+        "pages": 37,
+        "layouts": 333,
+        "issues": 0
+      },
+      {
+        "role": "PartnerAdmin",
+        "pages": 53,
+        "layouts": 477,
+        "issues": 0
+      },
+      {
+        "role": "PartnerFieldOfficer",
+        "pages": 53,
+        "layouts": 477,
+        "issues": 0
+      },
+      {
+        "role": "Program_Lead",
+        "pages": 118,
+        "layouts": 1062,
+        "issues": 0
+      },
+      {
+        "role": "ProjectCoordinator",
+        "pages": 83,
+        "layouts": 747,
+        "issues": 0
+      },
+      {
+        "role": "RegionalVicePresident",
+        "pages": 89,
+        "layouts": 801,
+        "issues": 0
+      }
+    ]
+  },
+  "scope": "Successful full HTML snapshots from argument-free routes, rendered with the shared frontend assets. Populated live workflows and record pages are checked separately; this is not a certification of every possible application state.",
+  "component_tests": {
+    "passed": 72,
+    "engines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ]
+  },
+  "live_tests": {
+    "passed": 7,
+    "intentional_project_skips": 2,
+    "note": "WebKit normal-state button comparison passed on focused rerun after moving the pointer away from Filters."
+  },
+  "source_tests": {
+    "covered": 211,
+    "note": "210 passed initially; standalone offline landmark assertion corrected and full design-contract module passed on rerun with project workflow tests."
+  },
+  "follow_up_2026_09_09": {
+    "shared_strip_surfaces": 142,
+    "responsive_browser_tests_passed": 3,
+    "engines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ],
+    "login_widths": [
+      390,
+      768,
+      1048,
+      1290,
+      1600
+    ],
+    "workspace_widths": [
+      390,
+      768,
+      1048,
+      1600
+    ],
+    "themes": [
+      "Light",
+      "Dark",
+      "Edify Blue"
+    ],
+    "source_tests_covered": 154,
+    "source_verification": "153 passed initially; updated expected light canvas and reran all 72 design-quality tests successfully.",
+    "subtle_text_canvas_contrast": 4.738
+  },
+  "plain_table_policy": {
+    "page_variants": 88,
+    "theme_viewport_checks": 528,
+    "widths": [
+      390,
+      1290
+    ],
+    "themes": [
+      "Light",
+      "Dark",
+      "Edify Blue"
+    ],
+    "cross_browser_checks": [
+      "finance queues and statuses",
+      "dynamic table content, action styling and keyboard focus"
+    ],
+    "engines": [
+      "Chromium",
+      "Firefox",
+      "WebKit"
+    ],
+    "queue_interaction_tests_passed": 18,
+    "shared_style_inventory_tests_passed": 114
+  }
+}

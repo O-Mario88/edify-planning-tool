@@ -2,7 +2,9 @@
 {% load static %}
 
 {% block title %}Today's Tasks Console — Edify{% endblock %}
-{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}{% endblock %}
+{% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}
+<script src="{% static 'js/dashboard-greeting.js' %}?v=20260909greeting2" defer></script>
+{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto">
@@ -12,7 +14,7 @@
 <!-- ================= TOP HEADER BAR ================= -->
 <div class="edify-page-header mobile-home-hide">
   <div class="edify-page-header__lead">
-    <h1 class="edify-page-title edify-page-header__title">Good morning, {{ user_name }} <span class="inline-block"></span></h1>
+    <h1 class="edify-page-title edify-page-header__title"><span x-data="edifyGreeting()" x-text="text" @focus.window="update()" @pageshow.window="update()">Welcome</span>{% if request.user.name %}, {{ request.user.name }}{% endif %}</h1>
     <p class="edify-page-header__description">Here's your plan for today. Stay focused, drive impact.</p>
   </div>
 
@@ -22,7 +24,7 @@
 
 
 <!-- Unified KPI Strip -->
-{% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" title="Week at a glance" %}
+{% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Week at a glance" %}
 
 <div class="mobile-home-only">
   <section class="mobile-home-section" aria-labelledby="cceo-mobile-next-title">

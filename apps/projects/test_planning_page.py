@@ -130,6 +130,8 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertEqual(filtered.status_code, 200)
         self.assertContains(filtered, "Leadership Growth Project")
         self.assertNotContains(filtered, "Reading project coaching")
+        self.assertContains(filtered, f"/projects/my-plan?project={self.project_b.id}")
+        self.assertContains(filtered, "More filters")
 
         htmx = self.client.get("/projects/planning?tab=ready", HTTP_HX_REQUEST="true")
         self.assertEqual(htmx.status_code, 200)
@@ -143,6 +145,27 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertEqual(export["Content-Type"], "text/csv")
         self.assertIn("Lakeview Project School", export.content.decode())
         self.assertNotIn("Reading Excellence Initiative", export.content.decode())
+
+    def test_project_overview_leads_with_delivery_context_and_workspace(self):
+        self.project_a.budget_ceiling_ugx = 25_000_000
+        self.project_a.measurement_start_fy = self.fy
+        self.project_a.measurement_end_fy = self.fy
+        self.project_a.target_interventions = [
+            SsaIntervention.LEARNING_ENVIRONMENT.value
+        ]
+        self.project_a.status_reason = "Continue delivery with monthly review."
+        self.project_a.save()
+
+        response = self.client.get(f"/projects/{self.project_a.id}")
+
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, "Delivery overview")
+        self.assertContains(response, "Budget ceiling")
+        self.assertContains(response, "Continue delivery with monthly review.")
+        self.assertContains(
+            response, f"/projects/analytics?project={self.project_a.id}"
+        )
+        self.assertContains(response, f"/projects/my-plan?project={self.project_a.id}")
 
     def test_admin_does_not_bulk_schedule_project_work(self):
         """Planning is the owner's, on Special Projects as everywhere else.

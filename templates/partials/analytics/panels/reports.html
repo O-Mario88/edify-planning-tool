@@ -1,3 +1,4 @@
+{% load kpi_metrics %}
 {% comment %}
 The Reports tab. Its own financial-year control travels with it; the workspace
 header, the scope filter row, the tiles and the tablist stay fixed above
@@ -32,13 +33,7 @@ header, the scope filter row, the tiles and the tablist stay fixed above
 <span class="edify-report-period__date">{{ period.chevron_label }}</span>
 <span class="edify-report-period__kind">{{ period.kind_label }}</span>
 </div>
-{% if period.has_target %}
-<h3 class="text-[22px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }} / {{ period.target|floatformat:0 }}</h3>
-<span class="edify-text-caption font-bold text-slate-400 block">Targets Achieved</span>
-{% else %}
-<h3 class="text-[22px] font-extrabold tracking-tight mt-1 leading-none">{{ period.achieved }}</h3>
-<span class="edify-text-caption font-bold text-slate-400 block">Achieved (no target set)</span>
-{% endif %}
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Targets achieved{% endkpi_label %}{{ period.achieved }}{% if period.has_target %} / {{ period.target|floatformat:0 }}{% endif %}{% kpi_helper %}{% if not period.has_target %}No target set{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
 </div>
 <!-- Progress circle -->
 <div class="shrink-0" style="--edify-donut-gauge-size: 3.75rem; --edify-donut-gauge-headline: 0.8125rem">
@@ -69,7 +64,7 @@ header, the scope filter row, the tiles and the tablist stay fixed above
 </div>
 <p>Compare verified activity volumes with the approved FY{{ fy }} operating targets.</p>
 </header>
-{% include "components/kpi_strip.html" with items=core_kpi_items variant="executive" title="Core target headline" %}
+{% include "components/context_metrics.html" with items=core_kpi_items variant="executive" title="Core target headline" %}
 </section>
 
 

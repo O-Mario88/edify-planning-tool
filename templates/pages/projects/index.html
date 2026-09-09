@@ -1,10 +1,12 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load frontend_filters %}
 
 {% block title %}Projects — Edify{% endblock %}
 
 {% block shell_content %}
-<div class="edify-page-canvas space-y-5" data-mobile-family="directory">
+<div class="edify-page-canvas project-portfolio space-y-5" data-mobile-family="directory">
 
 {% comment %}
   CCEO / Program Lead Projects page — a role-scoped operational view of the
@@ -101,14 +103,16 @@
 {% if not has_projects %}
 <!-- No projects in the caller's scope -->
 <div class="card p-12">
-  {% include "components/empty_state.html" with title="No projects in your scope yet" message="When a project is assigned to you, its cohort, planning queue, budget and impact appear here — all driven by the same planning engine." icon="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" %}
+  {% include "components/empty_state.html" with title="No projects in your scope yet" message="When a project is assigned to you, its cohort, planning queue, budget and impact appear here — all driven by the same planning engine." icon_path="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" %}
 </div>
 {% else %}
 
 <!-- ============================ KPI STRIP ============================ -->
-{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Project portfolio context" %}
+{% include "components/context_metrics.html" with items=kpis variant="executive" title="Project portfolio context" %}
 
-<!-- ============================ MAIN GRID ============================ -->
+{% include "partials/projects/portfolio_list.html" %}
+
+<!-- Supporting context follows the full-width project queue. -->
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
 
   <!-- ───────────── LEFT (2/3): Project table ───────────── -->
@@ -117,7 +121,7 @@
   {% comment %}Project table + mobile cards. Swapped in place by the
      #project-filters form via HTMX (hx-target="#project-list"). Extracted so the
      filtered state can re-render without the surrounding page chrome.{% endcomment %}
-  {% include "partials/projects/portfolio_list.html" %}
+
 
   <!-- =========== BUDGET & EXECUTION =========== -->
   <div class="card p-5 space-y-4">
@@ -128,15 +132,15 @@
       </div>
       <a href="/fund-requests/weekly" class="text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline">Fund Requests →</a>
     </div>
-    <div class="text-[22px] font-extrabold text-slate-800 tracking-tight">{{ budget_summary.total }}</div>
-    <div class="edify-metric-panel grid grid-cols-2">
+    {% kpi_strip %}
+      {% kpi_metric %}{% kpi_label %}Total budget{% endkpi_label %}{{ budget_summary.total }}{% endkpi_metric %}
       {% for b in budget_summary.buckets %}
-      <div class="edify-metric">
-        <p class="edify-metric__label">{{ b.label }}</p>
-        <p class="edify-metric__value">{{ b.value }}</p>
-      </div>
+      {% kpi_metric %}
+        {% kpi_label %}{{ b.label }}{% endkpi_label %}
+        {{ b.value }}
+      {% endkpi_metric %}
       {% endfor %}
-    </div>
+    {% endkpi_strip %}
     <div>
       <div class="flex items-center justify-between mb-1.5">
         <span class="edify-text-caption text-slate-500 font-bold uppercase tracking-wider">Budget Utilization</span>
@@ -175,7 +179,7 @@
       </div>
       {% endfor %}
     {% else %}
-      {% include "components/empty_state.html" with title="No verified deliveries yet" message="Intervention impact appears here once activities are delivered and verified." icon="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" %}
+      {% include "components/empty_state.html" with title="No verified deliveries yet" message="Intervention impact appears here once activities are delivered and verified." icon_path="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" %}
     {% endif %}
     <a href="/projects/analytics" class="block text-center text-[12px] font-bold edify-primary-text edify-primary-text-hover hover:underline pt-1">View full Impact Analytics →</a>
   </div>

@@ -1,335 +1,77 @@
 {% extends "layouts/shell.html" %}
 {% load kpi_metrics %}
-{% comment %}
-Without this the page inherited the shell's default, so /my-performance was the
-one route in the sidebar whose browser tab, history entry and bookmark all read
-"Edify School Improvement Planning". Matches the h1 below rather than the
-sidebar's "My Performance" label — the two disagree, and a title contradicting
-the heading on screen would be the worse of the two.
-{% endcomment %}
-{% block title %}Priority Setting Dashboard · Edify{% endblock %}
+{% block title %}Priorities · Edify{% endblock %}
 {% block shell_content %}
-<div class="px-4 sm:px-6 py-5 space-y-5 max-w-[1500px] mx-auto" x-data="{ tab: '{{ tab|escapejs }}' }" data-mobile-family="performance">
-
-  {% comment %}
-  .edify-page-header is a plain block, so the flex row goes on the header
-  itself — title left, controls opposite. The title and control groups stay its
-  DIRECT children because platform.css sets flex-wrap:wrap on the last child of
-  any header holding an h1: that should be the control group, so the badges
-  wrap among themselves. Put a wrapper around both instead and the rule lands
-  on the wrapper, dropping the controls onto their own line — and it outranks a
-  plain flex-nowrap utility on specificity, so it cannot be undone from here.
-
-  md: not lg: — with the sidebar expanded the content column is ~963px on a
-  1280px screen, so an lg: (1024px) rule would never fire for the people who
-  actually use this page.
-  {% endcomment %}
-  <div class="edify-page-header">
-      <div class="min-w-0 edify-page-header__lead">
-        <p class="edify-page-eyebrow">People & Culture</p>
-        <h1 class="edify-page-title edify-page-header__title">Priority Setting Dashboard</h1>
-        <p class="edify-page-subtitle edify-page-header__description">
-          Your agreed priorities drive your targets, allocations and performance
-          conversations — progress is computed from verified work, never typed.
-        </p>
-      </div>
-      <div class="edify-page-header__controls">
-        {% if cycle %}
-        <span class="edify-badge">FY{{ cycle.fy }} Performance Cycle</span>
-        {% if cycle.status == "active" %}<span class="edify-badge" data-tone="success">Active</span>{% endif %}
-        {% if active_window_label %}<span class="edify-badge" data-tone="info">{{ active_window_label }} window open</span>{% endif %}
-        {% endif %}
-        {% comment %}
-        Only HR opens and closes the conversation window — performance_engine's
-        activate_window/close_window both assert it. The control used to vanish
-        whenever the window was shut, which left the staff member with no way
-        to tell the difference between "not my turn yet" and "this feature does
-        not exist". It stays visible and goes inert instead, so HR opening a
-        window is what activates it and HR closing one is what disables it.
-        {% endcomment %}
-        {% if review %}
-        {% if show_open_conversation %}
-        {% if active_window_label %}
-        <a data-control="open-conversation" href="/performance-conversation"
-           class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">Open conversation</a>
-        {% else %}
-        <span data-control="open-conversation" role="button" aria-disabled="true" tabindex="-1"
-              class="rounded-md px-3.5 py-2 text-[13px] font-bold"
-              aria-label="Open conversation — unavailable until HR opens a conversation window"
-              title="HR opens and closes the performance conversation window. No window is open right now.">Open conversation</span>
-        {% endif %}
-        {% endif %}
-
-        {% if show_priority_button %}
-        {% if active_window_label %}
-        <a data-control="{% if has_priorities %}update-priority{% else %}create-priority{% endif %}" href="/performance-conversation"
-           class="edify-primary-solid edify-primary-on-solid rounded-md px-3.5 py-2 text-[13px] font-bold">{{ priority_button_label }}</a>
-        {% else %}
-        <span data-control="{% if has_priorities %}update-priority{% else %}create-priority{% endif %}" role="button" aria-disabled="true" tabindex="-1"
-              class="rounded-md px-3.5 py-2 text-[13px] font-bold"
-              aria-label="{{ priority_button_label }} — unavailable until HR opens a conversation window"
-              title="HR opens and closes the performance conversation window. No window is open right now.">{{ priority_button_label }}</span>
-        {% endif %}
-        {% endif %}
-        {% endif %}
-      </div>
-  </div>
-
-  {% if not review %}
-  <div class="edify-surface rounded-surface border border-slate-100 p-8 text-center text-slate-400">
-    <p class="font-bold text-[13px]">No performance cycle is open for this year yet.</p>
-    <p class="edify-text-caption mt-1">HR opens the cycle; your draft agreement is generated from your role and portfolio.</p>
-  </div>
-  {% else %}
-
-  {% legacy_kpi_item "Agreement status" stage_label helper=review.updated_at|date:"j M Y" tone="success" icon="check" as agreement_kpi %}
-  {% if overall_pct is not None %}
-    {% legacy_kpi_item "Overall progress" overall_pct|stringformat:"s"|add:"%" helper="Weighted verified progress" tone="primary" icon="chart" as progress_kpi %}
-  {% else %}
-    {% legacy_kpi_item "Overall progress" "—" helper="No verified work yet" tone="neutral" icon="chart" as progress_kpi %}
-  {% endif %}
-  {% if active_window_label %}
-    {% legacy_kpi_item "Conversation window" active_window_label helper="Open performance conversation" tone="warning" icon="calendar" as window_kpi %}
-  {% else %}
-    {% legacy_kpi_item "Conversation window" "None open" helper="HR schedules the next window" tone="neutral" icon="calendar" as window_kpi %}
-  {% endif %}
-  {% collect_kpi_items agreement_kpi progress_kpi window_kpi as performance_kpis %}
-  {% include "components/kpi_strip.html" with items=performance_kpis variant="executive" title="Performance headline" %}
-
-  {# ── Tabs ──────────────────────────────────────────────────────────── #}
-  <nav data-edify-tablist class="flex flex-wrap" aria-label="Performance sections">
+<div class="edify-page-canvas space-y-4" data-mobile-family="performance">
+  <header class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Priority Setting Dashboard</p>
+      <h1 class="edify-page-title">Priorities</h1>
+      <p class="edify-page-subtitle">{{ distributed.scope }} · FY{{ fy }}</p>
+    </div>
+    <div class="edify-page-header__controls">
+      {% if can_distribute %}<a class="btn btn-secondary" href="/target-distribution?fy={{ fy }}">Distribute targets</a>{% endif %}
+      {% if can_distribute_team %}<a class="btn btn-secondary" href="/target-distribution/team?fy={{ fy }}">Distribute to my team</a>{% endif %}
+      {% if can_configure %}<a class="btn btn-secondary" href="/strategic-priorities?fy={{ fy }}">Strategy &amp; approval</a>{% endif %}
+      {% if review %}{% if show_open_conversation %}{% if caps %}<a data-control="open-conversation" href="/performance-conversation" class="btn btn-secondary">Performance conversation</a>{% else %}<span data-control="open-conversation" role="button" aria-disabled="true" class="btn btn-secondary">Conversation window closed</span>{% endif %}{% else %}<a class="btn btn-secondary" href="/performance-conversation">Performance conversation</a>{% endif %}{% endif %}
+    </div>
+  </header>
+  <form method="get" class="edify-filter-bar">
+    <label for="priority-year">Financial year</label>
+    <input id="priority-year" name="fy" type="number" min="2000" max="2100" value="{{ fy }}" class="rounded-control border px-3 py-1.5 w-24">
+    <input type="hidden" name="tab" value="{{ tab }}">
+    <button class="btn btn-secondary" type="submit">Apply</button>
+  </form>
+  <nav data-edify-tablist class="flex flex-wrap" aria-label="Priority sections">
     {% for key, label in tab_defs %}
-    <button data-edify-tab type="button" @click="tab = '{{ key }}'"
-            :aria-pressed="tab === '{{ key }}'">{{ label }}</button>
+    <a data-edify-tab href="?fy={{ fy }}&amp;tab={{ key }}" {% if tab == key %}aria-current="page" aria-selected="true"{% endif %}>{{ label }}</a>
     {% endfor %}
   </nav>
-
-  {# ── Agreed Priorities ─────────────────────────────────────────────── #}
-  <section x-show="tab === 'priorities'" x-cloak>
-    <div class="mb-4">
-      {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="performance-project-priorities" only %}
+  {% if tab == 'distributed' %}
+  <section class="edify-surface rounded-surface border overflow-hidden" aria-labelledby="distributed-title">
+    <header class="px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+      <h2 id="distributed-title" class="font-bold">Distributed priorities ({{ distributed.rows|length }})</h2>
+      <span class="edify-text-caption">{% if overall_pct is not None %}{{ overall_pct }}% verified achievement{% else %}Verified score awaits configured targets and weights{% endif %}</span>
+    </header>
+    {% if distributed.rows %}
+    <div class="overflow-x-auto" data-table-scroll-region tabindex="0" role="region" aria-label="Distributed priorities">
+      <table class="w-full text-left text-sm">
+        <thead><tr><th>Priority</th><th>Approved target</th><th>Plan and completion</th><th>Verified</th><th>Action</th></tr></thead>
+        <tbody>{% for row in distributed.rows %}
+          <tr data-distributed-priority="{{ row.id }}">
+            <td><strong>{{ row.title }}</strong><p class="edify-text-caption">{{ row.priority }}</p></td>
+            <td>{{ row.target|floatformat:'-2' }} {{ row.unit }}<p class="edify-text-caption">{{ row.source }} · FY{{ fy }}</p></td>
+            <td>{% include "components/meter.html" with progress=row.progress meta=True %}</td>
+            <td>{% if row.pct is not None %}{{ row.actual|floatformat:'-2' }} · {{ row.pct }}%{% else %}Awaiting metric configuration{% endif %}</td>
+            <td><a class="btn btn-secondary" href="/planning?fy={{ fy }}">Open planning</a></td>
+          </tr>
+        {% endfor %}</tbody>
+      </table>
     </div>
-    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
-        <h2 class="text-[14px] font-bold text-slate-800">Agreed Priorities ({{ priorities|length }})</h2>
-        <span class="edify-text-caption text-slate-400">Weights total 100 · progress from verified work</span>
-      </div>
-      <div class="overflow-x-auto"><table class="w-full text-[13px]">
-        <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
-          <th class="px-5 py-2.5 w-10">#</th>
-          <th class="px-3 py-2.5">Priority</th>
-          <th class="px-3 py-2.5">Milestones (key)</th>
-          <th class="px-3 py-2.5">Target</th>
-          <th class="px-3 py-2.5 w-44">Progress</th>
-          <th class="px-3 py-2.5">Status</th>
-          <th class="px-3 py-2.5">Weight</th>
-        </tr></thead>
-        <tbody>
-        {% for row in priorities|slice:":60" %}
-        <tr class="border-t border-slate-50 align-top">
-          <td class="px-5 py-3 font-bold text-slate-400">{{ row.p.sequence }}</td>
-          <td class="px-3 py-3">
-            <p class="font-bold text-slate-800">{{ row.p.outcome_statement }}</p>
-            <p class="edify-text-caption {% if row.p.priority_layer == 'organizational' %}text-emerald-600{% else %}edify-primary-text{% endif %}">
-              {{ row.p.priority_layer|capfirst }} Priority</p>
-          </td>
-          <td class="px-3 py-3">
-            {% if row.auto_milestones %}
-            <ul class="space-y-0.5 text-slate-500">
-              {% for m in row.auto_milestones %}
-              <li class="flex items-center justify-between gap-3">
-                <span class="flex items-center gap-1.5">
-                  {{ m.label }}
-                  {% if m.kind == "auto" %}<span class="edify-text-caption text-slate-300" title="Derived from verified records — cannot be typed">auto</span>{% endif %}
-                </span>
-                <span class="font-bold text-slate-700 tabular-nums">
-                  {% if m.value is None %}—{% elif m.kind == "calc" %}{{ m.value }}%{% else %}{{ m.value }}{% endif %}
-                </span>
-              </li>
-              {% endfor %}
-            </ul>
-            {% endif %}
-            {% for m in row.milestones %}
-            <div class="mt-1 flex items-start gap-1.5 text-slate-500">
-              <span class="mt-0.5 {% if m.is_complete %}text-emerald-500{% else %}text-slate-300{% endif %}">•</span>
-              <span {% if m.is_complete %}class="line-through text-slate-400"{% endif %}>{{ m.description }}</span>
-            </div>
-            {% endfor %}
-            {% if not row.auto_milestones and not row.milestones %}<span class="text-slate-300">—</span>{% endif %}
-          </td>
-          <td class="px-3 py-3 font-bold text-slate-700">
-            {{ row.p.target|default:"—" }}
-            {% if row.p.denominator_note %}<p class="edify-text-caption font-normal text-slate-400">{{ row.p.denominator_note }}</p>{% endif %}
-          </td>
-          <td class="px-3 py-3">
-            {% if row.progress.actual is not None %}
-            <p class="font-bold text-slate-800">{{ row.progress.actual }}{% if row.progress.target %} / {{ row.progress.target }}{% endif %}</p>
-            {% if row.progress.pct is not None %}
-            <div class="mt-1 flex items-center gap-2">
-              <div class="h-1.5 flex-1 rounded-full bg-slate-100 overflow-hidden">
-                <div class="h-full rounded-full {% if row.progress.pct >= 100 %}bg-emerald-500{% elif row.progress.pct >= 60 %}edify-primary-solid{% elif row.progress.pct >= 30 %}bg-amber-500{% else %}bg-rose-500{% endif %}"
-                     style="width: {% if row.progress.pct > 100 %}100{% else %}{{ row.progress.pct }}{% endif %}%"></div>
-              </div>
-              <span class="edify-text-caption text-slate-500">{{ row.progress.pct }}%</span>
-            </div>
-            {% endif %}
-            {% else %}
-            <span class="edify-text-caption text-slate-400">Conversational — discussed, not counted</span>
-            {% endif %}
-          </td>
-          <td class="px-3 py-3">
-            {% if row.progress.pct is None %}
-            <span class="edify-badge">Qualitative</span>
-            {% elif row.progress.pct >= 100 %}
-            <span class="edify-badge" data-tone="success">Achieved</span>
-            {% elif row.progress.pct >= 60 %}
-            <span class="edify-badge" data-tone="success">On Track</span>
-            {% elif row.progress.pct >= 30 %}
-            <span class="edify-badge" data-tone="warning">Watch</span>
-            {% else %}
-            <span class="edify-badge" data-tone="danger">Behind</span>
-            {% endif %}
-          </td>
-          <td class="px-3 py-3 font-bold text-slate-700">{{ row.p.weight }}%</td>
-        </tr>
-        {% empty %}
-        <tr><td colspan="7" class="px-5 py-8 text-center text-slate-400">No priorities on this agreement yet.</td></tr>
-        {% endfor %}
-        </tbody>
-      </table></div>
-    </div>
+    {% else %}
+    <div class="p-5"><p class="font-semibold">No approved priorities distributed for FY{{ fy }}.</p><p class="edify-text-caption mt-1">Assigned targets appear here automatically after IA and your Program Lead approve the distribution.</p></div>
+    {% endif %}
   </section>
-
-  {# ── Targets & Progress ────────────────────────────────────────────── #}
-  <section x-show="tab === 'targets'" x-cloak>
-    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <h2 class="text-[14px] font-bold text-slate-800">Targets &amp; Progress</h2>
-        <p class="edify-text-caption text-slate-400">Metric priorities feed My Targets on approval; each figure below is the live verified count.</p>
-      </div>
-      <div class="overflow-x-auto"><table class="w-full text-[13px]">
-        <thead><tr class="text-left edify-text-caption uppercase text-slate-400">
-          <th class="px-5 py-2.5">Priority</th><th class="px-3 py-2.5">Metric</th>
-          <th class="px-3 py-2.5">FY Target</th><th class="px-3 py-2.5">Verified Actual</th>
-          <th class="px-3 py-2.5">Achievement</th>
-        </tr></thead>
-        <tbody>
-        {% for row in priorities|slice:":60" %}{% if row.p.metric_key %}
-        <tr class="border-t border-slate-50">
-          <td class="px-5 py-3 font-bold text-slate-800">{{ row.p.outcome_statement|truncatechars:64 }}</td>
-          <td class="px-3 py-3 text-slate-500">{{ row.p.metric_key }}</td>
-          <td class="px-3 py-3 font-bold">{{ row.progress.target|default:"—" }}</td>
-          <td class="px-3 py-3 font-bold">{{ row.progress.actual }}</td>
-          <td class="px-3 py-3">{% if row.progress.pct is not None %}{{ row.progress.pct }}%{% else %}—{% endif %}</td>
-        </tr>
-        {% endif %}{% endfor %}
-        </tbody>
-      </table></div>
-    </div>
+  <p class="edify-text-caption">Completion updates as work is completed. Verified achievement updates after verification; returned work is removed from achievement.</p>
+  {% elif tab == 'values' or tab == 'spiritual' %}
+  <section class="edify-surface rounded-surface border overflow-hidden">
+    <header class="px-4 py-3"><h2 class="font-bold">{% if tab == 'values' %}Core Values{% else %}Spiritual Formation{% endif %}</h2><p class="edify-text-caption">Personal commitments and reflections, agreed in your performance conversation.</p></header>
+    <ul class="divide-y">{% if tab == 'values' %}{% for v in values %}{% include "partials/hr/_value_commitment_row.html" %}{% empty %}<li class="p-4">Commitments become available when your performance cycle opens.</li>{% endfor %}{% else %}{% for v in spiritual %}{% include "partials/hr/_value_commitment_row.html" %}{% empty %}<li class="p-4">Commitments become available when your performance cycle opens.</li>{% endfor %}{% endif %}</ul>
   </section>
-
-  {# ── Development Plans ─────────────────────────────────────────────── #}
-  <section x-show="tab === 'development'" x-cloak>
-    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <h2 class="text-[14px] font-bold text-slate-800">Development Plan</h2>
-        <p class="edify-text-caption text-slate-400">PD-workflow items appear automatically; manual items are added in the conversation form.</p>
-      </div>
-      <ul class="divide-y divide-slate-50">
-        {% for d in development %}
-        <li class="px-5 py-3.5 flex items-start justify-between gap-4">
-          <div>
-            <p class="text-[13px] font-bold text-slate-800">{{ d.description }}</p>
-            {% if d.expected_impact %}<p class="edify-text-caption text-slate-400">{{ d.expected_impact }}</p>{% endif %}
-          </div>
-          <span class="edify-badge shrink-0">{% if d.source == "pd_workflow" %}PD Workflow{% else %}Added by me{% endif %}</span>
-        </li>
-        {% empty %}
-        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">PD-workflow courses appear here automatically; you can add your own items.</li>
-        {% endfor %}
-      </ul>
-    </div>
+  {% elif tab == 'development' %}
+  <section class="edify-surface rounded-surface border overflow-hidden">
+    <header class="px-4 py-3 flex items-center justify-between gap-2"><h2 class="font-bold">Professional Development</h2><a href="/my-professional-development" class="btn btn-secondary">Manage development</a></header>
+    <ul class="divide-y">{% for d in development %}<li class="p-4"><strong>{{ d.description }}</strong><p class="edify-text-caption">{{ d.expected_impact|default:'' }}</p></li>{% empty %}<li class="p-4">Your professional development plans appear here.</li>{% endfor %}</ul>
   </section>
-
-  {# ── Values & Commitments ──────────────────────────────────────────── #}
-  <section x-show="tab === 'values'" x-cloak>
-    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <h2 class="text-[14px] font-bold text-slate-800">Values &amp; Commitments</h2>
-        <p class="edify-text-caption text-slate-400">Entered manually and agreed in conversation — never rated from activity counts.</p>
-      </div>
-      <ul class="divide-y divide-slate-50">
-        {% for v in values %}
-        <li class="px-5 py-3.5">
-          <p class="text-[13px] font-bold text-slate-800">{{ v.value_name }}</p>
-          {% if v.agreed_behaviour %}<p class="edify-text-caption text-slate-500 mt-0.5">{{ v.agreed_behaviour }}</p>{% endif %}
-        </li>
-        {% empty %}
-        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No value commitments recorded yet.</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </section>
-
-  {# ── Amendments ────────────────────────────────────────────────────── #}
-  <section x-show="tab === 'amendments'" x-cloak>
-    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <h2 class="text-[14px] font-bold text-slate-800">Amendments</h2>
-        <p class="edify-text-caption text-slate-400">Signed history is immutable — amendments change future periods only.</p>
-      </div>
-      <ul class="divide-y divide-slate-50">
-        {% for a in amendments %}
-        <li class="px-5 py-3.5 flex items-start justify-between gap-4">
-          <div>
-            <p class="text-[13px] font-bold text-slate-800">{{ a.priority.outcome_statement|truncatechars:70 }}</p>
-            <p class="edify-text-caption text-slate-500">{{ a.reason }}</p>
-            <p class="edify-text-caption text-slate-400 mt-0.5">
-              {% if a.changed_target %}New target: {{ a.changed_target }} · {% endif %}{{ a.created_at|date:"j M Y" }}
-            </p>
-          </div>
-          <span class="edify-badge shrink-0"
-                {% if a.status == "approved" %}data-tone="success"{% elif a.status == "rejected" %}data-tone="danger"{% endif %}>
-            {{ a.status|capfirst }}</span>
-        </li>
-        {% empty %}
-        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No amendments requested.</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </section>
-
-  {# ── Conversations ─────────────────────────────────────────────────── #}
-  <section x-show="tab === 'conversations'" x-cloak>
-    <div class="edify-surface rounded-surface border border-slate-100 overflow-hidden">
-      <div class="px-5 py-4 border-b border-slate-100">
-        <h2 class="text-[14px] font-bold text-slate-800">Performance Conversations</h2>
-        <p class="edify-text-caption text-slate-400">Each conversation is held against a frozen snapshot; after sign-off it is locked permanently.</p>
-      </div>
-      <ul class="divide-y divide-slate-50">
-        {% for row in snapshots %}
-        <li class="px-5 py-3.5 flex items-center justify-between gap-4">
-          <div>
-            <p class="text-[13px] font-bold text-slate-800">{{ row.label }}</p>
-            <p class="edify-text-caption text-slate-400">Snapshot taken {{ row.snap.taken_at|date:"j M Y" }}</p>
-          </div>
-          <div class="flex items-center gap-2">
-            <a href="/performance-conversation/{{ review.id }}/document/{{ row.snap.window }}"
-               class="rounded-md border border-slate-200 px-2.5 py-1 text-[12px] font-bold text-slate-600">Record</a>
-            {% if row.snap.signed_off_at %}
-            <span class="edify-badge" data-tone="success">Signed off {{ row.snap.signed_off_at|date:"j M" }}</span>
-            {% else %}
-            <span class="edify-badge" data-tone="info">In progress</span>
-            {% endif %}
-          </div>
-        </li>
-        {% empty %}
-        <li class="px-5 py-8 text-center text-slate-400 text-[13px]">No conversations held yet — the first snapshot is taken when HR opens a window.</li>
-        {% endfor %}
-      </ul>
-    </div>
-  </section>
-
+  {% endif %}
+  {% if review %}
+  <details class="edify-surface rounded-surface border p-4">
+    <summary class="cursor-pointer font-semibold">Conversation records and amendments</summary>
+    <ul class="divide-y mt-2">
+      {% for row in snapshots %}<li class="py-2 flex flex-wrap items-center justify-between gap-2"><span>{{ row.label }} · {{ row.snap.taken_at|date:"j M Y" }}</span><a class="btn btn-secondary" href="/performance-conversation/{{ review.id }}/document/{{ row.snap.window }}">View record</a></li>{% empty %}<li class="py-2 edify-text-caption">No conversation snapshots yet.</li>{% endfor %}
+      {% for a in amendments %}<li class="py-2"><strong>{{ a.priority.outcome_statement }}</strong><p>{{ a.reason }} · {{ a.status|capfirst }} · {{ a.created_at|date:"j M Y" }}</p></li>{% endfor %}
+    </ul>
+  </details>
   {% endif %}
 </div>
 {% endblock %}

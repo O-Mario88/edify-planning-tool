@@ -41,7 +41,9 @@ def _get_cache_key(prefix: str, user, params: dict) -> str:
     # or change a reporting line and the key changes, so the previous answer
     # is never served again — see `scope_cache_fingerprint`.
     portfolio = scope_cache_fingerprint(resolve_user_scope(user))
-    return f"analytics:{prefix}:{user.id}:{role_hash}:{portfolio}:{param_hash}"
+    from apps.hr.accountability_cache import revision
+
+    return f"analytics:allocations-v2:{revision()}:{prefix}:{user.id}:{role_hash}:{portfolio}:{param_hash}"
 
 
 class AnalyticsDashboardView(APIView):

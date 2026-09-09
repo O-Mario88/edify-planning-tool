@@ -1081,9 +1081,9 @@ main :is(
   [data-component="filter-toolbar"]
 ) > .edify-filter-field {
   display: flex;
-  flex: 1 0 7.5rem;
-  min-inline-size: 7.5rem;
-  max-inline-size: none;
+  flex: 1 0 7.5rem !important;
+  min-inline-size: 7.5rem !important;
+  max-inline-size: 100% !important;
   flex-direction: column;
   align-items: stretch;
   gap: 0.25rem;
@@ -1092,6 +1092,15 @@ main :is(
   border-radius: 0 !important;
   background: transparent !important;
   box-shadow: none !important;
+}
+
+/* Legacy selects carry fixed widths and intrinsic option widths. Keep the
+   actual control inside its field so adjacent filters retain their gap. */
+main .edify-filter-field > :is(select, input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]), textarea) {
+  box-sizing: border-box;
+  inline-size: 100% !important;
+  min-inline-size: 0 !important;
+  max-inline-size: 100% !important;
 }
 
 /* A toolbar with one selector (a fiscal-year switch, say) must not stretch
@@ -1125,8 +1134,8 @@ main :is(
   #cluster-filters,
   [data-component="filter-toolbar"]
 ) > .edify-filter-field.platform-filter-compact {
-  flex: 0 1 20rem;
-  max-inline-size: 20rem;
+  flex: 0 1 20rem !important;
+  max-inline-size: min(20rem, 100%) !important;
 }
 
 /* Search fields routinely carry longer labels and query text than compact
@@ -1420,7 +1429,7 @@ main :is(
   section.edify-surface[class*="rounded"],
   article.edify-surface[class*="rounded"],
   aside.edify-surface[class*="rounded"]
-):not(.p-0):not([data-edify-padding="flush"]):not(.edify-structured-surface) {
+):not(.p-0):not([data-edify-padding="flush"]):not(.edify-structured-surface):not(.kpi-strip__item) {
   padding: var(--edify-surface-padding) !important;
 }
 
@@ -1768,18 +1777,7 @@ main :is(
   .spp-header,
   .spa-header
 ) {
-  /* These sixteen header classes now receive the canonical tonal surface
-     instead of having every surface stripped from them.
-
-     The previous rule set all of this to transparent/0/none, which was the
-     right call when the goal was removing heavy header cards — but it also
-     meant the one header everybody liked (the Program Lead Dashboard's quiet
-     tonal band) could not be shared: any page adopting it had its surface
-     flattened by this bridge. Inverting the bridge is what carries that band
-     to every page at once, without touching sixteen templates.
-
-     Still stripped: backdrop-filter. A blur behind a surface this close in
-     tone to the canvas buys nothing and costs a compositor layer per page. */
+  /* Feature header families share the same flat canvas treatment. */
   background: var(--page-header-surface) !important;
   background-image: none !important;
   border: 1px solid var(--page-header-border) !important;
@@ -1818,8 +1816,7 @@ main :is(
   .spp-header,
   .spa-header
 ) {
-  /* Canonical padding, not zero. Zero would put the title hard against the
-     surface edge now that these carry the tonal surface again. */
+  /* The page wrapper supplies the gutter; headers stay aligned with data. */
   padding: var(--page-header-padding-y, 1rem) var(--page-header-padding-x, 1rem) !important;
   margin-inline: 0 !important;
   /* Through a variable, because the families that turn the header into a
@@ -2021,7 +2018,7 @@ main :is(
      picker must keep its own opaque surface, border and shadow or the form
      shows through the day grid (2026-09-02). */
   .edify-calendar-popover
-) {
+):not(.edify-table-titlebar) {
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -2274,7 +2271,7 @@ main :where(div, section, article).edify-tile-grid:not(.edify-kpi-strip):not(.kp
      own opaque surface, border and shadow, or the form shows through the
      day grid (2026-09-02). */
   .edify-calendar-popover
-) {
+):not(.edify-table-titlebar) {
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -2290,7 +2287,7 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
   [class~="p-8"], [class~="p-10"], [class~="p-12"]
 ):not([data-edify-summary-kpi]):not([role="alert"]):not([role="listbox"]):not(
   [role="radiogroup"]
-) {
+):not(.edify-table-titlebar) {
   background-color: transparent !important;
   background-image: none !important;
   border-color: transparent !important;
@@ -2534,7 +2531,7 @@ main form :is(div, section, article, aside)[class*="rounded"][class*="border"]:i
 
 /* Links styled as controls are actions, not headings. This deliberately has
    enough specificity to retire legacy button-family !important rules. */
-main :is(a, button, input):is(
+main :is(a, button, input, summary):is(
   .btn,
   [class*="btn-"],
   [class*="button"],
@@ -2669,6 +2666,10 @@ main :is(.apexcharts-datalabel-value) {
   font-variant-numeric: tabular-nums;
 }
 
+/* Explicit numeric/centred columns take precedence over the heading default. */
+:where(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  :where(table thead th) { text-align: start; }
+
 /* Reclaim the heading role after legacy `.edify-text-caption` utilities. */
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
   table:not(.sr-only):not(.edify-visually-hidden) thead th {
@@ -2679,7 +2680,6 @@ main :is(.apexcharts-datalabel-value) {
   font-size: var(--edify-text-table-heading-size) !important;
   font-weight: var(--edify-table-header-weight) !important;
   line-height: 1.3 !important;
-  text-align: start;
   text-transform: none !important;
   vertical-align: middle;
 }
@@ -2794,13 +2794,13 @@ main :is(.apexcharts-datalabel-value) {
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  .edify-record-table :is([data-align="end"], [data-type="number"], .edify-table__numeric) {
+  table :is([data-align="end"], [data-type="number"], .edify-table__numeric, .text-right) {
   text-align: end;
   font-variant-numeric: tabular-nums;
 }
 
 :is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
-  .edify-record-table :is([data-align="center"], [data-type="boolean"], .edify-table__boolean) {
+  table :is([data-align="center"], [data-type="boolean"], .edify-table__boolean, .text-center) {
   text-align: center;
 }
 
@@ -3141,6 +3141,8 @@ main :is(div, section, article, p, li).edify-empty-copy:is(
   [class~="p-8"],
   [class~="p-12"],
   [class~="p-16"],
+  [class~="p-20"],
+  [class~="py-20"],
   [class~="py-8"],
   [class~="py-12"],
   [class~="py-16"]
@@ -3192,8 +3194,8 @@ main table tbody > tr:only-child > td[colspan] > :is(
   }
 
   main .edify-page-header {
-    --page-header-padding-y: 0.75rem;
-    --page-header-padding-x: 0.75rem;
+    --page-header-padding-y: 0px;
+    --page-header-padding-x: 0px;
   }
 }
 
@@ -4040,8 +4042,8 @@ main .school-filter-grid > div {
   --edify-field-border: color-mix(in srgb, var(--edify-border-strong) 78%, transparent);
 }
 
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea),
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea) {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content) {
   border: 1px solid var(--edify-field-border) !important;
   border-radius: var(--edify-radius-sm) !important;
   background-color: var(--edify-surface-raised) !important;
@@ -4059,8 +4061,8 @@ main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):no
    on some boxes and not others, side by side. The attribute treats every field
    the same, a select included, where "filled" means a real choice rather than
    the leading All option every filter starts on. */
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled],
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea)[data-edify-filled] {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content)[data-edify-filled],
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content)[data-edify-filled] {
   border-color: var(--edify-border-strong) !important;
   background-color: var(--edify-field-filled) !important;
 }
@@ -4073,15 +4075,15 @@ main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):no
 
 /* Focus keeps the platform's ring: the reference does not show a focus state,
    and the ring is what carries the accessibility contract. */
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible),
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):is(:focus, :focus-visible) {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):is(:focus, :focus-visible),
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):is(:focus, :focus-visible) {
   border-color: var(--edify-accent) !important;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--edify-accent) 18%, transparent) !important;
   outline: 0 !important;
 }
 
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled,
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):disabled {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):disabled,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):disabled {
   border-color: var(--edify-field-border) !important;
   background-color: var(--edify-surface-muted) !important;
   color: var(--edify-text-disabled) !important;
@@ -4090,8 +4092,8 @@ main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):no
 /* A field that failed validation says so on its own edge, not only in a message
    below it. `:user-invalid` waits until the person has actually interacted, so
    an untouched required field is not painted red on arrival. */
-main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid,
-.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):user-invalid {
+main :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):user-invalid,
+.drawer-surface :is(input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="hidden"]):not([type="file"]):not([type="submit"]):not([type="button"]):not([type="reset"]), select, textarea):not(.edify-table-plain-content):user-invalid {
   border-color: var(--edify-danger, #b42318) !important;
 }
 
@@ -4100,4 +4102,352 @@ main textarea,
 .drawer-surface textarea {
   padding-block: 0.55rem !important;
   line-height: 1.45 !important;
+}
+
+/* Performance values are the focal point within the compact shared strip. */
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .context-metrics .context-metrics__value,
+:is(main, .drawer-surface, .edify-popup-dialog__surface, [role="dialog"])
+  .context-metrics .context-metrics__value > span[aria-hidden="true"] {
+  font-weight: 700 !important;
+}
+
+/* Table content is ink on the table surface. Only action buttons keep a
+   bounded treatment. Structural markers also cover HTMX-inserted rows. */
+:root :is(main, .drawer-body, [role="dialog"])
+  table.edify-plain-table.edify-plain-table.edify-plain-table :is(thead, tbody, tfoot, tr, th, td) {
+  border: 0 !important;
+  box-shadow: none !important;
+  background-color: var(--edify-surface-raised) !important;
+  background-image: none !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is(.text-white, .edify-table-status, [class*="badge"], [class*="pill"], [class*="chip"]) {
+  color: var(--edify-text) !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="success"], [class*="text-emerald"], [class*="text-green"], [class*="bg-emerald"], [class*="bg-green"]) {
+  color: var(--edify-success-text) !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="danger"], [class*="text-rose"], [class*="text-red"], [class*="bg-rose"], [class*="bg-red"]) {
+  color: var(--edify-danger-text) !important;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is([data-tone="warning"], [class*="text-amber"], [class*="text-orange"], [class*="bg-amber"], [class*="bg-orange"]) {
+  color: var(--edify-warning-text) !important;
+}
+/* Preserve keyboard location without permanently boxing editable content. */
+:root table.edify-plain-table.edify-plain-table.edify-plain-table .edify-table-plain-content:is(input, select, textarea, a):focus-visible {
+  outline: 2px solid var(--edify-accent);
+  outline-offset: 2px;
+}
+:root table.edify-plain-table.edify-plain-table.edify-plain-table
+  .edify-table-plain-content:is(.edify-table-status, [class*="badge"], [class*="pill"], [class*="chip"]) {
+  display: inline-flex !important;
+  align-items: center;
+  flex-direction: row !important;
+  gap: 0.25rem;
+  padding: 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+}
+
+:root table.edify-plain-table .edify-table-plain-content:is(input, select, textarea):disabled { color: var(--edify-text-disabled) !important; }
+:root table.edify-plain-table .edify-table-plain-content:is(input, select, textarea):user-invalid { color: var(--edify-danger-text) !important; }
+
+/* Compact record actions: shared by semantic tables and school/cluster lists.
+   Keep the sizing local so drawer footers and page actions retain their scale. */
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table)
+  :is(.school-record-action, .edify-table-action):not([role="menuitem"]):not([role="menu"] *, .row-menu *, [popover] *) {
+  --edify-action-button-block-size: 1.5rem;
+  --edify-action-button-icon-size: .75rem;
+  --edify-action-button-padding-inline: .5rem;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  height: 1.5rem !important;
+  block-size: 1.5rem !important;
+  min-height: 1.5rem !important;
+  min-block-size: 1.5rem !important;
+  max-block-size: 1.5rem !important;
+  min-inline-size: 1.5rem !important;
+  padding: 0 .5rem !important;
+  gap: .25rem !important;
+  font-size: var(--edify-text-micro-size) !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  white-space: nowrap !important;
+}
+:root :is(main, .drawer-body, [role="dialog"])
+  :is(.school-record-row, .school-list-card, .cluster-card, table.edify-plain-table)
+  :is(.school-record-action, .edify-table-action):not([role="menuitem"]):not([role="menu"] *, .row-menu *, [popover] *) svg {
+  width: .75rem !important;
+  height: .75rem !important;
+  inline-size: .75rem !important;
+  block-size: .75rem !important;
+  flex-shrink: 0;
+}
+
+/* Light-mode table hierarchy: blue title band, blue column ink on the
+   existing column surface. Other themes retain their own header treatment. */
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar {
+  background: #285b96 !important;
+  color: #fff !important;
+  padding: .5rem .75rem !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar :is(h2, h3, h4, p, span):not(button *):not(a *) {
+  color: #fff !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table thead :is(th, td),
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"]) table.edify-plain-table thead :is(th, td) :is(span, a, button) {
+  color: #285b96 !important;
+}
+:root:is(.light, .theme-light) :is(main, .drawer-body, [role="dialog"])
+  .edify-table-titlebar.edify-table-titlebar.edify-table-titlebar.edify-table-titlebar
+  :is(span, a:not(.btn):not([class*="btn-"]):not(.rounded-control)):not(button *):not(a.btn *) {
+  color: #fff !important;
+  background: transparent !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+}
+
+/* Compact centred workflows. Size tiers reflect form complexity rather than
+   the available monitor width; scrolling handles long forms. */
+:root {
+  --drawer-width-sm: 26rem;
+  --drawer-width-md: 35rem;
+  --drawer-width-lg: 43rem;
+  --drawer-width-xl: 50rem;
+  --drawer-width-workspace: 60rem;
+}
+@media (min-width: 48rem) {
+  :root { --edify-drawer-inset: clamp(2rem, 6vh, 4rem); }
+  .drawer-surface.drawer-surface,
+  .edify-popup-dialog .edify-popup-dialog__surface {
+    min-block-size: 0 !important;
+    max-block-size: min(52rem, calc(100dvh - 2 * var(--edify-drawer-inset))) !important;
+  }
+  .edify-popup-dialog .edify-popup-dialog__surface {
+    inline-size: min(100%, var(--drawer-width-lg)) !important;
+    max-inline-size: var(--drawer-width-lg) !important;
+  }
+  .edify-popup-dialog--wide .edify-popup-dialog__surface {
+    inline-size: min(100%, var(--drawer-width-workspace)) !important;
+    max-inline-size: var(--drawer-width-workspace) !important;
+  }
+  .drawer-surface.drawer-surface .drawer-header {
+    min-block-size: 0 !important;
+    padding: .875rem 3rem .75rem 1.25rem !important;
+  }
+  .drawer-surface.drawer-surface .drawer-body { padding: .5rem 1.25rem 0 !important; }
+  .drawer-surface.drawer-surface .drawer-body:not(.edify-has-drawer-footer) { padding-block-end: 1.25rem !important; }
+  .drawer-surface.drawer-surface .drawer-footer {
+    margin: .875rem -1.25rem 0 !important;
+    padding: .75rem 1.25rem !important;
+  }
+  .drawer-surface.drawer-surface .drawer-close-btn {
+    inset-block-start: .75rem !important;
+    inset-inline-end: .75rem !important;
+    inline-size: 2rem !important;
+    block-size: 2rem !important;
+  }
+}
+@media (min-width: 48rem) {
+  .pto-drawer-shell.pto-drawer-shell {
+    inset: 0 !important;
+    margin: auto !important;
+    padding: 0 !important;
+    inline-size: min(var(--drawer-width-md), calc(100vw - 4rem)) !important;
+    block-size: min(48rem, calc(100dvh - 4rem)) !important;
+  }
+  .pto-drawer-shell .pto-drawer-panel {
+    max-inline-size: none;
+    border: 1px solid var(--edify-border);
+    border-radius: var(--edify-drawer-radius, 1rem);
+    overflow: hidden;
+  }
+}
+.drawer-surface.drawer-surface.drawer-surface {
+  inline-size: calc(100% - 2 * var(--edify-drawer-inset)) !important;
+  min-inline-size: 0 !important;
+}
+/* Choice cards retain their title/description hierarchy in a narrow dialog. */
+.drawer-surface .drawer-body button.edify-stacked-label-button {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: .25rem !important;
+  height: auto !important;
+  white-space: normal !important;
+  text-align: left !important;
+}
+:root :is(.drawer-surface, .edify-popup-dialog__surface) input:is([type="radio"], [type="checkbox"]) {
+  width: 1rem !important;
+  height: 1rem !important;
+  inline-size: 1rem !important;
+  block-size: 1rem !important;
+  min-width: 1rem !important;
+  min-height: 1rem !important;
+  min-inline-size: 1rem !important;
+  min-block-size: 1rem !important;
+  padding: 0 !important;
+  flex: 0 0 1rem;
+}
+@media (min-width: 48rem) {
+  :root :is(.drawer-surface, .edify-popup-dialog__surface)
+    :is(input[type="text"], input[type="email"], input[type="number"], input[type="tel"], input[type="date"], select) {
+    min-height: 2.25rem !important;
+    min-block-size: 2.25rem !important;
+    height: 2.25rem !important;
+    padding-block: .375rem !important;
+  }
+  .drawer-surface .cluster-create-fields { padding: .75rem 0 1rem; gap: .875rem; }
+  .drawer-surface .cluster-create-basics { gap: .875rem; }
+}
+@container drawer (min-width: 40rem) {
+  .cluster-create-basics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* Short, wide laptops need less structural whitespace, not smaller text. */
+@media (min-width: 64rem) and (max-height: 50rem) {
+  main .analytics-metrics-disclosure > summary {
+    min-block-size: 2rem;
+    padding-block: .375rem;
+  }
+  main .leave-approval-queue {
+    max-block-size: max(12rem, calc(100dvh - 18rem));
+  }
+}
+/* Status filters must move below a long panel heading, never be squeezed
+   under the card's clipped edge when a laptop window narrows. */
+main .tt-panel__header { flex-wrap: wrap; }
+main .tt-panel__header > div:first-child { min-inline-size: 0; }
+main .tt-panel__header .tt-segmented {
+  flex-shrink: 0;
+  max-inline-size: 100%;
+}
+
+/* Empty queues retain their heading and status without displacing active work. */
+main .hr-today-queue--empty { padding-block: .75rem; }
+main .hr-today-queue--empty .edify-section {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .25rem 1rem;
+}
+main .hr-today-queue--empty .edify-section__description { margin: 0; }
+
+/* Project workspaces: queues own the width, supporting context follows them.
+   Keep these structural rules after the shared toolbar/card compatibility layer. */
+main :is(.spp-work-layout, .sp-plan-layout, .spa-layout) {
+  grid-template-columns: minmax(0, 1fr);
+  gap: .75rem;
+}
+main :is(.spp-rail, .sp-insights, .spa-insights) {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 17rem), 1fr));
+  align-items: start;
+  gap: .75rem;
+}
+main :is(.spp-card__titlebar, .sp-card__header, .spa-card > header) {
+  min-height: 0;
+  padding: .625rem .875rem;
+  flex-wrap: wrap;
+  gap: .375rem .75rem;
+}
+main .spp-band-grid { gap: 0; border: 1px solid var(--edify-border); border-radius: .5rem; overflow: hidden; }
+main .spp .spp-band {
+  min-height: 0;
+  padding: .625rem .875rem;
+  border: 0;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  background: var(--edify-surface);
+  gap: .625rem;
+}
+main .spp-band + .spp-band { border-inline-start: 1px solid var(--edify-border); }
+main .spp-band__icon { width: 1.75rem; height: 1.75rem; }
+main .spp-band > div { grid-template-columns: 1fr auto; column-gap: .75rem; align-items: baseline; width: 100%; }
+main .spp-band strong { font-size: 1.125rem; }
+main .spp-band p { grid-column: 1 / -1; }
+main #spp-filters, main #sp-plan-filters { display: block !important; padding: 0; margin-bottom: .75rem; }
+main #spp-filters .spp-filter-grid--primary {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(2, minmax(0, 1fr)) auto;
+  align-items: end;
+  gap: .5rem;
+}
+main #sp-plan-filters .sp-filter-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  gap: .5rem;
+}
+main #sp-plan-filters .sp-field--wide { grid-column: auto; }
+main :is(#spp-filters, #sp-plan-filters) label { width: auto !important; min-width: 0 !important; max-width: none !important; }
+main :is(#spp-filters, #sp-plan-filters) select { width: 100%; min-width: 0; }
+main .spp-filter-reset { min-height: 2.5rem; }
+main .spp-filter-reset .htmx-indicator:not(.htmx-request),
+main .sp-filter-panel__footer .htmx-indicator:not(.htmx-request) { display: none; }
+main .sp-filter-panel__footer { float: right; margin-top: .375rem; padding: 0; min-height: 0; }
+main :is(.spp-more-filters, .sp-more-filters) { margin-top: .375rem; padding: 0; border: 0; }
+main :is(.spp-more-filters, .sp-more-filters) > summary { cursor: pointer; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 650; padding-block: .25rem; }
+main .sp-more-filters[open] .sp-filter-grid { margin-top: .5rem; clear: both; }
+main .spp-delivery-tiles > div { min-height: 0; }
+main .spa-detail-grid { grid-template-columns: minmax(0, 1fr); }
+/* An explicit Alpine hidden state must beat structural display utilities,
+   including mixed table-cell layouts and toolbar compatibility styles. */
+[x-show][style*="display: none"], [x-show\.important][style*="display: none"] { display: none !important; }
+@media (max-width: 47.999rem) {
+  main #spp-filters .spp-filter-grid--primary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  main #spp-filters .spp-filter-reset { grid-column: auto; justify-content: flex-start; }
+  main .spp-band-grid { grid-template-columns: minmax(0, 1fr); }
+  main .spp-band + .spp-band { border-inline-start: 0; border-top: 1px solid var(--edify-border); }
+  main .spp-band p { margin: 0; }
+}
+
+main .spp-card__titlebar > div { display: flex; align-items: baseline; flex-wrap: wrap; gap: .25rem .75rem; }
+main .spa-insights { position: static; }
+main .sp-period-bar { flex-wrap: wrap; gap: .5rem .75rem; }
+main .sp-period-tabs { flex: 0 0 auto; max-width: 100%; }
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  main #sp-plan-filters .sp-filter-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 47.999rem) {
+  main #sp-plan-filters .sp-filter-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+main .spp-readiness > summary { cursor: pointer; padding-block: .25rem; color: var(--edify-accent-text); font-size: var(--edify-text-micro-size); font-weight: 650; }
+main .spp-readiness[open] > summary { margin-bottom: .5rem; }
+/* Profile queues need the same reading width as their directory, especially
+   while the navigation rail occupies part of a laptop display. */
+@media (min-width: 64rem) and (max-width: 99.999rem) {
+  main .edify-record-workspace { grid-template-columns: minmax(0, 1fr); }
+  main .edify-record-workspace > div { grid-column: auto; min-width: 0; }
+}
+main .project-delivery-overview > header,
+main .project-delivery-overview #budget-execution { padding: .75rem; }
+main .project-detail-context > summary { padding: .625rem .75rem; cursor: pointer; font-size: var(--edify-text-micro-size); font-weight: 650; color: var(--edify-accent-text); }
+main .project-detail details[aria-labelledby] { padding: .75rem; }
+main .project-detail details[aria-labelledby] > summary { cursor: pointer; color: var(--edify-accent-text); }
+main .project-detail details[aria-labelledby] > summary h2 { display: inline; font-size: .875rem; }
+main .project-detail-context > .grid > div,
+main .project-detail-context > .border-t { padding: .75rem; }
+main #sp-plan-filters { display: flow-root !important; }
+
+/* Login and the blue workspace share one brand surface and text hierarchy. */
+.theme-blue .context-metrics {
+  --kpi-surface: #073454;
+  --kpi-text: var(--edify-brand-panel-text);
+  --kpi-muted: var(--edify-brand-kpi-muted);
+  --kpi-divider: var(--edify-brand-panel-border);
+}
+.theme-blue :is(.context-metrics__sentence, .edify-metric-panel) {
+  background: var(--edify-brand-panel) !important;
+  border-color: var(--edify-brand-panel-border) !important;
 }

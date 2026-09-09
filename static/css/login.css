@@ -1234,3 +1234,94 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
     border-width: 2px;
   }
 }
+
+/* Keep the same live KPI strip available below sign-in on smaller screens. */
+@media (max-width: 70rem) {
+  .login-brand, .login-brand__content { display: contents; }
+  .login-brand > :not(.login-brand__content),
+  .login-brand__content > :not(.context-metrics) { display: none; }
+  .login-access { order: 1; }
+  .login-brand__content > .context-metrics {
+    order: 2;
+    width: calc(100% - 3rem);
+    margin: 0 1.5rem 1.5rem;
+  }
+}
+
+/* Login retains its blue brand treatment in every workspace theme. */
+.login-brand .context-metrics {
+  --kpi-surface: var(--login-navy-950);
+  --kpi-text: #fff;
+  --kpi-muted: var(--edify-brand-kpi-muted);
+  --kpi-divider: #38556f;
+  --kpi-positive: #85f4ce;
+  --kpi-warning: #ffdc83;
+  --kpi-negative: #ffc0c6;
+  margin-top: 16px;
+}
+.login-brand .context-metrics__navigation-row { color: #d4e7fa; }
+@media (max-width: 70rem) {
+  .login-brand .context-metrics__navigation-row { color: #174b79; }
+}
+
+.login-brand .impact-item h3 { color: #fff !important; }
+.login-brand .impact-card__title {
+  color: #fff !important;
+  font-weight: 700 !important;
+  font-style: italic;
+}
+@media (max-width: 70rem) {
+  .login-shell { align-content: center; gap: 16px; }
+  .login-access { min-height: auto; padding: 24px 12px 0; background: transparent; }
+  .login-card { min-height: auto; max-width: 36rem; }
+  .login-brand__content > .context-metrics {
+    width: calc(100% - 24px);
+    max-width: 36rem;
+    margin: 0 auto 24px;
+  }
+}
+
+/* One opaque blue surface keeps the impact card and live KPI strip identical,
+   independent of the photograph behind them or the workspace theme. */
+.login-page { --login-panel-background: var(--edify-brand-panel); }
+.login-brand .impact-card,
+.login-brand .context-metrics__sentence {
+  background: var(--login-panel-background);
+  border-color: var(--edify-brand-panel-border);
+}
+.login-brand__content { padding-block: 2.75rem 1.75rem; }
+.login-brand__header { padding-block: .25rem; }
+.login-access { padding: 2rem clamp(1.5rem, 3vw, 3rem); }
+.login-card {
+  width: min(100%, 29rem);
+  min-height: auto;
+  border: 1px solid #d9e3ed;
+  border-radius: var(--radius-overlay);
+  background: #fff;
+  box-shadow: 0 16px 48px rgba(7, 38, 65, .09);
+}
+.login-card__inner {
+  max-width: none;
+  padding: 2.75rem clamp(1.5rem, 3vw, 2.75rem);
+}
+.login-card__logo { width: 7rem; margin-bottom: 1.25rem; }
+.login-heading h1 { font-size: 1.75rem; font-weight: 650; letter-spacing: -.025em; }
+.login-heading p { margin-top: .5rem; font-size: var(--edify-text-body-size); line-height: 1.5; }
+.login-form { margin-top: 1.75rem; }
+.login-field + .login-field { margin-top: 1.25rem; }
+[data-login-form] .login-field input { min-height: 3.125rem; padding: .75rem 1rem; background: #f8fafc; font-size: 1rem; }
+.login-field input#current-password { padding-inline-end: 3.5rem; }
+[data-login-form] .password-toggle { right: .375rem; width: 2.75rem; height: 2.75rem; min-height: 2.75rem; font: inherit; font-size: var(--edify-text-label-size); font-weight: 600; color: var(--login-blue-700); }
+.secure-card { margin-top: 1.5rem; padding: 1.25rem 0 0; border: 0; border-top: 1px solid #e3eaf1; border-radius: 0; background: transparent; box-shadow: none; }
+@media (max-width: 70rem) {
+  .login-shell { align-content: safe center; }
+  .login-access { padding: 1.5rem 1rem 0; }
+  .login-card { max-width: 29rem; }
+  .login-brand__content > .context-metrics { width: calc(100% - 2rem); max-width: 29rem; margin-bottom: 1.5rem; }
+  .login-card__inner { padding: 2.5rem clamp(1.5rem, 5vw, 2.75rem); }
+}
+@media (max-height: 44rem) and (min-width: 70.01rem) {
+  .login-access { padding-block: 1.25rem; }
+  .login-card__inner { padding-block: 1.75rem; }
+  .login-brand__content { padding-block: 2rem 1.25rem; }
+}

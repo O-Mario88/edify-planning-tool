@@ -54,7 +54,6 @@ class DashboardViewSourceTest(TestCase):
             "templates/partials/dashboards/pl/map_view.html",
             "templates/partials/dashboards/rvp/map_view.html",
             "templates/partials/ia/view.html",
-            "templates/partials/finance/accountant_view.html",
         ):
             with self.subTest(view=view):
                 self.assertIn(MAP_INCLUDE, _read(view))
@@ -141,7 +140,6 @@ class DashboardViewSourceTest(TestCase):
             "templates/pages/dashboards/cd.html",
             "templates/pages/dashboards/pl.html",
             "templates/pages/dashboards/rvp.html",
-            "templates/pages/accounts/dashboard.html",
         ):
             with self.subTest(page=page):
                 self.assertIn(
@@ -193,16 +191,24 @@ class DashboardViewRenderTest(TestCase):
                 self.assertIn('aria-selected="true"', html)
                 self.assertLess(html.index("Map"), html.index("Operations"))
 
-    def test_the_accountant_opens_on_the_queue_with_the_map_one_tab_away(self):
-        response = self._get(self.accountant, "/accounts")
-        self.assertEqual(response.status_code, 200)
-        html = response.content.decode()
-        self.assertIn("data-dashboard-views", html)
-        self.assertNotIn("subregionMap()", html)
-        self.assertIn('id="fund-filters-card"', html)
-        html = self._get(self.accountant, "/accounts?view=map").content.decode()
-        self.assertIn("subregionMap()", html)
-        self.assertNotIn('id="fund-filters-card"', html)
+    def test_accountant_is_operations_only_even_with_a_saved_map_preference(self):
+        self.client.cookies[f"{VIEW_COOKIE_PREFIX}accountant"] = "map"
+        for url in ("/accounts", "/accounts?view=map", "/accounts?view=operations"):
+            with self.subTest(url=url):
+                response = self._get(self.accountant, url)
+                self.assertEqual(response.status_code, 200)
+                html = response.content.decode()
+                self.assertNotIn("data-dashboard-views", html)
+                self.assertNotIn("subregionMap()", html)
+                self.assertIn('id="fund-filters-card"', html)
+        response = self._get(
+            self.accountant,
+            "/accounts?view=map",
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="accountant-dashboard-view-shell",
+        )
+        self.assertNotContains(response, "subregionMap()")
+        self.assertContains(response, 'id="fund-filters-card"')
 
     def test_the_remaining_roles_open_on_their_work_with_the_map_one_tab_away(self):
         for user, first in (
@@ -288,7 +294,6 @@ class DashboardViewRenderTest(TestCase):
                 "operations",
             ),
             (self.ia, "/ia/dashboard/?view=map", "ia-dashboard-view", "map"),
-            (self.accountant, "/accounts?view=map", "accountant-dashboard-view", "map"),
         ):
             with self.subTest(target=target):
                 response = self._get(

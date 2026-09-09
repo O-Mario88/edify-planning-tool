@@ -1,29 +1,8 @@
-"""The one place a performance score is computed (§13–§15).
+"""Approved allocation scores and supervisory delivery projections.
 
-Every surface — My Targets, Team Targets, Country Program Leads Performance,
-Country Performance, Performance Management, the exports — reads from here.
-That is the whole point: a platform where two pages compute the same score
-independently is a platform where two pages eventually disagree, and the person
-whose rating is on the screen has no way to tell which one is right.
-
-The chain this implements:
-
-    allocation → verified achievement → milestone score
-                                             ↓
-                             weighted staff overall score
-                                             ↓
-                    PL team average · CD country average
-
-Three rules that decide most of the edge cases:
-
-  * Verified only. Nothing here reads planned work, and there is no argument
-    to any of these functions that lets a caller supply an achievement figure.
-  * Each person counted once. A CD's country average is built from individual
-    staff scores, never by averaging PL team averages — that would count every
-    CCEO twice, once in their PL's average and again in the country's.
-  * Absence is stated, never scored. Someone with no approved agreement is
-    excluded from the average and reported as needing configuration, because
-    averaging them in at 0% would quietly punish a setup gap.
+Personal allocations retain their own classification. PL and country headlines
+use the shared accountability contract: own plus team delivery for PLs and
+unique country delivery for CDs. Missing configuration never becomes failure.
 """
 
 from __future__ import annotations
@@ -256,21 +235,21 @@ def direct_reports(pl_profile):
 
 
 def pl_performance(pl_profile, fy: str) -> dict:
-    """§14 — the Program Lead's own score and their team's, kept apart.
-
-    The headline on Country Program Leads Performance is the TEAM average, but
-    a PL now holds a self-allocation too, and letting the team number stand in
-    for their own delivery would hide the part of the target they personally
-    committed to.
-    """
+    """Combined PL and team accountability, with personal detail preserved."""
     personal = staff_overall(pl_profile, fy)
     reports = direct_reports(pl_profile)
     eligible, excluded = _eligible_scores(reports, fy)
-    team_pct = _average(eligible)
+    from apps.hr.accountability import allocation_priorities
+
+    combined = allocation_priorities(pl_profile.user, fy)
+    team_pct = combined["pct"]
     return {
         "staffId": str(pl_profile.id),
         "name": personal.name,
         "personal": personal.as_dict(),
+        "pct": team_pct,
+        "scope": combined["scope"],
+        "distributedPriorities": combined["rows"],
         "team": {
             "pct": team_pct,
             "classification": classify_achievement(team_pct),
@@ -286,12 +265,7 @@ def pl_performance(pl_profile, fy: str) -> dict:
 
 
 def country_performance(country: str, fy: str) -> dict:
-    """§15 — the average of eligible individual staff, each counted once.
-
-    Deliberately NOT an average of PL team averages: every CCEO sits inside
-    their PL's average, so averaging those would weight a CCEO by how large
-    their team is and count them twice over.
-    """
+    """Unique country delivery against approved country allocations."""
     from apps.accounts.models import StaffProfile
 
     from apps.hr.review_authority import REVIEWER_ROLE_FOR
@@ -306,8 +280,12 @@ def country_performance(country: str, fy: str) -> dict:
         ).select_related("user")
     )
     eligible, excluded = _eligible_scores(staff, fy)
-    pct = _average(eligible)
+    from apps.hr.accountability import allocation_priorities
+
+    combined = allocation_priorities(None, fy, country=country)
+    pct = combined["pct"]
     return {
+        "distributedPriorities": combined["rows"],
         "country": country,
         "fy": fy,
         "pct": pct,

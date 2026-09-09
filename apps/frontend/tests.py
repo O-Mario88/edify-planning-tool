@@ -321,10 +321,12 @@ class FrontendViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertTemplateUsed(response, "pages/dashboards/special_projects.html")
         self.assertEqual(
-            response.content.decode().count('data-component="kpi-card"'),
-            3,
-            "three distinct portfolio measures should remain visible",
+            response.content.decode().count('data-component="context-metric"'),
+            4,
+            "the coordinator home keeps all four portfolio metrics in one strip",
         )
+        self.assertContains(response, "Active projects")
+        self.assertContains(response, "Your delivery desk")
 
     def test_partner_roles_redirect_to_partner_scoped_dashboard(self):
         """PartnerAdmin/PartnerFieldOfficer logins previously fell through to
@@ -409,7 +411,7 @@ class FrontendViewsTestCase(TestCase):
 
         registered = response.context["dashboard_kpi_items"]
         rendered = consolidate_kpi_items(registered)
-        self.assertEqual(html.count('data-component="kpi-card"'), len(rendered))
+        self.assertEqual(html.count('data-component="context-metric"'), len(rendered))
         # Nothing is lost between registering and rendering. Consolidation
         # deduplicates by identity, so a difference here means the view
         # registered the same metric twice or two metrics collided on one

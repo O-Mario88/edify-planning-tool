@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load frontend_filters %}
 {% comment %}Operations view: team performance, personal targets, CCEO performance, SSA intelligence, funding, route capacity and actions. The chart script travels with the view so it runs again when the tab swaps it in.{% endcomment %}
 <div class="space-y-4" data-pl-operations-view>
@@ -16,19 +18,19 @@
       2026-09-07): it colours the caption rather than a filled card, and a
       target that cannot be measured says so instead of showing a colour it
       has not earned.{% endcomment %}
-      <div class="edify-metric-panel grid grid-cols-2 flex-1">
+      {% kpi_strip %}
         {% for c in personal_targets.cards %}
-        <div class="edify-metric">
-          <p class="edify-metric__label" title="{{ c.label }}">{{ c.label }}</p>
-          <p class="edify-metric__value">{{ c.done }}<span class="edify-metric__unit">/{% if c.has_target %}{{ c.target }}{% else %}—{% endif %}</span></p>
+        {% kpi_metric %}
+          {% kpi_label %}{{ c.label }}{% endkpi_label %}
+          {{ c.done }}<span class="edify-metric__unit">/{% if c.has_target %}{{ c.target }}{% else %}—{% endif %}</span>
           {% if c.has_target %}
-          <p class="edify-metric__meta edify-status-text" data-edify-tone="{% if c.pct >= 80 %}success{% elif c.pct >= 60 %}warning{% else %}danger{% endif %}">{{ c.pct }}%</p>
+          {% kpi_helper %}{{ c.pct }}%{% endkpi_helper %}
           {% else %}
-          <p class="edify-metric__meta">Not measurable</p>
+          {% kpi_helper %}Not measurable{% endkpi_helper %}
           {% endif %}
-        </div>
+        {% endkpi_metric %}
         {% endfor %}
-      </div>
+      {% endkpi_strip %}
       {% if personal_targets.has_target %}
       <div class="pt-3 mt-3 border-t edify-border-top">
         <div class="flex items-center justify-between mb-1.5">

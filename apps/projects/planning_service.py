@@ -739,6 +739,10 @@ def get_planning(principal, filters=None) -> dict:
         "has_projects": bool(project_ids),
         "has_assignments": bool(assignments),
         "projects": projects,
+        "workspace_project": next(
+            (project for project in projects if str(project.id) == selected_project),
+            None,
+        ),
         "regions": Region.objects.filter(id__in=region_ids).order_by("name"),
         "districts": district_options,
         "staff_options": staff_options,

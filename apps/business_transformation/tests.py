@@ -176,7 +176,7 @@ class UgandaBusinessTransformationFrontendTests(UgandaBusinessTransformationTest
         self.assertContains(workspace, 'form="bt-workspace-filters"')
         # The platform headline policy deliberately removes the former
         # eleven-card inventory and keeps one professional four-metric tray.
-        self.assertContains(workspace, 'data-component="kpi-card"', count=4)
+        self.assertContains(workspace, 'data-component="context-metric"', count=4)
         self.assertNotContains(workspace, "text-[11px]")
         self.assertEqual(portfolio.status_code, 200)
         self.assertContains(portfolio, "MFI referral pipeline")
@@ -189,7 +189,7 @@ class UgandaBusinessTransformationFrontendTests(UgandaBusinessTransformationTest
         response = self.client.get("/loans")
 
         self.assertEqual(response.status_code, 200)
-        self.assertContains(response, 'data-component="kpi-card"', count=2)
+        self.assertContains(response, 'data-component="context-metric"', count=2)
 
 
 class TransformationSchoolPortfolioTests(UgandaBusinessTransformationTestCase):

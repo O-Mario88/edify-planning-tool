@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% comment %}
 The Decision Intelligence tab.
 
@@ -32,24 +34,24 @@ travels with the panel rather than sitting in the shared header.{% endcomment %}
 {% endfor %}
 {% endif %}
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ open_leadership }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Operational decisions awaiting you</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ open_budget }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Financial decisions awaiting you</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ leadership_snapshot.dataConfidence|default:"—" }}{% if leadership_snapshot.dataConfidence %}%{% endif %}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Data confidence</p>
-</div>
-<div class="edify-surface rounded-surface border {% if budget_snapshot.amountAtRisk %}border-amber-200 bg-amber-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
-<p class="text-[24px] font-extrabold {% if budget_snapshot.amountAtRisk %}text-amber-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ budget_snapshot.amountAtRisk|floatformat:0 }}</p>
-<p class="edify-text-caption {% if budget_snapshot.amountAtRisk %}text-amber-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">UGX flagged at risk</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{{ open_leadership }}
+{% kpi_label %}Operational decisions awaiting you{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ open_budget }}
+{% kpi_label %}Financial decisions awaiting you{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ leadership_snapshot.dataConfidence|default:"—" }}{% if leadership_snapshot.dataConfidence %}%{% endif %}
+{% kpi_label %}Data confidence{% endkpi_label %}
+{% endkpi_metric %}
+{% kpi_metric %}
+{{ budget_snapshot.amountAtRisk|floatformat:0 }}
+{% kpi_label %}UGX flagged at risk{% endkpi_label %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 {# ── Operational decisions ─────────────────────────────────────────── #}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">

@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% comment %}
   Staff vs Partner Performance — the approved 2+2+1 analytics composition.
   Every figure comes from CoreStaffPartnerPerformanceService (real scoped
@@ -161,15 +163,7 @@
         {% endif %}
       </div>
       {% if perf_insights.top_region %}
-      <div class="sm:w-44 shrink-0 rounded-control border border-slate-200 bg-slate-50/70 p-3 self-start">
-        <p class="edify-text-caption font-bold uppercase tracking-wide edify-text-muted">Top performing region</p>
-        <p class="text-[15px] font-bold edify-text mt-1">{{ perf_insights.top_region.name }}</p>
-        <p class="text-[20px] font-bold edify-primary-text tabular-nums">{{ perf_insights.top_region.score|floatformat:1 }}/10</p>
-        {% if perf_insights.top_region.vs_avg is not None %}
-        <p class="edify-text-caption font-semibold {% if perf_insights.top_region.vs_avg >= 0 %}edify-success-text{% else %}edify-danger-text{% endif %}">{% if perf_insights.top_region.vs_avg >= 0 %}+{% endif %}{{ perf_insights.top_region.vs_avg }} vs org average</p>
-        {% endif %}
-        <p class="edify-text-caption edify-text-muted mt-0.5">{{ perf_insights.top_region.school_count }} core school{{ perf_insights.top_region.school_count|pluralize }}</p>
-      </div>
+      <div class="sm:w-44 shrink-0 self-start">{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Top performing region{% endkpi_label %}{{ perf_insights.top_region.score|floatformat:1 }}/10{% kpi_helper %}{{ perf_insights.top_region.name }} · {{ perf_insights.top_region.school_count }} core schools{% if perf_insights.top_region.vs_avg is not None %} · {{ perf_insights.top_region.vs_avg }} vs org average{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}</div>
       {% endif %}
     </div>
     {% else %}
@@ -270,26 +264,7 @@
         </div>
       </div>
       {% if perf_insights.trend_summary %}
-      <div class="lg:w-64 shrink-0 rounded-control border border-slate-200 bg-slate-50/70 p-4 space-y-2 self-start">
-        <p class="edify-text-caption font-bold uppercase tracking-wide edify-text-muted">Latest verified period</p>
-        <p class="text-[14px] font-bold edify-text">{{ perf_insights.trend_summary.latest_label }}</p>
-        <p class="text-[24px] font-bold edify-primary-text tabular-nums">{{ perf_insights.trend_summary.latest_avg }}<span class="text-[13px] edify-text-muted font-semibold">/10</span></p>
-        <div class="flex items-center justify-between text-[12px] font-semibold">
-          <span class="edify-text-muted">vs {{ perf_insights.trend_summary.baseline_label }}</span>
-          <span class="{% if perf_insights.trend_summary.change > 0 %}edify-success-text{% elif perf_insights.trend_summary.change < 0 %}edify-danger-text{% else %}edify-text-muted{% endif %} tabular-nums">
-            {% if perf_insights.trend_summary.change > 0 %}▲ +{% elif perf_insights.trend_summary.change < 0 %}▼ {% else %}— {% endif %}{{ perf_insights.trend_summary.change }}
-          </span>
-        </div>
-        <div class="flex items-center justify-between text-[12px] font-semibold">
-          <span class="edify-text-muted">Trend</span>
-          <span class="{% if perf_insights.trend_summary.direction == 'Improving' %}edify-success-text{% elif perf_insights.trend_summary.direction == 'Declining' %}edify-danger-text{% else %}edify-text-muted{% endif %}">{{ perf_insights.trend_summary.direction }}</span>
-        </div>
-        <div class="flex items-center justify-between text-[12px] font-semibold">
-          <span class="edify-text-muted">Verified periods</span>
-          <span class="edify-text tabular-nums">{{ perf_insights.trend_summary.periods }}</span>
-        </div>
-        <p class="edify-text-caption edify-text-muted pt-1 border-t border-slate-200">Built from verified assessments only; periods without data are never interpolated.</p>
-      </div>
+      <div class="lg:w-64 shrink-0 self-start">{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Latest verified period{% endkpi_label %}{{ perf_insights.trend_summary.latest_avg }}<span class="text-[13px] edify-text-muted font-semibold">/10</span>{% kpi_helper %}{{ perf_insights.trend_summary.latest_label }} · Baseline: {{ perf_insights.trend_summary.baseline_label }} · Change: {{ perf_insights.trend_summary.change }} · {{ perf_insights.trend_summary.direction }} · {{ perf_insights.trend_summary.periods }} verified periods · Missing periods are not interpolated{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}</div>
       {% endif %}
     </div>
     {% else %}

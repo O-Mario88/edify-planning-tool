@@ -1,0 +1,8 @@
+<section class="edify-surface rounded-surface border overflow-hidden" aria-label="Distributed priority performance">
+  <header class="px-4 py-3"><h2 class="font-bold">Distributed priority performance</h2><p class="edify-text-caption">{% if distributed.pct is not None %}{{ distributed.pct }}% verified achievement{% else %}No configured score for this reporting scope{% endif %}</p></header>
+  <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Distributed performance table">
+    <table class="w-full text-left text-sm"><thead><tr><th>Priority</th><th>Scope</th><th>Target</th><th>Verified</th><th>Achievement</th></tr></thead>
+      <tbody>{% for row in distributed.rows %}<tr><td>{{ row.title }}</td><td>{{ row.scope }}</td><td>{{ row.target|floatformat:'-2' }} {{ row.unit }}</td><td>{{ row.actual|floatformat:'-2' }}</td><td>{% if row.pct is not None %}{{ row.pct }}%{% else %}Not configured{% endif %}</td></tr>{% empty %}<tr><td colspan="5">No approved distributed priorities in this record.</td></tr>{% endfor %}</tbody>
+    </table>
+  </div>
+</section>

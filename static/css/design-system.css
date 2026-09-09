@@ -19,6 +19,11 @@
   /* ── EDIFY BRAND PALETTE ─────────────────────────────────────────────────
      The login experience is the visual north star for the application.
      These literal values come from the approved brand reference. */
+  --edify-brand-panel: linear-gradient(110deg, #073454, #103f62);
+  --edify-brand-panel-border: #38607d;
+  --edify-brand-panel-text: #ffffff;
+  --edify-brand-panel-muted: #b9d2e5;
+  --edify-brand-kpi-muted: #d4e7fa;
   --edify-navy-950: #001d39;
   --edify-navy-800: #0a4d86;
   --edify-steel-600: #49769f;
@@ -229,8 +234,7 @@
   --edify-surface-muted: #e5eaed;
   --edify-surface-raised: #ffffff;
   /* A floating overlay (calendar, menu) must hide what it floats over, so
-     this step is opaque in every theme — including Blue, whose other
-     surfaces are deliberately glass. */
+     this step is opaque in every theme. */
   --edify-surface-popover: #ffffff;
   --edify-surface-hover: #e9eef1;
   --edify-surface-selected: #dfe8ed;
@@ -251,7 +255,7 @@
      panel carries; on a light surface it is white, on a dark one a lift of the
      same. */
   --edify-kpi-panel-border: color-mix(in srgb, var(--edify-border) 78%, transparent);
-  --edify-kpi-divider: color-mix(in srgb, var(--edify-border) 55%, transparent);
+  --edify-kpi-divider: color-mix(in srgb, var(--edify-border) 34%, transparent);
   --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.55);
   /* Four-step text hierarchy, all verified against the surfaces above:
      primary 15.3:1 · secondary 7.9:1 · muted 4.9:1 on the card plane. */
@@ -273,45 +277,23 @@
   --edify-table-row-selected: #e2eef6;
   --edify-table-divider: #d2dbe0;
   --edify-table-header-divider: #c4cfd5;
-  /* Requested light-mode canvas. A faint blue tint rather than the old
-     neutral grey: white cards separate from it at 1.14:1, which is low as
-     a contrast figure but is doing the right job — a page background must
-     recede behind its content, not compete with it. Body text still reads
-     at 12.77:1 and muted text at 7.22:1 against it. */
-  --edify-bg: #e3f2fa;
-  /* A FROZEN table cell's background. A sticky column is a curtain the rest
-     of the row scrolls behind, so it must be opaque — and the surface token
-     alone is not: the blue theme's surface is a 58% glass over the page.
-     Painting the surface over the page background gives every theme the
-     same solid curtain (owner, 2026-09-05). */
+  /* Neutral canvas keeps operational data and white KPI strips distinct. */
+  --edify-bg: #e8eef5;
+  /* Sticky table cells need an opaque background while adjacent data scrolls. */
   --edify-frozen-surface: linear-gradient(var(--edify-surface), var(--edify-surface)), var(--edify-bg);
   --edify-frozen-surface-muted: linear-gradient(var(--edify-surface-muted), var(--edify-surface-muted)), var(--edify-bg);
 
-  /* ── Page header: tonal elevation ──────────────────────────────────────
-     The header is the page's context band, and it should read as part of
-     the page rather than as a card floating on it. So the surface sits a
-     few percent off the canvas, the border is barely there, and the shadow
-     is wide and faint.
-
-     This was previously an inline style on one template referencing
-     --header-band-bg, a variable that was never defined anywhere. It worked
-     because the fallback happened to be a 10% white wash — the right effect
-     reached by accident, on exactly one page, unavailable to the other 176.
-
-     Transparency lives in these colours only, never on the container: an
-     opacity on the header would fade the title and the controls with it,
-     and the whole point is a quiet surface carrying legible content. */
-  --page-header-surface: color-mix(in oklab, #ffffff 46%, var(--edify-bg));
+  /* Page headings sit directly on the canvas. The workspace owns the
+     gutter; headers add no second surface, shadow or inset. */
+  --page-header-surface: transparent;
   --page-header-border: transparent;
-  --page-header-shadow:
-    0 18px 44px -28px rgba(18, 74, 112, 0.42),
-    0 5px 16px -10px rgba(18, 74, 112, 0.16);
-  --page-header-radius: var(--edify-radius-surface, 12px);
+  --page-header-shadow: none;
+  --page-header-radius: 0px;
   /* One stable content gutter for every header family. The page wrapper owns
      the surface edge, so this padding never changes its outer alignment. */
-  --page-header-padding-x: 1rem;
-  --page-header-padding-y: 1rem;
-  --page-header-gap: 0.75rem;
+  --page-header-padding-x: 0px;
+  --page-header-padding-y: 0px;
+  --page-header-gap: 0.5rem;
   --edify-section-bg: #f2f5f6;
   /* Flat neutral canvas: the tinted gradient competed with card surfaces and
      made the same card read differently depending on where it sat. */
@@ -324,13 +306,9 @@
   /* Shared card contract. Component CSS consumes these through the platform
      layer so a new card cannot accidentally reintroduce a heavy outline. */
   --edify-card-surface: var(--edify-surface-raised);
-  --edify-card-border: transparent;
-  --edify-card-shadow:
-    0 18px 44px -28px rgba(18, 74, 112, 0.42),
-    0 5px 16px -10px rgba(18, 74, 112, 0.16);
-  --edify-card-shadow-hover:
-    0 22px 52px -28px rgba(18, 74, 112, 0.48),
-    0 8px 20px -12px rgba(18, 74, 112, 0.22);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
+  --edify-card-shadow-hover: none;
   --edify-card-backdrop-filter: none;
   /* Buttons are deliberately flat in light mode. The reference treatment is
      a confident Edify blue or a quiet blue outline — gradients introduced
@@ -409,21 +387,21 @@
      they inherit the same type, colour, focus and numeric rhythm. */
   --edify-table-cell-padding-block: 0.5rem;
   --edify-table-cell-padding-inline: 0.75rem;
-  /* Headers may be bold; the body never is. Cells sit at regular (400) per
+  /* Headers may be bold; the body never is. Cells sit at a clear medium-light (450) weight in
      the reference grid, and the identity column separates itself with ink
      colour plus a half-step of medium — not a second bold rail. */
   --edify-table-header-weight: 600;
-  --edify-table-body-weight: 400;
-  --edify-table-identity-weight: 500;
+  --edify-table-body-weight: 450;
+  --edify-table-identity-weight: 550;
   --edify-table-action-size: 2rem;
   --edify-table-radius: 0.5rem;
 
   --edify-text-display-weight: 700;
   --edify-text-heading-weight: 600;
   --edify-text-title-weight:   600;
-  --edify-text-body-weight:    400;
-  --edify-text-label-weight:   500;
-  --edify-text-micro-weight:   400;
+  --edify-text-body-weight:    450;
+  --edify-text-label-weight:   550;
+  --edify-text-micro-weight:   450;
 
   --edify-text-display-leading: 1.15;
   --edify-text-heading-leading: 1.3;
@@ -461,7 +439,7 @@
   --edify-font-display: 700 var(--edify-text-display-size)/var(--edify-text-display-leading) var(--edify-font-display-family);
   --edify-font-heading: 600 var(--edify-text-heading-size)/var(--edify-text-heading-leading) var(--edify-font-sans);
   --edify-font-title:   600 var(--edify-text-title-size)/var(--edify-text-title-leading) var(--edify-font-sans);
-  --edify-font-body:    400 var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
+  --edify-font-body:    var(--edify-text-body-weight) var(--edify-text-body-size)/var(--edify-text-body-leading) var(--edify-font-sans);
   --edify-font-label:   500 var(--edify-text-label-size)/var(--edify-text-label-leading) var(--edify-font-sans);
   --edify-font-micro:   600 var(--edify-text-micro-size)/var(--edify-text-micro-leading) var(--edify-font-sans);
 
@@ -488,12 +466,12 @@
        One fluid inset replaces the page-by-page mix of 12, 16, 20 and 24px.
        It stays compact on a phone, reaches the full 20px rhythm on a wide
        canvas, and is consumed by cards, tiles, panels and KPI components. */
-  --edify-surface-padding-inline: clamp(0.875rem, 0.78rem + 0.42vw, 1.25rem);
-  --edify-surface-padding-block: clamp(0.875rem, 0.8rem + 0.32vw, 1.125rem);
+  --edify-surface-padding-inline: 1rem;
+  --edify-surface-padding-block: 0.75rem;
   --edify-surface-padding:
     var(--edify-surface-padding-block) var(--edify-surface-padding-inline);
-  --edify-surface-padding-compact: clamp(0.75rem, 0.69rem + 0.28vw, 1rem);
-  --edify-surface-padding-generous: clamp(1.5rem, 1.28rem + 0.9vw, 2.25rem);
+  --edify-surface-padding-compact: 0.75rem;
+  --edify-surface-padding-generous: 1.5rem;
   --edify-kpi-padding:
     clamp(0.8125rem, 0.75rem + 0.25vw, 1rem)
     clamp(0.8125rem, 0.74rem + 0.32vw, 1.0625rem);
@@ -654,60 +632,37 @@
   --edify-notification-text: var(--edify-navy-950);
   --edify-notification-glow: rgba(255, 157, 66, 0.38);
 
-  /* The filter controls establish Blue's single translucent content plane.
-     Reusing it at every elevation keeps the classroom image present without
-     building a stack of progressively heavier glass rectangles. */
-  --edify-surface: rgba(5, 54, 96, 0.58);
-  --edify-surface-muted: rgba(5, 54, 96, 0.58);
-  --edify-surface-raised: rgba(5, 54, 96, 0.58);
-  /* The one opaque step. The glass plane is right for panels that sit on
-     the page, and wrong for a popover that sits on those panels: the date
-     picker read as transparent, with the form's text showing through the
-     day grid. Same navy, no alpha. */
+  /* Opaque blue surfaces retain the brand without a photographic backdrop. */
+  --edify-surface: #073454;
+  --edify-surface-muted: #0a3657;
+  --edify-surface-raised: #103f62;
+  /* Popovers remain distinct from the underlying content plane. */
   --edify-surface-popover: #0b3a63;
-  --edify-border: rgba(123, 189, 232, 0.32);
+  --edify-border: var(--edify-brand-panel-border);
   --edify-border-strong: rgba(123, 189, 232, 0.58);
   /* The reference photograph is this theme, so these are its measured values
      rather than a mix: the login strip's own panel border and rule. */
   --edify-kpi-panel-border: rgba(147, 205, 241, 0.3);
   --edify-kpi-divider: rgba(131, 196, 234, 0.22);
   --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.05);
-  --edify-text: #f5fbff;
-  --edify-text-muted: var(--edify-sky-100);
-  --edify-text-subtle: #91b5cc;
+  --edify-text: var(--edify-brand-panel-text);
+  --edify-text-muted: var(--edify-brand-panel-muted);
+  --edify-text-subtle: #b9d2e5;
   --edify-bg: var(--edify-navy-950);
 
-  /* ── Page header: tonal elevation ──────────────────────────────────────
-     The header is the page's context band, and it should read as part of
-     the page rather than as a card floating on it. So the surface sits a
-     few percent off the canvas, the border is barely there, and the shadow
-     is wide and faint.
-
-     This was previously an inline style on one template referencing
-     --header-band-bg, a variable that was never defined anywhere. It worked
-     because the fallback happened to be a 10% white wash — the right effect
-     reached by accident, on exactly one page, unavailable to the other 176.
-
-     Transparency lives in these colours only, never on the container: an
-     opacity on the header would fade the title and the controls with it,
-     and the whole point is a quiet surface carrying legible content. */
-  --page-header-surface: color-mix(in oklab, #ffffff 7%, var(--edify-bg));
+  /* Page headings sit directly on the canvas. The workspace owns the
+     gutter; headers add no second surface, shadow or inset. */
+  --page-header-surface: transparent;
   --page-header-border: transparent;
-  --page-header-shadow:
-    0 22px 50px -26px rgba(0, 0, 0, 0.72),
-    0 7px 18px -10px rgba(0, 0, 0, 0.52);
-  --page-header-radius: var(--edify-radius-surface, 12px);
+  --page-header-shadow: none;
+  --page-header-radius: 0px;
   /* One stable content gutter for every header family. The page wrapper owns
      the surface edge, so this padding never changes its outer alignment. */
-  --page-header-padding-x: 1rem;
-  --page-header-padding-y: 1rem;
-  --page-header-gap: 0.75rem;
-  --edify-canvas-treatment:
-    linear-gradient(108deg, rgba(0, 19, 39, .80) 0%, rgba(0, 29, 57, .56) 46%, rgba(3, 46, 84, .74) 100%),
-    radial-gradient(circle at 88% 0%, rgba(123,189,232,.24), transparent 36rem),
-    linear-gradient(180deg, rgba(0,29,57,.06) 0%, rgba(0,18,38,.48) 100%),
-    url("../images/login-classroom-portrait.jpg");
-  --edify-surface-treatment: none;
+  --page-header-padding-x: 0px;
+  --page-header-padding-y: 0px;
+  --page-header-gap: 0.5rem;
+  --edify-canvas-treatment: none;
+  --edify-surface-treatment: var(--edify-brand-panel);
   --edify-glass-tile-treatment: none;
   --edify-glass-kpi-treatment: none;
   --edify-button-primary-treatment: none;
@@ -719,13 +674,9 @@
   /* Content planes float above the classroom canvas without decorative
      outlines. Controls and tables continue to use --edify-border. */
   --edify-card-surface: var(--edify-surface);
-  --edify-card-border: transparent;
-  --edify-card-shadow:
-    0 22px 50px -26px rgba(0, 0, 0, 0.72),
-    0 7px 18px -10px rgba(0, 0, 0, 0.52);
-  --edify-card-shadow-hover:
-    0 26px 58px -26px rgba(0, 0, 0, 0.78),
-    0 10px 24px -10px rgba(0, 0, 0, 0.58);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
+  --edify-card-shadow-hover: none;
   --edify-card-backdrop-filter: none;
 
   /* Blue-theme tables need their own surface ladder. Reusing the transparent
@@ -856,31 +807,17 @@ html.theme-blue body {
      changing the geometry of any existing page or HTMX partial. */
   --edify-bg: #0e151c;
 
-  /* ── Page header: tonal elevation ──────────────────────────────────────
-     The header is the page's context band, and it should read as part of
-     the page rather than as a card floating on it. So the surface sits a
-     few percent off the canvas, the border is barely there, and the shadow
-     is wide and faint.
-
-     This was previously an inline style on one template referencing
-     --header-band-bg, a variable that was never defined anywhere. It worked
-     because the fallback happened to be a 10% white wash — the right effect
-     reached by accident, on exactly one page, unavailable to the other 176.
-
-     Transparency lives in these colours only, never on the container: an
-     opacity on the header would fade the title and the controls with it,
-     and the whole point is a quiet surface carrying legible content. */
-  --page-header-surface: #111b24;
+  /* Page headings sit directly on the canvas. The workspace owns the
+     gutter; headers add no second surface, shadow or inset. */
+  --page-header-surface: transparent;
   --page-header-border: transparent;
-  --page-header-shadow:
-    0 22px 50px -26px rgba(0, 0, 0, 0.72),
-    0 7px 18px -10px rgba(0, 0, 0, 0.52);
-  --page-header-radius: var(--edify-radius-surface, 12px);
+  --page-header-shadow: none;
+  --page-header-radius: 0px;
   /* One stable content gutter for every header family. The page wrapper owns
      the surface edge, so this padding never changes its outer alignment. */
-  --page-header-padding-x: 1rem;
-  --page-header-padding-y: 1rem;
-  --page-header-gap: 0.75rem;
+  --page-header-padding-x: 0px;
+  --page-header-padding-y: 0px;
+  --page-header-gap: 0.5rem;
   --edify-section-bg: #111a22;
   --edify-surface-muted: #121c25;
   --edify-surface: #151f29;
@@ -895,7 +832,7 @@ html.theme-blue body {
   /* A sheen of white on a near-black surface reads as a scratch; this theme
      lifts the panel's top edge with its own border colour instead. */
   --edify-kpi-panel-border: #3b4c5a;
-  --edify-kpi-divider: #2c3a45;
+  --edify-kpi-divider: color-mix(in srgb, var(--edify-border) 42%, transparent);
   --edify-kpi-panel-sheen: rgba(255, 255, 255, 0.04);
 
   /* Text remains comfortably above WCAG AA on both canvas and card planes. */
@@ -913,13 +850,9 @@ html.theme-blue body {
   /* Content planes rely on a tonal step and quiet outline, while fields and
      tables retain stronger functional boundaries. */
   --edify-card-surface: var(--edify-surface);
-  --edify-card-border: #2d3d49;
-  --edify-card-shadow:
-    0 18px 42px -30px rgba(0, 0, 0, 0.78),
-    inset 0 1px 0 rgba(225, 239, 248, 0.025);
-  --edify-card-shadow-hover:
-    0 22px 48px -28px rgba(0, 0, 0, 0.82),
-    inset 0 1px 0 rgba(225, 239, 248, 0.04);
+  --edify-card-border: var(--edify-border);
+  --edify-card-shadow: none;
+  --edify-card-shadow-hover: none;
   --edify-card-backdrop-filter: none;
 
   /* Dense tables retain explicit row states while adopting the reference's
@@ -1003,7 +936,7 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
 /* Shadows cannot communicate a boundary in forced-colors mode. Restore a
    system outline for cards and page headers without changing their geometry. */
 @media (forced-colors: active) {
-  :root {
+  :root, :root.dark, :root.theme-dark, :root.theme-blue {
     --edify-card-border: CanvasText;
     --edify-card-shadow: none;
     --edify-card-shadow-hover: none;

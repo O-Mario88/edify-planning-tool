@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% comment %}HR Professional Development Dashboard body (§16) — re-rendered by HTMX on
 filter change. Everything here is derived live from ProfessionalDevelopmentRequest /
 ProfessionalDevelopmentAllocation, scoped to the viewer's role (HR/Admin all,
@@ -5,7 +7,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
 <div class="space-y-4">
 
   <!-- KPI Strip -->
-  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Professional development context" %}
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title="Professional development context" %}
 
   <!-- 1. Staff Professional Development Tracker -->
   <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
@@ -31,8 +33,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
     <div class="edify-metric-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5">
       {% for g in action_center %}
       <div class="edify-metric" data-tone="{% if g.count %}warning{% else %}success{% endif %}">
-        <p class="edify-metric__label" title="{{ g.label }}">{{ g.label }}</p>
-        <p class="edify-metric__value">{{ g.count }}</p>
+        {% kpi_strip %}{% kpi_metric %}{% kpi_label %}{{ g.label }}{% endkpi_label %}{{ g.count }}{% endkpi_metric %}{% endkpi_strip %}
         {% if g.items %}
         <div class="edify-metric__body space-y-1.5">
           {% for it in g.items %}
@@ -259,24 +260,12 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
   <!-- 6. Completed Courses & HR Sign-Off Snapshot -->
   <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
     <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">6. Completed Courses &amp; HR Sign-Off Snapshot</h2>
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-      <div class="rounded-surface border p-3 text-center edify-surface-muted edify-border">
-        <span class="block text-[20px] font-black tabular-nums edify-text">{{ completed_this_fy }}</span>
-        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">Signed Off, FY {{ fy }}</span>
-      </div>
-      <div class="rounded-surface border p-3 text-center edify-surface-muted edify-border">
-        <span class="block text-[20px] font-black tabular-nums edify-text">{{ certs_verified }}</span>
-        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">Certificates Verified</span>
-      </div>
-      <div class="rounded-surface border p-3 text-center edify-surface-muted edify-border">
-        <span class="block text-[20px] font-black tabular-nums edify-text">{{ bamboo_confirmed }}</span>
-        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">BambooHR Confirmed</span>
-      </div>
-      <div class="rounded-surface border p-3 text-center edify-surface-muted edify-border">
-        <span class="block text-[20px] font-black tabular-nums edify-text">{{ signoff_rate }}%</span>
-        <span class="block edify-text-caption font-bold text-slate-400 uppercase tracking-wide mt-1">Sign-Off Rate</span>
-      </div>
-    </div>
+    {% kpi_strip %}
+{% kpi_metric %}{% kpi_label %}Signed off, FY {{ fy }}{% endkpi_label %}{{ completed_this_fy }}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Certificates verified{% endkpi_label %}{{ certs_verified }}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}BambooHR confirmed{% endkpi_label %}{{ bamboo_confirmed }}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Sign-off rate{% endkpi_label %}{{ signoff_rate }}%{% endkpi_metric %}
+{% endkpi_strip %}
   </div>
 
   <!-- 7. Upcoming & Overdue Courses -->

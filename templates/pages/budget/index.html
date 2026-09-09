@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -13,40 +15,40 @@
 <p class="edify-page-header__description">FY{{ fy }} budget performance across all requests</p>
 </div>
 </div>
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Planned Budget</p>
-<p class="text-[24px] font-semibold text-[var(--edify-accent-text)] mt-1">{{ fy_data.plannedBudget|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Requested Budget</p>
-<p class="text-[24px] font-semibold edify-primary-text mt-1">{{ fy_data.requestedBudget|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Approved Budget</p>
-<p class="text-[24px] font-semibold text-emerald-600 mt-1">{{ fy_data.approvedBudget|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Disbursed Amount</p>
-<p class="text-[24px] font-semibold text-violet-600 mt-1">{{ fy_data.disbursedAmount|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Cleared Amount</p>
-<p class="text-[24px] font-semibold text-teal-600 mt-1">{{ fy_data.clearedAmount|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Pending Amount</p>
-<p class="text-[24px] font-semibold text-amber-600 mt-1">{{ fy_data.pendingAmount|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Variance</p>
-<p class="text-[24px] font-semibold text-rose-600 mt-1">{{ fy_data.variance|ugx }}</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-5 shadow-sm">
-<p class="edify-text-caption font-bold text-slate-400 uppercase tracking-wider">Scheduled Activities</p>
-<p class="text-[24px] font-semibold mt-1">{{ fy_data.activity_count }}</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{% kpi_label %}Planned Budget{% endkpi_label %}
+{{ fy_data.plannedBudget|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Requested Budget{% endkpi_label %}
+{{ fy_data.requestedBudget|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Approved Budget{% endkpi_label %}
+{{ fy_data.approvedBudget|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Disbursed Amount{% endkpi_label %}
+{{ fy_data.disbursedAmount|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Cleared Amount{% endkpi_label %}
+{{ fy_data.clearedAmount|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Pending Amount{% endkpi_label %}
+{{ fy_data.pendingAmount|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Variance{% endkpi_label %}
+{{ fy_data.variance|ugx }}
+{% endkpi_metric %}
+{% kpi_metric %}
+{% kpi_label %}Scheduled Activities{% endkpi_label %}
+{{ fy_data.activity_count }}
+{% endkpi_metric %}
+{% endkpi_strip %}
 
 {% if pending_approvals %}
 <div class="bg-amber-50 border border-amber-200 rounded-surface p-4 flex items-center gap-3">

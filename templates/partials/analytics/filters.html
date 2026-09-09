@@ -20,6 +20,7 @@ tiles and the panel move together and can never describe different scopes.{% end
     <label class="analytics-filter-field">
       <span class="edify-filter-label">Period</span>
       <select aria-label="Quarter" name="quarter">
+        <option value="" {% if not filters.selected_quarter %}selected{% endif %}>FY Cumulative</option>
         <option value="Q1" {% if filters.selected_quarter == 'Q1' %}selected{% endif %}>Q1 · Oct–Dec</option>
         <option value="Q2" {% if filters.selected_quarter == 'Q2' %}selected{% endif %}>Q2 · Jan–Mar</option>
         <option value="Q3" {% if filters.selected_quarter == 'Q3' %}selected{% endif %}>Q3 · Apr–Jun</option>

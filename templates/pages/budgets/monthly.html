@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -214,14 +216,7 @@
       <p class="edify-page-eyebrow">Actual spending</p>
       <h2 id="actual-spending-heading" class="text-[15px] font-bold text-slate-800">Disbursement and Accountability</h2>
     </div>
-    <dl class="grid grid-cols-2 divide-x divide-y divide-slate-100 sm:grid-cols-3 lg:grid-cols-6 lg:divide-y-0">
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Approved Operating Limits</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.approved_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Committed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.committed_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Amount Disbursed</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.disbursed_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Actual Accounted Spend</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.accounted_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Returned Balance</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.returned_fmt }}</dd></div>
-      <div class="p-3"><dt class="edify-text-caption font-semibold text-slate-500">Reimbursements</dt><dd class="mt-1 text-[14px] font-bold tabular-nums text-slate-800">{{ country_workflow.reconciliation.reimbursed_fmt }}</dd></div>
-    </dl>
+    {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Approved Operating Limits{% endkpi_label %}{{ country_workflow.reconciliation.approved_fmt }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Committed{% endkpi_label %}{{ country_workflow.reconciliation.committed_fmt }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Amount Disbursed{% endkpi_label %}{{ country_workflow.reconciliation.disbursed_fmt }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Actual Accounted Spend{% endkpi_label %}{{ country_workflow.reconciliation.accounted_fmt }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Returned Balance{% endkpi_label %}{{ country_workflow.reconciliation.returned_fmt }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Reimbursements{% endkpi_label %}{{ country_workflow.reconciliation.reimbursed_fmt }}{% endkpi_metric %}{% endkpi_strip %}
   </section>
   {% endif %}
   {% endif %}

@@ -2,7 +2,6 @@
 <div class="analytics-command-layer">
 
   {# Executive health: the minimum needed before deciding where to look. #}
-  {% include "components/kpi_strip.html" with items=kpi_strip_items variant="executive" drilldown_mode="program_lead" %}
 
   <section class="analytics-decision-section" aria-labelledby="pl-priority-title">
     <header class="analytics-section-heading">
@@ -26,7 +25,7 @@
       </summary>
       <div class="analytics-evidence-disclosure__body">
         <div class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {% include "partials/analytics/pl/team_performance.html" %}
+          {% include "partials/hr/distributed_summary.html" %}
           {% include "partials/analytics/pl/ssa_interventions.html" %}
         </div>
         <div class="edify-card-row grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -44,7 +43,7 @@
       <div class="analytics-evidence-disclosure__body" data-analytics-deferred>
         <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div class="lg:col-span-4">{% include "partials/analytics/pl/impact_summary.html" %}</div>
-          <div class="lg:col-span-8">{% include "partials/analytics/pl/cceo_performance.html" %}</div>
+          <div class="lg:col-span-8">{% include "partials/analytics/distributed_team.html" %}</div>
         </div>
         <div class="edify-card-row grid grid-cols-1 lg:grid-cols-12 gap-5">
           <div class="lg:col-span-12">{% include "partials/analytics/pl/activity_tracking.html" %}</div>

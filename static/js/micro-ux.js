@@ -10,6 +10,19 @@
   if (window.__edifyMicroUXInstalled) return;
   window.__edifyMicroUXInstalled = true;
 
+  // A top-bar search can include a separate filter form. Keep that association
+  // bidirectional: changing a filter must not silently clear the visible query.
+  document.addEventListener('htmx:configRequest', function (event) {
+    var detail = event.detail;
+    if (!detail || String(detail.verb).toLowerCase() !== 'get') return;
+    var filter = detail.elt && detail.elt.closest('form[id]');
+    var input = document.querySelector('.edify-topbar__search input[type="search"]');
+    var search = input && input.closest('form[hx-include]');
+    if (!filter || !search || !input.name) return;
+    var includes = search.getAttribute('hx-include').split(',').map(function (s) { return s.trim(); });
+    if (includes.indexOf('#' + filter.id) !== -1) detail.parameters[input.name] = input.value;
+  });
+
   var dialogStates = new WeakMap();
   var activeDialogs = new Set();
   var generatedId = 0;
@@ -89,6 +102,50 @@
    * relationships once into ordinary classes instead. HTMX-added roots pass
    * through this same enhancer, so the markers remain correct after swaps. */
   function enhanceStructuralMarkers(root) {
+    var contentTables = elementsWithin(root, 'main table, .drawer-body table, [role="dialog"] table');
+    var containingTable = root.closest && root.closest('table.edify-plain-table');
+    if (containingTable && contentTables.indexOf(containingTable) < 0) contentTables.push(containingTable);
+    contentTables.forEach(function (table) {
+      table.classList.add('edify-plain-table');
+      // Find the nearest local title bar; never paint a page heading or filters.
+      var branch = table;
+      while (branch.parentElement && !branch.parentElement.matches('main, body')) {
+        var parent = branch.parentElement;
+        var titleBar = Array.from(parent.children).find(function (child) {
+          return child !== branch && !child.contains(table)
+            && Boolean(child.compareDocumentPosition(branch) & Node.DOCUMENT_POSITION_FOLLOWING)
+            && !child.matches('.edify-page-header, form')
+            && !child.querySelector('h1, table, form, input, select, textarea, section, article')
+            && child.querySelectorAll('h2, h3, h4').length <= 1
+            && (child.matches('h2, h3, h4, caption') || child.querySelector('h2, h3, h4'));
+        });
+        if (titleBar) {
+          titleBar.classList.add('edify-table-titlebar');
+          break;
+        }
+        if (parent.querySelectorAll('table').length > 1 || parent.querySelector('h1')) break;
+        branch = parent;
+      }
+
+      table.querySelectorAll('button, [role="button"], summary, a.btn, a[class*="btn-"], a.rounded-control, [data-record-action] a').forEach(function (action) {
+        action.classList.add('edify-table-action');
+      });
+      table.querySelectorAll('td *, th *').forEach(function (element) {
+        var popup = element.closest('[role="dialog"], [role="menu"], .row-menu, [popover], [x-show].absolute, [x-show].fixed');
+        var plain = element.namespaceURI === 'http://www.w3.org/1999/xhtml'
+          && !element.matches('table, thead, tbody, tfoot, tr, td, th, script, style, template')
+          && !element.closest('.edify-table-action')
+          && !(popup && table.contains(popup))
+          && !element.matches('input[type="checkbox"], input[type="radio"], input[type="submit"], input[type="button"], input[type="reset"], input[type="hidden"]');
+        element.classList.toggle('edify-table-plain-content', plain);
+      });
+    });
+    elementsWithin(root, '.drawer-body').forEach(function (body) {
+      body.classList.toggle('edify-has-drawer-footer', Boolean(body.querySelector('.drawer-footer')));
+      body.querySelectorAll('button').forEach(function (button) {
+        button.classList.toggle('edify-stacked-label-button', Boolean(button.querySelector(':scope > span + span')));
+      });
+    });
     elementsWithin(root, filterToolbarSelector).forEach(function (toolbar) {
       toolbar.classList.toggle(
         'edify-has-work-plan-filter-popover',
@@ -924,7 +981,7 @@
     if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
     unfitTable(table);
     var plan = columnPlan(table, region);
-    if (!plan) return;
+    if (!plan || !plan.fits) return;
     applyPlan(table, plan);
     var overflow = table.scrollWidth - region.clientWidth;
     if (overflow > 0) settlePlan(table, overflow);
@@ -943,7 +1000,7 @@
     var plans = candidates.map(function (c) { return { table: c.table, region: c.region, plan: columnPlan(c.table, c.region) }; });
     var fitted = [];
     plans.forEach(function (entry) {
-      if (!entry.plan) return;
+      if (!entry.plan || !entry.plan.fits) return;
       applyPlan(entry.table, entry.plan);
       fitted.push(entry);
     });
@@ -1590,7 +1647,7 @@
     auditQueued = true;
     runWhenIdle(function () {
       auditQueued = false;
-      var roots = Array.from(pendingAuditRoots);
+      var roots = connectedRoots(pendingAuditRoots);
       pendingAuditRoots.clear();
       roots.forEach(function (auditRoot) {
         if (auditRoot === document || auditRoot.isConnected) auditInteractiveNames(auditRoot);
@@ -1615,6 +1672,21 @@
     });
   }
 
+  // One inserted subtree needs one enhancement pass, even when its parent
+  // and children were appended separately in the same task (tables/charts).
+  function connectedRoots(pending) {
+    var roots = Array.from(pending).filter(function (node) {
+      return node === document || node.isConnected;
+    });
+    var candidates = new Set(roots);
+    return roots.filter(function (node) {
+      for (var parent = node.parentNode; parent; parent = parent.parentNode) {
+        if (candidates.has(parent)) return false;
+      }
+      return true;
+    });
+  }
+
   function scheduleMutationScan(mutations) {
     mutations.forEach(function (mutation) {
       if (mutation.type === 'childList') {
@@ -1630,8 +1702,8 @@
     mutationScanQueued = true;
     requestAnimationFrame(function () {
       mutationScanQueued = false;
-      var enhanceRoots = Array.from(pendingEnhanceRoots);
-      var dialogRoots = Array.from(pendingDialogRoots);
+      var enhanceRoots = connectedRoots(pendingEnhanceRoots);
+      var dialogRoots = connectedRoots(pendingDialogRoots);
       pendingEnhanceRoots.clear();
       pendingDialogRoots.clear();
       /* Dialog visibility is a read; enhance() writes. Reading first means

@@ -12944,6 +12944,25 @@
    "view": "apps.documents.views.respond_comment_view"
   },
   {
+   "page_permission": "my_performance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities",
+   "route_name": "priorities_master",
+   "view": "apps.frontend.views.target_distribution_views.priorities_workspace_page"
+  },
+  {
    "page_permission": "priorities_master",
    "required_permissions": [],
    "role_exclusive": false,
@@ -12957,8 +12976,8 @@
     "ProjectCoordinator",
     "Admin"
    ],
-   "route": "/priorities",
-   "route_name": "priorities_master",
+   "route": "/priorities/master",
+   "route_name": "priorities_master_register",
    "view": "apps.frontend.views.target_distribution_views.priorities_master_page"
   },
   {
@@ -14659,26 +14678,26 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 390,
-  "Admin": 785,
+  "Accountant": 391,
+  "Admin": 786,
   "BusinessTransformationOfficer": 219,
-  "CCEO": 493,
-  "CountryDirector": 625,
-  "HumanResources": 269,
-  "ImpactAssessment": 506,
+  "CCEO": 494,
+  "CountryDirector": 626,
+  "HumanResources": 270,
+  "ImpactAssessment": 507,
   "MfiLoanOfficer": 118,
   "MfiPartnerAdmin": 121,
   "PartnerAdmin": 205,
   "PartnerFieldOfficer": 205,
-  "Program Lead": 557,
-  "ProjectCoordinator": 412,
-  "RegionalVicePresident": 311
+  "Program Lead": 558,
+  "ProjectCoordinator": 413,
+  "RegionalVicePresident": 312
  },
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 882,
-  "routes_total": 1069,
+  "routes_guarded": 883,
+  "routes_total": 1070,
   "routes_unguarded": 187,
   "surfaces_no_role_can_reach": 0
  },

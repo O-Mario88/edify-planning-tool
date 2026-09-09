@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -31,30 +33,30 @@
     <button type="submit" class="self-end h-8 px-3 inline-flex items-center rounded-control border border-slate-200 edify-surface text-[12px] font-bold edify-primary-text">Show year</button>
   </form>
 
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Total Schools</p>
-      <p class="text-[20px] font-bold text-slate-800 tabular-nums mt-0.5">{{ total_schools|intcomma }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">active in program</p>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Visited</p>
-      <p class="text-[20px] font-bold text-emerald-600 tabular-nums mt-0.5">{{ visited|intcomma }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">≥1 completed visit in FY{{ fy }}</p>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Not Yet Visited</p>
-      <p class="text-[20px] font-bold text-rose-600 tabular-nums mt-0.5">{{ unvisited|intcomma }}</p>
-      <p class="edify-text-caption font-semibold text-slate-400">awaiting first visit</p>
-    </div>
-    <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-3.5">
-      <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Coverage Rate</p>
-      <p class="text-[20px] font-bold tabular-nums mt-0.5 {% if coverage_pct >= 70 %}text-emerald-600{% elif coverage_pct >= 40 %}text-amber-600{% else %}text-rose-600{% endif %}">{{ coverage_pct }}%</p>
+  {% kpi_strip %}
+    {% kpi_metric %}
+      {% kpi_label %}Total Schools{% endkpi_label %}
+      {{ total_schools|intcomma }}
+      {% kpi_helper %}active in program{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Visited{% endkpi_label %}
+      {{ visited|intcomma }}
+      {% kpi_helper %}≥1 completed visit in FY{{ fy }}{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Not Yet Visited{% endkpi_label %}
+      {{ unvisited|intcomma }}
+      {% kpi_helper %}awaiting first visit{% endkpi_helper %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
+      {% kpi_label %}Coverage Rate{% endkpi_label %}
+      {{ coverage_pct }}%
       <div class="h-[6px] bg-slate-100 rounded-pill overflow-hidden mt-1.5">
         <div class="h-full rounded-pill {% if coverage_pct >= 70 %}bg-emerald-500{% elif coverage_pct >= 40 %}bg-amber-500{% else %}bg-rose-500{% endif %}" style="width: {{ coverage_pct }}%"></div>
       </div>
-    </div>
-  </div>
+    {% endkpi_metric %}
+  {% endkpi_strip %}
 
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2">
     <h2 class="text-[13px] font-bold text-slate-800 tracking-tight">Reach by district · FY{{ fy }}</h2>

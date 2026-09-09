@@ -104,13 +104,13 @@
               <button type="button" @click="open = !open" @click.outside="open = false" class="h-7 w-7 inline-flex items-center justify-center rounded-control text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors" :aria-expanded="open" aria-label="Project actions">
                 <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20"><path d="M10 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4zm0 6a2 2 0 110-4 2 2 0 010 4z"/></svg>
               </button>
-              <div x-show="open" x-cloak x-transition.origin.top.right class="absolute right-3 top-12 z-20 w-48 edify-surface border border-slate-200 rounded-surface shadow-lg py-1 text-left">
+              <div x-show.important="open" x-cloak x-transition.origin.top.right class="row-menu absolute right-3 top-12 z-20 w-48 edify-surface border border-slate-200 rounded-surface shadow-lg py-1 text-left">
                 <a href="/projects/{{ row.id }}" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Open Project</a>
-                <a href="/projects/{{ row.id }}" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">View Schools</a>
-                <a href="/projects/planning" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Add Schools</a>
-                <a href="/projects/planning" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Open Project Planning</a>
-                <a href="/partners" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Assign</a>
-                <a href="/projects/analytics" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">View Impact</a>
+                <a href="/projects/{{ row.id }}#participating-schools" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">View Schools</a>
+                <a href="/projects/planning?project={{ row.id }}" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Add Schools</a>
+                <a href="/projects/planning?project={{ row.id }}" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Open Project Planning</a>
+                <a href="/projects/planning?project={{ row.id }}&amp;partner_type=unassigned" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">Assign</a>
+                <a href="/projects/analytics?project={{ row.id }}" class="block px-3 py-2 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">View Impact</a>
               </div>
             </td>
           </tr>

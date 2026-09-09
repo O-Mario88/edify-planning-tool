@@ -4,19 +4,19 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **602**
-- All registered routes: **1069**
+- Routed product surfaces: **603**
+- All registered routes: **1070**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **26**
 - Activity states: **24**
-- Shared component templates: **422**
-- Full pages: **237**
-- Partials and drawers: **180**
-- Permission-gated surfaces: **588**
-- Referenced by automated tests: **559**
-- Findings: critical **0**, high **0**, medium **0**, low **0**
+- Shared component templates: **406**
+- Full pages: **236**
+- Partials and drawers: **179**
+- Permission-gated surfaces: **589**
+- Referenced by automated tests: **560**
+- Findings: critical **0**, high **0**, medium **1**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
 
@@ -258,7 +258,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-EAF8068263 | /escalations | Escalations | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0FD663DD8D | /evidence | Evidence Gallery | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8AAED4C95E | /evidence/ | Evidence Center | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-EAF2C08253 | /evidence/returned | Returned Evidence | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EAF2C08253 | /evidence/returned | Returned Evidence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-CF53BB543B | /extra-work | Extra Work · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-27E90C9600 | /extra-work/<str:assignment_id>/<str:action> | Extra Work Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-B8315198A8 | /extra-work/<str:assignment_id>/submit-drawer | Extra Work Submit Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -404,10 +404,10 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-70F6DE8C6B | /messages/thread/<str:thread_id>/star | Message Thread Star | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F513132000 | /mfi-portal | MFI Partner Portal | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2A8C6B46DF | /mfi-portal/<str:section> | MFI Partner Portal | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-00C9E3437D | /my-performance | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3F93C61FF3 | /my-performance/development | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-394F17A694 | /my-performance/documents | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-130CC03295 | /my-performance/values | Priority Setting Dashboard · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-00C9E3437D | /my-performance | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3F93C61FF3 | /my-performance/development | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-394F17A694 | /my-performance/documents | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-130CC03295 | /my-performance/values | Priorities · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-81D22F3012 | /my-plan | My Plan | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1028B8B6D6 | /my-plan/<str:activity_id> | Activity Details | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3093D469A8 | /my-plan/<str:activity_id>/accountability | Accountability Action | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -431,7 +431,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-94B9DA355F | /my-professional-development/request/<str:request_id>/action | Pd Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-E1DCBDF21B | /my-professional-development/request/<str:request_id>/certificate | Pd Certificate Upload | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-DB37D19B27 | /my-professional-development/request/<str:request_id>/evidence | Pd Evidence Upload | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-17269F5939 | /my-targets | My Targets | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-17269F5939 | /my-targets | My Targets | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 1 | referenced by automated test |
 | UI-PAGE-51EB10E6E7 | /my-targets/area-drawer | My Targets Area Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-26D49EB5F1 | /my-targets/export | My Targets Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-80804A5F4B | /my-targets/mscs | My Targets Mscs | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -502,7 +502,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-2460A9454D | /planning/assign-partner-action | Planning Assign Partner Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-39DFC686C6 | /planning/assign-partner-modal | Planning Assign Partner Modal | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E0F3508137 | /planning/bulk-action | Planning Bulk Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-CDB4BA67D1 | /planning/intelligence | Planning Intelligence | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CDB4BA67D1 | /planning/intelligence | Planning Intelligence | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-70E52CFA17 | /planning/route-preview | Planning Route Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-739AAF8574 | /planning/schedule | Schedule Activity - Edify Command Center | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CB5D63ABE3 | /planning/schedule-action | Planning Schedule Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -515,7 +515,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-433A02DA3B | /policy-agreement/restricted | Access Restricted | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5A094101A0 | /policy-compliance | Policy Compliance | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4B290608CB | /policy-compliance/comments/<str:comment_id> | Respond Comment | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-B337BA86BF | /priorities | Priorities | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-27FA261421 | /priorities | Priorities | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-E8E9A2A166 | /priorities/master | Priorities · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EB2FC6A25B | /priorities/ssa-mapping | SSA & Activity Mapping · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8BBA1A3E04 | /priorities/ssa-mapping/<str:item_id>/drawer | Ssa Mapping Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5D8206AE15 | /priorities/ssa-mapping/<str:item_id>/save | Ssa Mapping Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

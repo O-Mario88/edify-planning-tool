@@ -14,7 +14,7 @@ window.subregionMap = function (){
   const token = (name) => getComputedStyle(document.documentElement)
     .getPropertyValue(name).trim();
   return {
-    ready:false, failed:false, attempts:0,
+    ready:false, failed:false, attempts:0, loading:false,
     detailLoading:false, detailFailed:false, detailRequest:0,
     focused:null, focusedSubregion:null, focusedDistrict:null, focusedSubcounty:null,
     districtParentSubregion:null,
@@ -211,7 +211,17 @@ window.subregionMap = function (){
       pin.appendChild(dot);
     },
 
+    fitViewport(){
+      const viewport = this.$el.querySelector('.sr-map-viewport');
+      if (!viewport) return;
+      const top = viewport.getBoundingClientRect().top + window.scrollY;
+      const height = Math.max(220, window.innerHeight - top - 24);
+      this.$el.style.setProperty('--map-viewport-height', height + 'px');
+      this.refreshMapLabelPlacement();
+    },
     async load(){
+      if(this.loading || this.ready) return;
+      this.loading = true;
       // district_insight ships an object keyed by district name, already in
       // the shape the card needs -- no re-indexing. (It replaced an array;
       // calling .forEach on the object threw here and left the map blank.)
@@ -234,16 +244,15 @@ window.subregionMap = function (){
           document.getElementById('subregion-distribution-rows').textContent) || [];
         this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
         this.syncSchoolTotals();
-        const indexRequest = fetch("{% static 'geo/uganda_subcounty_index.json' %}")
-          .then(response => response.ok ? response.json() : null)
-          .catch(() => null);
         const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
         if (!res.ok) throw new Error('boundaries HTTP ' + res.status);
-        this.geo = await res.json();
-        this.subcountyIndex = await indexRequest;
+        // Static coordinates never change. Keeping them out of Alpine's
+        // deep reactive proxies makes path generation substantially cheaper.
+        this.geo = Object.freeze(await res.json());
         if (this.$refs.svg) this.$refs.svg.replaceChildren();
         this.draw();
         this.ready = true;
+        this.$nextTick(() => this.fitViewport());
       } catch (err) {
         this.attempts += 1;
         if (this.attempts <= 1) {
@@ -252,6 +261,7 @@ window.subregionMap = function (){
           this.failed = true;
         }
       }
+      this.loading = false;
       // A bfcache restore resurrects the page without re-running scripts;
       // rehydrate if the component came back not ready.
       if (!this._pageshowBound) {
@@ -310,7 +320,7 @@ window.subregionMap = function (){
 
       const shapes = document.createElementNS(NS,'g');
       shapes.setAttribute('class', 'sr-boundary-layer sr-district-layer');
-      f.forEach((ft, i) => {
+      f.forEach(ft => {
         const p = ft.properties;
         const d = rings(ft.geometry)
           .map(r => 'M' + r.map(([x,y]) => sx(x).toFixed(1)+','+sy(y).toFixed(1)).join(' L') + 'Z')
@@ -336,8 +346,7 @@ window.subregionMap = function (){
         el.style.cssText =
           'cursor:pointer;transform-box:fill-box;transform-origin:center;' +
           'transition:opacity 180ms ease,filter 240ms ease,' +
-          'transform 260ms cubic-bezier(.2,.8,.2,1);' +
-          `animation:sr-rise 520ms cubic-bezier(.22,.61,.36,1) both ${i*4}ms`;
+          'transform 260ms cubic-bezier(.2,.8,.2,1);';
         el.addEventListener('pointermove', e => this.hover(el, e));
         el.addEventListener('pointerleave', () => this.releaseBoundary(el));
         el.addEventListener('click', e => { e.stopPropagation(); this.zoom(el); });
@@ -433,7 +442,7 @@ window.subregionMap = function (){
       const pinLayer = document.createElementNS(NS,'g');
       pinLayer.setAttribute('class','sr-school-pins');
       pinLayer.setAttribute('aria-hidden','true');
-      f.forEach((ft, districtIndex) => {
+      f.forEach(ft => {
         const p = ft.properties, mix = this.schoolMix(p.d);
         const visible = this.schoolTypes.filter(type => (mix[type.key] || 0) > 0);
         if(!visible.length) return;
@@ -460,8 +469,6 @@ window.subregionMap = function (){
             `translate(${offset.toFixed(1)},${Math.abs(offset) ? 1.5 : -0.5})`
           );
           pin.dataset.schoolType = type.key;
-          pin.style.animation =
-            `sr-pin-rise 360ms cubic-bezier(.22,.61,.36,1) both ${districtIndex * 3}ms`;
 
           const title = document.createElementNS(NS,'title');
           title.textContent =
@@ -872,6 +879,15 @@ window.subregionMap = function (){
       }));
       const markerRects = this.markerObstacleRects(pinLayer, scale);
       const placed = [];
+      if(key === 'district' && this.subLabels && this.cam){
+        const inverse = this.cam.getScreenCTM()?.inverse();
+        if(inverse) this.subLabels.querySelectorAll('text').forEach(label => {
+          const box = label.getBoundingClientRect();
+          const a = new DOMPoint(box.left - 2, box.top - 2).matrixTransform(inverse);
+          const b = new DOMPoint(box.right + 2, box.bottom + 2).matrixTransform(inverse);
+          placed.push({left:a.x, top:a.y, right:b.x, bottom:b.y});
+        });
+      }
       const overlaps = (a, b) =>
         a.left < b.right && a.right > b.left &&
         a.top < b.bottom && a.bottom > b.top;
@@ -935,33 +951,7 @@ window.subregionMap = function (){
           // permitted nearby empty space here, which put compact districts
           // such as Kampala and Butambala over their neighbours.
           placement = 'boundary-fit';
-          const openOptions = labelScales.flatMap(candidateScale =>
-            candidates.map(candidate => {
-              const rect = rectFor(candidate, candidateScale);
-              const blocked =
-                markerRects.some(marker => overlaps(rect, marker)) ||
-                placed.some(existing => overlaps(rect, existing));
-              if(blocked || !this.boundaryContainsLabel(path, rect)) return null;
-              return {
-                candidate,
-                labelScale:candidateScale,
-                penalty:
-                  (1 - candidateScale) * 120 +
-                  Math.hypot(candidate[0], candidate[1]) / 100,
-              };
-            }).filter(Boolean)
-          );
-          const best = openOptions.reduce(
-            (current, option) =>
-              !current || option.penalty < current.penalty
-                ? option
-                : current,
-            null,
-          );
-          if(best){
-            offset = best.candidate;
-            labelScale = best.labelScale;
-          }else if(allowOverlapFallback){
+          if(allowOverlapFallback){
             labelScale = labelScales[labelScales.length - 1];
             const anchor = candidates.map(candidate => {
               const x = baseX + candidate[0] / scale;
@@ -1038,7 +1028,7 @@ window.subregionMap = function (){
         const step = () => {
           /* A newer placement, or a map that has since been swapped out of
              the page (the dashboard's Map | Operations rail), ends this one. */
-          if(token !== this._placementToken || !this.$refs.svg || !this.$refs.svg.isConnected){ resolve(false); return; }
+          if(token !== this._placementToken || (key === "district" && this.focused) || !this.$refs.svg || !this.$refs.svg.isConnected){ resolve(false); return; }
           const sliceEnd = performance.now() + 6;
           while(index < labels.length && performance.now() < sliceEnd){
             placeOne(labels[index++]);
@@ -1050,6 +1040,8 @@ window.subregionMap = function (){
       });
     },
     placeDistrictLabels(){
+      if(this.focused) return Promise.resolve(false);
+      this.keepSubRegionLabelsOnCanvas();
       return this.placeBoundaryLabels({
         labelLayer:this.labels,
         pathLayer:this.districtShapes,
@@ -1057,7 +1049,7 @@ window.subregionMap = function (){
         key:'district',
         scale:1,
         labelScales:[0.82, 0.74, 0.68],
-        allowOverlapFallback:true,
+        allowOverlapFallback:false,
       }).then(completed => {
         if(completed) this.keepSubRegionLabelsOnCanvas();
         return completed;
@@ -1106,7 +1098,7 @@ window.subregionMap = function (){
         key:'subcounty',
         scale:this.zoomScale || 1,
         labelScales:[1, 0.9, 0.82],
-        allowOverlapFallback:true,
+        allowOverlapFallback:false,
         sync:true,
       });
     },
@@ -1238,8 +1230,6 @@ window.subregionMap = function (){
           `translate(${offset.toFixed(1)},${Math.abs(offset) ? 1.5 : -0.5})`,
         );
         pin.dataset.schoolType = type.key;
-        pin.style.animation =
-          `sr-pin-rise 280ms cubic-bezier(.22,.61,.36,1) both ${sequence * 7}ms`;
 
         const title = document.createElementNS(this.NS, 'title');
         title.textContent =
@@ -1481,7 +1471,8 @@ window.subregionMap = function (){
       this.focusedSubcounty = name;
       this.focused = `subcounty:${name}`;
       this.tip.show = false;
-      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+      el.blur();
+      this.$nextTick(() => requestAnimationFrame(() => this.$refs.mapBack?.focus({preventScroll:true})));
     },
 
     zoom(el){
@@ -1531,7 +1522,8 @@ window.subregionMap = function (){
       // A focused SVG path would otherwise retain its blue keyboard ring and
       // magnify that ring with the camera. Move focus to the visible escape
       // control, preserving keyboard navigation without drawing over the map.
-      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+      el.blur();
+      this.$nextTick(() => requestAnimationFrame(() => this.$refs.mapBack?.focus({preventScroll:true})));
     },
 
     back(){
@@ -1556,7 +1548,7 @@ window.subregionMap = function (){
       this.tip.show = false;
       this.resolveSubcountyLabelCollisions();
       this.scaleSubcountyOverlays(camera.scale);
-      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+      this.$nextTick(() => requestAnimationFrame(() => this.$refs.mapBack?.focus({preventScroll:true})));
     },
 
     reset(){

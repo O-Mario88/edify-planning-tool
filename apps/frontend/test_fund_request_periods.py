@@ -587,17 +587,17 @@ class TwoColumnLayoutTest(TestCase):
         client.force_login(self.user)
         body = client.get("/fund-requests/weekly").content.decode()
         self.assertNotIn('id="fund-requests-monthly-preview"', body)
-        self.assertEqual(body.count('data-component="kpi-card"'), 6)
+        self.assertEqual(body.count('data-component="context-metric"'), 6)
 
     def test_the_retired_monthly_preview_cannot_regrow_kpi_markup(self):
-        """Keep the retired partial inert if an old include is reintroduced."""
+        """The retired duplicate presentation must stay removed."""
         from pathlib import Path
 
         from django.conf import settings
 
-        source = (
-            Path(settings.BASE_DIR)
-            / "templates/partials/fund_requests/monthly_preview.html"
-        ).read_text()
-        self.assertNotIn("components/kpi_strip.html", source)
-        self.assertNotIn('data-component="kpi-card"', source)
+        self.assertFalse(
+            (
+                Path(settings.BASE_DIR)
+                / "templates/partials/fund_requests/monthly_preview.html"
+            ).exists()
+        )

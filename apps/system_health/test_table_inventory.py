@@ -40,7 +40,12 @@ class TableBoundsTest(SimpleTestCase):
     #:   "Lagging district-intervention combinations" to be all of them. The
     #:   page now states the count it is showing and the total it came from,
     #:   so the bound is disclosed rather than hidden.
-    UNBOUNDED_CEILING = 81
+    #: * `distributed.rows` on the performance review / conversation summary
+    #:   is naturally bounded by the number of strategic priorities assigned
+    #:   to the user's role (typically 3 to 6).
+    #: * The PL Team Targets performance matrix (`members`, bounded by supervisees)
+    #:   and monthly trend table (`team_trend`, exactly 12 financial-year months).
+    UNBOUNDED_CEILING = 84
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

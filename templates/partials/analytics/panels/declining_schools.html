@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load table_pagination %}
 {% comment %}
 The Declining Schools tab.
@@ -36,28 +38,12 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 </div>
 {% else %}
 
-<div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ d.totalDeclining }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Declining schools</p>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">of {{ d.assessedPairs }} with two cycles</p>
-</div>
-<div class="edify-surface rounded-surface border {% if d.severeCount %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} p-4">
-<p class="text-[24px] font-extrabold {% if d.severeCount %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ d.severeCount }}</p>
-<p class="edify-text-caption {% if d.severeCount %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1.5">In freefall</p>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">dropped 1.5+ points</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[24px] font-extrabold text-slate-800 leading-none tabular-nums">{{ d.bandDropCount }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Fell a band</p>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">e.g. Strong → Improving</p>
-</div>
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] p-4">
-<p class="text-[15px] font-extrabold text-slate-800 leading-tight">{{ d.weakestIntervention|default:"—"|title }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1.5">Weakest intervention</p>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">lowest average movement</p>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}{% kpi_label %}Declining schools{% endkpi_label %}{{ d.totalDeclining }}{% kpi_helper %}of {{ d.assessedPairs }} with two cycles{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}In freefall{% endkpi_label %}{{ d.severeCount }}{% kpi_helper %}Dropped 1.5+ points{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Fell a band{% endkpi_label %}{{ d.bandDropCount }}{% kpi_helper %}e.g. Strong → Improving{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Weakest intervention{% endkpi_label %}{{ d.weakestIntervention|default:"—"|title }}{% kpi_helper %}Lowest average movement{% endkpi_helper %}{% endkpi_metric %}
+{% endkpi_strip %}
 
 {# ── Which interventions are failing ───────────────────────────────── #}
 <div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">

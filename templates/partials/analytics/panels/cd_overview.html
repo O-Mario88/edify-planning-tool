@@ -28,7 +28,7 @@ changes this analysis, not the tab you are on.
 
 <form id="cd-analytics-filters"
       hx-get="/analytics/country-director"
-      hx-target="#cd-analytics-body" hx-swap="innerHTML"
+      hx-target="#analytics-scope" hx-swap="innerHTML"
       hx-trigger="change delay:80ms" hx-push-url="true"
       class="analytics-filter-bar edify-text-caption font-bold text-slate-500">
 
@@ -99,7 +99,7 @@ changes this analysis, not the tab you are on.
     <span class="uppercase tracking-wider edify-text-caption">Country Wide</span>
   </span>
   <a href="/analytics/country-director"
-     hx-get="/analytics/country-director" hx-target="#cd-analytics-body" hx-swap="innerHTML" hx-push-url="true"
+     hx-get="/analytics/country-director" hx-target="#analytics-scope" hx-swap="innerHTML" hx-push-url="true"
      class="ml-auto inline-flex items-center gap-1 edify-text-caption edify-primary-text edify-primary-text-hover font-semibold px-2">
     <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5M4 9a8 8 0 0113-3M20 15a8 8 0 01-13 3"/></svg>
     Reset Filters

@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 <div class="edify-surface rounded-surface  p-4 shadow-sm space-y-4">
 <div class="flex items-center justify-between border-b border-slate-50 pb-2">
 <div>
@@ -10,31 +12,8 @@
 
 </div>
 
-<div class="space-y-4">
-<!-- Core Schools Block -->
-<div class="bg-slate-50  rounded-surface p-3 flex items-center justify-between">
-<div>
-<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Core Schools</span>
-<p class="text-[18px] font-semibold text-slate-800 mt-0.5">{{ core_champion.core_count }} schools</p>
-<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">Average SSA: {{ core_champion.core_ssa }}</span>
-</div>
-<div class="text-right">
-<span class="text-[20px] font-semibold text-slate-800">{{ core_champion.core_ssa }}</span>
-<span class="edify-text-caption text-emerald-600 font-bold block mt-0.5">▲ +0.28 vs Q1</span>
-</div>
-</div>
-
-<!-- Champion Schools Block -->
-<div class="bg-slate-50  rounded-surface p-3 flex items-center justify-between">
-<div>
-<span class="edify-text-caption uppercase font-semibold text-slate-400 tracking-wider">Champion Schools</span>
-<p class="text-[18px] font-semibold text-[var(--edify-accent-text)] mt-0.5">{{ core_champion.champion_count }} schools</p>
-<span class="edify-text-caption text-slate-400 font-semibold block mt-0.5">Average SSA: {{ core_champion.champion_ssa }}</span>
-</div>
-<div class="text-right">
-<span class="text-[20px] font-semibold text-[var(--edify-accent-text)]">{{ core_champion.champion_ssa }}</span>
-<span class="edify-text-caption text-emerald-600 font-bold block mt-0.5">▲ +0.41 vs Q1</span>
-</div>
-</div>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}{% kpi_label %}Core schools{% endkpi_label %}{{ core_champion.core_count }}{% kpi_helper %}Average SSA: {{ core_champion.core_ssa }}{% endkpi_helper %}{% endkpi_metric %}
+{% kpi_metric %}{% kpi_label %}Champion schools{% endkpi_label %}{{ core_champion.champion_count }}{% kpi_helper %}Average SSA: {{ core_champion.champion_ssa }}{% endkpi_helper %}{% endkpi_metric %}
+{% endkpi_strip %}
 </div>

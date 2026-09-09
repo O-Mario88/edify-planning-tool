@@ -1,4 +1,4 @@
-{% if is_htmx %}
+{% if is_htmx and can_export %}
 <a id="spp-export" class="spp-button spp-button--secondary" href="{{ export_url }}" hx-swap-oob="outerHTML">{% include "partials/projects/planning_icon.html" with name="download" %} Export</a>
 {% endif %}
 
@@ -10,23 +10,31 @@
   <a class="spp-button spp-button--primary" href="/projects">Open Special Projects</a>
 </section>
 {% else %}
+{% include "partials/projects/workspace_nav.html" with workspace_active="plan" %}
 <form id="spp-filters" class="spp-filter-panel" method="get" action="/projects/planning" hx-get="/projects/planning" hx-target="#spp-workspace" hx-swap="innerHTML" hx-push-url="true" hx-trigger="change, submit" hx-indicator="#spp-updating" @htmx:before-request="selected = []">
   <input id="spp-tab" type="hidden" name="tab" value="{{ selected.tab }}">
-  <div class="spp-filter-grid">
+  <div class="spp-filter-grid spp-filter-grid--primary">
+    <label class="spp-field"><span>Project</span><select aria-label="Project" name="project"><option value="">All projects</option>{% for option in projects %}<option value="{{ option.id }}" {% if selected.project == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
     <label class="spp-field"><span>Fiscal Year</span><select aria-label="Fiscal year" name="fy">{% for option in fy_options %}<option value="{{ option }}" {% if selected.fy == option %}selected{% endif %}>FY {{ option }}</option>{% endfor %}</select></label>
     <label class="spp-field"><span>Quarter</span><select aria-label="Quarter" name="quarter">{% for option in quarters %}<option value="{{ option }}" {% if selected.quarter == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></label>
-    <label class="spp-field"><span>District</span><select aria-label="District" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
-    <label class="spp-field"><span>Project Lead</span><select aria-label="Staff" name="staff"><option value="">All project leads</option>{% for option in staff_options %}<option value="{{ option.id }}" {% if selected.staff == option.id|stringformat:'s' %}selected{% endif %}>{{ option.user.name }}</option>{% endfor %}</select></label>
-    <label class="spp-field"><span>Project</span><select aria-label="Project" name="project"><option value="">All projects</option>{% for option in projects %}<option value="{{ option.id }}" {% if selected.project == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
-    <label class="spp-field"><span>Project Type</span><select aria-label="Project type" name="project_type"><option value="">All types</option>{% for option in project_types %}<option value="{{ option.value }}" {% if selected.project_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
-    <label class="spp-field"><span>Delivery Type</span><select aria-label="Partner type" name="partner_type"><option value="">All delivery types</option>{% for option in partner_types %}<option value="{{ option.value }}" {% if selected.partner_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
-    <label class="spp-field"><span>Activity Type</span><select aria-label="Activity type" name="activity_type"><option value="">All activities</option>{% for option in activity_types %}<option value="{{ option.value }}" {% if selected.activity_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
     <div class="spp-filter-reset"><span id="spp-updating" class="htmx-indicator">Updating…</span><a href="/projects/planning">{% include "partials/projects/planning_icon.html" with name="reset" %} Clear filters</a></div>
   </div>
+  <details class="spp-more-filters" {% if selected.district or selected.staff or selected.project_type or selected.partner_type or selected.activity_type %}open{% endif %}>
+    <summary>More filters{% if selected.district or selected.staff or selected.project_type or selected.partner_type or selected.activity_type %} · active{% endif %}</summary>
+    <div class="spp-filter-grid spp-filter-grid--advanced">
+      <label class="spp-field"><span>District</span><select aria-label="District" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+      <label class="spp-field"><span>Project Lead</span><select aria-label="Staff" name="staff"><option value="">All project leads</option>{% for option in staff_options %}<option value="{{ option.id }}" {% if selected.staff == option.id|stringformat:'s' %}selected{% endif %}>{{ option.user.name }}</option>{% endfor %}</select></label>
+      <label class="spp-field"><span>Project Type</span><select aria-label="Project type" name="project_type"><option value="">All types</option>{% for option in project_types %}<option value="{{ option.value }}" {% if selected.project_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+      <label class="spp-field"><span>Delivery Type</span><select aria-label="Partner type" name="partner_type"><option value="">All delivery types</option>{% for option in partner_types %}<option value="{{ option.value }}" {% if selected.partner_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+      <label class="spp-field"><span>Activity Type</span><select aria-label="Activity type" name="activity_type"><option value="">All activities</option>{% for option in activity_types %}<option value="{{ option.value }}" {% if selected.activity_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    </div>
+  </details>
 </form>
 
-{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Project planning context" %}
+{% include "components/context_metrics.html" with items=kpis variant="executive" title="Project planning context" %}
 
+<details class="spp-readiness">
+<summary>Readiness guidance</summary>
 <section class="spp-band-grid" aria-label="Planning readiness bands">
   {% for item in band_cards %}
   <article class="spp-band spp-tone--{{ item.tone }}">
@@ -35,6 +43,7 @@
   </article>
   {% endfor %}
 </section>
+</details>
 
 <div class="spp-work-layout">
   <section class="spp-card spp-queue" aria-labelledby="spp-queue-title">
@@ -112,7 +121,7 @@
       <header><p class="spp-eyebrow">Bulk Actions</p><h2><span x-text="selected.length">0</span> selected</h2></header>
       <button type="button" @click="openBulk('partner')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="partner" %} Assign</button>
       <button type="button" @click="openBulk('schedule')" :disabled="selected.length === 0">{% include "partials/projects/planning_icon.html" with name="calendar" %} Schedule</button>
-      <a href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export Filtered</a>
+      {% if can_export %}<a href="{{ export_url }}">{% include "partials/projects/planning_icon.html" with name="download" %} Export Filtered</a>{% endif %}
       {% if selected_row %}<a href="{{ selected_row.project_url }}">{% include "partials/projects/planning_icon.html" with name="folder" %} Open Project Plan</a>{% endif %}
     </section>
   </aside>

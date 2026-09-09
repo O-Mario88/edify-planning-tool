@@ -67,6 +67,37 @@ class DashboardMetricCostTest(TestCase):
         self.assertEqual(response.status_code, 302)
         build_metrics.assert_not_called()
 
+    def test_map_does_not_build_hidden_operational_tables(self):
+        user = _user("map-cost@edify.test", "CountryDirector")
+        self.client.force_login(user)
+        with patch(
+            "apps.analytics.cd_dashboard_service.CDDashboardService.finance_snapshot",
+            return_value={},
+        ) as finance:
+            response = self.client.get("/dashboard?view=map")
+            self.assertEqual(response.status_code, 200)
+            finance.assert_not_called()
+            operation = self.client.get("/dashboard?view=operations")
+            self.assertEqual(operation.status_code, 200)
+            finance.assert_called_once()
+        self.assertEqual(
+            response.context["kpi_strip_items"], operation.context["kpi_strip_items"]
+        )
+
+    def test_retired_dashboard_rails_do_not_query_alerts_or_today(self):
+        user = _user("retired-rails@edify.test", "CountryDirector")
+        self.client.force_login(user)
+        with (
+            patch("apps.command_center.services.alerts") as alerts,
+            patch("apps.command_center.services.alerts_summary") as summary,
+            patch("apps.command_center.services.today") as today,
+        ):
+            response = self.client.get("/dashboard")
+        self.assertEqual(response.status_code, 200)
+        alerts.assert_not_called()
+        summary.assert_not_called()
+        today.assert_not_called()
+
     def test_the_cceo_branch_does_not_build_metrics_it_never_renders(self):
         response, build_metrics = self._get_dashboard_as("CCEO", "cceo-cost@edify.test")
         self.assertEqual(response.status_code, 200)

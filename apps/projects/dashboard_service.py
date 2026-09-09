@@ -13,9 +13,12 @@ Derived bands (completion %, status, planning-readiness labels) come from real d
 
 from __future__ import annotations
 
+from urllib.parse import urlencode
+
 from apps.core.metrics import render_precomputed_metric_item
 
 from django.db.models import Q, Sum
+from django.utils import timezone
 
 from apps.core.scoping import resolve_user_scope
 
@@ -156,6 +159,8 @@ def get_dashboard(
         projects_qs = projects_qs.filter(category=filters["type"])
     projects = list(projects_qs.order_by("name"))
     project_ids = [p.id for p in projects]
+    project_names = {p.id: p.name for p in projects}
+    project_by_id = {p.id: p for p in projects}
 
     # ── Base querysets (all scoped to those projects) ─────────────────────────
     psa = ProjectSchoolAssignment.objects.filter(
@@ -406,6 +411,32 @@ def get_dashboard(
             }
         )
 
+    at_risk_projects = []
+    for row in portfolio:
+        project = project_by_id[row["id"]]
+        planned = int(budget_by_project.get(row["id"], 0) or 0)
+        ceiling = int(project.budget_ceiling_ugx or 0)
+        is_over_budget = bool(ceiling and planned > ceiling)
+        if row["status"] not in {"At Risk", "Behind"} and not is_over_budget:
+            continue
+        if is_over_budget:
+            reason = f"Planned cost is {_fmt_ugx(planned - ceiling)} over the ceiling."
+        elif row["status"] == "Behind":
+            reason = "Delivery is behind the current project plan."
+        else:
+            reason = "Delivery needs a coordinator review."
+        at_risk_projects.append(
+            {
+                **row,
+                "reason": reason,
+                "action_url": (
+                    f"/projects/{row['id']}#budget-execution"
+                    if is_over_budget
+                    else f"/projects/planning?{urlencode({'project': row['id']})}"
+                ),
+            }
+        )
+
     # Status is derived (not stored), so it is applied to the built portfolio
     # rows, not the project queryset. The right-rail selection still resolves
     # from the unfiltered `projects` set so a selected project stays visible.
@@ -483,7 +514,7 @@ def get_dashboard(
                 else "All project schools have a current SSA — schedule support activities."
             ),
             "next_step_cta": "Go to Planning",
-            "next_step_href": "/planning",
+            "next_step_href": f"/projects/planning?{urlencode({'project': sel.id})}",
         }
 
     # ── Project Planning Queue (real readiness from stored fields) ─────────────
@@ -495,49 +526,45 @@ def get_dashboard(
         ssa = s.current_fy_ssa_status
         readiness = s.planning_readiness
         if ssa == "not_done":
-            state, tone, action, href = (
+            state, tone, action = (
                 "SSA Required",
                 "warning",
                 "Schedule SSA",
-                "/planning",
             )
         elif readiness == "in_my_plan":
-            state, tone, action, href = (
+            state, tone, action = (
                 "In My Plan",
                 "info",
                 "View in My Plan",
-                "/my-plan",
             )
         elif readiness == "ready_for_partner_assignment":
-            state, tone, action, href = (
+            state, tone, action = (
                 "Partner Pending Schedule",
                 "purple",
                 "Assign",
-                "/planning",
             )
         elif readiness == "scheduled":
-            state, tone, action, href = (
+            state, tone, action = (
                 "Scheduled",
                 "success",
                 "View School",
-                "/planning",
             )
         elif readiness == "requires_cluster":
-            state, tone, action, href = (
+            state, tone, action = (
                 "Cluster Required",
                 "neutral",
                 "Add to Cluster",
-                "/clusters",
             )
         else:
-            state, tone, action, href = (
+            state, tone, action = (
                 "Ready for Support",
                 "success",
                 "Schedule",
-                "/planning",
             )
         queue.append(
             {
+                "project_id": a.project_id,
+                "project": project_names.get(a.project_id, "Project"),
                 "school": s.name,
                 "school_id": s.school_id,
                 "district": s.district.name if s.district_id else "—",
@@ -546,12 +573,157 @@ def get_dashboard(
                 "state": state,
                 "tone": tone,
                 "action": action,
-                "href": href,
+                "href": (
+                    f"/projects/my-plan?{urlencode({'project': a.project_id, 'q': s.name})}"
+                    if state == "In My Plan"
+                    else "/clusters"
+                    if state == "Cluster Required"
+                    else f"/projects/planning?{urlencode({'project': a.project_id, 'q': s.name})}"
+                ),
             }
         )
     # Surface schools needing action first.
     queue.sort(key=lambda r: r["state"] in ("In My Plan", "Scheduled"))
     queue_total = len(queue)
+
+    # ── Coordinator action centre ────────────────────────────────────────────
+    # The role home should answer "what needs me now?" rather than forcing the
+    # coordinator to reconcile Planning, My Plan and notifications by hand.
+    # These rows remain projections over the canonical school/activity state;
+    # completing the underlying workflow makes the item disappear naturally.
+    today = timezone.localdate()
+    action_queue = []
+    for project in projects:
+        planned = int(budget_by_project.get(project.id, 0) or 0)
+        ceiling = int(project.budget_ceiling_ugx or 0)
+        if not ceiling or planned <= ceiling:
+            continue
+        action_queue.append(
+            {
+                "id": f"budget-{project.id}",
+                "title": project.name,
+                "project": project.name,
+                "issue": "Budget variance",
+                "detail": f"Planned cost is {_fmt_ugx(planned - ceiling)} over the project ceiling.",
+                "tone": "danger",
+                "priority": 0,
+                "priority_label": "Urgent",
+                "due": None,
+                "url": f"/projects/{project.id}#budget-execution",
+                "action_label": "Review budget",
+            }
+        )
+    action_activities = list(
+        acts.select_related("school")
+        .exclude(status__in=["closed", "cancelled", "rejected", "deferred"])
+        .order_by("planned_date", "created_at")[:200]
+    )
+    for activity in action_activities:
+        issue = ""
+        detail = ""
+        tone = "info"
+        priority = 3
+        if activity.status in {"returned", "returned_by_pl", "returned_by_ia"}:
+            issue = "Returned for correction"
+            detail = "Review the return reason and correct the activity."
+            tone = "danger"
+            priority = 0
+        elif (
+            activity.planned_date
+            and activity.planned_date < today
+            and activity.status in {"scheduled", "in_progress"}
+        ):
+            issue = "Overdue activity"
+            detail = "The planned date has passed without completion."
+            tone = "danger"
+            priority = 0
+        elif activity.evidence_status in {"returned", "rejected"}:
+            issue = "Evidence needs correction"
+            detail = "Update the evidence requested by the reviewer."
+            tone = "danger"
+            priority = 0
+        elif (
+            activity.status in {"completed", "evidence_uploaded"}
+            and activity.evidence_status != "accepted"
+        ):
+            issue = "Evidence needs attention"
+            detail = "Delivery is recorded, but the evidence workflow is incomplete."
+            tone = "warning"
+            priority = 1
+        elif (
+            activity.delivery_type == "partner"
+            and activity.status == "assigned_to_partner"
+        ):
+            issue = "Partner confirmation pending"
+            detail = "Follow up with the assigned partner on delivery readiness."
+            tone = "warning"
+            priority = 1
+        elif activity.status == "awaiting_ia_verification":
+            issue = "IA review pending"
+            detail = "The activity is waiting for verification."
+            tone = "info"
+            priority = 2
+        if not issue:
+            continue
+        school_name = activity.school.name if activity.school_id else "Project activity"
+        action_queue.append(
+            {
+                "id": activity.id,
+                "title": school_name,
+                "project": project_names.get(activity.project_id, "Project"),
+                "issue": issue,
+                "detail": detail,
+                "tone": tone,
+                "priority": priority,
+                "priority_label": "Urgent" if priority == 0 else "Needs review",
+                "due": activity.planned_date,
+                "url": f"/my-plan/{activity.id}",
+                "action_label": "Review activity",
+            }
+        )
+
+    # Readiness work has no Activity yet, so add it from the school-project
+    # queue after activity exceptions. This closes the former gap between
+    # "unscheduled school" and the coordinator's home.
+    for row in queue:
+        if row["state"] in {"In My Plan", "Scheduled"}:
+            continue
+        action_queue.append(
+            {
+                "id": f"school-{row['school_id']}-{row['project_id']}",
+                "title": row["school"],
+                "project": row["project"],
+                "issue": row["state"],
+                "detail": "Move this school to its next project-planning step.",
+                "tone": row["tone"],
+                "priority": 1 if row["state"] == "SSA Required" else 2,
+                "priority_label": "Needs planning",
+                "due": None,
+                "url": row["href"],
+                "action_label": row["action"],
+            }
+        )
+    action_queue.sort(
+        key=lambda item: (
+            item["priority"],
+            item["due"] or today,
+            item["project"].casefold(),
+            item["title"].casefold(),
+        )
+    )
+
+    today_agenda = [
+        {
+            "id": activity.id,
+            "title": activity.school.name if activity.school_id else "Project activity",
+            "project": project_names.get(activity.project_id, "Project"),
+            "purpose": activity.activity_purpose_text
+            or activity.get_activity_type_display(),
+            "url": f"/my-plan/{activity.id}",
+        }
+        for activity in action_activities
+        if activity.planned_date == today
+    ][:6]
 
     # ── Partner Assignment & Delivery ─────────────────────────────────────────
     partner_rows = []
@@ -637,12 +809,28 @@ def get_dashboard(
     ]
     impact_max = max((b["total"] for b in impact_bars), default=0)
 
+    delivery_home_kpis = [
+        {**kpis[1], "link": "/projects"},
+        {**kpis[8], "link": "/projects/my-plan"},
+        {**kpis[9], "link": "/projects/my-plan#project-attention"},
+        {**kpis[7], "link": "/projects/planning"},
+    ]
+
     return {
         "kpis": kpis,
+        "delivery_home_kpis": delivery_home_kpis,
+        "active_project_count": len(active_project_ids),
+        "activities_in_plan": activities_in_plan,
+        "evidence_pending": evidence_pending,
         "portfolio": portfolio,
         "selected": selected,
+        "workspace_project": sel,
         "queue": queue[:6],
         "queue_total": queue_total,
+        "action_queue": action_queue,
+        "action_count": len(action_queue),
+        "today_agenda": today_agenda,
+        "at_risk_projects": at_risk_projects[:4],
         "partner_rows": partner_rows,
         "budget_summary": budget_summary,
         "impact_bars": impact_bars,

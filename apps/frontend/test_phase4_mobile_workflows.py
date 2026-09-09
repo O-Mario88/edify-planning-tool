@@ -29,9 +29,8 @@ class PhaseFourMobileWorkflowContractTest(SimpleTestCase):
         my_plan = _read("templates/partials/my_plan/workspace.html")
         todos = _read("templates/pages/todos/index.html")
 
-        self.assertLess(
-            planning.index("right_panel.html"), planning.index("kpi_strip_items")
-        )
+        self.assertNotIn("partials/planning/right_panel.html", planning)
+        self.assertIn("kpi_strip_items", planning)
         self.assertLess(
             my_plan.index("priority_queue.html"), my_plan.index("kpi_cards.html")
         )

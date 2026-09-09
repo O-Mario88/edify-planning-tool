@@ -1,10 +1,10 @@
 {
   "name": "edify-planning-tool",
   "private": true,
-  "description": "CSS build pipeline: compiles assets/css/tailwind.source.css (Tailwind v4 + custom.css) into the committed bundle static/css/main.css. Never edit main.css by hand.",
+  "description": "CSS build pipeline: compiles Tailwind sources, then generates class-indexed shared styles in static/build/css. Generated assets are committed; edit source styles only.",
   "scripts": {
-    "build:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css && tailwindcss -i assets/css/tokens.source.css -o static/css/tokens.css",
-    "watch:css": "tailwindcss -i assets/css/tailwind.source.css -o static/css/main.css --watch",
+    "build:css": "tailwindcss -i assets/css/tailwind.source.css --minify -o static/css/main.css && tailwindcss -i assets/css/tokens.source.css --minify -o static/css/tokens.css && node scripts/build_indexed_css.cjs",
+    "watch:css": "node scripts/watch_css.cjs",
     "test:e2e": "playwright test",
     "test:e2e:list": "playwright test --list",
     "test:e2e:production-auth": "playwright test e2e/authenticated-route-audit.spec.js --project chromium-desktop"
@@ -13,7 +13,9 @@
     "@playwright/test": "^1.62.1",
     "@tailwindcss/cli": "4.3.3",
     "axe-core": "4.13.0",
-    "tailwindcss": "4.3.3"
+    "tailwindcss": "4.3.3",
+    "@tailwindcss/oxide": "4.3.3",
+    "lightningcss": "1.32.0"
   },
   "dependencies": {
     "alpinejs": "^3.15.12",

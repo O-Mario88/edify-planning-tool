@@ -56,7 +56,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
         maintained beside it. The strip is the real component, not the
         `edify-kpi-strip` adapter that wraps older bespoke grids.
         """
-        self.assertIn('include "components/kpi_strip.html"', self.template)
+        self.assertIn('include "components/context_metrics.html"', self.template)
         self.assertNotIn("ia-metric-grid", self.template)
         self.assertNotIn('class="ia-metric"', self.template)
 
@@ -144,15 +144,14 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertNotIn('role="table"', self.template)
         self.assertNotIn(".ia-queue-table__header {\n    display: none", self.css)
 
-    def test_report_tile_titles_do_not_wrap_at_intermediate_widths(self):
-        self.assertIn("container-name: kpi-strip ia-report-kpis", self.css)
-        self.assertNotIn("@container ia-report-kpis (max-width: 64rem)", self.css)
-        self.assertIn("@container ia-report-kpis (max-width: 34rem)", self.css)
-        self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", self.css)
-        self.assertIn(".ia-dashboard .kpi-strip__label", self.css)
+    def test_report_metrics_use_the_shared_scrollable_strip(self):
+        components = (ROOT / "static/css/components.css").read_text(encoding="utf-8")
+        context = components[components.index("CONTEXT METRICS") :]
+
+        self.assertNotIn("ia-report-kpis", self.css)
+        self.assertNotIn("kpi-strip__label", self.css)
+        self.assertIn("scroll-snap-type: x mandatory", context)
         self.assertIn(".ia-card-heading h3", self.css)
-        self.assertIn("text-wrap: nowrap", self.css)
-        self.assertIn("white-space: nowrap", self.css)
 
 
 class IAVerificationWorkspaceContractTest(SimpleTestCase):
@@ -185,7 +184,7 @@ class IAVerificationWorkspaceContractTest(SimpleTestCase):
         self.assertEqual(self.queue.count('class="edify-filter-label"'), 6)
         self.assertIn('data-component="filter-drawer"', self.queue)
         self.assertIn('<dialog x-ref="advancedFilters"', self.queue)
-        self.assertNotIn('include "components/kpi_strip.html"', self.queue)
+        self.assertNotIn('include "components/context_metrics.html"', self.queue)
 
     def test_review_is_a_mobile_full_screen_workspace_with_sticky_decisions(self):
         self.assertIn("flex-col lg:flex-row", self.review)

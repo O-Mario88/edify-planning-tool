@@ -767,6 +767,13 @@ def priority_dashboard_redirect(request):
     return redirect(f"/priorities?{query}" if query else "/priorities")
 
 
+@require_page_permission("my_performance")
+def priorities_workspace_page(request):
+    from .hr_views import my_performance_view
+
+    return my_performance_view(request)
+
+
 @require_page_permission("priorities_master")
 def priorities_master_page(request):
     """The Uganda Master Priority Plan, in the source's own four columns:

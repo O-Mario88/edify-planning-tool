@@ -79,7 +79,7 @@ class ReportsResponsiveLayoutContractTest(SimpleTestCase):
         for responsive_hook in (
             "edify-report-workspace",
             "edify-report-timeline",
-            "components/kpi_strip.html",
+            "components/context_metrics.html",
             "edify-report-insight-grid",
             "edify-report-trend-chart",
         ):

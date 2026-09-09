@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 
 {% block title %}Escalations — Edify{% endblock %}
 
@@ -13,22 +15,22 @@
 {% if can_decide and can_raise %}Decisions your team has put in front of you, and the ones you have sent up to the {{ board.raise_to_label }}{% elif can_decide %}Decisions {% if decider_level == 'RVP' %}the Country Director has{% else %}your team has{% endif %} put in front of you{% else %}Decisions above your authority, routed to your {{ board.raise_to_label }}{% endif %}
 </p>
 </div>
-<div class="edify-page-header__controls">
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] px-4 py-2.5 text-center">
-<p class="text-[20px] font-extrabold text-slate-800 leading-none tabular-nums">{{ board.open_count }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1">Open</p>
-</div>
+{% kpi_strip %}
+{% kpi_metric %}
+{{ board.open_count }}
+{% kpi_label %}Open{% endkpi_label %}
+{% endkpi_metric %}
 {% if can_decide %}
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] px-4 py-2.5 text-center">
-<p class="text-[20px] font-extrabold text-slate-800 leading-none tabular-nums">{{ board.inbox_count }}</p>
-<p class="edify-text-caption text-slate-500 font-bold mt-1">For you</p>
-</div>
+{% kpi_metric %}
+{{ board.inbox_count }}
+{% kpi_label %}For you{% endkpi_label %}
+{% endkpi_metric %}
 {% endif %}
-<div class="edify-surface rounded-surface border {% if board.overdue_count %}border-rose-200 bg-rose-50/40{% else %}border-[var(--edify-border)]{% endif %} px-4 py-2.5 text-center">
-<p class="text-[20px] font-extrabold {% if board.overdue_count %}text-rose-700{% else %}text-slate-800{% endif %} leading-none tabular-nums">{{ board.overdue_count }}</p>
-<p class="edify-text-caption {% if board.overdue_count %}text-rose-600{% else %}text-slate-500{% endif %} font-bold mt-1">Overdue</p>
-</div>
-</div>
+{% kpi_metric %}
+{{ board.overdue_count }}
+{% kpi_label %}Overdue{% endkpi_label %}
+{% endkpi_metric %}
+{% endkpi_strip %}
 </header>
 
 {% if messages %}

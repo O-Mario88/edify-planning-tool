@@ -1211,9 +1211,14 @@ class MyTargetQueryService:
                 )
             )
 
+        from apps.hr.accountability import allocation_period_matrix
+
+        contract_matrix = allocation_period_matrix(user, fy, month_of_fy)
         return {
             "fy": fy,
             "month_of_fy": month_of_fy,
+            "contract_matrix": contract_matrix,
+            "distributed": contract_matrix["annual"],
             "month_label": Cal.month_label(fy, month_of_fy),
             "current_quarter": current_quarter,
             "is_current_fy": is_current_fy,

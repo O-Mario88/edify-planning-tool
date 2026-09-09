@@ -47,7 +47,7 @@
   {% legacy_kpi_item "IA clearance" clearance_pct|add:"%" helper="Share of delivered visits" tone="info" icon="check" as clearance_kpi %}
 {% endif %}
 {% collect_kpi_items comparable_kpi change_kpi alignment_kpi clearance_kpi as effectiveness_kpis %}
-{% include "components/kpi_strip.html" with items=effectiveness_kpis variant="executive" title="Visit effectiveness headline" %}
+{% include "components/context_metrics.html" with items=effectiveness_kpis variant="executive" title="Visit effectiveness headline" %}
 
 {% if d.cohort.sample_quality == 'very limited' or d.cohort.sample_quality == 'limited' %}
 <p class="p-3 rounded-surface border text-[12px] font-semibold edify-warning-soft edify-warning-border" style="color: var(--edify-warning-text)">

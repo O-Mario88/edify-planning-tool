@@ -180,7 +180,7 @@ class SpecialProjectImpactAnalyticsTest(TestCase):
         self.assertContains(page, "Special Project Analytics")
         self.assertContains(page, "Leadership Lift")
         self.assertContains(page, "Observed association")
-        self.assertContains(page, "Performance by Sub-Region")
+        self.assertContains(page, "Partner Performance by Project")
 
         partial = self.client.get(
             "/projects/analytics",

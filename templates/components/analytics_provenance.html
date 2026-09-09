@@ -1,10 +1,13 @@
 {% if engine %}
-<p class="platform-analytics-note" role="note">
+<details class="platform-analytics-note">
+  <summary>Data details{% if engine.record_count is not None %} · {{ engine.record_count }} records{% endif %}</summary>
+  <div class="platform-analytics-note__body" role="note">
   <span><strong>{{ engine.name }}</strong> · {{ engine.runtime }}</span>
   <span>
     {% if engine.record_count is not None %}{{ engine.record_count }} scoped record{{ engine.record_count|pluralize }} · {% endif %}
     {% if engine.quality %}{{ engine.quality.label|lower }} evidence · {% endif %}
     {{ engine.interpretation }}
   </span>
-</p>
+  </div>
+</details>
 {% endif %}

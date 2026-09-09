@@ -12,7 +12,7 @@
   {% legacy_kpi_item "Action required" metrics.actionRequired helper="Verified gap or expiry" tone="danger" icon="warning" as action_kpi %}
   {% legacy_kpi_item "Awaiting verification" metrics.awaitingVerification helper="Evidence pending IA review" tone="warning" icon="clock" as awaiting_kpi %}
   {% collect_kpi_items portfolio_kpi compliant_kpi action_kpi awaiting_kpi as government_kpis %}
-  {% include "components/kpi_strip.html" with items=government_kpis variant="executive" title="Government requirements headline" %}
+  {% include "components/context_metrics.html" with items=government_kpis variant="executive" title="Government requirements headline" %}
 
   <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">
     {% include "partials/business_transformation/school_portfolio_list.html" with list_title="Government Requirements portfolio" list_helper="Schools supported for Government Requirements, with verified compliance evidence kept distinct from SSA improvement." %}

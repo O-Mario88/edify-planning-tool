@@ -13,18 +13,18 @@ summary and the detail are the same numbers by construction.
 
 <section class="space-y-4" x-data="{ open: null }">
 
-  {% include "components/kpi_strip.html" with items=kpis variant="executive" title="Country planning context" %}
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country planning context" %}
 
   <div class="flex flex-wrap items-center justify-between gap-2">
     <details class="oversight-filters">
-      <summary class="btn h-9 inline-flex items-center cursor-pointer">
+      <summary class="btn btn-ghost h-9 inline-flex items-center cursor-pointer">
         Filters{% if advanced %} ({{ advanced|length }}){% endif %}
       </summary>
       <div class="card p-4 mt-2 max-w-md">
         {% include "partials/oversight/filter_drawer.html" with target_url="/country-planning-oversight/" target_id="#country-workspace" %}
       </div>
     </details>
-    <a class="btn h-8 inline-flex items-center"
+    <a class="btn btn-ghost h-8 inline-flex items-center"
        href="/country-planning-oversight/export?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}{% for key, value in advanced.items %}&{{ key }}={{ value }}{% endfor %}">
       Export CSV
     </a>

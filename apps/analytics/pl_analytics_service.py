@@ -34,6 +34,8 @@ Two distinct measurement concepts, kept separate on purpose:
 
 from __future__ import annotations
 
+from apps.core.request_cache import scoped
+
 from apps.core.metrics import render_precomputed_metric_for_source
 
 
@@ -352,6 +354,7 @@ def _team_activity_qs(pls: PLScope, fy: str, quarter: str | None, filters: dict)
     else:
         base = base.filter(
             Q(responsible_staff_id__in=pls.responsible_ids)
+            | Q(delivery_type="partner", monitored_by_staff_id__in=pls.responsible_ids)
             | Q(school_id__in=pls.school_ref)
         )
     if quarter:
@@ -373,6 +376,7 @@ class PLAnalyticsService:
     one cohesive service."""
 
     @staticmethod
+    @scoped()
     def get_dashboard(
         user,
         fy: str | None = None,
@@ -853,26 +857,34 @@ class PLAnalyticsService:
         measurable CCEO count and total target lets dashboards represent the
         absence of a denominator instead of fabricating a measured 0%.
         """
-        completed_qs = _team_activity_qs(pls, fy, quarter, filters or {}).filter(
-            status__in=COMPLETED_STATUSES
+        from apps.hr.accountability import allocation_priorities
+        from apps.accounts.models import User
+
+        contract = allocation_priorities(
+            pls.user, fy, quarter=quarter, include_plans=False
         )
-        total_target = total_achieved = 0
-        on_track = 0
-        measurable = 0
-        expected = PLAnalyticsService._expected_pace(fy)
-        bulk = PLAnalyticsService._cceo_targets_bulk(
-            pls.cceos, completed_qs, fy, quarter
+        narrowed = any(
+            value not in (None, "", "All")
+            for key, value in (filters or {}).items()
+            if key != "quarter"
         )
-        for c in pls.cceos:
-            pct, ach, tgt = bulk[c["staff_id"]]
-            total_target += tgt
-            total_achieved += ach
-            if tgt:
-                measurable += 1
-                if pct >= expected:
-                    on_track += 1
-        team_pct = round(total_achieved / total_target * 100) if total_target else None
-        return team_pct, on_track, measurable, total_target
+        scores = [
+            allocation_priorities(user, fy, quarter=quarter, include_plans=False)
+            for user in User.objects.filter(
+                id__in=[c["user_id"] for c in pls.cceos if c["user_id"]]
+            )
+        ]
+        measurable = [score for score in scores if score["pct"] is not None]
+        expected = 100 if quarter else PLAnalyticsService._expected_pace(fy)
+        on_track = sum(score["pct"] >= expected for score in measurable)
+        # The fourth value indicates whether a measurable target exists; it
+        # never sums targets with different units into an invented count.
+        return (
+            None if narrowed else contract["pct"],
+            on_track,
+            len(measurable),
+            len(contract["rows"]),
+        )
 
     @staticmethod
     def _expected_pace(fy: str) -> int:

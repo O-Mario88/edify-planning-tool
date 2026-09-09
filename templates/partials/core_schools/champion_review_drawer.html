@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 <div
 x-data="{ show: true }"
 x-show="show"
@@ -44,13 +46,7 @@ class="rounded-control p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 
 
 <!-- Score Circle Hero -->
 <div class="edify-surface rounded-surface border border-slate-100 p-5 shadow-sm flex items-center justify-between">
-<div class="space-y-1">
-<span class="edify-text-caption font-semibold uppercase text-slate-400 tracking-wider">Candidate Score</span>
-<h3 class="text-[32px] font-semibold text-slate-900 leading-none">{{ metrics.score }}<span class="text-[15px] text-slate-400 font-semibold"> /100</span></h3>
-<span class="inline-flex items-center edify-text-caption font-semibold rounded-pill px-2.5 py-0.5 border {% if metrics.eligible %}bg-emerald-50 text-emerald-700 border-emerald-100{% else %}bg-amber-50 text-amber-700 border-amber-100{% endif %}">
-{% if metrics.eligible %}GRADUATION READY{% else %}INSUFFICIENT MARGINS{% endif %}
-</span>
-</div>
+{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Candidate score{% endkpi_label %}{{ metrics.score }}<span class="text-[15px] text-slate-400 font-semibold"> /100</span>{% kpi_helper %}{% if metrics.eligible %}Graduation ready{% else %}Insufficient margins{% endif %}{% endkpi_helper %}{% endkpi_metric %}{% endkpi_strip %}
 
 <div class="shrink-0" style="--edify-donut-gauge-size: 5rem; --edify-donut-gauge-headline: 0.875rem">
 {% include "partials/components/donut_rings.html" with donut=metrics.gauge donut_class="edify-donut--gauge" donut_label="Graduation formula score" headline=metrics.score headline_unit="%" %}

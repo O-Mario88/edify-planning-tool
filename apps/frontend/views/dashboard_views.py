@@ -10,7 +10,6 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.activities.models import Activity
-from apps.command_center import services as cc_services
 from apps.command_center.planning_progress import (
     normalise_period as normalise_progress_period,
 )
@@ -268,16 +267,6 @@ def dashboard_view(request):
     if role in ("MfiPartnerAdmin", "MfiLoanOfficer"):
         return redirect("/mfi-portal/dashboard")
 
-    # Fetch common alerts and todays items. The CCEO dashboard renders none
-    # of them (its right rail was removed), so that role does not pay for
-    # the five alert queries and the today() derivation it would discard.
-    if role == "CCEO":
-        alerts_list = alerts_summary = today_context = None
-    else:
-        alerts_list = cc_services.alerts(user)
-        alerts_summary = cc_services.alerts_summary(user)
-        today_context = cc_services.today(user)
-
     # Get user avatar initials
     names = user.name.split()
     avatar_initials = "".join([n[0].upper() for n in names[:2]]) if names else "US"
@@ -293,9 +282,11 @@ def dashboard_view(request):
         fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
         raw_month = (request.GET.get("month") or "").strip()
         month = int(raw_month) if raw_month.isdigit() else None
-        data = CDDashboardService.get_dashboard(request.user, fy=fy, month=month)
         dashboard_view, view_explicit = resolve_dashboard_view(
             request, role_key="cd", default="map"
+        )
+        data = CDDashboardService.get_dashboard(
+            request.user, fy=fy, month=month, view=dashboard_view
         )
         _fy_months = [
             "Oct",
@@ -316,7 +307,6 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy_options": fy_options(),
             "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
             "mobile_primary_action": {
@@ -403,7 +393,6 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy_options": fy_options(),
             "urgent_pagination_query": urlencode(urgent_pagination_query),
             "mobile_primary_action": mobile_primary_action,
@@ -456,12 +445,9 @@ def dashboard_view(request):
         data = RVPDashboardService.get_dashboard(request.user, fy=fy)
         context = {
             **data,
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy_options": fy_options(),
             "mobile_primary_action": {
                 "label": (
@@ -545,12 +531,9 @@ def dashboard_view(request):
         ]
         context = {
             **data,
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy": fy,
             "month": month,
             "country": country,
@@ -971,116 +954,97 @@ def dashboard_view(request):
         return response
 
     elif role == "ProjectCoordinator":
-        # Special Projects Dashboard Context — sourced entirely from the real
-        # Project / ProjectSchoolAssignment / ProjectPartnerAssignment tables.
-        # No health scores, teacher-impact counts, budgets, or status/dates are
-        # rendered here because the Project model has no such fields yet.
-        from apps.projects.models import (
-            ProjectSchoolAssignment,
-            ProjectPartnerAssignment,
+        from apps.projects.dashboard_service import get_dashboard
+
+        delivery_context = get_dashboard(
+            request.user,
+            request.GET.get("project"),
+            request.GET,
         )
+        from apps.command_center.todo_service import get_cached_todos
 
-        # The coordinator's own landing page previously listed every project in
-        # the country — the single widest scope leak for this role.
-        from apps.projects.scoping import scoped_projects
+        # Pull system To-Dos (including directed actions and escalations) into
+        # the same queue as project readiness and activity exceptions. The
+        # source workflows remain canonical; this is a coordinator-facing
+        # projection with duplicate destinations collapsed.
+        action_queue = list(delivery_context["action_queue"])
+        seen_destinations = {item["url"] for item in action_queue}
+        priority_order = {"critical": 0, "high": 1, "medium": 2, "low": 3}
+        from apps.notifications.models import Notification
 
-        projects_qs = scoped_projects(request.user).prefetch_related(
-            "partner_assignments__partner", "school_assignments"
-        )
-
-        portfolio = []
-        for p in projects_qs:
-            partner_names = [pa.partner.name for pa in p.partner_assignments.all()]
-            portfolio.append(
+        for notification in Notification.objects.filter(
+            recipient_id=request.user.id,
+            status="unread",
+            resolved_at__isnull=True,
+            action_required=True,
+        ).order_by("-priority", "created_at")[:20]:
+            destination = notification.target_route or "/notifications/"
+            if destination in seen_destinations:
+                continue
+            seen_destinations.add(destination)
+            action_queue.append(
                 {
-                    "name": p.name,
-                    "code": p.code,
-                    "category": p.get_category_display(),
-                    "partners": ", ".join(partner_names)
-                    if partner_names
-                    else "Unassigned",
-                    "schools_enrolled": len(p.school_assignments.all()),
+                    "id": f"notification-{notification.id}",
+                    "title": notification.title,
+                    "project": "Notification",
+                    "issue": "Action requested",
+                    "detail": notification.body or notification.title,
+                    "tone": (
+                        "danger"
+                        if notification.priority == "urgent"
+                        else "warning"
+                        if notification.priority == "high"
+                        else "info"
+                    ),
+                    "priority": (
+                        0
+                        if notification.priority == "urgent"
+                        else 1
+                        if notification.priority == "high"
+                        else 2
+                    ),
+                    "priority_label": notification.get_priority_display(),
+                    "due": None,
+                    "url": destination,
+                    "action_label": notification.action_label or "Open",
                 }
             )
-
-        # Every count and list below is narrowed to the coordinator's own
-        # portfolio via the same scope helper the queryset above uses.
-        scoped_ids = list(projects_qs.values_list("id", flat=True))
-        schools_in_projects = (
-            ProjectSchoolAssignment.objects.filter(project_id__in=scoped_ids)
-            .values("school_id")
-            .distinct()
-            .count()
-        )
-        partners_assigned = (
-            ProjectPartnerAssignment.objects.filter(project_id__in=scoped_ids)
-            .values("partner_id")
-            .distinct()
-            .count()
-        )
-
-        # Schools actually assigned to a special project.
-        project_schools = [
-            {
-                "school_name": a.school.name,
-                "project_name": a.project.name,
-                "district": a.school.district.name if a.school.district_id else "—",
-            }
-            for a in ProjectSchoolAssignment.objects.filter(project_id__in=scoped_ids)
-            .select_related("school", "school__district", "project")
-            .order_by("-created_at")[:8]
-        ]
-
-        # Partners actually assigned to a special project.
-        project_partners = [
-            {"partner_name": a.partner.name, "project_name": a.project.name}
-            for a in ProjectPartnerAssignment.objects.filter(project_id__in=scoped_ids)
-            .select_related("partner", "project")
-            .order_by("partner__name")
-        ]
-
+        for todo in get_cached_todos(request.user)["todos"]:
+            destination = todo.get("action_url") or "/todos"
+            if destination in seen_destinations:
+                continue
+            seen_destinations.add(destination)
+            action_queue.append(
+                {
+                    "id": todo["id"],
+                    "title": todo.get("linked") or todo["title"],
+                    "project": todo.get("category") or "To-Do",
+                    "issue": todo.get("status_label") or todo["priority_label"],
+                    "detail": todo.get("description") or todo["title"],
+                    "tone": todo.get("status_tone", "info"),
+                    "priority": priority_order.get(todo.get("priority"), 3),
+                    "priority_label": todo.get("priority_label", "Needs review"),
+                    "due": None,
+                    "url": destination,
+                    "action_label": todo.get("action_label") or "Open",
+                }
+            )
+        action_queue.sort(key=lambda item: item["priority"])
+        delivery_context["action_queue"] = action_queue[:8]
+        delivery_context["action_count"] = len(action_queue)
+        first_action = next(iter(delivery_context["action_queue"]), None)
         context = {
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
+            **delivery_context,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "portfolio": portfolio,
-            "total_projects": len(portfolio),
-            "schools_in_projects": schools_in_projects,
-            "partners_assigned": partners_assigned,
-            # The registry-backed shared component consolidates these three
-            # related scale counts to the single clearest portfolio headline.
-            # The school and partner counts remain where they add detail: the
-            # tables immediately below, rather than as repeated headline KPIs.
-            "kpi_strip_items": [
-                render_precomputed_metric_item(
-                    "projects_dashboard_service_total_projects",
-                    str(len(portfolio)),
-                    icon="briefcase",
-                    variant="primary",
-                    helper="In your portfolio",
-                ),
-                render_precomputed_metric_item(
-                    "projects_dashboard_service_project_schools",
-                    str(schools_in_projects),
-                    icon="school",
-                    variant="info",
-                    helper="See project portfolio",
-                ),
-                render_precomputed_metric_item(
-                    "projects_dashboard_service_assigned_partners",
-                    str(partners_assigned),
-                    icon="users",
-                    variant="success",
-                    helper="See partner assignment",
-                ),
-            ],
-            "project_schools": project_schools,
-            "project_partners": project_partners,
+            "total_projects": len(delivery_context["portfolio"]),
+            "kpi_strip_items": delivery_context["delivery_home_kpis"],
             "mobile_primary_action": {
-                "label": "Open project portfolio",
-                "url": "/projects",
+                "label": "Review next action"
+                if first_action
+                else "Open project portfolio",
+                "url": first_action["url"] if first_action else "/projects",
             },
         }
         dashboard_view, view_explicit = resolve_dashboard_view(
@@ -1131,9 +1095,6 @@ def dashboard_view(request):
     metrics = DashboardMetricsService.get_dashboard_metrics(user, progress_period)
 
     context = {
-        "alerts": alerts_list,
-        "alerts_summary": alerts_summary,
-        "today_context": today_context,
         "role": role,
         "user_name": user.name,
         "avatar_initials": avatar_initials,

@@ -14,8 +14,7 @@ from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
 from apps.activities.models import Activity
 from apps.ssa.models import SsaRecord, SsaScore
-from apps.targets.models import TargetSetting
-from apps.accounts.models import StaffProfile, StaffTargetProfile
+from apps.accounts.models import StaffProfile
 from apps.geography.models import District, Region
 from apps.clusters.models import Cluster
 from apps.analytics.country_map_context import country_map_context
@@ -30,7 +29,7 @@ class AnalyticsDashboardService:
     def get_analytics_data(principal, filters: dict) -> dict:
         # 1. Parse active filters
         fy = filters.get("fy") or get_operational_fy()
-        quarter = filters.get("quarter") or "Q2"
+        quarter = None if filters.get("month") else (filters.get("quarter") or None)
         region_id = filters.get("region")
         sub_region_id = filters.get("sub_region")
         district_id = filters.get("district")
@@ -73,10 +72,21 @@ class AnalyticsDashboardService:
                 schools_qs = schools_qs.none()
                 ssa_qs = ssa_qs.none()
 
-            if scope.staff_ids:
+            if principal.active_role == "Program Lead" and getattr(
+                principal, "staff_profile", None
+            ):
+                from apps.hr.contribution_scope import scope_activities
+
+                activities_qs = scope_activities(
+                    activities_qs, staff=principal.staff_profile, include_team=True
+                )
+            elif scope.staff_ids:
                 activities_qs = activities_qs.filter(
                     Q(responsible_staff_id__in=scope.staff_ids)
-                    | Q(assigned_partner_id__in=scope.staff_ids)
+                    | Q(
+                        delivery_type="partner",
+                        monitored_by_staff_id__in=scope.staff_ids,
+                    )
                 )
             elif scope.partner_ids:
                 activities_qs = activities_qs.filter(
@@ -84,6 +94,13 @@ class AnalyticsDashboardService:
                 )
             else:
                 activities_qs = activities_qs.none()
+
+        if scope.country:
+            from apps.hr.contribution_scope import scope_activities
+
+            schools_qs = schools_qs.filter(region__country=scope.country)
+            ssa_qs = ssa_qs.filter(school__region__country=scope.country)
+            activities_qs = scope_activities(activities_qs, country=scope.country)
 
         # 3. Apply page filters to Querysets
         # Region
@@ -125,11 +142,36 @@ class AnalyticsDashboardService:
             schools_qs = schools_qs.filter(cluster_id=cluster_id)
             activities_qs = activities_qs.filter(school__cluster_id=cluster_id)
             ssa_qs = ssa_qs.filter(school__cluster_id=cluster_id)
-        # Staff Owner
-        if staff_id:
-            activities_qs = activities_qs.filter(responsible_staff_id=staff_id)
-            schools_qs = schools_qs.filter(account_owner_id=staff_id)
-            ssa_qs = ssa_qs.filter(school__account_owner_id=staff_id)
+        # Staff filters use the same personal/team monitoring boundary as progress.
+        chosen_staff = staff_id or filters.get("cceo") or filters.get("pl")
+        if chosen_staff:
+            from apps.accounts.models import StaffSchoolAssignment
+            from apps.hr.contribution_scope import owner_ids, scope_activities
+
+            chosen = StaffProfile.objects.filter(
+                Q(id=chosen_staff) | Q(user_id=chosen_staff)
+            ).first()
+            if chosen:
+                include_team = bool(
+                    filters.get("pl") and not (staff_id or filters.get("cceo"))
+                )
+                activities_qs = scope_activities(
+                    activities_qs, staff=chosen, include_team=include_team
+                )
+                ids = owner_ids(chosen, include_team)
+                assigned = StaffSchoolAssignment.objects.filter(
+                    staff_id__in=ids
+                ).values("school_id")
+                schools_qs = schools_qs.filter(
+                    Q(id__in=assigned) | Q(account_owner_id__in=ids)
+                )
+                ssa_qs = ssa_qs.filter(school_id__in=schools_qs.values("id"))
+            else:
+                activities_qs, schools_qs, ssa_qs = (
+                    activities_qs.none(),
+                    schools_qs.none(),
+                    ssa_qs.none(),
+                )
         # Partner Owner
         if partner_id:
             activities_qs = activities_qs.filter(assigned_partner_id=partner_id)
@@ -183,9 +225,19 @@ class AnalyticsDashboardService:
             )
             ssa_qs = ssa_qs.filter(school__name__icontains=search_q)
 
+        if filters.get("month"):
+            from apps.hr.accountability import reporting_period
+
+            _, period_start, period_end = reporting_period(fy, month=filters["month"])
+            activities_qs = activities_qs.filter(
+                planned_date__range=(period_start, period_end)
+            )
+
         # Quarter restriction for current period metrics (except cumulative metrics)
-        curr_activities = activities_qs.filter(quarter=quarter)
-        curr_ssa = ssa_qs.filter(quarter=quarter)
+        curr_activities = (
+            activities_qs.filter(quarter=quarter) if quarter else activities_qs
+        )
+        curr_ssa = ssa_qs.filter(quarter=quarter) if quarter else ssa_qs
 
         # Prior period matching
         prior_q = {"Q2": "Q1", "Q3": "Q2", "Q4": "Q3", "Q1": "Q4"}.get(quarter, "Q1")
@@ -197,6 +249,8 @@ class AnalyticsDashboardService:
 
         # Helper to format trend text
         def get_trend(curr, prev, mode="pct"):
+            if not quarter or quarter == "Q1":
+                return ""
             if prev == 0:
                 return f"+{curr} vs {prior_q}" if curr > 0 else f"0 vs {prior_q}"
             if mode == "pp":
@@ -241,53 +295,48 @@ class AnalyticsDashboardService:
         curr_kpis = activity_kpis(curr_activities)
         prior_kpis = activity_kpis(prior_activities)
 
-        # Card 1: Target Achievement
-        # Count achieved activities in quarter
-        achieved_q = curr_kpis["accepted"]
-        achieved_prior = prior_kpis["accepted"]
+        # Score the approved allocation contract in its own units. Never sum
+        # incompatible targets or invent equal quarterly phasing.
+        from apps.hr.accountability import allocation_priorities
 
-        # Targets sum — only ever a real, explicitly configured target.
-        # There is no third fallback to a planned/activity count: inferring
-        # "the target" from how much work happens to exist would make the
-        # achieved count its own denominator, reading as near-100%
-        # "achievement" by construction — fabricated data the no-mock-data
-        # rule forbids. An unconfigured target renders an honest empty state
-        # instead (below).
-        targets_sum = (
-            TargetSetting.objects.filter(fy=fy, is_active=True).aggregate(
-                s=Sum("target_value")
-            )["s"]
-            or 0
+        contract = allocation_priorities(
+            principal,
+            fy,
+            quarter=quarter,
+            month=filters.get("month"),
+            activity_ids=curr_activities.values("id"),
+            include_plans=False,
         )
-        if targets_sum == 0:
-            # Fallback to StaffTargetProfiles
-            staff_targets_sum = StaffTargetProfile.objects.filter(fy=fy).aggregate(
-                v=Sum("visits_target"), t=Sum("trainings_target")
+        # Geography and activity filters do not define an allocation boundary.
+        # Withhold the score rather than divide a subset by a full-scope target.
+        narrowed = any(
+            filters.get(key) not in (None, "", "All")
+            for key in (
+                "region",
+                "sub_region",
+                "district",
+                "sub_county",
+                "cluster",
+                "staff",
+                "cceo",
+                "pl",
+                "partner",
+                "school_type",
+                "activity_type",
+                "q",
             )
-            targets_sum = (staff_targets_sum["v"] or 0) + (staff_targets_sum["t"] or 0)
-
-        if targets_sum == 0:
-            achievement_pct = None
-            kpi_data["target_achievement"] = {
-                "value": "No Target Set",
-                "trend": "",
-                "points": [],
-                "class": "text-slate-500",
-            }
-        else:
-            # Target for this quarter is roughly 25% of annual targets
-            q_target = max(1, round(targets_sum / 4))
-            achievement_pct = round((achieved_q / q_target) * 100)
-            achievement_prior_pct = round((achieved_prior / q_target) * 100)
-
-            kpi_data["target_achievement"] = {
-                "value": f"{achievement_pct}%",
-                "trend": get_trend(achievement_pct, achievement_prior_pct, "pp"),
-                "points": [],
-                "class": "text-emerald-600"
-                if achievement_pct >= 90
-                else ("text-amber-600" if achievement_pct >= 70 else "text-rose-600"),
-            }
+        )
+        achievement_pct = None if narrowed else contract["pct"]
+        kpi_data["target_achievement"] = {
+            "value": f"{achievement_pct}%"
+            if achievement_pct is not None
+            else ("Scope target unavailable" if narrowed else "No Target Set"),
+            "trend": "",
+            "points": [],
+            "class": "text-emerald-600"
+            if achievement_pct is not None
+            else "text-slate-500",
+        }
 
         # Card 2: Teachers Trained
         teachers = curr_kpis["teachers"] or 0
@@ -379,8 +428,8 @@ class AnalyticsDashboardService:
         # Card 8: Total Activities Completed
         # Same population as Card 1's numerator, so it reuses that count
         # rather than re-running an identical query.
-        completed = achieved_q
-        completed_prior = achieved_prior
+        completed = curr_kpis["accepted"]
+        completed_prior = prior_kpis["accepted"]
         kpi_data["activities_completed"] = {
             "value": f"{completed:,}",
             "trend": get_trend(completed, completed_prior),
@@ -393,9 +442,9 @@ class AnalyticsDashboardService:
         ssa_diff = ssa_avg - ssa_avg_prior
         kpi_data["ssa_average"] = {
             "value": f"{ssa_avg:.2f}" if ssa_avg > 0 else "\u2014",
-            "trend": f"+{ssa_diff:.2f} vs {prior_q}"
-            if ssa_diff >= 0
-            else f"{ssa_diff:.2f} vs {prior_q}",
+            "trend": (
+                f"{ssa_diff:+.2f} vs {prior_q}" if quarter and quarter != "Q1" else ""
+            ),
             "points": [],
         }
 
@@ -405,9 +454,13 @@ class AnalyticsDashboardService:
                 "analytics_analytics_dashboard_service_overall_target_achievement",
                 kpi_data["target_achievement"]["value"],
                 raw_value=achievement_pct,
-                helper="vs last period"
+                helper="approved allocation · verified"
                 if achievement_pct is not None
-                else "no target configured",
+                else (
+                    "no target for this filter scope"
+                    if narrowed
+                    else "no approved target configured"
+                ),
                 icon="target",
                 variant="success" if achievement_pct is not None else "neutral",
                 trend={
@@ -1162,6 +1215,7 @@ class AnalyticsDashboardService:
         ]
 
         return {
+            "distributed": contract if not narrowed else {"rows": [], "pct": None},
             "filters": {
                 "selected_fy": fy,
                 "selected_quarter": quarter,

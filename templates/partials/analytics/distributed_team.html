@@ -1,0 +1,6 @@
+<section class="edify-surface rounded-surface border overflow-hidden" aria-label="Team accountability">
+  <header class="px-4 py-3"><h2 class="font-bold">Team accountability</h2><p class="edify-text-caption">Program Lead results include personal and team delivery. Country results count each eligible activity once.</p></header>
+  <div class="overflow-x-auto" tabindex="0" role="region" aria-label="Team accountability table"><table class="w-full text-left text-sm"><thead><tr><th>Person</th><th>Role</th><th>Priorities</th><th>Verified achievement</th></tr></thead><tbody>
+  {% for member in distributed_team %}<tr><td>{{ member.name }}</td><td>{{ member.role }}</td><td>{{ member.rows|length }}</td><td>{% if member.pct is not None %}{{ member.pct }}%{% else %}Not configured{% endif %}</td></tr>{% empty %}<tr><td colspan="4">No matching allocation scope for these filters.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>

@@ -12,7 +12,7 @@
   {% legacy_kpi_item "Practice verified" metrics.practiceVerified helper="IA-verified adoption" tone="success" icon="check" as practice_kpi %}
   {% legacy_kpi_item "Declining" metrics.declining helper="Needs follow-up" tone="danger" icon="warning" as declining_kpi %}
   {% collect_kpi_items portfolio_kpi partner_kpi practice_kpi declining_kpi as financial_health_kpis %}
-  {% include "components/kpi_strip.html" with items=financial_health_kpis variant="executive" title="Financial health headline" %}
+  {% include "components/context_metrics.html" with items=financial_health_kpis variant="executive" title="Financial health headline" %}
 
   <div class="grid grid-cols-1 xl:grid-cols-[minmax(0,1.65fr)_minmax(18rem,.7fr)] gap-6 items-start">
     {% include "partials/business_transformation/school_portfolio_list.html" with list_title="Financial Health portfolio" list_helper="Performance compares the first and latest confirmed Financial Health SSA; training and verified practice adoption remain separate." %}

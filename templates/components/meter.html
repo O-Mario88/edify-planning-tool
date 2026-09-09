@@ -24,7 +24,7 @@
   RVP's decision in Define metric, not something the bar can assume.{% endcomment %}
   <span class="edify-meter__value">{% if progress.pct is not None %}{{ progress.pct|floatformat:"0" }}%{% else %}{{ progress.completed }} done · {{ progress.planned }} planned{% endif %}</span>
   {% if meta %}
-  <span class="edify-meter__meta">{{ progress.completed }} done · {{ progress.planned }} planned{% if progress.target is not None %} · of {{ progress.target|floatformat:"-2" }} {{ progress.unit }}{% else %} {{ progress.unit }} · no target yet — define the metric to get a percentage{% endif %}{% if progress.verified %} · {{ progress.verified|floatformat:"-2" }} verified{% endif %}</span>
+  <span class="edify-meter__meta">{{ progress.completed }} done · {{ progress.planned }} planned{% if progress.target is not None %} · of {{ progress.target|floatformat:"-2" }} {{ progress.unit }}{% else %} {{ progress.unit }} · no target yet — define the metric to get a percentage{% endif %}{% if progress.verified is not None %} · {{ progress.verified|floatformat:"-2" }} verified{% endif %}</span>
   {% endif %}
 </div>
 {% else %}

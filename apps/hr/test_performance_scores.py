@@ -10,6 +10,7 @@ from __future__ import annotations
 from decimal import Decimal
 
 from django.test import TestCase
+from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSupervisorAssignment, User
 from apps.hr.models import (
@@ -130,6 +131,35 @@ class PerformanceScoreFixture(TestCase):
                 else Decimal("0")
             ),
         )
+        # Persist the verified source as well as its period projection.
+        from apps.activities.models import Activity
+        from apps.activity_catalogue.models import ActivityCatalogueItem
+        from apps.hr.models import MilestoneActivityRule, MilestoneProgressCredit
+
+        item = ActivityCatalogueItem.objects.first()
+        rule, _ = MilestoneActivityRule.objects.get_or_create(
+            milestone=milestone,
+            catalogue_item=item,
+            defaults={"counting_basis": "ACTIVITIES_COMPLETED", "weight": 1},
+        )
+        activity = Activity.objects.create(
+            fy=FY,
+            planned_date="2026-10-05",
+            activity_type="school_visit",
+            status="ia_verified",
+            responsible_staff_id=staff.id,
+            salesforce_activity_id="score-" + allocation.id,
+            catalogue_item=item,
+        )
+        MilestoneProgressCredit.objects.create(
+            rule=rule,
+            activity=activity,
+            credited_value=Decimal(str(achieved)),
+            credited_at=timezone.now(),
+        )
+        if milestone.measurement_type in {"percentage", "ratio"}:
+            allocation.denominator = 100
+            allocation.save(update_fields=["denominator"])
         return allocation
 
 
@@ -237,22 +267,22 @@ class TeamAndCountryTests(PerformanceScoreFixture):
         self.assertEqual(result["team"]["pct"], 80.0)
         self.assertEqual(result["team"]["counted"], 2)
 
-    def test_the_pl_personal_score_stays_visible_beside_the_team_score(self):
+    def test_the_pl_personal_score_stays_visible_beside_the_combined_score(self):
         milestone = self._milestone("BOTH")
         self._allocate(milestone, self.pl_sp, 100, 40)  # PL's own delivery
         self._allocate(milestone, self.a_sp, 100, 100)
         self._allocate(milestone, self.b_sp, 100, 100)
         result = pl_performance(self.pl_sp, FY)
-        self.assertEqual(result["team"]["pct"], 100.0)
+        self.assertEqual(result["team"]["pct"], 80.0)
         self.assertEqual(result["personal"]["pct"], 40.0)
 
-    def test_the_pl_is_not_counted_inside_their_own_team_average(self):
+    def test_the_pl_is_included_once_in_the_combined_team_scope(self):
         milestone = self._milestone("SELFEX")
         self._allocate(milestone, self.pl_sp, 100, 0)
         self._allocate(milestone, self.a_sp, 100, 100)
         self._allocate(milestone, self.b_sp, 100, 100)
         result = pl_performance(self.pl_sp, FY)
-        self.assertEqual(result["team"]["pct"], 100.0)
+        self.assertEqual(result["team"]["pct"], 66.67)
 
     def test_a_report_with_no_agreement_is_excluded_and_named(self):
         milestone = self._milestone("PARTIAL")

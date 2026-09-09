@@ -62,7 +62,7 @@
   display: inline-flex;
   align-items: center;
   gap: .4rem;
-  min-block-size: 38px;
+  min-block-size: 32px;
   padding-inline: .8rem;
   border: 1px solid var(--edify-border);
   border-radius: var(--edify-radius-control);
@@ -1529,3 +1529,75 @@ main #impact-workspace .impact-group-pagination a {
   }
 }
 
+
+/* Map geometry stays intact inside a landscape workspace. Height follows
+   the available viewport instead of growing with the monitor's width. */
+@media (min-width: 64rem) {
+  .analytics-geo-card .sr-map-layout { flex-direction: row; align-items: flex-start; }
+  .analytics-geo-card .sr-map-canvas { flex: 1 1 0%; min-width: 0; width: auto; }
+  .analytics-geo-card .sr-map-viewport {
+    aspect-ratio: auto !important;
+    height: var(--map-viewport-height, max(220px, calc(100dvh - 22rem)));
+    max-inline-size: none;
+  }
+  .analytics-geo-card .sr-map-viewport > svg { width: 100%; height: 100%; }
+  .analytics-geo-card .sr-distribution-panel { flex: 0 0 19rem; width: 19rem; }
+  .analytics-geo-card .sr-distribution-scroll { max-height: var(--map-viewport-height, 24rem); }
+}
+@media (min-width: 64rem) {
+  .analytics-geo-card .sr-distribution-scroll {
+    max-height: max(10rem, calc(var(--map-viewport-height, 24rem) - 4rem));
+  }
+}
+
+/* Give the selected map the workspace height; summary metrics remain on
+   the operations/week tab. :has responds to tab swaps without a reload. */
+@media (min-width: 64rem) {
+  main:has([data-dashboard-views]):has(.sr-map-viewport) [data-context-metrics] {
+    display: none;
+  }
+}
+
+/* SVG boundaries use a geographic stroke for keyboard focus, never the
+   rectangular HTML-button focus treatment. */
+.analytics-geo-card #sr-cam path[role="button"] {
+  outline: none !important;
+  box-shadow: none !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+}
+.analytics-geo-card .sr-distribution-table td:first-child > span {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+.analytics-geo-card .sr-distribution-table td:first-child > span > span:last-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (min-width: 64rem) {
+  .analytics-geo-card .sr-distribution-table td:first-child > span > span:last-child {
+    white-space: normal;
+    overflow-wrap: normal;
+    line-height: 1.25;
+  }
+}
+
+@media (min-width: 64rem) {
+  .analytics-geo-card .sr-distribution-panel {
+    display: flex;
+    flex-direction: column;
+    block-size: var(--map-viewport-height, 24rem);
+  }
+  .analytics-geo-card .sr-distribution-scroll {
+    flex: 1 1 auto;
+    min-block-size: 0;
+    max-block-size: none;
+    overflow-y: auto;
+  }
+  .analytics-geo-card .sr-distribution-panel > details { flex: 0 0 auto; }
+}

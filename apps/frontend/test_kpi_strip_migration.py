@@ -35,7 +35,7 @@ def _read(relative_path):
 
 
 class KpiStripMigrationTests(SimpleTestCase):
-    """Keep KPI summaries unified instead of regressing to loose card grids."""
+    """Keep contextual summaries unified without reviving KPI card grids."""
 
     def test_data_driven_role_dashboards_use_the_shared_component(self):
         for template in (
@@ -49,7 +49,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             "templates/partials/professional_development/body.html",
         ):
             source = _read(template)
-            self.assertIn("components/kpi_strip.html", source, template)
+            self.assertIn("components/context_metrics.html", source, template)
 
     def test_previously_bespoke_kpi_surfaces_use_the_shared_component(self):
         for template in (
@@ -58,7 +58,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             # ia/analytics_dashboard.html is not in this list because it uses
             # the real shared component rather than the legacy adapter — the
             # 2026-07-31 consistency mandate migrated its bespoke `ia-metric`
-            # tiles onto components/kpi_strip.html. See
+            # tiles onto components/context_metrics.html. See
             # test_ia_dashboard_design.test_summary_metrics_use_the_one_approved_kpi_component.
             "templates/pages/notifications/index.html",
             "templates/partials/analytics/panels/reports.html",
@@ -71,7 +71,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             "templates/partials/targets/my_body.html",
         ):
             source = _read(template)
-            self.assertIn("components/kpi_strip.html", source, template)
+            self.assertIn("components/context_metrics.html", source, template)
             self.assertNotIn("edify-kpi-strip", source, template)
 
     def test_period_and_timeline_controls_are_not_misclassified_as_kpis(self):
@@ -114,7 +114,7 @@ class KpiStripMigrationTests(SimpleTestCase):
             if legacy:
                 violations.append(f"{template.relative_to(ROOT)}: {', '.join(legacy)}")
             if (
-                template != ROOT / "templates/components/kpi_strip.html"
+                template != ROOT / "templates/components/context_metrics.html"
                 and 'data-component="kpi-card"' in source
             ):
                 violations.append(
@@ -122,37 +122,19 @@ class KpiStripMigrationTests(SimpleTestCase):
                 )
         self.assertEqual(violations, [])
 
-    def test_shared_component_has_one_kpi_tile_visual_path(self):
-        source = _read("templates/components/kpi_strip.html")
+    def test_shared_component_has_one_continuous_strip_visual_path(self):
+        source = _read("templates/components/context_metrics.html")
         styles = _read("static/css/components.css")
-        self.assertNotIn('variant == "context"', source)
-        self.assertNotIn("kpi-context-summary", source)
-        self.assertIn("kpi-strip--executive", source)
-        self.assertNotIn(".theme-blue .kpi-strip {", styles)
-        self.assertIn(".kpi-strip.kpi-strip--executive {", styles)
-        self.assertIn("grid-template-columns: repeat(6, minmax(0, 1fr));", styles)
-        self.assertIn("background-color: var(--edify-surface);", styles)
-        self.assertIn("clip-path: inset(50%);", styles)
-        # The elevation belongs to the panel now, not to each metric inside it
-        # (owner, 2026-09-07). A tile with its own shadow is the square design
-        # that was removed, so the assertion is that the shadow is on the tray.
-        tray = styles[styles.index(".kpi-strip.kpi-strip--executive {") :]
-        tray = tray[: tray.index("\n}")]
-        self.assertIn("box-shadow: inset 0 1px 0 var(--edify-kpi-panel-sheen)", tray)
-        # `--fresh`, not `--neutral`: "Current" reports that the DATA is up
-        # to date, which is one meaning on every tile. It is the one pill the
-        # per-tile accent tint deliberately does not repaint, and it sits
-        # beside "Pending", which means the opposite and stays muted. It opens
-        # with the reference caption's arrow.
-        self.assertIn('kpi-strip__trend--fresh">↗ Current', source)
+        context = styles[styles.index("CONTEXT METRICS") :]
+        self.assertIn('data-component="context-metric"', source)
+        self.assertIn('class="context-metrics__sentence" role="list"', source)
+        self.assertNotIn('data-component="kpi-card"', source)
+        self.assertNotIn("kpi-strip__", source)
         self.assertIn("{% firstof item.label item.canonical_label %}", source)
-        # Two lines, not three. The point of the clamp is that a long label
-        # cannot push the number down the card — the value is what the tile
-        # exists to show, and three reserved lines of label moved it below
-        # the fold on a six-up strip. Clamping still happens; it just happens
-        # sooner.
-        self.assertIn("-webkit-line-clamp: 2;", styles)
-        self.assertIn("white-space: normal;", styles)
+        self.assertIn("scroll-snap-type: x mandatory;", context)
+        self.assertIn("box-shadow:", context)
+        self.assertNotIn("background-image:", context)
+        self.assertNotIn("grid-template-columns:", context)
 
     def test_specialised_workspaces_use_the_shared_component_not_an_adapter(self):
         migrated = (
@@ -178,7 +160,7 @@ class KpiStripMigrationTests(SimpleTestCase):
         )
         for template in migrated:
             source = _read(template)
-            self.assertIn("components/kpi_strip.html", source, template)
+            self.assertIn("components/context_metrics.html", source, template)
             for marker in legacy_markers:
                 self.assertNotIn(marker, source, f"{template}: {marker}")
 
@@ -191,7 +173,7 @@ class KpiStripMigrationTests(SimpleTestCase):
         ):
             source = _read(template)
             self.assertEqual(
-                source.count("components/kpi_strip.html"),
+                source.count("components/context_metrics.html"),
                 1,
                 f"{template} must not duplicate KPI DOM for mobile and desktop",
             )
@@ -203,20 +185,26 @@ class KpiStripMigrationTests(SimpleTestCase):
         ):
             source = _read(template)
             self.assertEqual(
-                source.count("components/kpi_strip.html"),
+                source.count("components/context_metrics.html"),
                 1,
                 f"{template} must not duplicate KPI DOM for mobile and desktop",
             )
 
     def test_fund_requests_have_one_headline_kpi_tray(self):
         root = _read("templates/partials/fund_requests/root.html")
-        monthly = _read("templates/partials/fund_requests/monthly_preview.html")
         self.assertIn("partials/fund_requests/kpis.html", root)
         self.assertNotIn("partials/fund_requests/monthly_preview.html", root)
-        self.assertNotIn("components/kpi_strip.html", monthly)
+        self.assertFalse(
+            (ROOT / "templates/partials/fund_requests/monthly_preview.html").exists()
+        )
 
-    def test_special_projects_dashboard_uses_shared_executive_tray(self):
+    def test_special_projects_dashboard_distributes_metrics_into_work(self):
         source = _read("templates/pages/dashboards/special_projects.html")
-        self.assertIn("components/kpi_strip.html", source)
-        self.assertIn('variant="executive"', source)
+        operations = _read(
+            "templates/partials/dashboards/special_projects/operations.html"
+        )
+        self.assertIn("{% kpi_strip %}", source)
+        self.assertIn("active_project_count", source)
+        self.assertIn("activities_in_plan", source)
+        self.assertIn("evidence_pending", operations)
         self.assertNotIn("components/kpi_card.html", source)

@@ -1,3 +1,5 @@
+
+{% load kpi_metrics %}
 {% load frontend_filters %}
 <div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3">
   <h3 class="text-[13px] font-bold text-slate-800 tracking-tight">E. Impact Summary</h3>
@@ -5,27 +7,27 @@
   icon-led tiles in too). Each tinted box carried a filled chip in its own
   colour pair; the mark leads the metric on the accent now, and the number is
   what the tile is for.{% endcomment %}
-  <div class="edify-metric-panel grid grid-cols-2 mt-1">
-    <div class="edify-metric edify-metric--marked">
+  {% kpi_strip %}
+    {% kpi_metric %}
       <span class="edify-metric__mark" aria-hidden="true">{% include "partials/analytics/pl/_icon.html" with name="users" %}</span>
-      <p class="edify-metric__value">{{ impact_summary.teachers_trained|intcomma }}</p>
-      <p class="edify-metric__label">Teachers trained</p>
-    </div>
-    <div class="edify-metric edify-metric--marked">
+      {{ impact_summary.teachers_trained|intcomma }}
+      {% kpi_label %}Teachers trained{% endkpi_label %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
       <span class="edify-metric__mark" aria-hidden="true">{% include "partials/analytics/pl/_icon.html" with name="school" %}</span>
-      <p class="edify-metric__value">{{ impact_summary.leaders_trained|intcomma }}</p>
-      <p class="edify-metric__label">School leaders trained</p>
-    </div>
-    <div class="edify-metric edify-metric--marked">
+      {{ impact_summary.leaders_trained|intcomma }}
+      {% kpi_label %}School leaders trained{% endkpi_label %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
       <span class="edify-metric__mark" aria-hidden="true">{% include "partials/analytics/pl/_icon.html" with name="chart" %}</span>
-      <p class="edify-metric__value">{{ impact_summary.students_impacted|intcomma }}</p>
-      <p class="edify-metric__label">Students impacted</p>
-    </div>
-    <div class="edify-metric edify-metric--marked">
+      {{ impact_summary.students_impacted|intcomma }}
+      {% kpi_label %}Students impacted{% endkpi_label %}
+    {% endkpi_metric %}
+    {% kpi_metric %}
       <span class="edify-metric__mark" aria-hidden="true">{% include "partials/analytics/pl/_icon.html" with name="target" %}</span>
-      <p class="edify-metric__value">{{ impact_summary.schools_improved|intcomma }}</p>
-      <p class="edify-metric__label">Schools improved</p>
-    </div>
-  </div>
+      {{ impact_summary.schools_improved|intcomma }}
+      {% kpi_label %}Schools improved{% endkpi_label %}
+    {% endkpi_metric %}
+  {% endkpi_strip %}
   <p class="edify-text-caption text-slate-400 font-medium pt-1">Students Impacted = enrollment of schools reached · Schools Improved = positive annual SSA delta.</p>
 </div>

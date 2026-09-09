@@ -59,7 +59,7 @@ class InteractionContractIsLoadedTest(SimpleTestCase):
         links = [
             line
             for line in base.splitlines()
-            if 'rel="stylesheet"' in line and "{% static 'css/" in line
+            if 'rel="stylesheet"' in line and "{% static '" in line
         ]
         self.assertTrue(links)
         self.assertIn("interactions.css", links[-1])

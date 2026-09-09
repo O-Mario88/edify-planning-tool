@@ -75,14 +75,15 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
             self.assertNotIn(f".{data_canvas}", density)
 
     def test_one_action_button_height_at_every_width(self):
-        """32px "platform-wide" meant 32px above 1024px only: the responsive
-        scale stepped the same button to 36px on a tablet and 30px on a phone,
-        so a role page looked denser or looser purely by window size."""
+        """Page actions retain the rebuild's 40px height across breakpoints.
+
+        Dense record actions have a separate 24px scoped override.
+        """
         css = _read("static/css/components/mobile-micro-ux.css")
         sizes = set(
             re.findall(r"--edify-action-button-block-size:\s*([0-9.]+rem)", css)
         )
-        self.assertEqual(sizes, {"2rem"})
+        self.assertEqual(sizes, {"2.5rem"})
 
     def test_the_row_rhythm_is_not_gated_on_a_desktop_width(self):
         """A record table stays a table on a phone (mobile-shell.css says so),
@@ -133,10 +134,8 @@ class PlatformLayoutDensityContractTest(SimpleTestCase):
         self.assertIn("padding-block: 0.75rem !important;", css)
         self.assertIn('[class~="sm:p-6"]', css)
         self.assertIn(".space-y-5, .space-y-6", css)
-        # pages.css carries a fresh cache key whenever its rhythm rules change.
-        # The key moves forward whenever pages.css changes; it was last bumped
-        # for the Progress column in the priority record grid (2026-09-07).
-        self.assertIn("pages.css' %}?v=20260907meter1", base)
+        # Require a versioned asset without pinning an obsolete release key.
+        self.assertRegex(base, r"pages\.css' %\}\?v=\d{8}[a-z0-9]+")
 
     def test_shared_feature_grids_do_not_force_blank_equal_height_surfaces(self):
         platform = _read("static/css/platform.css")

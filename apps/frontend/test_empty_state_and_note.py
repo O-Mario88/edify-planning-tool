@@ -38,7 +38,6 @@ EMPTY_STATE_PAGES = (
     "templates/pages/accounts/cleared.html",
     "templates/pages/accounts/partner_payments.html",
     "templates/pages/accounts/ready_for_advance.html",
-    "templates/pages/accounts/reimbursements.html",
     "templates/pages/accounts/returned.html",
     "templates/pages/accounts/variance_review.html",
     "templates/pages/accounts/weekly_requests.html",

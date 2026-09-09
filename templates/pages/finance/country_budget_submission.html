@@ -1,4 +1,6 @@
 {% extends "layouts/shell.html" %}
+{% load kpi_metrics %}
+
 {% load frontend_filters %}
 
 {% block title %}{{ month_label }} FY {{ fy }} — Submitted Budget — Edify{% endblock %}
@@ -18,10 +20,7 @@
         <h1 class="edify-page-title edify-page-header__title">{{ month_label }} FY {{ fy }}</h1>
         <p class="edify-page-header__description">Version {{ version }} · {{ status_label }}</p>
       </div>
-      <div class="rounded-control border edify-primary-border edify-surface px-4 py-2 text-right shadow-sm">
-        <p class="edify-text-caption font-bold uppercase tracking-wider text-[var(--edify-accent)]">Submitted amount</p>
-        <p class="text-[22px] font-bold tabular-nums text-slate-800">{{ total_amount_fmt }}</p>
-      </div>
+      {% kpi_strip %}{% kpi_metric %}{% kpi_label %}Submitted amount{% endkpi_label %}{{ total_amount_fmt }}{% endkpi_metric %}{% endkpi_strip %}
     </div>
   </section>
 

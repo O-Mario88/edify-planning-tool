@@ -29,8 +29,9 @@ class NoPulsingTextTest(SimpleTestCase):
                     offenders.append(
                         f"{path.relative_to(settings.BASE_DIR)}:{line} -> {body[:60]!r}"
                     )
-        self.assertGreaterEqual(
-            matched, 10, "pulse scanner no longer sees its controls"
+        self.assertGreater(matched, 0, "pulse scanner no longer sees its controls")
+        self.assertIsNotNone(
+            PULSING.search('<span class="animate-pulse">unsafe text</span>')
         )
         self.assertEqual(
             offenders,

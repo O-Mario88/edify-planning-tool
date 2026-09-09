@@ -24,9 +24,8 @@ class PhaseFiveMobileLongTailContractTest(SimpleTestCase):
         self.assert_family(
             "analytics",
             (
+                "templates/pages/analytics/workspace.html",
                 "templates/pages/analytics/index.html",
-                "templates/pages/analytics/cd_analytics.html",
-                "templates/pages/analytics/pl_analytics.html",
                 "templates/pages/analytics/impact.html",
                 "templates/pages/analytics/declining_schools.html",
                 "templates/pages/analytics/visit_effectiveness.html",
@@ -97,7 +96,6 @@ class PhaseFiveMobileLongTailContractTest(SimpleTestCase):
                 "templates/pages/closure/readiness_queue.html",
                 "templates/pages/closure/blocked_closure.html",
                 "templates/pages/closure/activity_closure_detail.html",
-                "templates/pages/closure/completed_activities.html",
                 "templates/pages/closure/completed_detail.html",
             ),
         )

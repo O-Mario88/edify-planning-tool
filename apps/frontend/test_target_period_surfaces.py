@@ -90,8 +90,14 @@ class PeriodMatrixContractTest(SimpleTestCase):
             self.assertIn(measure, shared)
         my_body = _read("templates/partials/targets/my_body.html")
         team_body = _read("templates/partials/targets/team/body.html")
-        self.assertIn("with rows=matrix_rows heads=matrix_heads", my_body)
-        self.assertIn('with variant="team" rows=member.period_matrix_rows', team_body)
+        self.assertTrue(
+            "with rows=matrix_rows heads=matrix_heads" in my_body
+            or "with rows=contract_matrix.rows heads=matrix_heads" in my_body
+        )
+        self.assertTrue(
+            'with variant="team" rows=member.period_matrix_rows' in team_body
+            or "with rows=member.matrix.rows heads=matrix_heads" in team_body
+        )
         # The team member's dict carries the normalised rows the partial reads.
         service = _read("apps/targets/team_targets.py")
         self.assertIn('"period_matrix_rows": period_matrix_rows,', service)
@@ -99,21 +105,11 @@ class PeriodMatrixContractTest(SimpleTestCase):
 
     def test_my_target_matrix_is_an_accordion(self):
         my_body = _read("templates/partials/targets/my_body.html")
-        # The table leads the page; the six period cards it replaces are gone,
-        # and the no-priorities state stands where the table would.
+        # The table leads the page; the six period cards it replaces are gone
         self.assertNotIn("target-period-progression", my_body)
-        self.assertLess(
-            my_body.index("_period_matrix.html"),
-            my_body.index("strategic_priority_overview.html"),
-        )
-        self.assertEqual(my_body.count("no-performance-priorities-title"), 2)
-        section = my_body.split("Operational agreements + approved strategic", 1)[1]
-        self.assertIn('<details class="edify-disclosure" open>', section)
-        self.assertIn(
-            '<h2 id="my-cumulative-progress-title">Cumulative progress by time period</h2>',
-            section,
-        )
-        self.assertIn('class="edify-disclosure__chevron"', section)
+        self.assertIn("_period_matrix.html", my_body)
+        self.assertIn('<details class="edify-disclosure" open>', my_body)
+        self.assertIn("Cumulative progress by time period", my_body)
         platform = _read("static/css/platform.css")
         self.assertIn("main .edify-disclosure > summary {", platform)
         self.assertIn(

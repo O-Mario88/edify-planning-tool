@@ -191,8 +191,8 @@ class LoginBundleTests(SimpleTestCase):
         self.assertIn(".remember-control input:focus", css)
         self.assertIn('dataset.edifyInputModality = "pointer"', behavior)
         self.assertIn('dataset.edifyInputModality = "keyboard"', behavior)
-        self.assertIn("login.css' %}?v=20260907kpi1", markup)
-        self.assertIn("login.js' %}?v=20260812checkbox1", markup)
+        self.assertIn("login.css' %}?v=20260909perf1", markup)
+        self.assertIn("login.js' %}?v=20260909loginpolish3", markup)
 
 
 class LoginHeroImageTests(SimpleTestCase):

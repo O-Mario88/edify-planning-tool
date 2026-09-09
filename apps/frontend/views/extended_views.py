@@ -12,7 +12,7 @@ from apps.core.activity_types import (
     TRAINING_TYPES,
     VISIT_TYPES,
 )
-from apps.core.enums import ActivityType
+from apps.core.enums import ActivityType, SsaIntervention
 import calendar
 import csv
 import re
@@ -2348,6 +2348,9 @@ def special_projects_analytics_view(request):
         query,
         include_regional_map=export_kind not in {"csv", "snapshot"},
     )
+    context["can_export"] = RolePermissionService.can_export(
+        request.user, "special_projects"
+    )
     context["is_htmx"] = request.headers.get("HX-Request") == "true"
 
     if export_kind in {"csv", "snapshot"}:
@@ -2459,6 +2462,9 @@ def special_projects_planning_view(request):
         if request.GET.get(key)
     }
     context = get_planning(request.user, query)
+    context["can_export"] = RolePermissionService.can_export(
+        request.user, "special_projects"
+    )
     context["is_htmx"] = request.headers.get("HX-Request") == "true"
 
     if request.GET.get("export") == "csv":
@@ -2518,6 +2524,7 @@ def special_projects_planning_view(request):
 
 
 @require_page_permission("projects")
+@require_export_permission
 def special_projects_my_plan_view(request):
     """Special-project My Plan — the coordinator's scheduled project activities
     (staff-owned actionable; partner-planned read-only monitoring)."""
@@ -2546,6 +2553,9 @@ def special_projects_my_plan_view(request):
         if request.GET.get(key)
     }
     context = get_my_plan(request.user, query)
+    context["can_export"] = RolePermissionService.can_export(
+        request.user, "special_projects"
+    )
     context["is_htmx"] = request.headers.get("HX-Request") == "true"
     if request.GET.get("export") == "csv":
         response = HttpResponse(content_type="text/csv")
@@ -2822,6 +2832,8 @@ def pl_partner_invoice_download(request, invoice_id):
 @require_page_permission("projects")
 def project_detail_view(request, project_id):
     """Project detail."""
+    from apps.activities.models import ActivityScheduleCostLine
+    from apps.projects.dashboard_service import _coordinator_name, _fmt_ugx
     from apps.projects.scoping import get_scoped_project
     from apps.projects.models import OPEN_PROJECT_STATUSES
 
@@ -2837,10 +2849,71 @@ def project_detail_view(request, project_id):
         .order_by("staff__user__name")
     )
     assigned_count = school_assignments.count()
-    # NOTE: Project has no status field in the schema — the fake "Project
-    # Status: Active" / "Progress Status: Ongoing" tiles that used to sit here
-    # were hardcoded for every project and have been removed rather than show
-    # a status that isn't real.
+    project_activities = Activity.objects.filter(
+        project_id=project.id,
+        deleted_at__isnull=True,
+    ).exclude(status__in=["not_planned", "cancelled", "rejected", "deferred"])
+    activity_total = project_activities.count()
+    activity_closed = project_activities.filter(status="closed").count()
+    completion = round(activity_closed / activity_total * 100) if activity_total else 0
+    planned_budget = (
+        ActivityScheduleCostLine.objects.filter(
+            activity__project_id=project.id
+        ).aggregate(total=Sum("amount"))["total"]
+        or 0
+    )
+    decision_maker = None
+    if project.status_changed_by:
+        decision_staff = (
+            StaffProfile.objects.filter(id=project.status_changed_by)
+            .select_related("user")
+            .first()
+        )
+        decision_maker = (
+            decision_staff.user.name
+            if decision_staff
+            else User.objects.filter(id=project.status_changed_by)
+            .values_list("name", flat=True)
+            .first()
+        )
+    intervention_labels = dict(SsaIntervention.choices)
+    target_interventions = [
+        intervention_labels.get(value, value.replace("_", " ").title())
+        for value in project.target_intervention_list()
+    ]
+    budget_ceiling = int(project.budget_ceiling_ugx or 0)
+    project_summary = {
+        "status": project.get_status_display(),
+        "status_tone": (
+            "success"
+            if project.status in {"active", "scaling"}
+            else "warning"
+            if project.status in {"proposed", "under_review", "paused"}
+            else "neutral"
+        ),
+        "coordinator": _coordinator_name(project.manager_staff_id),
+        "interventions": target_interventions,
+        "measurement_window": (
+            f"FY {project.measurement_start_fy} – FY {project.measurement_end_fy}"
+            if project.measurement_start_fy and project.measurement_end_fy
+            else f"From FY {project.measurement_start_fy}"
+            if project.measurement_start_fy
+            else "Not set"
+        ),
+        "budget_ceiling": _fmt_ugx(budget_ceiling) if budget_ceiling else "Not set",
+        "planned_budget": _fmt_ugx(planned_budget),
+        "budget_remaining": (
+            _fmt_ugx(max(budget_ceiling - int(planned_budget), 0))
+            if budget_ceiling
+            else "—"
+        ),
+        "completion": completion,
+        "activity_closed": activity_closed,
+        "activity_total": activity_total,
+        "decision_maker": decision_maker or "Not recorded",
+        "decision_date": project.status_changed_at,
+        "decision_reason": project.status_reason or "No leadership note recorded.",
+    }
     kpi_strip_items = [
         render_precomputed_metric_item(
             "frontend_views_extended_views_assigned_schools",
@@ -2911,6 +2984,7 @@ def project_detail_view(request, project_id):
             ).exists()
         ),
         "kpi_strip_items": kpi_strip_items,
+        "project_summary": project_summary,
     }
     return render(request, "pages/projects/detail.html", context)
 

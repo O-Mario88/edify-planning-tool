@@ -1,5 +1,5 @@
 {% extends "base.html" %}
-{% load static %}
+{% load static kpi_metrics %}
 
 {% block content %}
 <main class="auth-shell h-full w-full flex items-center justify-center relative overflow-hidden p-4 sm:p-8">
@@ -77,17 +77,7 @@
       </div>
 
       <!-- Real stats footer -->
-      <div class="relative z-10 flex items-center gap-6">
-        <div class="text-center">
-          <p class="auth-stat-label">Schools Served</p>
-          <p class="auth-stat-value">{{ stat_schools_served|default:"—" }}</p>
-        </div>
-        <div class="auth-stat-divider"></div>
-        <div class="text-center">
-          <p class="auth-stat-label">Activities Completed</p>
-          <p class="auth-stat-value">{{ stat_activities_completed|default:"—" }}</p>
-        </div>
-      </div>
+      <div class="relative z-10">{% kpi_strip %}{% kpi_metric %}{% kpi_label %}Schools served{% endkpi_label %}{{ stat_schools_served|default:"—" }}{% endkpi_metric %}{% kpi_metric %}{% kpi_label %}Activities completed{% endkpi_label %}{{ stat_activities_completed|default:"—" }}{% endkpi_metric %}{% endkpi_strip %}</div>
     </div>
 
     <!-- RIGHT — auth form, centered as one compact block -->

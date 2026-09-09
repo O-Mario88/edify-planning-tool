@@ -1,5 +1,7 @@
 {% if is_htmx %}
+{% if can_export %}
 <a id="sp-plan-export-link" class="sp-button sp-button--secondary" href="{{ export_url }}" aria-label="Export filtered project plan as CSV" hx-swap-oob="outerHTML"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M12 3v12m0 0 4-4m-4 4-4-4"></path><path d="M5 17v3h14v-3"></path></svg>Export</a>
+{% endif %}
 <a id="sp-plan-calendar-link" class="sp-button sp-button--primary" href="{{ calendar_url }}" hx-swap-oob="outerHTML"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M16 3v4M8 3v4M3 10h18"></path></svg>Open Calendar</a>
 {% endif %}
 {% if not has_projects %}
@@ -10,12 +12,13 @@
   <a class="sp-button sp-button--primary" href="/projects">Open Special Projects</a>
 </section>
 {% else %}
+{% include "partials/projects/workspace_nav.html" with workspace_active="activities" %}
 <form
   id="sp-plan-filters"
   class="sp-filter-panel"
   method="get"
   action="/projects/my-plan"
-  x-show="filtersOpen"
+  x-show.important="filtersOpen"
   hx-get="/projects/my-plan"
   hx-target="#special-project-plan-workspace"
   hx-swap="innerHTML"
@@ -29,19 +32,26 @@
     <label class="sp-field"><span>Quarter</span><select aria-label="Quarter" name="quarter">{% for option in quarters %}<option value="{{ option }}" {% if selected.quarter == option %}selected{% endif %}>{{ option }}</option>{% endfor %}</select></label>
     <label class="sp-field"><span>Month</span><select aria-label="Month" name="month">{% for option in months %}<option value="{{ option.value }}" {% if selected.month == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
     <label class="sp-field sp-field--wide"><span>Week</span><select aria-label="Week" name="week">{% for option in weeks %}<option value="{{ option.value }}" {% if selected.week == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
-    <label class="sp-field"><span>District</span><select aria-label="District" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
     <label class="sp-field"><span>Project</span><select aria-label="Project" name="project"><option value="">All projects</option>{% for option in projects %}<option value="{{ option.id }}" {% if selected.project == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
-    <label class="sp-field"><span>Partner</span><select aria-label="Partner" name="partner"><option value="">All partners</option>{% for option in partners %}<option value="{{ option.id }}" {% if selected.partner == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
-    <label class="sp-field"><span>Activity Type</span><select aria-label="Activity type" name="activity_type"><option value="">All types</option>{% for option in activity_types %}<option value="{{ option.value }}" {% if selected.activity_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
     <label class="sp-field"><span>Status</span><select aria-label="Status" name="status"><option value="">All active statuses</option>{% for option in status_options %}<option value="{{ option.value }}" {% if selected.status == option.value|stringformat:'s' %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
   </div>
   <div class="sp-filter-panel__footer">
     <span id="sp-plan-updating" class="htmx-indicator">Updating plan…</span>
     <a href="/projects/my-plan" class="sp-filter-reset">Reset filters</a>
   </div>
+  {% if districts or partners or activity_types or selected.district or selected.partner or selected.activity_type %}
+  <details class="sp-more-filters" {% if selected.district or selected.partner or selected.activity_type %}open{% endif %}>
+    <summary>More filters{% if selected.district or selected.partner or selected.activity_type %} · active{% endif %}</summary>
+    <div class="sp-filter-grid">
+    <label class="sp-field"><span>District</span><select aria-label="District" name="district"><option value="">All districts</option>{% for option in districts %}<option value="{{ option.id }}" {% if selected.district == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Partner</span><select aria-label="Partner" name="partner"><option value="">All partners</option>{% for option in partners %}<option value="{{ option.id }}" {% if selected.partner == option.id|stringformat:'s' %}selected{% endif %}>{{ option.name }}</option>{% endfor %}</select></label>
+    <label class="sp-field"><span>Activity Type</span><select aria-label="Activity type" name="activity_type"><option value="">All types</option>{% for option in activity_types %}<option value="{{ option.value }}" {% if selected.activity_type == option.value %}selected{% endif %}>{{ option.label }}</option>{% endfor %}</select></label>
+    </div>
+  </details>
+  {% endif %}
 </form>
 
-{% include "components/kpi_strip.html" with items=kpis variant="executive" title="Special project plan context" %}
+{% include "components/context_metrics.html" with items=kpis variant="executive" title="Special project plan context" %}
 
 <nav class="sp-period-bar" aria-label="Plan period">
   <div class="sp-period-tabs" role="tablist" aria-label="Choose reporting period">
@@ -81,7 +91,7 @@
       </div>
     </section>
 
-    <section class="sp-card">
+    <section id="project-attention" class="sp-card scroll-mt-24">
       <div class="sp-card__header sp-card__header--compact"><div><p class="sp-card__eyebrow sp-card__eyebrow--danger">Action queue</p><h2>Attention Needed</h2></div><span class="sp-count sp-count--danger">{{ attention|length }}</span></div>
       <div class="sp-stack">
         {% for item in attention %}<a class="sp-attention sp-attention--{{ item.tone }}" href="{{ item.url }}" hx-get="{{ item.url }}" hx-target="#drawer-container" hx-swap="innerHTML"><span aria-hidden="true">!</span><div><strong>{{ item.issue }}</strong><small>{{ item.title }}</small></div><b aria-hidden="true">→</b></a>{% empty %}<p class="sp-muted-empty">Nothing needs attention in this period.</p>{% endfor %}

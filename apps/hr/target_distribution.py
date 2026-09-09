@@ -26,7 +26,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from django.db.models import Sum, Q
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
@@ -1354,7 +1354,9 @@ def _rule_activity_query(rule) -> Q:
     return query
 
 
-def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, dict]:
+def milestone_plan_progress(
+    milestones, *, fy: str | None = None, activity_ids=None, targets=None
+) -> dict[str, dict]:
     """One progress figure per milestone, read straight from the plan.
 
     THE DEFECT THIS FIXES (owner, 2026-09-07)
@@ -1400,17 +1402,6 @@ def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, d
     if not rules_by_milestone:
         return {}
 
-    verified_by_milestone: dict[str, Decimal] = {}
-    for mid, value in (
-        MilestoneProgressCredit.objects.filter(
-            rule__milestone_id__in=rules_by_milestone.keys(), reversed_at__isnull=True
-        )
-        .values_list("rule__milestone_id")
-        .annotate(total=Sum("credited_value"))
-        .values_list("rule__milestone_id", "total")
-    ):
-        verified_by_milestone[str(mid)] = Decimal(value or 0)
-
     out: dict[str, dict] = {}
     for mid, rules in rules_by_milestone.items():
         milestone = by_id[mid]
@@ -1421,6 +1412,8 @@ def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, d
         activities = Activity.objects.filter(query, deleted_at__isnull=True)
         if year:
             activities = activities.filter(fy=year)
+        if activity_ids is not None:
+            activities = activities.filter(id__in=activity_ids)
         planned_q = activities.filter(status__in=PLANNED_OUTPUT_STATUSES)
         completed_q = activities.filter(status__in=COMPLETED_WORK_STATUSES)
 
@@ -1466,8 +1459,21 @@ def milestone_plan_progress(milestones, *, fy: str | None = None) -> dict[str, d
 
             planned = measure(planned_q)
             completed = measure(completed_q)
-        verified = verified_by_milestone.get(mid, Decimal("0"))
-        target = milestone.target_value
+        from .milestone_progress import _aggregate_credits
+
+        verified = Decimal(
+            _aggregate_credits(
+                MilestoneProgressCredit.objects.filter(
+                    rule__milestone_id=mid,
+                    rule__active=True,
+                    reversed_at__isnull=True,
+                    activity_id__in=activities.values("id"),
+                ),
+                bases,
+            )
+            or 0
+        )
+        target = (targets or {}).get(str(milestone.id), milestone.target_value)
         target_f = float(target) if target is not None else None
 
         def share(n) -> float | None:
@@ -1550,35 +1556,17 @@ def planned_output(
 
 
 def _scope_activities(activities, allocation: MilestoneAllocation):
-    # 2026-08-20 audit: PERSONAL and TEAM planned output excludes partner
-    # deliveries — the verified side (milestone_progress) always excluded
-    # them, so counting them here inflated planned output with work whose
-    # credit the holder can never receive, understating the planning gap.
-    # Country/project scopes keep partner work: programme delivery owns it.
-    if allocation.allocated_to_type == "employee" and allocation.employee_id:
-        owner_ids = {
-            str(allocation.employee_id),
-            str(getattr(allocation.employee, "user_id", "") or ""),
-        } - {""}
-        return activities.exclude(delivery_type="partner").filter(
-            Q(responsible_staff_id__in=owner_ids)
-            | Q(monitored_by_staff_id__in=owner_ids)
-        )
-    if allocation.allocated_to_type == "team" and allocation.team_id:
-        from apps.accounts.models import StaffSupervisorAssignment
+    from .contribution_scope import scope_activities
 
-        member_ids = list(
-            StaffSupervisorAssignment.objects.filter(
-                supervisor_id=allocation.team_id
-            ).values_list("supervisee_id", flat=True)
-        )
-        return activities.exclude(delivery_type="partner").filter(
-            Q(responsible_staff_id__in=member_ids)
-            | Q(monitored_by_staff_id__in=member_ids)
-        )
+    if allocation.allocated_to_type == "employee" and allocation.employee_id:
+        return scope_activities(activities, staff=allocation.employee)
+    if allocation.allocated_to_type == "team" and allocation.team_id:
+        return scope_activities(activities, staff=allocation.team_id, include_team=True)
     if allocation.allocated_to_type == "project" and allocation.project_id:
         return activities.filter(project_id=allocation.project_id)
-    return activities
+    return scope_activities(
+        activities, country=allocation.milestone.priority.country_id
+    )
 
 
 def participant_guidance_for(catalogue_item_id: str) -> int | None:
