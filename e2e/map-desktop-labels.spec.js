@@ -11,7 +11,9 @@ test('desktop labels survive laptop heights and district drilldown', async({page
     await page.setViewportSize({width,height});
     await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).length)).toBeGreaterThan(15);
     await expect.poll(()=>svg.evaluate(e=>Math.round(e.getBoundingClientRect().bottom))).toBeLessThanOrEqual(height);
-    if(height===1440) expect((await svg.boundingBox()).height).toBeGreaterThan(560);
+    if (height === 1440) {
+      await expect.poll(async () => (await svg.boundingBox())?.height || 0).toBeGreaterThan(560);
+    }
   }
   await page.setViewportSize({width:1366,height:768});
   await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.every(n=>n.dataset.labelPlacement))).toBe(true);
