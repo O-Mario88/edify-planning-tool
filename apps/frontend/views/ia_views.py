@@ -1886,11 +1886,19 @@ def ia_compare_view(request):
     evidence_list = []
     ssa_record = None
 
-    # If no ID, get first waiting
+    waiting_list = (
+        Activity.objects.filter(
+            _ia_reach_q(request),
+            deleted_at__isnull=True,
+            status="awaiting_ia_verification",
+        )
+        .select_related("school", "cluster")
+        .order_by("created_at", "id")
+    )
+    # Choose from the same authorised queue as the selector, not another
+    # country's first record (which made an otherwise valid page return 404).
     if not activity_id:
-        first_waiting = Activity.objects.filter(
-            deleted_at__isnull=True, status="awaiting_ia_verification"
-        ).first()
+        first_waiting = waiting_list.first()
         if first_waiting:
             activity_id = first_waiting.id
 
@@ -1915,10 +1923,6 @@ def ia_compare_view(request):
                 .order_by("-date_of_ssa")
                 .first()
             )
-
-    waiting_list = Activity.objects.filter(
-        deleted_at__isnull=True, status="awaiting_ia_verification"
-    )
 
     context = {
         "act": a,

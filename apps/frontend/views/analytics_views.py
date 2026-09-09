@@ -50,15 +50,11 @@ def analytics_scope_kpis(request) -> dict:
         AnalyticsDashboardPreference,
     )
     from apps.analytics.report_delivery import CARD_CATEGORY
-    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+    from apps.analytics.views import _get_cache_key
 
     filters = _analytics_filters(request)
-    fingerprint = hashlib.sha256(
-        json.dumps(filters, sort_keys=True, default=str).encode()
-    ).hexdigest()[:20]
     data = stampede_safe_get_or_compute(
-        f"analytics-dashboard:v1:{request.user.id}:{request.user.active_role}:"
-        f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:{fingerprint}",
+        _get_cache_key("workspace-dashboard", request.user, filters),
         lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),
         timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
     )
@@ -84,18 +80,10 @@ def analytics_dashboard_view(request):
     # 1. Gather all filters from GET parameters
     filters = _analytics_filters(request)
 
-    # 2. Call Service to gather all dashboard datasets
-    filter_fingerprint = hashlib.sha256(
-        json.dumps(filters, sort_keys=True, default=str).encode()
-    ).hexdigest()[:20]
-    from apps.core.scoping import resolve_user_scope, scope_cache_fingerprint
+    # Share the backend-safe, role/portfolio/filter-isolated key with the tabs.
+    from apps.analytics.views import _get_cache_key
 
-    analytics_key = (
-        f"analytics-dashboard:v1:{request.user.id}:"
-        f"{request.user.active_role}:"
-        f"{scope_cache_fingerprint(resolve_user_scope(request.user))}:"
-        f"{filter_fingerprint}"
-    )
+    analytics_key = _get_cache_key("workspace-dashboard", request.user, filters)
     data = stampede_safe_get_or_compute(
         analytics_key,
         lambda: AnalyticsDashboardService.get_analytics_data(request.user, filters),

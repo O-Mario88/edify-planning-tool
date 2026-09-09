@@ -25,17 +25,18 @@ async function render(page, theme, width, html = markup, fullDocument = false) {
   await page.setViewportSize({ width, height: 700 });
   let server = servers.get(page);
   if (!server) { server = await snapshotServer(root); servers.set(page, server); }
-  server.setHtml(fullDocument ? html.replace('<html lang=', `<html class="${theme}${theme === 'theme-light' ? '' : ' dark'}" lang=`) : `<html class="${theme}${theme === 'theme-light' ? '' : ' dark'}"><head><meta charset="utf-8">${sheets.map(s => `<link rel="stylesheet" href="/static/css/${s}">`).join('')}</head><body><main style="padding:24px;max-width:none">${html}</main><script src="/static/js/kpi-strips.js"></script></body></html>`);
+  server.setHtml(fullDocument ? html.replace('<html lang=', `<html class="${theme}${theme === 'theme-light' ? '' : ' dark'}" lang=`) : `<html class="${theme}${theme === 'theme-light' ? '' : ' dark'}"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">${sheets.map(s => `<link rel="stylesheet" href="/static/css/${s}">`).join('')}</head><body><main style="padding:24px;max-width:none">${html}</main><script src="/static/js/kpi-strips.js"></script></body></html>`);
   await page.goto(server.origin + '/page');
   await expect(page.locator('[data-kpi-ready]')).toHaveCount(1);
   await page.evaluate(() => document.fonts.ready);
 }
-for (const [theme, color] of [['theme-light', 'rgb(255, 255, 255)'], ['theme-dark', 'rgb(18, 34, 52)'], ['theme-blue', 'rgb(7, 84, 154)']]) {
+for (const [theme, color] of [['theme-light', 'rgb(255, 255, 255)'], ['theme-dark', 'rgb(18, 34, 52)'], ['theme-blue', 'rgba(0, 0, 0, 0)']]) {
   for (const [width, visible] of [[390, 2], [768, 4], [1600, 8]]) {
     test(`${theme} at ${width}: layout, navigation, overflow and surface`, async ({ page }, testInfo) => {
       await render(page, theme, width);
       const rail = page.locator('.context-metrics__sentence');
       await expect(rail).toHaveCSS('background-color', color);
+      if (theme === 'theme-blue') await expect(rail).toHaveCSS('background-image', 'linear-gradient(110deg, rgb(7, 52, 84), rgb(16, 63, 98))');
       await expect(page.locator('.context-metrics__value').first()).toHaveCSS('font-weight', '700');
       const metrics = await rail.evaluate(el => ({ width: el.clientWidth, cell: el.children[0].getBoundingClientRect().width, height: el.offsetHeight, pageOverflow: document.documentElement.scrollWidth > innerWidth }));
       expect(Math.round(metrics.width / metrics.cell)).toBe(visible);

@@ -286,9 +286,7 @@ class TabsDoNotStretchTest(SimpleTestCase):
         outer corners and the last one's puts a rounded corner in the middle of
         the bar against a square edge — identical widths reading as different
         shapes."""
-        block = self.interactions[
-            self.interactions.index("Connected segments:") :
-        ]
+        block = self.interactions[self.interactions.index("Connected segments:") :]
         self.assertIn("border-radius: 0 !important;", block)
         self.assertIn(
             "border-start-start-radius: calc(var(--edify-radius-sm) - 2px) !important;",

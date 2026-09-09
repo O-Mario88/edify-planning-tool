@@ -74,17 +74,17 @@ inset themselves — see components/mobile-shell.css.
 <link rel="stylesheet" href="{% static 'css/fonts.css' %}?v=20260818geist3">
 
 <!-- Compiled Tailwind Styling -->
-<link rel="stylesheet" href="{% static 'css/main.css' %}?v=20260906field1">
+<link rel="stylesheet" href="{% static 'build/css/main.css' %}?v=20260909perf3">
 
 <!-- Edify Design System — the SINGLE source of truth for tokens.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
-<link rel="stylesheet" href="{% static 'css/design-system.css' %}?v=20260909brand2">
-<link rel="stylesheet" href="{% static 'css/components.css' %}?v=20260908calm1">
+<link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260909perf3">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
-<link rel="stylesheet" href="{% static 'css/components/mobile-patterns.css' %}?v=20260908calm1">
-<link rel="stylesheet" href="{% static 'css/pages.css' %}?v=20260909polish1">
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260909perf3">
+<link rel="stylesheet" href="{% static 'build/css/pages.css' %}?v=20260909perf3">
 {% comment %}
 admin-dashboard.css (29 KB), hcos-workspace.css (10 KB) and help-center.css
 (17 KB) used to load here, on every authenticated page. Between them they are
@@ -98,20 +98,20 @@ need them. Every selector in all three is scoped under its own prefix
 `.admin-period-switch .is-active` and `.theme-blue .admin-command` — so no
 other page was relying on them.
 {% endcomment %}
-<link rel="stylesheet" href="{% static 'css/drawers.css' %}?v=20260906float1">
+<link rel="stylesheet" href="{% static 'build/css/drawers.css' %}?v=20260909perf3">
 <link rel="stylesheet" href="{% static 'css/app.css' %}?v=20260826modal1">
-{% block platform_css %}<link rel="stylesheet" href="{% static 'css/platform.css' %}?v=20260908calm1">{% endblock %}
+{% block platform_css %}<link rel="stylesheet" href="{% static 'build/css/platform.css' %}?v=20260909perf3">{% endblock %}
 {% block feature_css %}{% endblock %}
 <!-- Feature styles load before this final bridge, so individual workspaces
      retain their layout while shared tokens, controls and accessibility states
      always win across the platform. -->
-{% block consistency_css %}<link rel="stylesheet" href="{% static 'css/consistency.css' %}?v=20260909brand2">{% endblock %}
-<link rel="stylesheet" href="{% static 'css/components/mobile-micro-ux.css' %}?v=20260909projects1">
+{% block consistency_css %}<link rel="stylesheet" href="{% static 'build/css/consistency.css' %}?v=20260909perf3">{% endblock %}
+<link rel="stylesheet" href="{% static 'build/css/components/mobile-micro-ux.css' %}?v=20260909perf3">
 <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260823aura1">
 <!-- How controls answer a pointer — readable hover states and the press. Last on
      purpose: it is the one place that decides the response, over whatever
      each component block decided about its resting look. -->
-<link rel="stylesheet" href="{% static 'css/components/interactions.css' %}?v=20260908calm1">
+<link rel="stylesheet" href="{% static 'build/css/components/interactions.css' %}?v=20260909perf3">
 
 
 <!-- HTMX (for fast server-driven partial updates) — served from this origin.
@@ -217,8 +217,8 @@ controller exists by the time a drawer's x-init runs.
      surrounding HTML, including content inserted by HTMX. -->
 <script defer src="{% static 'js/svg-typography.js' %}?v=20260804svgtype2"></script>
 <script defer src="{% static 'js/mobile-ux.js' %}?v=20260808mobilephase5"></script>
-<script defer src="{% static 'js/kpi-strips.js' %}?v=20260908strip6"></script>
-<script defer src="{% static 'js/micro-ux.js' %}?v=20260909projects1"></script>
+<script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
+<script defer src="{% static 'js/micro-ux.js' %}?v=20260909perf3"></script>
 
 {% comment %}
 Keeps the reader where they were. The shell gives the workspace its own

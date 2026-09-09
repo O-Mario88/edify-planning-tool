@@ -360,8 +360,15 @@ def _template_sites() -> list[KpiTemplateSite]:
             )
 
         for match in re.finditer(r"{%\s*kpi_strip\s*%}", source):
-            found.append((relative, source.count("\n", 0, match.start()) + 1,
-                          "template-authored-metrics", "context", "shared-component"))
+            found.append(
+                (
+                    relative,
+                    source.count("\n", 0, match.start()) + 1,
+                    "template-authored-metrics",
+                    "context",
+                    "shared-component",
+                )
+            )
 
         if relative not in {
             "templates/components/context_metrics.html",
@@ -391,9 +398,7 @@ def _template_sites() -> list[KpiTemplateSite]:
         page = page_context.get(template, {})
         if presentation == "context":
             recommendation = "convert"
-            reason = (
-                "All metric summaries use the shared responsive performance strip."
-            )
+            reason = "All metric summaries use the shared responsive performance strip."
             replacement = "compact performance strip"
             status = "completed"
         elif presentation == "executive":

@@ -2857,9 +2857,9 @@ def project_detail_view(request, project_id):
     activity_closed = project_activities.filter(status="closed").count()
     completion = round(activity_closed / activity_total * 100) if activity_total else 0
     planned_budget = (
-        ActivityScheduleCostLine.objects.filter(activity__project_id=project.id).aggregate(
-            total=Sum("amount")
-        )["total"]
+        ActivityScheduleCostLine.objects.filter(
+            activity__project_id=project.id
+        ).aggregate(total=Sum("amount"))["total"]
         or 0
     )
     decision_maker = None

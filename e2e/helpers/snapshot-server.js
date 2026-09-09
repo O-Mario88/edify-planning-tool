@@ -32,7 +32,12 @@ async function snapshotServer(root) {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
   return {origin:`http://127.0.0.1:${server.address().port}`,
-    setHtml(value) { html = value; },
+    setHtml(value) {
+      // Old captured fixtures should exercise the same generated bundles as
+      // live pages, while feature styles without a compiled version stay put.
+      html = value.replace(/\/static\/css\/([a-zA-Z0-9_./-]+\.css)/g, (url, name) =>
+        fs.existsSync(path.join(root, 'static/build/css', name)) ? `/static/build/css/${name}` : url);
+    },
     async close() { server.closeAllConnections(); await new Promise(resolve => server.close(resolve)); }};
 }
 module.exports = {snapshotServer};

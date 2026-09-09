@@ -1,6 +1,11 @@
 """Template boundary for the platform's contextual-metric policy."""
 
+from html import unescape
+import re
+
 from django import template
+from django.template.loader import render_to_string
+from django.utils.html import strip_tags
 
 from apps.core.metrics import PresentationKpi, consolidate_kpi_items
 
@@ -54,14 +59,12 @@ def collect_kpi_items(*items):
 
 # Template-authored summaries use the same renderer as registered payloads.
 # Block values retain existing filters, conditional states, and loop scope.
-from html import unescape
-import re
-from django.template.loader import render_to_string
-from django.utils.html import strip_tags
 
 
 def _metric_text(value):
-    return " ".join(unescape(strip_tags(re.sub(r"</(?:span|div|p)>", " ", value))).split())
+    return " ".join(
+        unescape(strip_tags(re.sub(r"</(?:span|div|p)>", " ", value))).split()
+    )
 
 
 class MetricFieldNode(template.Node):
@@ -82,6 +85,7 @@ def _field_tag(field):
         body = parser.parse(("end" + token.contents,))
         parser.delete_first_token()
         return MetricFieldNode(field, body)
+
     return parse
 
 
@@ -121,7 +125,14 @@ class MetricStripNode(template.Node):
         with context.push(_platform_kpi_items=items):
             self.body.render(context)
         values = context.flatten()
-        values.update(items=items, title="", subtitle="", density=None, variant="executive", drilldown_mode="")
+        values.update(
+            items=items,
+            title="",
+            subtitle="",
+            density=None,
+            variant="executive",
+            drilldown_mode="",
+        )
         return render_to_string("components/context_metrics.html", values)
 
 
@@ -136,21 +147,28 @@ def parse_metric_strip(parser, token):
 def kpi_value(item):
     """Compact large currency displays without losing the exact source value."""
     from decimal import Decimal, InvalidOperation
+
     value = item.get("display_value")
     if value is None or value == "":
         value = item.get("value", "—")
     exact = str(value) if value is not None else "—"
     result = {"exact": exact, "display": exact, "compact": False}
-    match = re.fullmatch(r"(UGX|USD|EUR|GBP|KES|TZS|RWF)\s+(-?\d[\d,]*(?:\.\d+)?)", exact)
+    match = re.fullmatch(
+        r"(UGX|USD|EUR|GBP|KES|TZS|RWF)\s+(-?\d[\d,]*(?:\.\d+)?)", exact
+    )
     if not match:
         return result
     try:
         amount = Decimal(match[2].replace(",", ""))
     except InvalidOperation:
         return result
-    for divisor, suffix in ((Decimal('1000000000000'), 'T'), (Decimal('1000000000'), 'B'), (Decimal('1000000'), 'M')):
+    for divisor, suffix in (
+        (Decimal("1000000000000"), "T"),
+        (Decimal("1000000000"), "B"),
+        (Decimal("1000000"), "M"),
+    ):
         if abs(amount) >= divisor:
-            short = f"{amount / divisor:.2f}".rstrip('0').rstrip('.')
+            short = f"{amount / divisor:.2f}".rstrip("0").rstrip(".")
             result.update(display=f"{match[1]} {short}{suffix}", compact=True)
             break
     return result

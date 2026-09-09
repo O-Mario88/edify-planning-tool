@@ -174,9 +174,8 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
 
     def test_every_analytics_route_uses_the_enterprise_anatomy(self):
         templates = (
+            "templates/pages/analytics/workspace.html",
             "templates/pages/analytics/index.html",
-            "templates/pages/analytics/pl_analytics.html",
-            "templates/pages/analytics/cd_analytics.html",
             "templates/pages/analytics/impact.html",
             "templates/pages/analytics/visit_effectiveness.html",
             "templates/pages/analytics/declining_schools.html",
@@ -186,14 +185,15 @@ class AnalyticsDecisionWorkspaceContractTest(SimpleTestCase):
             "templates/pages/ssa/performance.html",
             "templates/pages/decisions/index.html",
             "templates/pages/audit/decision_log.html",
-            "templates/pages/core_schools/leadership.html",
             "templates/pages/reports/index.html",
-            "templates/pages/closure/completed_activities.html",
             "templates/pages/projects/analytics.html",
             "templates/pages/ia/analytics_dashboard.html",
         )
         for template in templates:
             source = _read(template)
+            if template.endswith("analytics/workspace.html"):
+                source += _read("templates/partials/analytics/scope.html")
+                source += _read("templates/partials/analytics/panel.html")
             self.assertIn("data-analytics-enterprise", source, template)
             self.assertIn("analytics_decision_frame.html", source, template)
             self.assertIn("analytics-dashboard.css", source, template)

@@ -130,7 +130,6 @@ class MobileMicroUXContractTest(SimpleTestCase):
             "templates/partials/core_schools/planning_queue.html",
             "templates/partials/core_schools/matrix_table.html",
             "templates/partials/core_schools/team_oversight.html",
-            "templates/partials/finance/fund_allocation_table.html",
             "templates/partials/planning/school_table.html",
             "templates/partials/projects/planning_workspace.html",
             "templates/partials/schools/table.html",

@@ -20,7 +20,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-03` | Standard staff school visit | ✓ | 13 | 79 | 39 | 4 | 8 | 9 | 26 | 46 |
 | `journey-04` | Cluster training | ✓ | 1 | 37 | 15 | 0 | 0 | 0 | 1 | 41 |
 | `journey-05` | Partner assignment and payment | ✓ | 1 | 38 | 27 | 2 | 2 | 1 | 4 | 54 |
-| `journey-06` | Special Project | ✓ | 1 | 77 | 35 | 4 | 5 | 5 | 16 | 46 |
+| `journey-06` | Special Project | ✓ | 1 | 80 | 35 | 4 | 5 | 5 | 16 | 46 |
 | `journey-07` | Fund overspending and reimbursement | ✓ | 5 | 58 | 32 | 5 | 10 | 8 | 22 | 46 |
 | `journey-08` | Activity canceled after disbursement | ✓ | 2 | 55 | 25 | 3 | 6 | 7 | 18 | 45 |
 | `journey-09` | Leave and temporary coverage | ✓ | 1 | 41 | 15 | 0 | 0 | 1 | 4 | 10 |
@@ -153,7 +153,7 @@ Steps: IA maps SSA intervention → Assigns Project Coordinator → Staff adds e
 | Permissions checked | `fundRequest.approveEscalated`, `ia.verify`, `payment.act`, `project.configurePriorities` |
 | Page gates checked | `projects` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py` _+67 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py`, `apps/analytics/platform_engine.py`, `apps/audit/services.py` _+70 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+23 more_ |
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `notification.activity_submitted_for_review`, `notification.weekly_fund_request_approved`, `notification.weekly_fund_request_disbursed`, `notification.weekly_fund_request_ready`, `notification.weekly_fund_request_submitted` _+8 more_ |

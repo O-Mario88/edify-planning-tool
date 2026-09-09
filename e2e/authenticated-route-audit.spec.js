@@ -2,6 +2,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const { signIn } = require('./helpers/auth');
+const indexedSelectors = require('../static/build/css/selectors.json');
+
+// A platform crawl visits hundreds of pages; videos/traces of the entire
+// crawl consume memory and distort the load measurements. Keep JSON evidence.
+test.use({ video: 'off', trace: 'off' });
 
 const inventory = JSON.parse(
   fs.readFileSync(path.join(__dirname, '..', 'docs', 'platform-page-inventory.json'), 'utf8')
@@ -148,9 +153,21 @@ for (const [accountRole, inventoryRole, email, password] of roleAccounts) {
         continue;
       }
 
+      // Let load-triggered fragments finish before navigating away. Otherwise
+      // the next navigation aborts them and misattributes sendError to that page.
+      await expect(page.locator('.htmx-request')).toHaveCount(0, { timeout: 15_000 });
+      await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
+
       const status = response?.status() || 0;
       const finalPath = new URL(page.url()).pathname;
-      const pageRecord = await page.evaluate(() => {
+      const pageRecord = await page.evaluate(index => {
+        const patterns = Object.entries(index).map(([part, names]) => [part, new Set(names)]);
+        const unindexed = new Set();
+        document.querySelectorAll('[class]').forEach(element => patterns.forEach(([part, names]) => {
+          if (element.getAttribute('class').includes(part) && ![...element.classList].some(name => names.has(name))) {
+            unindexed.add(part + ': ' + element.getAttribute('class'));
+          }
+        }));
         const normalizedText = value => value?.trim().replace(/\s+/g, ' ').slice(0, 160) || '';
         const accessibleName = element => {
           const labelledBy = (element.getAttribute('aria-labelledby') || '')
@@ -187,16 +204,18 @@ for (const [accountRole, inventoryRole, email, password] of roleAccounts) {
             element.getAttribute('hx-delete') || element.getAttribute('formaction') || '',
         }));
         return {
+          unindexed: [...unindexed],
           title: document.title,
           domNodes: document.querySelectorAll('*').length,
           horizontalOverflow: document.documentElement.scrollWidth > document.documentElement.clientWidth + 1,
           controls,
         };
-      });
+      }, indexedSelectors);
 
       const unlabeledVisibleControls = pageRecord.controls.filter(control =>
-        control.visible && !control.disabled && !control.label && control.tag !== 'select'
+        control.visible && !control.disabled && !control.label && !['select', 'form'].includes(control.tag)
       );
+      if (pageRecord.unindexed.length) errors.push(`${route}: unindexed class patterns: ${pageRecord.unindexed.join("; ")}`);
       if (status >= 400) errors.push(`${route}: HTTP ${status}`);
       if (finalPath.startsWith('/policy-agreement') || finalPath.startsWith('/documents/') || finalPath === '/login') {
         errors.push(`${route}: redirected to onboarding gate ${finalPath}`);
@@ -204,7 +223,7 @@ for (const [accountRole, inventoryRole, email, password] of roleAccounts) {
       if (pageRecord.domNodes > 10_000) errors.push(`${route}: ${pageRecord.domNodes} DOM nodes`);
       if (pageRecord.horizontalOverflow) errors.push(`${route}: horizontal overflow`);
       if (unlabeledVisibleControls.length) {
-        errors.push(`${route}: ${unlabeledVisibleControls.length} visible controls lack an accessible name`);
+        errors.push(`${route}: visible controls lack an accessible name: ${unlabeledVisibleControls.map(control => control.id).join(", ")}`);
       }
       records.push({
         role: accountRole,

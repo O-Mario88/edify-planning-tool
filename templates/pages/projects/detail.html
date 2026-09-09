@@ -41,10 +41,10 @@ Project
 </div>
   <details class="project-detail-context"><summary>Project details and latest decision</summary>
   <div class="grid gap-px bg-[var(--edify-border)] sm:grid-cols-2 xl:grid-cols-4">
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Coordinator</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.coordinator }}</p></div>
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Target interventions</p><p class="mt-1 text-[13px] font-bold text-slate-800">{% for item in project_summary.interventions %}{{ item }}{% if not forloop.last %}, {% endif %}{% empty %}Not set{% endfor %}</p></div>
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Measurement window</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.measurement_window }}</p></div>
-    <div class="bg-white p-4"><p class="edify-profile-field__label">Budget ceiling</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.budget_ceiling }}</p></div>
+    <div class="edify-surface p-4"><p class="edify-profile-field__label">Coordinator</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.coordinator }}</p></div>
+    <div class="edify-surface p-4"><p class="edify-profile-field__label">Target interventions</p><p class="mt-1 text-[13px] font-bold text-slate-800">{% for item in project_summary.interventions %}{{ item }}{% if not forloop.last %}, {% endif %}{% empty %}Not set{% endfor %}</p></div>
+    <div class="edify-surface p-4"><p class="edify-profile-field__label">Measurement window</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.measurement_window }}</p></div>
+    <div class="edify-surface p-4"><p class="edify-profile-field__label">Budget ceiling</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.budget_ceiling }}</p></div>
   </div>
   <div class="border-t border-[var(--edify-border)] p-5"><p class="edify-profile-field__label">Latest leadership decision</p><p class="mt-1 text-[13px] font-bold text-slate-800">{{ project_summary.status }} · {{ project_summary.decision_maker }}{% if project_summary.decision_date %} · {{ project_summary.decision_date|date:"j M Y" }}{% endif %}</p><p class="mt-1 text-[12px] leading-5 text-slate-500">{{ project_summary.decision_reason }}</p></div>
   </details>

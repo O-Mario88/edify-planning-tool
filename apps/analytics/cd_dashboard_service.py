@@ -109,14 +109,20 @@ class CDDashboardService:
     country-wide, real, and month/FY filterable."""
 
     @staticmethod
-    def get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
+    def get_dashboard(
+        user, fy: str | None = None, month: int | None = None, *, view="all"
+    ) -> dict:
         from apps.core.request_cache import scoped
 
         with scoped():
-            return CDDashboardService._get_dashboard(user, fy=fy, month=month)
+            return CDDashboardService._get_dashboard(
+                user, fy=fy, month=month, view=view
+            )
 
     @staticmethod
-    def _get_dashboard(user, fy: str | None = None, month: int | None = None) -> dict:
+    def _get_dashboard(
+        user, fy: str | None = None, month: int | None = None, *, view="all"
+    ) -> dict:
         fy = fy or get_operational_fy()
         cd = resolve_cd_scope(fy, month=month, country=country_for(user))
         acts = _country_activities(cd)
@@ -143,35 +149,44 @@ class CDDashboardService:
         pl_rows = CDDashboardService.pl_performance(cd, acts)
         regional = CDDashboardService.regional_performance(cd, acts)
 
-        from apps.debriefs.rollup_service import field_debrief_intelligence_summary
-
-        return {
+        data = {
             "fy": fy,
             "month": month,
             "kpi_strip_items": CDDashboardService.kpis(cd, acts, fy, pl_rows, user),
             "leadership_attention": CDDashboardService.leadership_attention(
                 cd, acts, fy, regional
             ),
-            "country_performance": CDDashboardService.country_performance(cd),
-            "regional_performance": regional,
-            "geography": CDDashboardService.geography_breakdown(cd, acts),
-            "verification": CDDashboardService.verification_and_quality(cd, acts),
-            "pl_performance": pl_rows,
-            "finance_snapshot": CDDashboardService.finance_snapshot(cd, acts, fy),
-            "operational_risk": CDDashboardService.operational_risk_backlog(
-                cd, acts, fy
-            ),
-            "ssa_matrix": CDDashboardService.ssa_matrix(cd, acts),
-            "priority_schools": CDDashboardService.priority_schools(cd, acts),
-            "quick_actions": CDDashboardService.quick_actions(),
-            "budget_stage": CDDashboardService.budget_stage(fy),
-            "field_debrief_intel": field_debrief_intelligence_summary(user),
             "scope_meta": {
                 "pl_count": len(CDAnalyticsService._pls()),
                 "cceo_count": len(cd.cceo_user_ids),
                 "school_count": len(cd.school_ids),
             },
         }
+        if view != "operations":
+            data["geography"] = CDDashboardService.geography_breakdown(cd, acts)
+        if view == "map":
+            return data
+        # Build the operational tables only when that panel is requested.
+        from apps.debriefs.rollup_service import field_debrief_intelligence_summary
+
+        data.update(
+            {
+                "country_performance": CDDashboardService.country_performance(cd),
+                "regional_performance": regional,
+                "verification": CDDashboardService.verification_and_quality(cd, acts),
+                "pl_performance": pl_rows,
+                "finance_snapshot": CDDashboardService.finance_snapshot(cd, acts, fy),
+                "operational_risk": CDDashboardService.operational_risk_backlog(
+                    cd, acts, fy
+                ),
+                "ssa_matrix": CDDashboardService.ssa_matrix(cd, acts),
+                "priority_schools": CDDashboardService.priority_schools(cd, acts),
+                "quick_actions": CDDashboardService.quick_actions(),
+                "budget_stage": CDDashboardService.budget_stage(fy),
+                "field_debrief_intel": field_debrief_intelligence_summary(user),
+            }
+        )
+        return data
 
     # ── KPI strip (8, per mandate §6) ────────────────────────────────────────
     @staticmethod

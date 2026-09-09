@@ -380,7 +380,10 @@ def accountant_dashboard_view(request):
     }
     # Finance is an operations-only workspace, including legacy map links.
     context["dashboard_view"] = "operations"
-    if request.headers.get("HX-Target") in ("accountant-dashboard-view-shell", "accounts-root"):
+    if request.headers.get("HX-Target") in (
+        "accountant-dashboard-view-shell",
+        "accounts-root",
+    ):
         response = render(request, "partials/finance/accountant_root.html", context)
     elif request.headers.get("HX-Request") == "true" and request.GET.get("selected"):
         response = render(request, "partials/finance/accountant_detail.html", context)

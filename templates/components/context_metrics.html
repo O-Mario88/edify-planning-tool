@@ -41,7 +41,7 @@
         <span class="context-metrics__label"{% if item.accessible_description %} aria-hidden="true"{% endif %}>{% firstof item.label item.canonical_label %}</span>
         {% kpi_value item as formatted_value %}
         <strong class="context-metrics__value{% if formatted_value.compact %} context-metrics__value--compact{% endif %}" title="{{ formatted_value.exact }}"{% if item.accessible_description %} aria-hidden="true"{% endif %}>{% if formatted_value.compact %}<span class="sr-only">{{ formatted_value.exact }}</span><span aria-hidden="true">{{ formatted_value.display }}</span>{% else %}{{ formatted_value.display }}{% endif %}</strong>
-        {% if item.helper %}<span class="context-metrics__helper" title="{{ item.helper }}" data-tone="{{ item.tone }}">{{ item.helper }}</span>{% endif %}
+        {% if item.trend.value %}{% firstof item.trend.tone item.tone "neutral" as trend_tone %}<span class="context-metrics__helper" title="{{ item.trend.value }}{% if item.helper %} · {{ item.helper }}{% endif %}" data-tone="{{ trend_tone }}">{% if item.trend.direction == "up" %}<span aria-hidden="true">↗ </span>{% elif item.trend.direction == "down" %}<span aria-hidden="true">↘ </span>{% endif %}{{ item.trend.value }}</span>{% elif item.helper %}<span class="context-metrics__helper" title="{{ item.helper }}" data-tone="{{ item.tone }}">{{ item.helper }}</span>{% endif %}
 
       {% if item.hx_get %}</button>
       {% elif drilldown_mode == "program_lead" and item.link %}</button>

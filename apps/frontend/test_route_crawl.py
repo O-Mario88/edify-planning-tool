@@ -224,8 +224,7 @@ class KpiVisualAuditParserTests(SimpleTestCase):
 
     def test_an_empty_summary_is_still_a_fault(self):
         issues = self._issues(
-            '<section class="context-metrics" data-context-metrics>'
-            "</section>"
+            '<section class="context-metrics" data-context-metrics>' "</section>"
         )
         self.assertIn("context summary rendered no metrics at all", issues)
 
@@ -236,9 +235,7 @@ class KpiVisualAuditParserTests(SimpleTestCase):
             + '<span data-component="context-metric"></span>'
             + "</section>"
         )
-        self.assertTrue(
-            any("missing required parts" in issue for issue in issues)
-        )
+        self.assertTrue(any("missing required parts" in issue for issue in issues))
 
 
 def _zero_argument_routes() -> list[str]:
@@ -288,7 +285,14 @@ def _zero_argument_routes() -> list[str]:
     return sorted(routes)
 
 
-@override_settings(CACHES={"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache", "LOCATION": "kpi-platform-crawl"}})
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "kpi-platform-crawl",
+        }
+    }
+)
 class RouteCrawlTest(TestCase):
     """One signed-in user per role, walking every argument-free page."""
 
@@ -322,6 +326,7 @@ class RouteCrawlTest(TestCase):
         from pathlib import Path
         from django.conf import settings
         import re
+
         audit_dir = Path(settings.BASE_DIR) / "test-results/kpi-platform-crawl"
         audit_dir.mkdir(parents=True, exist_ok=True)
         records = []
@@ -342,12 +347,21 @@ class RouteCrawlTest(TestCase):
                 response.content.decode(response.charset or "utf-8", errors="replace")
             )
             parser.finish()
-            records.append({"url": url, "status": response.status_code, "metrics": parser.total_metric_count, "issues": parser.issues})
+            records.append(
+                {
+                    "url": url,
+                    "status": response.status_code,
+                    "metrics": parser.total_metric_count,
+                    "issues": parser.issues,
+                }
+            )
             if response.status_code == 200 and b"<html" in response.content:
                 filename = re.sub(r"[^a-zA-Z0-9_-]", "_", role + "-" + url) + ".html"
                 (audit_dir / filename).write_bytes(response.content)
             failures.extend(f"{url} → {issue}" for issue in parser.issues)
-        (audit_dir / (re.sub(r"[^a-zA-Z0-9_-]", "_", role) + ".json")).write_text(json.dumps(records, indent=2))
+        (audit_dir / (re.sub(r"[^a-zA-Z0-9_-]", "_", role) + ".json")).write_text(
+            json.dumps(records, indent=2)
+        )
         return failures
 
     def test_the_route_table_is_worth_crawling(self):

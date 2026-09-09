@@ -1296,7 +1296,7 @@ html[data-edify-input-modality="pointer"] .remember-control input:focus {
   width: min(100%, 29rem);
   min-height: auto;
   border: 1px solid #d9e3ed;
-  border-radius: 1rem;
+  border-radius: var(--radius-overlay);
   background: #fff;
   box-shadow: 0 16px 48px rgba(7, 38, 65, .09);
 }

@@ -110,8 +110,8 @@ jobs:
         if: ${{ !cancelled() }}
         run: |
           npm run build:css
-          git diff --exit-code static/css/main.css \
-            || { echo "::error::static/css/main.css is out of date — run 'npm run build:css' and commit the result"; exit 1; }
+          git diff --exit-code static/css/main.css static/css/tokens.css static/build/css \
+            || { echo "::error::Generated CSS is out of date — run 'npm run build:css' and commit the result"; exit 1; }
 
   browser-tests:
     name: Browser Journeys & Role Route Audit

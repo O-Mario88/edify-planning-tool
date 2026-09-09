@@ -322,11 +322,11 @@ class FrontendViewsTestCase(TestCase):
         self.assertTemplateUsed(response, "pages/dashboards/special_projects.html")
         self.assertEqual(
             response.content.decode().count('data-component="context-metric"'),
-            0,
-            "the coordinator home distributes metrics into its working sections",
+            4,
+            "the coordinator home keeps all four portfolio metrics in one strip",
         )
-        self.assertContains(response, "active project")
-        self.assertContains(response, "What needs my attention today?")
+        self.assertContains(response, "Active projects")
+        self.assertContains(response, "Your delivery desk")
 
     def test_partner_roles_redirect_to_partner_scoped_dashboard(self):
         """PartnerAdmin/PartnerFieldOfficer logins previously fell through to

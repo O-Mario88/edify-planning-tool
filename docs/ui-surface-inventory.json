@@ -145,17 +145,6 @@
       "header": "shared"
     },
     {
-      "template": "pages/accounts/reimbursements.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/accounts/reimbursements.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
       "template": "pages/accounts/returned.html",
       "family": "workspace",
       "inheritance": [
@@ -471,17 +460,6 @@
       "header": "family-owned or inherited"
     },
     {
-      "template": "pages/analytics/cd_analytics.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/analytics/cd_analytics.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
       "template": "pages/analytics/closure_impact.html",
       "family": "workspace",
       "inheritance": [
@@ -530,17 +508,6 @@
       "family": "workspace",
       "inheritance": [
         "pages/analytics/index.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
-      "template": "pages/analytics/pl_analytics.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/analytics/pl_analytics.html",
         "layouts/shell.html",
         "base.html"
       ],
@@ -775,17 +742,6 @@
       "header": "shared"
     },
     {
-      "template": "pages/closure/completed_activities.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/closure/completed_activities.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
       "template": "pages/closure/completed_detail.html",
       "family": "workspace",
       "inheritance": [
@@ -878,17 +834,6 @@
       "family": "workspace",
       "inheritance": [
         "pages/core_schools/index.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
-      "template": "pages/core_schools/leadership.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/core_schools/leadership.html",
         "layouts/shell.html",
         "base.html"
       ],
@@ -1206,28 +1151,6 @@
       ],
       "shared_design_system": true,
       "header": "shared"
-    },
-    {
-      "template": "pages/evidence/returned.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/evidence/returned.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
-      "template": "pages/finance/country_budget.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/finance/country_budget.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "family-owned or inherited"
     },
     {
       "template": "pages/finance/country_budget_history.html",
@@ -2461,17 +2384,6 @@
       "header": "shared"
     },
     {
-      "template": "pages/targets/team.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/targets/team.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
       "template": "pages/today/index.html",
       "family": "workspace",
       "inheritance": [
@@ -2531,6 +2443,6 @@
     "embedded fragment": 5,
     "print document": 2,
     "public or authentication": 9,
-    "workspace": 215
+    "workspace": 207
   }
 }

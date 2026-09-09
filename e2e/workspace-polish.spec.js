@@ -9,7 +9,7 @@ test('blue login and compact Planning and leave strips at every device size',asy
   await page.setViewportSize({width,height:900});
   const strip=page.locator('.login-brand .context-metrics__sentence');
   await expect(strip).toBeVisible();
-  await expect(strip).toHaveCSS('background-color','rgb(7, 84, 154)');
+  await expect(strip).toHaveCSS('background-image','linear-gradient(110deg, rgb(7, 52, 84), rgb(16, 63, 98))');
   await expect(page.locator('.login-brand .context-metrics__fact')).toHaveCount(4);
   if(width>1120)await expect(page.locator('.impact-card__title')).toHaveCSS('color','rgb(255, 255, 255)');
   expect(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1)).toBe(true);
@@ -36,7 +36,7 @@ test('blue login and compact Planning and leave strips at every device size',asy
     if(theme==='theme-light')await expect(page.locator('body')).toHaveCSS('background-color','rgb(232, 238, 245)');
     for(const strip of await page.locator('main .context-metrics__sentence').all()){
      const box=await strip.boundingBox();expect(box.width).toBeLessThanOrEqual(width);
-     await expect(strip).toHaveCSS('background-color',theme==='theme-light'?'rgb(255, 255, 255)':theme==='theme-dark'?'rgb(18, 34, 52)':'rgb(7, 84, 154)');
+     await expect(strip).toHaveCSS('background-color',theme==='theme-light'?'rgb(255, 255, 255)':theme==='theme-dark'?'rgb(18, 34, 52)':'rgba(0, 0, 0, 0)');
     }
     if(theme==='theme-light')await page.screenshot({path:info.outputPath(route.replaceAll('/','')+'-'+width+'-'+theme+'.png'),fullPage:true});
    }

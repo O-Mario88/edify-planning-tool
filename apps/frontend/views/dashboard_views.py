@@ -10,7 +10,6 @@ from django.utils import timezone
 from datetime import timedelta
 
 from apps.activities.models import Activity
-from apps.command_center import services as cc_services
 from apps.command_center.planning_progress import (
     normalise_period as normalise_progress_period,
 )
@@ -268,16 +267,6 @@ def dashboard_view(request):
     if role in ("MfiPartnerAdmin", "MfiLoanOfficer"):
         return redirect("/mfi-portal/dashboard")
 
-    # Fetch common alerts and todays items. The CCEO dashboard renders none
-    # of them (its right rail was removed), so that role does not pay for
-    # the five alert queries and the today() derivation it would discard.
-    if role == "CCEO":
-        alerts_list = alerts_summary = today_context = None
-    else:
-        alerts_list = cc_services.alerts(user)
-        alerts_summary = cc_services.alerts_summary(user)
-        today_context = cc_services.today(user)
-
     # Get user avatar initials
     names = user.name.split()
     avatar_initials = "".join([n[0].upper() for n in names[:2]]) if names else "US"
@@ -293,9 +282,11 @@ def dashboard_view(request):
         fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
         raw_month = (request.GET.get("month") or "").strip()
         month = int(raw_month) if raw_month.isdigit() else None
-        data = CDDashboardService.get_dashboard(request.user, fy=fy, month=month)
         dashboard_view, view_explicit = resolve_dashboard_view(
             request, role_key="cd", default="map"
+        )
+        data = CDDashboardService.get_dashboard(
+            request.user, fy=fy, month=month, view=dashboard_view
         )
         _fy_months = [
             "Oct",
@@ -316,7 +307,6 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy_options": fy_options(),
             "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
             "mobile_primary_action": {
@@ -403,7 +393,6 @@ def dashboard_view(request):
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy_options": fy_options(),
             "urgent_pagination_query": urlencode(urgent_pagination_query),
             "mobile_primary_action": mobile_primary_action,
@@ -456,12 +445,9 @@ def dashboard_view(request):
         data = RVPDashboardService.get_dashboard(request.user, fy=fy)
         context = {
             **data,
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy_options": fy_options(),
             "mobile_primary_action": {
                 "label": (
@@ -545,12 +531,9 @@ def dashboard_view(request):
         ]
         context = {
             **data,
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
-            "today_context": today_context,
             "fy": fy,
             "month": month,
             "country": country,
@@ -1052,15 +1035,15 @@ def dashboard_view(request):
         first_action = next(iter(delivery_context["action_queue"]), None)
         context = {
             **delivery_context,
-            "alerts": alerts_list,
-            "alerts_summary": alerts_summary,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
             "total_projects": len(delivery_context["portfolio"]),
             "kpi_strip_items": delivery_context["delivery_home_kpis"],
             "mobile_primary_action": {
-                "label": "Review next action" if first_action else "Open project portfolio",
+                "label": "Review next action"
+                if first_action
+                else "Open project portfolio",
                 "url": first_action["url"] if first_action else "/projects",
             },
         }
@@ -1112,9 +1095,6 @@ def dashboard_view(request):
     metrics = DashboardMetricsService.get_dashboard_metrics(user, progress_period)
 
     context = {
-        "alerts": alerts_list,
-        "alerts_summary": alerts_summary,
-        "today_context": today_context,
         "role": role,
         "user_name": user.name,
         "avatar_initials": avatar_initials,

@@ -576,11 +576,14 @@ class FinanceOperatingSystemTest(TestCase):
         from apps.fund_requests.finance_models import TransportPayment
 
         batch = DailyVisitBatch.objects.create(
-            responsible_user="cceo_user", visit_date=date(2026, 7, 15),
+            responsible_user="cceo_user",
+            visit_date=date(2026, 7, 15),
             district_type="primary",
         )
         transport = TransportPayment.objects.create(
-            batch=batch, provider_name="Transport-only supplier", amount=50000,
+            batch=batch,
+            provider_name="Transport-only supplier",
+            amount=50000,
         )
         self.staff_activity.status = "ia_verified"
         self.staff_activity.payment_status = "none"
@@ -590,9 +593,15 @@ class FinanceOperatingSystemTest(TestCase):
         response = self._accountant_client().get("/accounts/partner-payments/")
         self.assertEqual(response.status_code, 200)
         for queue in ("payments", "advance_queue"):
-            self.assertTrue(all(a.delivery_type == "partner" for a in response.context[queue]))
-            self.assertNotIn(self.staff_activity.id, {a.id for a in response.context[queue]})
-        self.assertIn(self.partner_activity.id, {a.id for a in response.context["advance_queue"]})
+            self.assertTrue(
+                all(a.delivery_type == "partner" for a in response.context[queue])
+            )
+            self.assertNotIn(
+                self.staff_activity.id, {a.id for a in response.context[queue]}
+            )
+        self.assertIn(
+            self.partner_activity.id, {a.id for a in response.context["advance_queue"]}
+        )
         self.assertNotIn("transport_queue", response.context)
         self.assertNotContains(response, "Transport Provider Payments")
         self.assertNotContains(response, "Transport-only supplier")

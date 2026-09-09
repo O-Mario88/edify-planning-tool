@@ -20,7 +20,6 @@ LEGACY_HERO_TEMPLATES = (
     "templates/pages/accounts/cleared.html",
     "templates/pages/accounts/partner_payments.html",
     "templates/pages/accounts/ready_for_advance.html",
-    "templates/pages/accounts/reimbursements.html",
     "templates/pages/accounts/returned.html",
     "templates/pages/accounts/variance_review.html",
     "templates/pages/accounts/weekly_requests.html",
@@ -28,7 +27,6 @@ LEGACY_HERO_TEMPLATES = (
     "templates/pages/budgets/monthly.html",
     "templates/pages/closure/activity_timeline.html",
     "templates/pages/closure/blocked_closure.html",
-    "templates/pages/closure/completed_activities.html",
     "templates/pages/closure/readiness_queue.html",
     "templates/pages/finance/country_budget_history.html",
     "templates/pages/finance/country_budget_submission.html",
@@ -227,7 +225,7 @@ class PageHeaderAnatomyContractTest(SimpleTestCase):
             encoding="utf-8"
         )
 
-        self.assertEqual(tokens.count("--page-header-padding-x: 1rem;"), 3)
+        self.assertEqual(tokens.count("--page-header-padding-x: 0px;"), 3)
 
     def test_the_lead_has_a_flex_basis_so_controls_stay_on_the_title_row(self):
         """flex-wrap breaks lines on the base size, not the shrunk size.

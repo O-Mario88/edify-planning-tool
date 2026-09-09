@@ -53,8 +53,8 @@ class PhaseThreeMobileRoleHomeContractTest(SimpleTestCase):
         # Owner decision (2026-09-03): tiles sit below the header and ahead of
         # the queue on every role home.
         self.assertLess(
-            projects.index('title="Portfolio headline"'),
-            projects.index("projects-mobile-portfolio-title"),
+            projects.index("{% kpi_strip %}"),
+            projects.index("projects-mobile-actions-title"),
         )
 
     def test_role_actions_are_selected_from_scoped_view_data(self):
@@ -64,7 +64,7 @@ class PhaseThreeMobileRoleHomeContractTest(SimpleTestCase):
             'data.get("attention")',
             'data.get("reviews_due")',
             'context["mobile_primary_action"]',
-            '"url": "/projects"',
+            'first_action["url"] if first_action else "/projects"',
         ):
             with self.subTest(marker=marker):
                 self.assertIn(marker, dashboard)

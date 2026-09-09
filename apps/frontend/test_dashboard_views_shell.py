@@ -201,7 +201,12 @@ class DashboardViewRenderTest(TestCase):
                 self.assertNotIn("data-dashboard-views", html)
                 self.assertNotIn("subregionMap()", html)
                 self.assertIn('id="fund-filters-card"', html)
-        response = self._get(self.accountant, "/accounts?view=map", HTTP_HX_REQUEST="true", HTTP_HX_TARGET="accountant-dashboard-view-shell")
+        response = self._get(
+            self.accountant,
+            "/accounts?view=map",
+            HTTP_HX_REQUEST="true",
+            HTTP_HX_TARGET="accountant-dashboard-view-shell",
+        )
         self.assertNotContains(response, "subregionMap()")
         self.assertContains(response, 'id="fund-filters-card"')
 

@@ -10,9 +10,9 @@ ROOT = Path(__file__).resolve().parents[2]
 
 class ContextMetricToneContractTest(SimpleTestCase):
     def test_metric_tones_do_not_create_per_fact_visual_variants(self):
-        template = (
-            ROOT / "templates/components/context_metrics.html"
-        ).read_text(encoding="utf-8")
+        template = (ROOT / "templates/components/context_metrics.html").read_text(
+            encoding="utf-8"
+        )
 
         self.assertNotIn("item.variant }}", template)
         self.assertIn('data-tone="{{ item.tone }}"', template)

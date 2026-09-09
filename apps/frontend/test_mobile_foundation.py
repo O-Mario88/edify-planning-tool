@@ -49,9 +49,6 @@ class MobileFoundationContractTest(SimpleTestCase):
         expected = {
             "templates/components/mobile_role_home.html": "data-mobile-role-home",
             "templates/components/mobile_agenda_card.html": "<article",
-            "templates/components/mobile_record_card.html": "<article",
-            "templates/components/mobile_section_picker.html": "<details",
-            "templates/components/mobile_sticky_action_bar.html": "<aside",
         }
         for path, marker in expected.items():
             with self.subTest(path=path):

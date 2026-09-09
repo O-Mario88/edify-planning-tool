@@ -192,10 +192,11 @@ class KpiStripMigrationTests(SimpleTestCase):
 
     def test_fund_requests_have_one_headline_kpi_tray(self):
         root = _read("templates/partials/fund_requests/root.html")
-        monthly = _read("templates/partials/fund_requests/monthly_preview.html")
         self.assertIn("partials/fund_requests/kpis.html", root)
         self.assertNotIn("partials/fund_requests/monthly_preview.html", root)
-        self.assertNotIn("components/context_metrics.html", monthly)
+        self.assertFalse(
+            (ROOT / "templates/partials/fund_requests/monthly_preview.html").exists()
+        )
 
     def test_special_projects_dashboard_distributes_metrics_into_work(self):
         source = _read("templates/pages/dashboards/special_projects.html")

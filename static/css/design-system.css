@@ -936,11 +936,11 @@ html.theme-fade :where(body, main, header, aside, nav, section, article, table, 
 /* Shadows cannot communicate a boundary in forced-colors mode. Restore a
    system outline for cards and page headers without changing their geometry. */
 @media (forced-colors: active) {
-  :root {
-    --edify-card-border: var(--edify-border);
+  :root, :root.dark, :root.theme-dark, :root.theme-blue {
+    --edify-card-border: CanvasText;
     --edify-card-shadow: none;
     --edify-card-shadow-hover: none;
-    --page-header-border: transparent;
+    --page-header-border: CanvasText;
     --page-header-shadow: none;
   }
 }

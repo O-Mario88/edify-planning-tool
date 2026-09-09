@@ -44,3 +44,27 @@ class EvidenceCenterContractTest(TestCase):
         self.assertNotContains(response, "<!DOCTYPE html>")
         self.assertContains(response, 'id="evidence-workspace"')
         self.assertContains(response, 'aria-selected="true"')
+
+    def test_old_returned_link_uses_current_named_actions(self):
+        self.activity.status = "returned_by_ia"
+        self.activity.save(update_fields=["status"])
+        response = self.client.get(reverse("frontend:returned_evidence"), follow=True)
+        self.assertRedirects(response, "/evidence/?tab=returned")
+        self.assertEqual(response.context["active_tab"], "returned")
+        self.assertContains(response, "View details")
+        self.assertNotContains(response, 'hx-get=""')
+
+    def test_old_returned_link_does_not_expose_other_staff_work(self):
+        user = User.objects.create_user(
+            email="cceo-returned@example.org",
+            name="Field staff",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="testpassword",
+        )
+        self.activity.status = "returned_by_ia"
+        self.activity.save(update_fields=["status"])
+        self.client.force_login(user)
+        response = self.client.get(reverse("frontend:returned_evidence"), follow=True)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context["rows"], [])

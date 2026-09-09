@@ -78,7 +78,6 @@ class InventoryTests(SimpleTestCase):
                 else:
                     self.assertEqual(checked_in[key], value)
 
-
     def test_every_site_records_where_it_was_found(self):
         for site in self.inventory.tiles():
             with self.subTest(f"{site.module}:{site.line}"):

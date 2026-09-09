@@ -152,7 +152,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn("--font-mono: var(--font-sans);", theme)
         self.assertIn("--edify-font-mono: var(--edify-font-sans);", tokens)
         self.assertRegex(compiled, r'--font-sans:\s*"Geist Sans",')
-        self.assertIn("--font-mono: var(--font-sans);", compiled)
+        self.assertRegex(compiled, r"--font-mono:\s*var\(--font-sans\);")
         self.assertIn(".leaflet-container {", bridge)
         self.assertIn("font-family: var(--edify-font-sans) !important;", bridge)
 
@@ -370,11 +370,13 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
                 declaration, source, f"{declaration} missing from the shared @theme"
             )
             self.assertIn(
-                declaration, compiled, f"{declaration} missing from compiled main.css"
+                declaration.replace(": ", ":"),
+                re.sub(r":\s+", ":", compiled),
+                f"{declaration} missing from compiled main.css",
             )
             self.assertIn(
-                declaration,
-                token_bundle,
+                declaration.replace(": ", ":"),
+                re.sub(r":\s+", ":", token_bundle),
                 f"{declaration} missing from tokens.css — sign-in reads the radii "
                 "from login.css without using a rounded-* utility, so a non-static "
                 "@theme tree-shakes them away and every radius there renders 0.",
@@ -493,11 +495,11 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         blue_tokens = tokens.split(":root.theme-blue {", 1)[1].split("\n}", 1)[0]
 
         for declaration in (
-            "--edify-surface: #10385b",
-            "--edify-surface-muted: #123d62",
-            "--edify-surface-raised: #154267",
-            "--edify-border: rgba(123, 189, 232, 0.32)",
-            "--edify-surface-treatment: none",
+            "--edify-surface: #073454",
+            "--edify-surface-muted: #0a3657",
+            "--edify-surface-raised: #103f62",
+            "--edify-border: var(--edify-brand-panel-border)",
+            "--edify-surface-treatment: var(--edify-brand-panel)",
             "--edify-glass-tile-treatment: none",
             "--edify-glass-kpi-treatment: none",
             "--edify-button-primary-treatment: none",
@@ -639,7 +641,6 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/pages/projects/my_plan.html",
             "templates/pages/projects/planning.html",
             "templates/pages/ssa/performance.html",
-            "templates/pages/targets/team.html",
         )
         for template in custom_workspaces:
             self.assertIn("edify-page-canvas", _read(template), template)

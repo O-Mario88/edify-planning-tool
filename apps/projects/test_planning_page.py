@@ -130,9 +130,7 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertEqual(filtered.status_code, 200)
         self.assertContains(filtered, "Leadership Growth Project")
         self.assertNotContains(filtered, "Reading project coaching")
-        self.assertContains(
-            filtered, f"/projects/my-plan?project={self.project_b.id}"
-        )
+        self.assertContains(filtered, f"/projects/my-plan?project={self.project_b.id}")
         self.assertContains(filtered, "More filters")
 
         htmx = self.client.get("/projects/planning?tab=ready", HTTP_HX_REQUEST="true")
@@ -167,9 +165,7 @@ class SpecialProjectPlanningPageTests(TestCase):
         self.assertContains(
             response, f"/projects/analytics?project={self.project_a.id}"
         )
-        self.assertContains(
-            response, f"/projects/my-plan?project={self.project_a.id}"
-        )
+        self.assertContains(response, f"/projects/my-plan?project={self.project_a.id}")
 
     def test_admin_does_not_bulk_schedule_project_work(self):
         """Planning is the owner's, on Special Projects as everywhere else.

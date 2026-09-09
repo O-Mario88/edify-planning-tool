@@ -1634,7 +1634,7 @@
     auditQueued = true;
     runWhenIdle(function () {
       auditQueued = false;
-      var roots = Array.from(pendingAuditRoots);
+      var roots = connectedRoots(pendingAuditRoots);
       pendingAuditRoots.clear();
       roots.forEach(function (auditRoot) {
         if (auditRoot === document || auditRoot.isConnected) auditInteractiveNames(auditRoot);
@@ -1659,6 +1659,21 @@
     });
   }
 
+  // One inserted subtree needs one enhancement pass, even when its parent
+  // and children were appended separately in the same task (tables/charts).
+  function connectedRoots(pending) {
+    var roots = Array.from(pending).filter(function (node) {
+      return node === document || node.isConnected;
+    });
+    var candidates = new Set(roots);
+    return roots.filter(function (node) {
+      for (var parent = node.parentNode; parent; parent = parent.parentNode) {
+        if (candidates.has(parent)) return false;
+      }
+      return true;
+    });
+  }
+
   function scheduleMutationScan(mutations) {
     mutations.forEach(function (mutation) {
       if (mutation.type === 'childList') {
@@ -1674,8 +1689,8 @@
     mutationScanQueued = true;
     requestAnimationFrame(function () {
       mutationScanQueued = false;
-      var enhanceRoots = Array.from(pendingEnhanceRoots);
-      var dialogRoots = Array.from(pendingDialogRoots);
+      var enhanceRoots = connectedRoots(pendingEnhanceRoots);
+      var dialogRoots = connectedRoots(pendingDialogRoots);
       pendingEnhanceRoots.clear();
       pendingDialogRoots.clear();
       /* Dialog visibility is a read; enhance() writes. Reading first means

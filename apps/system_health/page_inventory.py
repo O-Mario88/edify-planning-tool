@@ -407,9 +407,11 @@ def _dependencies(module_name: str) -> list[str]:
 # from the operating system's splash to this one is invisible. A token that
 # drifted from those two would show as a seam at launch.
 #
-# Deliberately keyed to one template and two rule keys: every other finding
-# still applies to it, and every other template still answers to all of them.
-_PRE_STYLESHEET_TEMPLATES = ("partials/pwa_launch.html",)
+# Deliberately limited to fallback templates and two rule keys: every other
+# finding still applies, and ordinary pages answer to all rules.
+# The offline fallback must also remain legible when no external stylesheet
+# is available; its small inline fallback is covered by the offline browser test.
+_PRE_STYLESHEET_TEMPLATES = ("partials/pwa_launch.html", "pages/offline.html")
 _PRE_STYLESHEET_EXEMPT = frozenset({"template-style-block", "raw-hex"})
 
 

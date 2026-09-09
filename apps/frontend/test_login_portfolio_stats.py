@@ -175,6 +175,6 @@ class LoginPortfolioStatsTest(TestCase):
             self.assertIn(label, html)
         # The denominator is said once per metric, quietly, beside the count.
         self.assertEqual(html.count('data-component="context-metric"'), 4)
-        self.assertEqual(html.count('>of 4 ·'), 4)
+        self.assertEqual(html.count(">of 4 ·"), 4)
         self.assertNotIn("Field visits", html)
         self.assertNotIn("Target progress", html)

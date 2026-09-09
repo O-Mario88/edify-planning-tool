@@ -2226,23 +2226,8 @@ def evidence_center_view(request):
 
 @require_page_permission("evidence_center")
 def returned_evidence_view(request):
-    """View specifically returned evidence items."""
-    activities = (
-        Activity.objects.filter(
-            deleted_at__isnull=True,
-            status__in=[
-                "returned",
-                "returned_by_pl",
-                "returned_by_ia",
-            ],
-        )
-        .select_related("school")
-        .order_by("-updated_at")
-    )
-    context = {
-        "returned_activities": activities,
-    }
-    return render(request, "pages/evidence/returned.html", context)
+    """Keep saved links working through the scoped, paginated evidence workspace."""
+    return redirect("/evidence/?tab=returned")
 
 
 @require_page_permission("disbursements")
