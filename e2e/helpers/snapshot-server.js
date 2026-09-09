@@ -22,11 +22,21 @@ async function snapshotServer(root) {
       response.end(html); return;
     }
     const file = path.resolve(root, '.' + decodeURIComponent(pathname));
-    if (file.startsWith(path.join(root, 'static') + path.sep) && fs.existsSync(file) && fs.statSync(file).isFile()) {
-      if (!assets.has(file)) assets.set(file, fs.readFileSync(file));
-      response.writeHead(200, {'Content-Type':types[path.extname(file)] || 'application/octet-stream',
-        'Cache-Control':'public, max-age=86400'});
-      response.end(assets.get(file)); return;
+    if (file.startsWith(path.join(root, 'static') + path.sep)) {
+      try {
+        if (!assets.has(file)) {
+          const data = fs.readFileSync(file);
+          assets.set(file, data);
+        }
+        response.writeHead(200, {
+          'Content-Type': types[path.extname(file)] || 'application/octet-stream',
+          'Cache-Control': 'public, max-age=86400',
+        });
+        response.end(assets.get(file));
+        return;
+      } catch {
+        // Ignore file read failure (e.g. ENOENT or EISDIR) and return 204
+      }
     }
     response.writeHead(204); response.end();
   });
