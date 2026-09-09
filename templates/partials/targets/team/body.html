@@ -8,7 +8,9 @@
       <summary><span><strong>{{ member.name }}</strong> · {{ member.role }} · {% if member.matrix.annual.pct is not None %}{{ member.matrix.annual.pct }}% verified{% else %}No configured score{% endif %}</span></summary>
       <div class="edify-disclosure__body overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="{{ member.name }} priority progress">
       {% if member.matrix.rows %}
-        {% include "partials/targets/_period_matrix.html" with rows=member.matrix.rows heads=matrix_heads overall=member.matrix.overall milestones=None drawer=None %}
+        <div class="tt-area-matrix-shell tt-area-matrix-shell--matrix">
+          {% include "partials/targets/_period_matrix.html" with rows=member.matrix.rows heads=matrix_heads overall=member.matrix.overall milestones=None drawer=None %}
+        </div>
       {% else %}<p>No approved allocations for this financial year.</p>{% endif %}
       </div>
     </details>
