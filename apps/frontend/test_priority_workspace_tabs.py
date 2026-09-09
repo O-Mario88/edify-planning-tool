@@ -74,20 +74,20 @@ class PriorityWorkspaceTabTest(TestCase):
             ),
             # §13's own workspace is this reader's third view.
             "Program Lead": (
-                "/priorities",
+                "/priorities/master",
                 ["Priority Setting", "Target Distribution", "My Team"],
             ),
             "RegionalVicePresident": (
-                "/priorities",
+                "/priorities/master",
                 ["Priority Setting", "Target Distribution"],
             ),
             "HumanResources": (
-                "/priorities",
+                "/priorities/master",
                 ["Priority Setting", "Target Distribution"],
             ),
             # A CCEO reads the master and nothing else. One tab is not a tab
             # bar, so this page carries no rail at all.
-            "CCEO": ("/priorities", []),
+            "CCEO": ("/priorities/master", []),
         }
         for role, (url, expected) in cases.items():
             with self.subTest(role=role):
@@ -112,7 +112,11 @@ class PriorityWorkspaceTabTest(TestCase):
         """Joining pages did not widen who may read them."""
 
         self.client.force_login(_user("Accountant", "acct@tab.test"))
-        for url in ("/strategic-priorities", "/target-distribution", "/priorities"):
+        for url in (
+            "/strategic-priorities",
+            "/target-distribution",
+            "/priorities/master",
+        ):
             with self.subTest(url=url):
                 response = self.client.get(url)
                 self.assertNotEqual(response.status_code, 200)

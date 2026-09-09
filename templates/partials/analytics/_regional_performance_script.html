@@ -215,8 +215,9 @@ window.subregionMap = function (){
       const viewport = this.$el.querySelector('.sr-map-viewport');
       if (!viewport) return;
       const top = viewport.getBoundingClientRect().top + window.scrollY;
-      const height = Math.max(220, Math.min(560, window.innerHeight - top - 24));
+      const height = Math.max(220, window.innerHeight - top - 24);
       this.$el.style.setProperty('--map-viewport-height', height + 'px');
+      this.refreshMapLabelPlacement();
     },
     async load(){
       if(this.loading || this.ready) return;
@@ -878,6 +879,15 @@ window.subregionMap = function (){
       }));
       const markerRects = this.markerObstacleRects(pinLayer, scale);
       const placed = [];
+      if(key === 'district' && this.subLabels && this.cam){
+        const inverse = this.cam.getScreenCTM()?.inverse();
+        if(inverse) this.subLabels.querySelectorAll('text').forEach(label => {
+          const box = label.getBoundingClientRect();
+          const a = new DOMPoint(box.left - 2, box.top - 2).matrixTransform(inverse);
+          const b = new DOMPoint(box.right + 2, box.bottom + 2).matrixTransform(inverse);
+          placed.push({left:a.x, top:a.y, right:b.x, bottom:b.y});
+        });
+      }
       const overlaps = (a, b) =>
         a.left < b.right && a.right > b.left &&
         a.top < b.bottom && a.bottom > b.top;
@@ -941,33 +951,7 @@ window.subregionMap = function (){
           // permitted nearby empty space here, which put compact districts
           // such as Kampala and Butambala over their neighbours.
           placement = 'boundary-fit';
-          const openOptions = labelScales.flatMap(candidateScale =>
-            candidates.map(candidate => {
-              const rect = rectFor(candidate, candidateScale);
-              const blocked =
-                markerRects.some(marker => overlaps(rect, marker)) ||
-                placed.some(existing => overlaps(rect, existing));
-              if(blocked || !this.boundaryContainsLabel(path, rect)) return null;
-              return {
-                candidate,
-                labelScale:candidateScale,
-                penalty:
-                  (1 - candidateScale) * 120 +
-                  Math.hypot(candidate[0], candidate[1]) / 100,
-              };
-            }).filter(Boolean)
-          );
-          const best = openOptions.reduce(
-            (current, option) =>
-              !current || option.penalty < current.penalty
-                ? option
-                : current,
-            null,
-          );
-          if(best){
-            offset = best.candidate;
-            labelScale = best.labelScale;
-          }else if(allowOverlapFallback){
+          if(allowOverlapFallback){
             labelScale = labelScales[labelScales.length - 1];
             const anchor = candidates.map(candidate => {
               const x = baseX + candidate[0] / scale;
@@ -1044,7 +1028,7 @@ window.subregionMap = function (){
         const step = () => {
           /* A newer placement, or a map that has since been swapped out of
              the page (the dashboard's Map | Operations rail), ends this one. */
-          if(token !== this._placementToken || !this.$refs.svg || !this.$refs.svg.isConnected){ resolve(false); return; }
+          if(token !== this._placementToken || (key === "district" && this.focused) || !this.$refs.svg || !this.$refs.svg.isConnected){ resolve(false); return; }
           const sliceEnd = performance.now() + 6;
           while(index < labels.length && performance.now() < sliceEnd){
             placeOne(labels[index++]);
@@ -1056,6 +1040,8 @@ window.subregionMap = function (){
       });
     },
     placeDistrictLabels(){
+      if(this.focused) return Promise.resolve(false);
+      this.keepSubRegionLabelsOnCanvas();
       return this.placeBoundaryLabels({
         labelLayer:this.labels,
         pathLayer:this.districtShapes,
@@ -1063,7 +1049,7 @@ window.subregionMap = function (){
         key:'district',
         scale:1,
         labelScales:[0.82, 0.74, 0.68],
-        allowOverlapFallback:true,
+        allowOverlapFallback:false,
       }).then(completed => {
         if(completed) this.keepSubRegionLabelsOnCanvas();
         return completed;
@@ -1112,7 +1098,7 @@ window.subregionMap = function (){
         key:'subcounty',
         scale:this.zoomScale || 1,
         labelScales:[1, 0.9, 0.82],
-        allowOverlapFallback:true,
+        allowOverlapFallback:false,
         sync:true,
       });
     },
@@ -1485,7 +1471,8 @@ window.subregionMap = function (){
       this.focusedSubcounty = name;
       this.focused = `subcounty:${name}`;
       this.tip.show = false;
-      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+      el.blur();
+      this.$nextTick(() => requestAnimationFrame(() => this.$refs.mapBack?.focus({preventScroll:true})));
     },
 
     zoom(el){
@@ -1535,7 +1522,8 @@ window.subregionMap = function (){
       // A focused SVG path would otherwise retain its blue keyboard ring and
       // magnify that ring with the camera. Move focus to the visible escape
       // control, preserving keyboard navigation without drawing over the map.
-      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+      el.blur();
+      this.$nextTick(() => requestAnimationFrame(() => this.$refs.mapBack?.focus({preventScroll:true})));
     },
 
     back(){
@@ -1560,7 +1548,7 @@ window.subregionMap = function (){
       this.tip.show = false;
       this.resolveSubcountyLabelCollisions();
       this.scaleSubcountyOverlays(camera.scale);
-      this.$nextTick(() => this.$refs.mapBack?.focus({preventScroll:true}));
+      this.$nextTick(() => requestAnimationFrame(() => this.$refs.mapBack?.focus({preventScroll:true})));
     },
 
     reset(){

@@ -17,7 +17,6 @@ from django.shortcuts import redirect, render
 
 from apps.core.redirects import local_redirect
 from apps.accounts.models import Leave, StaffProfile
-from apps.core.donut import build_gauge
 from apps.core.permissions import render_access_denied, require_page_permission
 from apps.hr.models import (
     Application,
@@ -1709,14 +1708,17 @@ def my_performance_view(request, tab=None):
     and values. Progress is derived on read from the verified ledger; the
     page never shows a typed number."""
     from apps.hr.models import PerformanceCycle, PerformanceReview
-    from apps.hr.performance_engine import development_rows, live_progress
+    from apps.hr.performance_engine import development_rows
 
     sp = getattr(request.user, "staff_profile", None)
     if sp is None:
         return render_access_denied(request, "No staff profile is linked.")
     from apps.core.fy import get_operational_fy
 
-    fy = get_operational_fy()
+    from apps.hr.accountability import allocation_priorities
+
+    distributed = allocation_priorities(request.user, request.GET.get("fy"))
+    fy = distributed["fy"]
     cycle = PerformanceCycle.objects.filter(fy=fy).first()
     review = PerformanceReview.objects.filter(
         staff=sp, fy=fy, review_type="annual_priorities"
@@ -1728,65 +1730,7 @@ def my_performance_view(request, tab=None):
             sp, cycle, request.user, include_role_templates=False
         )
 
-    from apps.hr.performance_engine import milestone_metrics
-
-    priorities = []
-    weighted_num = weighted_den = 0
-    if review:
-        for pr in review.priorities.all().prefetch_related("milestones"):
-            progress = live_progress(pr)
-            if progress["pct"] is not None and pr.weight:
-                weighted_num += min(progress["pct"], 100) * pr.weight
-                weighted_den += pr.weight
-            priorities.append(
-                {
-                    "p": pr,
-                    "progress": progress,
-                    # Auto-derived milestone breakdown (§2), plus any manual
-                    # milestone rows the manager added on top.
-                    "auto_milestones": milestone_metrics(pr),
-                    "milestones": list(pr.milestones.all()[:5]),
-                }
-            )
-
-    # KPI strip — every figure derived, never typed.
-    overall_pct = round(weighted_num / weighted_den) if weighted_den else None
-    # Same three bands the figure beside it is coloured by, so the ring and
-    # the number can never disagree about whether this is on track.
-    overall_gauge = (
-        build_gauge(
-            overall_pct,
-            label="Overall progress",
-            color=(
-                "var(--edify-success)"
-                if overall_pct >= 70
-                else "var(--edify-warning)"
-                if overall_pct >= 40
-                else "var(--edify-danger)"
-            ),
-        )
-        if overall_pct is not None
-        else None
-    )
-    allocation = {"total": 0, "core": 0, "client": 0, "champion": 0}
-    if sp is not None:
-        from apps.hr.performance_engine import _assigned_school_ids
-        from apps.schools.models import School
-
-        assigned = _assigned_school_ids(sp)
-        allocation["total"] = len(assigned)
-        for stype, n in (
-            School.objects.filter(id__in=assigned)
-            .values_list("school_type")
-            .annotate(n=__import__("django").db.models.Count("id"))
-        ):
-            if stype in allocation:
-                allocation[stype] = n
-
-    layers = {"organizational": 0, "role": 0, "personal": 0}
-    for row in priorities:
-        layer = row["p"].priority_layer or "role"
-        layers[layer] = layers.get(layer, 0) + 1
+    overall_pct = distributed["pct"]
 
     WINDOW_LABELS = {
         "priority_setting": "Priority Setting",
@@ -1824,30 +1768,31 @@ def my_performance_view(request, tab=None):
         "Admin",
     }
     show_open_conversation = user_role in MANAGER_ROLES
-    show_priority_button = True
-    has_priorities = bool(priorities and len(priorities) > 0)
-    priority_button_label = "Update priorities" if has_priorities else "Create Priority"
-    from apps.projects.staff_priorities import staff_project_priorities
-
-    project_priorities = staff_project_priorities(user=request.user, fy=fy)
-
     context = {
         "cycle": cycle,
         "review": review,
-        "priorities": priorities,
         "development": development_rows(review) if review else [],
-        "values": list(review.value_commitments.all()) if review else [],
+        "values": list(review.value_commitments.filter(kind="value")) if review else [],
+        "spiritual": list(review.value_commitments.filter(kind="spiritual"))
+        if review
+        else [],
+        "distributed": distributed,
+        "fy": fy,
+        "caps": {"employee"}
+        if review
+        and fy == get_operational_fy()
+        and cycle
+        and cycle.active_window != "none"
+        else set(),
+        "signed": bool(review and review.stage in {"signed_off", "archived"}),
+        "can_distribute": user_role in {"ImpactAssessment", "Admin"},
+        "can_distribute_team": user_role in {"Program Lead", "Admin"},
+        "can_configure": user_role
+        in {"ImpactAssessment", "Admin", "CountryDirector", "RegionalVicePresident"},
         "amendments": amendments,
         "snapshots": snapshots,
         "overall_pct": overall_pct,
-        "overall_gauge": overall_gauge,
-        "allocation": allocation,
-        "layers": layers,
         "show_open_conversation": show_open_conversation,
-        "show_priority_button": show_priority_button,
-        "has_priorities": has_priorities,
-        "priority_button_label": priority_button_label,
-        "project_priorities": project_priorities,
         "active_window_label": (
             WINDOW_LABELS.get(cycle.active_window) if cycle else None
         ),
@@ -1865,16 +1810,14 @@ def my_performance_view(request, tab=None):
             else None
         ),
         "tab_defs": [
-            ("priorities", "Agreed Priorities"),
-            ("targets", "Targets & Progress"),
-            ("development", "Development Plans"),
-            ("values", "Values & Commitments"),
-            ("amendments", "Amendments"),
-            ("conversations", "Conversations"),
+            ("distributed", "Distributed Priorities"),
+            ("values", "Core Values"),
+            ("spiritual", "Spiritual Formation"),
+            ("development", "Professional Development"),
         ],
-        # The tab can be fixed by the URL (sidebar deep-links to Development,
-        # Values, Documents) and otherwise falls back to the query string.
-        "tab": tab or request.GET.get("tab", "priorities"),
+        "tab": (tab or request.GET.get("tab"))
+        if (tab or request.GET.get("tab")) in {"values", "spiritual", "development"}
+        else "distributed",
     }
     return render(request, "pages/hr/my_performance.html", context)
 
@@ -1996,8 +1939,23 @@ def performance_conversation_view(request):
         "q3": "Q3 Performance Conversation",
         "year_end": "End-of-Year Performance Conversation",
     }
+    from apps.hr.accountability import allocation_priorities
+
+    contract = (
+        allocation_priorities(target.user, review.fy)
+        if review
+        else {"rows": [], "pct": None}
+    )
+    if snap:
+        # An old snapshot without this projection remains historical; never
+        # quietly substitute today's allocations into a signed conversation.
+        from apps.hr.accountability import snapshot_contract
+
+        contract = snapshot_contract(snap.data)
+
     signed = bool(snap and snap.signed_off_at)
     context = {
+        "distributed": contract,
         "review": review,
         "target": target,
         "caps": caps,

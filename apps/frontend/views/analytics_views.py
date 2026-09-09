@@ -26,6 +26,10 @@ def _analytics_filters(request):
     return {
         "fy": request.GET.get("fy"),
         "quarter": request.GET.get("quarter"),
+        "month": request.GET.get("month"),
+        "region": request.GET.get("region"),
+        "pl": request.GET.get("pl"),
+        "cceo": request.GET.get("cceo"),
         "sub_region": request.GET.get("sub_region"),
         "district": request.GET.get("district"),
         "sub_county": request.GET.get("sub_county"),
@@ -67,9 +71,20 @@ def analytics_scope_kpis(request) -> dict:
         for item in data.get("kpi_strip_items", [])
         if CARD_CATEGORY.get(item.get("label"), "reach") in visible
     ]
+    preferred = (
+        "Overall Target Achievement",
+        "SSA Average",
+        "Schools Impacted",
+        "Total Activities Completed",
+    )
+    headlines = [
+        item for label in preferred for item in items if item.get("label") == label
+    ]
+    headlines.extend(item for item in items if item not in headlines)
     return {
-        "executive_kpi_items": items[:4],
-        "additional_kpi_items": items[4:],
+        "distributed": data.get("distributed"),
+        "executive_kpi_items": headlines[:4],
+        "additional_kpi_items": [item for item in items if item not in headlines[:4]],
         "as_of_date": data.get("as_of_date"),
     }
 
@@ -290,8 +305,11 @@ def pl_analytics_view(request):
         ).encode()
     ).hexdigest()[:20]
     dashboard_key = (
-        f"program-lead-analytics:v1:{request.user.id}:{dashboard_fingerprint}"
+        f"program-lead-analytics:v2:{request.user.id}:{dashboard_fingerprint}"
     )
+    from apps.hr.accountability_cache import revision
+
+    dashboard_key += ":" + revision()
     data = stampede_safe_get_or_compute(
         dashboard_key,
         lambda: PLAnalyticsService.get_dashboard(
@@ -837,8 +855,11 @@ def cd_analytics_view(request):
         ).encode()
     ).hexdigest()[:20]
     dashboard_key = (
-        f"country-director-analytics:v1:{request.user.id}:{dashboard_fingerprint}"
+        f"country-director-analytics:v2:{request.user.id}:{dashboard_fingerprint}"
     )
+    from apps.hr.accountability_cache import revision
+
+    dashboard_key += ":" + revision()
     data = stampede_safe_get_or_compute(
         dashboard_key,
         lambda: CDAnalyticsService.get_dashboard(

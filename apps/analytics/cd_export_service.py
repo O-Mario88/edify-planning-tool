@@ -38,7 +38,6 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
     from apps.analytics.cd_analytics_service import (
         CDAnalyticsService,
         _country_activities,
-        _prime_target_series,
         country_for,
         resolve_cd_scope,
     )
@@ -128,39 +127,46 @@ def country_export(user, dataset, fy=None, quarter=None, month=None, filters=Non
         ]
         return ("core-health", header, rows)
 
-    _prime_target_series(cd)
-    rows = CDAnalyticsService.pl_oversight(cd, acts)["rows"]
-    header = [
-        "PL",
-        "CCEOs Supervised",
-        "Target Achievement %",
-        "School Visits %",
-        "Cluster Meetings %",
-        "Cluster Trainings %",
-        "SSA Completed %",
-        "MSCS %",
-        "Schools at Risk",
-        "Budget Utilization %",
-        "Backlog",
-        "Risk Status",
-    ]
-    return (
-        "pl-oversight",
-        header,
-        [
-            [
-                r["name"],
-                r["cceos"],
-                r["target_pct"],
-                *[
-                    area["pct"] if area["pct"] is not None else "Not set"
-                    for area in r["areas"]
-                ],
-                r["schools_at_risk"],
-                r["budget_util"],
-                r["backlog"],
-                r["risk"],
-            ]
-            for r in rows
-        ],
+    from apps.hr.accountability import leadership_priority_rows
+
+    narrowed = any(
+        value not in (None, "", "All")
+        for key, value in (filters or {}).items()
+        if key not in {"fy", "quarter", "month"}
     )
+    members = (
+        []
+        if narrowed
+        else leadership_priority_rows(user, fy, quarter=quarter, month=month)
+    )
+    header = [
+        "Person",
+        "Role",
+        "Accountability Scope",
+        "Milestone",
+        "Approved Target",
+        "Unit",
+        "Verified",
+        "Achievement %",
+        "FY",
+        "Quarter",
+        "Month of FY",
+    ]
+    rows = [
+        [
+            member["name"],
+            member["role"],
+            member["scope"],
+            row["title"],
+            row["target"],
+            row["unit"],
+            row["actual"],
+            row["pct"] if row["pct"] is not None else "Not configured",
+            fy,
+            quarter or "FY",
+            month or "",
+        ]
+        for member in members
+        for row in member["rows"]
+    ]
+    return "distributed-delivery", header, rows

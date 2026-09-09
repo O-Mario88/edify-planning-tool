@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 616,
-  "templates": 225,
-  "distinct_titles": 587,
+  "titled_cards": 607,
+  "templates": 227,
+  "distinct_titles": 577,
   "with_card_key": 13,
-  "untitled_surfaces": 795,
+  "untitled_surfaces": 791,
   "untitled_chrome": 182,
-  "untitled_nested": 257,
-  "untitled_headless": 356,
+  "untitled_nested": 255,
+  "untitled_headless": 354,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 22,
+  "titles_in_several_templates": 23,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -63,6 +63,10 @@
   "plan breakdown by period": [
    "templates/partials/my_plan/period_breakdown.html",
    "templates/partials/projects/my_plan_workspace.html"
+  ],
+  "professional development": [
+   "templates/pages/hr/my_performance.html",
+   "templates/pages/system_health/index.html"
   ],
   "public holidays": [
    "templates/pages/leave/leave_policies.html",
@@ -1584,85 +1588,43 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 112,
-   "title": "Agreed Priorities ()",
+   "line": 30,
+   "title": "Distributed priorities ()",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 overflow-hidden",
+   "classes": "edify-surface rounded-surface border overflow-hidden",
    "branch_path": [
     [
-     10,
+     7,
+     0
+    ]
+   ]
+  },
+  {
+   "template": "templates/pages/hr/my_performance.html",
+   "line": 56,
+   "title": "Core ValuesSpiritual Formation",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border overflow-hidden",
+   "branch_path": [
+    [
+     7,
      1
     ]
    ]
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 205,
-   "title": "Targets &amp; Progress",
+   "line": 61,
+   "title": "Professional Development",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 overflow-hidden",
+   "classes": "edify-surface rounded-surface border overflow-hidden",
    "branch_path": [
     [
-     10,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/hr/my_performance.html",
-   "line": 233,
-   "title": "Development Plan",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 overflow-hidden",
-   "branch_path": [
-    [
-     10,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/hr/my_performance.html",
-   "line": 256,
-   "title": "Values &amp; Commitments",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 overflow-hidden",
-   "branch_path": [
-    [
-     10,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/hr/my_performance.html",
-   "line": 276,
-   "title": "Amendments",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 overflow-hidden",
-   "branch_path": [
-    [
-     10,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/pages/hr/my_performance.html",
-   "line": 304,
-   "title": "Performance Conversations",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 overflow-hidden",
-   "branch_path": [
-    [
-     10,
-     1
+     7,
+     2
     ]
    ]
   },
@@ -1677,7 +1639,7 @@
   },
   {
    "template": "templates/pages/hr/performance_conversation.html",
-   "line": 155,
+   "line": 157,
    "title": "Edify Values &amp; Spiritual Formation",
    "heading_level": 2,
    "has_card_key": false,
@@ -3631,6 +3593,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/analytics/distributed_team.html",
+   "line": 1,
+   "title": "Team accountability",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border overflow-hidden",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/analytics/donor_reporting_snapshot.html",
    "line": 2,
    "title": "Donor Reporting Snapshot \u2139\ufe0f",
@@ -5371,6 +5342,15 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/hr/distributed_summary.html",
+   "line": 1,
+   "title": "Distributed priority performance",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border overflow-hidden",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/hr/pd_dashboard/body.html",
    "line": 13,
    "title": "1. Staff Professional Development Tracker",
@@ -6572,48 +6552,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 32,
-   "title": "No measurable performance priorities agreed for FY",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6",
-   "branch_path": [
-    [
-     0,
-     1
-    ]
-   ]
-  },
-  {
-   "template": "templates/partials/targets/my_body.html",
-   "line": 49,
-   "title": "My Strategic Milestone Allocations",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/targets/my_body.html",
-   "line": 133,
-   "title": "Contribution to Roll-up",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/targets/my_body.html",
-   "line": 150,
-   "title": "Top Areas to Focus",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/targets/my_body.html",
-   "line": 179,
+   "line": 20,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,
@@ -6654,25 +6593,16 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 6,
+   "line": 4,
    "title": "Cumulative progress by time period",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "tt-panel tt-matrix-panel",
+   "classes": "tt-panel",
    "branch_path": []
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 118,
-   "title": "Staff requiring support",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "tt-panel tt-rail-panel",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/targets/team/body.html",
-   "line": 143,
+   "line": 18,
    "title": "Recovery plans",
    "heading_level": 2,
    "has_card_key": false,
@@ -6681,7 +6611,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 167,
+   "line": 42,
    "title": "Validation issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -6690,25 +6620,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 218,
-   "title": "Priority progress",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "tt-panel tt-insight-panel",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/targets/team/body.html",
-   "line": 235,
-   "title": "Team performance trend",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "tt-panel tt-insight-panel",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/targets/team/body.html",
-   "line": 285,
+   "line": 67,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -6716,17 +6628,8 @@
    "branch_path": []
   },
   {
-   "template": "templates/partials/targets/team/body.html",
-   "line": 306,
-   "title": "Districts most behind",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "tt-panel tt-insight-panel",
-   "branch_path": []
-  },
-  {
    "template": "templates/partials/targets/team/workspace.html",
-   "line": 82,
+   "line": 73,
    "title": "Supervised-Team Project Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -6735,7 +6638,7 @@
   },
   {
    "template": "templates/partials/targets/team/workspace.html",
-   "line": 124,
+   "line": 115,
    "title": "Supervised-Team Milestone Allocations",
    "heading_level": 2,
    "has_card_key": false,

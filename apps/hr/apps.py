@@ -39,6 +39,9 @@ class HrConfig(AppConfig):
     verbose_name = "Edify Hr"
 
     def ready(self):
+        from .accountability_cache import register
+
+        register()
         from apps.core import reference_data
 
         reference_data.register(

@@ -92,7 +92,7 @@ def may_see_team_distribution(user) -> bool:
 
 
 def master_url_for(user) -> str:
-    return _MASTER_URL.get(getattr(user, "active_role", ""), "/priorities")
+    return _MASTER_URL.get(getattr(user, "active_role", ""), "/priorities/master")
 
 
 def priority_workspace_tabs(request, *, active: str, view_template: str) -> dict | None:

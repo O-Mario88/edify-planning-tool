@@ -112,7 +112,7 @@ class LiveProgressTests(EngineFixture):
         )
         self.assertEqual(live_progress(visits)["actual"], 0)
 
-    def test_partner_work_weights_partner_management_not_direct_execution(self):
+    def test_monitored_partner_work_contributes_to_accountable_delivery(self):
         review = build_draft_agreement(self.sp, self.cycle, self.hr)
         visits = review.priorities.get(metric_key="direct_visits")
         partner_mgmt = review.priorities.get(metric_key="partner_supported_schools")
@@ -127,8 +127,8 @@ class LiveProgressTests(EngineFixture):
         )
         self.assertEqual(
             live_progress(visits)["actual"],
-            0,
-            "partner-delivered work must never count as direct execution",
+            1,
+            "verified monitored partner work contributes to accountable delivery",
         )
         self.assertEqual(
             live_progress(partner_mgmt)["actual"],
@@ -202,8 +202,10 @@ class MyPerformancePageTests(EngineFixture):
         r = self.client.get("/my-performance")
         self.assertEqual(r.status_code, 200)
         body = r.content.decode()
-        self.assertIn("Agreed Priorities", body)
-        self.assertIn("4", body)  # the real denominator, not a typed one
+        self.assertIn("Distributed Priorities", body)
+        self.assertIn(
+            "No approved priorities distributed", body
+        )  # Legacy templates cannot supply an operational target.
 
 
 class OpenConversationControlTests(EngineFixture):
@@ -272,7 +274,7 @@ class OpenConversationControlTests(EngineFixture):
         build_draft_agreement(self.sp, self.cycle, self.hr)
         body = self._body(self.cceo)
         self.assertNotIn('data-control="open-conversation"', body)
-        self.assertIn('data-control="update-priority"', body)
+        self.assertNotIn('data-control="update-priority"', body)
 
     def test_priority_button_toggles_create_vs_update(self):
         from apps.hr.models import PerformancePriority
@@ -282,16 +284,16 @@ class OpenConversationControlTests(EngineFixture):
         review.priorities.all().delete()
         self.client.force_login(self.cceo)
         body = self.client.get("/my-performance").content.decode()
-        self.assertIn('data-control="create-priority"', body)
-        self.assertIn("Create Priority", body)
+        self.assertNotIn('data-control="create-priority"', body)
+        self.assertIn("Distributed Priorities", body)
 
         # Create a priority for the review
         PerformancePriority.objects.create(
             review=review, sequence=1, outcome_statement="Achieve targets", weight=100
         )
         body = self.client.get("/my-performance").content.decode()
-        self.assertIn('data-control="update-priority"', body)
-        self.assertIn("Update priorities", body)
+        self.assertNotIn('data-control="update-priority"', body)
+        self.assertIn("No approved priorities distributed", body)
 
 
 class NoProfileBranchTests(TestCase):

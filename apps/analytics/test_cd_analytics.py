@@ -435,11 +435,9 @@ class CDAnalyticsTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         header = response.content.decode().splitlines()[0]
-        self.assertIn("School Visits %", header)
-        self.assertIn("Cluster Meetings %", header)
-        self.assertIn("Cluster Trainings %", header)
-        self.assertIn("SSA Completed %", header)
-        self.assertIn("MSCS %", header)
+        self.assertIn("Approved Target", header)
+        self.assertIn("Verified", header)
+        self.assertIn("Achievement %", header)
 
     # ── 12. drill-downs are read/oversight, not field execution ──────────────
     def test_cd_drilldowns_are_read_or_oversight_actions_not_field_execution(self):
@@ -565,42 +563,12 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         self.assertEqual(rows["PL Bola"]["cceos"], 1)
         self.assertNotEqual(rows["PL Ada"]["backlog"], rows["PL Bola"].get("_x", None))
 
-    def test_pl_drilldown_shows_every_area_the_cceo_is_measured_on(self):
-        """Completeness of the drill-down, on the areas that now define it.
-
-        This asserted all five catalogue areas. Since CONFLICT-001 was decided
-        the drill-down reports the areas a CCEO has AGREED — the same rule My
-        Targets already followed — so listing the catalogue here would be
-        asserting the defect. The invariant it exists for is unchanged and
-        arguably stronger: every area the person is measured on appears, and
-        none they are not.
-        """
-        detail = S.drilldown(
-            self.cd,
-            "pl",
-            {"id": str(self.pl_a.id)},
-            fy=FY,
-        )
+    def test_legacy_agreements_do_not_invent_approved_drilldown_targets(self):
+        detail = S.drilldown(self.cd, "pl", {"id": str(self.pl_a.id)}, fy=FY)
         self.assertEqual(detail["kind"], "pl")
         self.assertEqual(len(detail["cceos"]), 1)
-        cceo = detail["cceos"][0]
-        self.assertEqual(cceo["name"], "CCEO A1")
-        self.assertEqual(
-            [area["key"] for area in cceo["areas"]],
-            [
-                "school_visits",
-                "cluster_trainings",
-            ],
-        )
-        by_area = {area["key"]: area for area in cceo["areas"]}
-        self.assertEqual(by_area["school_visits"]["pct"], 100)
-        self.assertEqual(by_area["cluster_trainings"]["pct"], 0)
-        self.assertNotIn(
-            "mscs",
-            by_area,
-            "an area nobody agreed appeared in the drill-down -- the catalogue "
-            "is inventing rows again",
-        )
+        self.assertEqual(detail["cceos"][0]["name"], "CCEO A1")
+        self.assertEqual(detail["cceos"][0]["areas"], [])
 
     def test_cceo_snapshot_uses_fairness_context(self):
         d = self._dash()
@@ -739,42 +707,9 @@ class CDRefinedSpecTest(CDAnalyticsTest):
             200,
         )
 
-    def test_weighted_overall_averages_each_persons_weighted_result(self):
-        """The country number is the average of each person's own result.
-
-        This expected 60, which is what you get by summing everyone's targets
-        and everyone's achievements and weighting once: visits 2/2 at weight
-        30, trainings 0/1 at weight 20 -> 3000/50.
-
-        CONFLICT-001 was decided in favour of the Programme Lead's reading, and
-        the PL's page has always averaged its members' own weighted results
-        instead. On this fixture that is (a1: 60, b1: 100) -> 80. The counts
-        below are unchanged at (2, 3), which is the evidence that only the
-        statistic moved and not the underlying data.
-
-        The trade-off is worth naming rather than burying: averaging members
-        gives a CCEO with one target the same voice as one with fifty, while
-        summing weights by volume. Summing is what let a CCEO with no target at
-        all push their achievement into somebody else's denominator and report
-        200%, so the platform now averages -- and a Country Director sees
-        exactly what each of their Programme Leads sees.
-        """
-        from apps.targets.my_targets import TargetAchievementService
-
-        # Build the validated ledgers: a1 visit (SF ✓) validates; a1 training
-        # (no SF) stays provisional; the partner-delivered visit never credits.
-        TargetAchievementService.rebuild(self.a1, FY)
-        TargetAchievementService.rebuild(self.b1, FY)
+    def test_legacy_profile_targets_do_not_replace_approved_country_allocations(self):
+        """The country headline needs approved milestone targets, not a staff average."""
         cd = resolve_cd_scope(FY)
         pct, achieved, target = S._weighted_overall(cd)
-        # a1: visits 1/1 = 100% (w30) and trainings 0/1 = 0% (w20) -> 60.
-        # b1: visits 1/1 = 100% (w30) only -> 100. Average = 80.
-        self.assertEqual((achieved, target), (2, 3))
-        self.assertEqual(pct, 80)
-        from apps.targets.models import TargetAchievementLedger
-
-        self.assertFalse(
-            TargetAchievementLedger.objects.filter(
-                source_id=self.act_partner.id
-            ).exists()
-        )  # partner never double-counts
+        self.assertIsNone(pct)
+        self.assertEqual((achieved, target), (0, 0))

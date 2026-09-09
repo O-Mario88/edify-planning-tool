@@ -20,6 +20,7 @@ import json
 from dataclasses import dataclass
 from datetime import date
 
+from django.db.models import Q
 from django.utils import timezone
 
 from apps.accounts.models import StaffTargetProfile
@@ -585,17 +586,18 @@ class _RebuildSources:
             for t in types
         ]
         activities: dict = {}
-        for a in (
-            Activity.objects.filter(
-                responsible_staff_id__in=source_ids,
-                fy=fy,
-                activity_type__in=activity_types,
-                deleted_at__isnull=True,
-            )
-            .exclude(planned_date__isnull=True)
-            .exclude(delivery_type="partner")
-        ):
-            activities.setdefault(a.responsible_staff_id, []).append(a)
+        for a in Activity.objects.filter(
+            Q(responsible_staff_id__in=source_ids)
+            | Q(delivery_type="partner", monitored_by_staff_id__in=source_ids),
+            fy=fy,
+            activity_type__in=activity_types,
+            deleted_at__isnull=True,
+        ).exclude(planned_date__isnull=True):
+            accountable = {a.responsible_staff_id}
+            if a.delivery_type == "partner":
+                accountable.add(a.monitored_by_staff_id)
+            for owner in accountable - {None, ""}:
+                activities.setdefault(owner, []).append(a)
 
         ssa: dict = {}
         for r in SsaRecord.objects.filter(
@@ -681,10 +683,8 @@ class TargetAchievementService:
         for area_key, (stype, types) in AREA_SOURCES.items():
             if stype != "activity":
                 continue
-            # Partner-delivered work is Partner Contribution, never personal
-            # target credit (policy: no silent partner→CCEO credit) — enforced
-            # by the `delivery_type` exclusion in _RebuildSources.for_users,
-            # which is what the pre-read below is filtered by.
+            # Responsible staff and accountable partner monitors receive
+            # contribution; the country rollup deduplicates delivery events.
             type_set = set(types)
             acts = [
                 a
@@ -1211,9 +1211,14 @@ class MyTargetQueryService:
                 )
             )
 
+        from apps.hr.accountability import allocation_period_matrix
+
+        contract_matrix = allocation_period_matrix(user, fy, month_of_fy)
         return {
             "fy": fy,
             "month_of_fy": month_of_fy,
+            "contract_matrix": contract_matrix,
+            "distributed": contract_matrix["annual"],
             "month_label": Cal.month_label(fy, month_of_fy),
             "current_quarter": current_quarter,
             "is_current_fy": is_current_fy,
@@ -1272,18 +1277,15 @@ class MyTargetQueryService:
             "provisional": [],
         }
         if stype == "activity":
-            acts = (
-                Activity.objects.filter(
-                    responsible_staff_id__in=ids,
-                    fy=fy,
-                    activity_type__in=types,
-                    planned_date__gte=m_start,
-                    planned_date__lt=m_end,
-                    deleted_at__isnull=True,
-                )
-                .exclude(delivery_type="partner")
-                .select_related("school", "cluster")
-            )
+            acts = Activity.objects.filter(
+                Q(responsible_staff_id__in=ids)
+                | Q(delivery_type="partner", monitored_by_staff_id__in=ids),
+                fy=fy,
+                activity_type__in=types,
+                planned_date__gte=m_start,
+                planned_date__lt=m_end,
+                deleted_at__isnull=True,
+            ).select_related("school", "cluster")
             for a in acts:
                 row = {
                     "name": (

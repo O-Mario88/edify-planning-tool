@@ -2,7 +2,6 @@
 <div class="analytics-command-layer">
 
   {# Executive health stays visible at every visit; the country map lives on the home dashboard. #}
-  {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" %}
 
   <section class="analytics-decision-section" aria-labelledby="cd-priority-title">
     <header class="analytics-section-heading">
@@ -26,11 +25,11 @@
       </summary>
       <div class="analytics-evidence-disclosure__body">
         <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {% include "partials/analytics/cd/performance_vs_target.html" %}
+          {% include "partials/hr/distributed_summary.html" %}
           {% include "partials/analytics/cd/ssa_interventions.html" %}
         </div>
         <div data-cd-analytics-row class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {% include "partials/analytics/cd/target_by_pl.html" %}
+          {% include "partials/analytics/distributed_team.html" %}
           {% include "partials/analytics/cd/district_heatmap.html" %}
         </div>
       </div>

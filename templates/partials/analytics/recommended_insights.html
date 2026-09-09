@@ -3,17 +3,17 @@
 <div class="border-b border-slate-200 pb-2">
 <h3 class="text-[14px] font-semibold text-slate-800 tracking-tight flex items-center gap-1.5">
 <span>Recommended Actions</span>
-<span class="edify-primary-soft edify-primary-text font-semibold edify-text-caption px-1.5 py-0.5 rounded-pill">AI Insights</span>
+<span class="edify-primary-soft edify-primary-text font-semibold edify-text-caption px-1.5 py-0.5 rounded-pill">Rule-based signals</span>
 </h3>
-<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Automated risk detection from live data stream</p>
+<p class="edify-text-caption text-slate-400 font-semibold mt-0.5">Threshold-based signals from the selected reporting period</p>
 </div>
 
 <!-- Insights cards stack -->
 <div class="space-y-3">
 {% for insight in insights %}
-<div
-class="border rounded-surface p-3 shadow-sm hover:shadow-md transition-all cursor-pointer edify-surface {{ insight.color }}"
-hx-get="/analytics/drilldown?metric={{ insight.key }}&fy={{ filters.selected_fy }}&quarter={{ filters.selected_quarter }}"
+<a href="/analytics/drilldown?metric={{ insight.key }}&amp;fy={{ filters.selected_fy }}{% if filters.selected_quarter %}&amp;quarter={{ filters.selected_quarter }}{% endif %}"
+class="block border rounded-surface p-3 shadow-sm hover:shadow-md transition-all cursor-pointer edify-surface {{ insight.color }}"
+hx-get="/analytics/drilldown?metric={{ insight.key }}&fy={{ filters.selected_fy }}{% if filters.selected_quarter %}&quarter={{ filters.selected_quarter }}{% endif %}"
 hx-target="#drawer-container"
 hx-swap="innerHTML"
 >
@@ -47,7 +47,7 @@ hx-swap="innerHTML"
 <span class="text-[14px] font-semibold">{{ insight.count }}</span>
 </div>
 <p class="edify-text-caption font-bold opacity-75 mt-1 leading-snug">{{ insight.description }}</p>
-</div>
+</a>
 {% endfor %}
 </div>
 

@@ -207,6 +207,23 @@ def set_priorities(review_id: str, principal, priorities: list[dict]):
         # one place rather than being restated at every write path.
         priority_cascade.assert_removable(dropped[0])
 
+    for payload in priorities:
+        if str(payload.get("id") or "") not in protected:
+            category = (
+                (payload.get("strategic_alignment") or "")
+                .strip()
+                .lower()
+                .replace("_", " ")
+            )
+            if payload.get("metric_key") or category not in {
+                "core values",
+                "spiritual formation",
+                "professional development",
+            }:
+                raise BadRequest(
+                    "Operational priorities must come from approved distribution. Manual priorities are limited to Core Values, Spiritual Formation and Professional Development."
+                )
+
     review.priorities.exclude(id__in=list(protected)).delete()
     for i, p in enumerate(priorities, start=1):
         outcome = (p.get("outcome_statement") or "").strip()

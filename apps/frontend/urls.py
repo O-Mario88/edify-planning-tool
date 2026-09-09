@@ -115,8 +115,13 @@ urlpatterns = [
     ),
     path(
         "priorities",
-        target_distribution_views.priorities_master_page,
+        target_distribution_views.priorities_workspace_page,
         name="priorities_master",
+    ),
+    path(
+        "priorities/master",
+        target_distribution_views.priorities_master_page,
+        name="priorities_master_register",
     ),
     path(
         "priorities/ssa-mapping",

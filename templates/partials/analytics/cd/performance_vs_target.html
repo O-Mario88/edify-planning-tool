@@ -13,7 +13,7 @@
          cfg.series = [
            { name: 'Planned Activities', type: 'column', data: {{ performance_vs_target.planned|escape }} },
            { name: 'Completed Activities', type: 'column', data: {{ performance_vs_target.completed|escape }} },
-           { name: 'Target Achievement %', type: 'line', data: {{ performance_vs_target.pct|escape }} }
+           { name: 'Monthly Verified Achievement %', type: 'line', data: {{ performance_vs_target.pct_json|escape }} }
          ];
          cfg.chart.height = 268;
          /* Clicking a month opens that month's drill-down drawer. */

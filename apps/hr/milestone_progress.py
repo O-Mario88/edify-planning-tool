@@ -4,7 +4,7 @@ import logging
 from decimal import Decimal
 
 from django.db import transaction
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Sum
 from django.utils import timezone
 
 from .models import (
@@ -153,6 +153,9 @@ def reverse_activity_progress(
     ).update(reversed_at=_tz.now(), reversed_reason=reason[:255])
     for milestone_id in milestone_ids:
         refresh_period_targets(milestone_id)
+    from .accountability_cache import changed
+
+    changed()
     return len(credits)
 
 
@@ -188,6 +191,9 @@ def record_activity_progress(activity) -> int:
         for _mid in set(revived_milestones):
             refresh_period_targets(_mid)
         created_count += len(revive_ids)
+        from .accountability_cache import changed
+
+        changed()
     credited_milestones = set(
         MilestoneProgressCredit.objects.filter(
             activity=activity, reversed_at__isnull=True
@@ -226,45 +232,32 @@ def record_activity_progress(activity) -> int:
 
 
 def _scoped_credits(milestone_id, *, scope, start, end, employee, project_id, team_id):
-    """The surviving credits one scope owns between two dates, inclusive.
+    """Credit the accountable recipient, including monitored partner delivery."""
+    from apps.activities.models import Activity
+    from .contribution_scope import scope_activities
 
-    Partner-delivered work is excluded from the employee and team scopes and
-    only from those: a partner visit is real programme delivery and belongs in
-    the country total, but it is Partner Contribution — never a named person's
-    personal achievement. The personal ledger states the same rule
-    (apps/targets/my_targets.py: "no silent partner→CCEO credit"); without the
-    exclusion here the two engines disagreed, and the cascade would book a
-    partner's visit as the supervising CCEO's verified result whenever the
-    milestone's rule left `required_executor_type` blank — which 45 of the 51
-    seeded rules do.
-    """
-    credits = MilestoneProgressCredit.objects.filter(
+    activities = Activity.objects.filter(deleted_at__isnull=True)
+    if scope == "employee" and employee is not None:
+        activities = scope_activities(activities, staff=employee)
+    elif scope == "team" and team_id:
+        activities = scope_activities(activities, staff=team_id, include_team=True)
+    elif scope == "project" and project_id:
+        activities = activities.filter(project_id=project_id)
+    else:
+        from .models import PriorityMilestone
+
+        country = PriorityMilestone.objects.values_list(
+            "priority__country_id", flat=True
+        ).get(id=milestone_id)
+        activities = scope_activities(activities, country=country)
+    return MilestoneProgressCredit.objects.filter(
         rule__milestone_id=milestone_id,
+        rule__active=True,
         reversed_at__isnull=True,
+        activity_id__in=activities.values("id"),
         activity__planned_date__gte=start,
         activity__planned_date__lte=end,
     )
-    if scope == "employee" and employee is not None:
-        owner_ids = {str(employee.id), str(employee.user_id or "")}
-        return credits.filter(
-            Q(activity__responsible_staff_id__in=owner_ids)
-            | Q(activity__monitored_by_staff_id__in=owner_ids)
-        ).exclude(activity__delivery_type="partner")
-    if scope == "project" and project_id:
-        return credits.filter(activity__project_id=project_id)
-    if scope == "team" and team_id:
-        from apps.accounts.models import StaffSupervisorAssignment
-
-        member_ids = list(
-            StaffSupervisorAssignment.objects.filter(supervisor_id=team_id).values_list(
-                "supervisee_id", flat=True
-            )
-        )
-        return credits.filter(
-            Q(activity__responsible_staff_id__in=member_ids)
-            | Q(activity__monitored_by_staff_id__in=member_ids)
-        ).exclude(activity__delivery_type="partner")
-    return credits
 
 
 def _aggregate_credits(credits, bases):
@@ -273,11 +266,21 @@ def _aggregate_credits(credits, bases):
         return credits.exclude(activity__school__isnull=True).aggregate(
             value=Count("activity__school", distinct=True)
         )["value"]
-    if bases & TEACHER_BASES:
-        return credits.aggregate(value=Sum("activity__teachers_attended"))["value"]
-    if bases & LEADER_BASES:
-        return credits.aggregate(value=Sum("activity__leaders_attended"))["value"]
-    return credits.aggregate(value=Sum("credited_value"))["value"]
+    # Multiple rules can match the same event; credit that event once in a
+    # recipient/country rollup, including attendance measures.
+    from django.db.models import Max
+
+    field = (
+        "activity__teachers_attended"
+        if bases & TEACHER_BASES
+        else "activity__leaders_attended"
+        if bases & LEADER_BASES
+        else "credited_value"
+    )
+    per_activity = (
+        credits.order_by().values("activity_id").annotate(event_value=Max(field))
+    )
+    return per_activity.aggregate(total=Sum("event_value"))["total"]
 
 
 def counts_distinct_entities(milestone) -> bool:
@@ -303,10 +306,9 @@ def range_actual(allocation, rows, *, milestone=None) -> Decimal:
     already prefetched; it is always the allocation's own milestone.
     """
     rows = list(rows)
-    total = sum((row.actual_value for row in rows), Decimal("0"))
     milestone = milestone if milestone is not None else allocation.milestone
-    if not rows or not counts_distinct_entities(milestone):
-        return total
+    if not rows:
+        return Decimal(0)
     credits = _scoped_credits(
         milestone.id,
         scope=allocation.allocated_to_type,
@@ -316,12 +318,9 @@ def range_actual(allocation, rows, *, milestone=None) -> Decimal:
         project_id=allocation.project_id,
         team_id=allocation.team_id,
     )
-    bases = set(credits.values_list("rule__counting_basis", flat=True).distinct())
-    if not bases & DISTINCT_ENTITY_BASES:
-        # Nothing on a distinct basis landed in this span, so the stored rows
-        # were not written by the distinct branch either. Summing them is the
-        # answer their own aggregation gives.
-        return total
+    bases = {
+        rule.counting_basis for rule in milestone.activity_rules.all() if rule.active
+    }
     return Decimal(_aggregate_credits(credits, bases) or 0)
 
 

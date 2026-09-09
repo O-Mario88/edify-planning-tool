@@ -268,7 +268,7 @@
                   <span class="inline-flex min-w-0 items-center gap-2">
                     <span class="sr-distribution-key shrink-0" aria-hidden="true"
                           :style="`--sr-key:${row.colour}`"></span>
-                    <span class="truncate" x-text="row.name"></span>
+                    <span class="truncate" :title="row.name" x-text="row.name"></span>
                   </span>
                 </td>
                 <td class="py-1.5 px-1 text-right font-semibold tabular-nums text-slate-600"
@@ -287,11 +287,10 @@
           </tbody>
         </table>
       </div>
-      <p class="edify-text-caption text-slate-400 font-semibold leading-relaxed mt-2">
-        SSA is the confirmed average, weighted by the assessments behind each
-        boundary. A dash means no confirmed assessment &mdash; not a score of
-        zero. <span x-text="distributionCoverageText()"></span>
-      </p>
+      <details class="edify-text-caption text-slate-400 font-semibold mt-2">
+        <summary class="cursor-pointer">About SSA · <span x-text="distributionCoverageText()"></span></summary>
+        <p class="mt-1">Confirmed assessments, weighted within each boundary. A dash means no confirmed assessment, rather than zero.</p>
+      </details>
     </div>
   </div>
 </div>

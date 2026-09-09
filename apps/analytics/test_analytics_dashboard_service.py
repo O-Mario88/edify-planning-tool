@@ -117,8 +117,8 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
         # Never a percentage sign on a fabricated number.
         self.assertNotIn("%", data["kpis"]["target_achievement"]["value"])
 
-    def test_configured_target_still_computes_a_real_percentage(self):
-        # A real, explicitly configured target restores the normal path.
+    def test_unallocated_legacy_target_cannot_supply_the_denominator(self):
+        # A separate legacy target is not the approved allocation contract.
         TargetSetting.objects.create(
             fy=FY,
             target_type="SCHOOL_VISIT",
@@ -133,9 +133,9 @@ class AnalyticsDashboardTargetDenominatorTest(TestCase):
 
         data = AnalyticsDashboardService.get_analytics_data(self.user, self._filters())
 
-        self.assertEqual(data["kpis"]["target_achievement"]["value"], "100%")
+        self.assertEqual(data["kpis"]["target_achievement"]["value"], "No Target Set")
         strip = {k["label"]: k for k in data["kpi_strip_items"]}
-        self.assertEqual(strip["Overall Target Achievement"]["raw_value"], 100)
+        self.assertIsNone(strip["Overall Target Achievement"]["raw_value"])
 
     def test_ssa_intervention_bars_use_the_canonical_zero_to_ten_scale(self):
         record = SsaRecord.objects.create(

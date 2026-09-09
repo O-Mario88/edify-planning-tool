@@ -14,6 +14,10 @@ apps.analytics.pl_analytics_service so counts never diverge across the app.
 
 from __future__ import annotations
 
+import json
+
+from apps.core.request_cache import scoped
+
 from apps.core.metrics import render_precomputed_metric_for_source
 
 
@@ -38,7 +42,6 @@ from apps.analytics.pl_analytics_service import (
     COMPLETED_STATUSES,
     MONTHS_SHORT,
     PLANNED_STATUSES,
-    SSA_COLLECTION_TYPES,
     SSA_INTERVENTIONS,
     TRAINING_TYPES,
     VERIFIED_STATUSES,
@@ -75,16 +78,7 @@ class CDScope:
         with the month selector.
         """
         if self.month:
-            from datetime import date
-
-            from apps.core.fy import get_fy_date_range
-            from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
-
-            start = get_fy_date_range(self.fy)[0].date()
-            year = start.year if int(self.month) >= start.month else start.year + 1
-            fy_month = TCal.month_of_fy_for(date(year, int(self.month), 1), self.fy)
-            if fy_month:
-                return [fy_month]
+            return [int(self.month)]
         return self.quarter
 
     school_ids: list = field(default_factory=list)  # all in-scope schools
@@ -245,7 +239,7 @@ def _country_activities(cd: CDScope):
             Q(school_id__in=cd.school_ref)
             | Q(responsible_staff_id__in=cd.responsible_ids)
         )
-    if cd.quarter:
+    if cd.quarter and not cd.month:
         qs = qs.filter(quarter=cd.quarter)
     if cd.month:
         start, end = get_month_date_range(cd.fy, cd.month)
@@ -371,6 +365,7 @@ class CDAnalyticsService:
     month, filters). CD role is enforced at the view layer."""
 
     @staticmethod
+    @scoped()
     def get_dashboard(
         user,
         fy=None,
@@ -729,9 +724,9 @@ class CDAnalyticsService:
                 "country_overall_target_achievement_pct",
                 "target",
                 "Overall Target Achievement",
-                f"{overall_target}%",
+                f"{overall_target}%" if overall_target is not None else "No Target Set",
                 "primary",
-                "weighted across the five target areas · validated only",
+                "approved country allocations · verified delivery",
             ),
             card(
                 "country_schools_impacted_count",
@@ -819,14 +814,24 @@ class CDAnalyticsService:
         `_weighted_achievement` so every other consumer that needs the SAME
         math for a narrower set of CCEOs (a PL's team, a single CCEO) reads
         from one place instead of recomputing its own definition."""
-        return CDAnalyticsService._weighted_achievement(
+        from apps.hr.accountability import allocation_priorities
+
+        month = cd.target_period[0] if isinstance(cd.target_period, list) else None
+        contract = allocation_priorities(
+            None,
             cd.fy,
-            cd.target_period,
-            cd.cceo_user_ids,
-            cd.cceo_staff_ids,
-            areas=cd.areas or None,
-            per_user_series=cd.per_user_series or None,
+            country=cd.country,
+            quarter=cd.quarter,
+            month=month,
+            include_plans=False,
         )
+        narrowed = any(
+            value not in (None, "", "All")
+            for key, value in cd.filters.items()
+            if key not in {"quarter", "month", "fy"}
+        )
+        pct = None if narrowed else contract["pct"]
+        return pct, 0, len(contract["rows"])
 
     @staticmethod
     def cceo_leaderboard(cd, limit=None):
@@ -1044,171 +1049,86 @@ class CDAnalyticsService:
 
     @staticmethod
     def _weighted_achievement(
-        fy, quarter, user_ids, staff_ids, areas=None, per_user_series=None
+        fy,
+        quarter,
+        user_ids,
+        staff_ids,
+        areas=None,
+        per_user_series=None,
+        principal=None,
     ) -> tuple:
-        """(weighted %, total validated achieved, total target) for the given
-        user_id/staff_id sets, across the five official target areas.
+        """Approved employee allocations, using one deduplicated delivery scope.
 
-        CANONICAL CALCULATION SOURCE: this is a thin scope-resolution wrapper
-        around apps.targets.my_targets.pooled_monthly_series() +
-        apps.targets.my_targets.weighted_period_pct() — the exact same
-        per-user series (MyTargetQueryService.monthly_targets/
-        monthly_achievements, explicit-then-annual-fallback target
-        resolution, TargetAchievementLedger-validated achievement) and the
-        exact same weighting formula that My Targets and PL Team Targets
-        use. Do NOT reimplement target-proration, ledger aggregation, or
-        weighting here — call the shared helpers so CD/RVP Analytics can
-        never disagree with what a PL sees on their own Team Targets page
-        for the same people/period (this function used to hand-roll its own
-        annual-target proration — `round(annual * months/12)` — which
-        disagreed with the canonical `divmod`-based proration in roughly
-        two-thirds of cases; that duplicate logic is gone).
-
-        This is the single place CD/RVP-level code reads "did this activity
-        earn target credit" — the KPI strip (all CCEOs in scope) and any
-        per-PL/per-CCEO breakdown (a subset of CCEOs) both call this, so a
-        table can never disagree with the KPI above it.
-
-        Pass `per_user_series` (from `_prime_target_series(cd)` /
-        `apps.targets.my_targets.per_user_monthly_series`) when computing
-        MULTIPLE overlapping subsets of the same roster in one request (the
-        country total, then each PL's team, then each CCEO) — it pools from
-        the pre-fetched series in pure Python instead of re-rebuilding the
-        ledger and re-querying per subset. Omitting it (the default) falls
-        back to a fresh single-purpose fetch, correct but only efficient for
-        a genuinely one-off caller like a single-CCEO drilldown.
+        The legacy series arguments remain accepted for existing callers, but
+        cannot override approved targets or supply manually entered results.
         """
-        from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
-        from apps.targets.my_targets import (
-            agreed_target_areas,
-            per_user_monthly_series,
-            team_weighted_pct,
-        )
+        from apps.hr.accountability import allocation_priorities
 
-        # Resolve every distinct person from user_ids ∪ (staff_ids -> user_id)
-        # into one User set — pooled_monthly_series/MyTargetQueryService only
-        # ever operate on a real User (targets/achievement are both keyed by
-        # user_id, never bare staff_id), matching how My Targets and Team
-        # Targets already resolve people.
-        resolved_user_ids = {u for u in user_ids if u}
-        staffs = [s for s in staff_ids if s]
-        if staffs:
-            # CD Analytics calls this 28 times per page -- once for the country,
-            # once per PL team and once per CCEO row -- and every call re-ran
-            # this staff-to-user lookup for a roster that cannot change while
-            # the page is being built. Memoised per request; outside a request
-            # (jobs, management commands, direct service calls in tests) the
-            # store is absent and the query runs as before.
-            resolved_user_ids |= CDAnalyticsService._staff_user_ids(staffs)
-        if not resolved_user_ids:
-            return 0, 0, 0
-
-        # `quarter` is a quarter label, a list of FY months (a single selected
-        # month, from CDScope.target_period), or None for the whole FY.
-        if isinstance(quarter, (list, tuple)):
-            months = [int(m) for m in quarter]
-        elif quarter:
-            months = TCal.months_of_quarter(quarter)
-        else:
-            months = list(range(1, 13))
-        users = None
-        if areas is None:
-            # See _prime_target_series: agreed areas, never the catalogue.
-            users = CDAnalyticsService._users_by_id(resolved_user_ids)
-            areas = agreed_target_areas(users, fy)
-        if not areas:
-            # Nobody in scope has agreed a measurable priority. Reporting 0 of
-            # 0 is the honest answer and matches PL Team Targets; inventing a
-            # denominator from the catalogue is the defect.
-            return 0, 0, 0
-        if per_user_series is None:
-            if users is None:
-                users = list(User.objects.filter(id__in=resolved_user_ids))
-            per_user_series = per_user_monthly_series(users, fy, areas=areas)
-        # Same rollup the Programme Lead's own Team Targets page uses: each
-        # person's weighted percentage first, then the average of those.
-        # Summing everyone's targets and achievements and dividing once is what
-        # made this surface disagree with the PL -- it let a CCEO with no
-        # target this month contribute their achievement to another's
-        # denominator (CONFLICT-001).
-        return team_weighted_pct(
-            list(resolved_user_ids),
-            per_user_series,
-            months,
-            lambda _user_id: areas,
+        ids = list(
+            StaffProfile.objects.filter(
+                Q(id__in=staff_ids) | Q(user_id__in=user_ids)
+            ).values_list("id", flat=True)
         )
+        month = (
+            quarter[0]
+            if isinstance(quarter, (list, tuple)) and len(quarter) == 1
+            else None
+        )
+        period = quarter if isinstance(quarter, str) else None
+        contract = allocation_priorities(
+            principal,
+            fy,
+            recipient_ids=ids if principal is None else None,
+            quarter=period,
+            month=month,
+            include_plans=False,
+        )
+        if contract["pct"] is None:
+            return 0, 0, 0
+        # Preserve units when there is one measure; mixed measures expose
+        # normalized weighted points, never a sum of visits and participants.
+        units = {row["unit"] for row in contract["rows"]}
+        if len(units) == 1:
+            return (
+                contract["pct"],
+                sum(row["actual"] for row in contract["rows"]),
+                sum(row["target"] for row in contract["rows"]),
+            )
+        return contract["pct"], contract["pct"], 100
 
     @staticmethod
     def _area_achievement_rows(cd, user_ids):
-        """Validated target performance for each official area.
+        """Verified progress per approved milestone, with each unit kept separate."""
+        from apps.hr.accountability import allocation_priorities
 
-        This is the unweighted area-level companion to
-        `_weighted_achievement`: it pools the same cached monthly target and
-        achievement series, then exposes each area separately so leadership
-        can see what an overall percentage is hiding.
-        """
-        from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
-        from apps.targets.my_targets import (
-            pool_series,
-            pooled_monthly_series,
+        ids = StaffProfile.objects.filter(user_id__in=user_ids).values_list(
+            "id", flat=True
         )
-
-        # cd.areas is already the agreed-area union for this CD's roster
-        # (_prime_target_series). An empty list is a real answer -- nobody has
-        # agreed a measurable priority -- so it must NOT fall back to the
-        # catalogue, which is what CONFLICT-001 was.
-        areas = cd.areas
-        resolved_user_ids = {user_id for user_id in user_ids if user_id}
-        months = (
-            TCal.months_of_quarter(cd.quarter) if cd.quarter else list(range(1, 13))
+        contract = allocation_priorities(
+            None,
+            cd.fy,
+            recipient_ids=list(ids),
+            quarter=None if cd.month else cd.quarter,
+            month=cd.month,
+            include_plans=False,
         )
-        if cd.per_user_series:
-            targets, achieved = pool_series(
-                resolved_user_ids, cd.per_user_series, areas
-            )
-        else:
-            targets, achieved = pooled_monthly_series(
-                User.objects.filter(id__in=resolved_user_ids),
-                cd.fy,
-                areas=areas,
-            )
-
-        short_labels = {
-            "school_visits": "VIS",
-            "cluster_meetings": "MEET",
-            "cluster_trainings": "TRN",
-            "ssa_completed": "SSA",
-            "mscs": "MSCS",
-        }
-        rows = []
-        for area in areas:
-            target = sum(targets[area.key][month - 1] for month in months)
-            done = sum(achieved[area.key][month - 1] for month in months)
-            pct = round(done / target * 100) if target else None
-            tone = (
-                "neutral"
-                if pct is None
+        return [
+            {
+                "key": row["id"],
+                "label": row["title"],
+                "short_label": row["title"],
+                "weight": row["weight"],
+                "target": row["target"],
+                "achieved": row["actual"],
+                "pct": row["pct"],
+                "tone": "neutral"
+                if row["pct"] is None
                 else "success"
-                if pct >= 90
-                else "info"
-                if pct >= 75
-                else "warning"
-                if pct >= 50
-                else "danger"
-            )
-            rows.append(
-                {
-                    "key": area.key,
-                    "label": area.label,
-                    "short_label": short_labels.get(area.key, area.label),
-                    "weight": area.weight,
-                    "target": target,
-                    "achieved": done,
-                    "pct": pct,
-                    "tone": tone,
-                }
-            )
-        return rows
+                if row["pct"] >= 100
+                else "info",
+            }
+            for row in contract["rows"]
+        ]
 
     @staticmethod
     def _active_pl_count(cd, acts):
@@ -1346,20 +1266,14 @@ class CDAnalyticsService:
             )
         )  # full FY timeline
         labels, planned, completed, pct = [], [], [], []
-        # country annual target for the cumulative line — same weighted
-        # target denominator as the Overall Target Achievement KPI.
-        _, _, total_target = CDAnalyticsService._weighted_achievement(
-            cd.fy,
-            None,
-            cd.cceo_user_ids,
-            cd.cceo_staff_ids,
-            areas=cd.areas or None,
-            per_user_series=cd.per_user_series or None,
-        )
-        cum = 0
-        target_types = (
-            VISIT_TYPES + TRAINING_TYPES + CLUSTER_MEETING_TYPES + SSA_COLLECTION_TYPES
-        )
+        from apps.hr.accountability import allocation_priorities
+
+        monthly_contracts = [
+            allocation_priorities(
+                None, cd.fy, country=cd.country, month=m, include_plans=False
+            )
+            for m in range(1, 13)
+        ]
         # One grouped pass instead of 36 per-month counts — the same
         # equivalence as country_performance: get_month_date_range() yields
         # contiguous first-of-month boundaries, so TruncMonth partitions the
@@ -1379,12 +1293,6 @@ class CDAnalyticsService:
             .annotate(
                 planned_n=Count("id", filter=Q(status__in=PLANNED_STATUSES)),
                 completed_n=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
-                credited_n=Count(
-                    "id",
-                    filter=Q(
-                        status__in=COMPLETED_STATUSES, activity_type__in=target_types
-                    ),
-                ),
             )
         }
         for m in range(1, 13):
@@ -1393,14 +1301,14 @@ class CDAnalyticsService:
             row = buckets.get(start.date()) or {}
             planned.append(row.get("planned_n", 0))
             completed.append(row.get("completed_n", 0))
-            cum += row.get("credited_n", 0)
-            pct.append(round(cum / total_target * 100) if total_target else 0)
+            pct.append(monthly_contracts[m - 1]["pct"])
         return {
             "labels": labels,
             "planned": planned,
             "completed": completed,
             "pct": pct,
-            "has_target": total_target > 0,
+            "pct_json": json.dumps(pct),
+            "has_target": any(c["pct"] is not None for c in monthly_contracts),
         }
 
     # ── 2. SSA by intervention (annual) ──────────────────────────────────────
@@ -1477,8 +1385,9 @@ class CDAnalyticsService:
             pl_pct, _pl_a, _pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
                 cd.target_period,
-                [c["user_id"] for c in cceos if c["user_id"]],
+                [pl.id, *[c["user_id"] for c in cceos if c["user_id"]]],
                 [c["staff_id"] for c in cceos],
+                principal=pl,
                 areas=cd.areas or None,
                 per_user_series=cd.per_user_series or None,
             )
@@ -2032,8 +1941,9 @@ class CDAnalyticsService:
             pl_pct, pl_a, pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
                 cd.target_period,
-                [c["user_id"] for c in cceos if c["user_id"]],
+                [pl.id, *[c["user_id"] for c in cceos if c["user_id"]]],
                 [c["staff_id"] for c in cceos],
+                principal=pl,
                 areas=cd.areas or None,
                 per_user_series=cd.per_user_series or None,
             )
