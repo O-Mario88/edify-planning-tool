@@ -43,7 +43,9 @@ class TableBoundsTest(SimpleTestCase):
     #: * `distributed.rows` on the performance review / conversation summary
     #:   is naturally bounded by the number of strategic priorities assigned
     #:   to the user's role (typically 3 to 6).
-    UNBOUNDED_CEILING = 82
+    #: * The PL Team Targets performance matrix (`members`, bounded by supervisees)
+    #:   and monthly trend table (`team_trend`, exactly 12 financial-year months).
+    UNBOUNDED_CEILING = 84
 
     def test_no_new_unbounded_tables(self):
         report = table_report()

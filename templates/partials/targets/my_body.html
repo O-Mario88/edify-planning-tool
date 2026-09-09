@@ -12,6 +12,8 @@
   {% endif %}
   <a href="/priorities?fy={{ fy }}" class="edify-primary-text font-bold">Open distributed priorities →</a>
 
+  {% include "partials/targets/strategic_priority_overview.html" with strategic_priorities=strategic_priorities fy=fy section_id="my-strategic-priorities" scope_label="your personal target ledger" only %}
+
   {% include "partials/targets/project_priorities.html" with project_priorities=project_priorities section_id="my-project-priorities" only %}
 
   {% include "partials/targets/priority_portfolio.html" with priority_groups=priority_groups fy=fy only %}

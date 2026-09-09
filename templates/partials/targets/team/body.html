@@ -1,22 +1,146 @@
 {% load frontend_filters %}
 <div class="tt-dashboard">
   {% include "partials/hr/distributed_summary.html" %}
-  <section class="tt-panel" id="staff-performance">
-    <header class="tt-panel__header"><div><h2>Cumulative progress by time period</h2><p>Each person’s approved allocation scope. Your row includes your own delivery and your team; rows are not added together. Staff filters select people, without changing their approved targets.</p></div></header>
-    {% for member in contract_members %}
-    <details class="edify-disclosure">
-      <summary><span><strong>{{ member.name }}</strong> · {{ member.role }} · {% if member.matrix.annual.pct is not None %}{{ member.matrix.annual.pct }}% verified{% else %}No configured score{% endif %}</span></summary>
-      <div class="edify-disclosure__body overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="{{ member.name }} priority progress">
-      {% if member.matrix.rows %}
-        <div class="tt-area-matrix-shell tt-area-matrix-shell--matrix">
-          {% include "partials/targets/_period_matrix.html" with rows=member.matrix.rows heads=matrix_heads overall=member.matrix.overall milestones=None drawer=None %}
+  {% include "components/context_metrics.html" with items=summary_kpis variant="executive" title="Team target progress" %}
+
+  <div class="tt-command-grid">
+    <section class="tt-panel tt-matrix-panel" id="staff-performance">
+      <header class="tt-panel__header">
+        <div>
+          <span class="tt-eyebrow">Validated performance</span>
+          <h2>Cumulative progress by time period</h2>
+          <p>{{ month_label }} · {{ selected_category_label }} · agreed performance priorities and approved strategic allocations · {{ team_size }} matching team member{{ team_size|pluralize }}</p>
         </div>
-      {% else %}<p>No approved allocations for this financial year.</p>{% endif %}
+        <div class="tt-segmented" aria-label="Filter performance status">
+          <button type="button" @click="staffFilter='all'" :aria-pressed="staffFilter === 'all'" :class="staffFilter === 'all' && 'is-active'">All</button>
+          <button type="button" @click="staffFilter='behind'" :aria-pressed="staffFilter === 'behind'" :class="staffFilter === 'behind' && 'is-active'">Behind</button>
+          <button type="button" @click="staffFilter='risk'" :aria-pressed="staffFilter === 'risk'" :class="staffFilter === 'risk' && 'is-active'">High risk</button>
+        </div>
+      </header>
+
+      {% if members and areas or members and strategic_milestones %}
+      <div class="tt-matrix-scroll-guide" aria-hidden="true">
+        <span>Period comparison</span>
+        <span>Scroll horizontally to compare Q3, Q4, and full-year performance&nbsp;→</span>
       </div>
-    </details>
-    {% endfor %}
-  </section>
-  <div class="tt-lower-grid">
+      <div class="tt-matrix-scroll" data-table-scroll-region tabindex="0" aria-label="Scrollable team performance table. Scroll horizontally to compare every quarter and the full fiscal year.">
+        <table class="tt-matrix">
+          <caption class="sr-only">Team cumulative target and verified achievement by reporting period</caption>
+          <colgroup>
+            <col class="tt-matrix__member-column">
+            {% for head in matrix_heads %}<col class="tt-matrix__period-column">{% endfor %}
+            <col class="tt-matrix__action-column">
+          </colgroup>
+          <thead>
+            <tr>
+              <th scope="col">Team member</th>
+              {% for head in matrix_heads %}
+              <th scope="col"{% if forloop.first or head.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if head.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}><span>{{ head.label }}</span><small>{{ head.sub }}{% if head.key == quarter %} · Current quarter{% endif %}</small></th>
+              {% endfor %}
+              <th scope="col" class="tt-matrix__action-head"><span>Review</span><small>Details</small></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for member in members %}
+            <tr class="tt-member-row"
+                data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
+                @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"
+                :class="expandedStaff === '{{ member.user_id }}' && 'is-expanded'"
+                x-show="staffFilter === 'all' || (staffFilter === 'behind' && ['behind','risk'].includes($el.dataset.bucket)) || (staffFilter === 'risk' && $el.dataset.bucket === 'risk')">
+              <td>
+                <div class="tt-person">
+                  <button type="button" class="tt-expand" @click.stop="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'" :aria-expanded="expandedStaff === '{{ member.user_id }}'" aria-controls="tt-desktop-areas-{{ member.user_id }}" aria-label="Show {{ member.name }} performance priorities">
+                    <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.8" :class="expandedStaff === '{{ member.user_id }}' && 'is-open'"><path d="m7 5 5 5-5 5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  </button>
+                  <span class="tt-avatar">{{ member.initials }}</span>
+                  <span class="tt-person__copy">
+                    <strong>{{ member.name }}</strong>
+                    <small>CCEO · {{ member.district_label }}</small>
+                  </span>
+                </div>
+              </td>
+              {% for cell in member.matrix_cells %}
+              <td{% if forloop.first or cell.key == quarter %} class="{% if forloop.first %}is-current{% endif %}{% if cell.key == quarter %}{% if forloop.first %} {% endif %}is-current-quarter{% endif %}"{% endif %}>
+                <div class="tt-period-cell">
+                  <strong class="tt-period-cell__value" data-tone="{{ cell.tone }}">{% if cell.display_pct is not None %}{{ cell.display_pct }}%{% else %}—{% endif %}</strong>
+                  <small>{{ cell.achieved }} of {{ cell.target }}</small>
+                  <span class="tt-status" data-tone="{{ cell.tone }}">{{ cell.status }}</span>
+                </div>
+              </td>
+              {% endfor %}
+              <td class="tt-matrix__action-cell">
+                <button type="button" class="tt-row-action"
+                        @click.stop
+                        hx-get="/team-targets/staff-drawer?staff={{ member.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                        hx-target="#drawer-container" hx-swap="innerHTML"
+                        aria-label="Open {{ member.name }} validated achievement, pace, and blockers">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M5 6h8M5 11h6M5 16h4" stroke-linecap="round"/><path d="m14 13 3 3-3 3m3-3h-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+              </td>
+            </tr>
+            <tr id="tt-desktop-areas-{{ member.user_id }}" class="tt-area-row" x-show="expandedStaff === '{{ member.user_id }}'" x-cloak>
+              <td colspan="{{ matrix_heads|length|add:'2' }}">
+                {% comment %}Click the member's row to open this, click again to close: the
+                same accordion as the school and cluster lists. What opens is the
+                "Cumulative progress by time period" table — target, achieved and
+                share per period for each of this member's agreed priorities
+                (owner, 2026-09-05).{% endcomment %}
+                <div class="tt-area-matrix-shell tt-area-matrix-shell--matrix">
+                  {% include "partials/targets/_period_matrix.html" with variant="team" rows=member.period_matrix_rows heads=matrix_heads overall=member.period_matrix_overall quarter=quarter owner=member.name %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <footer class="tt-panel__footer">
+        <span>Showing {{ team_size }} of {{ overall_team_size }} supervised team members</span>
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-link-button">Open detailed priority matrix</button>
+      </footer>
+      {% elif members %}
+      <div class="tt-empty">
+        <span class="tt-empty__icon" aria-hidden="true">◎</span>
+        <h3>No measurable team priorities agreed for FY {{ fy }}</h3>
+        <p>Team performance rows are populated from each employee’s agreed performance priorities, not from the global activity catalogue.</p>
+      </div>
+      {% else %}
+      <div class="tt-empty">
+        <span class="tt-empty__icon" aria-hidden="true">◎</span>
+        <h3>No team members match these filters</h3>
+        <p>Adjust the reporting scope to return to the full supervised team.</p>
+        <a href="/team-planning-oversight/?view=targets&fy={{ fy }}&month={{ month_of_fy }}" class="tt-button tt-button--quiet">Clear filters</a>
+      </div>
+      {% endif %}
+    </section>
+
+    <aside class="tt-rail" aria-label="Team intervention summary">
+      <section class="tt-panel tt-rail-panel">
+        <header class="tt-panel__header tt-panel__header--compact">
+          <div>
+            <span class="tt-eyebrow">Intervention queue</span>
+            <h2>Staff requiring support</h2>
+          </div>
+        </header>
+        <div class="tt-support-list">
+          {% for staff in support_staff %}
+          <button type="button" class="tt-support-item"
+                  hx-get="/team-targets/staff-drawer?staff={{ staff.user_id }}&fy={{ fy }}&month={{ month_of_fy }}"
+                  hx-target="#drawer-container" hx-swap="innerHTML">
+            <span class="tt-avatar">{{ staff.initials }}</span>
+            <span class="tt-support-item__copy"><strong>{{ staff.name }}</strong><small>{{ staff.reason }}</small></span>
+            <span class="tt-status" data-tone="{{ staff.tone }}">{{ staff.status }}</span>
+          </button>
+          {% empty %}
+          <div class="tt-rail-empty"><strong>No urgent interventions</strong><span>The selected team scope is at pace.</span></div>
+          {% endfor %}
+        </div>
+        <footer class="tt-rail-panel__actions">
+          <button type="button" @click="staffFilter='risk'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})" class="tt-link-button">View all</button>
+        </footer>
+      </section>
+
       <section class="tt-panel tt-rail-panel">
         <header class="tt-panel__header tt-panel__header--compact">
           <div>
@@ -65,10 +189,103 @@
           {% endfor %}
         </div>
       </section>
+    </aside>
   </div>
+
+  <section class="tt-signal-strip" aria-labelledby="tt-signals-heading">
+    <header>
+      <span class="tt-eyebrow">Operational signals</span>
+      <h2 id="tt-signals-heading">What needs attention</h2>
+    </header>
+    <div class="tt-signal-grid">
+      {% for signal in attention %}
+      <article class="tt-signal" data-tone="{{ signal.tone }}">
+        <span>{{ signal.label }}</span>
+        <strong>{{ signal.count }}</strong>
+        <small>{{ signal.sub }}</small>
+        {% if signal.drill == 'core' %}
+        <a href="/core-schools">{{ signal.action }} <span aria-hidden="true">→</span></a>
+        {% elif signal.drill == 'staff' or signal.drill == 'high_risk' %}
+        <button type="button" @click="staffFilter='{% if signal.drill == 'high_risk' %}risk{% else %}behind{% endif %}'; document.getElementById('staff-performance').scrollIntoView({behavior:'smooth'})">{{ signal.action }} <span aria-hidden="true">→</span></button>
+        {% else %}
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ signal.action }} <span aria-hidden="true">→</span></button>
+        {% endif %}
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+
+  <div class="tt-insights-grid">
+    <section class="tt-panel tt-insight-panel">
+      <header class="tt-panel__header tt-panel__header--compact">
+        <div><span class="tt-eyebrow">Selected month</span><h2>Priority progress</h2></div>
+      </header>
+      <div class="tt-progress-list">
+        {% for target in key_progress %}
+        <button type="button" hx-get="/team-targets/matrix?fy={{ fy }}&month={{ month_of_fy }}&area={{ target.key|urlencode }}" hx-target="#drawer-container" hx-swap="innerHTML" class="tt-progress-row" aria-label="View {{ target.label }} performance across the team">
+          <span class="tt-progress-row__top"><strong>{{ target.label }}</strong><span>{% if target.pct is not None %}{{ target.pct }}%{% else %}—{% endif %}</span></span>
+          <span class="tt-progress"><span data-tone="{{ target.tone }}" style="width:{{ target.bar }}%"></span></span>
+          <small>{{ target.achieved|intcomma }} validated of {{ target.target|intcomma }} target · {{ target.status }}</small>
+        </button>
+        {% empty %}
+        <div class="tt-rail-empty"><strong>No priority data</strong><span>No measurable performance priorities are agreed in this scope.</span></div>
+        {% endfor %}
+      </div>
+    </section>
+
+    <section class="tt-panel tt-insight-panel">
+      <header class="tt-panel__header tt-panel__header--compact">
+        <div><span class="tt-eyebrow">{{ fy_label }}</span><h2>Team performance trend</h2></div>
+        <span class="tt-status" data-tone="{% if summary_kpis.0.value == '0%' %}danger{% else %}success{% endif %}">{{ summary_kpis.0.value }}</span>
+      </header>
+      {% comment %}Weighted monthly team achievement, drawn through the chart system
+      (2026-09-05): one line in the platform's palette, gaps where no target
+      was assigned, the selected month marked. The values table below the
+      figure carries the same numbers for anyone the chart does not serve.{% endcomment %}
+      <figure class="tt-line-chart" aria-labelledby="tt-trend-title tt-trend-description">
+        <p id="tt-trend-title" class="sr-only">Monthly team performance trend for {{ fy_label }}</p>
+        <p id="tt-trend-description" class="sr-only">Validated weighted team achievement from October through September. Months without assigned targets are shown as gaps.</p>
+        {{ team_trend|json_script:"tt-trend-payload" }}
+        <div class="tt-line-chart__viewport"
+             x-data="{
+               chart: null,
+               init() { this.$nextTick(() => this.draw()); },
+               destroy() { if (this.chart) this.chart.destroy(); },
+               draw() {
+                 const points = JSON.parse(document.getElementById('tt-trend-payload').textContent || '[]');
+                 if (!window.EdifyChartSystem || !this.$refs.el) return;
+                 const cfg = window.EdifyChartSystem.lineTrend(1);
+                 cfg.chart.height = 260;
+                 cfg.series = [{ name: 'Team achievement', data: points.map(p => p.pct) }];
+                 cfg.xaxis.categories = points.map(p => p.month);
+                 cfg.yaxis = window.EdifyChartSystem.rateAxis('', { opposite: false });
+                 const selected = points.find(p => p.selected);
+                 if (selected) {
+                   cfg.annotations = { xaxis: [{ x: selected.month, borderColor: 'var(--edify-accent)', strokeDashArray: 4,
+                     label: { text: selected.pct == null ? 'Selected month' : selected.pct + '%', orientation: 'horizontal',
+                              style: { color: 'var(--edify-surface-raised)', background: 'var(--edify-accent)', fontSize: '12px', fontWeight: 600 } } }] };
+                 }
+                 this.chart = window.EdifyChartSystem.renderDetached(this.$refs.el, cfg);
+               }
+             }">
+          <div x-ref="el" role="img" aria-label="Monthly team achievement for {{ fy_label }}"></div>
+        </div>
+        <figcaption class="tt-insight-note">Weighted from the same validated ledger used by each team member’s My Targets page.</figcaption>
+        <table class="sr-only">
+          <caption>Monthly team performance values for {{ fy_label }}</caption>
+          <thead><tr><th scope="col">Month</th><th scope="col">Achievement</th></tr></thead>
+          <tbody>
+            {% for point in team_trend %}<tr><th scope="row">{{ point.month }}</th><td>{% if point.pct is not None %}{{ point.pct }}%{% else %}No assigned target{% endif %}</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </figure>
+    </section>
+  </div>
+
+  <div class="tt-lower-grid">
     <section class="tt-panel tt-partner-panel">
       <header class="tt-panel__header">
-        <div><span class="tt-eyebrow">Delivery assurance</span><h2>Partner contribution</h2><p>Verified partner work contributes to the monitoring CCEO and their Program Lead; country delivery counts each activity once.</p></div>
+        <div><span class="tt-eyebrow">Delivery assurance</span><h2>Partner contribution</h2><p>Partner-delivered work remains visible but is never double-counted into CCEO credit.</p></div>
       </header>
       {% if partners %}
       <div class="tt-table-scroll">
@@ -82,11 +299,31 @@
         </table>
       </div>
       {% else %}
-      <div class="tt-empty tt-empty--compact"><h3>No partner-delivered activities in this scope</h3><p>Assigned partner work appears here and contributes after verification.</p></div>
+      <div class="tt-empty tt-empty--compact"><h3>No partner-delivered activities in this scope</h3><p>Assigned partner work will appear here without changing personal target credit.</p></div>
       {% endif %}
     </section>
 
+    <aside class="tt-lower-stack">
+      <section class="tt-panel tt-insight-panel">
+        <header class="tt-panel__header tt-panel__header--compact"><div><span class="tt-eyebrow">Portfolio risk</span><h2>Districts most behind</h2></div></header>
+        <div class="tt-district-list">
+          {% for district in districts_behind %}
+          <div><span><strong>{{ district.district }}</strong><small>{{ district.staff }} staff · {{ district.schools }} schools</small></span><span class="tt-district-list__score">{{ district.pct }}%</span></div>
+          {% empty %}<div class="tt-rail-empty"><strong>No district data</strong><span>Team members need school portfolio assignments.</span></div>{% endfor %}
+        </div>
+      </section>
+      <a href="/debriefs" class="tt-panel tt-debrief-card">
+        <span class="tt-eyebrow">Field intelligence</span>
+        <h2>Open team debriefs</h2>
+        <p>Connect target variance to field evidence, blockers, and follow-up actions.</p>
+        <span>Review debrief intelligence <span aria-hidden="true">→</span></span>
+      </a>
+    </aside>
+  </div>
 
-  <a href="/debriefs" class="tt-link-button">Open team debriefs →</a>
-  <p class="edify-text-caption">Targets come from approved distributions. Verified delivery includes monitored partners and reflects reversals.</p>
+  <footer class="tt-data-note">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" aria-hidden="true"><path d="M12 3 5 6v5c0 4.6 2.7 8.3 7 10 4.3-1.7 7-5.4 7-10V6l-7-3Z"/><path d="m9 12 2 2 4-5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+    <span><strong>Validated system data.</strong> Achievement comes from the canonical My Targets ledger; partner delivery, SF ID compliance, and IA exceptions are reported separately.</span>
+    <span>Refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
+  </footer>
 </div>

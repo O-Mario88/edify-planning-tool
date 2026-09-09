@@ -9412,7 +9412,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5598,
+      "bytes": 5804,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
@@ -9488,6 +9488,7 @@
       "bytes": 2908,
       "deprecated_alternatives": [],
       "example_pages": [
+        "/my-targets",
         "/team-planning-oversight/",
         "/team-targets",
         "/team-targets/"
@@ -9511,7 +9512,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5736,
+      "bytes": 21138,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -9520,21 +9521,29 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 3,
+      "htmx_controls": 8,
       "kind": "application-partial",
       "name": "Body",
       "purpose": "Reusable body interface primitive",
       "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
-        "empty"
+        "empty",
+        "open"
       ],
-      "tables": 1,
+      "tables": 3,
       "template": "partials/targets/team/body.html",
       "variants": [
+        "executive",
+        "team",
         "{% if plan.status_key == ",
+        "{% if summary_kpis.0.value == ",
+        "{{ cell.tone }}",
         "{{ issue.tone }}",
-        "{{ partner.tone }}"
+        "{{ partner.tone }}",
+        "{{ signal.tone }}",
+        "{{ staff.tone }}",
+        "{{ target.tone }}"
       ]
     },
     {

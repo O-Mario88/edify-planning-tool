@@ -825,13 +825,23 @@ class CDAnalyticsService:
             month=month,
             include_plans=False,
         )
-        narrowed = any(
-            value not in (None, "", "All")
-            for key, value in cd.filters.items()
-            if key not in {"quarter", "month", "fy"}
+        if contract.get("rows") and contract.get("pct") is not None:
+            narrowed = any(
+                value not in (None, "", "All")
+                for key, value in cd.filters.items()
+                if key not in {"quarter", "month", "fy"}
+            )
+            pct = None if narrowed else contract["pct"]
+            return pct, 0, len(contract["rows"])
+
+        return CDAnalyticsService._weighted_achievement(
+            cd.fy,
+            cd.target_period,
+            cd.cceo_user_ids,
+            cd.cceo_staff_ids,
+            areas=cd.areas or None,
+            per_user_series=cd.per_user_series or None,
         )
-        pct = None if narrowed else contract["pct"]
-        return pct, 0, len(contract["rows"])
 
     @staticmethod
     def cceo_leaderboard(cd, limit=None):
@@ -1057,10 +1067,20 @@ class CDAnalyticsService:
         per_user_series=None,
         principal=None,
     ) -> tuple:
-        """Approved employee allocations, using one deduplicated delivery scope.
+        """(weighted %, total validated achieved, total target) for the given
+        user_id/staff_id sets, across the five official target areas.
 
-        The legacy series arguments remain accepted for existing callers, but
-        cannot override approved targets or supply manually entered results.
+        CANONICAL CALCULATION SOURCE: this is a thin scope-resolution wrapper
+        around apps.targets.my_targets.pooled_monthly_series() +
+        apps.targets.my_targets.weighted_period_pct() — the exact same
+        per-user series (MyTargetQueryService.monthly_targets/
+        monthly_achievements, explicit-then-annual-fallback target
+        resolution, TargetAchievementLedger-validated achievement) and the
+        exact same weighting formula that My Targets and PL Team Targets
+        use. Do NOT reimplement target-proration, ledger aggregation, or
+        weighting here — call the shared helpers so CD/RVP Analytics can
+        never disagree with what a PL sees on their own Team Targets page
+        for the same people/period.
         """
         from apps.hr.accountability import allocation_priorities
 
@@ -1083,18 +1103,52 @@ class CDAnalyticsService:
             month=month,
             include_plans=False,
         )
-        if contract["pct"] is None:
+        if contract.get("rows") and contract.get("pct") is not None:
+            units = {row["unit"] for row in contract["rows"]}
+            if len(units) == 1:
+                return (
+                    contract["pct"],
+                    sum(row["actual"] for row in contract["rows"]),
+                    sum(row["target"] for row in contract["rows"]),
+                )
+            return contract["pct"], contract["pct"], 100
+
+        from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
+        from apps.targets.my_targets import (
+            agreed_target_areas,
+            per_user_monthly_series,
+            team_weighted_pct,
+        )
+
+        resolved_user_ids = {u for u in user_ids if u}
+        staffs = [s for s in staff_ids if s]
+        if staffs:
+            resolved_user_ids |= CDAnalyticsService._staff_user_ids(staffs)
+        if not resolved_user_ids:
             return 0, 0, 0
-        # Preserve units when there is one measure; mixed measures expose
-        # normalized weighted points, never a sum of visits and participants.
-        units = {row["unit"] for row in contract["rows"]}
-        if len(units) == 1:
-            return (
-                contract["pct"],
-                sum(row["actual"] for row in contract["rows"]),
-                sum(row["target"] for row in contract["rows"]),
-            )
-        return contract["pct"], contract["pct"], 100
+
+        if isinstance(quarter, (list, tuple)):
+            months = [int(m) for m in quarter]
+        elif quarter:
+            months = TCal.months_of_quarter(quarter)
+        else:
+            months = list(range(1, 13))
+        users = None
+        if areas is None:
+            users = CDAnalyticsService._users_by_id(resolved_user_ids)
+            areas = agreed_target_areas(users, fy)
+        if not areas:
+            return 0, 0, 0
+        if per_user_series is None:
+            if users is None:
+                users = list(User.objects.filter(id__in=resolved_user_ids))
+            per_user_series = per_user_monthly_series(users, fy, areas=areas)
+        return team_weighted_pct(
+            list(resolved_user_ids),
+            per_user_series,
+            months,
+            lambda _user_id: areas,
+        )
 
     @staticmethod
     def _area_achievement_rows(cd, user_ids):
@@ -1112,23 +1166,83 @@ class CDAnalyticsService:
             month=cd.month,
             include_plans=False,
         )
-        return [
-            {
-                "key": row["id"],
-                "label": row["title"],
-                "short_label": row["title"],
-                "weight": row["weight"],
-                "target": row["target"],
-                "achieved": row["actual"],
-                "pct": row["pct"],
-                "tone": "neutral"
-                if row["pct"] is None
+        if contract.get("rows"):
+            return [
+                {
+                    "key": row["id"],
+                    "label": row["title"],
+                    "short_label": row["title"],
+                    "weight": row["weight"],
+                    "target": row["target"],
+                    "achieved": row["actual"],
+                    "pct": row["pct"],
+                    "tone": "neutral"
+                    if row["pct"] is None
+                    else "success"
+                    if row["pct"] >= 100
+                    else "info",
+                }
+                for row in contract["rows"]
+            ]
+
+        from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
+        from apps.targets.my_targets import (
+            pool_series,
+            pooled_monthly_series,
+        )
+
+        areas = cd.areas
+        resolved_user_ids = {user_id for user_id in user_ids if user_id}
+        months = (
+            TCal.months_of_quarter(cd.quarter) if cd.quarter else list(range(1, 13))
+        )
+        if cd.per_user_series:
+            targets, achieved = pool_series(
+                resolved_user_ids, cd.per_user_series, areas
+            )
+        else:
+            targets, achieved = pooled_monthly_series(
+                User.objects.filter(id__in=resolved_user_ids),
+                cd.fy,
+                areas=areas,
+            )
+
+        short_labels = {
+            "school_visits": "VIS",
+            "cluster_meetings": "MEET",
+            "cluster_trainings": "TRN",
+            "ssa_completed": "SSA",
+            "mscs": "MSCS",
+        }
+        rows = []
+        for area in areas:
+            target = sum(targets[area.key][month - 1] for month in months)
+            done = sum(achieved[area.key][month - 1] for month in months)
+            pct = round(done / target * 100) if target else None
+            tone = (
+                "neutral"
+                if pct is None
                 else "success"
-                if row["pct"] >= 100
-                else "info",
-            }
-            for row in contract["rows"]
-        ]
+                if pct >= 90
+                else "info"
+                if pct >= 75
+                else "warning"
+                if pct >= 50
+                else "danger"
+            )
+            rows.append(
+                {
+                    "key": area.key,
+                    "label": area.label,
+                    "short_label": short_labels.get(area.key, area.label),
+                    "weight": area.weight,
+                    "target": target,
+                    "achieved": done,
+                    "pct": pct,
+                    "tone": tone,
+                }
+            )
+        return rows
 
     @staticmethod
     def _active_pl_count(cd, acts):
