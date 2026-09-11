@@ -1136,10 +1136,9 @@ def schedule_action_view(request):
     # `or None`, so an unset field arrived as "" instead of None.
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
 
-    # Imported before first use, not further down. A function-local import
-    # binds `date` for the whole function scope, so the date guard below would
-    # otherwise raise UnboundLocalError on every submission.
-    from datetime import date, datetime
+    # Imported before first use, not further down: a function-local import
+    # binds the name for the whole function scope.
+    from datetime import datetime
 
     # A date, refused here rather than trusted from the form.
     #

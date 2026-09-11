@@ -22,7 +22,7 @@ from django.test import TestCase
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
 from apps.clusters.models import Cluster, ClusterSubCounty
 from apps.clusters.services import covered_sub_counties
-from apps.core.exceptions import BadRequest, Forbidden
+from apps.core.exceptions import Forbidden
 from apps.geography.models import District, Region, SubCounty
 from apps.planning.planning_service import PlanningDashboardService
 from apps.schools.models import School

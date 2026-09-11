@@ -1053,10 +1053,6 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
     cluster = get_scoped_object_or_404(
         Cluster, request.user, id=cluster_id, deleted_at__isnull=True
     )
-    covered_sub_counties = ClusterSubCounty.objects.filter(cluster=cluster).values_list(
-        "sub_county_id", flat=True
-    )
-
     if request.method == "POST":
         school_ids = request.POST.getlist("school_ids")
         user = request.user

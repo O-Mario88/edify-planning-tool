@@ -1,9 +1,12 @@
 """
 Clusters service — ports the legacy clusters.service business logic.
 
-Scope-constrained list, sub-county-unique create, school assignment, eligibility,
-recommendations, and per-cluster intelligence. Sub-county uniqueness (§10): one
-active cluster per sub-county by default — a 2nd requires CLUSTER_OVERRIDE.
+Scope-constrained list, create, school assignment, eligibility, recommendations,
+and per-cluster intelligence. The one-active-cluster-per-sub-county rule (§10)
+was lifted on 2026-09-11 (81bd28f9): several clusters may work the same
+sub-county. What remains is the district boundary — a school joins a cluster in
+its own district — and the portfolio boundary, enforced in
+``set_school_cluster_membership``.
 """
 
 from __future__ import annotations
@@ -288,8 +291,9 @@ def covered_sub_counties(district_id: str | None = None) -> dict[str, str]:
 
 
 def create_cluster(data: dict, principal) -> dict:
-    """Create a cluster. Validates district↔region, sub-county↔district, and the
-    sub-county uniqueness rule (override requires CLUSTER_OVERRIDE)."""
+    """Create a cluster. Validates district↔region and sub-county↔district;
+    the sub-county uniqueness rule was lifted on 2026-09-11, so no override
+    path exists any more."""
     region_id = data.get("regionId")
     district_id = data.get("districtId")
     district = District.objects.filter(id=district_id).first()
@@ -299,7 +303,6 @@ def create_cluster(data: dict, principal) -> dict:
     allowed_district_ids = cluster_creation_district_ids(principal)
     if district_id not in allowed_district_ids:
         raise Forbidden("District outside your scope")
-    scope = resolve_user_scope(principal)
 
     sub_ids = []
     if data.get("subCountyIds"):
@@ -319,9 +322,6 @@ def create_cluster(data: dict, principal) -> dict:
                 raise BadRequest("sub-county does not belong to district")
         primary = next(s for s in subs if s.id == sub_ids[0])
 
-    # Sub-county uniqueness restriction lifted: multiple clusters can exist in a sub-county.
-    needs_review = False
-
     default_name = f"{primary.name} Cluster" if primary else f"{district.name} Cluster"
     cluster_name = (data.get("name") or default_name).strip()
     if Cluster.objects.filter(
@@ -339,10 +339,7 @@ def create_cluster(data: dict, principal) -> dict:
             sub_county=primary,
             sub_county_name=primary.name if primary else None,
             cluster_type=data.get("clusterType", "mixed"),
-            status=ClusterRecordStatus.NEEDS_REVIEW
-            if needs_review
-            else ClusterRecordStatus.ACTIVE,
-            override_reason=data.get("overrideReason"),
+            status=ClusterRecordStatus.ACTIVE,
             responsible_staff_id=data.get("responsibleStaffId"),
             cluster_leader_name=data.get("clusterLeaderName"),
             cluster_leader_phone=data.get("clusterLeaderPhone"),
