@@ -70,4 +70,4 @@ class SubRegionColumnsMarkupTest(SimpleTestCase):
         self.assertEqual(html.count('x-show="wideColumns"'), 6)
         self.assertIn("'(min-width: 48rem) and (max-width: 63.999rem), (min-width: 100rem)'", script)
         css = _read("static/css/pages/analytics-dashboard.css")
-        self.assertIn("@media (min-width: 100rem) {\n  .analytics-geo-card .sr-distribution-panel { flex: 0 0 32rem; width: 32rem; }", css)
+        self.assertIn("@media (min-width: 100rem) {\n  .analytics-geo-card .sr-distribution-panel { flex: 0 0 36rem; width: 36rem; }", css)

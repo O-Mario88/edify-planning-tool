@@ -1622,6 +1622,12 @@ main #impact-workspace .impact-group-pagination a {
    every table cell visible with a ten-part !important rule that yields only
    to an inline display:none. The panel's width is still the stylesheet's. */
 @media (min-width: 100rem) {
-  .analytics-geo-card .sr-distribution-panel { flex: 0 0 32rem; width: 32rem; }
+  .analytics-geo-card .sr-distribution-panel { flex: 0 0 36rem; width: 36rem; }
+  /* Seven columns share the panel here; the name keeps enough to read
+     "South Western" whole rather than "South W". */
+  .analytics-geo-card .sr-distribution-col--name { width: 9.5rem; }
+  .analytics-geo-card .sr-distribution-col--schools,
+  .analytics-geo-card .sr-distribution-col--clusters { width: 3.25rem; }
+  .analytics-geo-card .sr-distribution-col--ssa { width: 4.25rem; }
 }
 
