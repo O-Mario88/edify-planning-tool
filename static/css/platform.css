@@ -5231,3 +5231,14 @@ main table thead .edify-frozen-cell { z-index: 2; }
     white-space: nowrap;
   }
 }
+
+/* A period control is four short words, never a page rail: its segments take
+   their label's width at every size, so all four stay on the row and the
+   desktop "More" menu is never needed for it (My Plan at 1024px put "FY"
+   behind "More"). */
+[role="tablist"][aria-label="Plan period"] > [role="tab"] {
+  min-inline-size: 0 !important;
+  flex: 0 1 auto !important;
+  padding-inline: 1rem !important;
+  white-space: nowrap;
+}
