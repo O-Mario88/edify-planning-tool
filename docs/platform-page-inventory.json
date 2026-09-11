@@ -707,7 +707,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 74634,
+      "bytes": 75551,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -723,7 +723,8 @@
       "states": [
         "default",
         "loading",
-        "error"
+        "error",
+        "open"
       ],
       "tables": 0,
       "template": "partials/analytics/_regional_performance_script.html",
@@ -2201,7 +2202,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 17932,
+      "bytes": 18106,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
