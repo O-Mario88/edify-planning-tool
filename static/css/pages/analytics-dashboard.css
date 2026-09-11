@@ -1533,8 +1533,17 @@ main #impact-workspace .impact-group-pagination a {
 /* Map geometry stays intact inside a landscape workspace. Height follows
    the available viewport instead of growing with the monitor's width. */
 @media (min-width: 64rem) {
-  .analytics-geo-card .sr-map-layout { flex-direction: row; align-items: flex-start; }
-  .analytics-geo-card .sr-map-canvas { flex: 1 1 0%; min-width: 0; width: auto; }
+  /* The canvas is exactly as wide as the map is tall, and the pair — square
+     map, then the distribution table — sits centred in the card. The canvas
+     used to take every pixel the fixed table left, so the drawing floated in
+     the middle of a much wider box and the table was pushed to the far edge
+     of the card with empty space between (owner, 2026-09-11). */
+  .analytics-geo-card .sr-map-layout { flex-direction: row; align-items: flex-start; justify-content: center; }
+  .analytics-geo-card .sr-map-canvas {
+    flex: 0 1 auto;
+    min-width: 0;
+    width: min(100%, var(--map-viewport-height, 40rem));
+  }
   .analytics-geo-card .sr-map-viewport {
     aspect-ratio: auto !important;
     height: var(--map-viewport-height, max(220px, calc(100dvh - 22rem)));
