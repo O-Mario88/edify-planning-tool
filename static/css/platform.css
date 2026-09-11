@@ -4076,6 +4076,35 @@ main [data-mobile-family="directory"] .school-filter-clear {
   }
 }
 
+/* ═════════════════════════════════════════════════════════════════════
+   RECORD ROWS FROM TABLET WIDTH UP (owner, 2026-09-11)
+   "Fix the table layout on all lists — it is like the card is split into two
+   columns." From 48rem the shared record row reads as a table row on every
+   list — the tick box, then the id and name, then the actions on the SAME
+   line — whatever the card's own width. The phone layout (actions under the
+   name, full-width) stays below 48rem. Planning already did this for its own
+   rows; this is the same rule for the directory, clusters, core schools and
+   the portfolio list. Later in the file than the container-query twins so
+   it wins at equal specificity.
+   ═════════════════════════════════════════════════════════════════════ */
+@media (min-width: 48rem) {
+  .school-record-row__summary { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+  .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+  .school-record-row__summary > .school-record-row__actions,
+  .school-record-row__summary--selectable > .school-record-row__actions {
+    grid-column: auto; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end;
+    padding-inline-start: .5rem; padding-block-start: 0; max-inline-size: none;
+  }
+  .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 3; }
+  .school-record-row__title { overflow-wrap: anywhere; }
+}
+@media (min-width: 48rem) and (max-width: 63.999rem) {
+  /* The phone shell's touch targets are right for a tablet; the row itself
+     need not be tall to hold them. */
+  .school-record-row__summary { padding-block: .5rem; }
+  .school-record-row__content { gap: .5rem; }
+}
+
 /* Planning rows keep Schedule and Assign beside the school name at every
    width (owner, 2026-09-02). The shared row drops its actions under the name
    once the list is narrower than 58rem — which, beside the sidebar, is most
@@ -5075,17 +5104,11 @@ main table thead .edify-frozen-cell { z-index: 2; }
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
   main .admin-quick-grid li:nth-child(2n) { border-inline-end: 0; }
-  /* Directory record cards two across: a phone card is ~120px tall and one
-     per row on an 820px screen halves the list's reading speed. An opened
-     record takes the full row so its disclosure has room. */
-  main .school-record-list {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 0.5rem;
-    align-items: start;
-  }
-  main .school-record-list > .school-record-row { min-inline-size: 0; }
-  main .school-record-list > .school-record-row.is-expanded { grid-column: 1 / -1; }
+  /* Record lists stay ONE record per row here. Two across (2026-09-06) made
+     each card half the width, so names wrapped and the actions dropped under
+     them — a desktop rendering at ~960 CSS px (display scaling, browser zoom)
+     lands in this band and read it as a broken table (owner, 2026-09-11).
+     The row is compact instead: see RECORD ROWS FROM TABLET WIDTH UP below. */
 }
 
 /* ═══════════════════════════════════════════════════════════════════════════
