@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 616,
+  "titled_cards": 618,
   "templates": 227,
-  "distinct_titles": 585,
+  "distinct_titles": 587,
   "with_card_key": 13,
   "untitled_surfaces": 794,
   "untitled_chrome": 182,
@@ -4392,6 +4392,24 @@
    "template": "templates/partials/dashboards/admin/_platform_operations.html",
    "line": 23,
    "title": "Recent Incidents",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "admin-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/admin/_platform_operations.html",
+   "line": 37,
+   "title": "Who's Online",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "admin-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/admin/_platform_operations.html",
+   "line": 53,
+   "title": "Sign-ins",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "admin-panel",

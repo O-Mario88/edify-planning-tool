@@ -707,7 +707,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 73542,
+      "bytes": 74634,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -2201,7 +2201,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16416,
+      "bytes": 17932,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -3732,7 +3732,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 1917,
+      "bytes": 3841,
       "deprecated_alternatives": [],
       "example_pages": [],
       "findings": [],
@@ -9759,7 +9759,7 @@
     },
     {
       "accessibility_requirements": [],
-      "bytes": 91,
+      "bytes": 360,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics",

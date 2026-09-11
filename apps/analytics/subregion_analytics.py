@@ -160,18 +160,70 @@ def district_frame(
     school_counts = _counts(school_qs, "district_id", "schools")
     cluster_counts = _counts(cluster_qs, "district_id", "clusters")
     ssa = _ssa_frame(fy, ssa_records)
+    reach = _reach_frames(fy, school_qs)
 
-    for part in (school_counts, cluster_counts, ssa):
+    for part in (school_counts, cluster_counts, ssa, *reach):
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
 
-    for col in ("schools", "clusters", "ssa_n"):
+    for col in ("schools", "clusters", "ssa_n", "enrollment", "schools_visited", "schools_trained"):
         if col not in base:
             base[col] = 0
         base[col] = base[col].fillna(0).astype(int)
     if "ssa_avg" not in base:
         base["ssa_avg"] = pd.NA
     return base
+
+
+def _reach_frames(fy, school_qs) -> tuple:
+    """Students impacted, schools visited, schools trained — per district.
+
+    Owner, 2026-09-12: the sub-region table gains "# Schools Trained",
+    "# Schools Visited" and "Students impacted (the total enrolment of all the
+    schools in each sub-region)" where the table has the room. Same
+    definitions as the hover card (apps.analytics.district_insight): a
+    completed activity of a visit or training type counts its school once
+    per year; enrolment is summed over the schools in scope.
+    """
+    from django.db.models import Count, Sum
+
+    from apps.activities.models import Activity
+    from apps.analytics.pl_analytics_service import (
+        COMPLETED_STATUSES,
+        TRAINING_TYPES,
+        VISIT_TYPES,
+    )
+
+    enrolment = pd.DataFrame.from_records(
+        list(school_qs.values("district_id").annotate(n=Sum("enrollment")))
+    )
+    if not enrolment.empty:
+        enrolment = enrolment.rename(columns={"n": "enrollment"})
+    acts = Activity.objects.filter(
+        deleted_at__isnull=True,
+        status__in=COMPLETED_STATUSES,
+        school__in=school_qs,
+    )
+    if fy:
+        acts = acts.filter(fy=fy)
+
+    def distinct_schools(kinds, name):
+        frame = pd.DataFrame.from_records(
+            list(
+                acts.filter(activity_type__in=kinds)
+                .values("school__district_id")
+                .annotate(n=Count("school", distinct=True))
+            )
+        )
+        if frame.empty:
+            return frame
+        return frame.rename(columns={"school__district_id": "district_id", "n": name})
+
+    return (
+        enrolment,
+        distinct_schools(VISIT_TYPES, "schools_visited"),
+        distinct_schools(TRAINING_TYPES, "schools_trained"),
+    )
 
 
 def weighted_ssa_mean(rows) -> float | None:
@@ -304,6 +356,9 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
         clusters=("clusters", "sum"),
         ssa_n=("ssa_n", "sum"),
         _weighted=("_weighted", "sum"),
+        enrollment=("enrollment", "sum"),
+        schools_visited=("schools_visited", "sum"),
+        schools_trained=("schools_trained", "sum"),
     )
     # Guard the divide: ssa_n is 0 for a group with no confirmed assessment,
     # and that must stay absent rather than becoming NaN-as-zero.
@@ -322,6 +377,9 @@ def _group(frame: pd.DataFrame, key: str) -> list[dict[str, Any]]:
                 "clusters": int(row["clusters"]),
                 "ssa_n": int(row["ssa_n"]),
                 "ssa_avg": None if pd.isna(avg) else round(float(avg), 2),
+                "enrollment": int(row["enrollment"]),
+                "schools_visited": int(row["schools_visited"]),
+                "schools_trained": int(row["schools_trained"]),
                 "school_share": (
                     round(float(row["schools"]) / total_schools * 100, 1)
                     if total_schools
@@ -363,6 +421,9 @@ def subregion_performance(
                     "clusters": int(r["clusters"]),
                     "ssa_n": int(r["ssa_n"]),
                     "ssa_avg": None if pd.isna(avg) else round(float(avg), 2),
+                    "enrollment": int(r["enrollment"]),
+                    "schools_visited": int(r["schools_visited"]),
+                    "schools_trained": int(r["schools_trained"]),
                 }
             )
 

@@ -1178,7 +1178,7 @@
    "audit_id": "KPI-SOURCE-061",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2593,
+   "line": 2631,
    "label": null,
    "keys": [
     "aging",
@@ -1268,7 +1268,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2511,
+   "line": 2549,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1286,7 +1286,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2512,
+   "line": 2550,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1304,7 +1304,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2513,
+   "line": 2551,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1322,7 +1322,7 @@
    "audit_id": "KPI-SOURCE-068",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2514,
+   "line": 2552,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1340,7 +1340,7 @@
    "audit_id": "KPI-SOURCE-069",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2515,
+   "line": 2553,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1358,7 +1358,7 @@
    "audit_id": "KPI-SOURCE-070",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2516,
+   "line": 2554,
    "label": "Returned",
    "keys": [
     "amount",
@@ -28772,7 +28772,7 @@
   {
    "audit_id": "KPI-PAYLOAD-025",
    "module": "apps/planning/planning_service.py",
-   "line": 827,
+   "line": 838,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,

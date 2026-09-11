@@ -38,6 +38,7 @@
         "apps/accounts/lockout_service.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
@@ -70,6 +71,7 @@
         "apps/core/scoping.py",
         "apps/core/session_backend.py",
         "apps/core/templatetags/kpi_metrics.py",
+        "apps/core/templatetags/static_version.py",
         "apps/daily_visit_batches/exceptions.py",
         "apps/daily_visit_batches/pricing.py",
         "apps/daily_visit_batches/services.py",
@@ -285,6 +287,7 @@
         "apps/accounts/jwt.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/analytics/decision_engine.py",
         "apps/analytics/platform_engine.py",
@@ -402,6 +405,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/closure_services.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
@@ -663,6 +667,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
         "apps/activities/services.py",
@@ -802,6 +807,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/closure_services.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
@@ -976,6 +982,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
@@ -1221,6 +1228,7 @@
         "apps/accounts/jwt.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
@@ -1439,6 +1447,7 @@
         "apps/accounts/jwt.py",
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/models.py",
         "apps/activities/services.py",
         "apps/activities/views.py",
@@ -1631,6 +1640,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/clusters/eligibility.py",
@@ -1751,6 +1761,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
         "apps/activities/salesforce.py",
@@ -1982,6 +1993,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/core/audit_hash.py",
@@ -2071,6 +2083,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/core/audit_hash.py",
@@ -2166,6 +2179,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/core/audit_hash.py",
@@ -2300,6 +2314,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activity_catalogue/scheduling_health.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
@@ -2324,6 +2339,7 @@
         "apps/core/scoping.py",
         "apps/core/session_backend.py",
         "apps/core/templatetags/kpi_metrics.py",
+        "apps/core/templatetags/static_version.py",
         "apps/documents/gate.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/views/oversight_views.py",
@@ -2424,6 +2440,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/analytics/platform_engine.py",
         "apps/audit/services.py",
@@ -2554,6 +2571,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/business_transformation/frontend_views.py",
@@ -2689,6 +2707,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/business_transformation/frontend_views.py",
@@ -2847,6 +2866,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
         "apps/business_transformation/frontend_views.py",
@@ -2996,6 +3016,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/accounts/staff_matching.py",
         "apps/activities/ia_services.py",
         "apps/activities/models.py",
@@ -3186,6 +3207,7 @@
       "services": [
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
+        "apps/accounts/presence.py",
         "apps/activities/models.py",
         "apps/admin_ops/detection.py",
         "apps/audit/services.py",
@@ -3332,9 +3354,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "d7b3596e56e2690057d555855f3625a255a6e1c7baba319d0fb3d7faa8e69e8b",
-    "sources": "e4752765858bd1b4f99848aa197242b7e850d96c5fb6a4fbfca5623c1593b6c5",
-    "sourceCount": 183,
+    "payload": "b763bba34b94be65e928c40e09a2f174782b5e8b0e32c953d0282839c150ff29",
+    "sources": "98dfe3bf19fcdbe3d73df92473bb0cf93d0b2a0e5c7aedc6b6abaf8b6def545a",
+    "sourceCount": 185,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

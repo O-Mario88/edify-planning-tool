@@ -235,6 +235,13 @@ def district_insight(
         t="teachers_trained",
         l="leaders_trained",
     )
+    # Students impacted: the enrolment of every school in the district
+    # (owner, 2026-09-12 — the sub-region table's third new column).
+    enrolment = _frame(
+        school_qs.values("district_id").annotate(n=Sum("enrollment")),
+        "district_id",
+        n="enrollment",
+    )
 
     for part in (
         schools,
@@ -246,6 +253,7 @@ def district_insight(
         trained,
         visited,
         people,
+        enrolment,
     ):
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
@@ -265,6 +273,7 @@ def district_insight(
         "schools_visited",
         "teachers_trained",
         "leaders_trained",
+        "enrollment",
     ]
     for col in counts:
         if col not in base:
@@ -341,5 +350,6 @@ def district_insight(
             "visited": int(r["schools_visited"]),
             "teachers_trained": int(r["teachers_trained"]),
             "leaders_trained": int(r["leaders_trained"]),
+            "enrollment": int(r["enrollment"]),
         }
     return out

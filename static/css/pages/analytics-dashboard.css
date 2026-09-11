@@ -1610,3 +1610,18 @@ main #impact-workspace .impact-group-pagination a {
   }
   .analytics-geo-card .sr-distribution-panel > details { flex: 0 0 auto; }
 }
+
+/* The sub-region table's three wide columns — schools visited, schools
+   trained, students impacted (owner, 2026-09-12). Hidden by default; shown
+   where the table has the room: on a tablet, where it sits below the map and
+   takes the whole row; and on desktop screens from 100rem (1600px), where the
+   panel beside the map can be wide. A 13-inch laptop (1440px) keeps the
+   four-column table, as asked. */
+/* Their visibility is the component's (x-show="wideColumns" on the cells,
+   from one matchMedia over the same two bands): mobile-micro-ux.css forces
+   every table cell visible with a ten-part !important rule that yields only
+   to an inline display:none. The panel's width is still the stylesheet's. */
+@media (min-width: 100rem) {
+  .analytics-geo-card .sr-distribution-panel { flex: 0 0 32rem; width: 32rem; }
+}
+
