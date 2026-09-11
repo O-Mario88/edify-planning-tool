@@ -1,4 +1,5 @@
 from django.utils.html import format_html
+from django.utils.html import escape
 from django.shortcuts import render, redirect, get_object_or_404
 from apps.core.htmx_errors import error_fragment
 from apps.core.permissions import (
@@ -736,8 +737,15 @@ def cluster_detail_view(request, cluster_id):
         messages.error(request, f"Error loading cluster details: {e}")
         return redirect("/clusters")
 
+    from apps.clusters.models import Cluster as _Cluster
+    from apps.clusters.services import cluster_delete_block
+
+    _cluster_row = _Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
     context = {
         "cluster": detail,
+        # The reason the Delete control is inert, shown beside it — a cluster
+        # that has hosted work is kept, and the page says so before a press.
+        "delete_block": cluster_delete_block(_cluster_row) if _cluster_row else None,
         "weakest_interventions": intervention_overview["weakest"],
         "intervention_summary": intervention_overview["summary"],
         "activity_impact": impact,
@@ -1290,4 +1298,45 @@ def edit_cluster_view(request, cluster_id):
         else:
             messages.error(request, "Failed to update cluster: missing fields.")
 
+    return redirect("/clusters")
+
+
+@require_page_permission("planning")
+def delete_cluster_view(request, cluster_id):
+    """Delete a cluster from its profile (owner, 2026-09-11).
+
+    The service decides: a cluster that has hosted a meeting or training is
+    refused with the reason, and the page shows that reason before the button
+    is ever pressed (see ``delete_block`` on the profile). A deleted cluster's
+    schools are released to ``unclustered``, ready for a new cluster.
+    """
+    from django.http import HttpResponse, HttpResponseNotAllowed
+
+    from apps.clusters.services import delete_cluster
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+
+    if request.method != "POST":
+        return HttpResponseNotAllowed(["POST"])
+    is_htmx = bool(request.headers.get("HX-Request"))
+    try:
+        result = delete_cluster(cluster_id, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        if is_htmx:
+            return HttpResponse(
+                f'<div class="edify-note" data-tone="danger" role="alert">'
+                f'<p class="edify-note__body">{escape(str(exc))}</p></div>',
+                status=400,
+            )
+        messages.error(request, str(exc))
+        return redirect(f"/clusters/{cluster_id}")
+    released = result["schoolsReleased"]
+    messages.success(
+        request,
+        f"Deleted cluster '{result['name']}'. {released} school"
+        f"{'s' if released != 1 else ''} released and ready for a new cluster.",
+    )
+    if is_htmx:
+        response = HttpResponse(status=200)
+        response["HX-Redirect"] = "/clusters"
+        return response
     return redirect("/clusters")

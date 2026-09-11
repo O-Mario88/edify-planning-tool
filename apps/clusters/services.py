@@ -1973,3 +1973,114 @@ __all__ = [
     "ClusterCostPreviewService",
     "ClusterMyPlanSyncService",
 ]
+
+
+# ── Deleting a cluster ───────────────────────────────────────────────────────
+#
+# Owner, 2026-09-11: "The staff should be able to delete cluster and the
+# schools added to the deleted clusters can just get unclustered ready to be
+# added to a new cluster. If the clusters have had a meeting or training, the
+# staff should not be able to delete it."
+#
+# A cluster is a grouping, not a record of work — until it has hosted some. A
+# meeting or training that was held is evidence, cost and credit that all point
+# at the cluster, so that cluster stays. One that is merely on the calendar is
+# not history yet, but deleting the cluster under it would orphan a planned
+# activity, so the planner is asked to cancel or move it first.
+
+# Nothing happened yet: on the calendar, or waiting for someone's yes.
+_UNHELD_STATUSES = frozenset(
+    {
+        "planned",
+        "scheduled",
+        "assigned_to_partner",
+        "partner_scheduled",
+        "awaiting_owner_approval",
+    }
+)
+# Not work at all.
+_NOT_WORK_STATUSES = frozenset({"cancelled", "not_planned", "deferred"})
+
+
+def cluster_delete_block(cluster) -> str | None:
+    """Why this cluster cannot be deleted, in the planner's words — or None."""
+    from apps.activities.models import Activity
+
+    work = Activity.objects.filter(
+        cluster_id=cluster.id, deleted_at__isnull=True
+    ).exclude(status__in=_NOT_WORK_STATUSES)
+    held = work.exclude(status__in=_UNHELD_STATUSES).count()
+    if held:
+        return (
+            f"{cluster.name} has held {held} meeting{'s' if held != 1 else ''} or "
+            "training. A cluster with a record of work is kept — move its "
+            "schools to another cluster instead."
+        )
+    pending = work.count()
+    if pending:
+        return (
+            f"{cluster.name} has {pending} scheduled meeting or training. Cancel "
+            "or move it before deleting the cluster."
+        )
+    return None
+
+
+def delete_cluster(cluster_id: str, principal) -> dict:
+    """Delete a cluster that has never hosted work, releasing its schools.
+
+    Every school it held goes back to ``unclustered`` through the one
+    membership service, so the audit trail and the derived readiness fields
+    are written the same way as any other move; the cluster itself is
+    soft-deleted so its id keeps resolving in history.
+    """
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.core.scoping import cluster_owner_ids
+    from apps.schools.models import School
+
+    cluster = Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    if not cluster:
+        raise NotFoundError("Cluster not found")
+
+    # The same ownership rule as editing: the person responsible for the
+    # cluster, or a country role. Sharing a district is not sharing a portfolio.
+    current_owner = (cluster.responsible_staff_id or "").strip()
+    scope = resolve_user_scope(principal)
+    if (
+        current_owner
+        and not scope.country_scope
+        and current_owner not in cluster_owner_ids(scope, direct_only=True)
+    ):
+        raise Forbidden(
+            "That cluster belongs to another staff member. Ask them, or "
+            "transfer it through the cluster-transfer workflow."
+        )
+
+    block = cluster_delete_block(cluster)
+    if block:
+        raise BadRequest(block)
+
+    actor_id = getattr(principal, "id", None) or "system"
+    with transaction.atomic():
+        released = 0
+        for school in list(active_schools(cluster.id)):
+            set_school_cluster_membership(school, None, assigned_by=actor_id)
+            released += 1
+        # A stale pointer (cluster_id set, status disagreeing) would otherwise
+        # keep naming a cluster that no longer exists.
+        School.objects.filter(cluster_id=cluster.id, deleted_at__isnull=True).update(
+            cluster_id=None, cluster_status="unclustered"
+        )
+        cluster.status = ClusterRecordStatus.INACTIVE
+        cluster.save(update_fields=["status", "updated_at"])
+        cluster.soft_delete()
+
+        from apps.audit.services import log as audit_log
+
+        audit_log(
+            action="cluster.deleted",
+            subject_kind="cluster",
+            subject_id=cluster.id,
+            actor_id=actor_id,
+            payload={"name": cluster.name, "schoolsReleased": released},
+        )
+    return {"id": cluster.id, "name": cluster.name, "schoolsReleased": released}

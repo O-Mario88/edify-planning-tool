@@ -423,6 +423,11 @@ urlpatterns = [
         name="edit_cluster",
     ),
     path(
+        "clusters/<str:cluster_id>/delete",
+        cluster_views.delete_cluster_view,
+        name="delete_cluster",
+    ),
+    path(
         "clusters/planner-drawer",
         cluster_views.planner_drawer_view,
         name="cluster_planner_drawer",
