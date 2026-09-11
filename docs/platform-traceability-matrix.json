@@ -3355,7 +3355,7 @@
   ],
   "fingerprint": {
     "payload": "b763bba34b94be65e928c40e09a2f174782b5e8b0e32c953d0282839c150ff29",
-    "sources": "98dfe3bf19fcdbe3d73df92473bb0cf93d0b2a0e5c7aedc6b6abaf8b6def545a",
+    "sources": "07a40a6b13aa306b53b5dfc6d0dcf170261b79412c7f6dcafb03090a42e0874c",
     "sourceCount": 185,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
