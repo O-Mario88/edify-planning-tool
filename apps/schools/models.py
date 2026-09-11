@@ -261,57 +261,38 @@ class School(SoftDeleteModel):
 
     @property
     def ssa_readiness_state(self) -> str:
-        # Find the latest SsaRecord for this school (which is not deleted)
+        """Where this school stands on its SSA, in the planner's words.
+
+        Two lookups per school — the latest record and any pending collection
+        activity — which a page of fifteen rows paid thirty times over. A page
+        primes the request store for its rows (:func:`prime_ssa_readiness`)
+        and the property answers from there (2026-09-12).
+        """
+        from apps.core.request_cache import store
+
+        bucket = store()
+        key = ("school.ssa_readiness", self.id)
+        if bucket is not None and key in bucket:
+            return bucket[key]
         latest_ssa = (
             self.ssa_records.filter(deleted_at__isnull=True)
             .order_by("-date_of_ssa")
             .first()
         )
-
-        # Check active activities that are expected to collect SSA
         from apps.activities.models import Activity
 
         act = (
             Activity.objects.filter(
                 school=self, deleted_at__isnull=True, ssa_collection_expected=True
             )
-            .exclude(status__in=["cancelled", "completed", "ia_verified"])
+            .exclude(status__in=SSA_COLLECTION_DONE_STATUSES)
             .order_by("scheduled_date")
             .first()
         )
-
-        # If there's an expected activity scheduled
-        if act:
-            if act.delivery_type == "partner":
-                return "Partner Collection Pending"
-            else:
-                if act.activity_type == "baseline_ssa_visit":
-                    return "Scheduled for Collection"
-                elif act.activity_type == "school_visit_ssa_collection":
-                    return "Collected During Visit"
-                elif act.activity_type == "cluster_training_ssa_collection":
-                    return "Collected During Training"
-                elif act.activity_type == "cluster_meeting_ssa_review":
-                    return "Collected During Cluster Activity"
-                else:
-                    return "Scheduled for Collection"
-
-        if not latest_ssa:
-            return "No SSA"
-
-        if latest_ssa.verification_status == "pending":
-            return "Pending IA Verification"
-        elif latest_ssa.verification_status == "returned":
-            return "Returned for Correction"
-        elif latest_ssa.verification_status == "confirmed":
-            from apps.core.fy import get_operational_fy
-
-            if latest_ssa.fy != get_operational_fy():
-                return "Expired / Needs Refresh"
-            else:
-                return "Verified"
-
-        return "No SSA"
+        state = readiness_from(latest_ssa, act)
+        if bucket is not None:
+            bucket[key] = state
+        return state
 
     def save(self, *args, **kwargs):
         from apps.clusters.models import Cluster, SchoolClusterAssignment
@@ -998,3 +979,73 @@ from apps.schools.lifecycle_models import (  # noqa: E402,F401
     ClosureType,
     SchoolClosure,
 )
+
+
+SSA_COLLECTION_DONE_STATUSES = ("cancelled", "completed", "ia_verified")
+
+
+def readiness_from(latest_ssa, act) -> str:
+    """The SSA readiness words for a latest record and a pending collection
+    activity — the same decision the property makes, kept pure so a page can
+    make it for many schools from two queries."""
+    if act:
+        if act.delivery_type == "partner":
+            return "Partner Collection Pending"
+        if act.activity_type == "baseline_ssa_visit":
+            return "Scheduled for Collection"
+        if act.activity_type == "school_visit_ssa_collection":
+            return "Collected During Visit"
+        if act.activity_type == "cluster_training_ssa_collection":
+            return "Collected During Training"
+        if act.activity_type == "cluster_meeting_ssa_review":
+            return "Collected During Cluster Activity"
+        return "Scheduled for Collection"
+
+    if not latest_ssa:
+        return "No SSA"
+
+    if latest_ssa.verification_status == "pending":
+        return "Pending IA Verification"
+    if latest_ssa.verification_status == "returned":
+        return "Returned for Correction"
+    if latest_ssa.verification_status == "confirmed":
+        from apps.core.fy import get_operational_fy
+
+        if latest_ssa.fy != get_operational_fy():
+            return "Expired / Needs Refresh"
+        return "Verified"
+
+    return "No SSA"
+
+
+def prime_ssa_readiness(schools) -> None:
+    """Answer ``ssa_readiness_state`` for many schools from two queries, into
+    the request store. A no-op without a store."""
+    from apps.activities.models import Activity
+    from apps.core.request_cache import store
+    from apps.ssa.models import SsaRecord
+
+    bucket = store()
+    schools = list(schools)
+    if bucket is None or not schools:
+        return
+    ids = [s.id for s in schools]
+    latest: dict = {}
+    for record in (
+        SsaRecord.objects.filter(school_id__in=ids, deleted_at__isnull=True)
+        .order_by("school_id", "-date_of_ssa")
+    ):
+        latest.setdefault(record.school_id, record)
+    pending: dict = {}
+    for act in (
+        Activity.objects.filter(
+            school_id__in=ids, deleted_at__isnull=True, ssa_collection_expected=True
+        )
+        .exclude(status__in=SSA_COLLECTION_DONE_STATUSES)
+        .order_by("school_id", "scheduled_date")
+    ):
+        pending.setdefault(act.school_id, act)
+    for school in schools:
+        bucket[("school.ssa_readiness", school.id)] = readiness_from(
+            latest.get(school.id), pending.get(school.id)
+        )

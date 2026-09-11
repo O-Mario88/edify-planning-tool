@@ -462,6 +462,17 @@ class PlanningDashboardService:
             paginated_schools = list(
                 ordered_qs.select_related("district", "sub_county")[start_idx:end_idx]
             )
+            # One page, three primers, a handful of queries — instead of the
+            # recommendation engine, the readiness property and the latest-SSA
+            # lookup each running their own per school (2026-09-12: ~13
+            # queries a row, fifteen rows a page).
+            from apps.schools.models import prime_ssa_readiness
+            from apps.ssa.recommendation_engine import prime_recommendation_inputs
+            from apps.ssa.services import prime_latest_applicable_records
+
+            prime_ssa_readiness(paginated_schools)
+            prime_latest_applicable_records(paginated_schools)
+            prime_recommendation_inputs(paginated_schools)
 
             # Retrieve latest confirmed SSA records
             school_ids = [s.id for s in paginated_schools]

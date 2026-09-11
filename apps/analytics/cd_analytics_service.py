@@ -1729,35 +1729,77 @@ class CDAnalyticsService:
     # ── 5. Partner performance (impact-weighted) ─────────────────────────────
     @staticmethod
     def partner_performance(cd, acts):
+        """Every partner's delivery and SSA movement, from grouped queries.
+
+        This looped over the partners running six queries each — counts,
+        verified counts, two SSA averages — so the To-Do page paid thirty-six
+        queries for six partners and grew with every partner added. The same
+        figures now come from one grouped activity query, one assignment
+        query and one SSA query, and are assembled per partner in Python.
+        """
+        from django.db.models import Count, Q
+
         from apps.partners.models import Partner, PartnerAssignment
 
         latest, prev = _cycle_fys(cd.school_ids, cd.fy, cd.school_ref)
-        rows = []
-        for p in Partner.objects.all().order_by("name"):
-            assignments = PartnerAssignment.objects.filter(partner=p)
-            p_school_ids = set(
-                assignments.exclude(school__isnull=True).values_list(
-                    "school_id", flat=True
-                )
+        partners = list(Partner.objects.all().order_by("name"))
+        if not partners:
+            return {"rows": []}
+        partner_ids = [p.id for p in partners]
+
+        schools_by_partner: dict = {pid: set() for pid in partner_ids}
+        for pid, sid in PartnerAssignment.objects.filter(
+            partner_id__in=partner_ids, school__isnull=False
+        ).values_list("partner_id", "school_id"):
+            schools_by_partner[pid].add(sid)
+
+        counts = {
+            row["assigned_partner_id"]: row
+            for row in acts.filter(assigned_partner_id__in=partner_ids)
+            .values("assigned_partner_id")
+            .annotate(
+                planned=Count("id"),
+                done=Count("id", filter=Q(status__in=COMPLETED_STATUSES)),
+                verified=Count("id", filter=Q(status__in=VERIFIED_STATUSES)),
+                touched=Count("school_id", distinct=True),
             )
-            p_acts = acts.filter(assigned_partner_id=p.id)
-            planned = p_acts.count()
-            done = p_acts.filter(status__in=COMPLETED_STATUSES).count()
-            target_pct = _pct(done, planned)
-            verified = p_acts.filter(status__in=VERIFIED_STATUSES).count()
-            # SSA improvement across the partner's schools (annual delta).
-            ssa_improve = None
-            if latest and prev and p_school_ids:
-                cur = SsaRecord.objects.filter(
-                    school_id__in=p_school_ids,
+        }
+
+        # SSA improvement across each partner's schools (annual delta): the
+        # mean of every confirmed record in the latest cycle against the
+        # previous one, per partner — the same figure the per-partner
+        # aggregate produced, from one query.
+        sums: dict = {}
+        if latest and prev:
+            all_school_ids = set().union(*schools_by_partner.values())
+            if all_school_ids:
+                for sid, fy, score in SsaRecord.objects.filter(
+                    school_id__in=all_school_ids,
                     verification_status="confirmed",
-                    fy=latest,
-                ).aggregate(a=Avg("average_score"))["a"]
-                old = SsaRecord.objects.filter(
-                    school_id__in=p_school_ids, verification_status="confirmed", fy=prev
-                ).aggregate(a=Avg("average_score"))["a"]
-                if cur is not None and old is not None:
-                    ssa_improve = round(cur - old, 1)
+                    fy__in=[latest, prev],
+                ).values_list("school_id", "fy", "average_score"):
+                    if score is None:
+                        continue
+                    for pid, ids in schools_by_partner.items():
+                        if sid in ids:
+                            bucket = sums.setdefault(pid, {latest: [0.0, 0], prev: [0.0, 0]})
+                            bucket[fy][0] += float(score)
+                            bucket[fy][1] += 1
+
+        rows = []
+        for p in partners:
+            p_school_ids = schools_by_partner.get(p.id, set())
+            row = counts.get(p.id) or {}
+            planned = row.get("planned", 0)
+            done = row.get("done", 0)
+            target_pct = _pct(done, planned)
+            verified = row.get("verified", 0)
+            ssa_improve = None
+            bucket = sums.get(p.id)
+            if bucket and bucket[latest][1] and bucket[prev][1]:
+                cur = bucket[latest][0] / bucket[latest][1]
+                old = bucket[prev][0] / bucket[prev][1]
+                ssa_improve = round(cur - old, 1)
             rec = CDAnalyticsService._partner_recommendation(
                 target_pct, ssa_improve, planned
             )
@@ -1766,11 +1808,7 @@ class CDAnalyticsService:
                     "id": p.id,
                     "name": p.name,
                     "target_pct": target_pct,
-                    "schools_supported": len(p_school_ids)
-                    or p_acts.exclude(school_id__isnull=True)
-                    .values("school_id")
-                    .distinct()
-                    .count(),
+                    "schools_supported": len(p_school_ids) or row.get("touched", 0),
                     "ssa_improve": ssa_improve,
                     "verified": verified,
                     "recommendation": rec[0],

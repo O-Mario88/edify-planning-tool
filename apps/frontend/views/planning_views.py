@@ -617,8 +617,12 @@ def planning_dashboard_view(request):
             )
         return response
 
-    # 2. Query Dashboard data from Service
-    data = PlanningDashboardService.get_dashboard_data(request.user, filters)
+    # 2. Query Dashboard data from Service — inside a memo scope, so the
+    # page's primers have a store to fill whether or not a middleware opened one.
+    from apps.core.request_cache import scoped
+
+    with scoped():
+        data = PlanningDashboardService.get_dashboard_data(request.user, filters)
 
     # 3. Dropdowns options — only places holding schools this user can plan for.
     from apps.core.scoping import resolve_user_scope, school_queryset

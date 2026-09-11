@@ -278,7 +278,13 @@ def latest_applicable_record(school):
     never gate, justify, or rank money-bearing work — before this helper, six
     surfaces computed "weakest interventions" with different filters and the
     planning gate could pass or fail on an unconfirmed score."""
-    return (
+    from apps.core.request_cache import store
+
+    bucket = store()
+    key = ("ssa.latest_applicable", school.id)
+    if bucket is not None and key in bucket:
+        return bucket[key]
+    record = (
         SsaRecord.objects.filter(
             school=school,
             deleted_at__isnull=True,
@@ -287,6 +293,24 @@ def latest_applicable_record(school):
         .order_by("-date_of_ssa", "-created_at")
         .first()
     )
+    if bucket is not None:
+        bucket[key] = record
+    return record
+
+
+def prime_latest_applicable_records(schools, *, with_scores: bool = True) -> None:
+    """Fill the request store so :func:`latest_applicable_record` answers a
+    whole page from one query — including the schools with NO record, which
+    are stored as None so they are not looked up again one by one."""
+    from apps.core.request_cache import store
+
+    bucket = store()
+    schools = list(schools)
+    if bucket is None or not schools:
+        return
+    found = latest_applicable_records(schools, with_scores=with_scores)
+    for school in schools:
+        bucket[("ssa.latest_applicable", school.id)] = found.get(school.id)
 
 
 def latest_applicable_records(schools, *, with_scores: bool = False) -> dict:

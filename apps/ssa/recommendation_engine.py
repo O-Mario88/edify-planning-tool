@@ -79,18 +79,29 @@ def _confidence(record_count: int) -> str:
 
 def _confirmed_history(school) -> list:
     """Every confirmed, non-deleted SSA record for the school, oldest first,
-    with its scores prefetched. Bounded — one school has a handful of SSAs."""
+    with its scores prefetched. Bounded — one school has a handful of SSAs.
+
+    Read from the request store when a page has primed it for its rows
+    (:func:`prime_recommendation_inputs`); Planning asked this twice per
+    school, fifteen schools a page, before that (2026-09-12)."""
+    from apps.core.request_cache import store
     from apps.ssa.models import SsaRecord
 
-    return list(
+    bucket = store()
+    if bucket is not None and ("ssa.confirmed_history", school.id) in bucket:
+        return bucket[("ssa.confirmed_history", school.id)]
+    records = list(
         SsaRecord.objects.filter(
             school=school,
             verification_status="confirmed",
             deleted_at__isnull=True,
         )
-        .order_by("date_of_ssa", "created_at")
         .prefetch_related("scores")
+        .order_by("date_of_ssa", "created_at")
     )
+    if bucket is not None:
+        bucket[("ssa.confirmed_history", school.id)] = records
+    return records
 
 
 def _series_by_intervention(records: list) -> dict[str, list[float]]:
@@ -105,6 +116,44 @@ def _series_by_intervention(records: list) -> dict[str, list[float]]:
     return series
 
 
+def _cluster_latest_scores(cluster_id: str) -> dict[str, dict[str, float]]:
+    """Each school's latest confirmed scores across ONE cluster, memoised for
+    the request: every school in the cluster asks the same question, and
+    Planning renders fifteen of them a page."""
+    from apps.core.request_cache import memoize
+    from apps.schools.models import School
+    from apps.ssa.models import SsaRecord, SsaScore
+
+    def compute():
+        school_ids = list(
+            School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True)
+            .values_list("id", flat=True)
+        )
+        if not school_ids:
+            return {}
+        latest_by_school: dict[str, str] = {}
+        for row in (
+            SsaRecord.objects.filter(
+                school_id__in=school_ids,
+                verification_status="confirmed",
+                deleted_at__isnull=True,
+            )
+            .order_by("school_id", "-date_of_ssa", "-created_at")
+            .values("id", "school_id")
+        ):
+            latest_by_school.setdefault(row["school_id"], row["id"])
+        school_by_record = {rid: sid for sid, rid in latest_by_school.items()}
+        scores: dict[str, dict[str, float]] = {sid: {} for sid in latest_by_school}
+        for row in SsaScore.objects.filter(
+            ssa_record_id__in=list(latest_by_school.values())
+        ).values("ssa_record_id", "intervention", "score"):
+            if row["score"] is not None and row["intervention"] in _ALL_INTERVENTIONS:
+                scores[school_by_record[row["ssa_record_id"]]][row["intervention"]] = float(row["score"])
+        return scores
+
+    return memoize(("ssa.cluster_latest_scores", cluster_id), compute)
+
+
 def _peer_stats(school) -> dict[str, dict[str, float]]:
     """Per-intervention peer mean/std from each cluster peer's *latest*
     confirmed SSA. Cluster-scoped, so bounded. Returns {} when the school is
@@ -112,44 +161,17 @@ def _peer_stats(school) -> dict[str, dict[str, float]]:
     cluster_id = getattr(school, "cluster_id", None)
     if not cluster_id:
         return {}
-
-    from apps.schools.models import School
-    from apps.ssa.models import SsaRecord, SsaScore
-
-    peer_ids = list(
-        School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True)
-        .exclude(id=school.id)
-        .values_list("id", flat=True)
-    )
-    if not peer_ids:
-        return {}
-
-    # Latest confirmed record per peer school (one query + Python dedup on an
-    # already cluster-bounded row set).
-    latest_by_peer: dict[str, str] = {}
-    for row in (
-        SsaRecord.objects.filter(
-            school_id__in=peer_ids,
-            verification_status="confirmed",
-            deleted_at__isnull=True,
-        )
-        .order_by("school_id", "-date_of_ssa", "-created_at")
-        .values("id", "school_id")
-    ):
-        latest_by_peer.setdefault(row["school_id"], row["id"])
-
-    if not latest_by_peer:
+    by_school = _cluster_latest_scores(cluster_id)
+    peers = {sid: scores for sid, scores in by_school.items() if sid != school.id}
+    if not peers:
         return {}
 
     import numpy as np
 
     grouped: dict[str, list[float]] = {code: [] for code in _ALL_INTERVENTIONS}
-    for row in SsaScore.objects.filter(
-        ssa_record_id__in=list(latest_by_peer.values())
-    ).values("intervention", "score"):
-        code, value = row["intervention"], row["score"]
-        if code in grouped and value is not None:
-            grouped[code].append(float(value))
+    for scores in peers.values():
+        for code, value in scores.items():
+            grouped[code].append(value)
 
     stats: dict[str, dict[str, float]] = {}
     for code, values in grouped.items():
@@ -168,28 +190,91 @@ def _prior_support_counts(school) -> dict[str, int]:
     """Per-intervention count of the school's completed/verified activities —
     pure context ("supported 3× already"), deliberately NOT a priority weight
     (we must not deprioritise an intervention just because it has resisted
-    improvement). One grouped query, not one-per-intervention."""
+    improvement). One grouped query, not one-per-intervention — and none at
+    all when the page primed it (:func:`prime_recommendation_inputs`)."""
     from django.db.models import Count
 
     from apps.activities.models import Activity
+    from apps.core.request_cache import store
 
+    bucket = store()
+    if bucket is not None and ("ssa.prior_support", school.id) in bucket:
+        return bucket[("ssa.prior_support", school.id)]
     rows = (
         Activity.objects.filter(
             school=school,
             deleted_at__isnull=True,
-            status__in=[
-                "completed",
-                "ia_verified",
-                "accountant_confirmed",
-                "closed",
-            ],
+            status__in=PRIOR_SUPPORT_STATUSES,
         )
         .values("focus_intervention")
         .annotate(n=Count("id"))
     )
-    return {
+    counts = {
         row["focus_intervention"]: row["n"] for row in rows if row["focus_intervention"]
     }
+    if bucket is not None:
+        bucket[("ssa.prior_support", school.id)] = counts
+    return counts
+
+
+PRIOR_SUPPORT_STATUSES = (
+    "completed",
+    "ia_verified",
+    "accountant_confirmed",
+    "closed",
+)
+
+
+def prime_recommendation_inputs(schools) -> None:
+    """Load what :func:`prioritized_interventions` reads, for many schools at
+    once, into the request store — so a page of fifteen schools costs three
+    queries here rather than four per school.
+
+    A no-op outside a request store (tests calling the engine directly, jobs),
+    where every helper falls through to its own query as before.
+    """
+    from collections import defaultdict
+
+    from django.db.models import Count
+
+    from apps.activities.models import Activity
+    from apps.core.request_cache import store
+    from apps.ssa.models import SsaRecord
+
+    bucket = store()
+    schools = list(schools)
+    if bucket is None or not schools:
+        return
+    ids = [s.id for s in schools]
+    history: dict[str, list] = defaultdict(list)
+    for record in (
+        SsaRecord.objects.filter(
+            school_id__in=ids,
+            verification_status="confirmed",
+            deleted_at__isnull=True,
+        )
+        .prefetch_related("scores")
+        .order_by("date_of_ssa", "created_at")
+    ):
+        history[record.school_id].append(record)
+    support: dict[str, dict[str, int]] = defaultdict(dict)
+    for row in (
+        Activity.objects.filter(
+            school_id__in=ids,
+            deleted_at__isnull=True,
+            status__in=PRIOR_SUPPORT_STATUSES,
+        )
+        .values("school_id", "focus_intervention")
+        .annotate(n=Count("id"))
+    ):
+        if row["focus_intervention"]:
+            support[row["school_id"]][row["focus_intervention"]] = row["n"]
+    for school in schools:
+        bucket[("ssa.confirmed_history", school.id)] = history.get(school.id, [])
+        bucket[("ssa.prior_support", school.id)] = support.get(school.id, {})
+    for cluster_id in {getattr(s, "cluster_id", None) for s in schools}:
+        if cluster_id:
+            _cluster_latest_scores(cluster_id)
 
 
 def _component_severity(latest_score: float) -> dict[str, Any]:
