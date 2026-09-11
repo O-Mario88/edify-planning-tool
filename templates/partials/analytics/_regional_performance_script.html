@@ -214,8 +214,17 @@ window.subregionMap = function (){
     fitViewport(){
       const viewport = this.$el.querySelector('.sr-map-viewport');
       if (!viewport) return;
-      const top = viewport.getBoundingClientRect().top + window.scrollY;
-      const height = Math.max(220, window.innerHeight - top - 24);
+      // The map is the motivator on this page (owner, 2026-09-11: "it should
+      // be bigger and detailed"). It used to be sized to whatever window
+      // height was LEFT below the card — 594px on a 1080p screen, 266px on a
+      // 1366x768 laptop — inside a box twice as wide, so the country sat
+      // small in a letterbox. It now takes most of the window's height, up to
+      // the width the canvas gives it, and the page scrolls to it like any
+      // other card. Phones keep the square (the flex column below 1280px).
+      const canvasWidth = viewport.getBoundingClientRect().width || window.innerWidth;
+      const height = Math.round(
+        Math.max(520, Math.min(canvasWidth * 0.92, window.innerHeight - 140))
+      );
       this.$el.style.setProperty('--map-viewport-height', height + 'px');
       this.refreshMapLabelPlacement();
     },
