@@ -19,34 +19,66 @@ from __future__ import annotations
 
 from datetime import timedelta
 
+import logging
+
 from django.utils import timezone
+
+logger = logging.getLogger(__name__)
 
 ONLINE_WINDOW = timedelta(minutes=10)
 
 
+def client_address(request) -> str | None:
+    """The caller's address when it is one. A proxy header or REMOTE_ADDR that
+    is not a valid IP is recorded as unknown, never raised: the first sign-in
+    behind a malformed X-Forwarded-For would otherwise have failed on the
+    address column's validation (found by the change-password flow's test)."""
+    import ipaddress
+
+    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
+    candidate = forwarded or (request.META.get("REMOTE_ADDR") or "").strip()
+    if not candidate:
+        return None
+    try:
+        return str(ipaddress.ip_address(candidate))
+    except ValueError:
+        return None
+
+
 def record_login(request, user) -> None:
+    """Record a successful sign-in. Never lets a bookkeeping failure break the
+    sign-in it records."""
+    from django.db import DatabaseError
+
     from .models import LoginEvent, User
 
     now = timezone.now()
-    forwarded = (request.META.get("HTTP_X_FORWARDED_FOR") or "").split(",")[0].strip()
-    ip = forwarded or request.META.get("REMOTE_ADDR") or None
-    LoginEvent.objects.create(
-        user=user,
-        at=now,
-        role=getattr(user, "active_role", "") or "",
-        ip=ip or None,
-        user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:256],
-    )
-    User.objects.filter(pk=user.pk).update(last_seen_at=now)
+    try:
+        LoginEvent.objects.create(
+            user=user,
+            at=now,
+            role=getattr(user, "active_role", "") or "",
+            ip=client_address(request),
+            user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:256],
+        )
+        User.objects.filter(pk=user.pk).update(last_seen_at=now)
+    except (DatabaseError, ValueError):  # pragma: no cover - defensive
+        logger.exception("presence: sign-in was not recorded for %s", getattr(user, "pk", None))
 
 
 def touch_presence(user) -> None:
-    """Mark the person as seen now. One UPDATE; the caller throttles."""
+    """Mark the person as seen now. One UPDATE; the caller throttles. Inside a
+    request whose transaction has already failed, it does nothing."""
+    from django.db import DatabaseError
+
     from .models import User
 
     if not getattr(user, "is_authenticated", False):
         return
-    User.objects.filter(pk=user.pk).update(last_seen_at=timezone.now())
+    try:
+        User.objects.filter(pk=user.pk).update(last_seen_at=timezone.now())
+    except DatabaseError:
+        return
 
 
 def presence_summary(*, now=None) -> dict:

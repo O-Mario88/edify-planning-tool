@@ -68,6 +68,15 @@ class PresenceServiceTest(TestCase):
         self.assertEqual(sum(w["count"] for w in summary["weekly"]), 5)
         self.assertGreaterEqual(summary["logins_this_week"], 2)
 
+    def test_a_malformed_address_never_breaks_the_sign_in(self):
+        request = self.rf.post("/login", REMOTE_ADDR="2001:db8::a237098e4ed6691c")
+        record_login(request, self.anna)  # must not raise
+        event = LoginEvent.objects.get(user=self.anna)
+        self.assertIsNone(event.ip)
+        request = self.rf.post("/login", HTTP_X_FORWARDED_FOR="not-an-address", REMOTE_ADDR="10.1.2.3")
+        record_login(request, self.ben)
+        self.assertIsNone(LoginEvent.objects.get(user=self.ben).ip)
+
     def test_touch_marks_the_person_seen(self):
         touch_presence(self.ben)
         self.ben.refresh_from_db()
