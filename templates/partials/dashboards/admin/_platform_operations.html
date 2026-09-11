@@ -32,4 +32,44 @@
     <p class="admin-panel__empty">No open incidents. Server errors, broken routes, SLO breaches and failed jobs are detected automatically.</p>
     {% endfor %}
   </section>
+
+  {% with presence=admin_ops.presence %}
+  <section class="admin-panel" aria-labelledby="admin-ops-online-title" data-admin-presence>
+    <header class="admin-panel__header">
+      <h2 id="admin-ops-online-title">Who's Online</h2>
+      <span class="edify-text-caption">{{ presence.online_count }} in the last {{ presence.window_minutes }} min</span>
+    </header>
+    {% for person in presence.online %}
+    <div class="admin-target-row">
+      <span>{{ person.name }}</span>
+      <strong>{{ person.active_role }}</strong>
+      <span class="admin-status s-green" title="{{ person.last_seen_at|date:'j M Y, H:i' }}">seen {{ person.last_seen_at|timesince }} ago</span>
+    </div>
+    {% empty %}
+    <p class="admin-panel__empty">Nobody has been active in the last {{ presence.window_minutes }} minutes.</p>
+    {% endfor %}
+  </section>
+
+  <section class="admin-panel" aria-labelledby="admin-ops-logins-title" data-admin-logins>
+    <header class="admin-panel__header">
+      <h2 id="admin-ops-logins-title">Sign-ins</h2>
+      <span class="edify-text-caption">{{ presence.logins_today }} today · {{ presence.logins_this_week }} this week · {{ presence.logins_last_7_days }} in 7 days</span>
+    </header>
+    {% for day in presence.daily reversed %}
+    <div class="admin-target-row">
+      <span>{{ day.date|date:"D j M" }}</span>
+      <strong>{{ day.count }}</strong>
+      <span class="admin-presence-bar" aria-hidden="true"><i style="--w: {% widthratio day.count presence.peak_day|default:1 100 %}%"></i></span>
+    </div>
+    {% endfor %}
+    <div class="admin-target-row admin-target-row--head"><span>Week of</span><strong>Sign-ins</strong><span></span></div>
+    {% for week in presence.weekly reversed %}
+    <div class="admin-target-row">
+      <span>{{ week.week_start|date:"j M" }}</span>
+      <strong>{{ week.count }}</strong>
+      <span></span>
+    </div>
+    {% endfor %}
+  </section>
+  {% endwith %}
 </div>

@@ -521,24 +521,33 @@ class SlidingSessionMiddleware:
 
     def __call__(self, request: HttpRequest) -> HttpResponse:
         response = self.get_response(request)
-        self._slide(getattr(request, "session", None))
+        if self._slide(getattr(request, "session", None)):
+            # The same once-a-minute beat marks the person as seen, so the
+            # Admin's "who is online" costs one indexed UPDATE per active
+            # user per minute and never a write per request.
+            user = getattr(request, "user", None)
+            if user is not None and getattr(user, "is_authenticated", False):
+                from apps.accounts.presence import touch_presence
+
+                touch_presence(user)
         return response
 
-    def _slide(self, session) -> None:
+    def _slide(self, session) -> bool:
         # An empty session has nothing to keep alive, and creating one here
         # would hand a session cookie to every anonymous visitor.
         if session is None or session.is_empty():
-            return
+            return False
 
         now = time.time()
         touched = session.get(self.TOUCHED_AT)
         if isinstance(touched, (int, float)) and now - touched < self.refresh_interval:
-            return
+            return False
 
         # Assigning is the whole mechanism: it sets session.modified, and
         # SessionMiddleware then saves the row with a fresh expiry and re-sends
         # the cookie with a fresh max-age.
         session[self.TOUCHED_AT] = int(now)
+        return True
 
 
 class StreamSafeGZipMiddleware(GZipMiddleware):

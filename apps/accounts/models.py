@@ -25,6 +25,8 @@ from django.db import models
 
 from django.core.files.storage import storages
 
+from django.utils import timezone
+
 from apps.core.models import CuidField, SoftDeleteModel, TimeStampedModel
 from apps.core.rbac import EdifyRole
 
@@ -127,6 +129,10 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     )
     password_set_at = models.DateTimeField(null=True, blank=True)
     last_login_at = models.DateTimeField(null=True, blank=True)
+    # Written by SlidingSessionMiddleware at most once a minute while the
+    # person is working, so "who is online" is a WHERE on this column rather
+    # than a scan of the session store (owner, 2026-09-12).
+    last_seen_at = models.DateTimeField(null=True, blank=True, db_index=True)
     # Set True when an admin creates/resets the password. The user must change it on next login.
     must_change_password = models.BooleanField(default=False)
     # Brute-force protection — apps.accounts.lockout_service
@@ -939,3 +945,22 @@ __all__ = [
     "StaffSetupCandidateStatus",
     "StaffSetupCandidate",
 ]
+
+
+class LoginEvent(models.Model):
+    """One row per successful sign-in (owner, 2026-09-12: "the number of
+    logins per day, per week"). Append-only; the role is the one the session
+    opened with, so a switch-role later does not rewrite history."""
+
+    id = CuidField()
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_events")
+    at = models.DateTimeField(default=timezone.now, db_index=True)
+    role = models.CharField(max_length=64, blank=True, default="")
+    ip = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.CharField(max_length=256, blank=True, default="")
+
+    class Meta:
+        db_table = "login_event"
+        ordering = ["-at"]
+        indexes = [models.Index(fields=["user", "at"], name="login_event_user_at")]
+

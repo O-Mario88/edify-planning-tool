@@ -15,6 +15,7 @@ from datetime import date, timedelta
 from django.conf import settings
 from django.db import IntegrityError, transaction
 from django.db.models import Count, Q
+from apps.accounts.presence import presence_summary
 from django.utils import timezone
 
 from apps.audit.services import log as audit_log
@@ -851,4 +852,5 @@ class AdminOpsDashboardService:
                 )[:5]
             ),
             "recent_incidents": list(open_incidents.order_by("-last_detected_at")[:5]),
+            "presence": presence_summary(),
         }

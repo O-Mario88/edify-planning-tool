@@ -1,5 +1,6 @@
 from django.conf import settings
 from django.shortcuts import render, redirect
+from apps.accounts.presence import record_login
 from django.contrib.auth import (
     authenticate,
     login as django_login,
@@ -280,6 +281,7 @@ def login_view(request):
             return _remember(redirect("/login/verify"), email if remember_me else None)
 
         django_login(request, user)
+        record_login(request, user)
 
         # No set_expiry() here on purpose. The session now expires after
         # SESSION_COOKIE_AGE of inactivity, and SlidingSessionMiddleware slides
@@ -525,6 +527,7 @@ def mfa_verify_view(request):
     # django_login cycles the session key again, so the identifier the waiting
     # room was held under is not the one the signed-in session uses.
     django_login(request, user)
+    record_login(request, user)
 
     if user.must_change_password:
         return _remember(
