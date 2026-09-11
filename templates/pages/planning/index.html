@@ -143,9 +143,22 @@ starts from (2026-09-06 filter audit).{% endcomment %}
 <span class="text-slate-400">Staff</span>
 <select aria-label="Staff" name="staff" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[135px]">
 <option value="All">All Staff</option>
-{% for s in staff_members %}
-<option value="{{ s.user.user_id }}" {% if selected_staff == s.user.user_id %}selected{% endif %}>{{ s.user.name }}</option>
+{% for g in owner_groups %}
+<optgroup label="{{ g.label }}">
+{% for o in g.owners %}
+<option value="{{ o.id }}" {% if selected_staff == o.id %}selected{% endif %}>{{ o.name }}</option>
 {% endfor %}
+</optgroup>
+{% endfor %}
+</select>
+</div>
+
+<!-- Order: by owner (Program Lead, then CCEO) or by name -->
+<div class="flex items-center gap-1 edify-surface px-2.5 py-1.5 rounded-surface border border-slate-200 shadow-sm">
+<span class="text-slate-400">Group</span>
+<select aria-label="Group schools" name="group" class="bg-transparent focus:outline-none cursor-pointer min-w-0 lg:w-[120px]">
+<option value="owner" {% if selected_group == "owner" %}selected{% endif %}>By PL &amp; CCEO</option>
+<option value="name" {% if selected_group != "owner" %}selected{% endif %}>By name</option>
 </select>
 </div>
 

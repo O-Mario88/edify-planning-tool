@@ -1,5 +1,6 @@
 from apps.core.metrics import PresentationKpi, render_precomputed_metric_item
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
+from apps.planning.owner_groups import group_label as _group_label
 from django.db.models import Count, Q
 from apps.core.fy import get_operational_fy
 from apps.core.enums import ActivityStatus, SsaIntervention
@@ -192,7 +193,14 @@ class PlanningDashboardService:
         if sub_county_id and sub_county_id != "All":
             schools_qs = schools_qs.filter(sub_county_id=sub_county_id)
         if staff_id and staff_id != "All":
-            schools_qs = schools_qs.filter(account_owner_id=staff_id)
+            # The owner column holds a StaffProfile id or, on some imported
+            # rows, that profile's user id; a filter has to accept both or it
+            # silently matches nothing for half the directory.
+            from apps.planning.owner_groups import owner_id_variants
+
+            schools_qs = schools_qs.filter(
+                account_owner_id__in=owner_id_variants(staff_id)
+            )
         if school_type and school_type != "All":
             schools_qs = schools_qs.filter(school_type=school_type)
         if readiness and readiness != "All":
@@ -432,10 +440,27 @@ class PlanningDashboardService:
             total_schools_count = table_schools_qs.count()
             start_idx = (page - 1) * per_page
             end_idx = start_idx + per_page
+            # Grouped by the people responsible (Program Lead, then CCEO) when
+            # asked — the reading order of a country role; by name otherwise.
+            group_by_owner = filters.get("group") == "owner"
+            owner_group_directory: dict = {}
+            owner_group_counts: dict = {}
+            if group_by_owner:
+                from django.db.models import Count as _Count
+
+                from apps.planning.owner_groups import owner_order
+
+                ordered_qs, owner_group_directory = owner_order(table_schools_qs)
+                owner_group_counts = {
+                    (row["account_owner_id"] or ""): row["n"]
+                    for row in table_schools_qs.values("account_owner_id").annotate(
+                        n=_Count("id")
+                    )
+                }
+            else:
+                ordered_qs = table_schools_qs.order_by("name")
             paginated_schools = list(
-                table_schools_qs.select_related("district", "sub_county").order_by(
-                    "name"
-                )[start_idx:end_idx]
+                ordered_qs.select_related("district", "sub_county")[start_idx:end_idx]
             )
 
             # Retrieve latest confirmed SSA records
@@ -637,6 +662,12 @@ class PlanningDashboardService:
                         "ownerName": staff_names_by_owner_id.get(s.account_owner_id)
                         or s.account_owner_name_raw
                         or "Unassigned",
+                        # Group headers, drawn where the owner changes.
+                        "groupKey": s.account_owner_id or "",
+                        "groupLabel": _group_label(
+                            owner_group_directory.get(s.account_owner_id or "")
+                        ),
+                        "groupCount": owner_group_counts.get(s.account_owner_id or "", 0),
                         "schoolContact": s.primary_contact_name or "—",
                         "phone": s.primary_contact_phone
                         or s.school_phone

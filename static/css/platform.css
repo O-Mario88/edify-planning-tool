@@ -2641,6 +2641,32 @@ main [data-mobile-family="directory"] .school-filter-clear {
   list-style: none;
 }
 
+/* A group header where the responsible person changes: the Program Lead,
+   then the CCEO, then that officer's schools (owner, 2026-09-11). */
+.planning-owner-group {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: .5rem .875rem .35rem;
+  border-block-end: 1px solid var(--edify-border, #e2e8f0);
+  background: color-mix(in srgb, var(--edify-accent, #2563eb) 6%, transparent);
+  list-style: none;
+}
+.planning-owner-group__label {
+  font-size: var(--edify-text-caption-size, .75rem);
+  font-weight: 700;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  color: var(--edify-text-muted, #475569);
+}
+.planning-owner-group__count {
+  font-size: var(--edify-text-caption-size, .75rem);
+  font-weight: 600;
+  color: var(--edify-text-subtle, #94a3b8);
+  font-variant-numeric: tabular-nums;
+}
+
 .planning-school-row {
   border-block-end: 1px solid var(--edify-border);
   background: color-mix(in oklab, var(--edify-surface) 97%, transparent);

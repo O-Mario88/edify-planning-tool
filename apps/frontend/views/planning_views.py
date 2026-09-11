@@ -565,6 +565,16 @@ def planning_dashboard_view(request):
         "page": request.GET.get("page", 1),
         "per_page": request.GET.get("per_page", 15),
     }
+    # Grouped by Program Lead and CCEO for a country role — IA, the CD — who
+    # reads the whole portfolio (owner, 2026-09-11); by name for someone whose
+    # portfolio IS their list. Absent means the default; an explicit value,
+    # either way, is the reader's choice and travels with every filter.
+    _group = request.GET.get("group")
+    if _group is None:
+        from apps.core.scoping import resolve_user_scope as _rus
+
+        _group = "owner" if _rus(request.user).country_scope else "name"
+    filters["group"] = "owner" if _group == "owner" else "name"
 
     # CSV export of the currently filtered list (same pattern as /clusters).
     if request.GET.get("export", "").strip() == "csv":
@@ -650,6 +660,11 @@ def planning_dashboard_view(request):
         .select_related("user")
         .order_by("user__name")
     )
+    # The Staff filter offers the people who HOLD schools in scope, grouped
+    # under their Program Lead — the same shape as the grouped list.
+    from apps.planning.owner_groups import owner_filter_groups
+
+    owner_groups = owner_filter_groups(_planning_schools)
     partners = assignable_partners()
 
     # Pagination pages list
@@ -725,6 +740,9 @@ def planning_dashboard_view(request):
         "districts": districts,
         "sub_counties": sub_counties,
         "staff_members": staff_members,
+        "owner_groups": owner_groups,
+        "selected_group": filters["group"],
+        "group_by_owner": filters["group"] == "owner",
         "partners": partners,
         "fy_options": fy_options(),
         "quarter_options": ["Q1", "Q2", "Q3", "Q4"],
