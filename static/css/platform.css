@@ -2654,14 +2654,14 @@ main [data-mobile-family="directory"] .school-filter-clear {
   list-style: none;
 }
 .planning-owner-group__label {
-  font-size: var(--edify-text-caption-size, .75rem);
+  font-size: var(--edify-text-micro-size);
   font-weight: 700;
   letter-spacing: .02em;
   text-transform: uppercase;
   color: var(--edify-text-muted, #475569);
 }
 .planning-owner-group__count {
-  font-size: var(--edify-text-caption-size, .75rem);
+  font-size: var(--edify-text-micro-size);
   font-weight: 600;
   color: var(--edify-text-subtle, #94a3b8);
   font-variant-numeric: tabular-nums;

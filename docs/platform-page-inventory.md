@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **603**
-- All registered routes: **1070**
+- Routed product surfaces: **604**
+- All registered routes: **1071**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
@@ -14,8 +14,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Shared component templates: **406**
 - Full pages: **236**
 - Partials and drawers: **179**
-- Permission-gated surfaces: **589**
-- Referenced by automated tests: **560**
+- Permission-gated surfaces: **590**
+- Referenced by automated tests: **561**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -164,6 +164,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster details | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FA80612906 | /clusters/<str:cluster_id>/bulk-assign-drawer | Cluster Bulk Assign Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-C171311DFC | /clusters/<str:cluster_id>/delete | Delete Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-67CB08D75B | /clusters/<str:cluster_id>/edit | Edit Cluster | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-2F0996F451 | /clusters/<str:cluster_id>/edit-drawer | Edit Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DFAF9F746E | /clusters/cost-preview | Cluster Cost Preview | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

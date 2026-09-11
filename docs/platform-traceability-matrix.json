@@ -59,6 +59,7 @@
         "apps/core/cuid.py",
         "apps/core/enums.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
@@ -3196,6 +3197,7 @@
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
         "apps/core/fy.py",
+        "apps/core/metrics/payload.py",
         "apps/core/middleware.py",
         "apps/core/models.py",
         "apps/core/navigation.py",
@@ -3203,6 +3205,7 @@
         "apps/core/request_cache.py",
         "apps/core/request_context.py",
         "apps/core/session_backend.py",
+        "apps/core/templatetags/kpi_metrics.py",
         "apps/documents/gate.py",
         "apps/frontend/templatetags/frontend_filters.py",
         "apps/frontend/views/hr_views.py",
@@ -3329,8 +3332,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "b8af5ac7d35e77c3641730ea590afc0270237da8332d76d57dbfc67fe8f6bc50",
-    "sources": "c994b459ca600dfc5a448d627b4a3260fa1f4ca06cd3efaceb3cc4e77bcef69a",
+    "payload": "d7b3596e56e2690057d555855f3625a255a6e1c7baba319d0fb3d7faa8e69e8b",
+    "sources": "6f4a3c4de0a7267bc4f5c2e956939c98b415c484e33732d14b3350869543da91",
     "sourceCount": 183,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

@@ -563,12 +563,29 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         self.assertEqual(rows["PL Bola"]["cceos"], 1)
         self.assertNotEqual(rows["PL Ada"]["backlog"], rows["PL Bola"].get("_x", None))
 
-    def test_legacy_agreements_do_not_invent_approved_drilldown_targets(self):
+    def test_pl_drilldown_reports_agreed_areas_and_never_the_catalogue(self):
+        """Approved allocations define a person's areas when they exist; until
+        they do, the SIGNED agreement does (CONFLICT-001) — and the catalogue
+        never invents a row nobody agreed. Written in a8474571 as "legacy
+        agreements do not invent approved drilldown targets", asserting an
+        empty list; that contradicted the command-center contract
+        (test_program_lead_rows_include_all_supervised_cceo_target_areas) on
+        the same fixture, and the drill-down would have gone blank for every
+        country until the RVP approves allocations. The row is labelled by
+        its agreement, so nothing reads as an approved contract."""
+
         detail = S.drilldown(self.cd, "pl", {"id": str(self.pl_a.id)}, fy=FY)
         self.assertEqual(detail["kind"], "pl")
         self.assertEqual(len(detail["cceos"]), 1)
         self.assertEqual(detail["cceos"][0]["name"], "CCEO A1")
-        self.assertEqual(detail["cceos"][0]["areas"], [])
+        keys = [area["key"] for area in detail["cceos"][0]["areas"]]
+        self.assertEqual(keys, ["school_visits", "cluster_trainings"])
+        self.assertNotIn(
+            "mscs",
+            keys,
+            "an area nobody agreed appeared in the drill-down -- the catalogue "
+            "is inventing rows again",
+        )
 
     def test_cceo_snapshot_uses_fairness_context(self):
         d = self._dash()
@@ -707,9 +724,17 @@ class CDRefinedSpecTest(CDAnalyticsTest):
             200,
         )
 
-    def test_legacy_profile_targets_do_not_replace_approved_country_allocations(self):
-        """The country headline needs approved milestone targets, not a staff average."""
+    def test_the_country_headline_pools_agreements_until_allocations_are_approved(self):
+        """The headline prefers approved allocations; with none approved it
+        averages each person's own agreed result, exactly as the PL's page
+        does (a1: 60, b1: 100 -> 80), so the KPI strip and the PL rows keep
+        agreeing (CDTargetCreditConvergenceTest). Written in a8474571 to
+        expect None here, which would have blanked the country headline for
+        every deployment until the RVP approves allocations."""
+        from apps.targets.my_targets import TargetAchievementService
+
+        TargetAchievementService.rebuild(self.a1, FY)
+        TargetAchievementService.rebuild(self.b1, FY)
         cd = resolve_cd_scope(FY)
-        pct, achieved, target = S._weighted_overall(cd)
-        self.assertIsNone(pct)
-        self.assertEqual((achieved, target), (0, 0))
+        pct, _achieved, _target = S._weighted_overall(cd)
+        self.assertEqual(pct, 80)

@@ -9,12 +9,12 @@ from __future__ import annotations
 
 from unittest import mock
 
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, TestCase
 
 from apps.analytics.cd_analytics_service import CDAnalyticsService, CDScope
 
 
-class TargetPeriodTest(SimpleTestCase):
+class TargetPeriodTest(TestCase):
     def test_a_month_becomes_the_matching_fy_month(self):
         # The FY starts in October: November is FY month 2, September is 12.
         self.assertEqual(CDScope(fy="2026", month=11).target_period, [2])

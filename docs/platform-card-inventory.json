@@ -947,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 70,
+   "line": 108,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
@@ -956,7 +956,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 93,
+   "line": 131,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
@@ -965,7 +965,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 190,
+   "line": 228,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -974,7 +974,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 225,
+   "line": 263,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -983,7 +983,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 248,
+   "line": 286,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -1592,42 +1592,42 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 31,
+   "line": 44,
    "title": "Distributed priorities ()",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border overflow-hidden",
    "branch_path": [
     [
-     7,
+     9,
      0
     ]
    ]
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 57,
+   "line": 70,
    "title": "Core ValuesSpiritual Formation",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border overflow-hidden",
    "branch_path": [
     [
-     7,
+     9,
      1
     ]
    ]
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 62,
+   "line": 75,
    "title": "Professional Development",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border overflow-hidden",
    "branch_path": [
     [
-     7,
+     9,
      2
     ]
    ]
@@ -2524,7 +2524,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 266,
+   "line": 279,
    "title": "Schedule Recommended Activities",
    "heading_level": 4,
    "has_card_key": false,
@@ -2533,7 +2533,7 @@
   },
   {
    "template": "templates/pages/planning/index.html",
-   "line": 309,
+   "line": 322,
    "title": "Assign Partner",
    "heading_level": 4,
    "has_card_key": false,
@@ -6556,7 +6556,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 26,
+   "line": 10,
    "title": "No measurable performance priorities agreed for FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6570,7 +6570,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 68,
+   "line": 52,
    "title": "My Strategic Milestone Allocations",
    "heading_level": 2,
    "has_card_key": false,
@@ -6579,7 +6579,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 143,
+   "line": 127,
    "title": "Contribution to Roll-up",
    "heading_level": 2,
    "has_card_key": false,
@@ -6588,7 +6588,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 160,
+   "line": 144,
    "title": "Top Areas to Focus",
    "heading_level": 2,
    "has_card_key": false,
@@ -6597,7 +6597,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 189,
+   "line": 173,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,
@@ -6606,7 +6606,7 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 258,
+   "line": 242,
    "title": "Submit MSCS",
    "heading_level": 3,
    "has_card_key": false,
@@ -6719,7 +6719,7 @@
   },
   {
    "template": "templates/partials/targets/team/workspace.html",
-   "line": 73,
+   "line": 82,
    "title": "Supervised-Team Project Priorities",
    "heading_level": 2,
    "has_card_key": false,
@@ -6728,7 +6728,7 @@
   },
   {
    "template": "templates/partials/targets/team/workspace.html",
-   "line": 115,
+   "line": 124,
    "title": "Supervised-Team Milestone Allocations",
    "heading_level": 2,
    "has_card_key": false,

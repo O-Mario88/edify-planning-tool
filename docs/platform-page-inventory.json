@@ -156,7 +156,7 @@
         "/admin-ops/support",
         "/admin-ops/team-plans",
         "/admin-panel/data-quality-center",
-        "/analytics/visit-effectiveness"
+        "/analytics/country-director"
       ],
       "findings": [],
       "forms": 0,
@@ -707,7 +707,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 70928,
+      "bytes": 72567,
       "deprecated_alternatives": [],
       "example_pages": [
         "/dashboard",
@@ -776,7 +776,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 5015,
+      "bytes": 5112,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/country-director"
@@ -793,7 +793,9 @@
       ],
       "tables": 0,
       "template": "partials/analytics/cd/body.html",
-      "variants": []
+      "variants": [
+        "executive"
+      ]
     },
     {
       "accessibility_requirements": [
@@ -1892,7 +1894,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 4505,
+      "bytes": 4632,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/program-lead"
@@ -1909,7 +1911,9 @@
       ],
       "tables": 0,
       "template": "partials/analytics/pl/body.html",
-      "variants": []
+      "variants": [
+        "executive"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -7980,7 +7984,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 14777,
+      "bytes": 15731,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9411,14 +9415,14 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 21308,
+      "bytes": 19892,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 1,
+      "htmx_controls": 0,
       "kind": "application-partial",
       "name": "My Body",
       "purpose": "Reusable my body interface primitive",
@@ -9430,6 +9434,7 @@
       "tables": 2,
       "template": "partials/targets/my_body.html",
       "variants": [
+        "executive",
         "{{ row.classification.tone }}"
       ]
     },
@@ -9682,7 +9687,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 11074,
+      "bytes": 11460,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -9830,7 +9835,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 9805,
+      "bytes": 9833,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan/add"
@@ -19215,7 +19220,7 @@
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -19948,7 +19953,7 @@
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -22358,7 +22363,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.4,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.cluster_detail_view",
       "card_count": 0,
@@ -22372,11 +22377,12 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /clusters/{{ cluster.id }}/edit-drawer",
         "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
+        "POST /clusters/{{ cluster.id }}/delete",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -22406,7 +22412,9 @@
       "route": "/clusters/<str:cluster_id>",
       "route_name": "cluster_detail",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        "/clusters/{{ cluster.id }}/delete"
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.clusters.models",
@@ -22420,9 +22428,9 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": false,
-        "error": false,
+        "error": true,
         "loading": false
       },
       "surface_kind": "page",
@@ -22540,6 +22548,90 @@
         "text-[12px]",
         "text-[14px]"
       ]
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.cluster_views",
+      "backend_view": "apps.frontend.views.cluster_views.delete_cluster_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:planning"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C171311DFC",
+      "page_title": "Delete Cluster",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "planning",
+      "primary_action": "Delete Cluster",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Delete a cluster from its profile (owner, 2026-09-11).",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "CCEO",
+        "CD",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR"
+      ],
+      "route": "/clusters/<str:cluster_id>/delete",
+      "route_name": "delete_cluster",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.clusters.models",
+        "apps.clusters.services",
+        "apps.core.scoping",
+        "apps.geography.models",
+        "apps.partners.models",
+        "apps.schools.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "not-applicable-nonvisual",
@@ -44035,7 +44127,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -44122,7 +44214,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -44209,7 +44301,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -44296,7 +44388,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": false,
@@ -46539,11 +46631,10 @@
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
-        "GET /my-targets/area-drawer?area={{ a.key }}&fy={{ fy }}&month={{ month_of_fy }}",
         "GET /my-targets"
       ],
       "implementation_status": "existing-routed-surface",
-      "kpi_count": "0",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
       "mobile_status": "pass-automated-contract",
       "modals": true,
@@ -52715,10 +52806,10 @@
       "htmx_endpoints": [
         "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=training{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}",
         "GET /planning/schedule-modal?cluster_id={{ c.id }}&action=meeting{% if priority_allocation_id %}&priority_allocation={{ priority_allocation_id }}{% endif %}",
-        "GET /planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
-        "GET /planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
-        "GET /planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
-        "GET /planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}",
+        "GET /planning?page={{ page|add:-1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
+        "GET /planning?page={{ p }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
+        "GET /planning?page={{ page|add:1 }}&per_page={{ per_page }}&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
+        "GET /planning?page=1&fy={{ selected_fy }}&quarter={{ selected_quarter }}&district={{ selected_district }}&sub_county={{ selected_sub_county }}&staff={{ selected_staff }}&school_type={{ selected_school_type }}&planning_readiness={{ selected_readiness }}&ssa_status={{ selected_ssa_status }}&cluster_status={{ selected_cluster_status }}&partner={{ selected_partner }}&q={{ search_q }}&tab={{ active_tab }}&group={{ selected_group }}",
         "GET /work-plan/add",
         "GET /planning",
         "POST /planning/bulk-action"
@@ -54272,7 +54363,7 @@
       "drawers": false,
       "evidence": [
         "test:referenced-by-automated-test",
-        "permission:my_performance"
+        "permission:priorities_master"
       ],
       "filters": "none",
       "findings": [],
@@ -54291,14 +54382,13 @@
       "page_title": "Priorities",
       "page_type": "interaction-fragment",
       "per_page_css": [],
-      "permission_key": "my_performance",
+      "permission_key": "priorities_master",
       "primary_action": "Priorities Master",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "Operate priorities within the frontend workflow.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "manual-review-required",
       "role_access": [
-        "ACCOUNTANT",
         "ADMIN",
         "CCEO",
         "CD",
@@ -75166,6 +75256,18 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.cluster_views.delete_cluster_view",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "planning",
+      "required_permissions": [],
+      "route": "/clusters/<str:cluster_id>/delete",
+      "route_name": "delete_cluster",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.cluster_views.edit_cluster_view",
       "kind": "action",
       "methods": [
@@ -80046,7 +80148,7 @@
       "methods": [
         "GET"
       ],
-      "page_permission": "my_performance",
+      "page_permission": "priorities_master",
       "required_permissions": [],
       "route": "/priorities",
       "route_name": "priorities_master",
@@ -81744,28 +81846,28 @@
   "summary": {
     "accessibility_contract_pass": 418,
     "activity_states": 24,
-    "all_routes": 1070,
+    "all_routes": 1071,
     "api_routes": 359,
     "component_templates": 406,
     "full_pages": 236,
     "mobile_contract_pass": 418,
-    "nonvisual_actions": 164,
+    "nonvisual_actions": 165,
     "page_types": {
       "administration-or-configuration": 24,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 343,
+      "interaction-fragment": 344,
       "operational-queue": 136,
       "planning-or-creation": 9,
       "record-detail": 24,
       "report": 28
     },
     "partials_and_drawers": 179,
-    "permission_gated": 589,
+    "permission_gated": 590,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 603,
+    "routed_surfaces": 604,
     "scheduled_jobs": 26,
     "severity_counts": {
       "critical": 0,
@@ -81774,7 +81876,7 @@
       "medium": 0
     },
     "tablet_contract_pass": 418,
-    "test_referenced": 560,
+    "test_referenced": 561,
     "theme_contract_pass": 418
   }
 }

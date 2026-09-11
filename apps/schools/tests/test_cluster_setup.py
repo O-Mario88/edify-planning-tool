@@ -606,14 +606,13 @@ class ClusterSetupTest(APITestCase):
 
     # ── Regressions: inline cluster-creation bypass (§4) ────────────────────────
 
-    def test_add_to_cluster_drawer_blocks_overlapping_new_cluster(self):
-        """The Add-to-Cluster drawer's inline "create new cluster" branch
-        must go through the real create_cluster() service and be rejected
-        when it overlaps an existing active cluster's sub-county. A CCEO
-        holds CLUSTER_ASSIGN but not CLUSTER_OVERRIDE, so this must be
-        blocked the same way the dedicated Create-Cluster flow blocks it —
-        previously it built the Cluster directly via the ORM with no
-        overlap check at all."""
+    def test_add_to_cluster_drawer_creates_a_cluster_on_shared_ground(self):
+        """The Add-to-Cluster drawer's inline "create new cluster" branch goes
+        through the real create_cluster() service. Until 2026-09-11 that
+        service refused a sub-county another active cluster already covered;
+        81bd28f9 lifted the one-cluster-per-sub-county rule, so the same
+        request now succeeds — through the service, with the school placed
+        in the cluster it just made — rather than being built around it."""
         from django.urls import reverse
 
         self.client.force_login(self.user)
@@ -659,14 +658,10 @@ class ClusterSetupTest(APITestCase):
             format="multipart",
         )
         self.assertEqual(response.status_code, 200)
-        self.assertIn("validation_error", response.context)
-        self.assertIn(
-            "already covers", (response.context["validation_error"] or "").lower()
-        )
+        self.assertIn("School added to cluster successfully.", response.content.decode())
 
-        # No new cluster was created bypassing the uniqueness rule, and the
-        # school was never assigned to anything.
-        self.assertEqual(Cluster.objects.count(), clusters_before)
-        self.assertFalse(Cluster.objects.filter(name="Overlapping Cluster").exists())
+        created = Cluster.objects.filter(name="Overlapping Cluster").first()
+        self.assertIsNotNone(created)
+        self.assertEqual(Cluster.objects.count(), clusters_before + 1)
         school.refresh_from_db()
-        self.assertIsNone(school.cluster_id)
+        self.assertEqual(school.cluster_id, created.id)

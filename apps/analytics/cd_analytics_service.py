@@ -65,6 +65,11 @@ class CDScope:
     filters: dict = field(default_factory=dict)
     # The country this scope is bounded to; "" is the whole deployment.
     country: str = ""
+    # Set once per page by pl_oversight: True when no approved allocation
+    # exists for this roster, so the per-lead contract lookups — each its own
+    # queries, so a cost that grew with the number of Program Leads — are
+    # skipped and the agreements pool as they did before allocations existed.
+    contract_empty: bool | None = None
 
     @property
     def target_period(self):
@@ -78,7 +83,18 @@ class CDScope:
         with the month selector.
         """
         if self.month:
-            return [int(self.month)]
+            # The selector sends a calendar month; `reporting_period` and the
+            # target ledger count months of the financial year (1 = October).
+            # Passing 11 through unconverted measured August for a November
+            # selection (regression in a8474571).
+            from datetime import date
+
+            from apps.core.fy import get_fy_date_range
+            from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
+
+            start = get_fy_date_range(self.fy)[0].date()
+            year = start.year if int(self.month) >= start.month else start.year + 1
+            return [TCal.month_of_fy_for(date(year, int(self.month), 1), self.fy)]
         return self.quarter
 
     school_ids: list = field(default_factory=list)  # all in-scope schools
@@ -834,6 +850,9 @@ class CDAnalyticsService:
             pct = None if narrowed else contract["pct"]
             return pct, 0, len(contract["rows"])
 
+        # Nothing approved for the period: the signed agreements pool, as they
+        # did before allocations existed (CONFLICT-001), so the headline and
+        # the PL rows beneath it keep agreeing.
         return CDAnalyticsService._weighted_achievement(
             cd.fy,
             cd.target_period,
@@ -1066,6 +1085,7 @@ class CDAnalyticsService:
         areas=None,
         per_user_series=None,
         principal=None,
+        contract_known_empty=False,
     ) -> tuple:
         """(weighted %, total validated achieved, total target) for the given
         user_id/staff_id sets, across the five official target areas.
@@ -1082,36 +1102,37 @@ class CDAnalyticsService:
         never disagree with what a PL sees on their own Team Targets page
         for the same people/period.
         """
-        from apps.hr.accountability import allocation_priorities
+        if not contract_known_empty:
+            from apps.hr.accountability import allocation_priorities
 
-        ids = list(
-            StaffProfile.objects.filter(
-                Q(id__in=staff_ids) | Q(user_id__in=user_ids)
-            ).values_list("id", flat=True)
-        )
-        month = (
-            quarter[0]
-            if isinstance(quarter, (list, tuple)) and len(quarter) == 1
-            else None
-        )
-        period = quarter if isinstance(quarter, str) else None
-        contract = allocation_priorities(
-            principal,
-            fy,
-            recipient_ids=ids if principal is None else None,
-            quarter=period,
-            month=month,
-            include_plans=False,
-        )
-        if contract.get("rows") and contract.get("pct") is not None:
-            units = {row["unit"] for row in contract["rows"]}
-            if len(units) == 1:
-                return (
-                    contract["pct"],
-                    sum(row["actual"] for row in contract["rows"]),
-                    sum(row["target"] for row in contract["rows"]),
-                )
-            return contract["pct"], contract["pct"], 100
+            ids = list(
+                StaffProfile.objects.filter(
+                    Q(id__in=staff_ids) | Q(user_id__in=user_ids)
+                ).values_list("id", flat=True)
+            )
+            month = (
+                quarter[0]
+                if isinstance(quarter, (list, tuple)) and len(quarter) == 1
+                else None
+            )
+            period = quarter if isinstance(quarter, str) else None
+            contract = allocation_priorities(
+                principal,
+                fy,
+                recipient_ids=ids if principal is None else None,
+                quarter=period,
+                month=month,
+                include_plans=False,
+            )
+            if contract.get("rows") and contract.get("pct") is not None:
+                units = {row["unit"] for row in contract["rows"]}
+                if len(units) == 1:
+                    return (
+                        contract["pct"],
+                        sum(row["actual"] for row in contract["rows"]),
+                        sum(row["target"] for row in contract["rows"]),
+                    )
+                return contract["pct"], contract["pct"], 100
 
         from apps.targets.fy_calendar import FinancialYearCalendarService as TCal
         from apps.targets.my_targets import (
@@ -1158,14 +1179,18 @@ class CDAnalyticsService:
         ids = StaffProfile.objects.filter(user_id__in=user_ids).values_list(
             "id", flat=True
         )
-        contract = allocation_priorities(
-            None,
-            cd.fy,
-            recipient_ids=list(ids),
-            quarter=None if cd.month else cd.quarter,
-            month=cd.month,
-            include_plans=False,
-        )
+        period = cd.target_period
+        if cd.contract_empty:
+            contract = {"rows": []}
+        else:
+            contract = allocation_priorities(
+                None,
+                cd.fy,
+                recipient_ids=list(ids),
+                quarter=period if isinstance(period, str) else None,
+                month=period[0] if isinstance(period, list) else None,
+                include_plans=False,
+            )
         if contract.get("rows"):
             return [
                 {
@@ -2037,6 +2062,12 @@ class CDAnalyticsService:
             for c in members
             if c.get("user_id")
         }
+        # The lead is on their own team's roster below (`[pl.id, *cceos]`), so
+        # warm the leads too — otherwise each one is fetched, attached and
+        # has their agreed areas resolved inside the loop, four queries per
+        # Program Lead (a8474571 added the lead to the roster; this did not
+        # follow).
+        all_user_ids |= {pl.id for pl in pls}
         if all_user_ids:
             from apps.accounts.models import attach_staff_profile_ids
             from apps.targets.my_targets import priority_target_areas_for_users
@@ -2044,6 +2075,32 @@ class CDAnalyticsService:
             roster = CDAnalyticsService._users_by_id(all_user_ids)
             attach_staff_profile_ids(roster)
             priority_target_areas_for_users(roster, cd.fy)
+        # One roster-wide question before the per-lead loop: is ANY allocation
+        # approved for these people (or their teams) this year? When none is,
+        # every per-lead contract lookup below would return nothing after its
+        # own handful of queries — a cost that grew with the number of
+        # Program Leads (test_the_cost_does_not_grow_with_the_number_of_program_leads).
+        if cd.contract_empty is None:
+            from apps.hr.models import MilestoneAllocation
+
+            pl_staff = set(
+                StaffProfile.objects.filter(
+                    user_id__in=[pl.id for pl in pls], deleted_at__isnull=True
+                ).values_list("id", flat=True)
+            )
+            cd.contract_empty = not (
+                MilestoneAllocation.objects.filter(
+                    status="approved",
+                    milestone__priority__fy=cd.fy,
+                    milestone__active=True,
+                    milestone__definition_status="approved",
+                )
+                .filter(
+                    Q(allocated_to_type="employee", employee_id__in=all_staff | pl_staff)
+                    | Q(allocated_to_type="team", team_id__in=pl_staff)
+                )
+                .exists()
+            )
         for pl in CDAnalyticsService._pls():
             cceos = CDAnalyticsService._pl_cceos(pl, cd)
             all_school_ids = set()
@@ -2060,6 +2117,7 @@ class CDAnalyticsService:
                 principal=pl,
                 areas=cd.areas or None,
                 per_user_series=cd.per_user_series or None,
+                contract_known_empty=bool(cd.contract_empty),
             )
             area_rows = CDAnalyticsService._area_achievement_rows(
                 cd, [c["user_id"] for c in cceos if c["user_id"]]

@@ -15,7 +15,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 
 | Req | Title | Test | Routes | Services | Models written | Permissions | Roles | Notifications | Audit | Metrics moved |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| `journey-01` | Priority to verified performance | ✓ | 2 | 84 | 37 | 3 | 3 | 5 | 18 | 46 |
+| `journey-01` | Priority to verified performance | ✓ | 2 | 85 | 37 | 3 | 3 | 5 | 18 | 46 |
 | `journey-02` | SSA to school improvement | ✓ | 1 | 32 | 10 | 1 | 10 | 0 | 0 | 14 |
 | `journey-03` | Standard staff school visit | ✓ | 13 | 80 | 39 | 4 | 8 | 9 | 26 | 46 |
 | `journey-04` | Cluster training | ✓ | 1 | 38 | 15 | 0 | 0 | 0 | 1 | 41 |
@@ -36,7 +36,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-19` | Cross-role security | ✓ | 4 | 34 | 11 | 2 | 2 | 0 | 1 | 49 |
 | `journey-20` | Offline field activity | **not traced** | — | — | — | — | — | — | — | — |
 | `journey-21` | Integration outage | **not traced** | — | — | — | — | — | — | — | — |
-| `journey-22` | Financial-year rollover | ✓ | 1 | 39 | 17 | 0 | 0 | 1 | 3 | 49 |
+| `journey-22` | Financial-year rollover | ✓ | 1 | 41 | 17 | 0 | 0 | 1 | 3 | 49 |
 
 ## Each requirement in full
 
@@ -53,7 +53,7 @@ Steps: Publish priority → IA distributes to PL → PL distributes to self and 
 | Permissions checked | `fundRequest.approveEscalated`, `ia.verify`, `payment.act` |
 | Page gates checked | `my_target`, `performance_conversations` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py` _+74 more_ |
+| Services executed | `apps/accounts/auth_backend.py`, `apps/accounts/lockout_service.py`, `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/ia_services.py`, `apps/activities/models.py`, `apps/activities/salesforce.py`, `apps/activities/services.py`, `apps/activity_catalogue/services.py`, `apps/admin_ops/detection.py` _+75 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSchoolAssignment`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `activities.Activity`, `activities.ActivityCompletionVerification`, `activities.ActivitySalesforceReference`, `activities.IAVerification`, `activities.VerificationChecklist`, `activities.VerificationDecision`, `activities.VerificationHistory`, `audit.AuditLog` _+25 more_ |
 | Notifications raised | `activity_submitted_for_review`, `weekly_fund_request_approved`, `weekly_fund_request_disbursed`, `weekly_fund_request_ready`, `weekly_fund_request_submitted` |
 | Audit actions (evidence) | `activity.cost.calculated`, `activity.salesforce_id_entered`, `activity.scheduled`, `hr.priorities_agreed`, `hr.priorities_submitted`, `hr.review_cycle_opened`, `hr.strategic_priority_published`, `hr.targets_synced_from_agreement` _+10 more_ |
@@ -445,7 +445,7 @@ Steps: Close September → Lock history → Open October → Preserve multi-year
 | Permissions checked | — |
 | Page gates checked | `my_performance` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing_service.py`, `apps/budget/signals.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py` _+29 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/activities/models.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/budget/costing_service.py`, `apps/budget/signals.py`, `apps/business_transformation/signals.py`, `apps/clusters/eligibility.py`, `apps/core/audit_hash.py` _+31 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.User`, `activities.Activity`, `activities.ActivityScheduleCostLine`, `audit.AuditLog`, `fund_requests.AdvanceRequest`, `hr.FiscalYearRollover`, `hr.PerformanceCycle`, `hr.PerformancePriority`, `hr.PerformanceReview`, `hr.PerformanceSnapshot`, `hr.StrategicPriorityCycle` _+5 more_ |
 | Notifications raised | `fiscal_year_priority_setting` |
 | Audit actions (evidence) | `hr.fiscal_year_rolled_over`, `hr.performance_agreement_drafted`, `notification.fiscal_year_priority_setting` |

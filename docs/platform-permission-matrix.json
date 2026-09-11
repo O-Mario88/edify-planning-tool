@@ -7087,6 +7087,23 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/clusters/<str:cluster_id>/delete",
+   "route_name": "delete_cluster",
+   "view": "apps.frontend.views.cluster_views.delete_cluster_view"
+  },
+  {
+   "page_permission": "planning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "ImpactAssessment",
+    "Accountant",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/clusters/<str:cluster_id>/edit",
    "route_name": "edit_cluster",
    "view": "apps.frontend.views.cluster_views.edit_cluster_view"
@@ -12944,7 +12961,7 @@
    "view": "apps.documents.views.respond_comment_view"
   },
   {
-   "page_permission": "my_performance",
+   "page_permission": "priorities_master",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
@@ -12953,7 +12970,6 @@
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
-    "Accountant",
     "HumanResources",
     "ProjectCoordinator",
     "Admin"
@@ -14679,25 +14695,25 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 391,
-  "Admin": 786,
+  "Admin": 787,
   "BusinessTransformationOfficer": 219,
-  "CCEO": 494,
-  "CountryDirector": 626,
+  "CCEO": 495,
+  "CountryDirector": 627,
   "HumanResources": 270,
-  "ImpactAssessment": 507,
+  "ImpactAssessment": 508,
   "MfiLoanOfficer": 118,
   "MfiPartnerAdmin": 121,
   "PartnerAdmin": 205,
   "PartnerFieldOfficer": 205,
-  "Program Lead": 558,
-  "ProjectCoordinator": 413,
+  "Program Lead": 559,
+  "ProjectCoordinator": 414,
   "RegionalVicePresident": 312
  },
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 883,
-  "routes_total": 1070,
+  "routes_guarded": 884,
+  "routes_total": 1071,
   "routes_unguarded": 187,
   "surfaces_no_role_can_reach": 0
  },
