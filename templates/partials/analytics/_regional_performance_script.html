@@ -221,9 +221,23 @@ window.subregionMap = function (){
       // small in a letterbox. It now takes most of the window's height, up to
       // the width the canvas gives it, and the page scrolls to it like any
       // other card. Phones keep the square (the flex column below 1280px).
-      const canvasWidth = viewport.getBoundingClientRect().width || window.innerWidth;
+      // Owner, 2026-09-11 (second pass): "large enough to fill the whole
+      // screen, dynamic according to the screen size." The canvas takes the
+      // full viewport height less the fixed chrome above it — the top bar and
+      // the card's own header — so the country and its distribution table
+      // fill the screen once the card is scrolled into view, on every size.
+      // Nothing caps it at the canvas width any more: a wide screen simply
+      // centres the square inside a wider box.
+      const top = viewport.getBoundingClientRect().top;
+      const header = document.querySelector('.edify-topbar');
+      const topbar = header ? header.getBoundingClientRect().height : 56;
+      // The card header sits between the top bar and the viewport; measure it
+      // from the card itself so a taller header on a narrow desktop is honoured.
+      const card = viewport.closest('.analytics-geo-card') || viewport.parentElement;
+      const cardTop = card ? card.getBoundingClientRect().top : top;
+      const cardChrome = Math.max(0, top - cardTop);
       const height = Math.round(
-        Math.max(520, Math.min(canvasWidth * 0.92, window.innerHeight - 140))
+        Math.max(520, window.innerHeight - topbar - cardChrome - 24)
       );
       this.$el.style.setProperty('--map-viewport-height', height + 'px');
       this.refreshMapLabelPlacement();

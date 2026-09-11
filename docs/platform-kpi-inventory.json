@@ -28177,7 +28177,7 @@
   {
    "audit_id": "KPI-PAYLOAD-003",
    "module": "apps/clusters/services.py",
-   "line": 1674,
+   "line": 1671,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,

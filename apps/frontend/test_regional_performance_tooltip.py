@@ -484,3 +484,28 @@ class RegionalPerformanceTooltipTest(SimpleTestCase):
         self.assertIn("metric.boundary_code", template)
         self.assertNotIn("pointInPolygon", template)
         self.assertNotIn("containsPoint", template)
+
+
+class MapFillsTheScreenTest(SimpleTestCase):
+    """Owner, 2026-09-11: "make sure the map canvas is large enough to fill the
+    whole screen. It should be dynamic according to the screen size, but it
+    should be large."
+
+    The viewport's height is the window's height less the chrome that sits
+    above the canvas — the top bar and the card's own header — measured, not
+    assumed, and never capped by the canvas width (a wide screen centres the
+    square in a wider box). The floor keeps a short window from squashing it.
+    """
+
+    def test_the_viewport_takes_the_window_less_the_chrome_above_it(self):
+        template = _regional_source()
+        self.assertIn("document.querySelector('.edify-topbar')", template)
+        self.assertIn("const cardChrome = Math.max(0, top - cardTop);", template)
+        self.assertIn(
+            "Math.max(520, window.innerHeight - topbar - cardChrome - 24)", template
+        )
+        # The old caps: what was left below the card, and the canvas width.
+        self.assertNotIn("window.innerHeight - top - 24", template)
+        self.assertNotIn("canvasWidth * 0.92", template)
+        self.assertIn("@resize.window.debounce.100ms=\"fitViewport()\"", template)
+
