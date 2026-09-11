@@ -110,24 +110,23 @@ class ClusteringBoundaryTest(TestCase):
         self.assertIsNone(covered.get(str(self.free_sc.id)))
 
     def test_the_drawer_and_the_validator_agree(self):
-        """The drawer disables what create_cluster would refuse. If these ever
-        diverge the UI starts offering choices the service rejects, which is
-        the bug this pair of assertions exists to prevent."""
+        """Sub-county restriction is lifted: multiple clusters can exist in a sub-county.
+        Creating a second cluster in an occupied sub-county succeeds."""
         from apps.clusters.services import create_cluster
 
         covered = covered_sub_counties()
         self.assertIn(str(self.taken_sc.id), covered)
 
-        with self.assertRaises(BadRequest):
-            create_cluster(
-                {
-                    "name": "Second Cluster",
-                    "regionId": self.region.id,
-                    "districtId": self.district.id,
-                    "subCountyIds": [self.taken_sc.id],
-                },
-                self.admin,
-            )
+        result = create_cluster(
+            {
+                "name": "Second Cluster",
+                "regionId": self.region.id,
+                "districtId": self.district.id,
+                "subCountyIds": [self.taken_sc.id],
+            },
+            self.admin,
+        )
+        self.assertEqual(result["name"], "Second Cluster")
 
     def test_a_free_sub_county_is_still_clusterable(self):
         """The rule must block the taken ones without blocking the rest."""

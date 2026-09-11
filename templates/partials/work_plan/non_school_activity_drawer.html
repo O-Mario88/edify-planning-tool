@@ -23,17 +23,41 @@ stays but only appears for the few items that require one.{% endcomment %}
   {% csrf_token %}
   <div id="non-school-errors"></div>
 
+  {% comment %}
+    Every control below that previews its own cost states
+    `hx-disabled-elt="this"`, and must keep stating it.
+
+    htmx INHERITS hx-disabled-elt, and this form's value is
+    `find button[type=submit]` — correct for the form's own submit, fatal for a
+    child. `find` searches inside the REQUESTING element, so a <select> or
+    <input> inherits it, resolves nothing, and htmx dereferences null:
+    "Cannot read properties of null (reading 'htmx-internal-data')". The
+    exception is thrown before the request is sent, so the cost preview never
+    fired at all — the panel sat on "Enter dates and participants to preview
+    the catalogue cost" no matter what was entered, and the planner scheduled
+    non-school work without ever seeing what the CD catalogue would charge for
+    it. Overriding the inherited value per control is what makes the preview
+    reachable.
+  {% endcomment %}
   <label class="block">Activity
     <select name="catalogue_item_id" required
             class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2"
             @change="selected = { ...$event.target.options[$event.target.selectedIndex].dataset }"
-            hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change">
+            hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change">
       <option value="">Choose an approved activity…</option>
       {% regroup items by programme_category as categories %}
       {% for category in categories %}
       <optgroup label="{{ category.grouper|default:'Programme' }}">
         {% for item in category.list %}
+        {% comment %}
+          `data-field-event` decides whether the reach questions below are
+          asked. Only a genuine field event (district meeting, boot camp,
+          conference, workshop) is exempt from them — see
+          apps/activities/services.py, which zeroes the school count for
+          `field_event` and requires 1–10,000 for every other programme type.
+        {% endcomment %}
         <option value="{{ item.stable_code }}"
+                data-field-event="{% if item.programme_metadata.programme_activity_type == 'field_event' %}true{% else %}false{% endif %}"
                 data-requires-intervention="{{ item.programme_metadata.requires_intervention|yesno:'true,false' }}"
                 data-training-course="{{ item.programme_metadata.is_training_course|yesno:'true,false' }}"
                 data-training-category="{{ item.programme_metadata.training_category }}"
@@ -63,12 +87,12 @@ stays but only appears for the few items that require one.{% endcomment %}
     <label class="block">Start date
       <input type="date" name="scheduled_date" required
              {% if date_prefill %}value="{{ date_prefill }}"{% endif %}
-             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change"
+             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
              class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
     </label>
     <label class="block">End date <span class="font-medium text-slate-400">(only for multi-day events)</span>
       <input type="date" name="end_date"
-             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change"
+             hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
              class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
     </label>
   </div>
@@ -76,7 +100,7 @@ stays but only appears for the few items that require one.{% endcomment %}
   <div class="grid gap-3 sm:grid-cols-2">
     <label class="block">District
       <select name="district_id"
-              hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change"
+              hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change"
               class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
         <option value="">My own district</option>
         {% for district in districts %}
@@ -90,9 +114,39 @@ stays but only appears for the few items that require one.{% endcomment %}
     </label>
   </div>
 
-  <label class="block">Participants <span class="font-medium text-slate-400">(only when the activity feeds or hosts people)</span>
+  {% comment %}
+    Reach, asked only of the activities that have it.
+
+    The 2026-08-19 simplification removed the school count from this drawer and
+    defaulted it to 0 server-side. That is right for a field event and wrong
+    for everything else: the create funnel accepts 0 schools ONLY when the
+    programme type is `field_event`, and refuses 1–10,000 otherwise. Of the
+    activities this drawer offers, four are field events and the rest are
+    trainings, youth camps, school visits and admin meetings — so 34 of 38
+    titles could be chosen, dated and submitted, and every one of them came
+    back "Number of schools must be between 1 and 10,000" for a question the
+    drawer had never asked. Participants was the same story one line down:
+    optional in the form, required by the funnel.
+
+    So both are asked when they apply and hidden when they do not, rather than
+    being defaulted to a value the funnel will reject.
+  {% endcomment %}
+  {# One input per question. A second control sharing `expected_participants`
+     would post the field twice and leave the view reading whichever came
+     last, so the requirement is bound instead of duplicated. #}
+  <label class="block" x-cloak x-show="selected.fieldEvent === 'false'">Schools reached
+    <input type="number" name="planned_school_count" min="1" max="10000"
+           x-bind:required="selected.fieldEvent === 'false'"
+           x-bind:disabled="selected.fieldEvent !== 'false'"
+           hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change delay:300ms"
+           class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
+  </label>
+
+  <label class="block">Participants
+    <span class="font-medium text-slate-400" x-show="selected.fieldEvent !== 'false'">(only when the activity feeds or hosts people)</span>
     <input type="number" name="expected_participants" min="1" max="100000"
-           hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-trigger="change delay:300ms"
+           x-bind:required="selected.fieldEvent === 'false'"
+           hx-post="/work-plan/add/preview" hx-target="#non-school-cost-preview" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change delay:300ms"
            class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
   </label>
 

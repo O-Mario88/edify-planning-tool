@@ -114,27 +114,17 @@
             :class="{ 'cluster-create-checklist--invalid': subCountyError }"
           >
             {% comment %}
-              A sub-county already covered by an active cluster is disabled
-              here rather than hidden. Hiding it would read as missing data —
-              the person knows that sub-county exists — while disabling it with
-              the holding cluster named answers the question they are about to
-              ask. aria-disabled carries the same fact to a screen reader, and
-              the reason is in the label rather than a title tooltip, which
-              never appears on touch.
+              Sub-county restriction lifted: multiple clusters can exist in a sub-county.
+              Existing cluster coverage is shown as informational only rather than disabling the option.
             {% endcomment %}
             <template x-for="subCounty in visibleSubCounties" :key="subCounty.id">
-              <label
-                class="cluster-create-check"
-                :class="subCounty.covered_by && 'cluster-create-check--taken'"
-              >
+              <label class="cluster-create-check">
                 <input
                   type="checkbox"
                   name="sub_county_ids"
                   :id="`cluster-subcounty-${subCounty.id}`"
                   :value="subCounty.id"
                   x-model="selectedSubCounties"
-                  :disabled="!!subCounty.covered_by"
-                  :aria-disabled="!!subCounty.covered_by"
                   @change="subCountyError = false"
                 >
                 <span>
@@ -142,7 +132,7 @@
                   <span
                     x-show="subCounty.covered_by"
                     class="cluster-create-check__taken"
-                    x-text="`Already in ${subCounty.covered_by}`"
+                    x-text="`Also in ${subCounty.covered_by}`"
                   ></span>
                 </span>
               </label>

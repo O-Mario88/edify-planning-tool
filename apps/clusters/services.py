@@ -319,20 +319,8 @@ def create_cluster(data: dict, principal) -> dict:
                 raise BadRequest("sub-county does not belong to district")
         primary = next(s for s in subs if s.id == sub_ids[0])
 
-    # Sub-county uniqueness: one active cluster per sub-county by default.
+    # Sub-county uniqueness restriction lifted: multiple clusters can exist in a sub-county.
     needs_review = False
-    if sub_ids:
-        # Same helper the create drawer reads, so what the UI disables and what
-        # this refuses can never disagree.
-        covered = covered_sub_counties()
-        taken = {str(s) for s in sub_ids} & set(covered)
-        if taken:
-            if Permission.CLUSTER_OVERRIDE.value in scope.permissions and data.get(
-                "overrideReason"
-            ):
-                needs_review = True
-            else:
-                raise BadRequest("An active cluster already covers this sub-county.")
 
     default_name = f"{primary.name} Cluster" if primary else f"{district.name} Cluster"
     cluster_name = (data.get("name") or default_name).strip()
@@ -498,23 +486,7 @@ def set_school_cluster_membership(school, cluster, assigned_by: str):
     if cluster and school.district_id != cluster.district_id:
         raise BadRequest("A school can only be assigned within its own district.")
 
-    # Owner and sub-county, enforced here rather than only in the picker.
-    # Filtering a dropdown is not a rule: the cluster id arrives in a POST body,
-    # and every other write path — bulk assignment, the API, a management
-    # command — reaches this function without passing a dropdown at all.
-    if cluster:
-        # Only when both are known. A school with no sub-county is a data gap
-        # to complete, not grounds to refuse the district-level assignment it
-        # could always make.
-        if school.sub_county_id and cluster.sub_county_id:
-            covers = cluster.covered_sub_counties.filter(
-                sub_county_id=school.sub_county_id
-            ).exists()
-            if cluster.sub_county_id != school.sub_county_id and not covers:
-                raise BadRequest(
-                    "That cluster covers a different sub-county. A school "
-                    "joins a cluster covering its own sub-county."
-                )
+    # District is enforced above: a school joins an active cluster in its own district.
 
     with transaction.atomic():
         school = School.objects.select_for_update().get(pk=school.pk)

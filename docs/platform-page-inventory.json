@@ -310,7 +310,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2857,
+      "bytes": 4343,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-performance",
@@ -2691,7 +2691,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7095,
+      "bytes": 7154,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2718,7 +2718,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 22583,
+      "bytes": 23344,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2847,7 +2847,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 10067,
+      "bytes": 9528,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/create-drawer"
@@ -2862,7 +2862,6 @@
       "states": [
         "default",
         "error",
-        "disabled",
         "open"
       ],
       "tables": 0,
@@ -7670,7 +7669,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 5097,
+      "bytes": 5166,
       "deprecated_alternatives": [],
       "example_pages": [
         "/partner/invoices/new"
@@ -9028,7 +9027,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15200,
+      "bytes": 15246,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/edit-drawer"
@@ -9412,19 +9411,12 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 21303,
+      "bytes": 21308,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-targets"
       ],
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
+      "findings": [],
       "forms": 1,
       "htmx_controls": 1,
       "kind": "application-partial",
@@ -9838,14 +9830,14 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 6368,
+      "bytes": 9805,
       "deprecated_alternatives": [],
       "example_pages": [
         "/work-plan/add"
       ],
       "findings": [],
       "forms": 1,
-      "htmx_controls": 6,
+      "htmx_controls": 7,
       "kind": "application-partial",
       "name": "Non School Activity Drawer",
       "purpose": "Reusable non school activity drawer interface primitive",
@@ -22384,6 +22376,7 @@
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
         "GET /clusters/{{ cluster.id }}/edit-drawer",
+        "GET /clusters/{{ cluster.id }}/bulk-assign-drawer",
         "GET /planning/schedule-modal?school_id={{ s.schoolId }}"
       ],
       "implementation_status": "existing-routed-surface",
@@ -22905,7 +22898,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.7,
+      "automated_quality_score": 9.6,
       "backend_module": "apps.frontend.views.cluster_views",
       "backend_view": "apps.frontend.views.cluster_views.create_cluster_drawer_view",
       "card_count": 0,
@@ -22969,7 +22962,7 @@
         "components/drawers/base_drawer.html"
       ],
       "state_coverage": {
-        "disabled": true,
+        "disabled": false,
         "empty": false,
         "error": true,
         "loading": false
@@ -46528,7 +46521,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.1,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.staff_views",
       "backend_view": "apps.frontend.views.staff_views.my_targets_view",
       "card_count": 0,
@@ -46541,16 +46534,8 @@
         "permission:my_target"
       ],
       "filters": "canvas-level shared filter bar",
-      "findings": [
-        {
-          "evidence": "A literal white surface can flatten Light mode and break Dark/System themes.",
-          "finding_id": "UI-FINDING-C326266F7B",
-          "key": "legacy-white-surface",
-          "recommended_action": "Use the semantic card, elevated or muted surface token.",
-          "severity": "medium"
-        }
-      ],
-      "fix_status": "pending",
+      "findings": [],
+      "fix_status": "fixed",
       "forms": true,
       "header_variant": "fragment-owned-by-parent",
       "htmx_endpoints": [
@@ -46572,7 +46557,7 @@
       "primary_action": "My Targets",
       "primary_user_decision": "What immediate step completes the parent workflow?",
       "purpose": "My Targets \u2014 the personal performance operating page.",
-      "remediation": "Use the semantic card, elevated or muted surface token.",
+      "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
         "ADMIN",
@@ -81786,7 +81771,7 @@
       "critical": 0,
       "high": 0,
       "low": 0,
-      "medium": 1
+      "medium": 0
     },
     "tablet_contract_pass": 418,
     "test_referenced": 560,

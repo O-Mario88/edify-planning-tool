@@ -23,7 +23,7 @@ payable instalment is calculated for you and routed to your Program Lead.
   <div class="grid gap-3 sm:grid-cols-3">
     <label class="block">Invoice for
       <select name="instalment"
-              hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
+              hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
               class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
         <option value="advance" {% if instalment == "advance" %}selected{% endif %}>50% advance — planned work</option>
         <option value="clearance" {% if instalment == "clearance" %}selected{% endif %}>Balance — IA-cleared work</option>
@@ -31,7 +31,7 @@ payable instalment is calculated for you and routed to your Program Lead.
     </label>
     <label class="block">Period
       <select name="period_kind"
-              hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
+              hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
               class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
         <option value="week" {% if kind == "week" %}selected{% endif %}>Week</option>
         <option value="month" {% if kind == "month" %}selected{% endif %}>Month</option>
@@ -40,7 +40,7 @@ payable instalment is calculated for you and routed to your Program Lead.
     </label>
     <label class="block">Date in the period
       <input type="date" name="anchor" value="{{ anchor }}"
-             hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
+             hx-get="/partner/invoices/new" hx-target="closest .drawer-body" hx-include="closest form" hx-disabled-elt="this" hx-trigger="change" hx-select=".drawer-body" hx-swap="outerHTML"
              class="edify-surface mt-1 block w-full rounded-control border border-[var(--border-card)] px-3 py-2">
     </label>
   </div>

@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 607,
+  "titled_cards": 616,
   "templates": 227,
-  "distinct_titles": 577,
+  "distinct_titles": 585,
   "with_card_key": 13,
-  "untitled_surfaces": 791,
+  "untitled_surfaces": 794,
   "untitled_chrome": 182,
-  "untitled_nested": 255,
-  "untitled_headless": 354,
+  "untitled_nested": 256,
+  "untitled_headless": 356,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 23,
+  "titles_in_several_templates": 24,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -98,6 +98,10 @@
   "schools needing urgent attention": [
    "templates/partials/dashboards/cceo/week.html",
    "templates/partials/dashboards/pl/operations.html"
+  ],
+  "submit mscs": [
+   "templates/pages/targets/index.html",
+   "templates/partials/targets/my_body.html"
   ],
   "team availability": [
    "templates/pages/leave/personal_time_off.html",
@@ -943,7 +947,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 60,
+   "line": 70,
    "title": "Cluster Logistics &amp; Contacts",
    "heading_level": 3,
    "has_card_key": false,
@@ -952,7 +956,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 83,
+   "line": 93,
    "title": "Schools in This Cluster",
    "heading_level": 3,
    "has_card_key": false,
@@ -961,7 +965,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 154,
+   "line": 190,
    "title": "Cluster Activity &amp; Improvement Impact",
    "heading_level": 3,
    "has_card_key": false,
@@ -970,7 +974,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 189,
+   "line": 225,
    "title": "Struggling Interventions",
    "heading_level": 3,
    "has_card_key": false,
@@ -979,7 +983,7 @@
   },
   {
    "template": "templates/pages/clusters/detail.html",
-   "line": 212,
+   "line": 248,
    "title": "Full Cluster Scorecard",
    "heading_level": 3,
    "has_card_key": false,
@@ -1588,7 +1592,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 30,
+   "line": 31,
    "title": "Distributed priorities ()",
    "heading_level": 2,
    "has_card_key": false,
@@ -1602,7 +1606,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 56,
+   "line": 57,
    "title": "Core ValuesSpiritual Formation",
    "heading_level": 2,
    "has_card_key": false,
@@ -1616,7 +1620,7 @@
   },
   {
    "template": "templates/pages/hr/my_performance.html",
-   "line": 61,
+   "line": 62,
    "title": "Professional Development",
    "heading_level": 2,
    "has_card_key": false,
@@ -6552,11 +6556,61 @@
   },
   {
    "template": "templates/partials/targets/my_body.html",
-   "line": 20,
+   "line": 26,
+   "title": "No measurable performance priorities agreed for FY",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-dashed border-slate-200 bg-slate-50/70 px-5 py-6",
+   "branch_path": [
+    [
+     0,
+     1
+    ]
+   ]
+  },
+  {
+   "template": "templates/partials/targets/my_body.html",
+   "line": 68,
+   "title": "My Strategic Milestone Allocations",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/my_body.html",
+   "line": 143,
+   "title": "Contribution to Roll-up",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "lg:col-span-3 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/my_body.html",
+   "line": 160,
+   "title": "Top Areas to Focus",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "lg:col-span-4 edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/my_body.html",
+   "line": 189,
    "title": "Core School Tracker",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-3",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/my_body.html",
+   "line": 258,
+   "title": "Submit MSCS",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface shadow-xl max-w-lg w-full p-6 space-y-4",
    "branch_path": []
   },
   {
@@ -6593,16 +6647,25 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 4,
+   "line": 7,
    "title": "Cumulative progress by time period",
    "heading_level": 2,
    "has_card_key": false,
-   "classes": "tt-panel",
+   "classes": "tt-panel tt-matrix-panel",
    "branch_path": []
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 18,
+   "line": 119,
+   "title": "Staff requiring support",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tt-panel tt-rail-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/team/body.html",
+   "line": 144,
    "title": "Recovery plans",
    "heading_level": 2,
    "has_card_key": false,
@@ -6611,7 +6674,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 42,
+   "line": 168,
    "title": "Validation issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -6620,11 +6683,38 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 67,
+   "line": 219,
+   "title": "Priority progress",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tt-panel tt-insight-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/team/body.html",
+   "line": 236,
+   "title": "Team performance trend",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tt-panel tt-insight-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/team/body.html",
+   "line": 286,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "tt-panel tt-partner-panel",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/targets/team/body.html",
+   "line": 307,
+   "title": "Districts most behind",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "tt-panel tt-insight-panel",
    "branch_path": []
   },
   {

@@ -380,9 +380,21 @@ value="{% if selected_cluster.responsible_staff_id %}{{ selected_cluster.respons
 </div>
 </div>
 
+{% comment %}
+  hx-target is stated here, and must stay stated. htmx INHERITS hx-target from
+  ancestors, and this div's ancestor is the planner form, whose target is
+  #drawer-container — the shell element this whole drawer was swapped into. So
+  a bare hx-get here sent its own load response to #drawer-container: 100ms
+  after opening, the cost preview replaced the entire drawer, which read as the
+  drawer flashing open and closing and pasting a cost preview onto the Clusters
+  page, and left no form to submit — cluster meetings and group trainings could
+  not be scheduled at all. Every other cost-preview trigger in this file names
+  the target explicitly; this one, the initial load, did not.
+{% endcomment %}
 <!-- Dynamic Cost Preview target (matching mockup structure) -->
 <div id="planner-cost-preview-container" class="border-t border-slate-100 pt-4"
-hx-get="/clusters/cost-preview" hx-trigger="load delay:100ms" hx-include="#action-planner-form">
+hx-get="/clusters/cost-preview" hx-trigger="load delay:100ms" hx-include="#action-planner-form"
+hx-target="this" hx-swap="innerHTML">
 {% if cost_preview %}
 {% if not cost_preview.can_schedule %}
 <div class="p-3 bg-rose-50 border border-rose-100 rounded-surface text-rose-800 edify-text-caption font-semibold mb-2 space-y-0.5">

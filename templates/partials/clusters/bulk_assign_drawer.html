@@ -2,7 +2,7 @@
 {% load frontend_filters %}
 
 {% block drawer_title %}Add Schools to {{ cluster.name }}{% endblock %}
-{% block drawer_subtitle %}Bulk assign unclustered schools located in this cluster's covered sub-counties.{% endblock %}
+{% block drawer_subtitle %}Bulk assign unclustered schools located in this cluster's district.{% endblock %}
 
 {% block drawer_body %}
 <div class="space-y-6 text-slate-700"
@@ -86,7 +86,7 @@ class="space-y-6"
 {% for item in sub_county_list %}
 <div class="space-y-2">
 <h4 class="edify-text-caption font-semibold text-slate-400 uppercase tracking-wider bg-slate-50 px-2 py-1 rounded-small">
-{{ item.grouper.name }} Sub-county
+{% if item.grouper %}{{ item.grouper.name }} Sub-county{% else %}Unassigned Sub-county{% endif %}
 </h4>
 <div class="space-y-1.5">
 {% for s in item.list %}
@@ -179,7 +179,7 @@ class="px-4 h-8 rounded-control btn-premium-primary text-white font-bold text-[1
 <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 </svg>
 <p class="text-[14px] font-semibold text-slate-500 leading-snug">All Schools Clustered</p>
-<p class="edify-text-caption text-slate-400 leading-normal">All candidate schools inside the sub-counties covered by this cluster have already been assigned.</p>
+<p class="edify-text-caption text-slate-400 leading-normal">All candidate schools inside {{ cluster.district.name }} district have already been assigned to clusters.</p>
 </div>
 </div>
 {% endif %}

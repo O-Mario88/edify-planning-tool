@@ -68,6 +68,18 @@ class BulkAssignmentTests(TestCase):
             staff=self.staff_profile, school_id=self.school_other.id
         )
 
+        # School in a different district (Wakiso) to test district scoping
+        self.school_in_other_district = School.objects.create(
+            id="sch-3",
+            school_id="S-1003",
+            name="Wakiso Primary School",
+            region=self.region,
+            district=self.district_other,
+            sub_county=self.sub_county_other,
+            school_type="client",
+            cluster_status="unclustered",
+        )
+
         self.cluster = Cluster.objects.create(
             id="cl-1",
             name="Mukono Hub Cluster",
@@ -121,27 +133,22 @@ class BulkAssignmentTests(TestCase):
 
     def test_bulk_assign_drawer_candidate_list(self):
         self.client.force_login(self.user)
-        # Link sc-2 to the cluster
-        ClusterSubCounty.objects.get_or_create(
-            cluster=self.cluster, sub_county=self.sub_county_2
-        )
-
+        # sc-2 is NOT linked to the cluster, but sch-2 is in Mukono District.
+        # sch-3 is in Wakiso District.
         response = self.client.get(f"/clusters/{self.cluster.id}/bulk-assign-drawer")
         self.assertEqual(response.status_code, 200)
 
         schools = response.context["schools"]
         school_ids = [s.id for s in schools]
-        # Should include both unclustered schools (sch-1 and sch-2) since both sub-counties are linked
+        # Should include unclustered schools in Mukono District (sch-1 and sch-2)
         self.assertIn("sch-1", school_ids)
         self.assertIn("sch-2", school_ids)
+        # Should NOT include sch-3 because it is in Wakiso District
+        self.assertNotIn("sch-3", school_ids)
 
     def test_bulk_assign_drawer_post(self):
         self.client.force_login(self.user)
-        # Link sc-2 to the cluster so the schools in sc-2 are eligible for assignment
-        ClusterSubCounty.objects.get_or_create(
-            cluster=self.cluster, sub_county=self.sub_county_2
-        )
-
+        # sch-2 is in Mukono District so it can be assigned without prior sub-county linkage
         response = self.client.post(
             f"/clusters/{self.cluster.id}/bulk-assign-drawer",
             {"school_ids": ["sch-1", "sch-2"]},
@@ -167,6 +174,58 @@ class BulkAssignmentTests(TestCase):
                 school=self.school_other, cluster=self.cluster
             ).exists()
         )
+
+    def test_cluster_detail_has_add_schools_button(self):
+        """The cluster detail page provides the Add Schools to Cluster button."""
+        self.client.force_login(self.user)
+        response = self.client.get(f"/clusters/{self.cluster.id}")
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(
+            response,
+            f'hx-get="/clusters/{self.cluster.id}/bulk-assign-drawer"',
+        )
+        self.assertContains(response, "Add Schools to Cluster")
+
+    def test_schools_directory_scopes_clusters_to_owner(self):
+        """School directory assign-cluster modal scopes clusters to the staff owner."""
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        cceo = User.objects.create(
+            id="user-cceo-1",
+            email="cceo1@edify.org",
+            name="CCEO Test User",
+            roles=["CCEO"],
+            active_role="CCEO",
+        )
+        cceo_staff = StaffProfile.objects.create(
+            id="staff-cceo-1", user=cceo, title="CCEO"
+        )
+        # Cluster owned by this CCEO
+        my_cluster = Cluster.objects.create(
+            id="cl-cceo-1",
+            name="CCEO Owned Cluster",
+            region=self.region,
+            district=self.district,
+            responsible_staff_id=cceo_staff.id,
+            status="active",
+        )
+        # Cluster owned by another staff member
+        other_cluster = Cluster.objects.create(
+            id="cl-other-1",
+            name="Other Staff Cluster",
+            region=self.region,
+            district=self.district,
+            responsible_staff_id="some-other-staff-id",
+            status="active",
+        )
+
+        self.client.force_login(cceo)
+        response = self.client.get("/schools")
+        self.assertEqual(response.status_code, 200)
+        clusters = list(response.context["clusters"])
+        cluster_ids = [c.id for c in clusters]
+        self.assertIn(my_cluster.id, cluster_ids)
+        self.assertNotIn(other_cluster.id, cluster_ids)
 
     def test_add_to_cluster_drawer_get_with_existing_covering_cluster(self):
         self.client.force_login(self.user)

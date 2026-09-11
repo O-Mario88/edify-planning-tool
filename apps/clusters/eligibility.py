@@ -118,20 +118,7 @@ def declare_sub_county_coverage(cluster, sub_county_id) -> bool:
     if not district_id or district_id != cluster.district_id:
         return False
 
-    rival = (
-        Cluster.objects.filter(
-            deleted_at__isnull=True,
-            status=ClusterRecordStatus.ACTIVE,
-        )
-        .exclude(pk=cluster.pk)
-        .filter(
-            Q(sub_county_id=sub_county_id)
-            | Q(covered_sub_counties__sub_county_id=sub_county_id)
-        )
-        .exists()
-    )
-    if rival:
-        return False
+
 
     _, created = ClusterSubCounty.objects.get_or_create(
         cluster=cluster, sub_county_id=sub_county_id
@@ -240,18 +227,6 @@ def eligible_clusters_for_school(school, *, scope=None):
 
     sub_county_id = getattr(school, "sub_county_id", None)
     if sub_county_id:
-        # A cluster reaches a sub-county either as its primary one or through
-        # its declared coverage; both are the cluster saying "this ground is
-        # mine", so both qualify.
-        #
-        # A cluster with *no* sub-county also qualifies, and that is not a
-        # loophole: the rule excludes another sub-county's clusters, and a
-        # district-level cluster is not another sub-county — it has not claimed
-        # one. Excluding it would make every district-level cluster unusable by
-        # any school that has a sub-county, which is most of the ones that do,
-        # and would read as the picker losing clusters that are plainly right.
-        # `set_school_cluster_membership` applies the mirror of this: it
-        # refuses only when both sides name a sub-county and they differ.
         qs = qs.filter(
             Q(sub_county_id=sub_county_id)
             | Q(covered_sub_counties__sub_county_id=sub_county_id)

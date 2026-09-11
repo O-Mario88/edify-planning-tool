@@ -690,7 +690,23 @@ def school_directory_view(request):
         .order_by("user__name")
     )
     school_owners = _school_owner_queryset()
-    clusters = Cluster.objects.filter(deleted_at__isnull=True).order_by("name")
+    from apps.core.scoping import cluster_owner_ids
+    if scope.country_scope or scope.can_view_summary_only:
+        clusters = Cluster.objects.filter(
+            deleted_at__isnull=True, status=ClusterRecordStatus.ACTIVE
+        ).order_by("name")
+    else:
+        owner_ids = cluster_owner_ids(scope, direct_only=True)
+        clusters = (
+            Cluster.objects.filter(
+                deleted_at__isnull=True,
+                status=ClusterRecordStatus.ACTIVE,
+            )
+            .filter(
+                Q(responsible_staff_id__in=owner_ids) | Q(id__in=scope.own_cluster_ids)
+            )
+            .order_by("name")
+        )
     from apps.projects.scoping import scoped_projects
 
     projects = scoped_projects(user).filter(
@@ -894,6 +910,30 @@ def add_to_cluster_drawer_view(request, school_id):
     # The profile's canonical SubCounty FK is the only location input. Raw
     # uploaded text and posted cluster ids never participate in this lookup.
     existing_covering_cluster = active_cluster_for_school_geography(school)
+    if existing_covering_cluster:
+        from apps.clusters.eligibility import school_owner_ids
+        owner_ids = school_owner_ids(school)
+        if (
+            existing_covering_cluster.responsible_staff_id
+            and owner_ids
+            and existing_covering_cluster.responsible_staff_id not in owner_ids
+        ):
+            existing_covering_cluster = None
+        elif (
+            school.sub_county_id
+            and Cluster.objects.filter(
+                district_id=school.district_id,
+                deleted_at__isnull=True,
+                status=ClusterRecordStatus.ACTIVE,
+            )
+            .filter(
+                Q(sub_county_id=school.sub_county_id)
+                | Q(covered_sub_counties__sub_county_id=school.sub_county_id)
+            )
+            .count()
+            > 1
+        ):
+            existing_covering_cluster = None
     responsible_staff = get_responsible_staff(school)
     show_cluster_directory = bool(
         school.sub_county_id and existing_covering_cluster is None
@@ -2104,7 +2144,25 @@ def school_onboard_drawer_view(request):
         )
 
     districts = District.objects.select_related("region").order_by("name")
-    clusters = Cluster.objects.filter(deleted_at__isnull=True, status="active")
+    from apps.core.scoping import cluster_owner_ids
+    onboard_scope = resolve_user_scope(request.user)
+    if onboard_scope.country_scope or onboard_scope.can_view_summary_only:
+        clusters = Cluster.objects.filter(
+            deleted_at__isnull=True, status=ClusterRecordStatus.ACTIVE
+        ).order_by("name")
+    else:
+        owner_ids = cluster_owner_ids(onboard_scope, direct_only=True)
+        clusters = (
+            Cluster.objects.filter(
+                deleted_at__isnull=True,
+                status=ClusterRecordStatus.ACTIVE,
+            )
+            .filter(
+                Q(responsible_staff_id__in=owner_ids)
+                | Q(id__in=onboard_scope.own_cluster_ids)
+            )
+            .order_by("name")
+        )
     staff = _school_owner_queryset()
 
     # Pre-populated cluster if any

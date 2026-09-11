@@ -1065,23 +1065,9 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
                 direct_portfolio_schools(resolve_user_scope(user))
                 or School.objects.none()
             )
-            # District is checked on both arms. Only the second one had it, so
-            # a school whose own district disagreed with its sub-county — a
-            # geography error the register does carry — passed the covered
-            # sub-county test and was then refused by the membership service
-            # with "A school can only be assigned within its own district",
-            # after the batch had already reported it as selectable.
-            if covered_sub_counties:
-                school = writable.filter(
-                    id=sid,
-                    district_id=cluster.district_id,
-                    sub_county_id__in=covered_sub_counties,
-                    deleted_at__isnull=True,
-                ).first()
-            else:
-                school = writable.filter(
-                    id=sid, district_id=cluster.district_id, deleted_at__isnull=True
-                ).first()
+            school = writable.filter(
+                id=sid, district_id=cluster.district_id, deleted_at__isnull=True
+            ).first()
             if school:
                 # Audited inside set_school_cluster_membership() (the
                 # canonical service assign_school_to_cluster delegates to)
@@ -1102,29 +1088,25 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
         )
         return response
 
-    # GET method — if cluster has covered sub-counties, filter by them.
-    # If no covered sub-counties (district-level cluster), show all unclustered
-    # schools in the cluster's district.
-    if covered_sub_counties:
-        unassigned_schools = (
-            School.objects.filter(
-                sub_county_id__in=covered_sub_counties,
-                cluster_status="unclustered",
-                deleted_at__isnull=True,
-            )
-            .select_related("sub_county")
-            .order_by("sub_county__name", "name")
+    # GET method — bring out all unclustered schools in the district where the cluster is.
+    scope = resolve_user_scope(request.user)
+    if scope.country_scope or scope.can_view_summary_only:
+        unassigned_schools = School.objects.filter(
+            district_id=cluster.district_id,
+            cluster_status="unclustered",
+            deleted_at__isnull=True,
         )
     else:
-        unassigned_schools = (
-            School.objects.filter(
-                district_id=cluster.district_id,
-                cluster_status="unclustered",
-                deleted_at__isnull=True,
-            )
-            .select_related("sub_county")
-            .order_by("name")
+        writable = direct_portfolio_schools(scope) or School.objects.none()
+        unassigned_schools = writable.filter(
+            district_id=cluster.district_id,
+            cluster_status="unclustered",
+            deleted_at__isnull=True,
         )
+    unassigned_schools = (
+        unassigned_schools.select_related("sub_county")
+        .order_by("sub_county__name", "name")
+    )
 
     context = {
         "cluster": cluster,

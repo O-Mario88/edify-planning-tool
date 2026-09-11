@@ -1080,7 +1080,7 @@ def schedule_action_view(request):
     purpose_of_visit = request.POST.get("purpose_of_visit", "").strip()
     school_id = request.POST.get("school_id")
     cluster_id = request.POST.get("cluster_id")
-    scheduled_date = request.POST.get("scheduled_date")
+    scheduled_date = (request.POST.get("scheduled_date") or "").strip()
     focus_intervention = request.POST.get("focus_intervention")
     purpose_type = request.POST.get("purpose_type", "focus_intervention")
     purpose_text = (
@@ -1117,6 +1117,42 @@ def schedule_action_view(request):
     # One read. The second assignment used to overwrite the first and drop the
     # `or None`, so an unset field arrived as "" instead of None.
     source_activity_id = request.POST.get("source_activity_id", "").strip() or None
+
+    # Imported before first use, not further down. A function-local import
+    # binds `date` for the whole function scope, so the date guard below would
+    # otherwise raise UnboundLocalError on every submission.
+    from datetime import date, datetime
+
+    # A date, refused here rather than trusted from the form.
+    #
+    # The drawer marks its date input `required`, but the input is
+    # `type="hidden"` (the visible control is an Alpine calendar that writes
+    # into it), and browsers skip constraint validation on hidden inputs
+    # entirely. So the attribute never blocked anything: submitting without
+    # picking a day posted an empty string, which flowed through as
+    # `scheduledDate: ""` and persisted an activity with scheduled_date NULL.
+    #
+    # That activity is real but unreachable — every plan surface selects by
+    # date, so it appears in no week, month, quarter or calendar — and its
+    # daily rates cannot be priced without a day, so it also costs nothing.
+    # A planner sees the drawer close successfully and then cannot find the
+    # visit anywhere: the exact shape of "scheduling does not save".
+    #
+    # The bulk and cluster paths already refuse this; the single-activity
+    # path, which is the one the drawers use most, did not.
+    if not scheduled_date:
+        return error_fragment(
+            BadRequest("Pick the date this is planned for before scheduling it."),
+            status=400,
+        )
+    try:
+        datetime.fromisoformat(scheduled_date)
+    except ValueError:
+        return error_fragment(
+            BadRequest("That scheduled date is not a valid calendar date."),
+            status=400,
+        )
+
     if cluster_id and activity_type == "cluster_training":
         if not catalogue_item_id:
             return error_fragment(
@@ -1184,8 +1220,6 @@ def schedule_action_view(request):
                 ),
                 status=400,
             )
-
-    from datetime import date
 
     # Purpose of Visit is the plain-language reason staff select. Activity
     # Type stays an internal/costing classification, derived from that reason
@@ -1300,7 +1334,7 @@ def schedule_action_view(request):
 
     if scheduled_date:
         try:
-            dt = date.fromisoformat(scheduled_date)
+            dt = datetime.fromisoformat(scheduled_date).date()
             payload["plannedMonth"] = dt.month
             payload["plannedWeek"] = min(5, (dt.day - 1) // 7 + 1)
         except ValueError:

@@ -695,29 +695,90 @@ class Command(BaseCommand):
                 "Room to Read",
             ]
         ):
-            Partner.objects.get_or_create(
-                name=name,
-                defaults={
-                    "coverage_districts": [d.name for d in districts[:3]],
-                    "is_certified": i % 2 == 0,
-                    "active_status": True,
-                    "contract_status": "active",
-                    "user": partner_user if i == 0 else None,
-                    "source": "local_test_upload",
-                },
-            )
+            # `all_objects`, because `Partner.objects` hides tombstones.
+            #
+            # A demo partner that someone soft-deleted while trying the
+            # directory out is invisible to the default manager, so
+            # get_or_create would build a SECOND row with the same name — and
+            # `Partner.user` is a OneToOne, so re-linking the demo login to the
+            # twin raises a unique violation and takes the whole seed down.
+            # Reviving the existing row keeps the partner's assignment history
+            # attached to it, which a fresh twin would have left orphaned.
+            partner = Partner.all_objects.filter(name=name).order_by("created_at").first()
+            if partner is None:
+                partner = Partner.objects.create(
+                    name=name,
+                    coverage_districts=[d.name for d in districts[:3]],
+                    is_certified=i % 2 == 0,
+                    active_status=True,
+                    contract_status="active",
+                    source="local_test_upload",
+                )
+            elif partner.deleted_at is not None or not partner.active_status:
+                partner.deleted_at = None
+                partner.active_status = True
+                partner.contract_status = "active"
+                partner.save(
+                    update_fields=[
+                        "deleted_at",
+                        "active_status",
+                        "contract_status",
+                        "updated_at",
+                    ]
+                )
+            # The partner login link is applied on update, not only on create.
+            #
+            # `Partner.user` is the canonical FK a partner field officer
+            # authenticates through — `resolve_partner_ids` reads it first, and
+            # returns NOTHING when it is unset (the role-bridge fallback is off
+            # by default and forbidden in production). A partner user with no
+            # partner sees no assigned schools, cannot schedule, and has an
+            # empty My Plan, so the whole partner side of the handoff looks
+            # broken.
+            #
+            # This link lived in `defaults`, which Django applies only when the
+            # row is created. Every re-seed of an existing partner row — and
+            # any first seed where the partner row predates the demo accounts —
+            # therefore left `user_id` NULL, which is exactly the state
+            # `resolve_partner_ids` documents as "the seed never sets
+            # Partner.userId".
+            if i == 0 and partner_user and partner.user_id != partner_user.user_id:
+                partner.user = partner_user
+                partner.save(update_fields=["user", "updated_at"])
 
         partner_admin = User.objects.filter(email="partner-admin@edify.org").first()
         if partner_admin:
-            Partner.objects.update_or_create(
-                name="Demo Partner Administration",
-                defaults={
-                    "active_status": True,
-                    "contract_status": "active",
-                    "user": partner_admin,
-                    "source": "local_test_upload",
-                },
+            # Same tombstone rule as above: update_or_create matches through
+            # the default manager, so a soft-deleted admin org would be
+            # duplicated rather than revived, and the OneToOne login link would
+            # then collide.
+            admin_partner = (
+                Partner.all_objects.filter(name="Demo Partner Administration")
+                .order_by("created_at")
+                .first()
             )
+            if admin_partner is None:
+                Partner.objects.create(
+                    name="Demo Partner Administration",
+                    active_status=True,
+                    contract_status="active",
+                    user=partner_admin,
+                    source="local_test_upload",
+                )
+            else:
+                admin_partner.deleted_at = None
+                admin_partner.active_status = True
+                admin_partner.contract_status = "active"
+                admin_partner.user = partner_admin
+                admin_partner.save(
+                    update_fields=[
+                        "deleted_at",
+                        "active_status",
+                        "contract_status",
+                        "user",
+                        "updated_at",
+                    ]
+                )
         self.stdout.write(f"  sample partners: {Partner.objects.count()} (local only)")
 
         from apps.business_transformation.models import (
@@ -826,14 +887,63 @@ class Command(BaseCommand):
         from apps.budget.costing_service import apply_to_activity
         from apps.clusters.models import Cluster
         from apps.clusters.models import ClusterSubCounty
+        from apps.clusters.eligibility import portfolio_owner_profile_id
+        from apps.clusters.services import set_school_cluster_membership
         from apps.core.enums import ClusterRecordStatus
         from datetime import datetime, timezone
 
+        # Enough members for a cluster meeting to look and cost like one,
+        # small enough that fifteen clusters share the seeded schools out.
+        CLUSTER_SEED_MEMBERS = 6
+
         schools = list(seeded_schools)
+
+        # Clusters are built FROM the seeded schools, not beside them.
+        #
+        # A cluster only exists to be planned into, and every planning surface
+        # is gated on membership: the Planning page lists clustered schools
+        # ("Planning works on clustered schools"), and the cluster scheduler
+        # refuses an empty cluster outright ("no active schools, so there is
+        # nobody to invite"). The seed used to pick each cluster's district at
+        # random and never set School.cluster_id, so it produced a country with
+        # 700 unclustered schools and 15 clusters holding nothing — a demo in
+        # which no visit, meeting, training or partner assignment could be
+        # planned at all, and which read as "scheduling does not save".
+        #
+        # `services.assign` is the authority on membership and enforces two
+        # rules a random district cannot satisfy: a school joins a cluster
+        # covering its OWN sub-county, and owned by its own portfolio owner.
+        # So the geography is derived from real portfolios here — the biggest
+        # (owner, sub-county) groups among the seeded schools — and each
+        # cluster is homed on one of them before any school is assigned.
+        owner_subcounty_groups: dict[tuple[str, str], list] = {}
+        for school in schools:
+            if school.deleted_at is not None or not school.sub_county_id:
+                continue
+            owner_id = portfolio_owner_profile_id(school)
+            if not owner_id:
+                continue
+            owner_subcounty_groups.setdefault((owner_id, school.sub_county_id), []).append(
+                school
+            )
+        # Deterministic: biggest groups first, then by key, so a re-seed puts
+        # the same schools in the same clusters.
+        ranked_groups = sorted(
+            owner_subcounty_groups.items(), key=lambda kv: (-len(kv[1]), kv[0])
+        )
+
         clusters = []
         for i in range(15):
             cl_name = f"Cluster {chr(65+i)}"
-            dist = rnd.choice(districts)
+            group_key, group_schools = (
+                ranked_groups[i] if i < len(ranked_groups) else ((None, None), [])
+            )
+            group_owner_id, _group_sub_county_id = group_key
+            dist = (
+                group_schools[0].district
+                if group_schools
+                else rnd.choice(districts)
+            )
             cluster, _ = Cluster.objects.get_or_create(
                 name=cl_name,
                 defaults={
@@ -856,13 +966,59 @@ class Command(BaseCommand):
             # all resolve to nothing — silently, because "no cluster covers
             # this sub-county" and "no cluster declares any sub-county" look
             # identical from the outside.
-            if not cluster.sub_county_id:
+            # Home the cluster on its group's own geography and owner, so the
+            # assignment below satisfies the sub-county and portfolio rules
+            # rather than tripping over them. Written unconditionally for a
+            # group-backed cluster: a cluster left on last run's random
+            # district would keep refusing the very schools seeded for it.
+            if group_schools:
+                target = group_schools[0]
+                fields = []
+                if cluster.district_id != target.district_id:
+                    cluster.district_id = target.district_id
+                    cluster.region_id = target.region_id
+                    fields += ["district", "region"]
+                if cluster.sub_county_id != target.sub_county_id:
+                    cluster.sub_county_id = target.sub_county_id
+                    fields.append("sub_county")
+                if group_owner_id and cluster.responsible_staff_id != group_owner_id:
+                    cluster.responsible_staff_id = group_owner_id
+                    fields.append("responsible_staff_id")
+                if fields:
+                    cluster.save(update_fields=[*fields, "updated_at"])
+                ClusterSubCounty.objects.get_or_create(
+                    cluster=cluster, sub_county_id=target.sub_county_id
+                )
+            elif not cluster.sub_county_id:
+                # A cluster with no declared sub-county can never claim a
+                # school. `active_cluster_for_geography` matches on district
+                # AND sub-county, so a seeded cluster carrying only a district
+                # made the Add-to-Cluster drawer, the School Profile and
+                # School.save() all resolve to nothing — silently, because "no
+                # cluster covers this sub-county" and "no cluster declares any
+                # sub-county" look identical from the outside.
                 covered = SubCounty.objects.filter(district=cluster.district).first()
                 if covered:
                     cluster.sub_county = covered
                     cluster.save(update_fields=["sub_county", "updated_at"])
                     ClusterSubCounty.objects.get_or_create(
                         cluster=cluster, sub_county=covered
+                    )
+
+            # Give the cluster a membership to plan for. Capped, so the demo
+            # shows several populated clusters instead of one huge one, and
+            # priced honestly: the per-school participant figure in the
+            # scheduler multiplies by this count.
+            for member in group_schools[:CLUSTER_SEED_MEMBERS]:
+                if member.cluster_id == cluster.id:
+                    continue
+                try:
+                    set_school_cluster_membership(
+                        member, cluster, cceos[0].user.user_id
+                    )
+                except Exception as exc:  # noqa: BLE001 - seed keeps going
+                    self.stdout.write(
+                        f"  cluster {cl_name}: could not add {member.school_id}: {exc}"
                     )
             clusters.append(cluster)
 
