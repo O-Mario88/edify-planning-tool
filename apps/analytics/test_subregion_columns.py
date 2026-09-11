@@ -58,9 +58,9 @@ class SubRegionColumnsMarkupTest(SimpleTestCase):
     def test_the_columns_exist_and_show_only_where_there_is_room(self):
         html = _read("templates/partials/analytics/regional_performance.html")
         for label in ("Visited", "Trained", "Students"):
-            self.assertIn(f'text-right sr-wide" title=', html)
             self.assertIn(f">{label}</th>", html)
-        self.assertEqual(html.count('sr-wide"\n                    x-text='), 3)
+        self.assertEqual(html.count('text-right sr-wide" x-show="wideColumns" x-cloak title='), 3)
+        self.assertEqual(html.count('sr-wide" x-show="wideColumns" x-cloak\n                    x-text='), 3)
         script = _read("templates/partials/analytics/_regional_performance_script.html")
         self.assertIn("students:row.enrollment || 0", script)
         self.assertIn("visited:metric.visited || 0", script)
