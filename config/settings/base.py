@@ -287,7 +287,13 @@ DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 # sessions per process and exhaust a small managed Postgres instance. Django's
 # ASGI guidance requires persistent connections to be disabled; add a bounded
 # external pool (for example PgBouncer) at the infrastructure layer instead.
-DATABASES["default"]["CONN_MAX_AGE"] = 0
+# ``DB_CONN_MAX_AGE`` lifts that once a bounded pool is in front of Postgres
+# (DigitalOcean's connection pool / PgBouncer in transaction mode): with a
+# pool, a persistent connection is a local handle rather than a TLS handshake
+# to the managed cluster on every request — which is what the live site paid,
+# on a 1-vCPU instance, for each of a page's requests (2026-09-12). Unset, the
+# ASGI-safe default of 0 stands.
+DATABASES["default"]["CONN_MAX_AGE"] = int(os.environ.get("DB_CONN_MAX_AGE", "0") or 0)
 
 # Managed PgBouncer rejects libpq's generic ``options`` startup parameter.
 # Pooled runtime roles therefore carry the same timeout policy as ALTER ROLE
@@ -495,6 +501,19 @@ MEDIA_ROOT = BASE_DIR / "media"
 # different backend than the one serving requests produces 500s on every asset.
 # One constant, two importers, no way for them to drift apart.
 STATICFILES_STORAGE_BACKEND = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+# How long a browser or CDN may keep a static file. The files are served under
+# their plain names, so WhiteNoise's default of sixty seconds meant a page
+# load on the live site re-fetched every asset from a 1-vCPU origin with a
+# 1.5s time-to-first-byte — the client called the app slow (2026-09-11).
+# Thirty days, with change detection carried by the URL instead: base.html
+# bumps ``?v=`` on the stylesheets by hand, and ``{% static_v %}``
+# (apps.core.templatetags.static_version) hashes the file for everything else.
+# In DEBUG the age is zero so a local rebuild is seen at once.
+WHITENOISE_MAX_AGE = 0 if DEBUG else 60 * 60 * 24 * 30
+# The country boundaries went out as application/octet-stream, which a CDN
+# will not compress or cache as data.
+WHITENOISE_MIMETYPES = {".geojson": "application/geo+json"}
 
 # All restricted uploads use the named private backend.  Keeping it distinct
 # from ``default`` prevents a future public-media change from exposing

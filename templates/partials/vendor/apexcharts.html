@@ -1,1 +1,4 @@
-{% load static %}<script src="{% static 'js/vendor/apexcharts-3.54.1.min.js' %}"></script>
+{% load static static_version %}{% comment %}527 KB that no chart needs until a
+chart mounts — and every chart here mounts on DOMContentLoaded or an htmx
+swap, which a deferred script precedes. Blocking the parser on it delayed the
+map on every dashboard open.{% endcomment %}<script defer src="{% static_v 'js/vendor/apexcharts-3.54.1.min.js' %}"></script>

@@ -1,4 +1,4 @@
-{% load static %}
+{% load static static_version %}
 {% comment %}
 The Uganda map's Alpine component, `subregionMap`. It lives in the
 dashboard HEAD (partials/vendor/dashboard_map.html), not in the swapped map
@@ -30,6 +30,14 @@ window.subregionMap = function (){
     geo:null, subcountyIndex:null, subcountyCache:{},
     subcountyLabelLayer:null, unmatchedSchoolCount:0,
     boundaryExitHandler:null,
+    // The distribution table's three wide columns (visited, trained,
+    // students) show where the table has the room: below the map on a tablet
+    // and on desktop screens from 100rem. A stylesheet cannot decide this —
+    // the platform forces every table cell visible with a ten-part
+    // !important rule (mobile-micro-ux.css), which yields only to an inline
+    // display:none, i.e. to x-show. So the component watches the two bands.
+    wideColumns:false,
+    _wideColumnsQuery:null,
     sx:null, sy:null, W:620, H:620, NS:'http://www.w3.org/2000/svg',
     combinedBoundaries:{}, combinedDistrictRequests:{},
     schoolTypes:[
@@ -82,6 +90,8 @@ window.subregionMap = function (){
           .filter(metric => this.districtKey(metric.district) === districtKey)
           .map(metric => ({
             level:'subcounty', name:metric.subcounty,
+            visited:metric.visited ?? null, trained:metric.trained ?? null,
+            students:metric.enrollment ?? null,
             schools:metric.schools || 0, clusters:metric.clusters || 0,
             ssa_avg:metric.ssa_avg,
             colour:this.colourOf(metric.subregion),
@@ -93,6 +103,8 @@ window.subregionMap = function (){
           .filter(metric => metric.subregion === this.focusedSubregion)
           .map(metric => ({
             level:'district', name:metric.district,
+            visited:metric.visited || 0, trained:metric.trained || 0,
+            students:metric.enrollment || 0,
             schools:metric.schools || 0, clusters:metric.clusters || 0,
             ssa_avg:metric.ssa_avg,
             colour:this.colourOf(metric.subregion),
@@ -101,6 +113,8 @@ window.subregionMap = function (){
       }
       return this.subregionDistributionRows.map(row => ({
         level:'subregion', name:row.name,
+        visited:row.schools_visited || 0, trained:row.schools_trained || 0,
+        students:row.enrollment || 0,
         schools:row.schools || 0, clusters:row.clusters || 0,
         ssa_avg:row.ssa_avg, colour:row.colour || this.colourOf(row.name),
       }));
@@ -242,8 +256,18 @@ window.subregionMap = function (){
       this.$el.style.setProperty('--map-viewport-height', height + 'px');
       this.refreshMapLabelPlacement();
     },
+    watchWideColumns(){
+      if(this._wideColumnsQuery || !window.matchMedia) return;
+      const query = window.matchMedia(
+        '(min-width: 48rem) and (max-width: 63.999rem), (min-width: 100rem)',
+      );
+      this.wideColumns = query.matches;
+      query.addEventListener('change', event => { this.wideColumns = event.matches; });
+      this._wideColumnsQuery = query;
+    },
     async load(){
       if(this.loading || this.ready) return;
+      this.watchWideColumns();
       this.loading = true;
       // district_insight ships an object keyed by district name, already in
       // the shape the card needs -- no re-indexing. (It replaced an array;
@@ -267,7 +291,9 @@ window.subregionMap = function (){
           document.getElementById('subregion-distribution-rows').textContent) || [];
         this.colours = JSON.parse(document.getElementById('subregion-colours').textContent) || {};
         this.syncSchoolTotals();
-        const res = await fetch("{% static 'geo/uganda_districts.geojson' %}");
+        // Same URL as the <link rel="preload"> in regional_performance.html, so
+        // the download that began with the page is the one this reads.
+        const res = await fetch("{% static_v 'geo/uganda_districts.geojson' %}");
         if (!res.ok) throw new Error('boundaries HTTP ' + res.status);
         // Static coordinates never change. Keeping them out of Alpine's
         // deep reactive proxies makes path generation substantially cheaper.
@@ -926,8 +952,14 @@ window.subregionMap = function (){
         a.textContent.length - b.textContent.length
       );
 
+      /* Every position is computed first and written last, in one frame.
+         Writing each label as it was placed made the names visibly settle
+         one district at a time over most of a second — what the owner saw as
+         the map "loading individual districts" (2026-09-11). */
+      const writes = [];
+      const commit = () => { writes.splice(0).forEach(write => write()); };
       const placeOne = label => {
-        label.style.opacity = '';
+        writes.push(() => { label.style.opacity = ''; });
         const path = pathByName.get(label.dataset[key]);
         const baseX = Number(label.dataset.labelX);
         const baseY = Number(label.dataset.labelY);
@@ -1033,10 +1065,12 @@ window.subregionMap = function (){
           }else{
             // The accessible boundary and hover snapshot still carry the
             // name. Omit the visual label instead of shrinking or colliding.
-            label.style.opacity = 0;
-            label.dataset.labelOffset = '0.00,0.00';
-            label.dataset.labelScale = '1.00';
-            label.dataset.labelPlacement = 'hidden';
+            writes.push(() => {
+              label.style.opacity = 0;
+              label.dataset.labelOffset = '0.00,0.00';
+              label.dataset.labelScale = '1.00';
+              label.dataset.labelPlacement = 'hidden';
+            });
             return;
           }
         }
@@ -1044,17 +1078,19 @@ window.subregionMap = function (){
         const rect = rectFor(offset, labelScale);
         const [dx, dy] = offset;
         const visualScale = labelScale / scale;
-        label.setAttribute(
-          'transform',
-          `translate(${(baseX + dx / scale).toFixed(2)},` +
-          `${(baseY + dy / scale).toFixed(2)}) ` +
-          (visualScale === 1
-            ? ''
-            : `scale(${visualScale.toFixed(4)})`),
-        );
-        label.dataset.labelOffset = `${dx.toFixed(2)},${dy.toFixed(2)}`;
-        label.dataset.labelScale = labelScale.toFixed(2);
-        label.dataset.labelPlacement = placement;
+        writes.push(() => {
+          label.setAttribute(
+            'transform',
+            `translate(${(baseX + dx / scale).toFixed(2)},` +
+            `${(baseY + dy / scale).toFixed(2)}) ` +
+            (visualScale === 1
+              ? ''
+              : `scale(${visualScale.toFixed(4)})`),
+          );
+          label.dataset.labelOffset = `${dx.toFixed(2)},${dy.toFixed(2)}`;
+          label.dataset.labelScale = labelScale.toFixed(2);
+          label.dataset.labelPlacement = placement;
+        });
         placed.push(rect);
       };
 
@@ -1066,6 +1102,7 @@ window.subregionMap = function (){
          synchronous so their collision pass can follow immediately. */
       if(sync){
         labels.forEach(placeOne);
+        commit();
         return Promise.resolve(true);
       }
       const token = (this._placementToken = (this._placementToken || 0) + 1);
@@ -1083,7 +1120,7 @@ window.subregionMap = function (){
             placeOne(labels[index++]);
           }
           if(index < labels.length) schedule(step);
-          else resolve(true);
+          else { commit(); resolve(true); }
         };
         schedule(step);
       });
