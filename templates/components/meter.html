@@ -10,8 +10,28 @@
   `progress` is one entry from milestone_plan_progress(); None means the
   milestone has no activity rule yet, so there is no plan to link it to — the
   track is drawn empty and says so, rather than reading as 0%.
+
+  Four states, in the order a reader meets them:
+    no rule          "—"                 nothing counts towards this yet
+    no work          "Not started"       the year is empty, or has not opened
+    no target        "3 done · 5 planned" real counts, no denominator yet
+    measured         "40%"               the number the owner asked for
+
+  The third and fourth were built on 2026-09-07. The second was added on
+  2026-09-11: with targets set and the FY2027 cycle three weeks from opening,
+  every bar read "0%" — which says the country has failed, when what happened
+  is that the year has not begun.
 {% endcomment %}
-{% if progress %}
+{% if progress and not progress.has_work and not progress.completed and not progress.planned %}
+<div class="edify-meter edify-meter--waiting" role="img"
+     aria-label="{% if not progress.started %}FY{{ progress.year }} has not started{% else %}Nothing planned towards this in FY{{ progress.year }}{% endif %}">
+  <span class="edify-meter__track" aria-hidden="true"></span>
+  <span class="edify-meter__value">{% if not progress.started %}Not started{% else %}Nothing planned{% endif %}</span>
+  {% if meta %}
+  <span class="edify-meter__meta">{% if not progress.started %}FY{{ progress.year }} has not started — nothing is planned into it yet.{% else %}No FY{{ progress.year }} activity counts towards this yet.{% endif %}{% if progress.target is not None %} Target {{ progress.target|floatformat:"-2" }} {{ progress.unit }}.{% endif %}</span>
+  {% endif %}
+</div>
+{% elif progress %}
 <div class="edify-meter" {% if progress.classification %}data-tone="{{ progress.classification.tone|default:'' }}"{% endif %}
      role="img"
      aria-label="{{ progress.completed }} completed and {{ progress.planned }} planned of {% if progress.target is not None %}{{ progress.target|floatformat:'-2' }}{% else %}an unset target{% endif %} {{ progress.unit }}{% if progress.pct is not None %}, {{ progress.pct|floatformat:"-1" }}% complete{% endif %}">

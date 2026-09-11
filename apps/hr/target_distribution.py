@@ -1482,25 +1482,59 @@ def milestone_plan_progress(
             return round(min(float(n) / target_f * 100.0, 100.0), 1)
 
         pct = share(completed)
+        # Has this milestone's year begun, and is there anything in it? A
+        # measurement year that has not started yet cannot be behind: "0% of
+        # 233" on a year opening in three weeks reads as total failure, when
+        # the truth is that nobody has planned into it (owner, 2026-09-11:
+        # the Priority Setting page was a column of 0%). The caller decides
+        # what to say; the service only reports the two facts.
+        has_work = bool(planned or completed)
+        started = _fy_has_started(year)
         out[mid] = {
             "unit": unit,
             "target": target,
             "planned": planned,
             "completed": completed,
             "verified": verified,
+            "year": year,
+            "has_work": has_work,
+            "started": started,
             # Completed against the target — the number the owner asked to see.
             "pct": pct,
             # The same share for planned work, drawn as the lighter segment so
             # a plan that is scheduled but not yet done is visible as intent.
             "planned_pct": share(planned),
             "summable": is_summable(milestone),
+            # No work at all is not an achievement band. Classifying it would
+            # paint the tile red for a year that has not started.
             "classification": (
                 classify_achievement(pct, cap_at_100=milestone.cap_at_100)
-                if pct is not None
+                if pct is not None and has_work
                 else None
             ),
         }
     return out
+
+
+def _fy_has_started(year: str | None, *, today=None) -> bool:
+    """True when the financial year has begun as of `today`.
+
+    An unknown year is treated as started: the honest default is to report
+    what was measured rather than to explain away a figure we cannot date.
+    """
+
+    if not year:
+        return True
+    from datetime import date as _date
+
+    from apps.core.fy import get_fy_date_range
+
+    try:
+        start, _end = get_fy_date_range(str(year))
+    except Exception:  # noqa: BLE001 — an unparseable year is not a reason to hide data
+        return True
+    start = getattr(start, "date", lambda: start)()
+    return start <= (today or _date.today())
 
 
 def planned_output(

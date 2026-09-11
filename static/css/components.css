@@ -5265,3 +5265,13 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   font: var(--edify-font-label);
   white-space: nowrap;
 }
+
+/* A year that has not started, or one with nothing planned into it yet, is
+   not a failure — it is an absence. Same muted treatment as an unlinked
+   milestone, because both are saying "there is nothing here to measure"
+   rather than "you are at zero" (owner, 2026-09-11). */
+.edify-meter--waiting .edify-meter__value {
+  color: var(--edify-text-subtle);
+  font-weight: 600;
+  white-space: nowrap;
+}

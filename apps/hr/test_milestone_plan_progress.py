@@ -250,9 +250,11 @@ class MilestonePlanProgressTest(TestCase):
         html = response.content.decode()
         self.assertIn(">Progress<", html)
         # Each milestone draws its meter twice — in the summary row, and again
-        # with its words in the detail beneath it. Two linked, one not.
-        self.assertEqual(html.count('class="edify-meter"'), 4)
+        # with its words in the detail beneath it. Two linked, one not; the
+        # linked milestone with no work in the year draws the waiting state.
+        self.assertEqual(html.count('<div class="edify-meter'), 6)
         self.assertEqual(html.count("edify-meter--unlinked"), 2)
+        self.assertEqual(html.count("edify-meter--waiting"), 2)
         self.assertIn("10% complete", html)
         self.assertIn("1 done · 0 planned · of 10 schools", html)
 
@@ -455,3 +457,86 @@ class LinkMilestonesToPlanTest(TestCase):
         )
         self.assertIn("148 done · 3 planned</span>", html)
         self.assertIn("no target yet — define the metric to get a percentage", html)
+
+
+class YearNotStartedTest(TestCase):
+    """A year that has not begun cannot be behind (owner, 2026-09-11).
+
+    With targets set on every linked milestone and the FY2027 cycle three
+    weeks from opening, the Priority Setting page was a column of "0%" — which
+    tells a Country Director the country has delivered nothing, when what
+    actually happened is that nobody has planned into the year yet. Absence and
+    zero are different answers and the meter now distinguishes them.
+    """
+
+    @classmethod
+    def setUpTestData(cls):
+        # A year far enough ahead to be unstarted whatever the test clock.
+        cls.cycle = StrategicPriorityCycle.objects.create(
+            financial_year="2030", title="FY2030", scope_type="country", country_id="Uganda"
+        )
+        cls.priority = StrategicPriority.objects.create(
+            cycle=cls.cycle, fy="2030", level="country", country_id="Uganda",
+            title="Program Quality", sequence=1,
+        )
+        cls.item = ActivityCatalogueItem.objects.create(
+            stable_code="NOTSTARTED-VISIT", source_name="Visit", display_name="Visit",
+            activity_type="school_visit", delivery_method="school_visit",
+            workflow_kind="school_visit", status="active",
+            costing_profile="SCHOOL_VISIT", evidence_profile="VISIT_REPORT",
+            salesforce_record_type="SCHOOL_VISIT",
+        )
+        cls.milestone = _milestone(
+            cls.cycle, cls.priority, code="M-FUTURE", title="Schools visited", target="233"
+        )
+        MilestoneActivityRule.objects.create(
+            milestone=cls.milestone, catalogue_item=cls.item,
+            counting_basis="UNIQUE_SCHOOLS_SUPPORTED",
+        )
+
+    def test_a_future_year_reports_absence_not_zero(self):
+        row = milestone_plan_progress([self.milestone], fy="2030")[self.milestone.id]
+        self.assertEqual(row["year"], "2030")
+        self.assertFalse(row["has_work"])
+        self.assertFalse(row["started"])
+        # No band: a year that has not opened is not "critically behind".
+        self.assertIsNone(row["classification"])
+
+    def test_a_started_year_with_no_work_is_still_absence(self):
+        row = milestone_plan_progress([self.milestone], fy="2020")[self.milestone.id]
+        self.assertTrue(row["started"])
+        self.assertFalse(row["has_work"])
+
+    def test_work_restores_the_percentage_and_its_band(self):
+        school = School.objects.create(name="Future School", school_id="FUT-1")
+        Activity.objects.create(
+            activity_type="school_visit", status="completed", school=school,
+            catalogue_item=self.item, fy="2030",
+        )
+        row = milestone_plan_progress([self.milestone], fy="2030")[self.milestone.id]
+        self.assertTrue(row["has_work"])
+        self.assertEqual(row["completed"], 1)
+        self.assertIsNotNone(row["classification"])
+
+    def test_the_meter_says_not_started_rather_than_a_percentage(self):
+        from django.template.loader import render_to_string
+
+        row = milestone_plan_progress([self.milestone], fy="2030")[self.milestone.id]
+        html = render_to_string("components/meter.html", {"progress": row, "meta": True})
+        self.assertIn("edify-meter--waiting", html)
+        self.assertIn("Not started", html)
+        self.assertIn("FY2030 has not started", html)
+        self.assertNotIn("0%", html)
+        # The target still travels: the reader learns what it is waiting for.
+        self.assertIn("Target 233", html)
+
+    def test_the_fy_boundary_is_the_first_of_october(self):
+        from datetime import date
+
+        from apps.hr.target_distribution import _fy_has_started
+
+        self.assertFalse(_fy_has_started("2027", today=date(2026, 9, 30)))
+        self.assertTrue(_fy_has_started("2027", today=date(2026, 10, 1)))
+        # An unknown year never hides data.
+        self.assertTrue(_fy_has_started(None))
+        self.assertTrue(_fy_has_started("not-a-year"))
