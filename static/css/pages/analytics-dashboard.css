@@ -1538,7 +1538,7 @@ main #impact-workspace .impact-group-pagination a {
      used to take every pixel the fixed table left, so the drawing floated in
      the middle of a much wider box and the table was pushed to the far edge
      of the card with empty space between (owner, 2026-09-11). */
-  .analytics-geo-card .sr-map-layout { flex-direction: row; align-items: flex-start; justify-content: center; }
+  .analytics-geo-card .sr-map-layout { flex-direction: row; align-items: flex-start; justify-content: center; column-gap: 2.5rem !important; }
   .analytics-geo-card .sr-map-canvas {
     flex: 0 1 auto;
     min-width: 0;
