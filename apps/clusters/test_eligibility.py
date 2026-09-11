@@ -255,11 +255,26 @@ class TheServiceEnforcesItToo(EligibilityFixture):
 
         self.assertIn("another staff member", str(caught.exception))
 
-    def test_another_sub_county_is_refused(self):
-        with self.assertRaises(BadRequest) as caught:
-            self._assign(self.akokoro_cluster)
+    def test_another_sub_county_in_the_same_district_is_accepted(self):
+        """The sub-county rule was lifted on 2026-09-11 (81bd28f9): a school
+        joins any active cluster of its OWN DISTRICT held by its own owner —
+        several clusters may share a sub-county, and a cluster may take
+        schools from across its district. The district boundary and the
+        portfolio boundary are the two that remain."""
 
-        self.assertIn("sub-county", str(caught.exception))
+        self._assign(self.akokoro_cluster)
+
+        self.school.refresh_from_db()
+        self.assertEqual(self.school.cluster_id, self.akokoro_cluster.id)
+
+    def test_another_district_is_still_refused(self):
+        elsewhere = District.objects.create(name="Lira", region=self.region)
+        far_cluster = self._cluster("Lira Cluster", self.james, elsewhere, None)
+
+        with self.assertRaises(BadRequest) as caught:
+            self._assign(far_cluster)
+
+        self.assertIn("own district", str(caught.exception))
 
     def test_a_school_with_no_sub_county_is_not_blocked_by_the_sub_county_rule(self):
         School.objects.filter(id=self.school.id).update(sub_county=None)

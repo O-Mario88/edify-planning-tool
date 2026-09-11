@@ -144,7 +144,14 @@ class TabContractTest(SimpleTestCase):
             with self.subTest(source=source):
                 self.assertIn("data-edify-tablist", markup)
                 self.assertIn("data-edify-tab", markup)
-                self.assertIn(":aria-pressed=", markup)
+                # Alpine tabs press (:aria-pressed); link tabs — one URL per
+                # tab, so a deep link and the back button land on the right
+                # one — mark the current page instead. platform.css styles
+                # both the same way.
+                self.assertTrue(
+                    ":aria-pressed=" in markup or 'aria-current="page"' in markup,
+                    source,
+                )
 
 
 class NoPageStylesItsOwnTabsTest(SimpleTestCase):

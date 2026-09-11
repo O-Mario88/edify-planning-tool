@@ -421,12 +421,17 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         for removed in (
             "support_rationale",
             "purpose",
-            "planned_school_count",
             "responsibility_type",
             "expected_outcome",
             "project_id",
         ):
             self.assertNotIn(f'name="{removed}"', html)
+        # Schools reached came back in 2026-09 as a CONDITIONAL question: the
+        # funnel requires it for non-event items, and a server-side default
+        # the funnel then rejected was the worse of the two. It is bound to
+        # the chosen item, never a free-standing required field.
+        self.assertIn('name="planned_school_count"', html)
+        self.assertIn('x-bind:required="selected.fieldEvent === \'false\'"', html)
 
         # Activity type and delivery mode are DERIVED from the chosen
         # catalogue item, not entered beside it. They used to be their own

@@ -899,7 +899,7 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             "templates/partials/hr/pd_dashboard/body.html",
             "templates/partials/dashboards/pl/body.html",
             "templates/partials/dashboards/cd/body.html",
-            "templates/partials/dashboards/hr/body.html",
+            "templates/partials/dashboards/hr/operations.html",
             "templates/partials/analytics/cd/body.html",
             "templates/partials/analytics/pl/body.html",
             "templates/partials/debriefs/dashboard_body.html",

@@ -16,6 +16,19 @@
       {% if review %}{% if show_open_conversation %}{% if caps %}<a data-control="open-conversation" href="/performance-conversation" class="btn btn-secondary">Performance conversation</a>{% else %}<span data-control="open-conversation" role="button" aria-disabled="true" class="btn btn-secondary">Conversation window closed</span>{% endif %}{% else %}<a class="btn btn-secondary" href="/performance-conversation">Performance conversation</a>{% endif %}{% endif %}
     </div>
   </header>
+  {% legacy_kpi_item "Agreement status" stage_label helper=review.updated_at|date:"j M Y" tone="success" icon="check" as agreement_kpi %}
+  {% if overall_pct is not None %}
+    {% legacy_kpi_item "Overall progress" overall_pct|stringformat:"s"|add:"%" helper="Weighted verified progress" tone="primary" icon="chart" as progress_kpi %}
+  {% else %}
+    {% legacy_kpi_item "Overall progress" "—" helper="No verified work yet" tone="neutral" icon="chart" as progress_kpi %}
+  {% endif %}
+  {% if active_window_label %}
+    {% legacy_kpi_item "Conversation window" active_window_label helper="Open performance conversation" tone="warning" icon="calendar" as window_kpi %}
+  {% else %}
+    {% legacy_kpi_item "Conversation window" "None open" helper="HR schedules the next window" tone="neutral" icon="calendar" as window_kpi %}
+  {% endif %}
+  {% collect_kpi_items agreement_kpi progress_kpi window_kpi as performance_kpis %}
+  {% include "components/context_metrics.html" with items=performance_kpis variant="executive" title="Performance headline" %}
   <form method="get" class="edify-filter-bar">
     <label for="priority-year">Financial year</label>
     <input id="priority-year" name="fy" type="number" min="2000" max="2100" value="{{ fy }}" class="rounded-control border px-3 py-1.5 w-24">

@@ -131,9 +131,10 @@ stays but only appears for the few items that require one.{% endcomment %}
     So both are asked when they apply and hidden when they do not, rather than
     being defaulted to a value the funnel will reject.
   {% endcomment %}
-  {# One input per question. A second control sharing `expected_participants`
-     would post the field twice and leave the view reading whichever came
-     last, so the requirement is bound instead of duplicated. #}
+  {% comment %}One input per question. A second control sharing
+     `expected_participants` would post the field twice and leave the view
+     reading whichever came last, so the requirement is bound instead of
+     duplicated.{% endcomment %}
   <label class="block" x-cloak x-show="selected.fieldEvent === 'false'">Schools reached
     <input type="number" name="planned_school_count" min="1" max="10000"
            x-bind:required="selected.fieldEvent === 'false'"

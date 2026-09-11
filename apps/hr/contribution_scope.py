@@ -22,8 +22,12 @@ def owner_ids(staff, include_team=False):
 def scope_activities(queryset, *, staff=None, include_team=False, country=None):
     if staff is not None:
         ids = owner_ids(staff, include_team)
+        # AUD-005: a partner activity still names the school's owner as
+        # responsible_staff_id (230 of 231 partner rows in dev). That name is
+        # custody, not delivery — the credit goes to whoever MONITORED the
+        # partner, and to nobody through the responsible column.
         return queryset.filter(
-            Q(responsible_staff_id__in=ids)
+            (Q(responsible_staff_id__in=ids) & ~Q(delivery_type="partner"))
             | Q(delivery_type="partner", monitored_by_staff_id__in=ids)
         ).distinct()
     if country:

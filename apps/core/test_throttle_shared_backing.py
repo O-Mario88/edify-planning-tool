@@ -26,7 +26,7 @@ from concurrent.futures import ThreadPoolExecutor
 from unittest import mock
 
 from django.core.cache import cache
-from django.test import SimpleTestCase
+from django.test import SimpleTestCase, override_settings
 
 from apps.core import throttling
 from apps.core.throttling import _hit, _window, reset_throttle_state
@@ -158,6 +158,14 @@ class SharedCacheWindowTest(SimpleTestCase):
             )
 
 
+@override_settings(
+    CACHES={
+        "default": {
+            "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
+            "LOCATION": "throttle-reset-test",
+        }
+    }
+)
 class ResetHelperTest(SimpleTestCase):
     """The test helper has to clear whichever backing is live, or suites leak
     throttle state into each other depending on whether Redis is running."""

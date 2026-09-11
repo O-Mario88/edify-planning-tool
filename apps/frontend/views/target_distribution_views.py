@@ -767,7 +767,10 @@ def priority_dashboard_redirect(request):
     return redirect(f"/priorities?{query}" if query else "/priorities")
 
 
-@require_page_permission("my_performance")
+# The sidebar entry that leads here is keyed "priorities_master", so the
+# gate matches the door: a role with no priority surface (the Accountant)
+# is refused here and keeps its own agreement at /my-performance.
+@require_page_permission("priorities_master")
 def priorities_workspace_page(request):
     from .hr_views import my_performance_view
 

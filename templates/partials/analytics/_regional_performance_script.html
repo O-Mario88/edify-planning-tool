@@ -951,7 +951,33 @@ window.subregionMap = function (){
           // permitted nearby empty space here, which put compact districts
           // such as Kampala and Butambala over their neighbours.
           placement = 'boundary-fit';
-          if(allowOverlapFallback){
+          const openOptions = labelScales.flatMap(candidateScale =>
+            candidates.map(candidate => {
+              const rect = rectFor(candidate, candidateScale);
+              const blocked =
+                markerRects.some(marker => overlaps(rect, marker)) ||
+                placed.some(existing => overlaps(rect, existing));
+              if(blocked || !this.boundaryContainsLabel(path, rect)) return null;
+              return {
+                candidate,
+                labelScale:candidateScale,
+                penalty:
+                  (1 - candidateScale) * 120 +
+                  Math.hypot(candidate[0], candidate[1]) / 100,
+              };
+            }).filter(Boolean)
+          );
+          const best = openOptions.reduce(
+            (current, option) =>
+              !current || option.penalty < current.penalty
+                ? option
+                : current,
+            null,
+          );
+          if(best){
+            offset = best.candidate;
+            labelScale = best.labelScale;
+          }else if(allowOverlapFallback){
             labelScale = labelScales[labelScales.length - 1];
             const anchor = candidates.map(candidate => {
               const x = baseX + candidate[0] / scale;
@@ -1049,7 +1075,7 @@ window.subregionMap = function (){
         key:'district',
         scale:1,
         labelScales:[0.82, 0.74, 0.68],
-        allowOverlapFallback:false,
+        allowOverlapFallback:true,
       }).then(completed => {
         if(completed) this.keepSubRegionLabelsOnCanvas();
         return completed;
@@ -1098,7 +1124,7 @@ window.subregionMap = function (){
         key:'subcounty',
         scale:this.zoomScale || 1,
         labelScales:[1, 0.9, 0.82],
-        allowOverlapFallback:false,
+        allowOverlapFallback:true,
         sync:true,
       });
     },

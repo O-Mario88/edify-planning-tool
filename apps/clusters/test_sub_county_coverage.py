@@ -202,12 +202,21 @@ class CoverageLearnedFromAssignmentTests(CoverageFixture):
 
         set_school_cluster_membership(school, self.cluster, "tester")
 
-        # One active cluster per sub-county is the rule `create_cluster`
-        # enforces; coverage acquired sideways must not evade it.
-        self.assertFalse(
+        # One active cluster per sub-county WAS the rule `create_cluster`
+        # enforced. It was lifted on 2026-09-11 (81bd28f9): several clusters
+        # may work the same sub-county, so a cluster that receives a school
+        # from that ground declares it, rival or not — otherwise the next
+        # school there would never resolve to the cluster its owner uses.
+        self.assertTrue(
             ClusterSubCounty.objects.filter(
                 cluster=self.cluster, sub_county=self.sub_county
             ).exists()
+        )
+        self.assertTrue(
+            ClusterSubCounty.objects.filter(
+                cluster=rival, sub_county=self.sub_county
+            ).exists(),
+            "the rival keeps its own claim; coverage is shared, not stolen",
         )
 
     def test_a_sub_county_in_another_district_is_never_adopted(self):
