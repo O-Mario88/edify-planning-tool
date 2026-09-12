@@ -19,7 +19,7 @@ from io import StringIO
 from unittest.mock import patch
 
 from django.core.management import call_command
-from django.test import Client, TestCase
+from django.test import Client, SimpleTestCase, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import StaffProfile, StaffSchoolAssignment, User
