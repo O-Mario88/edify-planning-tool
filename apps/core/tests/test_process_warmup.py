@@ -59,6 +59,73 @@ class DashboardCacheTest(TestCase):
         self.assertEqual(settings.DASHBOARD_CACHE_SECONDS, 0)
 
     @override_settings(DASHBOARD_CACHE_SECONDS=60)
+    def test_every_role_dashboard_is_reused_within_the_window(self):
+        """One rebuild serves the repeat loads, for each heavy role dashboard."""
+        from unittest import mock
+
+        from django.core.cache import cache
+
+        from apps.accounts.models import User
+        from apps.analytics.cd_dashboard_service import CDDashboardService
+        from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
+        from apps.analytics.rvp_dashboard_service import RVPDashboardService
+
+        cases = (
+            (CDDashboardService, "_get_dashboard", "CountryDirector"),
+            (ProgramLeadDashboardService, "_get_dashboard_uncached", "Program Lead"),
+            (RVPDashboardService, "_get_dashboard_uncached", "RegionalVicePresident"),
+        )
+        for index, (service, builder, role) in enumerate(cases):
+            with self.subTest(service=service.__name__):
+                cache.clear()
+                user = User.objects.create(
+                    id=f"warm-role-{index}",
+                    email=f"warm-role-{index}@edify.test",
+                    name=role,
+                    roles=[role],
+                    active_role=role,
+                    is_active=True,
+                )
+                with mock.patch.object(
+                    service, builder, return_value={"built": index}
+                ) as build:
+                    first = service.get_dashboard(user, fy="2026")
+                    second = service.get_dashboard(user, fy="2026")
+                self.assertEqual(first, second)
+                self.assertEqual(build.call_count, 1)
+        cache.clear()
+
+    @override_settings(DASHBOARD_CACHE_SECONDS=60)
+    def test_two_viewers_never_share_a_dashboard(self):
+        from unittest import mock
+
+        from django.core.cache import cache
+
+        from apps.accounts.models import User
+        from apps.analytics.cd_dashboard_service import CDDashboardService
+
+        cache.clear()
+        people = [
+            User.objects.create(
+                id=f"warm-cd-{i}",
+                email=f"warm-cd-{i}@edify.test",
+                name=f"CD {i}",
+                roles=["CountryDirector"],
+                active_role="CountryDirector",
+                is_active=True,
+            )
+            for i in (1, 2)
+        ]
+        with mock.patch.object(
+            CDDashboardService, "_get_dashboard", side_effect=[{"who": 1}, {"who": 2}]
+        ) as build:
+            first = CDDashboardService.get_dashboard(people[0], fy="2026")
+            second = CDDashboardService.get_dashboard(people[1], fy="2026")
+        self.assertNotEqual(first, second)
+        self.assertEqual(build.call_count, 2)
+        cache.clear()
+
+    @override_settings(DASHBOARD_CACHE_SECONDS=60)
     def test_a_second_load_within_the_window_is_served_from_cache(self):
         from unittest import mock
 

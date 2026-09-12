@@ -75,6 +75,27 @@ class ProgramLeadDashboardService:
 
     @staticmethod
     def get_dashboard(user, fy=None, month=None, filters=None, urgent_page=1) -> dict:
+        """Cached per viewer and filter set — see cached_role_dashboard."""
+        from apps.core.cache_utils import cached_role_dashboard
+
+        return cached_role_dashboard(
+            "pl",
+            user,
+            (
+                fy or get_operational_fy(),
+                month,
+                sorted((filters or {}).items()),
+                urgent_page,
+            ),
+            lambda: ProgramLeadDashboardService._get_dashboard_uncached(
+                user, fy=fy, month=month, filters=filters, urgent_page=urgent_page
+            ),
+        )
+
+    @staticmethod
+    def _get_dashboard_uncached(
+        user, fy=None, month=None, filters=None, urgent_page=1
+    ) -> dict:
         fy = fy or get_operational_fy()
         filters = dict(filters or {})
         pls = resolve_pl_scope(user, filters)

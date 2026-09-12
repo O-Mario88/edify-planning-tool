@@ -24,6 +24,38 @@ def _read(key: str) -> tuple[bool, object]:
         return False, _MISSING
 
 
+def cached_role_dashboard(kind: str, user, parts, build):
+    """Reuse a role dashboard's computed payload for DASHBOARD_CACHE_SECONDS.
+
+    These pages are the heaviest reads in the product — the Country Director's
+    is ~96 queries and over a second even with warm request-scoped caches
+    (2026-09-12) — and they are opened repeatedly by the same person as they
+    move between tabs. One rebuild serves all of those loads, and the
+    stampede lock means a cold cache under concurrent traffic rebuilds once
+    rather than once per waiting request, which is what turned a slow page
+    into a frozen one on a single worker.
+
+    Keyed by the viewer, because every figure on them is scope-bounded.
+    Zero timeout (the test settings) computes directly, so tests always see
+    fresh figures.
+    """
+    import hashlib
+
+    from django.conf import settings
+
+    timeout = int(getattr(settings, "DASHBOARD_CACHE_SECONDS", 0) or 0)
+    if timeout <= 0:
+        return build()
+    signature = hashlib.sha1(
+        repr(
+            (getattr(user, "id", ""), getattr(user, "active_role", ""), parts)
+        ).encode()
+    ).hexdigest()[:16]
+    return stampede_safe_get_or_compute(
+        f"dashboard:{kind}:{signature}", build, timeout=timeout
+    )
+
+
 def stampede_safe_get_or_compute(
     key: str,
     compute: Callable[[], T],

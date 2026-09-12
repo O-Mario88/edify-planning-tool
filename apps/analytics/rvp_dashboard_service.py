@@ -60,6 +60,22 @@ class RVPDashboardService:
     # ── page payload ─────────────────────────────────────────────────────────
     @staticmethod
     def get_dashboard(user, fy: str | None = None, month: str | None = None) -> dict:
+        """Cached per viewer — see cached_role_dashboard."""
+        from apps.core.cache_utils import cached_role_dashboard
+
+        return cached_role_dashboard(
+            "rvp",
+            user,
+            (fy or get_operational_fy(), month),
+            lambda: RVPDashboardService._get_dashboard_uncached(
+                user, fy=fy, month=month
+            ),
+        )
+
+    @staticmethod
+    def _get_dashboard_uncached(
+        user, fy: str | None = None, month: str | None = None
+    ) -> dict:
         from apps.monthly_work_plan.models import (
             CountryAnnualBudget,
             MonthlyWorkPlanBudget,
