@@ -31,22 +31,37 @@ class TrainingCardTest(TestCase):
         region = Region.objects.create(name="TC Region")
         district = District.objects.create(name="TC District", region=region)
         self.user = User.objects.create(
-            id="tc-cceo", email="tc-cceo@edify.org", name="TC Officer", roles=["CCEO"],
-            active_role="CCEO", is_active=True,
+            id="tc-cceo",
+            email="tc-cceo@edify.org",
+            name="TC Officer",
+            roles=["CCEO"],
+            active_role="CCEO",
+            is_active=True,
         )
-        self.profile = StaffProfile.objects.create(id="tc-cceo-sp", user=self.user, title="CCEO", country="Uganda")
+        self.profile = StaffProfile.objects.create(
+            id="tc-cceo-sp", user=self.user, title="CCEO", country="Uganda"
+        )
         self.school = School.objects.create(
-            school_id="TC-1", name="Nakaseke Hill Primary", region=region, district=district,
+            school_id="TC-1",
+            name="Nakaseke Hill Primary",
+            region=region,
+            district=district,
             account_owner_id=self.profile.id,
         )
         today = date.today()
         common = dict(
-            school=self.school, responsible_staff_id=self.profile.id, delivery_type="staff",
-            status="scheduled", planned_date=today, fy=get_operational_fy(),
+            school=self.school,
+            responsible_staff_id=self.profile.id,
+            delivery_type="staff",
+            status="scheduled",
+            planned_date=today,
+            fy=get_operational_fy(),
             quarter=get_quarter_for_date(today),
         )
         self.visit = Activity.objects.create(
-            activity_type="school_visit", activity_purpose_text="School visit accompanying Biblical Integration", **common
+            activity_type="school_visit",
+            activity_purpose_text="School visit accompanying Biblical Integration",
+            **common,
         )
         self.training = Activity.objects.create(
             activity_type="in_school_training", paired_school_visit=self.visit, **common

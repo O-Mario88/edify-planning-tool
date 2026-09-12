@@ -85,7 +85,8 @@ def owner_order(queryset):
         key=lambda kv: (kv[1]["sort_key"] if kv[1] else ("￿", "￿")),
     )
     whens = [
-        When(account_owner_id=oid, then=Value(rank)) for rank, (oid, _) in enumerate(ranked)
+        When(account_owner_id=oid, then=Value(rank))
+        for rank, (oid, _) in enumerate(ranked)
     ]
     annotated = queryset.annotate(
         _owner_rank=Case(*whens, default=Value(len(whens)), output_field=IntegerField())
@@ -106,9 +107,7 @@ def owner_filter_groups(schools_qs) -> list[dict]:
     )
     directory = owner_directory(owner_ids)
     seen, groups = set(), {}
-    for entry in sorted(
-        (e for e in directory.values()), key=lambda e: e["sort_key"]
-    ):
+    for entry in sorted((e for e in directory.values()), key=lambda e: e["sort_key"]):
         if entry["profile_id"] in seen:
             continue
         seen.add(entry["profile_id"])

@@ -9,31 +9,55 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0025_user_sms_money_alerts'),
+        ("accounts", "0025_user_sms_money_alerts"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='user',
-            name='last_seen_at',
+            model_name="user",
+            name="last_seen_at",
             field=models.DateTimeField(blank=True, db_index=True, null=True),
         ),
         migrations.CreateModel(
-            name='LoginEvent',
+            name="LoginEvent",
             fields=[
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('at', models.DateTimeField(db_index=True, default=django.utils.timezone.now)),
-                ('role', models.CharField(blank=True, default='', max_length=64)),
-                ('ip', models.GenericIPAddressField(blank=True, null=True)),
-                ('user_agent', models.CharField(blank=True, default='', max_length=256)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='login_events', to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                (
+                    "at",
+                    models.DateTimeField(
+                        db_index=True, default=django.utils.timezone.now
+                    ),
+                ),
+                ("role", models.CharField(blank=True, default="", max_length=64)),
+                ("ip", models.GenericIPAddressField(blank=True, null=True)),
+                (
+                    "user_agent",
+                    models.CharField(blank=True, default="", max_length=256),
+                ),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="login_events",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'login_event',
-                'ordering': ['-at'],
-                'indexes': [models.Index(fields=['user', 'at'], name='login_event_user_at')],
+                "db_table": "login_event",
+                "ordering": ["-at"],
+                "indexes": [
+                    models.Index(fields=["user", "at"], name="login_event_user_at")
+                ],
             },
         ),
     ]

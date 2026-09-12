@@ -69,7 +69,7 @@ def _offenders(attribute: str, only_relative: bool) -> list[str]:
                 line = text[: opener.end() + child.start()].count("\n") + 1
                 found.append(
                     f"{path.relative_to(TEMPLATES.parent)}:{line} "
-                    f"<{child.group(1)}> inherits {attribute}=\"{value}\""
+                    f'<{child.group(1)}> inherits {attribute}="{value}"'
                 )
     return found
 
@@ -82,7 +82,7 @@ class HtmxInheritedAttributeTests(SimpleTestCase):
             [],
             "These controls issue their own htmx request while inheriting an "
             "hx-disabled-elt that resolves relative to the requesting element, "
-            "so htmx throws on null before sending. Add hx-disabled-elt=\"this\" "
+            'so htmx throws on null before sending. Add hx-disabled-elt="this" '
             "to each:\n  " + "\n  ".join(offenders),
         )
 
@@ -95,8 +95,7 @@ class HtmxInheritedAttributeTests(SimpleTestCase):
             [],
             "These controls issue their own htmx request while inheriting an "
             "ancestor's hx-target, so their response is swapped somewhere they "
-            "did not ask for. State hx-target on each:\n  "
-            + "\n  ".join(offenders),
+            "did not ask for. State hx-target on each:\n  " + "\n  ".join(offenders),
         )
 
     def test_the_cluster_planner_preview_targets_itself(self):

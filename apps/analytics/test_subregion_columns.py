@@ -26,19 +26,42 @@ class SubRegionColumnsServiceTest(TestCase):
     def setUpTestData(cls):
         cls.region = Region.objects.create(name="Col Region")
         cls.sub = SubRegion.objects.create(name="Col Sub", region=cls.region)
-        cls.district = District.objects.create(name="Col District", region=cls.region, sub_region=cls.sub)
-        cls.a = School.objects.create(school_id="COL-1", name="Col A", region=cls.region, district=cls.district, enrollment=320)
-        cls.b = School.objects.create(school_id="COL-2", name="Col B", region=cls.region, district=cls.district, enrollment=180)
-        cls.c = School.objects.create(school_id="COL-3", name="Col C", region=cls.region, district=cls.district, enrollment=None)
+        cls.district = District.objects.create(
+            name="Col District", region=cls.region, sub_region=cls.sub
+        )
+        cls.a = School.objects.create(
+            school_id="COL-1",
+            name="Col A",
+            region=cls.region,
+            district=cls.district,
+            enrollment=320,
+        )
+        cls.b = School.objects.create(
+            school_id="COL-2",
+            name="Col B",
+            region=cls.region,
+            district=cls.district,
+            enrollment=180,
+        )
+        cls.c = School.objects.create(
+            school_id="COL-3",
+            name="Col C",
+            region=cls.region,
+            district=cls.district,
+            enrollment=None,
+        )
         for school, kind, status in (
             (cls.a, "school_visit", "completed"),
-            (cls.a, "school_visit", "completed"),   # a second visit: still one school
-            (cls.b, "school_visit", "scheduled"),   # not delivered: not visited
+            (cls.a, "school_visit", "completed"),  # a second visit: still one school
+            (cls.b, "school_visit", "scheduled"),  # not delivered: not visited
             (cls.b, "in_school_training", "completed"),
         ):
             Activity.objects.create(
-                activity_type=kind, status=status, school=school,
-                planned_date=date(2026, 3, 3), fy="2026",
+                activity_type=kind,
+                status=status,
+                school=school,
+                planned_date=date(2026, 3, 3),
+                fy="2026",
             )
 
     def test_the_sub_region_row_carries_the_three_figures(self):
@@ -51,7 +74,9 @@ class SubRegionColumnsServiceTest(TestCase):
 
     def test_the_district_hover_carries_enrolment_too(self):
         metric = district_insight("2026")["Col District"]
-        self.assertEqual((metric["visited"], metric["trained"], metric["enrollment"]), (1, 1, 500))
+        self.assertEqual(
+            (metric["visited"], metric["trained"], metric["enrollment"]), (1, 1, 500)
+        )
 
 
 class SubRegionColumnsMarkupTest(SimpleTestCase):
@@ -59,8 +84,15 @@ class SubRegionColumnsMarkupTest(SimpleTestCase):
         html = _read("templates/partials/analytics/regional_performance.html")
         for label in ("Visited", "Trained", "Students"):
             self.assertIn(f">{label}</th>", html)
-        self.assertEqual(html.count('text-right sr-wide" x-show="wideColumns" x-cloak title='), 3)
-        self.assertEqual(html.count('sr-wide" x-show="wideColumns" x-cloak\n                    x-text='), 3)
+        self.assertEqual(
+            html.count('text-right sr-wide" x-show="wideColumns" x-cloak title='), 3
+        )
+        self.assertEqual(
+            html.count(
+                'sr-wide" x-show="wideColumns" x-cloak\n                    x-text='
+            ),
+            3,
+        )
         script = _read("templates/partials/analytics/_regional_performance_script.html")
         self.assertIn("students:row.enrollment || 0", script)
         self.assertIn("visited:metric.visited || 0", script)
@@ -68,6 +100,12 @@ class SubRegionColumnsMarkupTest(SimpleTestCase):
         # forces every table cell visible with !important and yields only to
         # an inline display:none, which is what x-show writes.
         self.assertEqual(html.count('x-show="wideColumns"'), 6)
-        self.assertIn("'(min-width: 48rem) and (max-width: 63.999rem), (min-width: 100rem)'", script)
+        self.assertIn(
+            "'(min-width: 48rem) and (max-width: 63.999rem), (min-width: 100rem)'",
+            script,
+        )
         css = _read("static/css/pages/analytics-dashboard.css")
-        self.assertIn("@media (min-width: 100rem) {\n  .analytics-geo-card .sr-distribution-panel { flex: 0 0 36rem; width: 36rem; }", css)
+        self.assertIn(
+            "@media (min-width: 100rem) {\n  .analytics-geo-card .sr-distribution-panel { flex: 0 0 36rem; width: 36rem; }",
+            css,
+        )

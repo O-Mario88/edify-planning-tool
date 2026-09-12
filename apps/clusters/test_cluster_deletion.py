@@ -30,8 +30,12 @@ User = get_user_model()
 
 def _staff(uid, role, name):
     user = User.objects.create(
-        id=uid, email=f"{uid}@edify.org", name=name, roles=[role],
-        active_role=role, is_active=True,
+        id=uid,
+        email=f"{uid}@edify.org",
+        name=name,
+        roles=[role],
+        active_role=role,
+        is_active=True,
     )
     return user, StaffProfile.objects.create(id=f"{uid}-sp", user=user, title=role)
 
@@ -40,18 +44,27 @@ class ClusterDeletionTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="Del Region")
         self.district = District.objects.create(name="Del District", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="Del SC", district=self.district)
+        self.sub_county = SubCounty.objects.create(
+            name="Del SC", district=self.district
+        )
         self.owner, self.owner_sp = _staff("del-cceo", "CCEO", "Del Owner")
         self.other, self.other_sp = _staff("del-other", "CCEO", "Del Other")
         self.cluster = Cluster.objects.create(
-            name="Del Cluster", region=self.region, district=self.district,
-            sub_county=self.sub_county, cluster_type="mixed", status="active",
+            name="Del Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            cluster_type="mixed",
+            status="active",
             responsible_staff_id=self.owner_sp.id,
         )
         self.schools = [
             School.objects.create(
-                school_id=f"DEL-{i}", name=f"Del School {i}", region=self.region,
-                district=self.district, sub_county=self.sub_county,
+                school_id=f"DEL-{i}",
+                name=f"Del School {i}",
+                region=self.region,
+                district=self.district,
+                sub_county=self.sub_county,
                 account_owner_id=self.owner_sp.id,
             )
             for i in range(2)
@@ -61,8 +74,11 @@ class ClusterDeletionTest(TestCase):
 
     def _work(self, status, kind="cluster_meeting"):
         return Activity.objects.create(
-            activity_type=kind, status=status, cluster=self.cluster,
-            planned_date=date(2026, 9, 20), fy="2026",
+            activity_type=kind,
+            status=status,
+            cluster=self.cluster,
+            planned_date=date(2026, 9, 20),
+            fy="2026",
         )
 
     def test_a_fresh_cluster_is_deleted_and_its_schools_released(self):
@@ -112,12 +128,20 @@ class ClusterDeletionTest(TestCase):
 class ClusterDeletionSurfaceTest(TestCase):
     def setUp(self):
         self.region = Region.objects.create(name="DelS Region")
-        self.district = District.objects.create(name="DelS District", region=self.region)
-        self.sub_county = SubCounty.objects.create(name="DelS SC", district=self.district)
+        self.district = District.objects.create(
+            name="DelS District", region=self.region
+        )
+        self.sub_county = SubCounty.objects.create(
+            name="DelS SC", district=self.district
+        )
         self.user, self.sp = _staff("dels-admin", "Admin", "DelS Admin")
         self.cluster = Cluster.objects.create(
-            name="DelS Cluster", region=self.region, district=self.district,
-            sub_county=self.sub_county, cluster_type="mixed", status="active",
+            name="DelS Cluster",
+            region=self.region,
+            district=self.district,
+            sub_county=self.sub_county,
+            cluster_type="mixed",
+            status="active",
         )
         self.client.force_login(self.user)
 
@@ -128,13 +152,18 @@ class ClusterDeletionSurfaceTest(TestCase):
 
     def test_the_profile_explains_why_a_working_cluster_cannot_be_deleted(self):
         Activity.objects.create(
-            activity_type="cluster_training", status="completed", cluster=self.cluster,
-            planned_date=date(2026, 9, 20), fy="2026",
+            activity_type="cluster_training",
+            status="completed",
+            cluster=self.cluster,
+            planned_date=date(2026, 9, 20),
+            fy="2026",
         )
         response = self.client.get(f"/clusters/{self.cluster.id}")
         self.assertContains(response, "data-cluster-delete-blocked")
         self.assertContains(response, "has held 1 meeting")
-        self.assertNotContains(response, f'hx-post="/clusters/{self.cluster.id}/delete"')
+        self.assertNotContains(
+            response, f'hx-post="/clusters/{self.cluster.id}/delete"'
+        )
 
     def test_a_press_deletes_and_sends_the_browser_to_the_directory(self):
         response = self.client.post(
@@ -146,8 +175,11 @@ class ClusterDeletionSurfaceTest(TestCase):
 
     def test_a_refused_press_shows_the_reason_in_the_page(self):
         Activity.objects.create(
-            activity_type="cluster_meeting", status="completed", cluster=self.cluster,
-            planned_date=date(2026, 9, 20), fy="2026",
+            activity_type="cluster_meeting",
+            status="completed",
+            cluster=self.cluster,
+            planned_date=date(2026, 9, 20),
+            fy="2026",
         )
         response = self.client.post(
             f"/clusters/{self.cluster.id}/delete", HTTP_HX_REQUEST="true"
@@ -157,4 +189,6 @@ class ClusterDeletionSurfaceTest(TestCase):
         self.assertTrue(Cluster.objects.filter(id=self.cluster.id).exists())
 
     def test_get_is_not_a_delete(self):
-        self.assertEqual(self.client.get(f"/clusters/{self.cluster.id}/delete").status_code, 405)
+        self.assertEqual(
+            self.client.get(f"/clusters/{self.cluster.id}/delete").status_code, 405
+        )

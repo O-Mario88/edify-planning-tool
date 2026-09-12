@@ -507,5 +507,4 @@ class MapFillsTheScreenTest(SimpleTestCase):
         # The old caps: what was left below the card, and the canvas width.
         self.assertNotIn("window.innerHeight - top - 24", template)
         self.assertNotIn("canvasWidth * 0.92", template)
-        self.assertIn("@resize.window.debounce.100ms=\"fitViewport()\"", template)
-
+        self.assertIn('@resize.window.debounce.100ms="fitViewport()"', template)

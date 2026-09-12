@@ -57,7 +57,9 @@ from apps.activities.models import Activity
 
 
 # One table for the whole platform (apps.core.interventions).
-from apps.core.interventions import INTERVENTION_ABBREVIATIONS as SSA_SCORE_ABBREVIATIONS  # noqa: E402
+from apps.core.interventions import (
+    INTERVENTION_ABBREVIATIONS as SSA_SCORE_ABBREVIATIONS,
+)  # noqa: E402
 
 
 def _forbid_staff_on_partner_activity(request, a):

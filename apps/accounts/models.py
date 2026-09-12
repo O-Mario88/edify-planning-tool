@@ -953,7 +953,9 @@ class LoginEvent(models.Model):
     opened with, so a switch-role later does not rewrite history."""
 
     id = CuidField()
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="login_events")
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name="login_events"
+    )
     at = models.DateTimeField(default=timezone.now, db_index=True)
     role = models.CharField(max_length=64, blank=True, default="")
     ip = models.GenericIPAddressField(null=True, blank=True)
@@ -963,4 +965,3 @@ class LoginEvent(models.Model):
         db_table = "login_event"
         ordering = ["-at"]
         indexes = [models.Index(fields=["user", "at"], name="login_event_user_at")]
-

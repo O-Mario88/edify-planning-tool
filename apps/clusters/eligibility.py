@@ -118,8 +118,6 @@ def declare_sub_county_coverage(cluster, sub_county_id) -> bool:
     if not district_id or district_id != cluster.district_id:
         return False
 
-
-
     _, created = ClusterSubCounty.objects.get_or_create(
         cluster=cluster, sub_county_id=sub_county_id
     )

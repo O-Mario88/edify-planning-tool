@@ -473,24 +473,41 @@ class YearNotStartedTest(TestCase):
     def setUpTestData(cls):
         # A year far enough ahead to be unstarted whatever the test clock.
         cls.cycle = StrategicPriorityCycle.objects.create(
-            financial_year="2030", title="FY2030", scope_type="country", country_id="Uganda"
+            financial_year="2030",
+            title="FY2030",
+            scope_type="country",
+            country_id="Uganda",
         )
         cls.priority = StrategicPriority.objects.create(
-            cycle=cls.cycle, fy="2030", level="country", country_id="Uganda",
-            title="Program Quality", sequence=1,
+            cycle=cls.cycle,
+            fy="2030",
+            level="country",
+            country_id="Uganda",
+            title="Program Quality",
+            sequence=1,
         )
         cls.item = ActivityCatalogueItem.objects.create(
-            stable_code="NOTSTARTED-VISIT", source_name="Visit", display_name="Visit",
-            activity_type="school_visit", delivery_method="school_visit",
-            workflow_kind="school_visit", status="active",
-            costing_profile="SCHOOL_VISIT", evidence_profile="VISIT_REPORT",
+            stable_code="NOTSTARTED-VISIT",
+            source_name="Visit",
+            display_name="Visit",
+            activity_type="school_visit",
+            delivery_method="school_visit",
+            workflow_kind="school_visit",
+            status="active",
+            costing_profile="SCHOOL_VISIT",
+            evidence_profile="VISIT_REPORT",
             salesforce_record_type="SCHOOL_VISIT",
         )
         cls.milestone = _milestone(
-            cls.cycle, cls.priority, code="M-FUTURE", title="Schools visited", target="233"
+            cls.cycle,
+            cls.priority,
+            code="M-FUTURE",
+            title="Schools visited",
+            target="233",
         )
         MilestoneActivityRule.objects.create(
-            milestone=cls.milestone, catalogue_item=cls.item,
+            milestone=cls.milestone,
+            catalogue_item=cls.item,
             counting_basis="UNIQUE_SCHOOLS_SUPPORTED",
         )
 
@@ -510,8 +527,11 @@ class YearNotStartedTest(TestCase):
     def test_work_restores_the_percentage_and_its_band(self):
         school = School.objects.create(name="Future School", school_id="FUT-1")
         Activity.objects.create(
-            activity_type="school_visit", status="completed", school=school,
-            catalogue_item=self.item, fy="2030",
+            activity_type="school_visit",
+            status="completed",
+            school=school,
+            catalogue_item=self.item,
+            fy="2030",
         )
         row = milestone_plan_progress([self.milestone], fy="2030")[self.milestone.id]
         self.assertTrue(row["has_work"])
@@ -522,7 +542,9 @@ class YearNotStartedTest(TestCase):
         from django.template.loader import render_to_string
 
         row = milestone_plan_progress([self.milestone], fy="2030")[self.milestone.id]
-        html = render_to_string("components/meter.html", {"progress": row, "meta": True})
+        html = render_to_string(
+            "components/meter.html", {"progress": row, "meta": True}
+        )
         self.assertIn("edify-meter--waiting", html)
         self.assertIn("Not started", html)
         self.assertIn("FY2030 has not started", html)

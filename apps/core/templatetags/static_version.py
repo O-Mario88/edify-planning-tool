@@ -34,7 +34,9 @@ def static_version(path: str) -> str:
         key = ""
         if source:
             try:
-                key = hashlib.md5(Path(source).read_bytes()).hexdigest()[:10]  # noqa: S324 — cache key, not security
+                key = hashlib.md5(  # noqa: S324 — cache key, not security
+                    Path(source).read_bytes(), usedforsecurity=False
+                ).hexdigest()[:10]
             except OSError:
                 key = ""
         _HASHES[path] = key

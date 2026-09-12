@@ -208,20 +208,39 @@ class KpiInterventionAbbreviationTests(SimpleTestCase):
 
     def test_a_value_that_is_an_intervention_shows_its_code_and_keeps_the_name(self):
         output = self.render(
-            [{"label": "Weakest Intervention", "value": "Exposure to the Word of God", "helper": "Avg 2.1"}]
+            [
+                {
+                    "label": "Weakest Intervention",
+                    "value": "Exposure to the Word of God",
+                    "helper": "Avg 2.1",
+                }
+            ]
         )
         self.assertIn(">WOG<", output)
         self.assertIn('title="Exposure to the Word of God"', output)
         self.assertNotIn(">Exposure to the Word of God<", output)
 
-    def test_a_helper_naming_an_intervention_is_abbreviated_and_kept_whole_in_its_title(self):
+    def test_a_helper_naming_an_intervention_is_abbreviated_and_kept_whole_in_its_title(
+        self,
+    ):
         output = self.render(
-            [{"label": "SSA average", "value": "5.4/10", "helper": "Weakest: Teacher's Environment"}]
+            [
+                {
+                    "label": "SSA average",
+                    "value": "5.4/10",
+                    "helper": "Weakest: Teacher's Environment",
+                }
+            ]
         )
         self.assertIn(">Weakest: TE<", output)
-        self.assertIn("title=\"Weakest: Teacher&#x27;s Environment\"", output)
+        self.assertIn('title="Weakest: Teacher&#x27;s Environment"', output)
 
     def test_money_and_plain_counts_are_untouched(self):
-        output = self.render([{"label": "Spend", "value": "UGX 12,500,000"}, {"label": "Visits", "value": 17}])
+        output = self.render(
+            [
+                {"label": "Spend", "value": "UGX 12,500,000"},
+                {"label": "Visits", "value": 17},
+            ]
+        )
         self.assertIn("UGX 12.5M", output)
         self.assertIn(">17<", output)

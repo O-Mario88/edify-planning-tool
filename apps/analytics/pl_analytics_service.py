@@ -109,10 +109,18 @@ from apps.core.interventions import INTERVENTION_ABBREVIATIONS as _ABBR  # noqa:
 
 SSA_INTERVENTIONS = [
     ("christlike_behaviour", "Christlike Behaviour", _ABBR["christlike_behaviour"]),
-    ("exposure_to_word_of_god", "Exposure to the Word of God", _ABBR["exposure_to_word_of_god"]),
+    (
+        "exposure_to_word_of_god",
+        "Exposure to the Word of God",
+        _ABBR["exposure_to_word_of_god"],
+    ),
     ("financial_health", "Financial Health", _ABBR["financial_health"]),
     ("leadership", "Leadership", _ABBR["leadership"]),
-    ("government_requirement", "Government Requirements", _ABBR["government_requirement"]),
+    (
+        "government_requirement",
+        "Government Requirements",
+        _ABBR["government_requirement"],
+    ),
     ("learning_environment", "Learning Environment", _ABBR["learning_environment"]),
     ("teaching_environment", "Teacher's Environment", _ABBR["teaching_environment"]),
     ("enrolment", "Enrolment", _ABBR["enrolment"]),

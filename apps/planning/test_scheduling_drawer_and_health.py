@@ -1107,19 +1107,35 @@ class DrawerLabelRowTest(SimpleTestCase):
         from pathlib import Path
 
         css = Path("static/css/drawers.css").read_text()
-        self.assertIn(".drawer-body label.flex,\n.drawer-body label.inline-flex {\n  display: flex;\n}", css)
-        html = Path("templates/partials/clusters/cluster_action_planner_drawer.html").read_text()
-        self.assertIn('<label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50">', html)
+        self.assertIn(
+            ".drawer-body label.flex,\n.drawer-body label.inline-flex {\n  display: flex;\n}",
+            css,
+        )
+        html = Path(
+            "templates/partials/clusters/cluster_action_planner_drawer.html"
+        ).read_text()
+        self.assertIn(
+            '<label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50">',
+            html,
+        )
         # checkbox, then the school id, then the name — all on that one row
         box = html.index('name="invited_school_ids"')
-        ident = html.index('{{ s.school_id }}', box)
-        name = html.index('{{ s.name }}', box)
+        ident = html.index("{{ s.school_id }}", box)
+        name = html.index("{{ s.name }}", box)
         self.assertLess(box, ident)
         self.assertLess(ident, name)
         self.assertNotIn('<span class="block', html[box:name])
         # the per-school counts are digits, so they stay three across
-        self.assertEqual(html.count('<div class="grid grid-cols-3 gap-2" data-keep-columns>'), 2)
-        self.assertIn('.drawer-body .grid:not(.grid-cols-7):not([data-keep-columns]) {\n  grid-template-columns: minmax(0, 1fr);\n}', css)
+        self.assertEqual(
+            html.count('<div class="grid grid-cols-3 gap-2" data-keep-columns>'), 2
+        )
+        self.assertIn(
+            ".drawer-body .grid:not(.grid-cols-7):not([data-keep-columns]) {\n  grid-template-columns: minmax(0, 1fr);\n}",
+            css,
+        )
         self.assertNotIn("repeat(2, minmax(0, 1fr));\n    align-items: start;", css)
         self.assertIn('> [class*="col-span-"] {\n  grid-column: auto;\n}', css)
-        self.assertNotIn("@container drawer (min-width: 40rem)", Path("static/css/consistency.css").read_text())
+        self.assertNotIn(
+            "@container drawer (min-width: 40rem)",
+            Path("static/css/consistency.css").read_text(),
+        )

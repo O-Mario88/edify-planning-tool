@@ -1782,7 +1782,9 @@ class CDAnalyticsService:
                         continue
                     for pid, ids in schools_by_partner.items():
                         if sid in ids:
-                            bucket = sums.setdefault(pid, {latest: [0.0, 0], prev: [0.0, 0]})
+                            bucket = sums.setdefault(
+                                pid, {latest: [0.0, 0], prev: [0.0, 0]}
+                            )
                             bucket[fy][0] += float(score)
                             bucket[fy][1] += 1
 
@@ -2134,7 +2136,10 @@ class CDAnalyticsService:
                     milestone__definition_status="approved",
                 )
                 .filter(
-                    Q(allocated_to_type="employee", employee_id__in=all_staff | pl_staff)
+                    Q(
+                        allocated_to_type="employee",
+                        employee_id__in=all_staff | pl_staff,
+                    )
                     | Q(allocated_to_type="team", team_id__in=pl_staff)
                 )
                 .exists()

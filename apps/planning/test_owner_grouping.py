@@ -27,8 +27,12 @@ User = get_user_model()
 
 def _staff(uid, role, name, **profile):
     user = User.objects.create(
-        id=uid, email=f"{uid}@edify.org", name=name, roles=[role],
-        active_role=role, is_active=True,
+        id=uid,
+        email=f"{uid}@edify.org",
+        name=name,
+        roles=[role],
+        active_role=role,
+        is_active=True,
     )
     return user, StaffProfile.objects.create(
         id=f"{uid}-sp", user=user, title=role, **profile
@@ -49,20 +53,33 @@ class OwnerGroupingFixture(TestCase):
         cls.district = District.objects.create(name="OG District", region=cls.region)
         cls.sub_county = SubCounty.objects.create(name="OG SC", district=cls.district)
         cls.cluster = Cluster.objects.create(
-            name="OG Cluster", region=cls.region, district=cls.district,
-            sub_county=cls.sub_county, cluster_type="mixed", status="active",
+            name="OG Cluster",
+            region=cls.region,
+            district=cls.district,
+            sub_county=cls.sub_county,
+            cluster_type="mixed",
+            status="active",
         )
-        cls.pl_user, cls.pl = _staff("og-pl", "Program Lead", "PL One", country="Uganda")
+        cls.pl_user, cls.pl = _staff(
+            "og-pl", "Program Lead", "PL One", country="Uganda"
+        )
         cls.a_user, cls.a = _staff("og-a", "CCEO", "CCEO Anna", country="Uganda")
         cls.b_user, cls.b = _staff("og-b", "CCEO", "CCEO Ben", country="Uganda")
         StaffSupervisorAssignment.objects.create(supervisor=cls.pl, supervisee=cls.a)
-        cls.ia_user, cls.ia = _staff("og-ia", "ImpactAssessment", "IA Officer", country="Uganda")
+        cls.ia_user, cls.ia = _staff(
+            "og-ia", "ImpactAssessment", "IA Officer", country="Uganda"
+        )
 
         def school(code, name, owner):
             return School.objects.create(
-                school_id=code, name=name, region=cls.region, district=cls.district,
-                sub_county=cls.sub_county, school_type="client",
-                account_owner_id=owner.id, cluster_id=cls.cluster.id,
+                school_id=code,
+                name=name,
+                region=cls.region,
+                district=cls.district,
+                sub_county=cls.sub_county,
+                school_type="client",
+                account_owner_id=owner.id,
+                cluster_id=cls.cluster.id,
                 cluster_status="clustered",
             )
 
@@ -71,9 +88,16 @@ class OwnerGroupingFixture(TestCase):
         cls.mango = school("OG-3", "Mango Primary", cls.b)
 
     def _rows(self, principal, **extra):
-        filters = {"fy": get_operational_fy(), "tab": "client", "page": 1,
-                   "per_page": 50, **extra}
-        return PlanningDashboardService.get_dashboard_data(principal, filters)["schools"]
+        filters = {
+            "fy": get_operational_fy(),
+            "tab": "client",
+            "page": 1,
+            "per_page": 50,
+            **extra,
+        }
+        return PlanningDashboardService.get_dashboard_data(principal, filters)[
+            "schools"
+        ]
 
 
 class OwnerGroupingServiceTest(OwnerGroupingFixture):
@@ -140,7 +164,11 @@ class OwnerGroupingPageTest(OwnerGroupingFixture):
         self.client.force_login(self.ia_user)
         html = self.client.get("/planning").content.decode()
         for school in (self.zebra, self.apple, self.mango):
-            self.assertIn(f"/planning/schedule-modal?school_id={school.school_id}", html)
-        response = self.client.get(f"/planning/schedule-modal?school_id={self.mango.school_id}")
+            self.assertIn(
+                f"/planning/schedule-modal?school_id={school.school_id}", html
+            )
+        response = self.client.get(
+            f"/planning/schedule-modal?school_id={self.mango.school_id}"
+        )
         self.assertEqual(response.status_code, 200)
         self.assertIn("who approves this visit", response.content.decode())

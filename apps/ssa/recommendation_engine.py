@@ -126,8 +126,9 @@ def _cluster_latest_scores(cluster_id: str) -> dict[str, dict[str, float]]:
 
     def compute():
         school_ids = list(
-            School.objects.filter(cluster_id=cluster_id, deleted_at__isnull=True)
-            .values_list("id", flat=True)
+            School.objects.filter(
+                cluster_id=cluster_id, deleted_at__isnull=True
+            ).values_list("id", flat=True)
         )
         if not school_ids:
             return {}
@@ -148,7 +149,9 @@ def _cluster_latest_scores(cluster_id: str) -> dict[str, dict[str, float]]:
             ssa_record_id__in=list(latest_by_school.values())
         ).values("ssa_record_id", "intervention", "score"):
             if row["score"] is not None and row["intervention"] in _ALL_INTERVENTIONS:
-                scores[school_by_record[row["ssa_record_id"]]][row["intervention"]] = float(row["score"])
+                scores[school_by_record[row["ssa_record_id"]]][row["intervention"]] = (
+                    float(row["score"])
+                )
         return scores
 
     return memoize(("ssa.cluster_latest_scores", cluster_id), compute)

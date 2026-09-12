@@ -704,7 +704,9 @@ class Command(BaseCommand):
             # twin raises a unique violation and takes the whole seed down.
             # Reviving the existing row keeps the partner's assignment history
             # attached to it, which a fresh twin would have left orphaned.
-            partner = Partner.all_objects.filter(name=name).order_by("created_at").first()
+            partner = (
+                Partner.all_objects.filter(name=name).order_by("created_at").first()
+            )
             if partner is None:
                 partner = Partner.objects.create(
                     name=name,
@@ -923,9 +925,9 @@ class Command(BaseCommand):
             owner_id = portfolio_owner_profile_id(school)
             if not owner_id:
                 continue
-            owner_subcounty_groups.setdefault((owner_id, school.sub_county_id), []).append(
-                school
-            )
+            owner_subcounty_groups.setdefault(
+                (owner_id, school.sub_county_id), []
+            ).append(school)
         # Deterministic: biggest groups first, then by key, so a re-seed puts
         # the same schools in the same clusters.
         ranked_groups = sorted(
@@ -939,11 +941,7 @@ class Command(BaseCommand):
                 ranked_groups[i] if i < len(ranked_groups) else ((None, None), [])
             )
             group_owner_id, _group_sub_county_id = group_key
-            dist = (
-                group_schools[0].district
-                if group_schools
-                else rnd.choice(districts)
-            )
+            dist = group_schools[0].district if group_schools else rnd.choice(districts)
             cluster, _ = Cluster.objects.get_or_create(
                 name=cl_name,
                 defaults={

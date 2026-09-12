@@ -63,7 +63,9 @@ def record_login(request, user) -> None:
         )
         User.objects.filter(pk=user.pk).update(last_seen_at=now)
     except (DatabaseError, ValueError):  # pragma: no cover - defensive
-        logger.exception("presence: sign-in was not recorded for %s", getattr(user, "pk", None))
+        logger.exception(
+            "presence: sign-in was not recorded for %s", getattr(user, "pk", None)
+        )
 
 
 def touch_presence(user) -> None:
@@ -121,7 +123,10 @@ def presence_summary(*, now=None) -> dict:
         .annotate(n=Count("id"))
     }
     daily = [
-        {"date": today - timedelta(days=offset), "count": per_day.get(today - timedelta(days=offset), 0)}
+        {
+            "date": today - timedelta(days=offset),
+            "count": per_day.get(today - timedelta(days=offset), 0),
+        }
         for offset in range(13, -1, -1)
     ]
     # Eight weeks of weekly counts, Monday to Sunday.
@@ -132,7 +137,9 @@ def presence_summary(*, now=None) -> dict:
         weekly.append(
             {
                 "week_start": start,
-                "count": events.filter(at__gte=start_dt, at__lt=start_dt + timedelta(weeks=1)).count(),
+                "count": events.filter(
+                    at__gte=start_dt, at__lt=start_dt + timedelta(weeks=1)
+                ).count(),
             }
         )
     return {

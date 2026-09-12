@@ -23,7 +23,6 @@ and keeps the three properties the diagnosis turned on.
 
 from __future__ import annotations
 
-import re
 from pathlib import Path
 
 from django.test import SimpleTestCase
@@ -53,8 +52,11 @@ class FormRefusalScriptTest(SimpleTestCase):
         start = source.index('addEventListener(\n    "invalid"')
         # The listener's own argument list, up to the call that closes it.
         block = source[start : source.index("\n  );", start)]
-        self.assertIn("true", block.rsplit(",", 1)[-1],
-                      "the invalid listener must register with capture=true")
+        self.assertIn(
+            "true",
+            block.rsplit(",", 1)[-1],
+            "the invalid listener must register with capture=true",
+        )
 
     def test_one_attempt_reports_every_missing_field_together(self):
         """The browser raises `invalid` once per rejected control in the same

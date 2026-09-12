@@ -678,7 +678,9 @@ class PlanningDashboardService:
                         "groupLabel": _group_label(
                             owner_group_directory.get(s.account_owner_id or "")
                         ),
-                        "groupCount": owner_group_counts.get(s.account_owner_id or "", 0),
+                        "groupCount": owner_group_counts.get(
+                            s.account_owner_id or "", 0
+                        ),
                         "schoolContact": s.primary_contact_name or "—",
                         "phone": s.primary_contact_phone
                         or s.school_phone

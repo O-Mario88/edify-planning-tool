@@ -32,6 +32,7 @@ from .planning_service import _scoped_projects
 
 INTERVENTION_LABELS = dict(SsaIntervention.choices)
 from apps.core.interventions import INTERVENTION_ABBREVIATIONS as INTERVENTION_ABBR  # noqa: E402
+
 CLASS_TONE = {
     "Great Impact": "success",
     "Positive Impact": "success",

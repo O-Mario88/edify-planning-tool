@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from unittest import mock
 
-from django.test import SimpleTestCase, TestCase
+from django.test import TestCase
 
 from apps.analytics.cd_analytics_service import CDAnalyticsService, CDScope
 

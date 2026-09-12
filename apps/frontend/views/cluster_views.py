@@ -740,7 +740,9 @@ def cluster_detail_view(request, cluster_id):
     from apps.clusters.models import Cluster as _Cluster
     from apps.clusters.services import cluster_delete_block
 
-    _cluster_row = _Cluster.objects.filter(id=cluster_id, deleted_at__isnull=True).first()
+    _cluster_row = _Cluster.objects.filter(
+        id=cluster_id, deleted_at__isnull=True
+    ).first()
     context = {
         "cluster": detail,
         # The reason the Delete control is inert, shown beside it — a cluster
@@ -1107,9 +1109,8 @@ def cluster_bulk_assign_drawer_view(request, cluster_id):
             cluster_status="unclustered",
             deleted_at__isnull=True,
         )
-    unassigned_schools = (
-        unassigned_schools.select_related("sub_county")
-        .order_by("sub_county__name", "name")
+    unassigned_schools = unassigned_schools.select_related("sub_county").order_by(
+        "sub_county__name", "name"
     )
 
     context = {

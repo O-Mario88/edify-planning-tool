@@ -33,7 +33,10 @@ INTERVENTION_ABBREVIATIONS: dict[str, str] = {
 #: Full label → abbreviation, longest label first so a label that contains
 #: another ("Learning Environment" / "Teacher's Environment") is matched whole.
 _LABEL_TO_ABBR: list[tuple[str, str]] = sorted(
-    ((label, INTERVENTION_ABBREVIATIONS[code]) for code, label in INTERVENTION_LABELS.items()),
+    (
+        (label, INTERVENTION_ABBREVIATIONS[code])
+        for code, label in INTERVENTION_LABELS.items()
+    ),
     key=lambda pair: -len(pair[0]),
 )
 _LABEL_PATTERN = re.compile(

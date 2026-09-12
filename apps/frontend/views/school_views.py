@@ -691,6 +691,7 @@ def school_directory_view(request):
     )
     school_owners = _school_owner_queryset()
     from apps.core.scoping import cluster_owner_ids
+
     if scope.country_scope or scope.can_view_summary_only:
         clusters = Cluster.objects.filter(
             deleted_at__isnull=True, status=ClusterRecordStatus.ACTIVE
@@ -912,6 +913,7 @@ def add_to_cluster_drawer_view(request, school_id):
     existing_covering_cluster = active_cluster_for_school_geography(school)
     if existing_covering_cluster:
         from apps.clusters.eligibility import school_owner_ids
+
         owner_ids = school_owner_ids(school)
         if (
             existing_covering_cluster.responsible_staff_id
@@ -2145,6 +2147,7 @@ def school_onboard_drawer_view(request):
 
     districts = District.objects.select_related("region").order_by("name")
     from apps.core.scoping import cluster_owner_ids
+
     onboard_scope = resolve_user_scope(request.user)
     if onboard_scope.country_scope or onboard_scope.can_view_summary_only:
         clusters = Cluster.objects.filter(

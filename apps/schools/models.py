@@ -1031,10 +1031,9 @@ def prime_ssa_readiness(schools) -> None:
         return
     ids = [s.id for s in schools]
     latest: dict = {}
-    for record in (
-        SsaRecord.objects.filter(school_id__in=ids, deleted_at__isnull=True)
-        .order_by("school_id", "-date_of_ssa")
-    ):
+    for record in SsaRecord.objects.filter(
+        school_id__in=ids, deleted_at__isnull=True
+    ).order_by("school_id", "-date_of_ssa"):
         latest.setdefault(record.school_id, record)
     pending: dict = {}
     for act in (

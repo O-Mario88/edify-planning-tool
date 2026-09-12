@@ -13,12 +13,16 @@ from apps.core.interventions import (
 
 class InterventionAbbreviationTest(SimpleTestCase):
     def test_every_intervention_has_a_short_distinct_code(self):
-        codes = [INTERVENTION_ABBREVIATIONS[code] for code, _ in SsaIntervention.choices]
+        codes = [
+            INTERVENTION_ABBREVIATIONS[code] for code, _ in SsaIntervention.choices
+        ]
         self.assertEqual(len(codes), 8)
         self.assertEqual(len(set(codes)), 8)
         self.assertTrue(all(1 < len(c) <= 5 and c.isupper() for c in codes), codes)
         self.assertEqual(intervention_abbr("exposure_to_word_of_god"), "WOG")
-        self.assertEqual(intervention_abbr("not_an_intervention"), "not_an_intervention")
+        self.assertEqual(
+            intervention_abbr("not_an_intervention"), "not_an_intervention"
+        )
 
     def test_names_inside_text_are_abbreviated_and_kept_whole_elsewhere(self):
         self.assertEqual(
@@ -26,8 +30,13 @@ class InterventionAbbreviationTest(SimpleTestCase):
             "Weakest: WOG · Avg 2.1",
         )
         # A label that contains another is matched whole, not in pieces.
-        self.assertEqual(abbreviate_interventions("Teacher's Environment / Learning Environment"), "TE / LE")
-        self.assertEqual(abbreviate_interventions("Financial health"), "FH")  # case-insensitive
+        self.assertEqual(
+            abbreviate_interventions("Teacher's Environment / Learning Environment"),
+            "TE / LE",
+        )
+        self.assertEqual(
+            abbreviate_interventions("Financial health"), "FH"
+        )  # case-insensitive
         self.assertEqual(abbreviate_interventions(12), 12)
         self.assertEqual(abbreviate_interventions(""), "")
         self.assertTrue(mentions_intervention("Leadership"))
@@ -40,4 +49,7 @@ class InterventionAbbreviationTest(SimpleTestCase):
 
         self.assertIs(SSA_SCORE_ABBREVIATIONS, INTERVENTION_ABBREVIATIONS)
         self.assertIs(INTERVENTION_ABBR, INTERVENTION_ABBREVIATIONS)
-        self.assertEqual([code for _, _, code in SSA_INTERVENTIONS], list(INTERVENTION_ABBREVIATIONS.values()))
+        self.assertEqual(
+            [code for _, _, code in SSA_INTERVENTIONS],
+            list(INTERVENTION_ABBREVIATIONS.values()),
+        )

@@ -166,7 +166,14 @@ def district_frame(
         if not part.empty:
             base = base.merge(part, on="district_id", how="left")
 
-    for col in ("schools", "clusters", "ssa_n", "enrollment", "schools_visited", "schools_trained"):
+    for col in (
+        "schools",
+        "clusters",
+        "ssa_n",
+        "enrollment",
+        "schools_visited",
+        "schools_trained",
+    ):
         if col not in base:
             base[col] = 0
         base[col] = base[col].fillna(0).astype(int)

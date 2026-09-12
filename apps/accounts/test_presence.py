@@ -7,22 +7,30 @@ per day, per week."
 from __future__ import annotations
 
 from datetime import timedelta
-from unittest import mock
 
 from django.contrib.auth import get_user_model
-from django.test import RequestFactory, TestCase, override_settings
+from django.test import RequestFactory, TestCase
 from django.utils import timezone
 
 from apps.accounts.models import LoginEvent, StaffProfile
-from apps.accounts.presence import ONLINE_WINDOW, presence_summary, record_login, touch_presence
+from apps.accounts.presence import (
+    ONLINE_WINDOW,
+    presence_summary,
+    record_login,
+    touch_presence,
+)
 
 User = get_user_model()
 
 
 def _user(uid, role="CCEO"):
     user = User.objects.create(
-        id=uid, email=f"{uid}@edify.org", name=uid.title(), roles=[role],
-        active_role=role, is_active=True,
+        id=uid,
+        email=f"{uid}@edify.org",
+        name=uid.title(),
+        roles=[role],
+        active_role=role,
+        is_active=True,
     )
     StaffProfile.objects.create(id=f"{uid}-sp", user=user, title=role, country="Uganda")
     return user
@@ -35,7 +43,11 @@ class PresenceServiceTest(TestCase):
         self.rf = RequestFactory()
 
     def test_a_sign_in_is_recorded_with_its_role_and_address(self):
-        request = self.rf.post("/login", HTTP_X_FORWARDED_FOR="203.0.113.9, 10.0.0.1", HTTP_USER_AGENT="Edify/1")
+        request = self.rf.post(
+            "/login",
+            HTTP_X_FORWARDED_FOR="203.0.113.9, 10.0.0.1",
+            HTTP_USER_AGENT="Edify/1",
+        )
         record_login(request, self.anna)
         event = LoginEvent.objects.get(user=self.anna)
         self.assertEqual(event.role, "CCEO")
@@ -46,8 +58,12 @@ class PresenceServiceTest(TestCase):
 
     def test_online_means_seen_within_the_window(self):
         now = timezone.now()
-        User.objects.filter(pk=self.anna.pk).update(last_seen_at=now - timedelta(minutes=3))
-        User.objects.filter(pk=self.ben.pk).update(last_seen_at=now - ONLINE_WINDOW - timedelta(minutes=1))
+        User.objects.filter(pk=self.anna.pk).update(
+            last_seen_at=now - timedelta(minutes=3)
+        )
+        User.objects.filter(pk=self.ben.pk).update(
+            last_seen_at=now - ONLINE_WINDOW - timedelta(minutes=1)
+        )
         summary = presence_summary(now=now)
         self.assertEqual([p["name"] for p in summary["online"]], ["Anna"])
         self.assertEqual(summary["online_count"], 1)
@@ -56,7 +72,9 @@ class PresenceServiceTest(TestCase):
         now = timezone.now()
         local_today = timezone.localtime(now).date()
         for days_ago in (0, 0, 1, 8, 20):
-            LoginEvent.objects.create(user=self.anna, at=now - timedelta(days=days_ago), role="CCEO")
+            LoginEvent.objects.create(
+                user=self.anna, at=now - timedelta(days=days_ago), role="CCEO"
+            )
         summary = presence_summary(now=now)
         self.assertEqual(summary["logins_today"], 2)
         self.assertEqual(summary["logins_last_7_days"], 3)
@@ -73,7 +91,9 @@ class PresenceServiceTest(TestCase):
         record_login(request, self.anna)  # must not raise
         event = LoginEvent.objects.get(user=self.anna)
         self.assertIsNone(event.ip)
-        request = self.rf.post("/login", HTTP_X_FORWARDED_FOR="not-an-address", REMOTE_ADDR="10.1.2.3")
+        request = self.rf.post(
+            "/login", HTTP_X_FORWARDED_FOR="not-an-address", REMOTE_ADDR="10.1.2.3"
+        )
         record_login(request, self.ben)
         self.assertIsNone(LoginEvent.objects.get(user=self.ben).ip)
 

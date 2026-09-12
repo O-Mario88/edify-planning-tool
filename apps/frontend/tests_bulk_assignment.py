@@ -189,6 +189,7 @@ class BulkAssignmentTests(TestCase):
     def test_schools_directory_scopes_clusters_to_owner(self):
         """School directory assign-cluster modal scopes clusters to the staff owner."""
         from django.contrib.auth import get_user_model
+
         User = get_user_model()
         cceo = User.objects.create(
             id="user-cceo-1",

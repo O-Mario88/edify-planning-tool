@@ -431,7 +431,7 @@ class ProgrammeWorkPlanSurfaceTest(_ProgrammeFixture):
         # the funnel then rejected was the worse of the two. It is bound to
         # the chosen item, never a free-standing required field.
         self.assertIn('name="planned_school_count"', html)
-        self.assertIn('x-bind:required="selected.fieldEvent === \'false\'"', html)
+        self.assertIn("x-bind:required=\"selected.fieldEvent === 'false'\"", html)
 
         # Activity type and delivery mode are DERIVED from the chosen
         # catalogue item, not entered beside it. They used to be their own
