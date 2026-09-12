@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 618,
-  "templates": 227,
-  "distinct_titles": 587,
+  "titled_cards": 619,
+  "templates": 228,
+  "distinct_titles": 588,
   "with_card_key": 13,
-  "untitled_surfaces": 787,
+  "untitled_surfaces": 789,
   "untitled_chrome": 179,
-  "untitled_nested": 254,
+  "untitled_nested": 256,
   "untitled_headless": 354,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 24,
@@ -3028,7 +3028,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 107,
+   "line": 117,
    "title": "Appearance",
    "heading_level": 2,
    "has_card_key": false,
@@ -3037,7 +3037,7 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 148,
+   "line": 158,
    "title": "Notifications",
    "heading_level": 2,
    "has_card_key": false,
@@ -3046,12 +3046,26 @@
   },
   {
    "template": "templates/pages/settings/index.html",
-   "line": 153,
+   "line": 163,
    "title": "Session",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-2",
    "branch_path": []
+  },
+  {
+   "template": "templates/pages/settings/two_step_app.html",
+   "line": 39,
+   "title": "Already set up",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "card p-5 space-y-2",
+   "branch_path": [
+    [
+     2,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/pages/ssa/manual_entry.html",

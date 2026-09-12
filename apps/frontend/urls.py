@@ -68,6 +68,12 @@ urlpatterns = [
     path("login/verify", auth_views.mfa_verify_view, name="mfa_verify"),
     path("login/resend-code", auth_views.mfa_resend_view, name="mfa_resend"),
     path("settings/two-step", auth_views.mfa_settings_view, name="mfa_settings"),
+    path("settings/two-step/app", auth_views.mfa_app_setup_view, name="mfa_app_setup"),
+    path(
+        "settings/two-step/app/remove",
+        auth_views.mfa_app_remove_view,
+        name="mfa_app_remove",
+    ),
     path(
         "settings/activity-catalogue/",
         catalogue_views.activity_catalogue_page,

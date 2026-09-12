@@ -161,7 +161,7 @@ class User(AbstractBaseUser, PermissionsMixin, SoftDeleteModel):
     mfa_enabled = models.BooleanField(default=False)
     mfa_channel = models.CharField(
         max_length=16,
-        choices=[("email", "Email"), ("sms", "SMS")],
+        choices=[("email", "Email"), ("sms", "SMS"), ("app", "Authenticator app")],
         default="email",
     )
     mfa_secret = models.CharField(max_length=512, null=True, blank=True)
@@ -329,7 +329,7 @@ class MfaChallenge(TimeStampedModel):
     phone number at the organisation's expense.
     """
 
-    CHANNELS = (("email", "Email"), ("sms", "SMS"))
+    CHANNELS = (("email", "Email"), ("sms", "SMS"), ("app", "Authenticator app"))
 
     id = CuidField()
     user = models.ForeignKey(

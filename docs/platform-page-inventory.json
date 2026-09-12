@@ -42497,7 +42497,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-AE7E3050B4",
-      "page_title": "Check your phone email",
+      "page_title": "Open your authenticator app",
       "page_type": "approval-or-verification",
       "per_page_css": [],
       "permission_key": "",
@@ -60005,6 +60005,84 @@
       "typography_exceptions": [
         "text-[13px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.6,
+      "backend_module": "apps.frontend.views.auth_views",
+      "backend_view": "apps.frontend.views.auth_views.mfa_app_setup_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/settings/two_step_app.html",
+        "test:referenced-by-automated-test",
+        "permission:unmapped"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-C9AF5B9B1E",
+      "page_title": "Authenticator app \u00b7 Edify",
+      "page_type": "administration-or-configuration",
+      "per_page_css": [],
+      "permission_key": "",
+      "primary_action": "Turn on",
+      "primary_user_decision": "What governed configuration change is required?",
+      "purpose": "Enrol an authenticator app: show a fresh secret, activate it once the person types the code their app shows for it. Needs no email or SMS.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [],
+      "route": "/settings/two-step/app",
+      "route_name": "mfa_app_setup",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{% url "
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.activities.models",
+        "apps.audit.services",
+        "apps.ssa.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": true,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/settings/two_step_app.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -80982,6 +81060,33 @@
       "templates": []
     },
     {
+      "callback": "apps.frontend.views.auth_views.mfa_app_setup_view",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/settings/two-step/app",
+      "route_name": "mfa_app_setup",
+      "templates": [
+        "pages/settings/two_step_app.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.auth_views.mfa_app_remove_view",
+      "kind": "platform-route",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "",
+      "required_permissions": [],
+      "route": "/settings/two-step/app/remove",
+      "route_name": "mfa_app_remove",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.ssa_views.ssa_performance_view",
       "kind": "page",
       "methods": [
@@ -81840,16 +81945,16 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 418,
+    "accessibility_contract_pass": 419,
     "activity_states": 24,
-    "all_routes": 1071,
+    "all_routes": 1073,
     "api_routes": 359,
     "component_templates": 406,
-    "full_pages": 236,
-    "mobile_contract_pass": 418,
+    "full_pages": 237,
+    "mobile_contract_pass": 419,
     "nonvisual_actions": 165,
     "page_types": {
-      "administration-or-configuration": 24,
+      "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
@@ -81863,7 +81968,7 @@
     "permission_gated": 590,
     "permission_keys": 112,
     "roles": 14,
-    "routed_surfaces": 604,
+    "routed_surfaces": 605,
     "scheduled_jobs": 26,
     "severity_counts": {
       "critical": 0,
@@ -81871,8 +81976,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 418,
-    "test_referenced": 561,
-    "theme_contract_pass": 418
+    "tablet_contract_pass": 419,
+    "test_referenced": 562,
+    "theme_contract_pass": 419
   }
 }

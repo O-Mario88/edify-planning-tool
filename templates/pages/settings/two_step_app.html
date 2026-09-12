@@ -1,0 +1,49 @@
+{% extends "layouts/shell.html" %}
+{% block title %}Authenticator app · Edify{% endblock %}
+{% block shell_content %}
+<div class="edify-page-canvas max-w-2xl space-y-4">
+  <header class="edify-page-header">
+    <h1 class="edify-page-title">Set up your authenticator app</h1>
+    <p class="text-sm text-[var(--edify-text-muted)]">Codes come from an app on your phone, so this works even when email or text messages cannot reach you.</p>
+  </header>
+
+  <section class="card p-5 space-y-4">
+    <ol class="list-decimal ml-5 space-y-3 text-sm">
+      <li>Install <strong>Google Authenticator</strong>, <strong>Microsoft Authenticator</strong> or <strong>Authy</strong> on your phone.</li>
+      <li>
+        On this phone, <a href="{{ otpauth_uri }}" class="underline font-semibold">open this link to add Edify Planning to the app</a>.
+        On another device, add an account by hand with this key:
+        <div class="mt-2 p-3 rounded-surface border border-[var(--edify-border)] bg-[var(--edify-surface-muted)] font-mono text-base tracking-widest select-all" data-app-secret>{{ secret_grouped }}</div>
+        <p class="mt-1 text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">Time-based, 6 digits, 30 seconds. Account name: your Edify email.</p>
+      </li>
+      <li>Type the 6-digit code the app shows now, so we know it is set up.</li>
+    </ol>
+
+    <form method="post" action="{% url 'frontend:mfa_app_setup' %}" class="space-y-3" data-app-confirm-form>
+      {% csrf_token %}
+      <div>
+        <label for="app-code" class="block text-[length:var(--edify-text-label-size)] font-semibold">Code from the app</label>
+        <input id="app-code" name="code" type="text" inputmode="numeric" autocomplete="one-time-code" pattern="[0-9]*" maxlength="6" required autofocus
+               class="mt-1 w-40 h-10 px-3 rounded-control border border-[var(--edify-border)] bg-[var(--edify-surface)] text-lg tracking-widest"
+               {% if error %}aria-invalid="true" aria-describedby="app-code-error"{% endif %}>
+      </div>
+      {% if error %}<p id="app-code-error" class="edify-note" data-tone="warning" role="alert">{{ error }}</p>{% endif %}
+      <div class="flex items-center gap-2">
+        <button type="submit" class="btn btn-primary h-8 inline-flex items-center">Turn on</button>
+        <a href="/settings" class="btn h-8 inline-flex items-center">Cancel</a>
+      </div>
+    </form>
+  </section>
+
+  {% if already_enrolled %}
+  <section class="card p-5 space-y-2">
+    <h2 class="text-sm font-semibold">Already set up</h2>
+    <p class="text-sm text-[var(--edify-text-muted)]">Finishing the steps above replaces the key on this account. To stop using the app and go back to email codes:</p>
+    <form method="post" action="{% url 'frontend:mfa_app_remove' %}">
+      {% csrf_token %}
+      <button type="submit" class="btn h-8 inline-flex items-center">Remove the authenticator app</button>
+    </form>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

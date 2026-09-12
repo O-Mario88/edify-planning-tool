@@ -822,3 +822,107 @@ class ChallengeRateLimitTest(MfaTestCase):
         )
         challenge, _ = mfa_service.start_challenge(self.user)
         self.assertIsNotNone(challenge)
+
+
+class AuthenticatorAppTest(MfaTestCase):
+    """A second factor that needs no email or SMS provider (2026-09-12): the
+    person enrols an authenticator app on their phone and signs in with the
+    code it shows."""
+
+    def setUp(self):
+        super().setUp()
+        self.user = _user("app@edify.test", enabled=False)
+        self.client = Client()
+
+    def _enrol(self):
+        from apps.accounts import mfa_service
+
+        self.client.force_login(self.user)
+        page = self.client.get("/settings/two-step/app")
+        self.assertEqual(page.status_code, 200)
+        secret = self.client.session["mfa_app_pending_secret"]
+        self.assertContains(page, "otpauth://totp/")
+        self.assertContains(page, secret[:4])
+        response = self.client.post(
+            "/settings/two-step/app", {"code": mfa_service.totp_code(secret)}
+        )
+        self.assertEqual(response["Location"], "/settings")
+        self.user.refresh_from_db()
+        return secret
+
+    def test_enrolment_needs_the_right_code_and_then_turns_the_factor_on(self):
+        from apps.accounts import mfa_service
+
+        self.client.force_login(self.user)
+        self.client.get("/settings/two-step/app")
+        wrong = self.client.post("/settings/two-step/app", {"code": "000000"})
+        self.assertEqual(wrong.status_code, 200)
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.mfa_enabled)
+        self.assertFalse(mfa_service.app_enrolled(self.user))
+
+        self._enrol()
+        self.assertTrue(self.user.mfa_enabled)
+        self.assertEqual(self.user.mfa_channel, "app")
+        self.assertTrue(mfa_service.app_enrolled(self.user))
+        self.assertIn("app", mfa_service.available_channels(self.user))
+
+    def test_signing_in_with_the_app_sends_nothing_and_accepts_its_code(self):
+        from apps.accounts import mfa_service
+
+        secret = self._enrol()
+        client = Client()
+        response = self.sign_in(client, self.user)
+        self.assertEqual(response["Location"], "/login/verify")
+        self.assertEqual(self.captured.messages, [], "no email or SMS may be sent")
+        page = client.get("/login/verify")
+        self.assertContains(page, "Open your authenticator app")
+        self.assertNotContains(page, "Send a new code")
+        bad = client.post("/login/verify", {"code": "000000"})
+        self.assertEqual(bad.status_code, 200)
+        self.assertNotIn("_auth_user_id", client.session)
+        good = client.post("/login/verify", {"code": mfa_service.totp_code(secret)})
+        self.assertEqual(good["Location"], "/dashboard")
+        self.assertIn("_auth_user_id", client.session)
+
+    @override_settings(MFA_REQUIRED_ROLES={"Admin"})
+    def test_a_policy_covered_account_can_sign_in_by_app_with_no_mail_at_all(self):
+        from apps.accounts import mfa_service
+
+        self.user.roles = ["Admin"]
+        self.user.active_role = "Admin"
+        self.user.save(update_fields=["roles", "active_role"])
+        secret = self._enrol()
+        client = Client()
+        self.sign_in(client, self.user)
+        self.assertEqual(self.captured.messages, [])
+        good = client.post("/login/verify", {"code": mfa_service.totp_code(secret)})
+        self.assertEqual(good["Location"], "/dashboard")
+
+    def test_removing_the_app_falls_back_to_email(self):
+        from apps.accounts import mfa_service
+
+        self._enrol()
+        response = self.client.post("/settings/two-step/app/remove")
+        self.assertEqual(response["Location"], "/settings")
+        self.user.refresh_from_db()
+        self.assertFalse(mfa_service.app_enrolled(self.user))
+        self.assertEqual(self.user.mfa_channel, "email")
+
+    def test_choosing_the_app_before_enrolling_goes_to_the_setup_page(self):
+        self.client.force_login(self.user)
+        response = self.client.post(
+            "/settings/two-step", {"mfa_enabled": "on", "mfa_channel": "app"}
+        )
+        self.assertEqual(response["Location"], "/settings/two-step/app")
+        self.user.refresh_from_db()
+        self.assertFalse(self.user.mfa_enabled)
+
+    def test_the_totp_matches_the_rfc_6238_vector(self):
+        import base64
+
+        from apps.accounts import mfa_service
+
+        secret = base64.b32encode(b"12345678901234567890").decode().rstrip("=")
+        self.assertEqual(mfa_service.totp_code(secret, at=59), "287082")
+        self.assertEqual(mfa_service.totp_code(secret, at=1111111109), "081804")

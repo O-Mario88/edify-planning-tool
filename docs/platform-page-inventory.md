@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **604**
-- All registered routes: **1071**
+- Routed product surfaces: **605**
+- All registered routes: **1073**
 - API routes: **359**
 - Roles: **14**
 - Permission keys: **112**
 - Scheduled jobs: **26**
 - Activity states: **24**
 - Shared component templates: **406**
-- Full pages: **236**
+- Full pages: **237**
 - Partials and drawers: **179**
 - Permission-gated surfaces: **590**
-- Referenced by automated tests: **561**
+- Referenced by automated tests: **562**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -387,7 +387,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5144CCA312 | /loans/repayment-snapshots | Loan Repayment Snapshot Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-9D676C663F | /loans/save | Loan Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-D1857EF285 | /login | Sign in | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-AE7E3050B4 | /login/verify | Check your phone email | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-AE7E3050B4 | /login/verify | Open your authenticator app | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4526582CB6 | /map | School Map · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-B83F484DF3 | /messages | Messages | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3B4661EEDB | /messages/ | Messages | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -574,6 +574,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-100A4132EB | /settings | Settings · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2F5DDB9EA2 | /settings/activity-catalogue/ | Activity Catalogue · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-99CE4E6D5D | /settings/activity-catalogue/new | Activity Catalogue Create | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-C9AF5B9B1E | /settings/two-step/app | Authenticator app · Edify | administration-or-configuration | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4A86903104 | /ssa | SSA Performance | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-E33623599D | /ssa/export | Ssa Performance Export | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-1B9D56BC39 | /ssa/manual/ | Add SSA Score - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

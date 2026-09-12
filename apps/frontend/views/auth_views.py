@@ -581,6 +581,10 @@ def mfa_settings_view(request):
         )
         return redirect("/settings")
 
+    # The authenticator app is enrolled on its own page: the person must prove
+    # their app shows the right code before the platform relies on it.
+    if channel == mfa_service.APP_CHANNEL and not mfa_service.app_enrolled(user):
+        return redirect("/settings/two-step/app")
     # Never enrol onto a channel that cannot deliver — that is not a security
     # control, it is a lockout with a confirmation message.
     if channel not in mfa_service.available_channels(user):
@@ -608,6 +612,81 @@ def mfa_settings_view(request):
         )
     else:
         messages.success(request, "Two-step verification is off.")
+    return redirect("/settings")
+
+
+PENDING_APP_SECRET = "mfa_app_pending_secret"
+
+
+@login_required(login_url="/login")
+def mfa_app_setup_view(request):
+    """Enrol an authenticator app: show a fresh secret, activate it once the
+    person types the code their app shows for it. Needs no email or SMS."""
+    from apps.accounts import mfa_service
+    from apps.audit.services import log as audit_log
+
+    user = request.user
+    if request.method == "POST":
+        secret = request.session.get(PENDING_APP_SECRET) or ""
+        if secret and mfa_service.confirm_app_enrolment(
+            user, secret, request.POST.get("code", "")
+        ):
+            request.session.pop(PENDING_APP_SECRET, None)
+            audit_log(
+                action="mfa_enrolment_changed",
+                subject_kind="User",
+                subject_id=str(user.id),
+                actor_id=str(user.id),
+                actor_role=user.active_role,
+                success=True,
+                payload={"enabled": True, "channel": mfa_service.APP_CHANNEL},
+            )
+            messages.success(
+                request,
+                "Two-step verification is on. Your authenticator app will give "
+                "you the code when you sign in.",
+            )
+            return redirect("/settings")
+        error = "That code is not right. Check the app and try again."
+    else:
+        secret = mfa_service.generate_app_secret()
+        request.session[PENDING_APP_SECRET] = secret
+        error = ""
+    return render(
+        request,
+        "pages/settings/two_step_app.html",
+        {
+            "secret": secret,
+            "secret_grouped": " ".join(
+                secret[i : i + 4] for i in range(0, len(secret), 4)
+            ),
+            "otpauth_uri": mfa_service.otpauth_uri(user, secret),
+            "error": error,
+            "already_enrolled": mfa_service.app_enrolled(user),
+        },
+    )
+
+
+@login_required(login_url="/login")
+@require_POST
+def mfa_app_remove_view(request):
+    from apps.accounts import mfa_service
+    from apps.audit.services import log as audit_log
+
+    user = request.user
+    mfa_service.remove_app(user)
+    audit_log(
+        action="mfa_enrolment_changed",
+        subject_kind="User",
+        subject_id=str(user.id),
+        actor_id=str(user.id),
+        actor_role=user.active_role,
+        success=True,
+        payload={"app_removed": True, "channel": user.mfa_channel},
+    )
+    messages.success(
+        request, "The authenticator app has been removed. Codes go by email."
+    )
     return redirect("/settings")
 
 

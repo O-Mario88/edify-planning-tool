@@ -2,11 +2,19 @@
 
 {% block auth_content %}
 <header class="login-heading">
+  {% if channel == 'app' %}
+  <h1 id="mfa-title" class="edify-page-title">Open your authenticator app</h1>
+  <p>
+    Enter the {{ code_length }}-digit code the app shows for Edify Planning.
+    It changes every 30 seconds; nothing was sent to you.
+  </p>
+  {% else %}
   <h1 id="mfa-title" class="edify-page-title">Check your {% if channel == 'sms' %}phone{% else %}email{% endif %}</h1>
   <p>
     We sent a {{ code_length }}-digit code to
     <strong>{{ destination_hint }}</strong>. Enter it to finish signing in.
   </p>
+  {% endif %}
 </header>
 
 <form class="login-form" action="{% url 'frontend:mfa_verify' %}" method="post" aria-labelledby="mfa-title">
@@ -66,7 +74,7 @@
 </form>
 
 <div class="login-options mt-3">
-  {% if can_resend %}
+  {% if can_resend and channel != 'app' %}
     {% comment %}
       Its own form because resending is a POST — it sends a message and spends
       one of a bounded number of deliveries, so it must not be reachable by a

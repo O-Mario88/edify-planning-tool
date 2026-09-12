@@ -69,6 +69,15 @@ CHALLENGE_WINDOW = timedelta(hours=1)
 
 EMAIL_CHANNEL = "email"
 SMS_CHANNEL = "sms"
+# An authenticator app (Google Authenticator, Microsoft Authenticator, Authy…)
+# generating time-based codes on the person's own phone. Nothing is sent, so
+# it works with no email or SMS provider at all — added 2026-09-12 after the
+# owner was locked out of production by an email channel that never
+# delivered. RFC 6238: SHA-1, 30-second steps, six digits, one step of drift.
+APP_CHANNEL = "app"
+TOTP_STEP_SECONDS = 30
+TOTP_DRIFT_STEPS = 1
+APP_HINT = "your authenticator app"
 
 
 # Outcome codes. Plain strings so a view can branch on them and a template can
@@ -109,7 +118,106 @@ def available_channels(user: User) -> list[str]:
     channels = [EMAIL_CHANNEL]
     if user.phone and sms.is_configured:
         channels.append(SMS_CHANNEL)
+    if app_enrolled(user):
+        channels.append(APP_CHANNEL)
     return channels
+
+
+# ── Authenticator app (TOTP) ───────────────────────────────────────────────
+def app_enrolled(user: User) -> bool:
+    return bool(getattr(user, "mfa_secret", None))
+
+
+def generate_app_secret() -> str:
+    """A fresh 160-bit secret, base32 as every authenticator app expects."""
+    import base64
+
+    return base64.b32encode(secrets.token_bytes(20)).decode("ascii").rstrip("=")
+
+
+def _seal_secret(secret: str) -> str:
+    """Store the secret encrypted where the deployment has a field key
+    (production always does — it is a boot gate); plain otherwise."""
+    from apps.core import crypto
+
+    try:
+        return crypto.encrypt_field(secret)
+    except RuntimeError:
+        return secret
+
+
+def app_secret_for(user: User) -> str | None:
+    from apps.core import crypto
+
+    stored = getattr(user, "mfa_secret", None)
+    if not stored:
+        return None
+    if crypto.is_encrypted(stored):
+        try:
+            return crypto.decrypt_field(stored)
+        except RuntimeError:
+            return None
+    return stored
+
+
+def totp_code(secret: str, *, at: float | None = None, step_offset: int = 0) -> str:
+    """The six digits an authenticator app shows for this secret right now."""
+    import base64
+    import struct
+    import time as _time
+
+    padded = secret.upper() + "=" * (-len(secret) % 8)
+    key = base64.b32decode(padded, casefold=True)
+    counter = (
+        int((at if at is not None else _time.time()) // TOTP_STEP_SECONDS) + step_offset
+    )
+    digest = hmac.new(key, struct.pack(">Q", counter), hashlib.sha1).digest()
+    offset = digest[-1] & 0x0F
+    number = (struct.unpack(">I", digest[offset : offset + 4])[0] & 0x7FFFFFFF) % (
+        10**CODE_DIGITS
+    )
+    return str(number).zfill(CODE_DIGITS)
+
+
+def verify_totp(secret: str, submitted: str) -> bool:
+    digits = "".join(c for c in (submitted or "") if c.isdigit())
+    if len(digits) != CODE_DIGITS:
+        return False
+    return any(
+        hmac.compare_digest(totp_code(secret, step_offset=offset), digits)
+        for offset in range(-TOTP_DRIFT_STEPS, TOTP_DRIFT_STEPS + 1)
+    )
+
+
+def otpauth_uri(user: User, secret: str) -> str:
+    """What a QR code would carry; on a phone the link opens the app directly."""
+    from urllib.parse import quote
+
+    issuer = "Edify Planning"
+    label = quote(f"{issuer}:{user.email}", safe="")
+    return (
+        f"otpauth://totp/{label}?secret={secret}&issuer={quote(issuer)}"
+        f"&algorithm=SHA1&digits={CODE_DIGITS}&period={TOTP_STEP_SECONDS}"
+    )
+
+
+def confirm_app_enrolment(user: User, secret: str, submitted: str) -> bool:
+    """Activate the app only once the person has proven their app shows the
+    right code for the secret they were given."""
+    if not verify_totp(secret, submitted):
+        return False
+    user.mfa_secret = _seal_secret(secret)
+    user.mfa_channel = APP_CHANNEL
+    user.mfa_enabled = True
+    user.save(update_fields=["mfa_secret", "mfa_channel", "mfa_enabled", "updated_at"])
+    return True
+
+
+def remove_app(user: User) -> None:
+    user.mfa_secret = None
+    if user.mfa_channel == APP_CHANNEL:
+        user.mfa_channel = EMAIL_CHANNEL
+    user.save(update_fields=["mfa_secret", "mfa_channel", "updated_at"])
 
 
 def enrolment_state(user: User) -> dict:
@@ -130,6 +238,7 @@ def enrolment_state(user: User) -> dict:
         "mfa_in_force": required_for(user),
         "mfa_channel": resolve_channel(user),
         "mfa_channels": channels,
+        "mfa_app_available": APP_CHANNEL in channels,
         "mfa_sms_available": SMS_CHANNEL in channels,
         "mfa_sms_blocked_reason": (
             ""
@@ -219,6 +328,8 @@ def _mask_phone(number: str) -> str:
 
 def destination_for(user: User, channel: str) -> tuple[str, str]:
     """(where it goes, what we are willing to show)."""
+    if channel == APP_CHANNEL:
+        return "", APP_HINT
     if channel == SMS_CHANNEL and user.phone:
         return user.phone, _mask_phone(user.phone)
     return user.email, _mask_email(user.email)
@@ -275,6 +386,9 @@ def start_challenge(
             last_sent_at=timezone.now(),
         )
 
+    if channel == APP_CHANNEL:
+        # Nothing to send: the code is on the person's phone already.
+        return challenge, Delivery(True, APP_CHANNEL, APP_HINT)
     delivery = _deliver(user, challenge, code, destination)
     return challenge, delivery
 
@@ -294,6 +408,8 @@ def resend(challenge: MfaChallenge) -> Delivery:
         return Delivery(
             False, challenge.channel, challenge.destination_hint, CODE_EXPIRED
         )
+    if challenge.channel == APP_CHANNEL:
+        return Delivery(True, APP_CHANNEL, APP_HINT)
     if challenge.deliveries >= MAX_DELIVERIES:
         return Delivery(
             False, challenge.channel, challenge.destination_hint, "resend_limit"
@@ -407,6 +523,18 @@ def verify(challenge: MfaChallenge, code: str) -> Verification:
         return Verification(False, TOO_MANY_ATTEMPTS)
 
     submitted = "".join(c for c in (code or "") if c.isdigit())
+    if challenge.channel == APP_CHANNEL:
+        secret = app_secret_for(challenge.user)
+        if secret and verify_totp(secret, submitted):
+            challenge.consumed_at = now
+            challenge.save(update_fields=["consumed_at", "updated_at"])
+            return Verification(True)
+        challenge.attempts += 1
+        challenge.save(update_fields=["attempts", "updated_at"])
+        remaining = max(0, MAX_ATTEMPTS - challenge.attempts)
+        if remaining == 0:
+            return Verification(False, TOO_MANY_ATTEMPTS)
+        return Verification(False, CODE_INCORRECT, attempts_left=remaining)
 
     # compare_digest, not ==. Comparing hex digests of equal length leaks
     # little, but the habit is what keeps the one comparison that would matter

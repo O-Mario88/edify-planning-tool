@@ -75,7 +75,17 @@
       {% endif %}
 
       <fieldset class="space-y-2" x-show="enabled" x-cloak>
-        <legend class="text-[length:var(--edify-text-label-size)] font-semibold">Send my code by</legend>
+        <legend class="text-[length:var(--edify-text-label-size)] font-semibold">Get my code from</legend>
+        <label class="flex items-start gap-2.5">
+          <input type="radio" name="mfa_channel" value="app" class="mt-0.5"
+                 {% if mfa_channel == 'app' %}checked{% endif %}>
+          <span class="text-sm">
+            Authenticator app
+            <span class="block text-[length:var(--edify-text-label-size)] text-[var(--edify-text-muted)]">
+              {% if mfa_app_available %}Set up on your phone. <a href="/settings/two-step/app" class="underline">Set up again</a>{% else %}Google Authenticator, Microsoft Authenticator or Authy on your phone — works with no email or text message. <a href="/settings/two-step/app" class="underline">Set it up</a>{% endif %}
+            </span>
+          </span>
+        </label>
 
         <label class="flex items-start gap-2.5">
           <input type="radio" name="mfa_channel" value="email" class="mt-0.5"
