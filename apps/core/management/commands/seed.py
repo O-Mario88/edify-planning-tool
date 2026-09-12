@@ -57,6 +57,14 @@ DEMO_ACCOUNTS = [
     ("cd@edify.org", "Sarah Okello", EdifyRole.COUNTRY_DIRECTOR.value),
     ("ia@edify.org", "Grace Alimo", EdifyRole.IMPACT_ASSESSMENT.value),
     ("rvp@edify.org", "Robert Vance", EdifyRole.REGIONAL_VICE_PRESIDENT.value),
+    # Oversees the Programme Leads of one region and decides nothing. Their
+    # region comes from the geography assignment an administrator makes; the
+    # seeder gives them the first region so the role is usable in dev.
+    (
+        "regional-lead@edify.org",
+        "Esther Nabwire",
+        EdifyRole.REGIONAL_PROGRAM_LEAD.value,
+    ),
     ("accountant@edify.org", "Moses Tindi", EdifyRole.PROGRAM_ACCOUNTANT.value),
     ("hr@edify.org", "Hellen Auma", EdifyRole.HUMAN_RESOURCES.value),
     ("coordinator@edify.org", "Allan Ssentongo", EdifyRole.PROJECT_COORDINATOR.value),
@@ -329,9 +337,21 @@ class Command(BaseCommand):
                 EdifyRole.MFI_PARTNER_ADMIN.value,
                 EdifyRole.MFI_LOAN_OFFICER.value,
             }:
-                StaffProfile.objects.update_or_create(
+                profile, _ = StaffProfile.objects.update_or_create(
                     user=u, defaults={"onboarding_state": "active"}
                 )
+                # The Regional Programme Lead reads one region, so an
+                # unassigned one reads nothing: give the demo account the
+                # first region that exists (geography is seeded before this).
+                if role == EdifyRole.REGIONAL_PROGRAM_LEAD.value:
+                    from apps.accounts.models import StaffGeographyAssignment
+                    from apps.geography.models import Region
+
+                    region = Region.objects.order_by("name").first()
+                    if region is not None:
+                        StaffGeographyAssignment.objects.get_or_create(
+                            staff=profile, region_id=region.id
+                        )
 
         # Program Leads (4) + CCEOs (20) with staff profiles + supervisor links.
         pls = []

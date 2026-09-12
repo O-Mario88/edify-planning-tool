@@ -8,7 +8,7 @@
   "with_drilldown": 0,
   "labels_in_several_modules": 0,
   "breakdown_rows": 191,
-  "registered_metrics": 411,
+  "registered_metrics": 414,
   "rendered_summaries": 140,
   "context_summaries": 140,
   "headline_summaries": 0,
@@ -1400,7 +1400,7 @@
    "audit_id": "KPI-SOURCE-072",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1396,
+   "line": 1390,
    "label": null,
    "keys": [
     "amount",
@@ -1420,7 +1420,7 @@
    "audit_id": "KPI-SOURCE-073",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1070,
+   "line": 1064,
    "label": null,
    "keys": [
     "count",
@@ -1441,7 +1441,7 @@
    "audit_id": "KPI-SOURCE-074",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_dashboard_service.py",
-   "line": 1388,
+   "line": 1382,
    "label": "Not Started",
    "keys": [
     "amount",
@@ -1602,7 +1602,7 @@
    "audit_id": "KPI-SOURCE-082",
    "kind": "other",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 777,
+   "line": 798,
    "label": null,
    "keys": [
     "done",
@@ -1623,7 +1623,7 @@
    "audit_id": "KPI-SOURCE-083",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_dashboard_service.py",
-   "line": 1305,
+   "line": 1326,
    "label": null,
    "keys": [
     "amount",
@@ -1662,7 +1662,7 @@
    "audit_id": "KPI-SOURCE-085",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 297,
+   "line": 313,
    "label": null,
    "keys": [
     "action",
@@ -1682,7 +1682,7 @@
    "audit_id": "KPI-SOURCE-086",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 796,
+   "line": 812,
    "label": null,
    "keys": [
     "count",
@@ -1699,7 +1699,7 @@
    "audit_id": "KPI-SOURCE-087",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 898,
+   "line": 914,
    "label": "General Budget Approval Delayed",
    "keys": [
     "aging",
@@ -1719,7 +1719,7 @@
    "audit_id": "KPI-SOURCE-088",
    "kind": "breakdown-row",
    "module": "apps/analytics/rvp_dashboard_service.py",
-   "line": 913,
+   "line": 929,
    "label": "Projects Underperforming",
    "keys": [
     "aging",
@@ -3024,7 +3024,7 @@
    "audit_id": "KPI-SOURCE-153",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 243,
+   "line": 260,
    "label": "My Work",
    "keys": [
     "count",
@@ -3043,7 +3043,7 @@
    "audit_id": "KPI-SOURCE-154",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 280,
+   "line": 297,
    "label": null,
    "keys": [
     "count",
@@ -3062,7 +3062,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 253,
+   "line": 270,
    "label": null,
    "keys": [
     "count",
@@ -3081,7 +3081,7 @@
    "audit_id": "KPI-SOURCE-156",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 909,
+   "line": 937,
    "label": "All Partners",
    "keys": [
     "count",
@@ -3099,7 +3099,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/oversight_views.py",
-   "line": 915,
+   "line": 943,
    "label": null,
    "keys": [
     "count",
@@ -6063,6 +6063,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Operate impact & reports within the business transformation workflow.",
@@ -6247,6 +6248,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
@@ -6283,6 +6285,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
@@ -6319,6 +6322,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
@@ -6355,6 +6359,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
@@ -6804,6 +6809,7 @@
     "MFI_OFFICER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Cockpit for requesting and managing personal leaves, matching the premium dashboard layout reference.",
@@ -6839,6 +6845,7 @@
     "MFI_OFFICER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Cockpit for requesting and managing personal leaves, matching the premium dashboard layout reference.",
@@ -6902,6 +6909,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "General notifications center dashboard.",
@@ -6960,6 +6968,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Partner Activities workspace for partner organisations.",
@@ -7026,6 +7035,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "User profile \u2014 role info, stats, recent activity, self-service edit.",
@@ -7393,6 +7403,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "The dedicated To-Do operating queue \u2014 system-generated, role-scoped, auto-closing action items derived live from workflow state.",
@@ -8297,6 +8308,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
@@ -8399,6 +8411,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "National program performance, approvals, targets, compliance &amp; operational risk.",
@@ -9120,6 +9133,7 @@
     "CD",
     "IA",
     "PL",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "One Team Oversight workspace for planning and target performance.",
@@ -9136,7 +9150,7 @@
   {
    "audit_id": "KPI-SURFACE-123",
    "template": "templates/partials/oversight/team_country_workspace.html",
-   "line": 3,
+   "line": 9,
    "source_pattern": "shared-component",
    "items_expression": "kpis",
    "presentation": "context",
@@ -9149,6 +9163,7 @@
     "CD",
     "IA",
     "PL",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "One Team Oversight workspace for planning and target performance.",
@@ -9230,6 +9245,7 @@
     "HR",
     "IA",
     "PL",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Operate strategic priorities within the frontend workflow.",
@@ -9478,7 +9494,8 @@
     "CD",
     "IA",
     "PL",
-    "PROJECT_COORDINATOR"
+    "PROJECT_COORDINATOR",
+    "RPL"
    ],
    "page_purpose": "Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.",
    "primary_action": "Open Upload Center",
@@ -9514,6 +9531,7 @@
     "PARTNER",
     "PL",
     "PROJECT_COORDINATOR",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "Unified, role-scoped SSA intelligence workspace.",
@@ -9630,6 +9648,7 @@
     "CD",
     "IA",
     "PL",
+    "RPL",
     "RVP"
    ],
    "page_purpose": "One Team Oversight workspace for planning and target performance.",
@@ -11905,6 +11924,125 @@
   },
   {
    "audit_id": "KPI-REG-058",
+   "kpi_id": "oversight_region_activities_planned",
+   "metric_registry_id": "oversight_region_activities_planned",
+   "page": "team_planning_oversight",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Region Planned Activities",
+   "definition": "Every activity planned in the period at a school in this region, plus the cluster work whose district sits in it, plus every partner handover in it that no partner has scheduled yet.",
+   "value_type": "count",
+   "period": "financial_year",
+   "scope": "One region, by the geography of the school and the cluster",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "Planned activities plus unscheduled partner handovers, region-wide",
+   "denominator": null,
+   "date_basis": "activity_planned_date",
+   "finance_stage": null,
+   "primary_home": "team_planning_oversight",
+   "approved_contextual_pages": [],
+   "user_question": "What has this region committed to this period?",
+   "user_decision": "What has this region committed to this period?",
+   "user_action": "/team-planning-oversight/",
+   "drill_down": "/team-planning-oversight/",
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "What has this region committed to this period?",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.planning.oversight_service.summarize",
+   "source_location": "apps.planning.oversight_service.summarize",
+   "source_models": [
+    "activities.Activity",
+    "partners.PartnerAssignment"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-059",
+   "kpi_id": "oversight_region_activities_at_risk",
+   "metric_registry_id": "oversight_region_activities_at_risk",
+   "page": "team_planning_oversight",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Region Activities At Risk",
+   "definition": "The same risk conditions as the team lens, measured across one region rather than one team.",
+   "value_type": "count",
+   "period": "financial_year",
+   "scope": "One region, by the geography of the school and the cluster",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "Items with one or more live risk conditions, region-wide",
+   "denominator": null,
+   "date_basis": "activity_planned_date",
+   "finance_stage": null,
+   "primary_home": "team_planning_oversight",
+   "approved_contextual_pages": [],
+   "user_question": "Which Programme Leads are carrying this region's planning risk?",
+   "user_decision": "Which Programme Leads are carrying this region's planning risk?",
+   "user_action": "/team-planning-oversight/",
+   "drill_down": "/team-planning-oversight/",
+   "metric_class": "primary-decision-kpi",
+   "recommendation": "retain",
+   "reason": "Which Programme Leads are carrying this region's planning risk?",
+   "replacement_pattern": "primary KPI group",
+   "priority": "high",
+   "implementation_status": "completed",
+   "service": "apps.planning.risk_service.annotate",
+   "source_location": "apps.planning.risk_service.annotate",
+   "source_models": [
+    "activities.Activity",
+    "partners.PartnerAssignment"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-060",
+   "kpi_id": "oversight_region_planned_budget",
+   "metric_registry_id": "oversight_region_planned_budget",
+   "page": "team_planning_oversight",
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "Admin"
+   ],
+   "metric_name": "Planned Region Budget",
+   "definition": "The sum of the cost lines on every scheduled activity in the region, on the same basis as the team figure. The Regional Programme Lead reads this figure and approves none of it.",
+   "value_type": "money_ugx",
+   "period": "financial_year",
+   "scope": "One region, by the geography of the school and the cluster",
+   "data_state": "measured-or-explicit-absence",
+   "numerator": "Sum of cost lines on scheduled activities, region-wide",
+   "denominator": null,
+   "date_basis": "activity_planned_date",
+   "finance_stage": "planned",
+   "primary_home": "team_planning_oversight",
+   "approved_contextual_pages": [],
+   "user_question": "What has this region's plan committed financially?",
+   "user_decision": "What has this region's plan committed financially?",
+   "user_action": "/team-planning-oversight/",
+   "drill_down": "/team-planning-oversight/",
+   "metric_class": "context-kpi",
+   "recommendation": "convert",
+   "reason": "What has this region's plan committed financially?",
+   "replacement_pattern": "compact context summary",
+   "priority": "medium",
+   "implementation_status": "completed",
+   "service": "apps.planning.oversight_service.summarize",
+   "source_location": "apps.planning.oversight_service.summarize",
+   "source_models": [
+    "activities.ActivityScheduleCostLine"
+   ],
+   "filter_behaviour": "filtered"
+  },
+  {
+   "audit_id": "KPI-REG-061",
    "kpi_id": "oversight_partner_awaiting_schedule",
    "metric_registry_id": "oversight_partner_awaiting_schedule",
    "page": "team_planning_oversight",
@@ -11945,7 +12083,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-059",
+   "audit_id": "KPI-REG-062",
    "kpi_id": "oversight_team_work_needing_attention",
    "metric_registry_id": "oversight_team_work_needing_attention",
    "page": "team_planning_oversight",
@@ -11985,7 +12123,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-060",
+   "audit_id": "KPI-REG-063",
    "kpi_id": "oversight_country_activities_at_risk",
    "metric_registry_id": "oversight_country_activities_at_risk",
    "page": "country_planning_oversight",
@@ -12025,7 +12163,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-061",
+   "audit_id": "KPI-REG-064",
    "kpi_id": "oversight_team_planned_budget",
    "metric_registry_id": "oversight_team_planned_budget",
    "page": "team_planning_oversight",
@@ -12064,7 +12202,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-062",
+   "audit_id": "KPI-REG-065",
    "kpi_id": "oversight_country_planned_budget",
    "metric_registry_id": "oversight_country_planned_budget",
    "page": "country_planning_oversight",
@@ -12103,7 +12241,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-063",
+   "audit_id": "KPI-REG-066",
    "kpi_id": "oversight_execution_progress",
    "metric_registry_id": "oversight_execution_progress",
    "page": "team_planning_oversight",
@@ -12144,7 +12282,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-064",
+   "audit_id": "KPI-REG-067",
    "kpi_id": "oversight_awaiting_verification",
    "metric_registry_id": "oversight_awaiting_verification",
    "page": "team_planning_oversight",
@@ -12185,7 +12323,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-065",
+   "audit_id": "KPI-REG-068",
    "kpi_id": "partner_oversight_active_partners",
    "metric_registry_id": "partner_oversight_active_partners",
    "page": "partner_oversight",
@@ -12224,7 +12362,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-066",
+   "audit_id": "KPI-REG-069",
    "kpi_id": "partner_oversight_yet_to_schedule",
    "metric_registry_id": "partner_oversight_yet_to_schedule",
    "page": "partner_oversight",
@@ -12263,7 +12401,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-067",
+   "audit_id": "KPI-REG-070",
    "kpi_id": "partner_oversight_scheduled",
    "metric_registry_id": "partner_oversight_scheduled",
    "page": "partner_oversight",
@@ -12303,7 +12441,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-068",
+   "audit_id": "KPI-REG-071",
    "kpi_id": "partner_oversight_needing_attention",
    "metric_registry_id": "partner_oversight_needing_attention",
    "page": "partner_oversight",
@@ -12343,7 +12481,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-069",
+   "audit_id": "KPI-REG-072",
    "kpi_id": "partner_oversight_scheduled_budget",
    "metric_registry_id": "partner_oversight_scheduled_budget",
    "page": "partner_oversight",
@@ -12382,7 +12520,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-070",
+   "audit_id": "KPI-REG-073",
    "kpi_id": "partner_oversight_payment_pending",
    "metric_registry_id": "partner_oversight_payment_pending",
    "page": "partner_oversight",
@@ -12421,7 +12559,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-071",
+   "audit_id": "KPI-REG-074",
    "kpi_id": "bt_new_loans",
    "metric_registry_id": "bt_new_loans",
    "page": "business_transformation",
@@ -12464,7 +12602,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-072",
+   "audit_id": "KPI-REG-075",
    "kpi_id": "bt_value_disbursed",
    "metric_registry_id": "bt_value_disbursed",
    "page": "business_transformation",
@@ -12508,7 +12646,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-073",
+   "audit_id": "KPI-REG-076",
    "kpi_id": "bt_schools_financed",
    "metric_registry_id": "bt_schools_financed",
    "page": "business_transformation",
@@ -12552,7 +12690,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-074",
+   "audit_id": "KPI-REG-077",
    "kpi_id": "bt_active_portfolio",
    "metric_registry_id": "bt_active_portfolio",
    "page": "business_transformation",
@@ -12596,7 +12734,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-075",
+   "audit_id": "KPI-REG-078",
    "kpi_id": "bt_repaid_amount",
    "metric_registry_id": "bt_repaid_amount",
    "page": "business_transformation",
@@ -12640,7 +12778,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-076",
+   "audit_id": "KPI-REG-079",
    "kpi_id": "bt_amount_overdue",
    "metric_registry_id": "bt_amount_overdue",
    "page": "business_transformation",
@@ -12684,7 +12822,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-077",
+   "audit_id": "KPI-REG-080",
    "kpi_id": "bt_defaulted_portfolio",
    "metric_registry_id": "bt_defaulted_portfolio",
    "page": "business_transformation",
@@ -12728,7 +12866,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-078",
+   "audit_id": "KPI-REG-081",
    "kpi_id": "bt_par30",
    "metric_registry_id": "bt_par30",
    "page": "business_transformation",
@@ -12772,7 +12910,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-079",
+   "audit_id": "KPI-REG-082",
    "kpi_id": "bt_collection_rate",
    "metric_registry_id": "bt_collection_rate",
    "page": "business_transformation",
@@ -12817,7 +12955,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-080",
+   "audit_id": "KPI-REG-083",
    "kpi_id": "bt_edtech_share",
    "metric_registry_id": "bt_edtech_share",
    "page": "business_transformation",
@@ -12860,7 +12998,7 @@
    "filter_behaviour": "filtered"
   },
   {
-   "audit_id": "KPI-REG-081",
+   "audit_id": "KPI-REG-084",
    "kpi_id": "bt_use_verified",
    "metric_registry_id": "bt_use_verified",
    "page": "business_transformation",
@@ -12903,7 +13041,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-082",
+   "audit_id": "KPI-REG-085",
    "kpi_id": "bt_salesforce_backlog",
    "metric_registry_id": "bt_salesforce_backlog",
    "page": "business_transformation",
@@ -12946,7 +13084,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-083",
+   "audit_id": "KPI-REG-086",
    "kpi_id": "bt_positive_impact",
    "metric_registry_id": "bt_positive_impact",
    "page": "business_transformation",
@@ -12989,7 +13127,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-084",
+   "audit_id": "KPI-REG-087",
    "kpi_id": "accounts_hr_dashboard_service_active_employees",
    "metric_registry_id": "accounts_hr_dashboard_service_active_employees",
    "page": "workforce_dashboard",
@@ -13040,7 +13178,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-085",
+   "audit_id": "KPI-REG-088",
    "kpi_id": "accounts_hr_dashboard_service_open_positions",
    "metric_registry_id": "accounts_hr_dashboard_service_open_positions",
    "page": "workforce_dashboard",
@@ -13091,7 +13229,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-086",
+   "audit_id": "KPI-REG-089",
    "kpi_id": "accounts_hr_dashboard_service_new_hires_onboarding",
    "metric_registry_id": "accounts_hr_dashboard_service_new_hires_onboarding",
    "page": "workforce_dashboard",
@@ -13142,7 +13280,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-087",
+   "audit_id": "KPI-REG-090",
    "kpi_id": "accounts_hr_dashboard_service_staff_on_track",
    "metric_registry_id": "accounts_hr_dashboard_service_staff_on_track",
    "page": "workforce_dashboard",
@@ -13193,7 +13331,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-088",
+   "audit_id": "KPI-REG-091",
    "kpi_id": "accounts_hr_dashboard_service_high_risk_staff",
    "metric_registry_id": "accounts_hr_dashboard_service_high_risk_staff",
    "page": "workforce_dashboard",
@@ -13244,7 +13382,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-089",
+   "audit_id": "KPI-REG-092",
    "kpi_id": "accounts_hr_dashboard_service_on_leave_today",
    "metric_registry_id": "accounts_hr_dashboard_service_on_leave_today",
    "page": "workforce_dashboard",
@@ -13295,7 +13433,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-090",
+   "audit_id": "KPI-REG-093",
    "kpi_id": "accounts_hr_dashboard_service_coverage_clashes_7d",
    "metric_registry_id": "accounts_hr_dashboard_service_coverage_clashes_7d",
    "page": "workforce_dashboard",
@@ -13346,7 +13484,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-091",
+   "audit_id": "KPI-REG-094",
    "kpi_id": "accounts_hr_dashboard_service_pending_leave_approvals",
    "metric_registry_id": "accounts_hr_dashboard_service_pending_leave_approvals",
    "page": "workforce_dashboard",
@@ -13397,7 +13535,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-092",
+   "audit_id": "KPI-REG-095",
    "kpi_id": "accounts_hr_dashboard_service_performance_reviews_due",
    "metric_registry_id": "accounts_hr_dashboard_service_performance_reviews_due",
    "page": "workforce_dashboard",
@@ -13448,7 +13586,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-093",
+   "audit_id": "KPI-REG-096",
    "kpi_id": "accounts_hr_dashboard_service_compliance_completion",
    "metric_registry_id": "accounts_hr_dashboard_service_compliance_completion",
    "page": "workforce_dashboard",
@@ -13499,7 +13637,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-094",
+   "audit_id": "KPI-REG-097",
    "kpi_id": "accounts_hr_dashboard_service_cpd_completion",
    "metric_registry_id": "accounts_hr_dashboard_service_cpd_completion",
    "page": "workforce_dashboard",
@@ -13550,7 +13688,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-095",
+   "audit_id": "KPI-REG-098",
    "kpi_id": "accounts_hr_dashboard_service_payroll_readiness",
    "metric_registry_id": "accounts_hr_dashboard_service_payroll_readiness",
    "page": "workforce_dashboard",
@@ -13601,7 +13739,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-096",
+   "audit_id": "KPI-REG-099",
    "kpi_id": "analytics_analytics_dashboard_service_overall_target_achievement",
    "metric_registry_id": "analytics_analytics_dashboard_service_overall_target_achievement",
    "page": "platform_analytics",
@@ -13645,7 +13783,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-097",
+   "audit_id": "KPI-REG-100",
    "kpi_id": "analytics_analytics_dashboard_service_teachers_trained",
    "metric_registry_id": "analytics_analytics_dashboard_service_teachers_trained",
    "page": "platform_analytics",
@@ -13697,7 +13835,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-098",
+   "audit_id": "KPI-REG-101",
    "kpi_id": "analytics_analytics_dashboard_service_school_leaders_trained",
    "metric_registry_id": "analytics_analytics_dashboard_service_school_leaders_trained",
    "page": "platform_analytics",
@@ -13749,7 +13887,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-099",
+   "audit_id": "KPI-REG-102",
    "kpi_id": "analytics_analytics_dashboard_service_students_impacted",
    "metric_registry_id": "analytics_analytics_dashboard_service_students_impacted",
    "page": "platform_analytics",
@@ -13801,7 +13939,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-100",
+   "audit_id": "KPI-REG-103",
    "kpi_id": "analytics_analytics_dashboard_service_schools_impacted",
    "metric_registry_id": "analytics_analytics_dashboard_service_schools_impacted",
    "page": "platform_analytics",
@@ -13853,7 +13991,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-101",
+   "audit_id": "KPI-REG-104",
    "kpi_id": "analytics_analytics_dashboard_service_districts_covered",
    "metric_registry_id": "analytics_analytics_dashboard_service_districts_covered",
    "page": "platform_analytics",
@@ -13905,7 +14043,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-102",
+   "audit_id": "KPI-REG-105",
    "kpi_id": "analytics_analytics_dashboard_service_clusters_covered",
    "metric_registry_id": "analytics_analytics_dashboard_service_clusters_covered",
    "page": "platform_analytics",
@@ -13957,7 +14095,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-103",
+   "audit_id": "KPI-REG-106",
    "kpi_id": "analytics_analytics_dashboard_service_total_activities_completed",
    "metric_registry_id": "analytics_analytics_dashboard_service_total_activities_completed",
    "page": "platform_analytics",
@@ -14009,7 +14147,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-104",
+   "audit_id": "KPI-REG-107",
    "kpi_id": "analytics_analytics_dashboard_service_ssa_average",
    "metric_registry_id": "analytics_analytics_dashboard_service_ssa_average",
    "page": "platform_analytics",
@@ -14061,7 +14199,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-105",
+   "audit_id": "KPI-REG-108",
    "kpi_id": "country_overall_target_achievement_pct",
    "metric_registry_id": "country_overall_target_achievement_pct",
    "page": "country_analytics",
@@ -14105,7 +14243,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-106",
+   "audit_id": "KPI-REG-109",
    "kpi_id": "country_schools_impacted_count",
    "metric_registry_id": "country_schools_impacted_count",
    "page": "country_analytics",
@@ -14149,7 +14287,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-107",
+   "audit_id": "KPI-REG-110",
    "kpi_id": "country_teachers_trained_count",
    "metric_registry_id": "country_teachers_trained_count",
    "page": "country_analytics",
@@ -14193,7 +14331,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-108",
+   "audit_id": "KPI-REG-111",
    "kpi_id": "country_school_leaders_trained_count",
    "metric_registry_id": "country_school_leaders_trained_count",
    "page": "country_analytics",
@@ -14237,7 +14375,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-109",
+   "audit_id": "KPI-REG-112",
    "kpi_id": "country_activities_completed_count",
    "metric_registry_id": "country_activities_completed_count",
    "page": "country_analytics",
@@ -14281,7 +14419,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-110",
+   "audit_id": "KPI-REG-113",
    "kpi_id": "country_active_pls_and_cceos",
    "metric_registry_id": "country_active_pls_and_cceos",
    "page": "country_analytics",
@@ -14325,7 +14463,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-111",
+   "audit_id": "KPI-REG-114",
    "kpi_id": "country_average_verified_ssa_score",
    "metric_registry_id": "country_average_verified_ssa_score",
    "page": "country_analytics",
@@ -14369,7 +14507,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-112",
+   "audit_id": "KPI-REG-115",
    "kpi_id": "country_districts_covered",
    "metric_registry_id": "country_districts_covered",
    "page": "country_analytics",
@@ -14413,7 +14551,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-113",
+   "audit_id": "KPI-REG-116",
    "kpi_id": "country_clusters_covered",
    "metric_registry_id": "country_clusters_covered",
    "page": "country_analytics",
@@ -14457,7 +14595,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-114",
+   "audit_id": "KPI-REG-117",
    "kpi_id": "country_budget_utilisation_pct",
    "metric_registry_id": "country_budget_utilisation_pct",
    "page": "country_analytics",
@@ -14501,7 +14639,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-115",
+   "audit_id": "KPI-REG-118",
    "kpi_id": "analytics_cd_dashboard_service_country_target_progress",
    "metric_registry_id": "analytics_cd_dashboard_service_country_target_progress",
    "page": "country_dashboard",
@@ -14544,7 +14682,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-116",
+   "audit_id": "KPI-REG-119",
    "kpi_id": "analytics_cd_dashboard_service_active_schools_served",
    "metric_registry_id": "analytics_cd_dashboard_service_active_schools_served",
    "page": "country_dashboard",
@@ -14587,7 +14725,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-117",
+   "audit_id": "KPI-REG-120",
    "kpi_id": "analytics_cd_dashboard_service_core_schools_on_track",
    "metric_registry_id": "analytics_cd_dashboard_service_core_schools_on_track",
    "page": "country_dashboard",
@@ -14630,7 +14768,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-118",
+   "audit_id": "KPI-REG-121",
    "kpi_id": "analytics_cd_dashboard_service_staff_productivity",
    "metric_registry_id": "analytics_cd_dashboard_service_staff_productivity",
    "page": "country_dashboard",
@@ -14673,7 +14811,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-119",
+   "audit_id": "KPI-REG-122",
    "kpi_id": "analytics_cd_dashboard_service_staff_over_capacity",
    "metric_registry_id": "analytics_cd_dashboard_service_staff_over_capacity",
    "page": "country_dashboard",
@@ -14716,7 +14854,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-120",
+   "audit_id": "KPI-REG-123",
    "kpi_id": "analytics_cd_dashboard_service_activity_sf_id_compliance",
    "metric_registry_id": "analytics_cd_dashboard_service_activity_sf_id_compliance",
    "page": "country_dashboard",
@@ -14759,7 +14897,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-121",
+   "audit_id": "KPI-REG-124",
    "kpi_id": "analytics_cd_dashboard_service_pending_fund_requests",
    "metric_registry_id": "analytics_cd_dashboard_service_pending_fund_requests",
    "page": "country_dashboard",
@@ -14802,7 +14940,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-122",
+   "audit_id": "KPI-REG-125",
    "kpi_id": "analytics_cd_dashboard_service_budget_utilization",
    "metric_registry_id": "analytics_cd_dashboard_service_budget_utilization",
    "page": "country_dashboard",
@@ -14845,7 +14983,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-123",
+   "audit_id": "KPI-REG-126",
    "kpi_id": "analytics_cd_dashboard_service_high_risk_teams",
    "metric_registry_id": "analytics_cd_dashboard_service_high_risk_teams",
    "page": "country_dashboard",
@@ -14888,7 +15026,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-124",
+   "audit_id": "KPI-REG-127",
    "kpi_id": "analytics_pl_analytics_service_team_execution_progress",
    "metric_registry_id": "analytics_pl_analytics_service_team_execution_progress",
    "page": "team_analytics",
@@ -14930,7 +15068,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-125",
+   "audit_id": "KPI-REG-128",
    "kpi_id": "analytics_pl_analytics_service_cceos_on_track",
    "metric_registry_id": "analytics_pl_analytics_service_cceos_on_track",
    "page": "team_analytics",
@@ -14972,7 +15110,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-126",
+   "audit_id": "KPI-REG-129",
    "kpi_id": "analytics_pl_analytics_service_schools_assigned_to_team",
    "metric_registry_id": "analytics_pl_analytics_service_schools_assigned_to_team",
    "page": "team_analytics",
@@ -15014,7 +15152,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-127",
+   "audit_id": "KPI-REG-130",
    "kpi_id": "analytics_pl_analytics_service_schools_without_ssa",
    "metric_registry_id": "analytics_pl_analytics_service_schools_without_ssa",
    "page": "team_analytics",
@@ -15056,7 +15194,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-128",
+   "audit_id": "KPI-REG-131",
    "kpi_id": "analytics_pl_analytics_service_schools_not_visited",
    "metric_registry_id": "analytics_pl_analytics_service_schools_not_visited",
    "page": "team_analytics",
@@ -15098,7 +15236,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-129",
+   "audit_id": "KPI-REG-132",
    "kpi_id": "analytics_pl_analytics_service_schools_not_trained",
    "metric_registry_id": "analytics_pl_analytics_service_schools_not_trained",
    "page": "team_analytics",
@@ -15140,7 +15278,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-130",
+   "audit_id": "KPI-REG-133",
    "kpi_id": "analytics_pl_analytics_service_cluster_trainings_completed",
    "metric_registry_id": "analytics_pl_analytics_service_cluster_trainings_completed",
    "page": "team_analytics",
@@ -15182,7 +15320,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-131",
+   "audit_id": "KPI-REG-134",
    "kpi_id": "analytics_pl_analytics_service_cluster_meetings_completed",
    "metric_registry_id": "analytics_pl_analytics_service_cluster_meetings_completed",
    "page": "team_analytics",
@@ -15224,7 +15362,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-132",
+   "audit_id": "KPI-REG-135",
    "kpi_id": "analytics_pl_analytics_service_partner_activities_completed",
    "metric_registry_id": "analytics_pl_analytics_service_partner_activities_completed",
    "page": "team_analytics",
@@ -15266,7 +15404,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-133",
+   "audit_id": "KPI-REG-136",
    "kpi_id": "analytics_pl_analytics_service_team_budget_utilization",
    "metric_registry_id": "analytics_pl_analytics_service_team_budget_utilization",
    "page": "team_analytics",
@@ -15308,7 +15446,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-134",
+   "audit_id": "KPI-REG-137",
    "kpi_id": "analytics_pl_analytics_service_average_team_ssa_score",
    "metric_registry_id": "analytics_pl_analytics_service_average_team_ssa_score",
    "page": "team_analytics",
@@ -15350,7 +15488,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-135",
+   "audit_id": "KPI-REG-138",
    "kpi_id": "analytics_pl_analytics_service_activities_completed",
    "metric_registry_id": "analytics_pl_analytics_service_activities_completed",
    "page": "team_analytics",
@@ -15392,7 +15530,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-136",
+   "audit_id": "KPI-REG-139",
    "kpi_id": "analytics_pl_dashboard_service_team_execution_progress",
    "metric_registry_id": "analytics_pl_dashboard_service_team_execution_progress",
    "page": "program_lead_dashboard",
@@ -15435,7 +15573,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-137",
+   "audit_id": "KPI-REG-140",
    "kpi_id": "analytics_pl_dashboard_service_cceos_on_track",
    "metric_registry_id": "analytics_pl_dashboard_service_cceos_on_track",
    "page": "program_lead_dashboard",
@@ -15478,7 +15616,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-138",
+   "audit_id": "KPI-REG-141",
    "kpi_id": "analytics_pl_dashboard_service_plans_awaiting_approval",
    "metric_registry_id": "analytics_pl_dashboard_service_plans_awaiting_approval",
    "page": "program_lead_dashboard",
@@ -15521,7 +15659,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-139",
+   "audit_id": "KPI-REG-142",
    "kpi_id": "analytics_pl_dashboard_service_activities_this_week",
    "metric_registry_id": "analytics_pl_dashboard_service_activities_this_week",
    "page": "program_lead_dashboard",
@@ -15564,7 +15702,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-140",
+   "audit_id": "KPI-REG-143",
    "kpi_id": "analytics_pl_dashboard_service_activity_sf_id_compliance",
    "metric_registry_id": "analytics_pl_dashboard_service_activity_sf_id_compliance",
    "page": "program_lead_dashboard",
@@ -15607,7 +15745,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-141",
+   "audit_id": "KPI-REG-144",
    "kpi_id": "analytics_pl_dashboard_service_team_backlog",
    "metric_registry_id": "analytics_pl_dashboard_service_team_backlog",
    "page": "program_lead_dashboard",
@@ -15650,7 +15788,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-142",
+   "audit_id": "KPI-REG-145",
    "kpi_id": "analytics_pl_dashboard_service_monthly_fund_request",
    "metric_registry_id": "analytics_pl_dashboard_service_monthly_fund_request",
    "page": "program_lead_dashboard",
@@ -15693,7 +15831,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-143",
+   "audit_id": "KPI-REG-146",
    "kpi_id": "analytics_pl_dashboard_service_high_risk_schools",
    "metric_registry_id": "analytics_pl_dashboard_service_high_risk_schools",
    "page": "program_lead_dashboard",
@@ -15736,7 +15874,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-144",
+   "audit_id": "KPI-REG-147",
    "kpi_id": "analytics_pl_dashboard_service_teams_below_target",
    "metric_registry_id": "analytics_pl_dashboard_service_teams_below_target",
    "page": "program_lead_dashboard",
@@ -15778,7 +15916,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-145",
+   "audit_id": "KPI-REG-148",
    "kpi_id": "analytics_pl_dashboard_service_overdue_activity_sf_ids",
    "metric_registry_id": "analytics_pl_dashboard_service_overdue_activity_sf_ids",
    "page": "program_lead_dashboard",
@@ -15820,7 +15958,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-146",
+   "audit_id": "KPI-REG-149",
    "kpi_id": "analytics_pl_dashboard_service_funded_not_completed",
    "metric_registry_id": "analytics_pl_dashboard_service_funded_not_completed",
    "page": "program_lead_dashboard",
@@ -15862,7 +16000,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-147",
+   "audit_id": "KPI-REG-150",
    "kpi_id": "analytics_pl_dashboard_service_schools_with_no_visit",
    "metric_registry_id": "analytics_pl_dashboard_service_schools_with_no_visit",
    "page": "program_lead_dashboard",
@@ -15904,7 +16042,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-148",
+   "audit_id": "KPI-REG-151",
    "kpi_id": "analytics_pl_dashboard_service_schools_with_no_training",
    "metric_registry_id": "analytics_pl_dashboard_service_schools_with_no_training",
    "page": "program_lead_dashboard",
@@ -15946,7 +16084,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-149",
+   "audit_id": "KPI-REG-152",
    "kpi_id": "analytics_pl_dashboard_service_schools_w_neither_training_nor_visit",
    "metric_registry_id": "analytics_pl_dashboard_service_schools_w_neither_training_nor_visit",
    "page": "program_lead_dashboard",
@@ -15988,7 +16126,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-150",
+   "audit_id": "KPI-REG-153",
    "kpi_id": "analytics_rvp_dashboard_service_regional_target_achievement",
    "metric_registry_id": "analytics_rvp_dashboard_service_regional_target_achievement",
    "page": "regional_dashboard",
@@ -16032,7 +16170,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-151",
+   "audit_id": "KPI-REG-154",
    "kpi_id": "analytics_rvp_dashboard_service_regions_overseen",
    "metric_registry_id": "analytics_rvp_dashboard_service_regions_overseen",
    "page": "regional_dashboard",
@@ -16077,7 +16215,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-152",
+   "audit_id": "KPI-REG-155",
    "kpi_id": "analytics_rvp_dashboard_service_country_directors_on_track",
    "metric_registry_id": "analytics_rvp_dashboard_service_country_directors_on_track",
    "page": "regional_dashboard",
@@ -16122,7 +16260,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-153",
+   "audit_id": "KPI-REG-156",
    "kpi_id": "analytics_rvp_dashboard_service_general_budget_pending_approval",
    "metric_registry_id": "analytics_rvp_dashboard_service_general_budget_pending_approval",
    "page": "regional_dashboard",
@@ -16167,7 +16305,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-154",
+   "audit_id": "KPI-REG-157",
    "kpi_id": "analytics_rvp_dashboard_service_annual_budget_status",
    "metric_registry_id": "analytics_rvp_dashboard_service_annual_budget_status",
    "page": "regional_dashboard",
@@ -16212,7 +16350,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-155",
+   "audit_id": "KPI-REG-158",
    "kpi_id": "analytics_rvp_dashboard_service_special_projects_on_track",
    "metric_registry_id": "analytics_rvp_dashboard_service_special_projects_on_track",
    "page": "regional_dashboard",
@@ -16257,7 +16395,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-156",
+   "audit_id": "KPI-REG-159",
    "kpi_id": "analytics_rvp_dashboard_service_budget_utilization",
    "metric_registry_id": "analytics_rvp_dashboard_service_budget_utilization",
    "page": "regional_dashboard",
@@ -16302,7 +16440,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-157",
+   "audit_id": "KPI-REG-160",
    "kpi_id": "analytics_rvp_dashboard_service_schools_impacted",
    "metric_registry_id": "analytics_rvp_dashboard_service_schools_impacted",
    "page": "regional_dashboard",
@@ -16347,7 +16485,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-158",
+   "audit_id": "KPI-REG-161",
    "kpi_id": "analytics_rvp_dashboard_service_teachers_trained",
    "metric_registry_id": "analytics_rvp_dashboard_service_teachers_trained",
    "page": "regional_dashboard",
@@ -16392,7 +16530,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-159",
+   "audit_id": "KPI-REG-162",
    "kpi_id": "analytics_rvp_dashboard_service_high_risk_regions",
    "metric_registry_id": "analytics_rvp_dashboard_service_high_risk_regions",
    "page": "regional_dashboard",
@@ -16437,7 +16575,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-160",
+   "audit_id": "KPI-REG-163",
    "kpi_id": "clusters_services_total_clusters",
    "metric_registry_id": "clusters_services_total_clusters",
    "page": "cluster_dashboard",
@@ -16483,7 +16621,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-161",
+   "audit_id": "KPI-REG-164",
    "kpi_id": "clusters_services_schools_in_clusters",
    "metric_registry_id": "clusters_services_schools_in_clusters",
    "page": "cluster_dashboard",
@@ -16529,7 +16667,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-162",
+   "audit_id": "KPI-REG-165",
    "kpi_id": "clusters_services_without_current_ssa",
    "metric_registry_id": "clusters_services_without_current_ssa",
    "page": "cluster_dashboard",
@@ -16575,7 +16713,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-163",
+   "audit_id": "KPI-REG-166",
    "kpi_id": "clusters_services_needing_group_training",
    "metric_registry_id": "clusters_services_needing_group_training",
    "page": "cluster_dashboard",
@@ -16621,7 +16759,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-164",
+   "audit_id": "KPI-REG-167",
    "kpi_id": "clusters_services_not_met_this_quarter",
    "metric_registry_id": "clusters_services_not_met_this_quarter",
    "page": "cluster_dashboard",
@@ -16667,7 +16805,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-165",
+   "audit_id": "KPI-REG-168",
    "kpi_id": "clusters_services_average_cluster_ssa",
    "metric_registry_id": "clusters_services_average_cluster_ssa",
    "page": "cluster_dashboard",
@@ -16713,7 +16851,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-166",
+   "audit_id": "KPI-REG-169",
    "kpi_id": "clusters_services_weakest_intervention",
    "metric_registry_id": "clusters_services_weakest_intervention",
    "page": "cluster_dashboard",
@@ -16759,7 +16897,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-167",
+   "audit_id": "KPI-REG-170",
    "kpi_id": "clusters_services_pending_activities",
    "metric_registry_id": "clusters_services_pending_activities",
    "page": "cluster_dashboard",
@@ -16805,7 +16943,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-168",
+   "audit_id": "KPI-REG-171",
    "kpi_id": "command_center_dashboard_service_my_target_achievement",
    "metric_registry_id": "command_center_dashboard_service_my_target_achievement",
    "page": "role_command_centre",
@@ -16857,7 +16995,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-169",
+   "audit_id": "KPI-REG-172",
    "kpi_id": "command_center_dashboard_service_planned_this_week",
    "metric_registry_id": "command_center_dashboard_service_planned_this_week",
    "page": "role_command_centre",
@@ -16909,7 +17047,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-170",
+   "audit_id": "KPI-REG-173",
    "kpi_id": "command_center_dashboard_service_schools_visited",
    "metric_registry_id": "command_center_dashboard_service_schools_visited",
    "page": "role_command_centre",
@@ -16961,7 +17099,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-171",
+   "audit_id": "KPI-REG-174",
    "kpi_id": "command_center_dashboard_service_evidence_pending",
    "metric_registry_id": "command_center_dashboard_service_evidence_pending",
    "page": "role_command_centre",
@@ -17013,7 +17151,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-172",
+   "audit_id": "KPI-REG-175",
    "kpi_id": "command_center_dashboard_service_team_execution_progress",
    "metric_registry_id": "command_center_dashboard_service_team_execution_progress",
    "page": "role_command_centre",
@@ -17065,7 +17203,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-173",
+   "audit_id": "KPI-REG-176",
    "kpi_id": "command_center_dashboard_service_cceos_on_track",
    "metric_registry_id": "command_center_dashboard_service_cceos_on_track",
    "page": "role_command_centre",
@@ -17117,7 +17255,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-174",
+   "audit_id": "KPI-REG-177",
    "kpi_id": "command_center_dashboard_service_pending_reviews",
    "metric_registry_id": "command_center_dashboard_service_pending_reviews",
    "page": "role_command_centre",
@@ -17169,7 +17307,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-175",
+   "audit_id": "KPI-REG-178",
    "kpi_id": "command_center_dashboard_service_scheduled_this_week",
    "metric_registry_id": "command_center_dashboard_service_scheduled_this_week",
    "page": "role_command_centre",
@@ -17221,7 +17359,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-176",
+   "audit_id": "KPI-REG-179",
    "kpi_id": "command_center_dashboard_service_country_activities_completed_this_month",
    "metric_registry_id": "command_center_dashboard_service_country_activities_completed_this_month",
    "page": "role_command_centre",
@@ -17273,7 +17411,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-177",
+   "audit_id": "KPI-REG-180",
    "kpi_id": "command_center_dashboard_service_budget_utilization",
    "metric_registry_id": "command_center_dashboard_service_budget_utilization",
    "page": "role_command_centre",
@@ -17325,7 +17463,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-178",
+   "audit_id": "KPI-REG-181",
    "kpi_id": "command_center_dashboard_service_schools_impacted",
    "metric_registry_id": "command_center_dashboard_service_schools_impacted",
    "page": "role_command_centre",
@@ -17377,7 +17515,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-179",
+   "audit_id": "KPI-REG-182",
    "kpi_id": "command_center_dashboard_service_pending_approvals",
    "metric_registry_id": "command_center_dashboard_service_pending_approvals",
    "page": "role_command_centre",
@@ -17429,7 +17567,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-180",
+   "audit_id": "KPI-REG-183",
    "kpi_id": "command_center_dashboard_service_total_allocation",
    "metric_registry_id": "command_center_dashboard_service_total_allocation",
    "page": "role_command_centre",
@@ -17481,7 +17619,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-181",
+   "audit_id": "KPI-REG-184",
    "kpi_id": "command_center_dashboard_service_pending_clearance",
    "metric_registry_id": "command_center_dashboard_service_pending_clearance",
    "page": "role_command_centre",
@@ -17533,7 +17671,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-182",
+   "audit_id": "KPI-REG-185",
    "kpi_id": "command_center_dashboard_service_cleared_amount",
    "metric_registry_id": "command_center_dashboard_service_cleared_amount",
    "page": "role_command_centre",
@@ -17585,7 +17723,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-183",
+   "audit_id": "KPI-REG-186",
    "kpi_id": "command_center_dashboard_service_planned_activities",
    "metric_registry_id": "command_center_dashboard_service_planned_activities",
    "page": "role_command_centre",
@@ -17637,7 +17775,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-184",
+   "audit_id": "KPI-REG-187",
    "kpi_id": "command_center_dashboard_service_schools_ready_for_planning",
    "metric_registry_id": "command_center_dashboard_service_schools_ready_for_planning",
    "page": "role_command_centre",
@@ -17689,7 +17827,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-185",
+   "audit_id": "KPI-REG-188",
    "kpi_id": "command_center_dashboard_service_schools_without_ssa",
    "metric_registry_id": "command_center_dashboard_service_schools_without_ssa",
    "page": "role_command_centre",
@@ -17741,7 +17879,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-186",
+   "audit_id": "KPI-REG-189",
    "kpi_id": "command_center_dashboard_service_activities_this_week",
    "metric_registry_id": "command_center_dashboard_service_activities_this_week",
    "page": "role_command_centre",
@@ -17793,7 +17931,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-187",
+   "audit_id": "KPI-REG-190",
    "kpi_id": "command_center_dashboard_service_planned_this_month",
    "metric_registry_id": "command_center_dashboard_service_planned_this_month",
    "page": "role_command_centre",
@@ -17845,7 +17983,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-188",
+   "audit_id": "KPI-REG-191",
    "kpi_id": "debriefs_dashboard_service_debriefs_submitted",
    "metric_registry_id": "debriefs_dashboard_service_debriefs_submitted",
    "page": "debrief_dashboard",
@@ -17886,7 +18024,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-189",
+   "audit_id": "KPI-REG-192",
    "kpi_id": "debriefs_dashboard_service_activities_completed",
    "metric_registry_id": "debriefs_dashboard_service_activities_completed",
    "page": "debrief_dashboard",
@@ -17927,7 +18065,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-190",
+   "audit_id": "KPI-REG-193",
    "kpi_id": "debriefs_dashboard_service_partially_completed",
    "metric_registry_id": "debriefs_dashboard_service_partially_completed",
    "page": "debrief_dashboard",
@@ -17968,7 +18106,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-191",
+   "audit_id": "KPI-REG-194",
    "kpi_id": "debriefs_dashboard_service_unsuccessful_cancelled",
    "metric_registry_id": "debriefs_dashboard_service_unsuccessful_cancelled",
    "page": "debrief_dashboard",
@@ -18009,7 +18147,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-192",
+   "audit_id": "KPI-REG-195",
    "kpi_id": "debriefs_dashboard_service_action_required",
    "metric_registry_id": "debriefs_dashboard_service_action_required",
    "page": "debrief_dashboard",
@@ -18050,7 +18188,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-193",
+   "audit_id": "KPI-REG-196",
    "kpi_id": "debriefs_dashboard_service_critical_escalations",
    "metric_registry_id": "debriefs_dashboard_service_critical_escalations",
    "page": "debrief_dashboard",
@@ -18091,7 +18229,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-194",
+   "audit_id": "KPI-REG-197",
    "kpi_id": "debriefs_dashboard_service_open_commitments",
    "metric_registry_id": "debriefs_dashboard_service_open_commitments",
    "page": "debrief_dashboard",
@@ -18132,7 +18270,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-195",
+   "audit_id": "KPI-REG-198",
    "kpi_id": "debriefs_dashboard_service_peer_solutions",
    "metric_registry_id": "debriefs_dashboard_service_peer_solutions",
    "page": "debrief_dashboard",
@@ -18173,7 +18311,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-196",
+   "audit_id": "KPI-REG-199",
    "kpi_id": "frontend_views_budget_views_total_requested_this_month",
    "metric_registry_id": "frontend_views_budget_views_total_requested_this_month",
    "page": "fund_request_workspace",
@@ -18222,7 +18360,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-197",
+   "audit_id": "KPI-REG-200",
    "kpi_id": "frontend_views_budget_views_awaiting_approval",
    "metric_registry_id": "frontend_views_budget_views_awaiting_approval",
    "page": "fund_request_workspace",
@@ -18271,7 +18409,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-198",
+   "audit_id": "KPI-REG-201",
    "kpi_id": "frontend_views_budget_views_approved",
    "metric_registry_id": "frontend_views_budget_views_approved",
    "page": "fund_request_workspace",
@@ -18320,7 +18458,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-199",
+   "audit_id": "KPI-REG-202",
    "kpi_id": "frontend_views_budget_views_ready_for_disbursement",
    "metric_registry_id": "frontend_views_budget_views_ready_for_disbursement",
    "page": "fund_request_workspace",
@@ -18369,7 +18507,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-200",
+   "audit_id": "KPI-REG-203",
    "kpi_id": "frontend_views_budget_views_returned_for_review",
    "metric_registry_id": "frontend_views_budget_views_returned_for_review",
    "page": "fund_request_workspace",
@@ -18418,7 +18556,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-201",
+   "audit_id": "KPI-REG-204",
    "kpi_id": "frontend_views_budget_views_accountability_pending",
    "metric_registry_id": "frontend_views_budget_views_accountability_pending",
    "page": "fund_request_workspace",
@@ -18467,7 +18605,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-202",
+   "audit_id": "KPI-REG-205",
    "kpi_id": "frontend_views_core_schools_views_total_core_schools",
    "metric_registry_id": "frontend_views_core_schools_views_total_core_schools",
    "page": "core_schools_workspace",
@@ -18517,7 +18655,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-203",
+   "audit_id": "KPI-REG-206",
    "kpi_id": "frontend_views_core_schools_views_core_schools_ready_for_planning",
    "metric_registry_id": "frontend_views_core_schools_views_core_schools_ready_for_planning",
    "page": "core_schools_workspace",
@@ -18567,7 +18705,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-204",
+   "audit_id": "KPI-REG-207",
    "kpi_id": "frontend_views_core_schools_views_avg_core_assessment_score",
    "metric_registry_id": "frontend_views_core_schools_views_avg_core_assessment_score",
    "page": "core_schools_workspace",
@@ -18617,7 +18755,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-205",
+   "audit_id": "KPI-REG-208",
    "kpi_id": "frontend_views_core_schools_views_visits_scheduled",
    "metric_registry_id": "frontend_views_core_schools_views_visits_scheduled",
    "page": "core_schools_workspace",
@@ -18667,7 +18805,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-206",
+   "audit_id": "KPI-REG-209",
    "kpi_id": "frontend_views_core_schools_views_trainings_scheduled",
    "metric_registry_id": "frontend_views_core_schools_views_trainings_scheduled",
    "page": "core_schools_workspace",
@@ -18717,7 +18855,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-207",
+   "audit_id": "KPI-REG-210",
    "kpi_id": "frontend_views_core_schools_views_staff_vs_partner_performance_delta",
    "metric_registry_id": "frontend_views_core_schools_views_staff_vs_partner_performance_delta",
    "page": "core_schools_workspace",
@@ -18767,7 +18905,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-208",
+   "audit_id": "KPI-REG-211",
    "kpi_id": "frontend_views_core_schools_views_regions_covered",
    "metric_registry_id": "frontend_views_core_schools_views_regions_covered",
    "page": "core_schools_workspace",
@@ -18817,7 +18955,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-209",
+   "audit_id": "KPI-REG-212",
    "kpi_id": "frontend_views_dashboard_views_completed_tasks",
    "metric_registry_id": "frontend_views_dashboard_views_completed_tasks",
    "page": "role_dashboard",
@@ -18866,7 +19004,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-210",
+   "audit_id": "KPI-REG-213",
    "kpi_id": "frontend_views_dashboard_views_in_progress",
    "metric_registry_id": "frontend_views_dashboard_views_in_progress",
    "page": "role_dashboard",
@@ -18915,7 +19053,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-211",
+   "audit_id": "KPI-REG-214",
    "kpi_id": "frontend_views_dashboard_views_planned_tasks",
    "metric_registry_id": "frontend_views_dashboard_views_planned_tasks",
    "page": "role_dashboard",
@@ -18964,7 +19102,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-212",
+   "audit_id": "KPI-REG-215",
    "kpi_id": "frontend_views_dashboard_views_overdue_tasks",
    "metric_registry_id": "frontend_views_dashboard_views_overdue_tasks",
    "page": "role_dashboard",
@@ -19013,7 +19151,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-213",
+   "audit_id": "KPI-REG-216",
    "kpi_id": "frontend_views_extended_views_assigned_schools",
    "metric_registry_id": "frontend_views_extended_views_assigned_schools",
    "page": "operations_workspace",
@@ -19059,7 +19197,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-214",
+   "audit_id": "KPI-REG-217",
    "kpi_id": "frontend_views_extended_views_assigned_staff",
    "metric_registry_id": "frontend_views_extended_views_assigned_staff",
    "page": "operations_workspace",
@@ -19105,7 +19243,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-215",
+   "audit_id": "KPI-REG-218",
    "kpi_id": "frontend_views_extended_views_clean_schools",
    "metric_registry_id": "frontend_views_extended_views_clean_schools",
    "page": "operations_workspace",
@@ -19152,7 +19290,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-216",
+   "audit_id": "KPI-REG-219",
    "kpi_id": "frontend_views_extended_views_needs_review",
    "metric_registry_id": "frontend_views_extended_views_needs_review",
    "page": "operations_workspace",
@@ -19199,7 +19337,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-217",
+   "audit_id": "KPI-REG-220",
    "kpi_id": "frontend_views_extended_views_needs_cleanup",
    "metric_registry_id": "frontend_views_extended_views_needs_cleanup",
    "page": "operations_workspace",
@@ -19246,7 +19384,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-218",
+   "audit_id": "KPI-REG-221",
    "kpi_id": "frontend_views_extended_views_duplicate_risk",
    "metric_registry_id": "frontend_views_extended_views_duplicate_risk",
    "page": "operations_workspace",
@@ -19293,7 +19431,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-219",
+   "audit_id": "KPI-REG-222",
    "kpi_id": "frontend_views_extended_views_missing_critical_data",
    "metric_registry_id": "frontend_views_extended_views_missing_critical_data",
    "page": "operations_workspace",
@@ -19340,7 +19478,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-220",
+   "audit_id": "KPI-REG-223",
    "kpi_id": "frontend_views_hr_views_people_in_scope",
    "metric_registry_id": "frontend_views_hr_views_people_in_scope",
    "page": "hr_workspace",
@@ -19385,7 +19523,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-221",
+   "audit_id": "KPI-REG-224",
    "kpi_id": "frontend_views_hr_views_active",
    "metric_registry_id": "frontend_views_hr_views_active",
    "page": "hr_workspace",
@@ -19430,7 +19568,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-222",
+   "audit_id": "KPI-REG-225",
    "kpi_id": "frontend_views_hr_views_departments",
    "metric_registry_id": "frontend_views_hr_views_departments",
    "page": "hr_workspace",
@@ -19475,7 +19613,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-223",
+   "audit_id": "KPI-REG-226",
    "kpi_id": "frontend_views_hr_views_countries",
    "metric_registry_id": "frontend_views_hr_views_countries",
    "page": "hr_workspace",
@@ -19520,7 +19658,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-224",
+   "audit_id": "KPI-REG-227",
    "kpi_id": "frontend_views_hr_views_headcount",
    "metric_registry_id": "frontend_views_hr_views_headcount",
    "page": "hr_workspace",
@@ -19565,7 +19703,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-225",
+   "audit_id": "KPI-REG-228",
    "kpi_id": "frontend_views_hr_views_pending",
    "metric_registry_id": "frontend_views_hr_views_pending",
    "page": "hr_workspace",
@@ -19610,7 +19748,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-226",
+   "audit_id": "KPI-REG-229",
    "kpi_id": "frontend_views_hr_views_vacancies",
    "metric_registry_id": "frontend_views_hr_views_vacancies",
    "page": "hr_workspace",
@@ -19655,7 +19793,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-227",
+   "audit_id": "KPI-REG-230",
    "kpi_id": "frontend_views_hr_views_open",
    "metric_registry_id": "frontend_views_hr_views_open",
    "page": "hr_workspace",
@@ -19700,7 +19838,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-228",
+   "audit_id": "KPI-REG-231",
    "kpi_id": "frontend_views_hr_views_pending_approval",
    "metric_registry_id": "frontend_views_hr_views_pending_approval",
    "page": "hr_workspace",
@@ -19745,7 +19883,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-229",
+   "audit_id": "KPI-REG-232",
    "kpi_id": "frontend_views_hr_views_in_screening",
    "metric_registry_id": "frontend_views_hr_views_in_screening",
    "page": "hr_workspace",
@@ -19790,7 +19928,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-230",
+   "audit_id": "KPI-REG-233",
    "kpi_id": "frontend_views_hr_views_applications",
    "metric_registry_id": "frontend_views_hr_views_applications",
    "page": "hr_workspace",
@@ -19835,7 +19973,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-231",
+   "audit_id": "KPI-REG-234",
    "kpi_id": "frontend_views_hr_views_screening",
    "metric_registry_id": "frontend_views_hr_views_screening",
    "page": "hr_workspace",
@@ -19880,7 +20018,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-232",
+   "audit_id": "KPI-REG-235",
    "kpi_id": "frontend_views_hr_views_interviews",
    "metric_registry_id": "frontend_views_hr_views_interviews",
    "page": "hr_workspace",
@@ -19925,7 +20063,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-233",
+   "audit_id": "KPI-REG-236",
    "kpi_id": "frontend_views_hr_views_hired",
    "metric_registry_id": "frontend_views_hr_views_hired",
    "page": "hr_workspace",
@@ -19970,7 +20108,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-234",
+   "audit_id": "KPI-REG-237",
    "kpi_id": "frontend_views_hr_views_plans",
    "metric_registry_id": "frontend_views_hr_views_plans",
    "page": "hr_workspace",
@@ -20015,7 +20153,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-235",
+   "audit_id": "KPI-REG-238",
    "kpi_id": "frontend_views_hr_views_in_progress",
    "metric_registry_id": "frontend_views_hr_views_in_progress",
    "page": "hr_workspace",
@@ -20060,7 +20198,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-236",
+   "audit_id": "KPI-REG-239",
    "kpi_id": "frontend_views_hr_views_overdue",
    "metric_registry_id": "frontend_views_hr_views_overdue",
    "page": "hr_workspace",
@@ -20105,7 +20243,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-237",
+   "audit_id": "KPI-REG-240",
    "kpi_id": "frontend_views_hr_views_nominations",
    "metric_registry_id": "frontend_views_hr_views_nominations",
    "page": "hr_workspace",
@@ -20150,7 +20288,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-238",
+   "audit_id": "KPI-REG-241",
    "kpi_id": "frontend_views_hr_views_ready_now",
    "metric_registry_id": "frontend_views_hr_views_ready_now",
    "page": "hr_workspace",
@@ -20195,7 +20333,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-239",
+   "audit_id": "KPI-REG-242",
    "kpi_id": "frontend_views_hr_views_6_12_months",
    "metric_registry_id": "frontend_views_hr_views_6_12_months",
    "page": "hr_workspace",
@@ -20240,7 +20378,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-240",
+   "audit_id": "KPI-REG-243",
    "kpi_id": "frontend_views_hr_views_development_required",
    "metric_registry_id": "frontend_views_hr_views_development_required",
    "page": "hr_workspace",
@@ -20285,7 +20423,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-241",
+   "audit_id": "KPI-REG-244",
    "kpi_id": "frontend_views_hr_views_reviews",
    "metric_registry_id": "frontend_views_hr_views_reviews",
    "page": "hr_workspace",
@@ -20330,7 +20468,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-242",
+   "audit_id": "KPI-REG-245",
    "kpi_id": "frontend_views_hr_views_completed",
    "metric_registry_id": "frontend_views_hr_views_completed",
    "page": "hr_workspace",
@@ -20375,7 +20513,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-243",
+   "audit_id": "KPI-REG-246",
    "kpi_id": "frontend_views_hr_views_manager_pending",
    "metric_registry_id": "frontend_views_hr_views_manager_pending",
    "page": "hr_workspace",
@@ -20420,7 +20558,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-244",
+   "audit_id": "KPI-REG-247",
    "kpi_id": "frontend_views_hr_views_average_score",
    "metric_registry_id": "frontend_views_hr_views_average_score",
    "page": "hr_workspace",
@@ -20465,7 +20603,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-245",
+   "audit_id": "KPI-REG-248",
    "kpi_id": "frontend_views_hr_views_escalated",
    "metric_registry_id": "frontend_views_hr_views_escalated",
    "page": "hr_workspace",
@@ -20510,7 +20648,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-246",
+   "audit_id": "KPI-REG-249",
    "kpi_id": "frontend_views_hr_views_people",
    "metric_registry_id": "frontend_views_hr_views_people",
    "page": "hr_workspace",
@@ -20555,7 +20693,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-247",
+   "audit_id": "KPI-REG-250",
    "kpi_id": "frontend_views_hr_views_open_relations_cases",
    "metric_registry_id": "frontend_views_hr_views_open_relations_cases",
    "page": "hr_workspace",
@@ -20600,7 +20738,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-248",
+   "audit_id": "KPI-REG-251",
    "kpi_id": "frontend_views_hr_views_critical_cases",
    "metric_registry_id": "frontend_views_hr_views_critical_cases",
    "page": "hr_workspace",
@@ -20645,7 +20783,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-249",
+   "audit_id": "KPI-REG-252",
    "kpi_id": "frontend_views_hr_views_open_cases",
    "metric_registry_id": "frontend_views_hr_views_open_cases",
    "page": "hr_workspace",
@@ -20690,7 +20828,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-250",
+   "audit_id": "KPI-REG-253",
    "kpi_id": "frontend_views_hr_views_triage",
    "metric_registry_id": "frontend_views_hr_views_triage",
    "page": "hr_workspace",
@@ -20735,7 +20873,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-251",
+   "audit_id": "KPI-REG-254",
    "kpi_id": "frontend_views_hr_views_critical",
    "metric_registry_id": "frontend_views_hr_views_critical",
    "page": "hr_workspace",
@@ -20780,7 +20918,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-252",
+   "audit_id": "KPI-REG-255",
    "kpi_id": "frontend_views_hr_views_resolved",
    "metric_registry_id": "frontend_views_hr_views_resolved",
    "page": "hr_workspace",
@@ -20825,7 +20963,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-253",
+   "audit_id": "KPI-REG-256",
    "kpi_id": "frontend_views_hr_views_leave_records",
    "metric_registry_id": "frontend_views_hr_views_leave_records",
    "page": "hr_workspace",
@@ -20870,7 +21008,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-254",
+   "audit_id": "KPI-REG-257",
    "kpi_id": "frontend_views_hr_views_approved",
    "metric_registry_id": "frontend_views_hr_views_approved",
    "page": "hr_workspace",
@@ -20915,7 +21053,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-255",
+   "audit_id": "KPI-REG-258",
    "kpi_id": "frontend_views_hr_views_coverage_gaps",
    "metric_registry_id": "frontend_views_hr_views_coverage_gaps",
    "page": "hr_workspace",
@@ -20960,7 +21098,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-256",
+   "audit_id": "KPI-REG-259",
    "kpi_id": "frontend_views_hr_views_compensation_profiles",
    "metric_registry_id": "frontend_views_hr_views_compensation_profiles",
    "page": "hr_workspace",
@@ -21005,7 +21143,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-257",
+   "audit_id": "KPI-REG-260",
    "kpi_id": "frontend_views_hr_views_in_review",
    "metric_registry_id": "frontend_views_hr_views_in_review",
    "page": "hr_workspace",
@@ -21050,7 +21188,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-258",
+   "audit_id": "KPI-REG-261",
    "kpi_id": "frontend_views_hr_views_missing_profiles",
    "metric_registry_id": "frontend_views_hr_views_missing_profiles",
    "page": "hr_workspace",
@@ -21095,7 +21233,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-259",
+   "audit_id": "KPI-REG-262",
    "kpi_id": "frontend_views_hr_views_current_period",
    "metric_registry_id": "frontend_views_hr_views_current_period",
    "page": "hr_workspace",
@@ -21140,7 +21278,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-260",
+   "audit_id": "KPI-REG-263",
    "kpi_id": "frontend_views_hr_views_staff_checked",
    "metric_registry_id": "frontend_views_hr_views_staff_checked",
    "page": "hr_workspace",
@@ -21185,7 +21323,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-261",
+   "audit_id": "KPI-REG-264",
    "kpi_id": "frontend_views_hr_views_ready",
    "metric_registry_id": "frontend_views_hr_views_ready",
    "page": "hr_workspace",
@@ -21230,7 +21368,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-262",
+   "audit_id": "KPI-REG-265",
    "kpi_id": "frontend_views_hr_views_exceptions",
    "metric_registry_id": "frontend_views_hr_views_exceptions",
    "page": "hr_workspace",
@@ -21275,7 +21413,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-263",
+   "audit_id": "KPI-REG-266",
    "kpi_id": "frontend_views_hr_views_requirements",
    "metric_registry_id": "frontend_views_hr_views_requirements",
    "page": "hr_workspace",
@@ -21320,7 +21458,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-264",
+   "audit_id": "KPI-REG-267",
    "kpi_id": "frontend_views_hr_views_compliant",
    "metric_registry_id": "frontend_views_hr_views_compliant",
    "page": "hr_workspace",
@@ -21365,7 +21503,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-265",
+   "audit_id": "KPI-REG-268",
    "kpi_id": "frontend_views_hr_views_due_soon",
    "metric_registry_id": "frontend_views_hr_views_due_soon",
    "page": "hr_workspace",
@@ -21410,7 +21548,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-266",
+   "audit_id": "KPI-REG-269",
    "kpi_id": "frontend_views_hr_views_missing_or_expired",
    "metric_registry_id": "frontend_views_hr_views_missing_or_expired",
    "page": "hr_workspace",
@@ -21455,7 +21593,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-267",
+   "audit_id": "KPI-REG-270",
    "kpi_id": "frontend_views_hr_views_configured",
    "metric_registry_id": "frontend_views_hr_views_configured",
    "page": "hr_workspace",
@@ -21500,7 +21638,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-268",
+   "audit_id": "KPI-REG-271",
    "kpi_id": "frontend_views_hr_views_mandatory",
    "metric_registry_id": "frontend_views_hr_views_mandatory",
    "page": "hr_workspace",
@@ -21545,7 +21683,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-269",
+   "audit_id": "KPI-REG-272",
    "kpi_id": "frontend_views_hr_views_optional",
    "metric_registry_id": "frontend_views_hr_views_optional",
    "page": "hr_workspace",
@@ -21590,7 +21728,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-270",
+   "audit_id": "KPI-REG-273",
    "kpi_id": "frontend_views_hr_views_jurisdictions",
    "metric_registry_id": "frontend_views_hr_views_jurisdictions",
    "page": "hr_workspace",
@@ -21635,7 +21773,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-271",
+   "audit_id": "KPI-REG-274",
    "kpi_id": "frontend_views_hr_views_handover_gaps",
    "metric_registry_id": "frontend_views_hr_views_handover_gaps",
    "page": "hr_workspace",
@@ -21680,7 +21818,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-272",
+   "audit_id": "KPI-REG-275",
    "kpi_id": "frontend_views_hr_views_closed",
    "metric_registry_id": "frontend_views_hr_views_closed",
    "page": "hr_workspace",
@@ -21725,7 +21863,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-273",
+   "audit_id": "KPI-REG-276",
    "kpi_id": "frontend_views_hr_views_past_exit_date_still_active",
    "metric_registry_id": "frontend_views_hr_views_past_exit_date_still_active",
    "page": "hr_workspace",
@@ -21770,7 +21908,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-274",
+   "audit_id": "KPI-REG-277",
    "kpi_id": "frontend_views_hr_views_reviews_due",
    "metric_registry_id": "frontend_views_hr_views_reviews_due",
    "page": "hr_workspace",
@@ -21815,7 +21953,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-275",
+   "audit_id": "KPI-REG-278",
    "kpi_id": "frontend_views_hr_views_compliance_gaps",
    "metric_registry_id": "frontend_views_hr_views_compliance_gaps",
    "page": "hr_workspace",
@@ -21860,7 +21998,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-276",
+   "audit_id": "KPI-REG-279",
    "kpi_id": "frontend_views_hr_views_events",
    "metric_registry_id": "frontend_views_hr_views_events",
    "page": "hr_workspace",
@@ -21905,7 +22043,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-277",
+   "audit_id": "KPI-REG-280",
    "kpi_id": "frontend_views_hr_views_refused_actions",
    "metric_registry_id": "frontend_views_hr_views_refused_actions",
    "page": "hr_workspace",
@@ -21950,7 +22088,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-278",
+   "audit_id": "KPI-REG-281",
    "kpi_id": "frontend_views_hr_views_acting_roles",
    "metric_registry_id": "frontend_views_hr_views_acting_roles",
    "page": "hr_workspace",
@@ -21995,7 +22133,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-279",
+   "audit_id": "KPI-REG-282",
    "kpi_id": "frontend_views_hr_views_showing",
    "metric_registry_id": "frontend_views_hr_views_showing",
    "page": "hr_workspace",
@@ -22040,7 +22178,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-280",
+   "audit_id": "KPI-REG-283",
    "kpi_id": "frontend_views_leave_views_pending_approvals",
    "metric_registry_id": "frontend_views_leave_views_pending_approvals",
    "page": "leave_workspace",
@@ -22090,7 +22228,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-281",
+   "audit_id": "KPI-REG-284",
    "kpi_id": "frontend_views_leave_views_approved_7_days",
    "metric_registry_id": "frontend_views_leave_views_approved_7_days",
    "page": "leave_workspace",
@@ -22140,7 +22278,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-282",
+   "audit_id": "KPI-REG-285",
    "kpi_id": "frontend_views_leave_views_coverage_ready",
    "metric_registry_id": "frontend_views_leave_views_coverage_ready",
    "page": "leave_workspace",
@@ -22190,7 +22328,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-283",
+   "audit_id": "KPI-REG-286",
    "kpi_id": "frontend_views_leave_views_critical_conflicts",
    "metric_registry_id": "frontend_views_leave_views_critical_conflicts",
    "page": "leave_workspace",
@@ -22240,7 +22378,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-284",
+   "audit_id": "KPI-REG-287",
    "kpi_id": "frontend_views_leave_views_away_this_week",
    "metric_registry_id": "frontend_views_leave_views_away_this_week",
    "page": "leave_workspace",
@@ -22290,7 +22428,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-285",
+   "audit_id": "KPI-REG-288",
    "kpi_id": "frontend_views_leave_views_balance_alerts",
    "metric_registry_id": "frontend_views_leave_views_balance_alerts",
    "page": "leave_workspace",
@@ -22340,7 +22478,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-286",
+   "audit_id": "KPI-REG-289",
    "kpi_id": "frontend_views_school_views_total_schools",
    "metric_registry_id": "frontend_views_school_views_total_schools",
    "page": "school_workspace",
@@ -22390,7 +22528,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-287",
+   "audit_id": "KPI-REG-290",
    "kpi_id": "frontend_views_school_views_client_schools",
    "metric_registry_id": "frontend_views_school_views_client_schools",
    "page": "school_workspace",
@@ -22440,7 +22578,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-288",
+   "audit_id": "KPI-REG-291",
    "kpi_id": "frontend_views_school_views_core_schools",
    "metric_registry_id": "frontend_views_school_views_core_schools",
    "page": "school_workspace",
@@ -22490,7 +22628,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-289",
+   "audit_id": "KPI-REG-292",
    "kpi_id": "frontend_views_school_views_unclustered",
    "metric_registry_id": "frontend_views_school_views_unclustered",
    "page": "school_workspace",
@@ -22540,7 +22678,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-290",
+   "audit_id": "KPI-REG-293",
    "kpi_id": "frontend_views_school_views_no_ssa",
    "metric_registry_id": "frontend_views_school_views_no_ssa",
    "page": "school_workspace",
@@ -22590,7 +22728,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-291",
+   "audit_id": "KPI-REG-294",
    "kpi_id": "frontend_views_school_views_staff_required",
    "metric_registry_id": "frontend_views_school_views_staff_required",
    "page": "school_workspace",
@@ -22640,7 +22778,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-292",
+   "audit_id": "KPI-REG-295",
    "kpi_id": "frontend_views_school_views_planning_ready",
    "metric_registry_id": "frontend_views_school_views_planning_ready",
    "page": "school_workspace",
@@ -22690,7 +22828,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-293",
+   "audit_id": "KPI-REG-296",
    "kpi_id": "frontend_views_school_views_duplicates",
    "metric_registry_id": "frontend_views_school_views_duplicates",
    "page": "school_workspace",
@@ -22740,7 +22878,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-294",
+   "audit_id": "KPI-REG-297",
    "kpi_id": "frontend_views_staff_views_total_cceos",
    "metric_registry_id": "frontend_views_staff_views_total_cceos",
    "page": "staff_workspace",
@@ -22787,7 +22925,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-295",
+   "audit_id": "KPI-REG-298",
    "kpi_id": "frontend_views_staff_views_with_overdue",
    "metric_registry_id": "frontend_views_staff_views_with_overdue",
    "page": "staff_workspace",
@@ -22834,7 +22972,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-296",
+   "audit_id": "KPI-REG-299",
    "kpi_id": "frontend_views_staff_views_all_caught_up",
    "metric_registry_id": "frontend_views_staff_views_all_caught_up",
    "page": "staff_workspace",
@@ -22881,7 +23019,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-297",
+   "audit_id": "KPI-REG-300",
    "kpi_id": "fund_requests_disbursement_dashboard_service_total_funds_this_month",
    "metric_registry_id": "fund_requests_disbursement_dashboard_service_total_funds_this_month",
    "page": "disbursement_workspace",
@@ -22925,7 +23063,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-298",
+   "audit_id": "KPI-REG-301",
    "kpi_id": "fund_requests_disbursement_dashboard_service_pending_disbursement",
    "metric_registry_id": "fund_requests_disbursement_dashboard_service_pending_disbursement",
    "page": "disbursement_workspace",
@@ -22969,7 +23107,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-299",
+   "audit_id": "KPI-REG-302",
    "kpi_id": "fund_requests_disbursement_dashboard_service_disbursed_today",
    "metric_registry_id": "fund_requests_disbursement_dashboard_service_disbursed_today",
    "page": "disbursement_workspace",
@@ -23013,7 +23151,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-300",
+   "audit_id": "KPI-REG-303",
    "kpi_id": "fund_requests_disbursement_dashboard_service_awaiting_approval_completion",
    "metric_registry_id": "fund_requests_disbursement_dashboard_service_awaiting_approval_completion",
    "page": "disbursement_workspace",
@@ -23057,7 +23195,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-301",
+   "audit_id": "KPI-REG-304",
    "kpi_id": "fund_requests_disbursement_dashboard_service_held",
    "metric_registry_id": "fund_requests_disbursement_dashboard_service_held",
    "page": "disbursement_workspace",
@@ -23101,7 +23239,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-302",
+   "audit_id": "KPI-REG-305",
    "kpi_id": "fund_requests_disbursement_dashboard_service_special_projects_funds",
    "metric_registry_id": "fund_requests_disbursement_dashboard_service_special_projects_funds",
    "page": "disbursement_workspace",
@@ -23145,7 +23283,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-303",
+   "audit_id": "KPI-REG-306",
    "kpi_id": "fund_requests_pl_approval_service_requested_this_week",
    "metric_registry_id": "fund_requests_pl_approval_service_requested_this_week",
    "page": "fund_approval_workspace",
@@ -23187,7 +23325,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-304",
+   "audit_id": "KPI-REG-307",
    "kpi_id": "fund_requests_pl_approval_service_awaiting_your_approval",
    "metric_registry_id": "fund_requests_pl_approval_service_awaiting_your_approval",
    "page": "fund_approval_workspace",
@@ -23229,7 +23367,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-305",
+   "audit_id": "KPI-REG-308",
    "kpi_id": "fund_requests_pl_approval_service_awaiting_cceo_send",
    "metric_registry_id": "fund_requests_pl_approval_service_awaiting_cceo_send",
    "page": "fund_approval_workspace",
@@ -23271,7 +23409,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-306",
+   "audit_id": "KPI-REG-309",
    "kpi_id": "fund_requests_pl_approval_service_approved_this_week",
    "metric_registry_id": "fund_requests_pl_approval_service_approved_this_week",
    "page": "fund_approval_workspace",
@@ -23313,7 +23451,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-307",
+   "audit_id": "KPI-REG-310",
    "kpi_id": "fund_requests_pl_approval_service_returned_for_review",
    "metric_registry_id": "fund_requests_pl_approval_service_returned_for_review",
    "page": "fund_approval_workspace",
@@ -23355,7 +23493,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-308",
+   "audit_id": "KPI-REG-311",
    "kpi_id": "monthly_work_plan_country_budget_service_general_budget_total",
    "metric_registry_id": "monthly_work_plan_country_budget_service_general_budget_total",
    "page": "country_budget_workspace",
@@ -23396,7 +23534,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-309",
+   "audit_id": "KPI-REG-312",
    "kpi_id": "monthly_work_plan_country_budget_service_staff_visits_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_staff_visits_cost",
    "page": "country_budget_workspace",
@@ -23437,7 +23575,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-310",
+   "audit_id": "KPI-REG-313",
    "kpi_id": "monthly_work_plan_country_budget_service_partner_visits_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_partner_visits_cost",
    "page": "country_budget_workspace",
@@ -23478,7 +23616,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-311",
+   "audit_id": "KPI-REG-314",
    "kpi_id": "monthly_work_plan_country_budget_service_ssa_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_ssa_cost",
    "page": "country_budget_workspace",
@@ -23519,7 +23657,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-312",
+   "audit_id": "KPI-REG-315",
    "kpi_id": "monthly_work_plan_country_budget_service_cluster_training_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_cluster_training_cost",
    "page": "country_budget_workspace",
@@ -23560,7 +23698,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-313",
+   "audit_id": "KPI-REG-316",
    "kpi_id": "monthly_work_plan_country_budget_service_special_project_cost",
    "metric_registry_id": "monthly_work_plan_country_budget_service_special_project_cost",
    "page": "country_budget_workspace",
@@ -23601,7 +23739,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-314",
+   "audit_id": "KPI-REG-317",
    "kpi_id": "monthly_work_plan_country_budget_service_admin_budget",
    "metric_registry_id": "monthly_work_plan_country_budget_service_admin_budget",
    "page": "country_budget_workspace",
@@ -23642,7 +23780,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-315",
+   "audit_id": "KPI-REG-318",
    "kpi_id": "monthly_work_plan_country_budget_service_staff_included",
    "metric_registry_id": "monthly_work_plan_country_budget_service_staff_included",
    "page": "country_budget_workspace",
@@ -23683,7 +23821,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-316",
+   "audit_id": "KPI-REG-319",
    "kpi_id": "monthly_work_plan_country_budget_service_total_planned_activities",
    "metric_registry_id": "monthly_work_plan_country_budget_service_total_planned_activities",
    "page": "country_budget_workspace",
@@ -23724,7 +23862,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-317",
+   "audit_id": "KPI-REG-320",
    "kpi_id": "monthly_work_plan_country_budget_service_planned_schools",
    "metric_registry_id": "monthly_work_plan_country_budget_service_planned_schools",
    "page": "country_budget_workspace",
@@ -23765,7 +23903,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-318",
+   "audit_id": "KPI-REG-321",
    "kpi_id": "monthly_work_plan_country_budget_service_partner_planned_schools",
    "metric_registry_id": "monthly_work_plan_country_budget_service_partner_planned_schools",
    "page": "country_budget_workspace",
@@ -23806,7 +23944,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-319",
+   "audit_id": "KPI-REG-322",
    "kpi_id": "monthly_work_plan_country_budget_service_cluster_meetings_sessions",
    "metric_registry_id": "monthly_work_plan_country_budget_service_cluster_meetings_sessions",
    "page": "country_budget_workspace",
@@ -23847,7 +23985,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-320",
+   "audit_id": "KPI-REG-323",
    "kpi_id": "monthly_work_plan_country_budget_service_trainings_planned",
    "metric_registry_id": "monthly_work_plan_country_budget_service_trainings_planned",
    "page": "country_budget_workspace",
@@ -23888,7 +24026,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-321",
+   "audit_id": "KPI-REG-324",
    "kpi_id": "monthly_work_plan_country_budget_service_ssa_collection_visits",
    "metric_registry_id": "monthly_work_plan_country_budget_service_ssa_collection_visits",
    "page": "country_budget_workspace",
@@ -23929,7 +24067,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-322",
+   "audit_id": "KPI-REG-325",
    "kpi_id": "monthly_work_plan_country_budget_service_special_project_activities",
    "metric_registry_id": "monthly_work_plan_country_budget_service_special_project_activities",
    "page": "country_budget_workspace",
@@ -23970,7 +24108,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-323",
+   "audit_id": "KPI-REG-326",
    "kpi_id": "monthly_work_plan_country_budget_service_admin_plan_items",
    "metric_registry_id": "monthly_work_plan_country_budget_service_admin_plan_items",
    "page": "country_budget_workspace",
@@ -24011,7 +24149,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-324",
+   "audit_id": "KPI-REG-327",
    "kpi_id": "monthly_work_plan_country_budget_service_highest_planned_cost_staff",
    "metric_registry_id": "monthly_work_plan_country_budget_service_highest_planned_cost_staff",
    "page": "country_budget_workspace",
@@ -24052,7 +24190,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-325",
+   "audit_id": "KPI-REG-328",
    "kpi_id": "monthly_work_plan_country_budget_service_largest_cluster_training_budget",
    "metric_registry_id": "monthly_work_plan_country_budget_service_largest_cluster_training_budget",
    "page": "country_budget_workspace",
@@ -24093,7 +24231,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-326",
+   "audit_id": "KPI-REG-329",
    "kpi_id": "monthly_work_plan_country_budget_service_partner_cost_share",
    "metric_registry_id": "monthly_work_plan_country_budget_service_partner_cost_share",
    "page": "country_budget_workspace",
@@ -24134,7 +24272,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-327",
+   "audit_id": "KPI-REG-330",
    "kpi_id": "monthly_work_plan_country_budget_service_top_cost_category",
    "metric_registry_id": "monthly_work_plan_country_budget_service_top_cost_category",
    "page": "country_budget_workspace",
@@ -24175,7 +24313,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-328",
+   "audit_id": "KPI-REG-331",
    "kpi_id": "monthly_work_plan_country_budget_service_admin_budget_share",
    "metric_registry_id": "monthly_work_plan_country_budget_service_admin_budget_share",
    "page": "country_budget_workspace",
@@ -24216,7 +24354,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-329",
+   "audit_id": "KPI-REG-332",
    "kpi_id": "monthly_work_plan_country_budget_service_average_allocation_per_staff",
    "metric_registry_id": "monthly_work_plan_country_budget_service_average_allocation_per_staff",
    "page": "country_budget_workspace",
@@ -24257,7 +24395,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-330",
+   "audit_id": "KPI-REG-333",
    "kpi_id": "planning_planning_service_ready_for_support",
    "metric_registry_id": "planning_planning_service_ready_for_support",
    "page": "annual_planning_workspace",
@@ -24303,7 +24441,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-331",
+   "audit_id": "KPI-REG-334",
    "kpi_id": "planning_planning_service_ssa_required",
    "metric_registry_id": "planning_planning_service_ssa_required",
    "page": "annual_planning_workspace",
@@ -24349,7 +24487,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-332",
+   "audit_id": "KPI-REG-335",
    "kpi_id": "planning_planning_service_clusters_needing_action",
    "metric_registry_id": "planning_planning_service_clusters_needing_action",
    "page": "annual_planning_workspace",
@@ -24395,7 +24533,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-333",
+   "audit_id": "KPI-REG-336",
    "kpi_id": "planning_planning_service_core_package_gaps",
    "metric_registry_id": "planning_planning_service_core_package_gaps",
    "page": "annual_planning_workspace",
@@ -24441,7 +24579,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-334",
+   "audit_id": "KPI-REG-337",
    "kpi_id": "planning_planning_service_partner_pending_schedule",
    "metric_registry_id": "planning_planning_service_partner_pending_schedule",
    "page": "annual_planning_workspace",
@@ -24487,7 +24625,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-335",
+   "audit_id": "KPI-REG-338",
    "kpi_id": "planning_planning_service_in_my_plan",
    "metric_registry_id": "planning_planning_service_in_my_plan",
    "page": "annual_planning_workspace",
@@ -24533,7 +24671,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-336",
+   "audit_id": "KPI-REG-339",
    "kpi_id": "planning_planning_service_cost_blocked",
    "metric_registry_id": "planning_planning_service_cost_blocked",
    "page": "annual_planning_workspace",
@@ -24579,7 +24717,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-337",
+   "audit_id": "KPI-REG-340",
    "kpi_id": "planning_planning_service_data_cleanup_required",
    "metric_registry_id": "planning_planning_service_data_cleanup_required",
    "page": "annual_planning_workspace",
@@ -24625,7 +24763,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-338",
+   "audit_id": "KPI-REG-341",
    "kpi_id": "professional_development_hr_dashboard_service_total_annual_pd_allocation",
    "metric_registry_id": "professional_development_hr_dashboard_service_total_annual_pd_allocation",
    "page": "hr_learning_dashboard",
@@ -24672,7 +24810,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-339",
+   "audit_id": "KPI-REG-342",
    "kpi_id": "professional_development_hr_dashboard_service_funds_committed",
    "metric_registry_id": "professional_development_hr_dashboard_service_funds_committed",
    "page": "hr_learning_dashboard",
@@ -24719,7 +24857,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-340",
+   "audit_id": "KPI-REG-343",
    "kpi_id": "professional_development_hr_dashboard_service_funds_accounted_for",
    "metric_registry_id": "professional_development_hr_dashboard_service_funds_accounted_for",
    "page": "hr_learning_dashboard",
@@ -24766,7 +24904,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-341",
+   "audit_id": "KPI-REG-344",
    "kpi_id": "professional_development_hr_dashboard_service_staff_enrolled",
    "metric_registry_id": "professional_development_hr_dashboard_service_staff_enrolled",
    "page": "hr_learning_dashboard",
@@ -24813,7 +24951,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-342",
+   "audit_id": "KPI-REG-345",
    "kpi_id": "professional_development_hr_dashboard_service_courses_in_progress",
    "metric_registry_id": "professional_development_hr_dashboard_service_courses_in_progress",
    "page": "hr_learning_dashboard",
@@ -24860,7 +24998,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-343",
+   "audit_id": "KPI-REG-346",
    "kpi_id": "professional_development_hr_dashboard_service_pending_certificate_uploads",
    "metric_registry_id": "professional_development_hr_dashboard_service_pending_certificate_uploads",
    "page": "hr_learning_dashboard",
@@ -24907,7 +25045,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-344",
+   "audit_id": "KPI-REG-347",
    "kpi_id": "professional_development_hr_dashboard_service_pending_accountability",
    "metric_registry_id": "professional_development_hr_dashboard_service_pending_accountability",
    "page": "hr_learning_dashboard",
@@ -24954,7 +25092,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-345",
+   "audit_id": "KPI-REG-348",
    "kpi_id": "professional_development_hr_dashboard_service_hr_sign_off_pending",
    "metric_registry_id": "professional_development_hr_dashboard_service_hr_sign_off_pending",
    "page": "hr_learning_dashboard",
@@ -25001,7 +25139,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-346",
+   "audit_id": "KPI-REG-349",
    "kpi_id": "professional_development_services_annual_pd_allocation",
    "metric_registry_id": "professional_development_services_annual_pd_allocation",
    "page": "learning_workspace",
@@ -25046,7 +25184,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-347",
+   "audit_id": "KPI-REG-350",
    "kpi_id": "professional_development_services_committed_amount",
    "metric_registry_id": "professional_development_services_committed_amount",
    "page": "learning_workspace",
@@ -25091,7 +25229,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-348",
+   "audit_id": "KPI-REG-351",
    "kpi_id": "professional_development_services_funds_used_accounted",
    "metric_registry_id": "professional_development_services_funds_used_accounted",
    "page": "learning_workspace",
@@ -25136,7 +25274,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-349",
+   "audit_id": "KPI-REG-352",
    "kpi_id": "professional_development_services_remaining_fund",
    "metric_registry_id": "professional_development_services_remaining_fund",
    "page": "learning_workspace",
@@ -25181,7 +25319,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-350",
+   "audit_id": "KPI-REG-353",
    "kpi_id": "professional_development_services_active_courses",
    "metric_registry_id": "professional_development_services_active_courses",
    "page": "learning_workspace",
@@ -25226,7 +25364,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-351",
+   "audit_id": "KPI-REG-354",
    "kpi_id": "professional_development_services_certificates_pending",
    "metric_registry_id": "professional_development_services_certificates_pending",
    "page": "learning_workspace",
@@ -25271,7 +25409,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-352",
+   "audit_id": "KPI-REG-355",
    "kpi_id": "professional_development_services_accountability_pending",
    "metric_registry_id": "professional_development_services_accountability_pending",
    "page": "learning_workspace",
@@ -25316,7 +25454,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-353",
+   "audit_id": "KPI-REG-356",
    "kpi_id": "professional_development_services_completed_courses",
    "metric_registry_id": "professional_development_services_completed_courses",
    "page": "learning_workspace",
@@ -25361,7 +25499,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-354",
+   "audit_id": "KPI-REG-357",
    "kpi_id": "projects_dashboard_service_total_projects",
    "metric_registry_id": "projects_dashboard_service_total_projects",
    "page": "projects_dashboard",
@@ -25407,7 +25545,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-355",
+   "audit_id": "KPI-REG-358",
    "kpi_id": "projects_dashboard_service_active_projects",
    "metric_registry_id": "projects_dashboard_service_active_projects",
    "page": "projects_dashboard",
@@ -25453,7 +25591,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-356",
+   "audit_id": "KPI-REG-359",
    "kpi_id": "projects_dashboard_service_project_schools",
    "metric_registry_id": "projects_dashboard_service_project_schools",
    "page": "projects_dashboard",
@@ -25499,7 +25637,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-357",
+   "audit_id": "KPI-REG-360",
    "kpi_id": "projects_dashboard_service_teachers_trained",
    "metric_registry_id": "projects_dashboard_service_teachers_trained",
    "page": "projects_dashboard",
@@ -25545,7 +25683,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-358",
+   "audit_id": "KPI-REG-361",
    "kpi_id": "projects_dashboard_service_leaders_trained",
    "metric_registry_id": "projects_dashboard_service_leaders_trained",
    "page": "projects_dashboard",
@@ -25591,7 +25729,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-359",
+   "audit_id": "KPI-REG-362",
    "kpi_id": "projects_dashboard_service_learners_reached",
    "metric_registry_id": "projects_dashboard_service_learners_reached",
    "page": "projects_dashboard",
@@ -25637,7 +25775,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-360",
+   "audit_id": "KPI-REG-363",
    "kpi_id": "projects_dashboard_service_assigned_partners",
    "metric_registry_id": "projects_dashboard_service_assigned_partners",
    "page": "projects_dashboard",
@@ -25683,7 +25821,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-361",
+   "audit_id": "KPI-REG-364",
    "kpi_id": "projects_dashboard_service_budget_generated",
    "metric_registry_id": "projects_dashboard_service_budget_generated",
    "page": "projects_dashboard",
@@ -25729,7 +25867,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-362",
+   "audit_id": "KPI-REG-365",
    "kpi_id": "projects_dashboard_service_activities_in_my_plan",
    "metric_registry_id": "projects_dashboard_service_activities_in_my_plan",
    "page": "projects_dashboard",
@@ -25775,7 +25913,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-363",
+   "audit_id": "KPI-REG-366",
    "kpi_id": "projects_dashboard_service_evidence_pending",
    "metric_registry_id": "projects_dashboard_service_evidence_pending",
    "page": "projects_dashboard",
@@ -25821,7 +25959,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-364",
+   "audit_id": "KPI-REG-367",
    "kpi_id": "projects_dashboard_service_ia_pending",
    "metric_registry_id": "projects_dashboard_service_ia_pending",
    "page": "projects_dashboard",
@@ -25867,7 +26005,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-365",
+   "audit_id": "KPI-REG-368",
    "kpi_id": "projects_dashboard_service_closed_activities",
    "metric_registry_id": "projects_dashboard_service_closed_activities",
    "page": "projects_dashboard",
@@ -25913,7 +26051,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-366",
+   "audit_id": "KPI-REG-369",
    "kpi_id": "projects_impact_service_total_projects",
    "metric_registry_id": "projects_impact_service_total_projects",
    "page": "project_impact_analytics",
@@ -25960,7 +26098,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-367",
+   "audit_id": "KPI-REG-370",
    "kpi_id": "projects_impact_service_schools_in_projects",
    "metric_registry_id": "projects_impact_service_schools_in_projects",
    "page": "project_impact_analytics",
@@ -26007,7 +26145,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-368",
+   "audit_id": "KPI-REG-371",
    "kpi_id": "projects_impact_service_great_impact",
    "metric_registry_id": "projects_impact_service_great_impact",
    "page": "project_impact_analytics",
@@ -26054,7 +26192,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-369",
+   "audit_id": "KPI-REG-372",
    "kpi_id": "projects_impact_service_negative_impact",
    "metric_registry_id": "projects_impact_service_negative_impact",
    "page": "project_impact_analytics",
@@ -26101,7 +26239,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-370",
+   "audit_id": "KPI-REG-373",
    "kpi_id": "projects_impact_service_teachers_impacted",
    "metric_registry_id": "projects_impact_service_teachers_impacted",
    "page": "project_impact_analytics",
@@ -26148,7 +26286,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-371",
+   "audit_id": "KPI-REG-374",
    "kpi_id": "projects_impact_service_school_leaders_impacted",
    "metric_registry_id": "projects_impact_service_school_leaders_impacted",
    "page": "project_impact_analytics",
@@ -26195,7 +26333,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-372",
+   "audit_id": "KPI-REG-375",
    "kpi_id": "projects_impact_service_students_reached",
    "metric_registry_id": "projects_impact_service_students_reached",
    "page": "project_impact_analytics",
@@ -26242,7 +26380,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-373",
+   "audit_id": "KPI-REG-376",
    "kpi_id": "projects_impact_service_avg_annual_ssa_delta",
    "metric_registry_id": "projects_impact_service_avg_annual_ssa_delta",
    "page": "project_impact_analytics",
@@ -26289,7 +26427,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-374",
+   "audit_id": "KPI-REG-377",
    "kpi_id": "projects_impact_service_delivery_adoption",
    "metric_registry_id": "projects_impact_service_delivery_adoption",
    "page": "project_impact_analytics",
@@ -26336,7 +26474,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-375",
+   "audit_id": "KPI-REG-378",
    "kpi_id": "projects_impact_service_evidence_completion",
    "metric_registry_id": "projects_impact_service_evidence_completion",
    "page": "project_impact_analytics",
@@ -26383,7 +26521,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-376",
+   "audit_id": "KPI-REG-379",
    "kpi_id": "projects_my_plan_service_planned_this_week",
    "metric_registry_id": "projects_my_plan_service_planned_this_week",
    "page": "special_project_personal_plan",
@@ -26429,7 +26567,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-377",
+   "audit_id": "KPI-REG-380",
    "kpi_id": "projects_my_plan_service_planned_this_month",
    "metric_registry_id": "projects_my_plan_service_planned_this_month",
    "page": "special_project_personal_plan",
@@ -26475,7 +26613,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-378",
+   "audit_id": "KPI-REG-381",
    "kpi_id": "projects_my_plan_service_planned_this_quarter",
    "metric_registry_id": "projects_my_plan_service_planned_this_quarter",
    "page": "special_project_personal_plan",
@@ -26521,7 +26659,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-379",
+   "audit_id": "KPI-REG-382",
    "kpi_id": "projects_my_plan_service_planned_this_fy",
    "metric_registry_id": "projects_my_plan_service_planned_this_fy",
    "page": "special_project_personal_plan",
@@ -26567,7 +26705,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-380",
+   "audit_id": "KPI-REG-383",
    "kpi_id": "projects_my_plan_service_school_visits_scheduled",
    "metric_registry_id": "projects_my_plan_service_school_visits_scheduled",
    "page": "special_project_personal_plan",
@@ -26613,7 +26751,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-381",
+   "audit_id": "KPI-REG-384",
    "kpi_id": "projects_my_plan_service_partner_activities",
    "metric_registry_id": "projects_my_plan_service_partner_activities",
    "page": "special_project_personal_plan",
@@ -26659,7 +26797,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-382",
+   "audit_id": "KPI-REG-385",
    "kpi_id": "projects_my_plan_service_project_trainings",
    "metric_registry_id": "projects_my_plan_service_project_trainings",
    "page": "special_project_personal_plan",
@@ -26705,7 +26843,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-383",
+   "audit_id": "KPI-REG-386",
    "kpi_id": "projects_my_plan_service_completion_readiness",
    "metric_registry_id": "projects_my_plan_service_completion_readiness",
    "page": "special_project_personal_plan",
@@ -26751,7 +26889,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-384",
+   "audit_id": "KPI-REG-387",
    "kpi_id": "projects_my_plan_service_budget_created",
    "metric_registry_id": "projects_my_plan_service_budget_created",
    "page": "special_project_personal_plan",
@@ -26797,7 +26935,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-385",
+   "audit_id": "KPI-REG-388",
    "kpi_id": "projects_my_plan_service_fund_request_synced",
    "metric_registry_id": "projects_my_plan_service_fund_request_synced",
    "page": "special_project_personal_plan",
@@ -26843,7 +26981,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-386",
+   "audit_id": "KPI-REG-389",
    "kpi_id": "projects_my_plan_service_evidence_pending",
    "metric_registry_id": "projects_my_plan_service_evidence_pending",
    "page": "special_project_personal_plan",
@@ -26889,7 +27027,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-387",
+   "audit_id": "KPI-REG-390",
    "kpi_id": "projects_my_plan_service_ia_review_pending",
    "metric_registry_id": "projects_my_plan_service_ia_review_pending",
    "page": "special_project_personal_plan",
@@ -26935,7 +27073,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-388",
+   "audit_id": "KPI-REG-391",
    "kpi_id": "projects_planning_service_total_project_schools",
    "metric_registry_id": "projects_planning_service_total_project_schools",
    "page": "special_project_planning",
@@ -26984,7 +27122,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-389",
+   "audit_id": "KPI-REG-392",
    "kpi_id": "projects_planning_service_ssa_score_required",
    "metric_registry_id": "projects_planning_service_ssa_score_required",
    "page": "special_project_planning",
@@ -27033,7 +27171,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-390",
+   "audit_id": "KPI-REG-393",
    "kpi_id": "projects_planning_service_scheduled_this_week",
    "metric_registry_id": "projects_planning_service_scheduled_this_week",
    "page": "special_project_planning",
@@ -27082,7 +27220,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-391",
+   "audit_id": "KPI-REG-394",
    "kpi_id": "projects_planning_service_planning_completion",
    "metric_registry_id": "projects_planning_service_planning_completion",
    "page": "special_project_planning",
@@ -27131,7 +27269,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-392",
+   "audit_id": "KPI-REG-395",
    "kpi_id": "projects_planning_service_high_risk_project_schools",
    "metric_registry_id": "projects_planning_service_high_risk_project_schools",
    "page": "special_project_planning",
@@ -27180,7 +27318,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-393",
+   "audit_id": "KPI-REG-396",
    "kpi_id": "projects_planning_service_schools_requiring_follow_up",
    "metric_registry_id": "projects_planning_service_schools_requiring_follow_up",
    "page": "special_project_planning",
@@ -27229,7 +27367,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-394",
+   "audit_id": "KPI-REG-397",
    "kpi_id": "projects_planning_service_ssa_required",
    "metric_registry_id": "projects_planning_service_ssa_required",
    "page": "special_project_planning",
@@ -27278,7 +27416,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-395",
+   "audit_id": "KPI-REG-398",
    "kpi_id": "projects_planning_service_ready_for_scheduling",
    "metric_registry_id": "projects_planning_service_ready_for_scheduling",
    "page": "special_project_planning",
@@ -27327,7 +27465,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-396",
+   "audit_id": "KPI-REG-399",
    "kpi_id": "projects_planning_service_ready_for_partner_assignment",
    "metric_registry_id": "projects_planning_service_ready_for_partner_assignment",
    "page": "special_project_planning",
@@ -27376,7 +27514,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-397",
+   "audit_id": "KPI-REG-400",
    "kpi_id": "projects_planning_service_visit_pending",
    "metric_registry_id": "projects_planning_service_visit_pending",
    "page": "special_project_planning",
@@ -27425,7 +27563,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-398",
+   "audit_id": "KPI-REG-401",
    "kpi_id": "projects_planning_service_training_pending",
    "metric_registry_id": "projects_planning_service_training_pending",
    "page": "special_project_planning",
@@ -27474,7 +27612,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-399",
+   "audit_id": "KPI-REG-402",
    "kpi_id": "projects_planning_service_partner_assignment_pending",
    "metric_registry_id": "projects_planning_service_partner_assignment_pending",
    "page": "special_project_planning",
@@ -27523,7 +27661,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-400",
+   "audit_id": "KPI-REG-403",
    "kpi_id": "projects_planning_service_high_risk_schools",
    "metric_registry_id": "projects_planning_service_high_risk_schools",
    "page": "special_project_planning",
@@ -27572,7 +27710,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-401",
+   "audit_id": "KPI-REG-404",
    "kpi_id": "targets_team_targets_high_risk_staff",
    "metric_registry_id": "targets_team_targets_high_risk_staff",
    "page": "team_targets_workspace",
@@ -27618,7 +27756,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-402",
+   "audit_id": "KPI-REG-405",
    "kpi_id": "targets_team_targets_activity_sf_id_compliance",
    "metric_registry_id": "targets_team_targets_activity_sf_id_compliance",
    "page": "team_targets_workspace",
@@ -27664,7 +27802,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-403",
+   "audit_id": "KPI-REG-406",
    "kpi_id": "targets_team_targets_awaiting_ia",
    "metric_registry_id": "targets_team_targets_awaiting_ia",
    "page": "team_targets_workspace",
@@ -27710,7 +27848,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-404",
+   "audit_id": "KPI-REG-407",
    "kpi_id": "targets_team_targets_missing_sf_ids",
    "metric_registry_id": "targets_team_targets_missing_sf_ids",
    "page": "team_targets_workspace",
@@ -27756,7 +27894,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-405",
+   "audit_id": "KPI-REG-408",
    "kpi_id": "targets_team_targets_returned_by_ia",
    "metric_registry_id": "targets_team_targets_returned_by_ia",
    "page": "team_targets_workspace",
@@ -27802,7 +27940,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-406",
+   "audit_id": "KPI-REG-409",
    "kpi_id": "targets_team_targets_team_achievement",
    "metric_registry_id": "targets_team_targets_team_achievement",
    "page": "team_targets_workspace",
@@ -27848,7 +27986,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-407",
+   "audit_id": "KPI-REG-410",
    "kpi_id": "targets_team_targets_monthly_on_track",
    "metric_registry_id": "targets_team_targets_monthly_on_track",
    "page": "team_targets_workspace",
@@ -27894,7 +28032,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-408",
+   "audit_id": "KPI-REG-411",
    "kpi_id": "targets_team_targets_at_risk_staff",
    "metric_registry_id": "targets_team_targets_at_risk_staff",
    "page": "team_targets_workspace",
@@ -27940,7 +28078,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-409",
+   "audit_id": "KPI-REG-412",
    "kpi_id": "targets_team_targets_current_quarter",
    "metric_registry_id": "targets_team_targets_current_quarter",
    "page": "team_targets_workspace",
@@ -27986,7 +28124,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-410",
+   "audit_id": "KPI-REG-413",
    "kpi_id": "targets_team_targets_fy_achievement",
    "metric_registry_id": "targets_team_targets_fy_achievement",
    "page": "team_targets_workspace",
@@ -28032,7 +28170,7 @@
    "filter_behaviour": "partial"
   },
   {
-   "audit_id": "KPI-REG-411",
+   "audit_id": "KPI-REG-414",
    "kpi_id": "targets_team_targets_recovery_plans",
    "metric_registry_id": "targets_team_targets_recovery_plans",
    "page": "team_targets_workspace",
@@ -28395,7 +28533,7 @@
   {
    "audit_id": "KPI-PAYLOAD-012",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 836,
+   "line": 843,
    "function": "dashboard_view",
    "target": "cceo_kpi_items",
    "source_item_count": 4,
@@ -28421,7 +28559,7 @@
   {
    "audit_id": "KPI-PAYLOAD-013",
    "module": "apps/frontend/views/dashboard_views.py",
-   "line": 1218,
+   "line": 1225,
    "function": "dashboard_view",
    "target": "unknown",
    "source_item_count": 7,

@@ -1,6 +1,12 @@
 {% load frontend_filters %}
 <section class="space-y-4">
-  {% include "components/context_metrics.html" with items=kpis variant="executive" title="Country overview" %}
+  {% if region_unassigned %}
+  <div class="edify-note" data-tone="warning" role="status">
+    No region is assigned to your account yet, so there is nothing to oversee here.
+    An administrator assigns it on your staff record, under geography.
+  </div>
+  {% endif %}
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title=lens_label|add:" overview" %}
 
   <div class="oversight-workspace-toolbar">
     {% if tabs %}

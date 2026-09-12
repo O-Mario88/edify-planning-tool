@@ -1226,6 +1226,76 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         drilldown="/country-planning-oversight/",
         refresh_events=("activity_scheduled", "partner_assignment_created"),
     ),
+    # The Regional Programme Lead's three headline tiles. The country family
+    # cannot be reused for them: a tile labelled "Country Planned Activities"
+    # on a page bounded to one region states something untrue (owner,
+    # 2026-09-12).
+    MetricSpec(
+        key="oversight_region_activities_planned",
+        label="Region Planned Activities",
+        definition=(
+            "Every activity planned in the period at a school in this region, "
+            "plus the cluster work whose district sits in it, plus every "
+            "partner handover in it that no partner has scheduled yet."
+        ),
+        question="What has this region committed to this period?",
+        category=Category.SCALE,
+        unit=Unit.COUNT,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.Activity", "partners.PartnerAssignment"),
+        numerator="Planned activities plus unscheduled partner handovers, region-wide",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="One region, by the geography of the school and the cluster",
+        owner_page="team_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/",
+        refresh_events=("activity_scheduled", "partner_assignment_created"),
+    ),
+    MetricSpec(
+        key="oversight_region_activities_at_risk",
+        label="Region Activities At Risk",
+        definition=(
+            "The same risk conditions as the team lens, measured across one "
+            "region rather than one team."
+        ),
+        question="Which Programme Leads are carrying this region's planning risk?",
+        category=Category.RISK,
+        unit=Unit.COUNT,
+        service="apps.planning.risk_service.annotate",
+        source_models=("activities.Activity", "partners.PartnerAssignment"),
+        numerator="Items with one or more live risk conditions, region-wide",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="One region, by the geography of the school and the cluster",
+        owner_page="team_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/",
+        refresh_events=("activity_rescheduled", "evidence_uploaded"),
+    ),
+    MetricSpec(
+        key="oversight_region_planned_budget",
+        label="Planned Region Budget",
+        definition=(
+            "The sum of the cost lines on every scheduled activity in the "
+            "region, on the same basis as the team figure. The Regional "
+            "Programme Lead reads this figure and approves none of it."
+        ),
+        question="What has this region's plan committed financially?",
+        category=Category.FINANCE,
+        unit=Unit.MONEY_UGX,
+        finance_stage=FinanceStage.PLANNED,
+        service="apps.planning.oversight_service.summarize",
+        source_models=("activities.ActivityScheduleCostLine",),
+        numerator="Sum of cost lines on scheduled activities, region-wide",
+        date_basis=DateBasis.PLANNED_DATE,
+        period=Period.FINANCIAL_YEAR,
+        scope="One region, by the geography of the school and the cluster",
+        owner_page="team_planning_oversight",
+        filter_behaviour=FilterBehaviour.FILTERED,
+        drilldown="/team-planning-oversight/",
+        refresh_events=("activity_scheduled", "activity_costed"),
+    ),
     MetricSpec(
         key="oversight_partner_awaiting_schedule",
         label="Partner Awaiting Schedule",

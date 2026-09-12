@@ -25,6 +25,9 @@ class EdifyRole(str, Enum):
     COUNTRY_PROGRAM_LEAD = "Program Lead"
     COUNTRY_DIRECTOR = "CountryDirector"
     REGIONAL_VICE_PRESIDENT = "RegionalVicePresident"
+    # Oversees the Programme Leads of one region: reads their work and their
+    # CCEOs' work, follows both up, and decides nothing (owner, 2026-09-12).
+    REGIONAL_PROGRAM_LEAD = "RegionalProgramLead"
     IMPACT_ASSESSMENT = "ImpactAssessment"
     PROGRAM_ACCOUNTANT = "Accountant"
     HUMAN_RESOURCES = "HumanResources"
@@ -503,6 +506,37 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.BUSINESS_TRANSFORMATION_SENSITIVE_VIEW,
         P.BUSINESS_TRANSFORMATION_FACILITY_VIEW,
         P.BUSINESS_TRANSFORMATION_EXPORT,
+    ],
+    # The Regional Programme Lead oversees the Programme Leads of one region.
+    # Every entry here is a READ or a follow-up. What is deliberately absent is
+    # the point of the role (owner, 2026-09-12: "He should NOT approve funds,
+    # plan school activities, non school activities etc"): no PLANNING_CREATE,
+    # no MANUAL_ACTIVITY_CREATE, no ACTIVITY_ASSIGN, no ACTIVITY_COMPLETE, no
+    # BUDGET_APPROVE or COUNTRY_BUDGET_APPROVE, no FUND_REQUEST authority, no
+    # IA_VERIFY, and none of the strategic-priority write authorities — they
+    # follow up on the Leads' priorities rather than setting them.
+    EdifyRole.REGIONAL_PROGRAM_LEAD: [
+        P.SCHOOL_VIEW,
+        P.SCHOOL_DIRECTORY_VIEW,
+        P.CLUSTER_VIEW,
+        P.SSA_VIEW,
+        P.SSA_ACTIVITY_MAPPING_VIEW,
+        # Reads the plans; the absence of PLANNING_CREATE is what stops them
+        # scheduling anything into a Lead's or a CCEO's portfolio.
+        P.PLANNING_VIEW,
+        P.ACTIVITY_CATALOGUE_VIEW,
+        # Sees what a plan will cost, and approves none of it.
+        P.BUDGET_VIEW_SUMMARY,
+        P.RATE_CARD_REFERENCE_VIEW,
+        P.ACTIVITY_REFERENCE_COST_VIEW,
+        P.PARTNER_VIEW,
+        P.ANALYTICS_VIEW,
+        P.EXPORT,
+        # Following up on the Leads' priorities: their progress, not their
+        # definition.
+        P.STRATEGIC_PRIORITIES_VIEW,
+        P.MILESTONES_VIEW_PROGRESS,
+        P.STAFF_PERFORMANCE_VIEW,
     ],
     EdifyRole.COUNTRY_PROGRAM_LEAD: [
         P.SSA_ACTIVITY_MAPPING_VIEW,

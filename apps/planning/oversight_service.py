@@ -181,11 +181,13 @@ class PlanningOversightItem:
 class OversightScope:
     """Who this principal may see, resolved once and reused by every query."""
 
-    kind: str  # "pl" | "country"
+    kind: str  # "pl" | "region" | "country"
     # Both id spaces, because Activity.responsible_staff_id holds a StaffProfile
     # id or a User id depending on which path wrote it (see scoping.owner_ids).
     own_ids: set[str] = field(default_factory=set)
     supervised_ids: set[str] = field(default_factory=set)
+    # The regions a "region" scope is bounded to (the Regional Programme Lead).
+    region_ids: tuple[str, ...] = ()
 
     @property
     def team_ids(self) -> set[str]:
@@ -194,6 +196,16 @@ class OversightScope:
     @property
     def is_country(self) -> bool:
         return self.kind == "country"
+
+    @property
+    def is_region(self) -> bool:
+        return self.kind == "region"
+
+    @property
+    def groups_by_lead(self) -> bool:
+        """Whether this lens reads many Programme Leads and is therefore
+        organised in their tabs — the country lens, and the region lens."""
+        return self.kind in ("country", "region")
 
 
 def _both_id_spaces(staff_ids) -> set[str]:
@@ -239,6 +251,18 @@ def resolve_oversight_scope(principal) -> OversightScope:
         EdifyRole.ADMIN.value,
     ) or getattr(principal, "is_superuser", False):
         return OversightScope(kind="country")
+
+    # The Regional Programme Lead reads one region: every Programme Lead in it
+    # and every CCEO those Leads supervise, in the same Lead tabs the country
+    # lens uses (owner, 2026-09-12). The region comes from the geography
+    # assignments an administrator makes; with none they read nothing, and the
+    # page says so rather than quietly widening to the whole country.
+    if role == EdifyRole.REGIONAL_PROGRAM_LEAD.value:
+        from apps.core.scoping import resolve_user_scope as _resolve
+
+        return OversightScope(
+            kind="region", region_ids=tuple(_resolve(principal).region_ids or ())
+        )
 
     scope = resolve_user_scope(principal)
     own = _both_id_spaces(set(owner_ids(principal)))
@@ -429,6 +453,19 @@ def _activities_in_scope(
     if date_end:
         qs = qs.filter(planned_date__lt=date_end)
 
+    if scope.is_region:
+        # Geography, not the reporting line: a region's oversight is every
+        # activity delivered at a school in it, plus the cluster work whose
+        # district sits in it. That covers partner-delivered work, which
+        # carries no responsible staff member at all.
+        if not scope.region_ids:
+            return []
+        return list(
+            qs.filter(
+                Q(school__region_id__in=scope.region_ids)
+                | Q(cluster__district__region_id__in=scope.region_ids)
+            )
+        )
     if not scope.is_country:
         ids = scope.team_ids
         # Ownership of the school and of the cluster are the third and fourth
@@ -507,6 +544,15 @@ def _unscheduled_assignments_in_scope(
             "partner__name",
         )
     )
+    if scope.is_region:
+        if not scope.region_ids:
+            return []
+        return list(
+            qs.filter(
+                Q(school__region_id__in=scope.region_ids)
+                | Q(cluster__district__region_id__in=scope.region_ids)
+            )
+        )
     if not scope.is_country:
         ids = scope.team_ids
         qs = qs.filter(Q(monitoring_staff_id__in=ids) | Q(assigning_staff_id__in=ids))

@@ -11,6 +11,8 @@ PL = "PL"
 CD = "CD"
 IA = "IA"
 RVP = "RVP"
+# The Regional Programme Lead: reads one region's Programme Leads and CCEOs.
+RPL = "RPL"
 HR = "HR"
 ACCOUNTANT = "ACCOUNTANT"
 PARTNER = "PARTNER"
@@ -26,6 +28,7 @@ ALL_ROLES = {
     CD,
     IA,
     RVP,
+    RPL,
     HR,
     ACCOUNTANT,
     PARTNER,
@@ -87,6 +90,8 @@ def get_user_role_slug(user) -> str:
         "Impact Assessment": "IA",
         "RegionalVicePresident": "RVP",
         "Regional Vice President": "RVP",
+        "RegionalProgramLead": "RPL",
+        "Regional Program Lead": "RPL",
         "HumanResources": "HR",
         "Human Resources": "HR",
         "Accountant": "ACCOUNTANT",
@@ -147,7 +152,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Coordinator, who owns projects rather than a staff team.
     # NOTE: HR and IA are still listed and still resolve to an empty team —
     # out of scope for the field-role audit, flagged in the proposal.
-    "team_targets": {PL, CD, HR, IA, ADMIN},
+    "team_targets": {PL, CD, HR, IA, RPL, ADMIN},
     # Supervision lenses over the country plan. Deliberately narrow: the PL
     # page resolves a team only for a Program Lead, and the country page is a
     # leadership review surface, not a field-planning one. Neither grants any
@@ -161,7 +166,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # exports here now carry `@require_export_permission`, and the corrective
     # actions gate on their own authority rather than on page access — both
     # asserted in test_planning_oversight_access.py.
-    "team_planning_oversight": {PL, CD, RVP, IA, ACCOUNTANT, ADMIN},
+    # The Regional Programme Lead's home: their region's Programme Leads in
+    # tabs, with each Lead's CCEOs grouped inside (owner, 2026-09-12).
+    "team_planning_oversight": {PL, CD, RVP, RPL, IA, ACCOUNTANT, ADMIN},
     "country_planning_oversight": {CD, RVP, ADMIN},
     # Partner-delivered work, grouped by partner. The PL owns team-level
     # monitoring of it and the CD sees the country picture; the CCEO reaches
@@ -274,13 +281,15 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "leave_policies": {HR, ADMIN},
     "public_holidays": ALL_ROLES,
     "team_availability": {PL, CD, RVP, HR, ADMIN},
-    "schools": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
+    # The Regional Programme Lead reads the directory — grouped by Programme
+    # Lead, like every other country-or-wider role — and edits nothing.
+    "schools": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, RPL, ADMIN},
     # CD and the Accountant since 2026-09-02, for the same reason as
     # `planning`: a core visit they schedule is filed as a request the school's
     # owner approves (apps.planning.visit_requests). Core trainings stay the
     # owner's; the drawer refuses those roles.
     "core_schools": {CCEO, PL, IA, CD, ACCOUNTANT, ADMIN},
-    "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, ADMIN},
+    "school_directory": {CCEO, PL, PROJECT_COORDINATOR, IA, CD, RPL, ADMIN},
     "school_profile": {
         CCEO,
         PL,
@@ -338,7 +347,18 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "monthly_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN, RVP, PROJECT_COORDINATOR},
     "country_budget": {CD, ACCOUNTANT, IA, RVP, ADMIN},
     "consolidated_fund_allocation": {CD, ACCOUNTANT, IA, RVP, ADMIN},
-    "analytics": {CD, PL, IA, RVP, HR, ACCOUNTANT, PROJECT_COORDINATOR, CCEO, ADMIN},
+    "analytics": {
+        CD,
+        PL,
+        IA,
+        RVP,
+        RPL,
+        HR,
+        ACCOUNTANT,
+        PROJECT_COORDINATOR,
+        CCEO,
+        ADMIN,
+    },
     # The Program Lead's decision-intelligence cockpit — strictly PL-scoped.
     "pl_analytics": {PL, ADMIN},
     # The Country Director's national leadership-intelligence cockpit — country-wide.
@@ -530,7 +550,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # needs the source beside it; a PL reads the priorities their own
     # allocation comes from. Acting on a milestone still needs the define,
     # approve or allocate permission, which neither role gains here.
-    "strategic_priorities": {RVP, CD, HR, ADMIN, IA, PL},
+    # Read-only for the Regional Programme Lead: they follow up on the Leads'
+    # priorities, and hold none of the write authorities (see rbac.py).
+    "strategic_priorities": {RVP, RPL, CD, HR, ADMIN, IA, PL},
     # The Today workbench (roadmap Phase 5): the field roles' one primary
     # daily surface — route, next action, waiting-on-you, exceptions, the
     # proposed week, day completion.
@@ -541,7 +563,7 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "target_distribution": {IA, CD, ADMIN},
     # The canonical master table (§9): every staff role reads the SAME rows;
     # the target column is role-scoped (PL/CCEO see their own allocation).
-    "priorities_master": {CCEO, PL, CD, IA, RVP, HR, PROJECT_COORDINATOR, ADMIN},
+    "priorities_master": {CCEO, PL, CD, IA, RVP, RPL, HR, PROJECT_COORDINATOR, ADMIN},
     # A section of Priorities, not a separate system. Everyone who reads
     # priorities can see what each activity is measured against; only Impact
     # Assessment can change it, which the page enforces per control.
@@ -1173,7 +1195,7 @@ SIDEBAR_ITEMS = [
                 "label": "Team Oversight",
                 "url": "/team-planning-oversight/",
                 "page_key": "team_planning_oversight",
-                "visible_to": {PL, CD, HR, IA, RVP, ACCOUNTANT, ADMIN},
+                "visible_to": {PL, CD, HR, IA, RVP, RPL, ACCOUNTANT, ADMIN},
                 "extra_active_paths": ("/team-targets",),
             },
             {
@@ -1220,6 +1242,11 @@ SIDEBAR_ITEMS = [
                     IA: "/target-distribution",
                     CD: "/target-distribution",
                     ADMIN: "/target-distribution",
+                    # The Regional Programme Lead follows up on the Leads'
+                    # priorities: the read-only register at /priorities/master,
+                    # never the distribution workspace that sets them and
+                    # never the personal agreement /priorities delegates to.
+                    RPL: "/priorities/master",
                 },
             },
             {

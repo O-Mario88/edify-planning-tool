@@ -59,6 +59,11 @@ COUNTRY_SCHEDULING_ROLES = {
     EdifyRole.ADMIN.value,
 }
 SUMMARY_ONLY_ROLES = {EdifyRole.REGIONAL_VICE_PRESIDENT.value}
+# Roles bounded to the region(s) assigned to them, with school-level detail
+# inside it. The Regional Programme Lead reads the work of the Programme Leads
+# in their region and of the CCEOs those Leads supervise (owner, 2026-09-12);
+# unlike the RVP they need the rows, not just the summary.
+REGION_ROLES = {EdifyRole.REGIONAL_PROGRAM_LEAD.value}
 # Country roles with no portfolio of their own. They never plan *directly*
 # into a CCEO's or Programme Lead's schools or clusters — a visit they need at
 # somebody else's school is scheduled the ordinary way, carries the reason for
@@ -117,6 +122,9 @@ class UserScope:
     # instead of testing `region_ids` for emptiness, which conflated
     # "unassigned" with "assigned to nothing" and emptied the RVP's pages.
     rvp_region_scoped: bool = False
+    # True when this role reads one region's rows (REGION_ROLES) — the lens
+    # oversight and analytics narrow to `region_ids`.
+    region_scope: bool = False
     can_view_school_level_detail: bool = True
     can_view_partner_data: bool = False
     can_view_financial_data: bool = False
@@ -258,7 +266,7 @@ def _resolve_user_scope_uncached(user) -> UserScope:
     ):
         country_scope = False
 
-    if summary_only and staff_id and StaffGeographyAssignment:
+    if (summary_only or role in REGION_ROLES) and staff_id and StaffGeographyAssignment:
         # RVP sees summary performance — scope to assigned region(s). No
         # school-level rows (see school_queryset); analytics get country counts.
         #
@@ -535,6 +543,7 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         partner_ids=partner_ids,
         can_view_summary_only=summary_only,
         rvp_region_scoped=bool(summary_only and region_ids),
+        region_scope=role in REGION_ROLES,
         can_view_school_level_detail=not summary_only,
         can_view_partner_data=has(Permission.PARTNER_VIEW.value),
         can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
@@ -891,6 +900,14 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
             return qs.none()
     if scope.country_scope:
         return qs.filter(school_country_q(scope))
+    if scope.region_scope:
+        # A region role READS its region's schools and operates on none of
+        # them: it holds no school, planning, cluster or funding authority
+        # (see rbac.py, EdifyRole.REGIONAL_PROGRAM_LEAD). With no region
+        # assigned it reads nothing rather than silently widening.
+        return (
+            qs.filter(region_id__in=scope.region_ids) if scope.region_ids else qs.none()
+        )
     if scope.can_view_summary_only:
         return qs.none()
     if direct_only:

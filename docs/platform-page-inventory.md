@@ -7,7 +7,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Routed product surfaces: **605**
 - All registered routes: **1073**
 - API routes: **359**
-- Roles: **14**
+- Roles: **15**
 - Permission keys: **112**
 - Scheduled jobs: **26**
 - Activity states: **24**
@@ -517,7 +517,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-5A094101A0 | /policy-compliance | Policy Compliance | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-4B290608CB | /policy-compliance/comments/<str:comment_id> | Respond Comment | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-27FA261421 | /priorities | Priorities | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-E8E9A2A166 | /priorities/master | Priorities · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-E8E9A2A166 | /priorities/master | Priorities | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EB2FC6A25B | /priorities/ssa-mapping | SSA & Activity Mapping · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8BBA1A3E04 | /priorities/ssa-mapping/<str:item_id>/drawer | Ssa Mapping Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-5D8206AE15 | /priorities/ssa-mapping/<str:item_id>/save | Ssa Mapping Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

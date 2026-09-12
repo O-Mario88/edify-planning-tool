@@ -249,6 +249,13 @@ def dashboard_view(request):
     if role == "ImpactAssessment":
         return redirect("/ia/dashboard/")
 
+    # The Regional Programme Lead's home IS the oversight page: their region's
+    # Programme Leads in tabs, each Lead's CCEOs grouped inside (owner,
+    # 2026-09-12). There is no separate dashboard to build, because every
+    # figure they need is the one that page already computes.
+    if role == "RegionalProgramLead":
+        return redirect("/team-planning-oversight/")
+
     if role in ("PartnerAdmin", "PartnerFieldOfficer"):
         # Partner logins have no StaffProfile/country-cluster scope, so the
         # generic internal-staff dashboard below (schools/clusters/team

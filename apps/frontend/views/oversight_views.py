@@ -39,7 +39,7 @@ COUNTRY_OVERSIGHT_PATH = "/country-planning-oversight/"
 PARTNER_OVERSIGHT_PATH = "/partner-oversight/"
 
 
-def may_delegate(user, *, country: bool) -> bool:
+def may_delegate(user, *, country: bool, region: bool = False) -> bool:
     """Whether this person may send a corrective action from these pages.
 
     Delegation follows the reporting line: a Programme Lead asks their CCEOs,
@@ -63,15 +63,20 @@ def may_delegate(user, *, country: bool) -> bool:
     from apps.core.rbac import EdifyRole
 
     role = getattr(user, "active_role", "") or ""
-    allowed = (
-        {EdifyRole.COUNTRY_DIRECTOR.value}
-        if country
-        else {EdifyRole.COUNTRY_PROGRAM_LEAD.value}
-    )
+    # A Programme Lead asks their CCEOs; a Country Director asks their
+    # Programme Leads; a Regional Programme Lead asks the Programme Leads of
+    # their region, which is the whole of their job (owner, 2026-09-12:
+    # "follow up with the program leads").
+    if region:
+        allowed = {EdifyRole.REGIONAL_PROGRAM_LEAD.value}
+    elif country:
+        allowed = {EdifyRole.COUNTRY_DIRECTOR.value}
+    else:
+        allowed = {EdifyRole.COUNTRY_PROGRAM_LEAD.value}
     return role in allowed | {EdifyRole.ADMIN.value}
 
 
-def _kpi_items(summary, *, country: bool) -> list[dict]:
+def _kpi_items(summary, *, country: bool, region: bool = False) -> list[dict]:
     """The headline tiles, built through the metric registry.
 
     Every one is a field of the fold in `summarize()`, so a tile cannot show a
@@ -87,9 +92,13 @@ def _kpi_items(summary, *, country: bool) -> list[dict]:
     """
     return [
         render_kpi_item(
-            "oversight_country_activities_planned"
-            if country
-            else "oversight_team_activities_planned",
+            "oversight_region_activities_planned"
+            if region
+            else (
+                "oversight_country_activities_planned"
+                if country
+                else "oversight_team_activities_planned"
+            ),
             MetricValue.measured(summary["total_planned"]),
             helper=(
                 f"{summary['staff_scheduled']} staff · "
@@ -105,18 +114,26 @@ def _kpi_items(summary, *, country: bool) -> list[dict]:
             icon="handshake",
         ),
         render_kpi_item(
-            "oversight_country_activities_at_risk"
-            if country
-            else "oversight_team_work_needing_attention",
+            "oversight_region_activities_at_risk"
+            if region
+            else (
+                "oversight_country_activities_at_risk"
+                if country
+                else "oversight_team_work_needing_attention"
+            ),
             MetricValue.measured(summary["at_risk"]),
             helper=f"{summary['cost_missing']} scheduled without a cost",
             tone="danger" if summary["at_risk"] else "neutral",
             icon="warning",
         ),
         render_kpi_item(
-            "oversight_country_planned_budget"
-            if country
-            else "oversight_team_planned_budget",
+            "oversight_region_planned_budget"
+            if region
+            else (
+                "oversight_country_planned_budget"
+                if country
+                else "oversight_team_planned_budget"
+            ),
             MetricValue.measured(summary["planned_budget"]),
             helper=f"From {summary['scheduled_total']} scheduled",
             icon="currency",
@@ -332,7 +349,11 @@ def team_planning_oversight_view(request):
     items = oversight.build_items(
         request.user, filters=advanced, **_service_period(period)
     )
-    country_lens = scope.is_country
+    # Both the country lens and the Regional Programme Lead's region lens read
+    # many Programme Leads, so both are organised in Lead tabs; only the copy
+    # and the headline tiles differ (owner, 2026-09-12).
+    country_lens = scope.groups_by_lead
+    lens = "region" if scope.is_region else ("country" if scope.is_country else "team")
     selected = (
         (request.GET.get("program_lead") or "").strip()
         if country_lens
@@ -352,7 +373,12 @@ def team_planning_oversight_view(request):
         "owner": "" if country_lens else selected,
         "program_lead": selected if country_lens else "",
         "summary": summary,
-        "kpis": _kpi_items(summary, country=country_lens),
+        "kpis": _kpi_items(summary, country=scope.is_country, region=scope.is_region),
+        "lens": lens,
+        "lens_label": {"region": "Region", "country": "Country", "team": "Team"}[lens],
+        # With no region assigned there is nothing to read, and the page says
+        # which administrator action fixes it rather than looking empty.
+        "region_unassigned": scope.is_region and not scope.region_ids,
         "visible_summary": summary,
         "groups": oversight.group_by_owner(visible),
         "advanced": advanced,
@@ -364,7 +390,9 @@ def team_planning_oversight_view(request):
         # country lens asks the country rule, so the CD can send from here as
         # they can from Country Planning Oversight — the two pages used to
         # disagree.
-        "may_delegate": may_delegate(request.user, country=country_lens),
+        "may_delegate": may_delegate(
+            request.user, country=scope.is_country, region=scope.is_region
+        ),
         "cluster_oversight": grouped_clusters(request.user),
         # §12's Team School Oversight, as a section rather than a page: plans,
         # clusters and flagged schools are three lenses on one team, and a

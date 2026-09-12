@@ -7622,9 +7622,10 @@
     },
     {
       "accessibility_requirements": [
-        "accessible name and label"
+        "accessible name and label",
+        "announced dynamic state"
       ],
-      "bytes": 3556,
+      "bytes": 3832,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -7644,7 +7645,8 @@
       "tables": 0,
       "template": "partials/oversight/team_country_workspace.html",
       "variants": [
-        "executive"
+        "executive",
+        "warning"
       ]
     },
     {
@@ -13590,6 +13592,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/actions/<str:action_id>/<str:transition>",
@@ -13683,6 +13686,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/actions/mine",
@@ -18963,6 +18967,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/analytics",
@@ -19064,6 +19069,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/analytics/",
@@ -19605,6 +19611,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/analytics/customize-dashboard",
@@ -19702,6 +19709,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/analytics/drilldown",
@@ -19795,6 +19803,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/analytics/export",
@@ -20420,6 +20429,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/analytics/schedule-report",
@@ -20800,6 +20810,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/api/analytics/combine-map-boundaries",
@@ -20889,6 +20900,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/api/analytics/map-subcounties",
@@ -21671,6 +21683,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/business-transformation/impact-reports",
@@ -21929,6 +21942,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/calendar",
@@ -22044,6 +22058,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/calendar/events",
@@ -27899,6 +27914,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard",
@@ -28174,6 +28190,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard/pl",
@@ -28267,6 +28284,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard/pl-approve",
@@ -28363,6 +28381,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard/pl-drilldown",
@@ -28459,6 +28478,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard/pl-send-urgent-action",
@@ -28558,6 +28578,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard/pl-urgent-schools",
@@ -28653,6 +28674,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/dashboard/planning-progress",
@@ -29746,6 +29768,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/decision-log",
@@ -34846,6 +34869,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help",
@@ -34939,6 +34963,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/articles/<slug:slug>",
@@ -35033,6 +35058,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/articles/<slug:slug>/feedback",
@@ -35122,6 +35148,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/articles/<slug:slug>/print",
@@ -35209,6 +35236,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/categories/<slug:slug>",
@@ -35296,6 +35324,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/context",
@@ -35395,6 +35424,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/export/complete",
@@ -35486,6 +35516,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/export/role/<slug:role_slug>",
@@ -35573,6 +35604,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/features/<slug:feature_slug>",
@@ -35668,6 +35700,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/getting-started",
@@ -35763,6 +35796,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/glossary",
@@ -35850,6 +35884,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/manage",
@@ -35942,6 +35977,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/manage/<slug:slug>",
@@ -36028,6 +36064,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/manage/<slug:slug>/<slug:action>",
@@ -36112,6 +36149,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/manage/<slug:slug>/revision",
@@ -36197,6 +36235,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/manage/new",
@@ -36284,6 +36323,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/release-notes",
@@ -36371,6 +36411,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/roles/<slug:role_slug>",
@@ -36466,6 +36507,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/search",
@@ -36553,6 +36595,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/troubleshooting",
@@ -36640,6 +36683,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/help/workflows/<slug:workflow_slug>",
@@ -39299,6 +39343,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave-requests",
@@ -39408,6 +39453,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave/<str:leave_id>/attachment",
@@ -40225,6 +40271,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave/calendar",
@@ -40314,6 +40361,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave/calendar/",
@@ -40403,6 +40451,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave/calendar/activities",
@@ -40755,6 +40804,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave/coverage/<str:leave_id>/accept",
@@ -40840,6 +40890,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/leave/coverage/<str:leave_id>/decline",
@@ -42595,7 +42646,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/map",
       "route_name": "map",
@@ -42714,6 +42766,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages",
@@ -42812,6 +42865,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/",
@@ -42906,6 +42960,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/<str:message_id>",
@@ -42991,6 +43046,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/attachments/<str:attachment_id>",
@@ -43077,6 +43133,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/drawer",
@@ -43171,6 +43228,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/new",
@@ -43268,6 +43326,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/new/",
@@ -43362,6 +43421,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/new/records",
@@ -43454,6 +43514,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/new/suggestions",
@@ -43545,6 +43606,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/new/summary",
@@ -43639,6 +43701,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/thread/<str:thread_id>",
@@ -43733,6 +43796,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/thread/<str:thread_id>/archive",
@@ -43823,6 +43887,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/thread/<str:thread_id>/reply",
@@ -43917,6 +43982,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/messages/thread/<str:thread_id>/star",
@@ -47115,6 +47181,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/notifications",
@@ -47219,6 +47286,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/notifications/",
@@ -47325,6 +47393,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/notifications/<str:notif_id>/read",
@@ -47425,6 +47494,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/notifications/drawer",
@@ -47526,6 +47596,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/notifications/mark-all-read",
@@ -50673,6 +50744,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners",
@@ -50779,6 +50851,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners/<str:partner_id>",
@@ -50887,6 +50960,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners/<str:partner_id>/edit-drawer",
@@ -50991,6 +51065,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners/<str:partner_id>/members",
@@ -51091,6 +51166,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners/<str:partner_id>/members/drawer",
@@ -51195,6 +51271,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners/<str:partner_id>/status",
@@ -51293,6 +51370,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/partners/create",
@@ -52090,6 +52168,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/personal-time-off",
@@ -52182,6 +52261,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/personal-time-off/",
@@ -52271,6 +52351,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/personal-time-off/eligible-cover",
@@ -52357,6 +52438,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/personal-time-off/request",
@@ -52452,6 +52534,7 @@
         "MFI_OFFICER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/personal-time-off/request/",
@@ -54396,6 +54479,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/priorities",
@@ -54463,7 +54547,7 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-E8E9A2A166",
-      "page_title": "Priorities \u00b7 Edify",
+      "page_title": "Priorities",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "priorities_master",
@@ -54480,6 +54564,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/priorities/master",
@@ -54566,6 +54651,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/priorities/ssa-mapping",
@@ -54652,6 +54738,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/priorities/ssa-mapping/<str:item_id>/drawer",
@@ -54740,6 +54827,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/priorities/ssa-mapping/<str:item_id>/save",
@@ -54819,6 +54907,7 @@
         "IA",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/priority-dashboard",
@@ -54905,6 +54994,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/profile",
@@ -56440,6 +56530,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/public-holidays",
@@ -56537,6 +56628,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/public-holidays/",
@@ -57414,7 +57506,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools",
       "route_name": "schools_directory",
@@ -57634,7 +57727,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/<str:school_id>/add-to-cluster",
       "route_name": "add_to_cluster_drawer",
@@ -57742,7 +57836,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/<str:school_id>/assign-to-project",
       "route_name": "assign_to_project_drawer",
@@ -57843,7 +57938,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/<str:school_id>/change-type",
       "route_name": "school_change_type",
@@ -58226,7 +58322,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/<str:school_id>/edit-drawer",
       "route_name": "school_edit_drawer",
@@ -58417,7 +58514,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/add-school",
       "route_name": "add_school",
@@ -58509,7 +58607,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/bulk-assign-cluster",
       "route_name": "bulk_assign_cluster",
@@ -58601,7 +58700,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/bulk-assign-project",
       "route_name": "bulk_assign_project",
@@ -58693,7 +58793,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/bulk-match-staff",
       "route_name": "bulk_match_staff",
@@ -58883,7 +58984,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/create-drawer",
       "route_name": "school_onboard_drawer",
@@ -58984,7 +59086,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/parishes",
       "route_name": "school_parish_options",
@@ -59083,7 +59186,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/partial-intelligence/<str:school_id>",
       "route_name": "school_intelligence_partial",
@@ -59183,7 +59287,8 @@
         "CD",
         "IA",
         "PL",
-        "PROJECT_COORDINATOR"
+        "PROJECT_COORDINATOR",
+        "RPL"
       ],
       "route": "/schools/sub-counties",
       "route_name": "school_sub_county_options",
@@ -59664,6 +59769,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/search",
@@ -59780,6 +59886,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/settings",
@@ -60149,6 +60256,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/ssa",
@@ -60243,6 +60351,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/ssa/export",
@@ -61215,6 +61324,7 @@
         "HR",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/strategic-priorities",
@@ -61297,6 +61407,7 @@
         "HR",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/strategic-priorities/action",
@@ -61469,6 +61580,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/support",
@@ -61563,6 +61675,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/support/client-defect",
@@ -62355,6 +62468,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/team-planning-oversight/",
@@ -62447,6 +62561,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/team-planning-oversight/detail",
@@ -62534,6 +62649,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/team-planning-oversight/export",
@@ -62617,6 +62733,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/team-planning-oversight/send",
@@ -62705,7 +62822,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets",
       "route_name": "team_targets",
@@ -62802,7 +62920,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/",
       "route_name": "",
@@ -62893,7 +63012,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/catchup",
       "route_name": "team_targets_catchup_create",
@@ -62978,7 +63098,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/catchup/<str:plan_id>/action",
       "route_name": "team_targets_catchup_action",
@@ -63064,7 +63185,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/day",
       "route_name": "team_targets_day",
@@ -63153,7 +63275,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/export",
       "route_name": "team_targets_export",
@@ -63239,7 +63362,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/matrix",
       "route_name": "team_targets_matrix",
@@ -63327,7 +63451,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/recovery",
       "route_name": "team_targets_recovery",
@@ -63419,7 +63544,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/sfid-backlog",
       "route_name": "team_targets_sfid_backlog",
@@ -63509,7 +63635,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/staff-drawer",
       "route_name": "team_targets_staff_drawer",
@@ -63600,7 +63727,8 @@
         "CD",
         "HR",
         "IA",
-        "PL"
+        "PL",
+        "RPL"
       ],
       "route": "/team-targets/validation-backlog",
       "route_name": "team_targets_validation_backlog",
@@ -63864,6 +63992,7 @@
         "PARTNER",
         "PL",
         "PROJECT_COORDINATOR",
+        "RPL",
         "RVP"
       ],
       "route": "/todos",
@@ -65169,6 +65298,7 @@
       "Program Lead",
       "CountryDirector",
       "RegionalVicePresident",
+      "RegionalProgramLead",
       "ImpactAssessment",
       "Accountant",
       "HumanResources",
@@ -81971,7 +82101,7 @@
     "partials_and_drawers": 179,
     "permission_gated": 590,
     "permission_keys": 112,
-    "roles": 14,
+    "roles": 15,
     "routed_surfaces": 605,
     "scheduled_jobs": 26,
     "severity_counts": {

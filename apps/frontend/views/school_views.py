@@ -608,7 +608,7 @@ def school_directory_view(request):
     # explicit ?group= is the reader's choice either way.
     _group = request.GET.get("group")
     if _group is None:
-        _group = "owner" if scope.country_scope else "name"
+        _group = "owner" if (scope.country_scope or scope.region_scope) else "name"
     group_by_owner = _group == "owner"
     owner_group_directory: dict = {}
     owner_group_counts: dict = {}
