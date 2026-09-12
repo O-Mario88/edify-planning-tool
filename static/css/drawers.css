@@ -498,39 +498,20 @@
   font-size: 0.875rem !important;
 }
 
-@container drawer (min-width: 44rem) {
-  .drawer-body form:not(.cluster-create-form):not([data-drawer-layout="stack"]) {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    align-items: start;
-    gap: 1.25rem 1.5rem;
-  }
-
-  .drawer-body form:not(.cluster-create-form):not([data-drawer-layout="stack"])[class*="space-y-"] > * + * {
-    margin-top: 0 !important;
-  }
-
-  .drawer-body form:not(.cluster-create-form):not([data-drawer-layout="stack"]) > :is(
-    fieldset,
-    section,
-    article,
-    table,
-    hr,
-    h1, h2, h3, h4,
-    p,
-    .drawer-footer,
-    .grid,
-    .flex,
-    .overflow-x-auto,
-    .overflow-auto,
-    [role="alert"],
-    [role="status"],
-    [aria-live],
-    [id*="error"],
-    [data-drawer-span="full"]
-  ) {
-    grid-column: 1 / -1;
-  }
+/* ONE COLUMN. Every drawer stacks its fields below each other like the
+   sign-in form, whatever its width: a two-column form left a wide empty
+   band on the right of the cluster planner (owner, 2026-09-12). A grid
+   inside a drawer collapses to one column too, except the seven-day
+   calendar and a block that opts out with data-keep-columns. */
+.drawer-body form {
+  display: block;
+}
+.drawer-body .grid:not(.grid-cols-7):not([data-keep-columns]) {
+  grid-template-columns: minmax(0, 1fr);
+}
+/* A span utility would open a second implicit column; every item takes the one column. */
+.drawer-body .grid:not(.grid-cols-7):not([data-keep-columns]) > [class*="col-span-"] {
+  grid-column: auto;
 }
 
 @media (max-width: 47.99rem) {
@@ -1235,7 +1216,7 @@
 
 .cluster-create-leader__grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 1rem;
   margin-block-start: 0.75rem;
 }

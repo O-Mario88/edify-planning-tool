@@ -545,12 +545,15 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
         self.assertIn('class="drawer-required-note"', base_drawer)
         self.assertIn("REFERENCE-ALIGNED FLOATING WORKSPACE", drawers)
         self.assertIn("container: drawer / inline-size", drawers)
-        self.assertIn("@container drawer (min-width: 44rem)", drawers)
-        self.assertIn("grid-template-columns: repeat(2, minmax(0, 1fr))", drawers)
+        # One column at every width, like the sign-in form (owner, 2026-09-12):
+        # the wide-drawer two-column form and any grid inside a drawer stack.
+        self.assertNotIn("@container drawer (min-width: 44rem)", drawers)
+        self.assertIn(".drawer-body form {\n  display: block;\n}", drawers)
         self.assertIn(
-            'form:not(.cluster-create-form):not([data-drawer-layout="stack"])',
+            ".drawer-body .grid:not(.grid-cols-7):not([data-keep-columns]) {\n  grid-template-columns: minmax(0, 1fr);\n}",
             drawers,
         )
+        self.assertNotIn("@container drawer (min-width: 40rem)", consistency)
         self.assertIn("max-height: calc(100dvh - 7rem) !important", drawers)
         self.assertIn("scrollbar-gutter: stable", drawers)
         self.assertIn("overscroll-behavior: contain", drawers)
