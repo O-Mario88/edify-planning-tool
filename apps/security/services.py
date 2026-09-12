@@ -51,6 +51,7 @@ def summary() -> dict:
         "mfaEnabledUsers": users.filter(mfa_enabled=True).count(),
         "mfaImplemented": True,
         "mfaRequiredForAll": bool(getattr(settings, "MFA_REQUIRED_FOR_ALL", False)),
+        "mfaRequiredRoles": sorted(getattr(settings, "MFA_REQUIRED_ROLES", ()) or ()),
         "mfaSmsChannelConfigured": sms.is_configured,
         "fieldEncryptionKeyConfigured": key_configured,
         "encryptedFieldCount": len(ENCRYPTED_FIELDS),

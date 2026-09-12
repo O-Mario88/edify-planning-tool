@@ -714,6 +714,28 @@ SMS_LOG_BODIES = _truthy(os.environ.get("SMS_LOG_BODIES"), fallback=False)
 # the settings page); this turns it on for every account at once, for an
 # organisation that wants it mandatory rather than optional.
 MFA_REQUIRED_FOR_ALL = _truthy(os.environ.get("MFA_REQUIRED_FOR_ALL"), fallback=False)
+# Roles that must use a second factor whether or not they enrolled: the
+# accounts that approve money, administer users or see safeguarding records
+# (AEGIS review, 2026-09-12). Comma-separated EdifyRole values; an empty
+# MFA_REQUIRED_ROLES turns the role rule off. A person holding any of these
+# roles is asked for the code at their next sign-in.
+MFA_REQUIRED_ROLES = frozenset(
+    role.strip()
+    for role in os.environ.get(
+        "MFA_REQUIRED_ROLES",
+        "Admin,CountryDirector,Accountant,Program Lead,RegionalVicePresident",
+    ).split(",")
+    if role.strip()
+)
+
+# Long-lived realtime streams a single account may hold at once on this
+# process, and the per-address rate at which streams may be opened. The
+# stream endpoint had no cap (AEGIS review, 2026-09-12): a loop of stream
+# opens could hold a worker's connections indefinitely.
+REALTIME_STREAMS_PER_USER = _as_int(os.environ.get("REALTIME_STREAMS_PER_USER"), 3)
+REALTIME_STREAM_OPENS_PER_MINUTE = _as_int(
+    os.environ.get("REALTIME_STREAM_OPENS_PER_MINUTE"), 30
+)
 
 # Audit hash-chain seed for the genesis row. Override in deployments for a
 # trusted anchor.

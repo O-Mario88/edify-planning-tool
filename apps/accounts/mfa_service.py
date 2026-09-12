@@ -141,9 +141,7 @@ def enrolment_state(user: User) -> dict:
                 "Your administrator can enable it."
             )
         ),
-        "mfa_required_by_policy": bool(
-            getattr(settings, "MFA_REQUIRED_FOR_ALL", False)
-        ),
+        "mfa_required_by_policy": required_by_policy(user),
         "mfa_email_hint": _mask_email(user.email),
         "mfa_phone_hint": _mask_phone(user.phone) if user.phone else "",
     }
@@ -157,9 +155,27 @@ def required_for(user: User) -> bool:
     settings on each call rather than cached, so turning it on takes effect for
     the next sign-in rather than the next deploy.
     """
-    if getattr(settings, "MFA_REQUIRED_FOR_ALL", False):
+    if required_by_policy(user):
         return True
     return bool(user.mfa_enabled)
+
+
+def required_by_policy(user: User) -> bool:
+    """Does the organisation require a second factor of this person, whether
+    or not they enrolled? Either the estate-wide switch, or a role they hold
+    is in MFA_REQUIRED_ROLES (the money-approving, administrative and
+    safeguarding roles by default). Read from settings on each call, like
+    the switch, so a change takes effect at the next sign-in."""
+    if getattr(settings, "MFA_REQUIRED_FOR_ALL", False):
+        return True
+    required = set(getattr(settings, "MFA_REQUIRED_ROLES", ()) or ())
+    if not required:
+        return False
+    held = set(getattr(user, "roles", None) or ())
+    active = getattr(user, "active_role", None)
+    if active:
+        held.add(active)
+    return bool(held & required)
 
 
 def resolve_channel(user: User) -> str:

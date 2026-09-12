@@ -573,11 +573,11 @@ def mfa_settings_view(request):
     enable = request.POST.get("mfa_enabled") == "on"
     channel = request.POST.get("mfa_channel", mfa_service.EMAIL_CHANNEL)
 
-    if getattr(settings, "MFA_REQUIRED_FOR_ALL", False) and not enable:
+    if mfa_service.required_by_policy(user) and not enable:
         messages.error(
             request,
-            "Two-step verification is required for every account here and "
-            "cannot be turned off.",
+            "Two-step verification is required for your account and cannot be "
+            "turned off.",
         )
         return redirect("/settings")
 

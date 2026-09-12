@@ -119,8 +119,6 @@ class Command(BaseCommand):
         self._report(user)
 
     def _report(self, user) -> None:
-        from django.conf import settings
-
         blockers = []
         if user.deleted_at:
             blockers.append("account is soft-deleted (this command will not undo that)")
@@ -136,7 +134,9 @@ class Command(BaseCommand):
         if not user.password:
             blockers.append("no password set (invited but never accepted)")
 
-        mfa_on = getattr(settings, "MFA_REQUIRED_FOR_ALL", False) or user.mfa_enabled
+        from apps.accounts.mfa_service import required_for
+
+        mfa_on = required_for(user)
         if mfa_on:
             blockers.append(
                 "two-step verification is on — the code is emailed, so it also "

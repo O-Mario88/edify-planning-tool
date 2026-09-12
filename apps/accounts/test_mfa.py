@@ -442,6 +442,39 @@ class WhoIsAskedTest(MfaTestCase):
         self.assertEqual(response["Location"], "/login/verify")
         self.assertNotIn("_auth_user_id", client.session)
 
+    @override_settings(MFA_REQUIRED_ROLES={"Accountant", "Admin"})
+    def test_a_money_or_admin_role_needs_the_code_even_without_enrolling(self):
+        """AEGIS review, 2026-09-12: the roles that approve money, administer
+        users or see safeguarding records use a second factor by policy."""
+        user = _user("accountant@edify.test", enabled=False)
+        user.roles = ["Accountant"]
+        user.active_role = "Accountant"
+        user.save(update_fields=["roles", "active_role"])
+        client = Client()
+        response = self.sign_in(client, user)
+        self.assertEqual(response["Location"], "/login/verify")
+        self.assertNotIn("_auth_user_id", client.session)
+
+    @override_settings(MFA_REQUIRED_ROLES={"Accountant", "Admin"})
+    def test_a_role_outside_the_policy_signs_in_as_before(self):
+        user = _user("cceo@edify.test", enabled=False)
+        user.roles = ["CCEO"]
+        user.active_role = "CCEO"
+        user.save(update_fields=["roles", "active_role"])
+        client = Client()
+        response = self.sign_in(client, user)
+        self.assertEqual(response["Location"], "/dashboard")
+
+    @override_settings(MFA_REQUIRED_ROLES=set())
+    def test_an_empty_role_list_turns_the_role_rule_off(self):
+        user = _user("free@edify.test", enabled=False)
+        user.roles = ["Accountant"]
+        user.active_role = "Accountant"
+        user.save(update_fields=["roles", "active_role"])
+        client = Client()
+        response = self.sign_in(client, user)
+        self.assertEqual(response["Location"], "/dashboard")
+
 
 class EnrolmentTest(MfaTestCase):
     def setUp(self):
