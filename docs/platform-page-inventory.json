@@ -6668,7 +6668,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5206,
+      "bytes": 5197,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/accountability"

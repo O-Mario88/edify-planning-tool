@@ -39,8 +39,15 @@ class ClosureEligibilityService:
                 activity=activity, quarantined=False
             ).exists()
 
-            # Check 3: Salesforce ID entered
-            salesforce_id_entered = bool(activity.salesforce_activity_id)
+            # Check 3: Salesforce ID entered — where the work has a Salesforce
+            # record. SSA data gathering has none by design (IA confirmation
+            # does not ask for one), so a verified, paid partner SSA Support
+            # could never close (2026-09-12 journey walk).
+            from apps.activities.services import sf_kind_for_activity
+
+            salesforce_id_entered = bool(activity.salesforce_activity_id) or (
+                sf_kind_for_activity(activity) is None
+            )
 
             # Check 4: IA Verified
             ia_verified = activity.status in [

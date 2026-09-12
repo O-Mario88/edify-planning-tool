@@ -50,7 +50,16 @@ def sync_for_activity(activity: Activity, responsible_user_id: str | None) -> No
     # A line worth nothing funds nothing: the 2026-09-06 catalogue's
     # per-activity rates default to 0 until the Country Director sets them,
     # and a zero-shilling advance was one more advance to account for.
-    lines = list(activity.schedule_cost_lines.exclude(amount=0))
+    # A line paid straight to the vendor (school-visit transport, a
+    # vendor-booked room) is not staff money: the weekly fund request already
+    # leaves it out, and an advance opened for it could never be requested,
+    # so it sat "pending" in the Accountant's queue for good — one per school
+    # visit (2026-09-12 journey walk: 132 of 448 pending advances in dev).
+    from apps.fund_requests.fundable import vendor_direct_filter
+
+    lines = list(
+        activity.schedule_cost_lines.exclude(amount=0).exclude(vendor_direct_filter())
+    )
     line_ids = {line.id for line in lines}
 
     # The bulk-delete + per-line create/update must be atomic: a failure midway
@@ -846,6 +855,7 @@ def approve_accountability(advance_id: str, principal) -> dict:
         adv.accountability_reviewed_at = timezone.now()
         adv.status = AdvanceRequestStatus.ACCOUNTED
         adv.save(update_fields=["accountability_reviewed_at", "status", "updated_at"])
+        _settle_activity_accounts(adv)
     _audit(
         principal,
         "advance_request.approve_accountability",
@@ -853,6 +863,31 @@ def approve_accountability(advance_id: str, principal) -> dict:
         {"accounted_amount": adv.accounted_amount, "activity_id": adv.activity_id},
     )
     return _serialize(adv)
+
+
+def _settle_activity_accounts(adv) -> None:
+    """Once every advance whose money moved has been accounted or reimbursed,
+    the activity's accounts are complete. Staff work used to stay at
+    `pending_ia` for ever, so My Plan showed "Accounts pending" on closed,
+    fully accounted visits (2026-09-12 journey walk)."""
+    activity = adv.activity
+    if activity is None or activity.delivery_type == "partner":
+        return
+    open_states = {
+        AdvanceRequestStatus.DISBURSED,
+        AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING,
+        AdvanceRequestStatus.ACCOUNTABILITY_PENDING,
+        AdvanceRequestStatus.REIMBURSEMENT_SUBMITTED,
+        AdvanceRequestStatus.REIMBURSEMENT_DISBURSED,
+    }
+    if activity.advance_requests.filter(status__in=open_states).exists():
+        return
+    if not activity.advance_requests.filter(
+        status__in=[AdvanceRequestStatus.ACCOUNTED, AdvanceRequestStatus.REIMBURSED]
+    ).exists():
+        return
+    activity.payment_status = "accountant_cleared"
+    activity.save(update_fields=["payment_status", "updated_at"])
 
 
 # ── Reimbursement (self-funded activities AND advance-funded over-spend) ────
@@ -1057,6 +1092,7 @@ def confirm_reimbursement_receipt(advance_id: str, data: dict, principal) -> dic
                 "updated_at",
             ]
         )
+        _settle_activity_accounts(adv)
     _audit(
         principal,
         "advance_request.confirm_reimbursement_receipt",

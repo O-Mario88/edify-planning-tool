@@ -2744,14 +2744,19 @@ def complete(activity_id: str, data: dict, principal) -> dict:
     #
     # Scoped exactly as the form scopes it — `ssa_collection_expected`, set
     # when the visit's purpose is SSA collection. A visit that was never
-    # meant to collect one is untouched, which is why partner work and the
-    # in-school training pair pass through unchanged.
+    # meant to collect one is untouched, and so is partner work: the
+    # partner's deliverable is the uploaded visit form, and Impact
+    # Assessment keys the scores at completion (complete_partner_ssa_support).
+    # Partner SSA Support handovers set ssa_collection_expected too, so
+    # without this scope the partner's own submit door refused every one of
+    # them (owner, 2026-09-12: "for partner, they just need to upload their
+    # visit forms").
     #
     # The caller must answer because the platform cannot infer it: SsaRecord
     # is school-level with no link to the activity, so a pre-existing
     # assessment for the school would otherwise satisfy a visit that
     # collected nothing.
-    if a.ssa_collection_expected:
+    if a.ssa_collection_expected and a.delivery_type != "partner":
         ssa_collected = bool(data.get("ssaCollected"))
         reason = str(
             data.get("ssaNotCollectedReason") or a.ssa_not_collected_reason or ""

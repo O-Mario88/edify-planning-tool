@@ -221,6 +221,13 @@ class SchoolVisitSpineJourneyTest(TestCase):
             ).distinct()
         )
         self.assertTrue(advances, "disbursement created no advance to account for")
+        # The vendor-paid transport line opens no staff advance: one visit, one
+        # advance to account for (2026-09-12 — an orphan used to sit pending).
+        self.assertEqual(
+            AdvanceRequest.objects.filter(activity=activity).count(),
+            1,
+            "a school visit must open exactly one staff advance (the lunch)",
+        )
 
         # ── 4. The visit is actually executed ─────────────────────────────
         start_completion(activity.id, {}, self.cceo)
@@ -291,6 +298,12 @@ class SchoolVisitSpineJourneyTest(TestCase):
                 "accounted",
                 f"advance {advance.id} stalled at {advance.status}",
             )
+        activity.refresh_from_db()
+        self.assertEqual(
+            activity.payment_status,
+            "accountant_cleared",
+            "once every advance is accounted the activity's accounts are complete",
+        )
 
         # ── 7. The activity can actually CLOSE ────────────────────────────
         # The sweep's open question: nothing proved a visit funded through the
@@ -551,6 +564,8 @@ class SchoolVisitSpineJourneyTest(TestCase):
                 f"the accountant's endpoint left advance {advance.id} at "
                 f"{advance.status}",
             )
+        activity.refresh_from_db()
+        self.assertEqual(activity.payment_status, "accountant_cleared")
 
         # ── 13. Closure ───────────────────────────────────────────────────
         # Closed by the PL, not the Accountant.

@@ -480,7 +480,9 @@ class CentralizedCostingTest(APITestCase):
         )
         # An advance request per budget line is auto-created, pending confirmation.
         advances = list(AdvanceRequest.objects.filter(activity_id=scheduled["id"]))
-        self.assertEqual(len(advances), 2)  # transport + lunch
+        # lunch only: transport is vendor-direct and opens no staff advance
+        # (2026-09-12)
+        self.assertEqual(len(advances), 1)
         self.assertTrue(
             all(
                 a.status == AdvanceRequestStatus.PENDING_RESPONSIBLE_CONFIRMATION

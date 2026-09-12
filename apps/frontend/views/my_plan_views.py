@@ -642,7 +642,11 @@ def accountability_action(request, activity_id):
     netsuite_code = request.POST.get("netsuite_code", "").strip()
     variance_note = request.POST.get("variance_note", "").strip()
     try:
-        amount_spent = int(request.POST.get("amount_spent") or 0)
+        # Owner, 2026-09-12: "for staff fund accountability, one just has to
+        # enter the NetSuite ID and submit" — an empty spend means the whole
+        # advance was spent; a return is declared only when there was one.
+        raw_spent = (request.POST.get("amount_spent") or "").strip()
+        amount_spent = int(raw_spent) if raw_spent else int(total_disbursed)
         amount_returned = int(request.POST.get("amount_returned") or 0)
     except ValueError:
         return HttpResponse(

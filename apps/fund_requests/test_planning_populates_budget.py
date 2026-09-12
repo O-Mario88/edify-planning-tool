@@ -170,13 +170,19 @@ class PlanningPopulatesTheBudgetTest(TestCase):
 
         # 2. The advance ledger mirrors the lines worth money, awaiting the
         #    owner's choice (the visit's own rate is 0 until the CD sets it).
+        # Vendor-direct transport opens no staff advance (2026-09-12); the
+        # ledger mirrors the lines the staff member will actually hold.
+        staff_lines = [l for l in lines if l.amount and l.line_item_type != "transport"]
         advances = AdvanceRequest.objects.filter(activity=activity)
-        self.assertEqual(advances.count(), len([l for l in lines if l.amount]))
+        self.assertEqual(advances.count(), len(staff_lines))
         self.assertEqual(
             set(advances.values_list("status", flat=True)),
             {"pending_responsible_confirmation"},
         )
-        self.assertEqual(sum(advances.values_list("amount", flat=True)), DAY_POOL)
+        self.assertEqual(
+            sum(advances.values_list("amount", flat=True)),
+            sum(l.amount for l in staff_lines),
+        )
 
         # 3. The weekly fund request auto-generated from the STAFF-PAYABLE
         #    lines: lunch only — transport is vendor-direct to the provider.

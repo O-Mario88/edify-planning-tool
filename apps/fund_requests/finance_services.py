@@ -242,8 +242,17 @@ class FinanceBlockedReasonService:
         if not has_evidence:
             reasons.append("Evidence Missing")
 
-        # Rule 3: No Activity SF ID -> no clearance
-        if not activity.salesforce_activity_id:
+        # Rule 3: No Activity SF ID -> no clearance — for work that has a
+        # Salesforce record. SSA data gathering deliberately has none
+        # (sf_kind_for_activity returns None and IA confirmation does not
+        # ask for one), so demanding it here made every verified partner
+        # SSA Support unpayable at clearance (2026-09-12 journey walk).
+        from apps.activities.services import sf_kind_for_activity
+
+        if (
+            sf_kind_for_activity(activity) is not None
+            and not activity.salesforce_activity_id
+        ):
             reasons.append("Activity SF ID Missing")
 
         # Rule 4: Budget line missing

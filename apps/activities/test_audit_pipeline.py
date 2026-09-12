@@ -87,8 +87,10 @@ class OneActivityOneCostOneChannelTest(_PipelineFixture):
             activity_budget_line__activity=activity
         )
         self.assertEqual(wfr_lines.count(), len(staff_lines))
+        # The advance ledger mirrors the weekly request: vendor-direct
+        # transport opens no staff advance either (2026-09-12).
         self.assertEqual(
-            AdvanceRequest.objects.filter(activity=activity).count(), len(funded)
+            AdvanceRequest.objects.filter(activity=activity).count(), len(staff_lines)
         )
 
     def test_missing_rate_blocks_scheduling_with_no_partial_state(self):

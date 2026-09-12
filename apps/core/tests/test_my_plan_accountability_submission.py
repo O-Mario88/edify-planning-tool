@@ -153,3 +153,32 @@ class CompleteActivityAccountabilitySubmissionTest(TestCase):
         approve_accountability(self.adv.id, accountant)
         self.adv.refresh_from_db()
         self.assertEqual(self.adv.status, AdvanceRequestStatus.ACCOUNTED)
+
+
+class NetSuiteIdAloneIsEnoughTest(CompleteActivityAccountabilitySubmissionTest):
+    """Owner, 2026-09-12: "for staff fund accountability, one just has to enter
+    the NetSuite ID and submit." An empty spend means the whole advance was
+    spent; a return is declared only when there was one."""
+
+    def test_the_accountability_drawer_accepts_the_netsuite_id_alone(self):
+        resp = self.client.post(
+            f"/my-plan/{self.activity.id}/accountability",
+            {"netsuite_code": "EXP-2026-00890"},
+        )
+        self.assertIn(resp.status_code, (200, 302))
+        self.adv.refresh_from_db()
+        self.assertEqual(
+            self.adv.status, AdvanceRequestStatus.ACCOUNTABILITY_PL_PENDING
+        )
+        self.assertEqual(self.adv.accountability_netsuite_id, "EXP-2026-00890")
+        self.assertEqual(self.adv.accounted_amount, 50_000)
+        self.assertEqual(self.adv.returned_amount or 0, 0)
+
+    def test_the_drawer_no_longer_demands_a_spend_figure(self):
+        html = self.client.get(
+            f"/my-plan/{self.activity.id}/accountability"
+        ).content.decode()
+        start = html.index('name="amount_spent"')
+        tag = html[html.rfind("<input", 0, start) : html.index(">", start)]
+        self.assertNotIn("required", tag)
+        self.assertIn('value="50000"', tag)
