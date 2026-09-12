@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from datetime import date
+
 from apps.core.metrics import render_precomputed_metric_for_source
 
 
@@ -1308,6 +1310,15 @@ def wellness_view(request):
 
 @require_page_permission("compensation_benefits")
 def compensation_benefits_view(request):
+    """Pay bands, medical cover, pension and review dates, per employee.
+
+    Salary amounts and bank details stay off the overview: they are in each
+    record's drawer, which only HR opens.
+    """
+    from datetime import timedelta
+
+    from apps.hr.models import CompensationStatus
+
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
     records = CompensationRecord.objects.filter(
@@ -1317,51 +1328,303 @@ def compensation_benefits_view(request):
         records = records.filter(
             Q(staff__user__name__icontains=query)
             | Q(salary_band__icontains=query)
-            | Q(benefits_tier__icontains=query)
+            | Q(pension_scheme__icontains=query)
             | Q(status__icontains=query)
         )
     rows = [
         {
             "cells": [
                 _cell("Team member", record.staff.user.name, primary=True),
-                _cell("Role", record.staff.title or record.staff.user.active_role),
                 _cell("Country", record.staff.country),
                 _cell("Salary band", record.salary_band),
-                _cell("Benefits tier", record.benefits_tier),
-                _cell("Status", record.status, status=True),
-            ]
+                _cell("Medical cover", record.get_medical_cover_display()),
+                _cell("Pension", record.pension_scheme or "None recorded"),
+                _cell("Next review", record.next_review_date),
+                _cell("Status", record.get_status_display(), status=True),
+            ],
+            "actions": [
+                {
+                    "label": "Update",
+                    "drawer": f"/compensation-benefits/{record.staff_id}",
+                }
+            ],
         }
         for record in records.order_by("staff__user__name")
     ]
-    profiles = _profile_scope(request)
+    profiles = _profile_scope(request).exclude(onboarding_state="exited")
+    soon = date.today() + timedelta(days=30)
     return _render_workspace(
         request,
         title="Compensation & Benefits",
-        description="A privacy-conscious readiness register for pay bands and benefits tiers. Bank accounts and salary amounts are deliberately excluded from this overview.",
+        eyebrow="Rewards and wellbeing",
+        description=(
+            "Salary bands, medical cover, pension and review dates for the people "
+            "you oversee. Amounts and bank details stay inside each record."
+        ),
         metrics=[
             _metric("Compensation profiles", records.count(), "configured records"),
             _metric(
                 "Approved",
-                records.filter(status="Approved").count(),
+                records.filter(status=CompensationStatus.APPROVED).count(),
                 "completed HR review",
                 "success",
             ),
             _metric(
                 "In review",
-                records.exclude(status="Approved").count(),
+                records.filter(status=CompensationStatus.HR_REVIEW).count(),
                 "requiring HR action",
                 "warning",
             ),
             _metric(
+                "Pay reviews due",
+                records.filter(next_review_date__lte=soon).count(),
+                "pay reviews due in 30 days",
+                "info",
+            ),
+            _metric(
                 "Missing profiles",
-                max(profiles.count() - records.count(), 0),
-                "staff without a record",
-                "danger",
+                profiles.exclude(compensation_details__isnull=False).count(),
+                "current staff without a record",
+                "warning",
             ),
         ],
         rows=rows,
-        primary_action={"label": "Open People Directory", "href": "/staff"},
+        header_actions=[
+            {"label": "Add a record", "drawer": "/compensation-benefits/new"}
+        ],
+        primary_action={"label": "People Directory", "href": "/staff"},
         empty_title="No compensation profiles in this scope",
+        empty_body="Add a record to capture an employee's band, benefits and review date.",
+    )
+
+
+@require_page_permission("health_safety")
+def health_safety_view(request):
+    """Occupational health and safety: incidents, near misses and hazards."""
+    from datetime import timedelta
+
+    from apps.hr.models import SafetyIncident, SafetyIncidentStatus
+    from apps.hr.reach import people_reach, scope_by_country
+
+    query = (request.GET.get("q") or "").strip()
+    incidents = scope_by_country(
+        SafetyIncident.objects.select_related("affected_staff__user"),
+        people_reach(request.user),
+    )
+    if query:
+        incidents = incidents.filter(
+            Q(category__icontains=query)
+            | Q(location__icontains=query)
+            | Q(country__icontains=query)
+            | Q(affected_staff__user__name__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell(
+                    "Incident",
+                    f"{incident.get_category_display()} · "
+                    + (
+                        incident.affected_staff.user.name
+                        if incident.affected_staff
+                        else "No one injured"
+                    ),
+                    primary=True,
+                ),
+                _cell("Country", incident.country),
+                _cell("Date", incident.incident_date),
+                _cell("Severity", incident.get_severity_display(), status=True),
+                _cell("Days lost", incident.days_lost),
+                _cell("Status", incident.get_status_display(), status=True),
+            ],
+            "actions": [{"label": "Open", "drawer": f"/health-safety/{incident.id}"}],
+        }
+        for incident in incidents.order_by("-incident_date")
+    ]
+    open_incidents = incidents.exclude(status=SafetyIncidentStatus.CLOSED)
+    year_ago = date.today() - timedelta(days=365)
+    return _render_workspace(
+        request,
+        title="Health & Safety",
+        eyebrow="Rewards and wellbeing",
+        description=(
+            "Occupational health and safety across the countries you oversee: "
+            "incidents, near misses and hazards, and the corrective action taken."
+        ),
+        metrics=[
+            _metric(
+                "Open incidents", open_incidents.count(), "not yet closed", "warning"
+            ),
+            _metric(
+                "Serious incidents",
+                open_incidents.filter(severity__in=["high", "critical"]).count(),
+                "high or critical, open",
+                "danger",
+            ),
+            _metric(
+                "Near misses",
+                incidents.filter(
+                    category="near_miss", incident_date__gte=year_ago
+                ).count(),
+                "reported in the last 12 months",
+                "info",
+            ),
+            _metric(
+                "Days lost",
+                sum(
+                    incidents.filter(incident_date__gte=year_ago).values_list(
+                        "days_lost", flat=True
+                    )
+                ),
+                "to incidents in the last 12 months",
+                "warning",
+            ),
+        ],
+        rows=rows,
+        header_actions=[
+            {"label": "Report an incident", "drawer": "/health-safety/new"}
+        ],
+        primary_action={"label": "HR Today", "href": "/hr-today"},
+        empty_title="No incidents recorded",
+        empty_body=(
+            "Report injuries, road traffic incidents, near misses and hazards so "
+            "their causes can be fixed."
+        ),
+    )
+
+
+@require_page_permission("recognition")
+def recognition_view(request):
+    """Recognition given to staff: the productivity, recognition and morale
+    programme in the role description."""
+    from datetime import timedelta
+
+    from apps.hr.models import StaffRecognition
+    from apps.hr.reach import people_reach, scope_by_country
+
+    query = (request.GET.get("q") or "").strip()
+    recognitions = scope_by_country(
+        StaffRecognition.objects.select_related("staff__user", "awarded_by"),
+        people_reach(request.user),
+    )
+    if query:
+        recognitions = recognitions.filter(
+            Q(staff__user__name__icontains=query)
+            | Q(category__icontains=query)
+            | Q(citation__icontains=query)
+        )
+    rows = [
+        {
+            "cells": [
+                _cell("Team member", item.staff.user.name, primary=True),
+                _cell("Country", item.country),
+                _cell("Recognised for", item.get_category_display()),
+                _cell(
+                    "Citation",
+                    item.citation[:90] + ("…" if len(item.citation) > 90 else ""),
+                ),
+                _cell("Awarded", item.awarded_on),
+            ]
+        }
+        for item in recognitions.order_by("-awarded_on")
+    ]
+    quarter_ago = date.today() - timedelta(days=91)
+    recent = recognitions.filter(awarded_on__gte=quarter_ago)
+    staff_in_scope = _profile_scope(request).exclude(onboarding_state="exited").count()
+    recognised_people = recent.values("staff_id").distinct().count()
+    return _render_workspace(
+        request,
+        title="Recognition",
+        eyebrow="Rewards and wellbeing",
+        description=(
+            "Recognition given to staff across the countries you oversee, so good "
+            "work is named and nobody goes a year unrecognised."
+        ),
+        metrics=[
+            _metric(
+                "Recognitions", recent.count(), "given in the last quarter", "success"
+            ),
+            _metric(
+                "People recognised",
+                recognised_people,
+                f"of {staff_in_scope} staff, last quarter",
+                "info",
+            ),
+        ],
+        rows=rows,
+        header_actions=[{"label": "Recognise someone", "drawer": "/recognition/new"}],
+        primary_action={"label": "Staff Pulse Surveys", "href": "/pulse-surveys"},
+        empty_title="No recognition recorded yet",
+        empty_body="Recognise someone to record what they did and why it mattered.",
+    )
+
+
+@require_page_permission("pulse_surveys")
+def pulse_surveys_view(request):
+    """Anonymous staff pulse surveys and their results."""
+    from apps.hr.models import PulseSurvey, PulseSurveyStatus
+    from apps.hr.reach import people_reach
+    from apps.hr.rewards_wellbeing_service import survey_results
+
+    reach = people_reach(request.user)
+    surveys = [
+        survey
+        for survey in PulseSurvey.objects.order_by("-opens_on")
+        if all(reach.allows_country(c) for c in (survey.countries or []))
+    ]
+    rows = []
+    latest_overall = None
+    for survey in surveys:
+        results = survey_results(survey)
+        if latest_overall is None and results["shown"]:
+            latest_overall = results["overall"]
+        rows.append(
+            {
+                "cells": [
+                    _cell("Survey", survey.title, primary=True),
+                    _cell("Countries", ", ".join(survey.countries or [])),
+                    _cell(
+                        "Open",
+                        f"{survey.opens_on:%d %b} to {survey.closes_on:%d %b %Y}",
+                    ),
+                    _cell("Responses", results["count"]),
+                    _cell(
+                        "Score",
+                        f"{results['overall']} of 5"
+                        if results["shown"]
+                        else "Too few to show",
+                    ),
+                    _cell("Status", survey.get_status_display(), status=True),
+                ],
+                "actions": [
+                    {"label": "Results", "drawer": f"/pulse-surveys/{survey.id}"}
+                ],
+            }
+        )
+    open_count = sum(1 for s in surveys if s.status == PulseSurveyStatus.OPEN)
+    return _render_workspace(
+        request,
+        title="Staff Pulse Surveys",
+        eyebrow="Rewards and wellbeing",
+        description=(
+            "Short anonymous surveys on purpose, support, workload, recognition "
+            "and growth, to find what demotivates staff before it costs a "
+            "resignation. Results show only once five people have answered."
+        ),
+        metrics=[
+            _metric("Open surveys", open_count, "collecting answers", "info"),
+            _metric(
+                "Latest morale score",
+                f"{latest_overall} of 5" if latest_overall is not None else "—",
+                "average across the five statements",
+                "success",
+            ),
+        ],
+        rows=rows,
+        header_actions=[{"label": "Open a survey", "drawer": "/pulse-surveys/new"}],
+        primary_action={"label": "Recognition", "href": "/recognition"},
+        empty_title="No pulse survey yet",
+        empty_body="Open a survey to hear from staff anonymously.",
     )
 
 

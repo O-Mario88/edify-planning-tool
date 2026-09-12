@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **624**
-- All registered routes: **1092**
+- Routed product surfaces: **641**
+- All registered routes: **1109**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
 - Scheduled jobs: **26**
 - Activity states: **24**
 - Shared component templates: **413**
-- Full pages: **237**
-- Partials and drawers: **188**
-- Permission-gated surfaces: **609**
-- Referenced by automated tests: **577**
+- Full pages: **241**
+- Partials and drawers: **195**
+- Permission-gated surfaces: **626**
+- Referenced by automated tests: **585**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -184,6 +184,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3EB2E7F348 | /clusters/schedule-meeting-drawer | Schedule Meeting Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-65C7CBA4DB | /clusters/schedule-training-drawer | Schedule Training Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-1294570DE0 | /compensation-benefits | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-061697B28A | /compensation-benefits/<str:staff_id> | Compensation Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-4238220E8F | /compensation-benefits/new | Compensation New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-6AD574A855 | /compensation-benefits/save | Compensation Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-652212DA21 | /completed-activities | Completed Work | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6A7759EFE6 | /completed-activities/<str:activity_id> | Completed Activity Record - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-863319037E | /completed-activities/<str:activity_id>/ | Completed Activity Record - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -307,6 +310,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-41CB76A0D0 | /fund-requests/weekly/<str:request_id>/return-drawer | Weekly Fund Request Return Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-CF59C113B1 | /fund-requests/weekly/<str:request_id>/self-funded | Weekly Advance Request | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-9E1520AF65 | /fy | Fiscal Year Overview | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B35FAC1878 | /health-safety | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EE2DB868E6 | /health-safety/<str:incident_id> | Incident Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-6EA9145F97 | /health-safety/<str:incident_id>/advance | Incident Advance | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-31B9AC3451 | /health-safety/new | Incident New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-61DDBE7AA2 | /health-safety/report | Incident Report | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-61030068A3 | /help | Knowledge Center · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7A2D19730D | /help/articles/<slug:slug> | · Knowledge Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-20FD42EA34 | /help/articles/<slug:slug>/feedback | Help Feedback | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -553,7 +561,16 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-9CD74FDDEC | /projects/planning/bulk-schedule | Special Projects Bulk Schedule | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-24062C4D44 | /public-holidays | Calendar Blocks & Public Holidays | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-81466B885C | /public-holidays/ | Calendar Blocks & Public Holidays | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EEB299FBB6 | /pulse-surveys | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-0B32E25CA5 | /pulse-surveys/<str:survey_id> | Pulse Results Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-0DC6435DA6 | /pulse-surveys/<str:survey_id>/close | Pulse Close | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-AD000D654D | /pulse-surveys/new | Pulse New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-52E8522123 | /pulse-surveys/open | Pulse Open | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-525708C2CC | /pulse/<str:survey_id> | · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-734A2B48B5 | /quality-checks | Quality Checks | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-DF36A9580D | /recognition | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-AFA78C6AFC | /recognition/award | Recognition Award | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-A5D728E4C3 | /recognition/new | Recognition New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D604B8E968 | /recovery-plans | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-F9822D4383 | /recruitment | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2DAE9D7F72 | /recruitment/<str:vacancy_id> | Vacancy Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

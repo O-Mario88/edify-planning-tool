@@ -67,6 +67,10 @@ _VACANCY = ("apps.hr.models.Vacancy",)
 _APPLICATION = ("apps.hr.models.Application",)
 _ONBOARDING = ("apps.hr.models.OnboardingPlan",)
 _OFFBOARDING = ("apps.hr.models.OffboardingPlan",)
+_COMPENSATION = ("apps.hr.models.CompensationRecord",)
+_INCIDENT = ("apps.hr.models.SafetyIncident",)
+_RECOGNITION = ("apps.hr.models.StaffRecognition",)
+_PULSE = ("apps.hr.models.PulseSurvey", "apps.hr.models.PulseResponse")
 
 HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
     _row(
@@ -160,5 +164,100 @@ HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
         owner_page="offboarding",
         location="apps/frontend/views/hr_views.py:offboarding_view",
         category="risk",
+    ),
+    _row(
+        "Pay reviews due",
+        definition="Compensation records whose next pay review falls within 30 days.",
+        question="Whose pay review is coming up?",
+        numerator="compensation records with next_review_date on or before today + 30 days",
+        models=_COMPENSATION,
+        owner_page="compensation_benefits",
+        location="apps/frontend/views/hr_views.py:compensation_benefits_view",
+        category="pending_action",
+    ),
+    _row(
+        "Open incidents",
+        definition="Health and safety incidents not yet closed.",
+        question="How many safety incidents are still being worked?",
+        numerator="safety incidents with status other than closed",
+        models=_INCIDENT,
+        owner_page="health_safety",
+        location="apps/frontend/views/hr_views.py:health_safety_view",
+        category="risk",
+    ),
+    _row(
+        "Serious incidents",
+        definition="Open health and safety incidents of high or critical severity.",
+        question="How many serious safety incidents are open?",
+        numerator="open safety incidents with severity high or critical",
+        models=_INCIDENT,
+        owner_page="health_safety",
+        location="apps/frontend/views/hr_views.py:health_safety_view",
+        category="risk",
+    ),
+    _row(
+        "Near misses",
+        definition="Near misses reported in the last 12 months.",
+        question="Are near misses being reported before they become injuries?",
+        numerator="safety incidents of category near_miss dated in the last 365 days",
+        models=_INCIDENT,
+        owner_page="health_safety",
+        location="apps/frontend/views/hr_views.py:health_safety_view",
+        category="quality",
+    ),
+    _row(
+        "Days lost",
+        definition="Working days lost to health and safety incidents in the last 12 months.",
+        question="What have incidents cost in working time?",
+        numerator="sum of days_lost for safety incidents dated in the last 365 days",
+        models=_INCIDENT,
+        owner_page="health_safety",
+        location="apps/frontend/views/hr_views.py:health_safety_view",
+        category="outcome",
+        unit="days",
+    ),
+    _row(
+        "Recognitions",
+        definition="Recognitions given to staff in the last quarter (91 days).",
+        question="Is good work being recognised?",
+        numerator="staff recognitions awarded in the last 91 days",
+        models=_RECOGNITION,
+        owner_page="recognition",
+        location="apps/frontend/views/hr_views.py:recognition_view",
+        category="outcome",
+    ),
+    _row(
+        "People recognised",
+        definition="Distinct staff recognised in the last quarter (91 days).",
+        question="How widely is recognition reaching staff?",
+        numerator="distinct staff with a recognition in the last 91 days",
+        models=_RECOGNITION,
+        owner_page="recognition",
+        location="apps/frontend/views/hr_views.py:recognition_view",
+        category="progress",
+    ),
+    _row(
+        "Open surveys",
+        definition="Staff pulse surveys currently collecting answers.",
+        question="Is a pulse survey running?",
+        numerator="pulse surveys with status open",
+        models=_PULSE,
+        owner_page="pulse_surveys",
+        location="apps/frontend/views/hr_views.py:pulse_surveys_view",
+        category="scale",
+    ),
+    _row(
+        "Latest morale score",
+        definition=(
+            "The average score, out of 5, across the five pulse statements in the "
+            "most recent survey with at least five answers."
+        ),
+        question="How do staff feel about their work at Edify?",
+        numerator="mean of per-statement averages in the latest survey above the anonymity floor",
+        models=_PULSE,
+        owner_page="pulse_surveys",
+        location="apps/frontend/views/hr_views.py:pulse_surveys_view",
+        category="outcome",
+        unit="score",
     ),
 )

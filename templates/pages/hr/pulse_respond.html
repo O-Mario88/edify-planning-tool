@@ -1,0 +1,51 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}{{ survey.title }} · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+A staff pulse survey (2026-09-13). Five statements, answered 1 to 5, with an
+optional comment. The answer stores no user: a keyed hash stops a second
+answer without recording whose this is (apps/hr/rewards_wellbeing_service.py).
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 max-w-[52rem]">
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">Staff pulse</p>
+      <h1 class="edify-page-title edify-page-header__title">{{ survey.title }}</h1>
+      <p class="edify-page-header__description">Your answers are anonymous. Results are only shown for groups of five or more, so no one's answer can be singled out.</p>
+    </div>
+  </div>
+
+  {% if answered %}
+  <div class="edify-note" data-tone="success" role="status">You have answered this survey. Thank you.</div>
+  {% elif not is_open %}
+  <div class="edify-note" data-tone="info" role="status">This survey is not open to you. It may have closed, or it may be for another country.</div>
+  {% else %}
+  <form method="post" class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm pulse-form">
+    {% csrf_token %}
+    {% for key, statement in questions %}
+    <fieldset class="pulse-form__question">
+      <legend>{{ forloop.counter }}. {{ statement }}</legend>
+      <div class="pulse-form__scale" role="radiogroup" aria-label="{{ statement }}">
+        {% for value, label in scale %}
+        <label class="pulse-form__option">
+          <input type="radio" name="{{ key }}" value="{{ value }}" required>
+          <span class="pulse-form__value">{{ value }}</span>
+          <span class="pulse-form__label">{{ label }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </fieldset>
+    {% endfor %}
+    <label class="pulse-form__comment">
+      <span>Anything else HR should hear? (optional)</span>
+      <textarea name="comment" rows="4" maxlength="2000" placeholder="Please do not include names."></textarea>
+    </label>
+    <div class="pulse-form__actions">
+      <button type="submit" class="btn btn-primary h-8">Submit anonymously</button>
+    </div>
+  </form>
+  {% endif %}
+</div>
+{% endblock %}

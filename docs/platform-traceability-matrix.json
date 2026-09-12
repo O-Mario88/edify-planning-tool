@@ -2316,10 +2316,19 @@
         "frontend_views_hr_views_vacancies",
         "hr_programme_awaiting_supervisor",
         "hr_programme_awaiting_triage",
+        "hr_programme_days_lost",
         "hr_programme_disciplinary_matters",
+        "hr_programme_latest_morale_score",
+        "hr_programme_near_misses",
         "hr_programme_offers",
+        "hr_programme_open_incidents",
+        "hr_programme_open_surveys",
+        "hr_programme_pay_reviews_due",
+        "hr_programme_people_recognised",
         "hr_programme_ready_for_activation",
+        "hr_programme_recognitions",
         "hr_programme_replacements",
+        "hr_programme_serious_incidents",
         "hr_programme_under_investigation",
         "hr_programme_voluntary_exits"
       ],
@@ -3403,8 +3412,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "2a6b17a0899119b5e6021e998a07e4edf3d9531b551bbc9bd78fcf2f2ddad335",
-    "sources": "0007d11c9e06f1df094bc58aaced1cb2c44416a4f33a1cabd9c0775da16fd06b",
+    "payload": "28d8e07370815fdf0d5274f4d91d88e7f99c8510776482ffd74a4c1d197eacff",
+    "sources": "70ec405c0a18117c6cf24b5a1a4d8db1eea31517e69a4106aa61b8a217d11b59",
     "sourceCount": 187,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

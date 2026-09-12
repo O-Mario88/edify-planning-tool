@@ -134,11 +134,6 @@ KNOWN_READ_ONLY = {
         "to DEFAULT_TEMPLATES in code when it does not."
     ),
     # ── GOV-02: workspaces a user can open that can never hold data. ──
-    "CompensationRecord": (
-        "Descoped, and said so first. navigation.py carries the page commented "
-        "out with 'DESCOPED until a production writer exists' — the sidebar "
-        "does not advertise it, the direct URL keeps an honest empty state."
-    ),
     "SuccessionCandidate": (
         "Descoped the same way, with the same comment. Succession Planning is "
         "not offered in navigation; its URL still answers, empty and honest."

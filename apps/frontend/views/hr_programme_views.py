@@ -1192,3 +1192,636 @@ def offboarding_close(request, plan_id):
         return _refused(request, exc, OFFBOARDING_PATH)
     messages.success(request, f"Offboarding closed for {plan.staff.user.name}.")
     return _back(request, OFFBOARDING_PATH)
+
+
+# ── Compensation and benefits ────────────────────────────────────────────────
+COMPENSATION_PATH = "/compensation-benefits"
+
+
+def _staff_in_reach(request, staff_id):
+    from apps.accounts.models import StaffProfile
+    from apps.hr.reach import people_reach, scope_profiles
+
+    staff = (
+        scope_profiles(
+            StaffProfile.objects.select_related("user"), people_reach(request.user)
+        )
+        .filter(id=staff_id)
+        .first()
+    )
+    if staff is None:
+        raise Http404("Employee not found.")
+    return staff
+
+
+def _compensation_fields(request, record=None, *, choose_staff=False):
+    from apps.hr.models import CompensationStatus, MedicalCover
+
+    def value(name, default=""):
+        return getattr(record, name, default) if record is not None else default
+
+    fields = []
+    if choose_staff:
+        fields.append(
+            _field(
+                "staff_id",
+                "Employee",
+                type="select",
+                required=True,
+                options=_people_options(request),
+                blank="Choose the employee",
+            )
+        )
+    fields += [
+        _field(
+            "salary_band", "Salary band", value=value("salary_band") or "", maxlength=64
+        ),
+        _field(
+            "currency",
+            "Currency",
+            type="select",
+            options=[(c, c) for c in ("UGX", "KES", "RWF", "TZS", "USD")],
+            value=value("currency", "UGX"),
+        ),
+        _field(
+            "base_salary",
+            "Base salary (monthly)",
+            type="number",
+            min=0,
+            step="1",
+            value=value("base_salary", "") or "",
+        ),
+        _field(
+            "allowances",
+            "Allowances (monthly)",
+            type="number",
+            min=0,
+            step="1",
+            value=value("allowances", "") or "",
+        ),
+        _field(
+            "medical_cover",
+            "Medical cover",
+            type="select",
+            options=MedicalCover.choices,
+            value=value("medical_cover", MedicalCover.NONE),
+        ),
+        _field(
+            "pension_scheme",
+            "Pension or social security scheme",
+            value=value("pension_scheme") or "",
+            placeholder="e.g. NSSF",
+            maxlength=128,
+        ),
+        _field(
+            "other_benefits",
+            "Other benefits",
+            type="textarea",
+            rows=2,
+            value=value("other_benefits") or "",
+        ),
+        _field(
+            "effective_date",
+            "Effective from",
+            type="date",
+            value=value("effective_date").isoformat()
+            if value("effective_date")
+            else "",
+        ),
+        _field(
+            "next_review_date",
+            "Next pay review",
+            type="date",
+            value=value("next_review_date").isoformat()
+            if value("next_review_date")
+            else "",
+        ),
+        _field(
+            "status",
+            "Status",
+            type="select",
+            options=CompensationStatus.choices,
+            value=value("status", CompensationStatus.HR_REVIEW),
+        ),
+    ]
+    return fields
+
+
+@require_page_permission("compensation_benefits")
+@require_http_methods(["GET"])
+def compensation_new_drawer(request):
+    return _drawer(
+        request,
+        title="Add a compensation record",
+        subtitle="Band, benefits and the next pay review",
+        action="/compensation-benefits/save",
+        submit="Save record",
+        note="Amounts are visible only inside this record, never on the register.",
+        fields=_compensation_fields(request, choose_staff=True),
+    )
+
+
+@require_page_permission("compensation_benefits")
+@require_http_methods(["GET"])
+def compensation_drawer(request, staff_id):
+    from apps.hr.models import CompensationRecord
+
+    staff = _staff_in_reach(request, staff_id)
+    record = CompensationRecord.objects.filter(staff=staff).first()
+    fields = [_field("staff_id", "", type="hidden", value=staff.id)]
+    fields += _compensation_fields(request, record)
+    return _drawer(
+        request,
+        title=f"Compensation · {staff.user.name}",
+        subtitle=f"{staff.country} · {staff.title or staff.user.active_role}",
+        action="/compensation-benefits/save",
+        submit="Save record",
+        fields=fields,
+    )
+
+
+@require_page_permission("compensation_benefits")
+@require_POST
+def compensation_save(request):
+    from apps.hr.rewards_wellbeing_service import save_compensation
+
+    data = request.POST
+    try:
+        staff = _staff_in_reach(request, data.get("staff_id") or "")
+        save_compensation(
+            staff,
+            {
+                "salary_band": data.get("salary_band"),
+                "currency": data.get("currency"),
+                "base_salary": data.get("base_salary"),
+                "allowances": data.get("allowances"),
+                "medical_cover": data.get("medical_cover"),
+                "pension_scheme": data.get("pension_scheme"),
+                "other_benefits": data.get("other_benefits"),
+                "effective_date": _date(data.get("effective_date")),
+                "next_review_date": _date(data.get("next_review_date")),
+                "status": data.get("status"),
+            },
+            request.user,
+        )
+    except Http404:
+        messages.error(request, "Choose an employee you oversee.")
+        return _back(request, COMPENSATION_PATH)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, COMPENSATION_PATH)
+    messages.success(request, f"Compensation saved for {staff.user.name}.")
+    return _back(request, COMPENSATION_PATH)
+
+
+# ── Health and safety ────────────────────────────────────────────────────────
+SAFETY_PATH = "/health-safety"
+
+
+@require_page_permission("health_safety")
+@require_http_methods(["GET"])
+def incident_new_drawer(request):
+    from apps.hr.models import ERSeverity, SafetyIncidentCategory
+
+    return _drawer(
+        request,
+        title="Report an incident",
+        subtitle="An injury, road traffic incident, near miss or hazard",
+        action="/health-safety/report",
+        submit="Report incident",
+        fields=[
+            _field(
+                "category",
+                "What happened",
+                type="select",
+                required=True,
+                options=SafetyIncidentCategory.choices,
+                blank="Choose the kind of incident",
+            ),
+            _field("incident_date", "Date", type="date", required=True),
+            _field(
+                "affected_staff_id",
+                "Employee affected",
+                type="select",
+                options=_people_options(request),
+                blank="No one was hurt",
+            ),
+            _field(
+                "country",
+                "Country",
+                type="select",
+                options=_country_options(request),
+                blank="The employee's country",
+            ),
+            _field(
+                "location", "Where", maxlength=255, placeholder="School, road, office…"
+            ),
+            _field(
+                "severity",
+                "Severity",
+                type="select",
+                required=True,
+                options=ERSeverity.choices,
+                value=ERSeverity.MEDIUM,
+            ),
+            _field("days_lost", "Working days lost", type="number", min=0, step="1"),
+            _field(
+                "description",
+                "Description",
+                type="textarea",
+                required=True,
+                maxlength=5000,
+            ),
+            _field(
+                "immediate_action",
+                "Immediate action taken",
+                type="textarea",
+                rows=3,
+            ),
+        ],
+    )
+
+
+@require_page_permission("health_safety")
+@require_POST
+def incident_report(request):
+    from apps.hr.rewards_wellbeing_service import report_incident
+
+    data = request.POST
+    try:
+        incident = report_incident(
+            {
+                "category": data.get("category"),
+                "incident_date": _date(data.get("incident_date")),
+                "affected_staff_id": data.get("affected_staff_id"),
+                "country": data.get("country"),
+                "location": data.get("location"),
+                "severity": data.get("severity"),
+                "days_lost": data.get("days_lost"),
+                "description": data.get("description"),
+                "immediate_action": data.get("immediate_action"),
+            },
+            request.user,
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, SAFETY_PATH)
+    messages.success(request, f"{incident.get_category_display()} reported.")
+    return _back(request, SAFETY_PATH)
+
+
+def _visible_incident(request, incident_id):
+    from apps.hr.models import SafetyIncident
+    from apps.hr.reach import people_reach, scope_by_country
+
+    incident = (
+        scope_by_country(
+            SafetyIncident.objects.select_related(
+                "affected_staff__user", "reported_by"
+            ),
+            people_reach(request.user),
+        )
+        .filter(id=incident_id)
+        .first()
+    )
+    if incident is None:
+        raise Http404("Incident not found.")
+    return incident
+
+
+@require_page_permission("health_safety")
+@require_http_methods(["GET"])
+def incident_drawer(request, incident_id):
+    from apps.hr.rewards_wellbeing_service import incident_transitions
+
+    incident = _visible_incident(request, incident_id)
+    facts = [
+        {"label": "What happened", "value": incident.get_category_display()},
+        {"label": "Date", "value": incident.incident_date.isoformat()},
+        {
+            "label": "Employee affected",
+            "value": incident.affected_staff.user.name
+            if incident.affected_staff
+            else "",
+        },
+        {"label": "Country", "value": incident.country},
+        {"label": "Where", "value": incident.location},
+        {"label": "Severity", "value": incident.get_severity_display()},
+        {"label": "Days lost", "value": str(incident.days_lost)},
+        {"label": "Description", "value": incident.description},
+        {"label": "Immediate action", "value": incident.immediate_action},
+        {"label": "Corrective action", "value": incident.corrective_action},
+        {"label": "Status", "value": incident.get_status_display()},
+    ]
+    transitions = incident_transitions(incident)
+    if not transitions:
+        return _drawer(
+            request,
+            title=incident.get_category_display(),
+            subtitle=f"{incident.country} · Closed",
+            facts=facts,
+            empty="This incident is closed.",
+        )
+    return _drawer(
+        request,
+        title=incident.get_category_display(),
+        subtitle=f"{incident.country} · {incident.get_status_display()}",
+        action=f"/health-safety/{incident.id}/advance",
+        submit="Record",
+        facts=facts,
+        fields=[
+            _field(
+                "to_status",
+                "Move to",
+                type="select",
+                required=True,
+                options=transitions,
+            ),
+            _field(
+                "corrective_action",
+                "Corrective action",
+                type="textarea",
+                rows=3,
+                help="Required before an incident moves to action or closes.",
+            ),
+        ],
+    )
+
+
+@require_page_permission("health_safety")
+@require_POST
+def incident_advance(request, incident_id):
+    from apps.hr.rewards_wellbeing_service import advance_incident
+
+    incident = _visible_incident(request, incident_id)
+    try:
+        incident = advance_incident(
+            incident,
+            request.user,
+            to_status=request.POST.get("to_status") or "",
+            corrective_action=request.POST.get("corrective_action") or "",
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, SAFETY_PATH)
+    messages.success(
+        request, f"Incident moved to {incident.get_status_display().lower()}."
+    )
+    return _back(request, SAFETY_PATH)
+
+
+# ── Recognition ──────────────────────────────────────────────────────────────
+RECOGNITION_PATH = "/recognition"
+
+
+@require_page_permission("recognition")
+@require_http_methods(["GET"])
+def recognition_new_drawer(request):
+    from apps.hr.models import RecognitionCategory
+
+    return _drawer(
+        request,
+        title="Recognise someone",
+        subtitle="Name good work, and why it mattered",
+        action="/recognition/award",
+        submit="Record recognition",
+        fields=[
+            _field(
+                "staff_id",
+                "Employee",
+                type="select",
+                required=True,
+                options=_people_options(request),
+                blank="Choose the employee",
+            ),
+            _field(
+                "category",
+                "Recognised for",
+                type="select",
+                required=True,
+                options=RecognitionCategory.choices,
+                blank="Choose a category",
+            ),
+            _field(
+                "citation",
+                "Citation",
+                type="textarea",
+                required=True,
+                maxlength=2000,
+                placeholder="What they did, and the difference it made",
+            ),
+            _field("awarded_on", "Date", type="date"),
+        ],
+    )
+
+
+@require_page_permission("recognition")
+@require_POST
+def recognition_award(request):
+    from apps.hr.rewards_wellbeing_service import recognise
+
+    data = request.POST
+    try:
+        staff = _staff_in_reach(request, data.get("staff_id") or "")
+        recognise(
+            staff,
+            {
+                "category": data.get("category"),
+                "citation": data.get("citation"),
+                "awarded_on": _date(data.get("awarded_on")),
+            },
+            request.user,
+        )
+    except Http404:
+        messages.error(request, "Choose an employee you oversee.")
+        return _back(request, RECOGNITION_PATH)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, RECOGNITION_PATH)
+    messages.success(request, f"{staff.user.name} recognised.")
+    return _back(request, RECOGNITION_PATH)
+
+
+# ── Pulse surveys ────────────────────────────────────────────────────────────
+PULSE_PATH = "/pulse-surveys"
+
+
+@require_page_permission("pulse_surveys")
+@require_http_methods(["GET"])
+def pulse_new_drawer(request):
+    from apps.hr.models import PULSE_QUESTIONS
+
+    return _drawer(
+        request,
+        title="Open a pulse survey",
+        subtitle="Five anonymous statements, answered from 1 to 5",
+        action="/pulse-surveys/open",
+        submit="Open and notify staff",
+        note=(
+            "Staff in the chosen countries are notified. Answers are anonymous, and "
+            "results show only once five people have answered. The statements: "
+            + " ".join(f"({i}) {q}" for i, (_k, q) in enumerate(PULSE_QUESTIONS, 1))
+        ),
+        fields=[
+            _field(
+                "title",
+                "Title",
+                required=True,
+                maxlength=255,
+                placeholder="e.g. Quarter 1 staff pulse",
+            ),
+            *[
+                _field(
+                    f"country_{code}",
+                    f"Survey staff in {name}",
+                    type="checkbox",
+                    value=True,
+                )
+                for code, name in _country_options(request)
+            ],
+            _field("closes_on", "Closes on", type="date", required=True),
+        ],
+    )
+
+
+@require_page_permission("pulse_surveys")
+@require_POST
+def pulse_open(request):
+    from apps.hr.reach import people_reach
+    from apps.hr.rewards_wellbeing_service import open_pulse_survey
+
+    data = request.POST
+    countries = [
+        country
+        for country in people_reach(request.user).filter_options()
+        if data.get(f"country_{country}")
+    ]
+    try:
+        survey = open_pulse_survey(
+            {
+                "title": data.get("title"),
+                "countries": countries,
+                "closes_on": _date(data.get("closes_on")),
+            },
+            request.user,
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, PULSE_PATH)
+    messages.success(request, f"{survey.title} is open and staff have been notified.")
+    return _back(request, PULSE_PATH)
+
+
+def _visible_survey(request, survey_id):
+    from apps.hr.models import PulseSurvey
+    from apps.hr.reach import people_reach
+
+    survey = PulseSurvey.objects.filter(id=survey_id).first()
+    reach = people_reach(request.user)
+    if survey is None or not all(
+        reach.allows_country(c) for c in (survey.countries or [])
+    ):
+        raise Http404("Survey not found.")
+    return survey
+
+
+@require_page_permission("pulse_surveys")
+@require_http_methods(["GET"])
+def pulse_results_drawer(request, survey_id):
+    from apps.hr.models import PULSE_MIN_RESPONSES, PulseSurveyStatus
+    from apps.hr.rewards_wellbeing_service import survey_results
+
+    survey = _visible_survey(request, survey_id)
+    results = survey_results(survey)
+    facts = [
+        {"label": "Countries", "value": ", ".join(survey.countries or [])},
+        {
+            "label": "Open",
+            "value": f"{survey.opens_on:%d %b %Y} to {survey.closes_on:%d %b %Y}",
+        },
+        {"label": "Responses", "value": str(results["count"])},
+    ]
+    if results["shown"]:
+        facts.append({"label": "Overall", "value": f"{results['overall']} of 5"})
+        facts += [
+            {
+                "label": row["statement"],
+                "value": f"{row['average']} of 5 · {row['favourable']}% agree",
+            }
+            for row in results["rows"]
+        ]
+    else:
+        facts.append(
+            {
+                "label": "Results",
+                "value": f"Shown once {PULSE_MIN_RESPONSES} people have answered, "
+                "so no one's answer can be inferred.",
+            }
+        )
+    if survey.status == PulseSurveyStatus.OPEN:
+        return _drawer(
+            request,
+            title=survey.title,
+            subtitle="Open",
+            action=f"/pulse-surveys/{survey.id}/close",
+            submit="Close the survey",
+            facts=facts,
+        )
+    return _drawer(
+        request,
+        title=survey.title,
+        subtitle="Closed",
+        facts=facts,
+        empty="This survey is closed.",
+    )
+
+
+@require_page_permission("pulse_surveys")
+@require_POST
+def pulse_close(request, survey_id):
+    from apps.hr.rewards_wellbeing_service import close_pulse_survey
+
+    survey = _visible_survey(request, survey_id)
+    try:
+        close_pulse_survey(survey, request.user)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, PULSE_PATH)
+    messages.success(request, f"{survey.title} closed.")
+    return _back(request, PULSE_PATH)
+
+
+@require_page_permission("staff_pulse")
+@require_http_methods(["GET", "POST"])
+def pulse_respond(request, survey_id):
+    """The page a member of staff answers a pulse survey on."""
+    from apps.hr.models import PULSE_QUESTIONS, PulseSurvey
+    from apps.hr.rewards_wellbeing_service import has_answered, is_open_for, respond
+
+    survey = PulseSurvey.objects.filter(id=survey_id).first()
+    if survey is None:
+        raise Http404("Survey not found.")
+    if request.method == "POST":
+        try:
+            respond(
+                survey,
+                request.user,
+                scores={key: request.POST.get(key) for key, _q in PULSE_QUESTIONS},
+                comment=request.POST.get("comment") or "",
+            )
+        except SERVICE_ERRORS as exc:
+            messages.error(request, str(getattr(exc, "detail", exc)))
+            return redirect(f"/pulse/{survey.id}")
+        messages.success(request, "Thank you. Your answer is recorded anonymously.")
+        return redirect(f"/pulse/{survey.id}")
+    return render(
+        request,
+        "pages/hr/pulse_respond.html",
+        {
+            "survey": survey,
+            "questions": PULSE_QUESTIONS,
+            "scale": [
+                (1, "Strongly disagree"),
+                (2, "Disagree"),
+                (3, "Neutral"),
+                (4, "Agree"),
+                (5, "Strongly agree"),
+            ],
+            "is_open": is_open_for(survey, request.user),
+            "answered": has_answered(survey, request.user),
+        },
+    )

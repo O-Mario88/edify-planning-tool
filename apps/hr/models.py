@@ -893,22 +893,50 @@ class EmployeeRelationsCase(TimeStampedModel):
 # ─── COMPENSATION AND PAYROLL READYNESS ──────────────────────────────────────
 
 
+class CompensationStatus(models.TextChoices):
+    # The stored strings predate the choices; they are kept so existing rows
+    # keep reading correctly.
+    HR_REVIEW = "HR Review", "In HR review"
+    APPROVED = "Approved", "Approved"
+
+
+class MedicalCover(models.TextChoices):
+    NONE = "none", "No medical cover"
+    INDIVIDUAL = "individual", "Individual"
+    FAMILY = "family", "Employee and family"
+
+
 class CompensationRecord(TimeStampedModel):
-    """Compensation, grade structure and bank accounts per staff profile."""
+    """Compensation, grade structure and benefits per staff profile.
+
+    Benefits were one free-text "tier". The Regional HR Director administers
+    compensation and benefits by name (owner, 2026-09-12), so medical cover,
+    pension scheme and the review date are fields a register can count.
+    """
 
     id = CuidField()
     staff = models.OneToOneField(
         StaffProfile, on_delete=models.CASCADE, related_name="compensation_details"
     )
     salary_band = models.CharField(max_length=64, null=True, blank=True)
+    currency = models.CharField(max_length=8, default="UGX")
     base_salary = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     allowances = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     benefits_tier = models.CharField(max_length=64, null=True, blank=True)
+    medical_cover = models.CharField(
+        max_length=16, choices=MedicalCover.choices, default=MedicalCover.NONE
+    )
+    pension_scheme = models.CharField(max_length=128, blank=True, default="")
+    other_benefits = models.TextField(blank=True, default="")
+    effective_date = models.DateField(null=True, blank=True)
+    next_review_date = models.DateField(null=True, blank=True)
     bank_name = models.CharField(max_length=128, null=True, blank=True)
     account_number = models.CharField(max_length=64, null=True, blank=True)
     status = models.CharField(
-        max_length=32, default="HR Review"
-    )  # HR Review, Approved, etc.
+        max_length=32,
+        choices=CompensationStatus.choices,
+        default=CompensationStatus.HR_REVIEW,
+    )
 
     class Meta:
         db_table = "hr_compensation"
@@ -977,6 +1005,161 @@ class OffboardingPlan(TimeStampedModel):
 
     class Meta:
         db_table = "hr_offboarding"
+
+
+# ─── HEALTH, SAFETY, RECOGNITION AND MORALE ──────────────────────────────────
+# Three programmes the Regional HR Director administers by name (owner,
+# 2026-09-12) that had no record anywhere: occupational health and safety,
+# recognition, and morale.
+
+
+class SafetyIncidentCategory(models.TextChoices):
+    INJURY = "injury", "Injury"
+    ROAD_TRAFFIC = "road_traffic", "Road traffic incident"
+    ILLNESS = "illness", "Work-related illness"
+    NEAR_MISS = "near_miss", "Near miss"
+    SECURITY = "security", "Security incident"
+    HAZARD = "hazard", "Hazard reported"
+    OTHER = "other", "Other"
+
+
+class SafetyIncidentStatus(models.TextChoices):
+    REPORTED = "reported", "Reported"
+    INVESTIGATING = "investigating", "Investigating"
+    ACTION = "action", "Corrective action in progress"
+    CLOSED = "closed", "Closed"
+
+
+class SafetyIncident(TimeStampedModel):
+    """An occupational health and safety incident, near miss or hazard."""
+
+    id = CuidField()
+    country = models.CharField(max_length=64, db_index=True)
+    affected_staff = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="safety_incidents",
+    )
+    reported_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    incident_date = models.DateField()
+    location = models.CharField(max_length=255, blank=True, default="")
+    category = models.CharField(
+        max_length=32, choices=SafetyIncidentCategory.choices, db_index=True
+    )
+    severity = models.CharField(
+        max_length=16, choices=ERSeverity.choices, default=ERSeverity.MEDIUM
+    )
+    description = models.TextField()
+    immediate_action = models.TextField(blank=True, default="")
+    corrective_action = models.TextField(blank=True, default="")
+    days_lost = models.PositiveIntegerField(default=0)
+    status = models.CharField(
+        max_length=16,
+        choices=SafetyIncidentStatus.choices,
+        default=SafetyIncidentStatus.REPORTED,
+    )
+    closed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "hr_safety_incident"
+        indexes = [models.Index(fields=["country", "status"])]
+
+
+class RecognitionCategory(models.TextChoices):
+    VALUES = "values", "Living Edify's values"
+    EXCELLENCE = "excellence", "Excellence in delivery"
+    TEAMWORK = "teamwork", "Teamwork"
+    INNOVATION = "innovation", "Innovation"
+    ABOVE_AND_BEYOND = "above_and_beyond", "Above and beyond"
+    SERVICE_MILESTONE = "service_milestone", "Service milestone"
+
+
+class StaffRecognition(TimeStampedModel):
+    """A recognition given to a member of staff."""
+
+    id = CuidField()
+    staff = models.ForeignKey(
+        StaffProfile, on_delete=models.CASCADE, related_name="recognitions"
+    )
+    country = models.CharField(max_length=64, db_index=True)
+    category = models.CharField(max_length=32, choices=RecognitionCategory.choices)
+    citation = models.TextField()
+    awarded_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+    awarded_on = models.DateField()
+
+    class Meta:
+        db_table = "hr_staff_recognition"
+
+
+class PulseSurveyStatus(models.TextChoices):
+    OPEN = "open", "Open"
+    CLOSED = "closed", "Closed"
+
+
+#: The five statements every pulse survey asks, each scored 1 (strongly
+#: disagree) to 5 (strongly agree). Fixed so results compare survey to survey.
+PULSE_QUESTIONS: tuple[tuple[str, str], ...] = (
+    ("purpose", "I understand how my work serves Edify's mission."),
+    ("support", "I get the support I need from my supervisor."),
+    ("workload", "My workload is manageable."),
+    ("recognition", "My contribution is recognised."),
+    ("growth", "I have opportunities to learn and grow."),
+)
+
+#: Fewer answers than this and no result is shown, so no one's answer can be
+#: inferred from a small group.
+PULSE_MIN_RESPONSES = 5
+
+
+class PulseSurvey(TimeStampedModel):
+    """A short, anonymous staff morale survey for one country or several."""
+
+    id = CuidField()
+    title = models.CharField(max_length=255)
+    countries = models.JSONField(default=list)
+    opens_on = models.DateField()
+    closes_on = models.DateField()
+    status = models.CharField(
+        max_length=16, choices=PulseSurveyStatus.choices, default=PulseSurveyStatus.OPEN
+    )
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL, null=True, blank=True, related_name="+"
+    )
+
+    class Meta:
+        db_table = "hr_pulse_survey"
+
+
+class PulseResponse(TimeStampedModel):
+    """One anonymous answer to a pulse survey.
+
+    No user is stored. `respondent_key` is a keyed hash of the survey and the
+    person, which lets the survey refuse a second answer without recording
+    whose answer this is.
+    """
+
+    id = CuidField()
+    survey = models.ForeignKey(
+        PulseSurvey, on_delete=models.CASCADE, related_name="responses"
+    )
+    respondent_key = models.CharField(max_length=64)
+    country = models.CharField(max_length=64, db_index=True)
+    scores = models.JSONField(default=dict)
+    comment = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "hr_pulse_response"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["survey", "respondent_key"], name="uniq_pulse_response"
+            )
+        ]
 
 
 # ─── HR AUDIT LOG ────────────────────────────────────────────────────────────

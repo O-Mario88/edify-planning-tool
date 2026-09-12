@@ -2373,6 +2373,74 @@ urlpatterns = [
         hr_programme_views.offboarding_close,
         name="offboarding_close",
     ),
+    # Rewards and wellbeing (2026-09-13).
+    path(
+        "compensation-benefits/new",
+        hr_programme_views.compensation_new_drawer,
+        name="compensation_new_drawer",
+    ),
+    path(
+        "compensation-benefits/save",
+        hr_programme_views.compensation_save,
+        name="compensation_save",
+    ),
+    path(
+        "compensation-benefits/<str:staff_id>",
+        hr_programme_views.compensation_drawer,
+        name="compensation_drawer",
+    ),
+    path("health-safety", hr_views.health_safety_view, name="health_safety"),
+    path(
+        "health-safety/new",
+        hr_programme_views.incident_new_drawer,
+        name="incident_new_drawer",
+    ),
+    path(
+        "health-safety/report",
+        hr_programme_views.incident_report,
+        name="incident_report",
+    ),
+    path(
+        "health-safety/<str:incident_id>",
+        hr_programme_views.incident_drawer,
+        name="incident_drawer",
+    ),
+    path(
+        "health-safety/<str:incident_id>/advance",
+        hr_programme_views.incident_advance,
+        name="incident_advance",
+    ),
+    path("recognition", hr_views.recognition_view, name="recognition"),
+    path(
+        "recognition/new",
+        hr_programme_views.recognition_new_drawer,
+        name="recognition_new_drawer",
+    ),
+    path(
+        "recognition/award",
+        hr_programme_views.recognition_award,
+        name="recognition_award",
+    ),
+    path("pulse-surveys", hr_views.pulse_surveys_view, name="pulse_surveys"),
+    path(
+        "pulse-surveys/new",
+        hr_programme_views.pulse_new_drawer,
+        name="pulse_new_drawer",
+    ),
+    path("pulse-surveys/open", hr_programme_views.pulse_open, name="pulse_open"),
+    path(
+        "pulse-surveys/<str:survey_id>",
+        hr_programme_views.pulse_results_drawer,
+        name="pulse_results_drawer",
+    ),
+    path(
+        "pulse-surveys/<str:survey_id>/close",
+        hr_programme_views.pulse_close,
+        name="pulse_close",
+    ),
+    path(
+        "pulse/<str:survey_id>", hr_programme_views.pulse_respond, name="pulse_respond"
+    ),
     path(
         "employee-relations",
         hr_views.employee_relations_view,

@@ -657,8 +657,8 @@
         "/compliance-register",
         "/culture-engagement",
         "/employee-relations",
-        "/hr-analytics",
-        "/hr-audit-log"
+        "/health-safety",
+        "/hr-analytics"
       ],
       "findings": [],
       "forms": 0,
@@ -2288,9 +2288,9 @@
         "/compliance-register",
         "/culture-engagement",
         "/employee-relations",
+        "/health-safety",
         "/hr-analytics",
-        "/hr-audit-log",
-        "/ia/dashboard/"
+        "/hr-audit-log"
       ],
       "findings": [],
       "forms": 0,
@@ -6029,12 +6029,12 @@
       "example_pages": [
         "/candidate-pipeline/<str:application_id>",
         "/candidate-pipeline/new",
+        "/compensation-benefits/<str:staff_id>",
+        "/compensation-benefits/new",
         "/employee-relations/<str:case_id>",
         "/employee-relations/new",
-        "/offboarding/<str:plan_id>",
-        "/offboarding/new",
-        "/onboarding/<str:plan_id>",
-        "/recruitment/<str:vacancy_id>"
+        "/health-safety/<str:incident_id>",
+        "/health-safety/new"
       ],
       "findings": [],
       "forms": 1,
@@ -6065,9 +6065,9 @@
         "/compliance-register",
         "/culture-engagement",
         "/employee-relations",
+        "/health-safety",
         "/hr-analytics",
-        "/hr-audit-log",
-        "/offboarding"
+        "/hr-audit-log"
       ],
       "findings": [],
       "forms": 0,
@@ -24442,7 +24442,7 @@
       "permission_key": "compensation_benefits",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate compensation benefits within the frontend workflow.",
+      "purpose": "Pay bands, medical cover, pension and review dates, per employee.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -24483,6 +24483,238 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compensation_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:compensation_benefits"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-061697B28A",
+      "page_title": "Compensation Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compensation_benefits",
+      "primary_action": "Compensation Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compensation drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compensation-benefits/<str:staff_id>",
+      "route_name": "compensation_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compensation_new_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:compensation_benefits"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-4238220E8F",
+      "page_title": "Compensation New Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compensation_benefits",
+      "primary_action": "Compensation New Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compensation new drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compensation-benefits/new",
+      "route_name": "compensation_new_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compensation_save",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:compensation_benefits"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-6AD574A855",
+      "page_title": "Compensation Save",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compensation_benefits",
+      "primary_action": "Compensation Save",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compensation save within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compensation-benefits/save",
+      "route_name": "compensation_save",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -35697,6 +35929,397 @@
         "text-[12px]",
         "text-[14px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_views",
+      "backend_view": "apps.frontend.views.hr_views.health_safety_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/hr/module_workspace.html",
+        "test:referenced-by-automated-test",
+        "permission:health_safety"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-B35FAC1878",
+      "page_title": "\u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [
+        "css/hcos-workspace.css",
+        "css/pages/analytics-dashboard.css"
+      ],
+      "permission_key": "health_safety",
+      "primary_action": "\u2192",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "Occupational health and safety: incidents, near misses and hazards.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/health-safety",
+      "route_name": "health_safety",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.audit.models",
+        "apps.hr.models",
+        "apps.notifications.services",
+        "apps.professional_development.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/hr/module_workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.incident_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:health_safety"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EE2DB868E6",
+      "page_title": "Incident Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "health_safety",
+      "primary_action": "Incident Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate incident drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/health-safety/<str:incident_id>",
+      "route_name": "incident_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.incident_advance",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:health_safety"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-6EA9145F97",
+      "page_title": "Incident Advance",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "health_safety",
+      "primary_action": "Incident Advance",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate incident advance within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/health-safety/<str:incident_id>/advance",
+      "route_name": "incident_advance",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.incident_new_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:health_safety"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-31B9AC3451",
+      "page_title": "Incident New Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "health_safety",
+      "primary_action": "Incident New Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate incident new drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/health-safety/new",
+      "route_name": "incident_new_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.incident_report",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:health_safety"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-61DDBE7AA2",
+      "page_title": "Incident Report",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "health_safety",
+      "primary_action": "Incident Report",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate incident report within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/health-safety/report",
+      "route_name": "incident_report",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -58045,6 +58668,483 @@
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_views",
+      "backend_view": "apps.frontend.views.hr_views.pulse_surveys_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/hr/module_workspace.html",
+        "test:referenced-by-automated-test",
+        "permission:pulse_surveys"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EEB299FBB6",
+      "page_title": "\u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [
+        "css/hcos-workspace.css",
+        "css/pages/analytics-dashboard.css"
+      ],
+      "permission_key": "pulse_surveys",
+      "primary_action": "\u2192",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "Anonymous staff pulse surveys and their results.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/pulse-surveys",
+      "route_name": "pulse_surveys",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.audit.models",
+        "apps.hr.models",
+        "apps.notifications.services",
+        "apps.professional_development.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/hr/module_workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.pulse_results_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:pulse_surveys"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0B32E25CA5",
+      "page_title": "Pulse Results Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "pulse_surveys",
+      "primary_action": "Pulse Results Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate pulse results drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/pulse-surveys/<str:survey_id>",
+      "route_name": "pulse_results_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.pulse_close",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:pulse_surveys"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-0DC6435DA6",
+      "page_title": "Pulse Close",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "pulse_surveys",
+      "primary_action": "Pulse Close",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate pulse close within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/pulse-surveys/<str:survey_id>/close",
+      "route_name": "pulse_close",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.pulse_new_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:pulse_surveys"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-AD000D654D",
+      "page_title": "Pulse New Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "pulse_surveys",
+      "primary_action": "Pulse New Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate pulse new drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/pulse-surveys/new",
+      "route_name": "pulse_new_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.pulse_open",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:pulse_surveys"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-52E8522123",
+      "page_title": "Pulse Open",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "pulse_surveys",
+      "primary_action": "Pulse Open",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate pulse open within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/pulse-surveys/open",
+      "route_name": "pulse_open",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.pulse_respond",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "template:pages/hr/pulse_respond.html",
+        "test:coverage-review-required",
+        "permission:staff_pulse"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-525708C2CC",
+      "page_title": "\u00b7 Edify",
+      "page_type": "record-detail",
+      "per_page_css": [],
+      "permission_key": "staff_pulse",
+      "primary_action": "Submit anonymously",
+      "primary_user_decision": "What is the correct next action for this record?",
+      "purpose": "The page a member of staff answers a pulse survey on.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ACCOUNTANT",
+        "ADMIN",
+        "BUSINESS_TRANSFORMATION",
+        "CCEO",
+        "CD",
+        "HR",
+        "IA",
+        "PL",
+        "PROJECT_COORDINATOR",
+        "RPL",
+        "RVP"
+      ],
+      "route": "/pulse/<str:survey_id>",
+      "route_name": "pulse_respond",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/hr/pulse_respond.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.extended_views",
       "backend_view": "apps.frontend.views.extended_views.quality_checks_view",
       "card_count": 0,
@@ -58147,6 +59247,244 @@
         "text-[14px]",
         "text-[36px]"
       ]
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_views",
+      "backend_view": "apps.frontend.views.hr_views.recognition_view",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:pages/hr/module_workspace.html",
+        "test:referenced-by-automated-test",
+        "permission:recognition"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "canonical-page-header-anatomy",
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "runtime-registered; 1 contextual summary/summaries",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-DF36A9580D",
+      "page_title": "\u00b7 Edify",
+      "page_type": "operational-queue",
+      "per_page_css": [
+        "css/hcos-workspace.css",
+        "css/pages/analytics-dashboard.css"
+      ],
+      "permission_key": "recognition",
+      "primary_action": "\u2192",
+      "primary_user_decision": "Which queued record should be handled next?",
+      "purpose": "Recognition given to staff: the productivity, recognition and morale programme in the role description.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "shared-shell-contract",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/recognition",
+      "route_name": "recognition",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.audit.models",
+        "apps.hr.models",
+        "apps.notifications.services",
+        "apps.professional_development.models"
+      ],
+      "shared_layout": [
+        "layouts/shell.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "page",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "pages/hr/module_workspace.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.recognition_award",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:recognition"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-AFA78C6AFC",
+      "page_title": "Recognition Award",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "recognition",
+      "primary_action": "Recognition Award",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate recognition award within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/recognition/award",
+      "route_name": "recognition_award",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.recognition_new_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:recognition"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-A5D728E4C3",
+      "page_title": "Recognition New Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "recognition",
+      "primary_action": "Recognition New Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate recognition new drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/recognition/new",
+      "route_name": "recognition_new_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
@@ -77422,6 +78760,46 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.hr_programme_views.compensation_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compensation_benefits",
+      "required_permissions": [],
+      "route": "/compensation-benefits/<str:staff_id>",
+      "route_name": "compensation_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.compensation_new_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compensation_benefits",
+      "required_permissions": [],
+      "route": "/compensation-benefits/new",
+      "route_name": "compensation_new_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.compensation_save",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compensation_benefits",
+      "required_permissions": [],
+      "route": "/compensation-benefits/save",
+      "route_name": "compensation_save",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.closure_views.completed_activities_view",
       "kind": "page",
       "methods": [
@@ -79157,6 +80535,72 @@
       "templates": [
         "pages/fy/index.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_views.health_safety_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "health_safety",
+      "required_permissions": [],
+      "route": "/health-safety",
+      "route_name": "health_safety",
+      "templates": [
+        "pages/hr/module_workspace.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.incident_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "health_safety",
+      "required_permissions": [],
+      "route": "/health-safety/<str:incident_id>",
+      "route_name": "incident_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.incident_advance",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "health_safety",
+      "required_permissions": [],
+      "route": "/health-safety/<str:incident_id>/advance",
+      "route_name": "incident_advance",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.incident_new_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "health_safety",
+      "required_permissions": [],
+      "route": "/health-safety/new",
+      "route_name": "incident_new_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.incident_report",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "health_safety",
+      "required_permissions": [],
+      "route": "/health-safety/report",
+      "route_name": "incident_report",
+      "templates": []
     },
     {
       "callback": "apps.help_center.views.home",
@@ -82541,6 +83985,87 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.hr_views.pulse_surveys_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "pulse_surveys",
+      "required_permissions": [],
+      "route": "/pulse-surveys",
+      "route_name": "pulse_surveys",
+      "templates": [
+        "pages/hr/module_workspace.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.pulse_results_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "pulse_surveys",
+      "required_permissions": [],
+      "route": "/pulse-surveys/<str:survey_id>",
+      "route_name": "pulse_results_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.pulse_close",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "pulse_surveys",
+      "required_permissions": [],
+      "route": "/pulse-surveys/<str:survey_id>/close",
+      "route_name": "pulse_close",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.pulse_new_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "pulse_surveys",
+      "required_permissions": [],
+      "route": "/pulse-surveys/new",
+      "route_name": "pulse_new_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.pulse_open",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "pulse_surveys",
+      "required_permissions": [],
+      "route": "/pulse-surveys/open",
+      "route_name": "pulse_open",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.pulse_respond",
+      "kind": "page",
+      "methods": [
+        "GET",
+        "POST"
+      ],
+      "page_permission": "staff_pulse",
+      "required_permissions": [],
+      "route": "/pulse/<str:survey_id>",
+      "route_name": "pulse_respond",
+      "templates": [
+        "pages/hr/pulse_respond.html"
+      ]
+    },
+    {
       "callback": "apps.frontend.views.extended_views.quality_checks_view",
       "kind": "page",
       "methods": [
@@ -82553,6 +84078,46 @@
       "route_name": "quality_checks",
       "templates": [
         "pages/quality_checks/index.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_views.recognition_view",
+      "kind": "page",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recognition",
+      "required_permissions": [],
+      "route": "/recognition",
+      "route_name": "recognition",
+      "templates": [
+        "pages/hr/module_workspace.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.recognition_award",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recognition",
+      "required_permissions": [],
+      "route": "/recognition/award",
+      "route_name": "recognition_award",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.recognition_new_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recognition",
+      "required_permissions": [],
+      "route": "/recognition/new",
+      "route_name": "recognition_new_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
       ]
     },
     {
@@ -84014,30 +85579,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 428,
+    "accessibility_contract_pass": 439,
     "activity_states": 24,
-    "all_routes": 1092,
+    "all_routes": 1109,
     "api_routes": 359,
     "component_templates": 413,
-    "full_pages": 237,
-    "mobile_contract_pass": 428,
-    "nonvisual_actions": 175,
+    "full_pages": 241,
+    "mobile_contract_pass": 439,
+    "nonvisual_actions": 181,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 363,
-      "operational-queue": 136,
+      "interaction-fragment": 376,
+      "operational-queue": 139,
       "planning-or-creation": 9,
-      "record-detail": 24,
+      "record-detail": 25,
       "report": 28
     },
-    "partials_and_drawers": 188,
-    "permission_gated": 609,
+    "partials_and_drawers": 195,
+    "permission_gated": 626,
     "permission_keys": 112,
     "roles": 15,
-    "routed_surfaces": 624,
+    "routed_surfaces": 641,
     "scheduled_jobs": 26,
     "severity_counts": {
       "critical": 0,
@@ -84045,8 +85610,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 428,
-    "test_referenced": 577,
-    "theme_contract_pass": 428
+    "tablet_contract_pass": 439,
+    "test_referenced": 585,
+    "theme_contract_pass": 439
   }
 }

@@ -585,6 +585,14 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "offboarding": {HR, ADMIN},
     "hr_analytics": {HR, CD, RVP, ADMIN},
     "hr_audit_log": {HR, ADMIN},
+    # Rewards and wellbeing (2026-09-13): programmes the Regional HR Director
+    # administers by name that had no page.
+    "health_safety": {HR, ADMIN},
+    "recognition": {HR, ADMIN},
+    "pulse_surveys": {HR, ADMIN},
+    # Everyone who works for Edify answers a pulse survey; partner and MFI
+    # organisations are not staff.
+    "staff_pulse": ALL_ROLES - {PARTNER, MFI_ADMIN, MFI_OFFICER},
 }
 
 # SVG Icon templates to display inside the sidebar
@@ -670,6 +678,11 @@ ICONS = {
     "offboarding": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" /></svg>',
     "hr_analytics": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7 12l3-3 3 3 4-4M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>',
     "hr_audit_log": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+    # Rewards and wellbeing (2026-09-13): a shield for health and safety, a
+    # star for recognition, a heartbeat line for the staff pulse.
+    "health_safety": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m-3-3h6" /></svg>',
+    "recognition": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 3l2.6 5.3 5.9.9-4.3 4.1 1 5.8L12 16.4l-5.2 2.7 1-5.8L3.5 9.2l5.9-.9L12 3z" /></svg>',
+    "pulse_surveys": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 12h4l2-5 4 10 2-5h6" /></svg>',
     "my_performance": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
     "performance_conversations": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" /></svg>',
     "performance_development": '<svg class="app-sidebar__item-icon-svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5z" /><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" /></svg>',
@@ -1661,6 +1674,31 @@ SIDEBAR_ITEMS = [
                 "label": "Employee Relations",
                 "url": "/employee-relations",
                 "page_key": "employee_relations",
+            },
+        ],
+    },
+    {
+        "group_label": "REWARDS & WELLBEING",
+        "items": [
+            {
+                "label": "Compensation & Benefits",
+                "url": "/compensation-benefits",
+                "page_key": "compensation_benefits",
+            },
+            {
+                "label": "Recognition",
+                "url": "/recognition",
+                "page_key": "recognition",
+            },
+            {
+                "label": "Staff Pulse Surveys",
+                "url": "/pulse-surveys",
+                "page_key": "pulse_surveys",
+            },
+            {
+                "label": "Health & Safety",
+                "url": "/health-safety",
+                "page_key": "health_safety",
             },
         ],
     },

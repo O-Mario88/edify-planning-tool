@@ -172,6 +172,10 @@ class NotificationLinkResolver:
         if event_type == "outbox.dead_letter":
             return "/system-health", "Open System Health"
 
+        # A staff pulse survey opens the page the person answers it on.
+        if context_type == "pulse_survey" and context_id:
+            return f"/pulse/{context_id}", "Answer the survey"
+
         # Professional Development: every stage notice opens the request
         # itself. These used to be raw inserts that carried their own route
         # and bypassed dedupe and resolution entirely.
