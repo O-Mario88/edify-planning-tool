@@ -2469,3 +2469,77 @@
     content: none !important;
   }
 }
+
+/* HR programme drawers (2026-09-13) ----------------------------------------
+   templates/partials/hr/form_drawer.html: read-only facts about a record,
+   then a one-column form. Inputs take the drawer's existing field recipe
+   above; these rules only lay the pieces out, prefixed with .drawer-body
+   because `.drawer-body form { display: block }` would otherwise win. */
+.hr-drawer-facts {
+  display: grid;
+  gap: 0;
+  margin: 0 0 1rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  overflow: hidden;
+}
+
+.hr-drawer-facts__row {
+  display: grid;
+  grid-template-columns: minmax(7rem, 34%) minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--edify-surface);
+}
+
+.hr-drawer-facts__row:nth-child(even) {
+  background: var(--edify-surface-muted);
+}
+
+.hr-drawer-facts__row dt {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.hr-drawer-facts__row dd {
+  margin: 0;
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  overflow-wrap: anywhere;
+}
+
+.drawer-body .hr-drawer-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.drawer-body .hr-drawer-form__field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.drawer-body .hr-drawer-form__help {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.drawer-body .hr-drawer-form__check {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+}
+
+.drawer-body .hr-drawer-form__check input {
+  margin-block-start: 0.2rem;
+}
+
+.drawer-body .hr-drawer-form__check small {
+  display: block;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}

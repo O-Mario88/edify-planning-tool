@@ -6024,7 +6024,40 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2272,
+      "bytes": 3604,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/candidate-pipeline/<str:application_id>",
+        "/candidate-pipeline/new",
+        "/employee-relations/<str:case_id>",
+        "/employee-relations/new",
+        "/offboarding/<str:plan_id>",
+        "/offboarding/new",
+        "/onboarding/<str:plan_id>",
+        "/recruitment/<str:vacancy_id>"
+      ],
+      "findings": [],
+      "forms": 1,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Form Drawer",
+      "purpose": "Reusable form drawer interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/hr/form_drawer.html",
+      "variants": [
+        "info",
+        "{{ form_note_tone|default:"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2801,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline",
@@ -6038,7 +6071,7 @@
       ],
       "findings": [],
       "forms": 0,
-      "htmx_controls": 0,
+      "htmx_controls": 1,
       "kind": "application-partial",
       "name": "Module Register",
       "purpose": "Reusable module register interface primitive",
@@ -22276,7 +22309,7 @@
       "backend_view": "apps.frontend.views.hr_views.candidate_pipeline_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -22287,7 +22320,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -22305,7 +22340,7 @@
       "permission_key": "candidate_pipeline",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate candidate pipeline within the frontend workflow.",
+      "purpose": "Every application, by its real selection stage, with the next step.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -22346,6 +22381,386 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.application_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:candidate_pipeline"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-34FBF7294D",
+      "page_title": "Application Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "candidate_pipeline",
+      "primary_action": "Application Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate application drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/candidate-pipeline/<str:application_id>",
+      "route_name": "application_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.application_advance",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:candidate_pipeline"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-478A959BAD",
+      "page_title": "Application Advance",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "candidate_pipeline",
+      "primary_action": "Application Advance",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate application advance within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/candidate-pipeline/<str:application_id>/advance",
+      "route_name": "application_advance",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.application_hire",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:coverage-review-required",
+        "permission:candidate_pipeline"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-ADA2C3F609",
+      "page_title": "Application Hire",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "candidate_pipeline",
+      "primary_action": "Application Hire",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate application hire within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/candidate-pipeline/<str:application_id>/hire",
+      "route_name": "application_hire",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "coverage-review-required",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.application_record_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:candidate_pipeline"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-47512B11CB",
+      "page_title": "Application Record Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "candidate_pipeline",
+      "primary_action": "Application Record Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate application record drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/candidate-pipeline/new",
+      "route_name": "application_record_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.application_record",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:candidate_pipeline"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-97B63C8157",
+      "page_title": "Application Record",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "candidate_pipeline",
+      "primary_action": "Application Record",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate application record within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/candidate-pipeline/record",
+      "route_name": "application_record",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -23996,7 +24411,7 @@
       "backend_view": "apps.frontend.views.hr_views.compensation_benefits_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -24007,7 +24422,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -24344,7 +24761,7 @@
       "backend_view": "apps.frontend.views.hr_views.compliance_register_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -24355,7 +24772,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -27924,7 +28343,7 @@
       "backend_view": "apps.frontend.views.hr_views.culture_engagement_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -27935,7 +28354,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -31046,7 +31467,7 @@
       "backend_view": "apps.frontend.views.hr_views.employee_relations_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -31057,7 +31478,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -31075,7 +31498,7 @@
       "permission_key": "employee_relations",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate employee relations within the frontend workflow.",
+      "purpose": "Disciplinary matters, grievances, disputes and investigations.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -31116,6 +31539,312 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.er_case_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:employee_relations"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CE90D5C0A9",
+      "page_title": "Employee Relations Case",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "employee_relations",
+      "primary_action": "Employee Relations Case",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate employee relations case within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/employee-relations/<str:case_id>",
+      "route_name": "employee_relations_case",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.er_advance",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:employee_relations"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-9B0DED69EE",
+      "page_title": "Employee Relations Advance",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "employee_relations",
+      "primary_action": "Employee Relations Advance",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate employee relations advance within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/employee-relations/<str:case_id>/advance",
+      "route_name": "employee_relations_advance",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.er_open_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:employee_relations"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8B555F1B5F",
+      "page_title": "Employee Relations Open Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "employee_relations",
+      "primary_action": "Employee Relations Open Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate employee relations open drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/employee-relations/new",
+      "route_name": "employee_relations_open_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.er_open",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:employee_relations"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-31FB0E6047",
+      "page_title": "Employee Relations Open",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "employee_relations",
+      "primary_action": "Employee Relations Open",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate employee relations open within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/employee-relations/open",
+      "route_name": "employee_relations_open",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -36889,7 +37618,7 @@
       "backend_view": "apps.frontend.views.hr_views.hr_analytics_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -36900,7 +37629,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -36974,7 +37705,7 @@
       "backend_view": "apps.frontend.views.hr_views.hr_audit_log_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -36985,7 +37716,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -47805,7 +48538,7 @@
       "backend_view": "apps.frontend.views.hr_views.offboarding_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -47816,7 +48549,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -47834,7 +48569,7 @@
       "permission_key": "offboarding",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate offboarding within the frontend workflow.",
+      "purpose": "Exits: why people leave, who takes over, and the account closed on time.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -47875,6 +48610,312 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.offboarding_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:offboarding"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-28D0D15834",
+      "page_title": "Offboarding Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "offboarding",
+      "primary_action": "Offboarding Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate offboarding drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/offboarding/<str:plan_id>",
+      "route_name": "offboarding_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.offboarding_close",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:offboarding"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-DC627E0456",
+      "page_title": "Offboarding Close",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "offboarding",
+      "primary_action": "Offboarding Close",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate offboarding close within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/offboarding/<str:plan_id>/close",
+      "route_name": "offboarding_close",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.offboarding_start_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:offboarding"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-62A35A018A",
+      "page_title": "Offboarding Start Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "offboarding",
+      "primary_action": "Offboarding Start Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate offboarding start drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/offboarding/new",
+      "route_name": "offboarding_start_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.offboarding_start",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:offboarding"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-8D06EDDD8A",
+      "page_title": "Offboarding Start",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "offboarding",
+      "primary_action": "Offboarding Start",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate offboarding start within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/offboarding/start",
+      "route_name": "offboarding_start",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -47961,7 +49002,7 @@
       "backend_view": "apps.frontend.views.hr_views.onboarding_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -47972,7 +49013,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -47990,7 +49033,7 @@
       "permission_key": "onboarding",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate onboarding within the frontend workflow.",
+      "purpose": "New hires from invitation to activation, and their probation decision.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -48040,11 +49083,164 @@
       "app": "frontend",
       "audit_events": true,
       "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.onboarding_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:onboarding"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-3DFE6D3724",
+      "page_title": "Onboarding Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "onboarding",
+      "primary_action": "Onboarding Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate onboarding drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/onboarding/<str:plan_id>",
+      "route_name": "onboarding_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.onboarding_record",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:onboarding"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-1E22EB77D2",
+      "page_title": "Onboarding Record",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "onboarding",
+      "primary_action": "Onboarding Record",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate onboarding record within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/onboarding/<str:plan_id>/record",
+      "route_name": "onboarding_record",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
       "backend_module": "apps.frontend.views.hr_views",
       "backend_view": "apps.frontend.views.hr_views.org_structure_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -48055,7 +49251,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -51596,7 +52794,7 @@
       "backend_view": "apps.frontend.views.hr_views.payroll_readiness_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -51607,7 +52805,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -52201,7 +53401,7 @@
       "backend_view": "apps.frontend.views.hr_views.performance_reviews_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -52212,7 +53412,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -54186,7 +55388,7 @@
       "backend_view": "apps.frontend.views.hr_views.policies_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -54197,7 +55399,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -56954,7 +58158,7 @@
       "backend_view": "apps.frontend.views.hr_views.recovery_plans_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -56965,7 +58169,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -57038,7 +58244,7 @@
       "backend_view": "apps.frontend.views.hr_views.recruitment_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -57049,7 +58255,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -57067,7 +58275,7 @@
       "permission_key": "recruitment",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate recruitment within the frontend workflow.",
+      "purpose": "Staffing needs: vacancies for growth and replacements after turnover.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -57109,6 +58317,316 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.vacancy_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:recruitment"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-2DAE9D7F72",
+      "page_title": "Vacancy Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "recruitment",
+      "primary_action": "Vacancy Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate vacancy drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "HR"
+      ],
+      "route": "/recruitment/<str:vacancy_id>",
+      "route_name": "vacancy_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.vacancy_decide",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:recruitment"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-66C48F3393",
+      "page_title": "Vacancy Decide",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "recruitment",
+      "primary_action": "Vacancy Decide",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate vacancy decide within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "HR"
+      ],
+      "route": "/recruitment/<str:vacancy_id>/decide",
+      "route_name": "vacancy_decide",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.vacancy_request_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:recruitment"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-D84B6EA1E3",
+      "page_title": "Vacancy Request Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "recruitment",
+      "primary_action": "Vacancy Request Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate vacancy request drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "HR"
+      ],
+      "route": "/recruitment/new",
+      "route_name": "vacancy_request_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.vacancy_request",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:recruitment"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-5CF04E1A5E",
+      "page_title": "Vacancy Request",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "recruitment",
+      "primary_action": "Vacancy Request",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate vacancy request within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "CD",
+        "HR"
+      ],
+      "route": "/recruitment/request",
+      "route_name": "vacancy_request",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -61616,7 +63134,7 @@
       "backend_view": "apps.frontend.views.hr_views.succession_planning_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -61627,7 +63145,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -64600,7 +66120,7 @@
       "backend_view": "apps.frontend.views.hr_views.wellness_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -64611,7 +66131,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -65093,7 +66615,7 @@
       "backend_view": "apps.frontend.views.hr_views.workforce_planning_view",
       "card_count": 0,
       "charts": false,
-      "drawers": false,
+      "drawers": true,
       "evidence": [
         "template:pages/hr/module_workspace.html",
         "test:referenced-by-automated-test",
@@ -65104,7 +66626,9 @@
       "fix_status": "fixed",
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
-      "htmx_endpoints": [],
+      "htmx_endpoints": [
+        "GET {{ action.drawer }}"
+      ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "runtime-registered; 1 contextual summary/summaries",
       "manual_quality_score": null,
@@ -75569,6 +77093,70 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.hr_programme_views.application_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "candidate_pipeline",
+      "required_permissions": [],
+      "route": "/candidate-pipeline/<str:application_id>",
+      "route_name": "application_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.application_advance",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "candidate_pipeline",
+      "required_permissions": [],
+      "route": "/candidate-pipeline/<str:application_id>/advance",
+      "route_name": "application_advance",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.application_hire",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "candidate_pipeline",
+      "required_permissions": [],
+      "route": "/candidate-pipeline/<str:application_id>/hire",
+      "route_name": "application_hire",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.application_record_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "candidate_pipeline",
+      "required_permissions": [],
+      "route": "/candidate-pipeline/new",
+      "route_name": "application_record_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.application_record",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "candidate_pipeline",
+      "required_permissions": [],
+      "route": "/candidate-pipeline/record",
+      "route_name": "application_record",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.auth_views.force_change_password_view",
       "kind": "page",
       "methods": [
@@ -76939,6 +78527,58 @@
       "templates": [
         "pages/hr/module_workspace.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.er_case_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "employee_relations",
+      "required_permissions": [],
+      "route": "/employee-relations/<str:case_id>",
+      "route_name": "employee_relations_case",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.er_advance",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "employee_relations",
+      "required_permissions": [],
+      "route": "/employee-relations/<str:case_id>/advance",
+      "route_name": "employee_relations_advance",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.er_open_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "employee_relations",
+      "required_permissions": [],
+      "route": "/employee-relations/new",
+      "route_name": "employee_relations_open_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.er_open",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "employee_relations",
+      "required_permissions": [],
+      "route": "/employee-relations/open",
+      "route_name": "employee_relations_open",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.escalation_views.escalations_view",
@@ -79535,6 +81175,58 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.hr_programme_views.offboarding_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "offboarding",
+      "required_permissions": [],
+      "route": "/offboarding/<str:plan_id>",
+      "route_name": "offboarding_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.offboarding_close",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "offboarding",
+      "required_permissions": [],
+      "route": "/offboarding/<str:plan_id>/close",
+      "route_name": "offboarding_close",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.offboarding_start_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "offboarding",
+      "required_permissions": [],
+      "route": "/offboarding/new",
+      "route_name": "offboarding_start_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.offboarding_start",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "offboarding",
+      "required_permissions": [],
+      "route": "/offboarding/start",
+      "route_name": "offboarding_start",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.pwa_views.offline",
       "kind": "page",
       "methods": [
@@ -79561,6 +81253,32 @@
       "templates": [
         "pages/hr/module_workspace.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.onboarding_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "onboarding",
+      "required_permissions": [],
+      "route": "/onboarding/<str:plan_id>",
+      "route_name": "onboarding_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.onboarding_record",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "onboarding",
+      "required_permissions": [],
+      "route": "/onboarding/<str:plan_id>/record",
+      "route_name": "onboarding_record",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.hr_views.org_structure_view",
@@ -80864,6 +82582,58 @@
       "templates": [
         "pages/hr/module_workspace.html"
       ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.vacancy_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recruitment",
+      "required_permissions": [],
+      "route": "/recruitment/<str:vacancy_id>",
+      "route_name": "vacancy_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.vacancy_decide",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recruitment",
+      "required_permissions": [],
+      "route": "/recruitment/<str:vacancy_id>/decide",
+      "route_name": "vacancy_decide",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.vacancy_request_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recruitment",
+      "required_permissions": [],
+      "route": "/recruitment/new",
+      "route_name": "vacancy_request_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.vacancy_request",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "recruitment",
+      "required_permissions": [],
+      "route": "/recruitment/request",
+      "route_name": "vacancy_request",
+      "templates": []
     },
     {
       "callback": "apps.frontend.views.extended_views.reports_view",
@@ -82244,30 +84014,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 419,
+    "accessibility_contract_pass": 428,
     "activity_states": 24,
-    "all_routes": 1073,
+    "all_routes": 1092,
     "api_routes": 359,
-    "component_templates": 412,
+    "component_templates": 413,
     "full_pages": 237,
-    "mobile_contract_pass": 419,
-    "nonvisual_actions": 165,
+    "mobile_contract_pass": 428,
+    "nonvisual_actions": 175,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 344,
+      "interaction-fragment": 363,
       "operational-queue": 136,
       "planning-or-creation": 9,
       "record-detail": 24,
       "report": 28
     },
-    "partials_and_drawers": 179,
-    "permission_gated": 590,
+    "partials_and_drawers": 188,
+    "permission_gated": 609,
     "permission_keys": 112,
     "roles": 15,
-    "routed_surfaces": 605,
+    "routed_surfaces": 624,
     "scheduled_jobs": 26,
     "severity_counts": {
       "critical": 0,
@@ -82275,8 +84045,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 419,
-    "test_referenced": 562,
-    "theme_contract_pass": 419
+    "tablet_contract_pass": 428,
+    "test_referenced": 577,
+    "theme_contract_pass": 428
   }
 }

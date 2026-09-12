@@ -1197,7 +1197,10 @@ SIDEBAR_ITEMS = [
                 "label": "Team Oversight",
                 "url": "/team-planning-oversight/",
                 "page_key": "team_planning_oversight",
-                "visible_to": {PL, CD, HR, IA, RVP, RPL, ACCOUNTANT, ADMIN},
+                # Not the Regional HR Director's: programme planning and target
+                # pacing for a team HR does not supervise rendered empty for
+                # them (HR audit, 2026-09-12).
+                "visible_to": {PL, CD, IA, RVP, RPL, ACCOUNTANT, ADMIN},
                 "extra_active_paths": ("/team-targets",),
             },
             {
@@ -1249,6 +1252,10 @@ SIDEBAR_ITEMS = [
                     # never the distribution workspace that sets them and
                     # never the personal agreement /priorities delegates to.
                     RPL: "/priorities/master",
+                    # HR reads the register to see which published priorities
+                    # reached nobody; /priorities would render their own
+                    # agreement, which MY PERFORMANCE already links.
+                    HR: "/priorities/master",
                 },
             },
             {
@@ -1318,10 +1325,10 @@ SIDEBAR_ITEMS = [
                 "url": "/uploads",
                 "page_key": "uploads",
                 # Admin reaches it from PLATFORM OPERATIONS instead, so it is
-                # not advertised twice in one sidebar.
+                # not advertised twice in one sidebar. The Regional HR
+                # Director publishes policies from Policies & Documents.
                 "visible_to": {
                     IA,
-                    HR,
                     CD,
                     RVP,
                 },
@@ -1330,6 +1337,9 @@ SIDEBAR_ITEMS = [
                 "label": "Field Debrief",
                 "url": "/debriefs",
                 "page_key": "daily_debrief",
+                # A field submission tool. The people and capacity signals HR
+                # needs from it are summarised on the HR dashboard.
+                "visible_to": PAGE_PERMISSIONS["daily_debrief"] - {HR},
             },
             {
                 # Everyone who can raise or decide an escalation: the field
@@ -1349,6 +1359,15 @@ SIDEBAR_ITEMS = [
                 "label": "Leave Approvals",
                 "url": "/leave/approvals",
                 "page_key": "leave_approvals",
+            },
+            {
+                # Leave administration: the roster, balances and cover across
+                # the director's countries. Registered in SCHOOLS & FIELD for
+                # the field roles, which HR cannot see.
+                "label": "Leave Tracker",
+                "url": "/leave/tracker",
+                "page_key": "leave_tracker",
+                "visible_to": {HR},
             },
         ],
     },
@@ -1560,6 +1579,117 @@ SIDEBAR_ITEMS = [
             },
         ],
     },
+    # ── The Regional Human Resource Director's programmes ───────────────────
+    # Grouped by the role description (owner, 2026-09-12): staffing,
+    # recruiting and retention; performance, talent and development; employee
+    # relations (disciplinary matters, disputes and investigations); rewards
+    # and wellbeing; policy and compliance with employment law.
+    {
+        "group_label": "PEOPLE & STAFFING",
+        "items": [
+            {
+                "label": "HR Today",
+                "url": "/hr-today",
+                "page_key": "hr_today",
+            },
+            {
+                "label": "People Directory",
+                "url": "/staff",
+                "page_key": "staff",
+            },
+            {
+                "label": "Organization Structure",
+                "url": "/org-structure",
+                "page_key": "org_structure",
+            },
+            {
+                "label": "Workforce Planning",
+                "url": "/workforce-planning",
+                "page_key": "workforce_planning",
+            },
+            {
+                "label": "Recruitment",
+                "url": "/recruitment",
+                "page_key": "recruitment",
+            },
+            {
+                "label": "Candidate Pipeline",
+                "url": "/candidate-pipeline",
+                "page_key": "candidate_pipeline",
+            },
+            {
+                "label": "Onboarding",
+                "url": "/onboarding",
+                "page_key": "onboarding",
+            },
+            {
+                "label": "Offboarding",
+                "url": "/offboarding",
+                "page_key": "offboarding",
+            },
+        ],
+    },
+    {
+        "group_label": "PERFORMANCE & TALENT",
+        "items": [
+            {
+                "label": "Performance Cycle",
+                "url": "/hr/performance-cycle",
+                "page_key": "performance_console",
+            },
+            {
+                "label": "Performance Reviews",
+                "url": "/performance-reviews",
+                "page_key": "performance_reviews",
+            },
+            {
+                "label": "Recovery Plans",
+                "url": "/recovery-plans",
+                "page_key": "recovery_plans",
+            },
+            {
+                "label": "CPD & Learning",
+                "url": "/cpd-learning",
+                "page_key": "cpd_learning",
+            },
+        ],
+    },
+    {
+        "group_label": "EMPLOYEE RELATIONS",
+        "items": [
+            {
+                "label": "Employee Relations",
+                "url": "/employee-relations",
+                "page_key": "employee_relations",
+            },
+        ],
+    },
+    {
+        "group_label": "POLICY & COMPLIANCE",
+        "items": [
+            {
+                "label": "Policies & Documents",
+                "url": "/policies",
+                "page_key": "policies",
+            },
+            {
+                "label": "Policy Compliance",
+                "url": "/policy-compliance",
+                "page_key": "policy_compliance",
+            },
+            {
+                "label": "Leave Policies",
+                "url": "/leave/policies",
+                "page_key": "leave_policies",
+                "visible_to": {HR},
+            },
+            {
+                "label": "HR Audit Log",
+                "url": "/hr-audit-log",
+                "page_key": "hr_audit_log",
+            },
+        ],
+    },
     {
         "group_label": "FINANCE & BUDGET",
         "items": [
@@ -1569,6 +1699,9 @@ SIDEBAR_ITEMS = [
                 "label": "Work Plan",
                 "url": "/work-plan",
                 "page_key": "work_plan",
+                # A programme activity plan; the Regional HR Director plans
+                # none (HR audit, 2026-09-12).
+                "visible_to": PAGE_PERMISSIONS["work_plan"] - {HR},
             },
             {
                 "label": "Weekly Advance Request",
@@ -1818,189 +1951,11 @@ SIDEBAR_ITEMS = [
                 "page_key": "system_health",
             },
             {
+                # HR reaches it from POLICY & COMPLIANCE.
                 "label": "Leave Policies",
                 "url": "/leave/policies",
                 "page_key": "leave_policies",
-            },
-        ],
-    },
-    {
-        "group_label": "PEOPLE & TEAMS",
-        "items": [
-            {
-                "label": "HR Today",
-                "url": "/hr-today",
-                "page_key": "hr_today",
-            },
-            {
-                "label": "Policy Compliance",
-                "url": "/policy-compliance",
-                "page_key": "policy_compliance",
-            },
-            {
-                "label": "People Directory",
-                "url": "/staff",
-                "page_key": "staff",
-            },
-            {
-                "label": "Organization Structure",
-                "url": "/org-structure",
-                "page_key": "org_structure",
-            },
-            {
-                "label": "Workforce Planning",
-                "url": "/workforce-planning",
-                "page_key": "workforce_planning",
-            },
-        ],
-    },
-    {
-        "group_label": "TALENT & ONBOARDING",
-        "items": [
-            {
-                "label": "Recruitment",
-                "url": "/recruitment",
-                "page_key": "recruitment",
-            },
-            {
-                "label": "Candidate Pipeline",
-                "url": "/candidate-pipeline",
-                "page_key": "candidate_pipeline",
-            },
-            {
-                "label": "Onboarding",
-                "url": "/onboarding",
-                "page_key": "onboarding",
-            },
-            {
-                "label": "CPD & Learning",
-                "url": "/cpd-learning",
-                "page_key": "cpd_learning",
-            },
-            # DESCOPED until a production writer exists — the model behind this
-            # page has none, so the page is a permanently empty register. Direct
-            # URL still works (honest empty state); navigation stops advertising it.
-            # {
-            #                 "label": "Succession Planning",
-            #                 "url": "/succession-planning",
-            #                 "page_key": "succession_planning",
-            #             },
-        ],
-    },
-    {
-        "group_label": "PERFORMANCE",
-        "items": [
-            # §12's workspace is no longer a second sidebar entry: for IA, CD
-            # and Admin the Priorities item above IS the distribution
-            # workspace. The /target-distribution route, its permission and
-            # its page key all remain — only the duplicate link is gone.
-            #
-            # §13's — a Program Lead's own distribution among supervised CCEOs
-            # — went the same way on 2026-09-07: it is the "My Team" tab of the
-            # Priorities page. Route, permission and page key unchanged.
-            {
-                "label": "Performance Cycle",
-                "url": "/hr/performance-cycle",
-                "page_key": "performance_console",
-            },
-            {
-                "label": "Performance Reviews",
-                "url": "/performance-reviews",
-                "page_key": "performance_reviews",
-            },
-            {
-                "label": "Recovery Plans",
-                "url": "/recovery-plans",
-                "page_key": "recovery_plans",
-            },
-        ],
-    },
-    # Leave & Coverage and Holidays & Blackouts moved into the Leave workspace
-    # (LEAVE_SECTIONS), reached from "Leave & Personal Time Off" in MY WORK —
-    # the same page a user goes to for their own leave. The group held nothing
-    # else, so it is gone.
-    {
-        "group_label": "EMPLOYEE EXPERIENCE",
-        "items": [
-            # DESCOPED until a production writer exists — the model behind this
-            # page has none, so the page is a permanently empty register. Direct
-            # URL still works (honest empty state); navigation stops advertising it.
-            # {
-            #                 "label": "Culture & Engagement",
-            #                 "url": "/culture-engagement",
-            #                 "page_key": "culture_engagement",
-            #             },
-            {
-                "label": "Employee Relations",
-                "url": "/employee-relations",
-                "page_key": "employee_relations",
-            },
-            # DESCOPED until a production writer exists — the model behind this
-            # page has none, so the page is a permanently empty register. Direct
-            # URL still works (honest empty state); navigation stops advertising it.
-            # {
-            #                 "label": "Wellness",
-            #                 "url": "/wellness",
-            #                 "page_key": "wellness",
-            #             },
-        ],
-    },
-    {
-        "group_label": "REWARDS & COMPLIANCE",
-        "items": [
-            # DESCOPED until a production writer exists — the model behind this
-            # page has none, so the page is a permanently empty register. Direct
-            # URL still works (honest empty state); navigation stops advertising it.
-            # {
-            #                 "label": "Compensation & Benefits",
-            #                 "url": "/compensation-benefits",
-            #                 "page_key": "compensation_benefits",
-            #             },
-            # DESCOPED until a production writer exists — the model behind this
-            # page has none, so the page is a permanently empty register. Direct
-            # URL still works (honest empty state); navigation stops advertising it.
-            # {
-            #                 "label": "Payroll Readiness",
-            #                 "url": "/payroll-readiness",
-            #                 "page_key": "payroll_readiness",
-            #             },
-            # DESCOPED until a production writer exists — the model behind this
-            # page has none, so the page is a permanently empty register. Direct
-            # URL still works (honest empty state); navigation stops advertising it.
-            # {
-            #                 "label": "Compliance Register",
-            #                 "url": "/compliance-register",
-            #                 "page_key": "compliance_register",
-            #             },
-            {
-                "label": "Policies & Documents",
-                "url": "/policies",
-                "page_key": "policies",
-            },
-        ],
-    },
-    {
-        "group_label": "TRANSITIONS",
-        "items": [
-            {
-                "label": "Offboarding",
-                "url": "/offboarding",
-                "page_key": "offboarding",
-            },
-        ],
-    },
-    {
-        # Named INSIGHTS when it held HR Analytics. That page is now the
-        # Analytics workspace's "People Analytics" section, and what remains
-        # here is a log.
-        "group_label": "HR AUDIT",
-        "items": [
-            # HR Analytics moved into the Analytics workspace as "People
-            # Analytics" — same page, same audience, one fewer sidebar link.
-            {
-                "label": "HR Audit Log",
-                "url": "/hr-audit-log",
-                "page_key": "hr_audit_log",
+                "visible_to": {ADMIN},
             },
         ],
     },

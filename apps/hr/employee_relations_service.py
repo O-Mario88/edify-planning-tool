@@ -122,14 +122,36 @@ def open_case(data: dict, principal) -> EmployeeRelationsCase:
     if not case_type:
         raise BadRequest("A case type is required.")
 
+    from apps.accounts.models import StaffProfile
+    from apps.hr.models import ERCaseType, ERSeverity
+
+    if case_type not in ERCaseType.values:
+        raise BadRequest("Choose a case type from the list.")
+    severity = data.get("severity") or ERSeverity.MEDIUM
+    if severity not in ERSeverity.values:
+        raise BadRequest("Choose a severity from the list.")
+
     subject = None
     subject_id = (data.get("subject_staff_id") or "").strip()
     if subject_id:
-        from apps.accounts.models import StaffProfile
-
         subject = StaffProfile.objects.filter(id=subject_id).first()
         if not subject:
             raise BadRequest("That employee was not found.")
+
+    complainant = None
+    complainant_id = (data.get("complainant_staff_id") or "").strip()
+    if complainant_id:
+        complainant = StaffProfile.objects.filter(id=complainant_id).first()
+        if not complainant:
+            raise BadRequest("The complainant was not found.")
+        if subject and complainant.id == subject.id:
+            raise BadRequest(
+                "The complainant and the subject must be different people."
+            )
+    if case_type == ERCaseType.DISPUTE and not (subject and complainant):
+        raise BadRequest(
+            "A dispute names both parties: the subject and the complainant."
+        )
 
     country = (
         (data.get("country") or "").strip()
@@ -145,9 +167,11 @@ def open_case(data: dict, principal) -> EmployeeRelationsCase:
 
     case = EmployeeRelationsCase.objects.create(
         subject_staff=subject,
+        complainant_staff=complainant,
+        hearing_date=data.get("hearing_date") or None,
         country=country,
         case_type=case_type,
-        severity=data.get("severity") or "medium",
+        severity=severity,
         status=ERCaseStatus.SUBMITTED,
         case_owner_id=getattr(principal, "user_id", None),
         raised_by_id=getattr(principal, "user_id", None),
@@ -172,9 +196,26 @@ _CASE_FLOW = {
 }
 
 
+def allowed_transitions(case) -> list[tuple[str, str]]:
+    """The states a case may move to next, as (value, label) pairs."""
+    labels = dict(ERCaseStatus.choices)
+    return [
+        (status, labels[status])
+        for status in ERCaseStatus.values
+        if status in _CASE_FLOW.get(case.status, set())
+    ]
+
+
 @transaction.atomic
 def advance_case(
-    case_id: str, principal, *, to_status: str, note: str = "", investigator_id=None
+    case_id: str,
+    principal,
+    *,
+    to_status: str,
+    note: str = "",
+    investigator_id=None,
+    sanction: str = "",
+    hearing_date=None,
 ) -> EmployeeRelationsCase:
     _assert_hr(principal)
     case = get_case(case_id, principal)
@@ -201,6 +242,16 @@ def advance_case(
         if not (note or "").strip():
             raise BadRequest("The action taken must be recorded.")
         case.action_taken = note
+        from apps.hr.models import DisciplinarySanction, ERCaseType
+
+        if case.case_type == ERCaseType.DISCIPLINARY:
+            if sanction not in DisciplinarySanction.values:
+                raise BadRequest(
+                    "Record the sanction decided for this disciplinary matter."
+                )
+            case.sanction = sanction
+    if hearing_date:
+        case.hearing_date = hearing_date
     if to_status == ERCaseStatus.APPEAL:
         case.appeal_note = note
     if to_status == ERCaseStatus.CLOSED:

@@ -1,0 +1,68 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+One drawer for every HR programme action (2026-09-13): open a case, request a
+vacancy, record a candidate, close an offboarding. Each view hands it a title,
+the POST target, optional read-only facts about the record, and a list of
+fields built by apps/frontend/views/hr_programme_views.py `_field`. The form is
+one column, as every platform drawer is.
+{% endcomment %}
+
+{% block drawer_title %}{{ form_title }}{% endblock %}
+{% block drawer_subtitle %}{{ form_subtitle }}{% endblock %}
+
+{% block drawer_body %}
+{% if form_facts %}
+<dl class="hr-drawer-facts">
+  {% for fact in form_facts %}
+  <div class="hr-drawer-facts__row">
+    <dt>{{ fact.label }}</dt>
+    <dd>{{ fact.value|default:"—"|linebreaksbr }}</dd>
+  </div>
+  {% endfor %}
+</dl>
+{% endif %}
+
+{% if form_action %}
+<form method="post" action="{{ form_action }}" class="hr-drawer-form" @input="isDirty = true" @change="isDirty = true">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ form_next }}">
+  {% if form_note %}<div class="edify-note" data-tone="{{ form_note_tone|default:'info' }}" role="note">{{ form_note }}</div>{% endif %}
+
+  {% for field in form_fields %}
+  {% if field.type == "hidden" %}
+  <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+  {% elif field.type == "checkbox" %}
+  <label class="hr-drawer-form__check" for="hr-field-{{ field.name }}">
+    <input type="checkbox" id="hr-field-{{ field.name }}" name="{{ field.name }}" value="1"{% if field.value %} checked{% endif %}>
+    <span>{{ field.label }}{% if field.help %}<small>{{ field.help }}</small>{% endif %}</span>
+  </label>
+  {% else %}
+  <div class="hr-drawer-form__field">
+    <label for="hr-field-{{ field.name }}">{{ field.label }}{% if field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
+    {% if field.type == "textarea" %}
+    <textarea id="hr-field-{{ field.name }}" name="{{ field.name }}" rows="{{ field.rows|default:4 }}"{% if field.required %} required{% endif %}{% if field.maxlength %} maxlength="{{ field.maxlength }}"{% endif %}{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}>{{ field.value|default:"" }}</textarea>
+    {% elif field.type == "select" %}
+    <select id="hr-field-{{ field.name }}" name="{{ field.name }}"{% if field.required %} required{% endif %}>
+      {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}
+      {% for option in field.options %}
+      <option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>
+      {% endfor %}
+    </select>
+    {% else %}
+    <input id="hr-field-{{ field.name }}" type="{{ field.type }}" name="{{ field.name }}" value="{{ field.value|default:'' }}"{% if field.required %} required{% endif %}{% if field.maxlength %} maxlength="{{ field.maxlength }}"{% endif %}{% if field.min is not None %} min="{{ field.min }}"{% endif %}{% if field.step %} step="{{ field.step }}"{% endif %}{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}>
+    {% endif %}
+    {% if field.help %}<span class="hr-drawer-form__help">{{ field.help }}</span>{% endif %}
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <div class="drawer-footer">
+    <button type="button" @click="requestClose()" class="btn btn-secondary h-8">Cancel</button>
+    <button type="submit" class="btn btn-primary h-8">{{ form_submit|default:"Save" }}</button>
+  </div>
+</form>
+{% elif form_empty %}
+<div class="edify-note" data-tone="info" role="note">{{ form_empty }}</div>
+{% endif %}
+{% endblock %}

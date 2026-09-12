@@ -27,7 +27,7 @@ Each requirement's covering test is executed with the platform instrumented; eve
 | `journey-10` | Quarterly Performance Conversation | ✓ | 1 | 77 | 39 | 3 | 3 | 5 | 23 | 48 |
 | `journey-11` | Professional Development | ✓ | 1 | 35 | 8 | 0 | 0 | 1 | 1 | 0 |
 | `journey-12` | Policy lifecycle | ✓ | 1 | 32 | 12 | 0 | 0 | 1 | 10 | 4 |
-| `journey-13` | PIP | ✓ | 1 | 30 | 7 | 0 | 0 | 0 | 3 | 0 |
+| `journey-13` | PIP | ✓ | 1 | 31 | 7 | 0 | 0 | 0 | 3 | 0 |
 | `journey-14` | Team Oversight and Send School to | ✓ | 1 | 45 | 14 | 0 | 0 | 2 | 3 | 10 |
 | `journey-15` | Financial Health | ✓ | 1 | 47 | 17 | 2 | 4 | 1 | 6 | 14 |
 | `journey-16` | Government Requirements | ✓ | 1 | 46 | 17 | 2 | 4 | 1 | 5 | 14 |
@@ -293,11 +293,11 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Permissions checked | — |
 | Page gates checked | `recovery_plans` |
 | Object-level guards | — |
-| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/context_processors.py`, `apps/core/cuid.py`, `apps/core/interventions.py`, `apps/core/metrics/payload.py` _+20 more_ |
+| Services executed | `apps/accounts/middleware.py`, `apps/accounts/models.py`, `apps/accounts/presence.py`, `apps/admin_ops/detection.py`, `apps/audit/services.py`, `apps/core/audit_hash.py`, `apps/core/context_processors.py`, `apps/core/cuid.py`, `apps/core/interventions.py`, `apps/core/metrics/payload.py` _+21 more_ |
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `hr.PerformanceImprovementPlan`, `hr.RecoveryMilestone`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `hr.pip_activated`, `hr.pip_outcome`, `hr.pip_recommended` |
-| Metrics computed in the run | `frontend_views_hr_views_6_12_months`, `frontend_views_hr_views_acting_roles`, `frontend_views_hr_views_active`, `frontend_views_hr_views_applications`, `frontend_views_hr_views_approved`, `frontend_views_hr_views_average_score`, `frontend_views_hr_views_closed`, `frontend_views_hr_views_compensation_profiles` _+52 more_ |
+| Metrics computed in the run | `frontend_views_hr_views_6_12_months`, `frontend_views_hr_views_acting_roles`, `frontend_views_hr_views_active`, `frontend_views_hr_views_applications`, `frontend_views_hr_views_approved`, `frontend_views_hr_views_average_score`, `frontend_views_hr_views_closed`, `frontend_views_hr_views_compensation_profiles` _+60 more_ |
 | Metrics whose sources it moves | — |
 
 ### `journey-14` · Team Oversight and Send School to

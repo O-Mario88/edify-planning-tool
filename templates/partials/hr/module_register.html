@@ -16,7 +16,7 @@ the People Analytics tab of the Analytics workspace (2026-09-05).
       <table class="hcos-table">
         <caption class="sr-only">{{ title }} operational records</caption>
         <thead>
-          <tr>{% for cell in rows.0.cells %}<th scope="col">{{ cell.label }}</th>{% endfor %}</tr>
+          <tr>{% for cell in rows.0.cells %}<th scope="col">{{ cell.label }}</th>{% endfor %}{% if has_row_actions %}<th scope="col" class="hcos-table__actions-head"><span class="sr-only">Actions</span></th>{% endif %}</tr>
         </thead>
         <tbody>
           {% for row in rows %}
@@ -26,6 +26,13 @@ the People Analytics tab of the Analytics workspace (2026-09-05).
               {% if cell.status %}<span class="hcos-status" data-tone="{{ cell.tone }}">{{ cell.value }}</span>{% else %}{{ cell.value }}{% endif %}
             </td>
             {% endfor %}
+            {% if has_row_actions %}
+            <td class="hcos-table__actions" data-record-action data-label="Actions">
+              {% for action in row.actions %}
+              <button type="button" class="hcos-row-action" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% endfor %}
+            </td>
+            {% endif %}
           </tr>
           {% endfor %}
         </tbody>

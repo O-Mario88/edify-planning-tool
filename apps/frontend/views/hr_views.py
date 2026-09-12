@@ -130,7 +130,17 @@ def _render_workspace(
     primary_action,
     empty_title="No records in this scope",
     empty_body="New records will appear here as the connected workflow progresses.",
+    header_actions=None,
+    eyebrow="Human Capital Operations",
+    notice=None,
 ):
+    """Render an HR programme register.
+
+    `header_actions` are drawer buttons for creating a record
+    ({"label", "drawer"}); a row may carry its own `actions` the same way.
+    Rules, permissions and audit stay in the services the drawers call
+    (apps/frontend/views/hr_programme_views.py).
+    """
     paginator = Paginator(rows, 25)
     page = paginator.get_page(request.GET.get("page") or 1)
     context = {
@@ -139,7 +149,11 @@ def _render_workspace(
         "metrics": metrics,
         "page_obj": page,
         "rows": page.object_list,
+        "has_row_actions": any(row.get("actions") for row in page.object_list),
         "primary_action": primary_action,
+        "header_actions": header_actions or [],
+        "eyebrow": eyebrow,
+        "notice": notice,
         "empty_title": empty_title,
         "empty_body": empty_body,
         "search": (request.GET.get("q") or "").strip(),
@@ -264,13 +278,24 @@ def workforce_planning_view(request):
 
 @require_page_permission("recruitment")
 def recruitment_view(request):
-    query = (request.GET.get("q") or "").strip()
-    vacancies = Vacancy.objects.select_related("reporting_manager").annotate(
-        application_count=Count("applications")
-    )
+    """Staffing needs: vacancies for growth and replacements after turnover.
+
+    The tiles counted "Open", "Pending Approval" and "Screening", none of which
+    a vacancy stores (the codes are lowercase, and screening is an application
+    stage), so every tile read 0; and nothing on the page could request,
+    approve or close a vacancy although the service could (HR audit,
+    2026-09-12).
+    """
+    from apps.hr.models import VacancyStatus
     from apps.hr.reach import people_reach, scope_by_country
 
-    vacancies = scope_by_country(vacancies, people_reach(request.user))
+    query = (request.GET.get("q") or "").strip()
+    vacancies = scope_by_country(
+        Vacancy.objects.select_related("reporting_manager").annotate(
+            application_count=Count("applications")
+        ),
+        people_reach(request.user),
+    )
     if query:
         vacancies = vacancies.filter(
             Q(role__icontains=query)
@@ -278,40 +303,58 @@ def recruitment_view(request):
             | Q(country__icontains=query)
             | Q(status__icontains=query)
         )
-    rows = [
-        {
-            "cells": [
-                _cell("Vacancy", vacancy.role, primary=True),
-                _cell("Department", vacancy.department),
-                _cell("Country", vacancy.country),
-                _cell("Applications", vacancy.application_count),
-                _cell("Target start", vacancy.target_start_date),
-                _cell("Status", vacancy.status, status=True),
-            ]
-        }
-        for vacancy in vacancies.order_by("-created_at")
-    ]
+    live = [VacancyStatus.PENDING_APPROVAL, VacancyStatus.APPROVED, VacancyStatus.OPEN]
+    rows = []
+    for vacancy in vacancies.order_by("-created_at"):
+        actions = []
+        if vacancy.status in live:
+            actions.append({"label": "Review", "drawer": f"/recruitment/{vacancy.id}"})
+        rows.append(
+            {
+                "cells": [
+                    _cell(
+                        "Vacancy",
+                        f"{vacancy.role} · {vacancy.department}"
+                        if vacancy.department
+                        else vacancy.role,
+                        primary=True,
+                    ),
+                    _cell("Country", vacancy.country),
+                    _cell("Type", vacancy.get_replacement_or_new_role_display()),
+                    _cell("Applications", vacancy.application_count),
+                    _cell("Target start", vacancy.target_start_date),
+                    _cell("Status", vacancy.get_status_display(), status=True),
+                ],
+                "actions": actions,
+            }
+        )
+    open_or_pending = vacancies.filter(status__in=live)
     return _render_workspace(
         request,
         title="Recruitment & Vacancies",
-        description="Approved and active vacancies connected to the real candidate pipeline, reporting owners, and target start dates.",
+        eyebrow="Staffing and recruiting",
+        description=(
+            "Staffing needs across the countries you oversee: new roles for growth "
+            "and replacements after turnover, from request and approval to an open "
+            "post."
+        ),
         metrics=[
             _metric(
                 "Open",
-                vacancies.filter(status="Open").count(),
+                vacancies.filter(status=VacancyStatus.OPEN).count(),
                 "accepting candidates",
                 "success",
             ),
             _metric(
                 "Pending approval",
-                vacancies.filter(status="Pending Approval").count(),
-                "requiring decision",
+                vacancies.filter(status=VacancyStatus.PENDING_APPROVAL).count(),
+                "awaiting a Country Director or the RVP",
                 "warning",
             ),
             _metric(
-                "In screening",
-                vacancies.filter(status="Screening").count(),
-                "active selection",
+                "Replacements",
+                open_or_pending.filter(replacement_or_new_role="replacement").count(),
+                "open posts replacing a leaver",
                 "info",
             ),
             _metric(
@@ -321,23 +364,34 @@ def recruitment_view(request):
             ),
         ],
         rows=rows,
+        header_actions=[{"label": "Request a vacancy", "drawer": "/recruitment/new"}]
+        if request.user.active_role in ("HumanResources", "Admin")
+        else [],
         primary_action={
-            "label": "Open Candidate Pipeline",
+            "label": "Candidate Pipeline",
             "href": "/candidate-pipeline",
-        },
-        empty_title="No vacancies have been created",
-        empty_body="Approved job openings will appear here once HR starts the recruitment workflow.",
+        }
+        if request.user.active_role in ("HumanResources", "Admin")
+        else None,
+        empty_title="No vacancies yet",
+        empty_body=(
+            "Request a vacancy to start recruiting for a new role or to replace "
+            "someone who is leaving."
+        ),
     )
 
 
 @require_page_permission("candidate_pipeline")
 def candidate_pipeline_view(request):
-    query = (request.GET.get("q") or "").strip()
-    applications = Application.objects.select_related("candidate", "vacancy")
+    """Every application, by its real selection stage, with the next step."""
+    from apps.hr.models import ApplicationStage
     from apps.hr.reach import people_reach, scope_by_country
 
+    query = (request.GET.get("q") or "").strip()
     applications = scope_by_country(
-        applications, people_reach(request.user), "vacancy__country"
+        Application.objects.select_related("candidate", "vacancy"),
+        people_reach(request.user),
+        "vacancy__country",
     )
     if query:
         applications = applications.filter(
@@ -346,27 +400,52 @@ def candidate_pipeline_view(request):
             | Q(vacancy__role__icontains=query)
             | Q(stage__icontains=query)
         )
-    rows = [
-        {
-            "cells": [
-                _cell("Candidate", application.candidate.name, primary=True),
-                _cell("Vacancy", application.vacancy.role),
-                _cell("Country", application.vacancy.country),
-                _cell("Stage", application.stage, status=True),
-                _cell("Updated", application.updated_at.date()),
-            ]
-        }
-        for application in applications.order_by("-updated_at")
+    finished = [
+        ApplicationStage.HIRED,
+        ApplicationStage.REJECTED,
+        ApplicationStage.WITHDRAWN,
     ]
+    rows = []
+    for application in applications.order_by("-updated_at"):
+        actions = []
+        if application.stage not in finished:
+            label = (
+                "Hire"
+                if application.stage == ApplicationStage.ACCEPTED
+                else "Next step"
+            )
+            actions.append(
+                {"label": label, "drawer": f"/candidate-pipeline/{application.id}"}
+            )
+        rows.append(
+            {
+                "cells": [
+                    _cell("Candidate", application.candidate.name, primary=True),
+                    _cell("Vacancy", application.vacancy.role),
+                    _cell("Country", application.vacancy.country),
+                    _cell("Stage", application.get_stage_display(), status=True),
+                    _cell("Updated", application.updated_at.date()),
+                ],
+                "actions": actions,
+            }
+        )
     return _render_workspace(
         request,
         title="Candidate Pipeline",
-        description="Every candidate application, scoped to visible vacancies and grouped by its current evidence-backed selection stage.",
+        eyebrow="Staffing and recruiting",
+        description=(
+            "Every candidate against the vacancies you oversee, by selection stage, "
+            "from application to hire."
+        ),
         metrics=[
-            _metric("Applications", applications.count(), "visible candidate records"),
+            _metric(
+                "Applications",
+                applications.exclude(stage__in=finished).count(),
+                "still in selection",
+            ),
             _metric(
                 "Screening",
-                applications.filter(stage__in=["Screened", "Shortlisted"]).count(),
+                applications.filter(stage=ApplicationStage.SCREENING).count(),
                 "in early assessment",
                 "info",
             ),
@@ -374,30 +453,50 @@ def candidate_pipeline_view(request):
                 "Interviews",
                 applications.filter(
                     stage__in=[
-                        "Interview 1",
-                        "Interview 2",
-                        "Assessment",
-                        "Reference Check",
+                        ApplicationStage.INTERVIEW,
+                        ApplicationStage.ASSESSMENT,
+                        ApplicationStage.REFERENCE_CHECK,
                     ]
                 ).count(),
-                "in active selection",
+                "interview, assessment or references",
                 "warning",
             ),
             _metric(
+                "Offers",
+                applications.filter(
+                    stage__in=[ApplicationStage.OFFER, ApplicationStage.ACCEPTED]
+                ).count(),
+                "made or accepted",
+                "info",
+            ),
+            _metric(
                 "Hired",
-                applications.filter(stage="Hired").count(),
-                "accepted candidates",
+                applications.filter(stage=ApplicationStage.HIRED).count(),
+                "provisioned employees",
                 "success",
             ),
         ],
         rows=rows,
-        primary_action={"label": "Review Vacancies", "href": "/recruitment"},
+        header_actions=[
+            {"label": "Record a candidate", "drawer": "/candidate-pipeline/new"}
+        ],
+        primary_action={"label": "Vacancies", "href": "/recruitment"},
         empty_title="No candidate applications yet",
+        empty_body="Record a candidate against an open vacancy to start selection.",
     )
 
 
 @require_page_permission("onboarding")
 def onboarding_view(request):
+    """New hires from invitation to activation, and their probation decision.
+
+    "Active" and "Overdue" counted statuses an onboarding plan never stores,
+    so both read 0 and "In progress" swallowed closed plans (HR audit,
+    2026-09-12).
+    """
+    from apps.hr.models import OnboardingStatus
+    from apps.hr.onboarding_service import overdue_onboarding
+
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
     plans = (
@@ -422,39 +521,47 @@ def onboarding_view(request):
                 _cell("Country", plan.staff.country),
                 _cell("Start date", plan.start_date),
                 _cell("Checklist", f"{plan.completed_tasks} of {plan.total_tasks}"),
-                _cell("Status", plan.status, status=True),
-            ]
+                _cell("Status", plan.get_status_display(), status=True),
+            ],
+            "actions": [{"label": "Manage", "drawer": f"/onboarding/{plan.id}"}],
         }
         for plan in plans.order_by("-created_at")
     ]
+    open_plans = plans.exclude(status=OnboardingStatus.CLOSED)
+    overdue = overdue_onboarding(visible_ids)
     return _render_workspace(
         request,
         title="Staff Onboarding",
-        description="New-hire activation plans with live checklist completion, start dates, and ownership context.",
+        eyebrow="Staffing and recruiting",
+        description=(
+            "New hires from invitation to activation: checklist, supervisor "
+            "confirmation, and the probation decision."
+        ),
         metrics=[
-            _metric("Plans", plans.count(), "onboarding records in scope"),
-            _metric(
-                "Active",
-                plans.filter(status="Active").count(),
-                "fully activated",
-                "success",
-            ),
-            _metric(
-                "In progress",
-                plans.exclude(status__in=["Active", "Overdue"]).count(),
-                "moving through checklist",
-                "info",
-            ),
+            _metric("Plans", open_plans.count(), "onboarding in progress"),
             _metric(
                 "Overdue",
-                plans.filter(status="Overdue").count(),
-                "requiring intervention",
+                overdue.count(),
+                "past their target completion",
                 "danger",
+            ),
+            _metric(
+                "Awaiting supervisor",
+                plans.filter(status=OnboardingStatus.SUPERVISOR_REVIEW).count(),
+                "readiness not yet confirmed",
+                "warning",
+            ),
+            _metric(
+                "Ready for activation",
+                plans.filter(status=OnboardingStatus.READY_FOR_ACTIVATION).count(),
+                "HR can close and activate",
+                "success",
             ),
         ],
         rows=rows,
-        primary_action={"label": "Open People Directory", "href": "/staff"},
+        primary_action={"label": "Candidate Pipeline", "href": "/candidate-pipeline"},
         empty_title="No onboarding plans in this scope",
+        empty_body="Hiring a candidate opens their onboarding plan here.",
     )
 
 
@@ -994,81 +1101,135 @@ def _employee_relations_scope(viewer_user):
 
 @require_page_permission("employee_relations")
 def employee_relations_view(request):
-    query = (request.GET.get("q") or "").strip()
-    # The highest-privacy register on the platform was the ONE HR surface with
-    # no scope at all — every grievance, harassment, whistleblowing and
-    # safeguarding case in every country, with `is_confidential` rendered as a
-    # label that filtered nothing. The model carries no country or subject
-    # field, so the owner's country is the available bound today.
-    cases = _employee_relations_scope(request.user)
-    # Opening a restricted people register is itself an accountable act. The
-    # service has always had `record_access`, and its only caller was a
-    # case-detail path with no route — so browsing every grievance and
-    # safeguarding case in a country left no trace at all to attribute after
-    # a leak (2026-08-20 HR audit).
-    from apps.hr import employee_relations_service
+    """Disciplinary matters, grievances, disputes and investigations.
 
+    The register counted title-case statuses ("Resolved", "Triage") while the
+    model stores lowercase codes, so Triage and Resolved always read 0 and
+    "Open" counted closed cases too; the table printed raw codes; and no
+    screen could open or advance a case although the service could (HR
+    audit, 2026-09-12).
+    """
+    from apps.hr import employee_relations_service
+    from apps.hr.models import ERCaseStatus, ERCaseType
+
+    query = (request.GET.get("q") or "").strip()
+    cases = _employee_relations_scope(request.user).select_related(
+        "complainant_staff__user"
+    )
+    # Reading a restricted people register is itself an accountable act.
     employee_relations_service.record_access(request.user, what="case_register")
     if query:
         cases = cases.filter(
             Q(case_type__icontains=query)
             | Q(status__icontains=query)
             | Q(severity__icontains=query)
+            | Q(country__icontains=query)
             | Q(case_owner__name__icontains=query)
+            | Q(subject_staff__user__name__icontains=query)
         )
-    rows = [
-        {
-            "cells": [
-                _cell("Case type", case.case_type, primary=True),
-                _cell("Severity", case.severity.title(), status=True),
-                _cell(
-                    "Owner", case.case_owner.name if case.case_owner else "Unassigned"
-                ),
-                _cell(
-                    "Confidentiality",
-                    "Restricted" if case.is_confidential else "Standard",
-                ),
-                _cell("Updated", case.updated_at.date()),
-                _cell("Status", case.status, status=True),
-            ]
-        }
-        for case in cases.order_by("-updated_at")
+    closed = [ERCaseStatus.RESOLVED, ERCaseStatus.CLOSED]
+    in_investigation = [
+        ERCaseStatus.INVESTIGATION,
+        ERCaseStatus.FINDINGS,
+        ERCaseStatus.ACTION,
+        ERCaseStatus.APPEAL,
     ]
+    rows = []
+    for case in cases.order_by("-updated_at"):
+        concerns = (
+            case.subject_staff.user.name
+            if case.subject_staff and case.subject_staff.user
+            else "No named individual"
+        )
+        rows.append(
+            {
+                "cells": [
+                    _cell(
+                        "Case",
+                        f"{case.get_case_type_display()} · {concerns}",
+                        primary=True,
+                    ),
+                    _cell("Country", case.country),
+                    _cell("Severity", case.get_severity_display(), status=True),
+                    _cell(
+                        "Investigator",
+                        case.investigator.name if case.investigator else "Not named",
+                    ),
+                    _cell(
+                        "Opened",
+                        case.opened_at.date()
+                        if case.opened_at
+                        else case.created_at.date(),
+                    ),
+                    _cell("Status", case.get_status_display(), status=True),
+                ],
+                "actions": [
+                    {"label": "Open case", "drawer": f"/employee-relations/{case.id}"}
+                ],
+            }
+        )
+    # Counts over every case in the director's countries, confidential ones
+    # included: they know a confidential case exists without seeing whom it
+    # concerns.
+    from apps.hr.models import EmployeeRelationsCase
+    from apps.hr.reach import people_reach, scope_by_country
+
+    all_cases = scope_by_country(
+        EmployeeRelationsCase.objects.all(), people_reach(request.user)
+    )
+    open_cases = all_cases.exclude(status__in=closed)
     return _render_workspace(
         request,
-        title="Employee Relations Cases",
-        description="A restricted case register for grievances, conduct, safeguarding, and whistleblowing—details remain protected from the overview surface.",
+        title="Employee Relations",
+        eyebrow="Employee relations",
+        description=(
+            "Disciplinary matters, grievances, disputes and investigations across "
+            "the countries you oversee. Confidential cases show only to the people "
+            "working them."
+        ),
         metrics=[
+            _metric("Open cases", open_cases.count(), "not yet resolved"),
             _metric(
-                "Open cases",
-                cases.exclude(status__in=["Resolved", "Closed"]).count(),
-                "requiring case ownership",
+                "Awaiting triage",
+                open_cases.filter(
+                    status__in=[ERCaseStatus.SUBMITTED, ERCaseStatus.TRIAGE]
+                ).count(),
+                "submitted or in restricted triage",
+                "warning",
             ),
             _metric(
-                "Triage",
-                cases.filter(status__in=["Submitted", "Triage"]).count(),
-                "awaiting assessment",
+                "Under investigation",
+                open_cases.filter(status__in=in_investigation).count(),
+                "investigation to appeal",
+                "info",
+            ),
+            _metric(
+                "Disciplinary matters",
+                open_cases.filter(case_type=ERCaseType.DISCIPLINARY).count(),
+                "open",
                 "warning",
             ),
             _metric(
                 "Critical",
-                cases.filter(severity="critical")
-                .exclude(status__in=["Resolved", "Closed"])
-                .count(),
-                "urgent restricted cases",
+                open_cases.filter(severity="critical").count(),
+                "open and critical",
                 "danger",
             ),
             _metric(
                 "Resolved",
-                cases.filter(status__in=["Resolved", "Closed"]).count(),
-                "closed case records",
+                all_cases.filter(status__in=closed).count(),
+                "resolved or closed",
                 "success",
             ),
         ],
         rows=rows,
-        primary_action={"label": "Review HR Dashboard", "href": "/dashboard"},
+        header_actions=[{"label": "Open a case", "drawer": "/employee-relations/new"}],
+        primary_action={"label": "HR Today", "href": "/hr-today"},
         empty_title="No employee-relations cases",
-        empty_body="No confidential case records are visible in your current scope.",
+        empty_body=(
+            "No case you may see is open. Open a case to record a disciplinary "
+            "matter, grievance, dispute or investigation."
+        ),
     )
 
 
@@ -1406,6 +1567,10 @@ def policies_view(request):
 
 @require_page_permission("offboarding")
 def offboarding_view(request):
+    """Exits: why people leave, who takes over, and the account closed on time."""
+    from apps.hr.models import VOLUNTARY_EXIT_REASONS
+    from apps.hr.offboarding_service import accounts_past_last_working_day
+
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
     plans = OffboardingPlan.objects.filter(staff_id__in=visible_ids).select_related(
@@ -1415,65 +1580,59 @@ def offboarding_view(request):
         plans = plans.filter(
             Q(staff__user__name__icontains=query)
             | Q(status__icontains=query)
+            | Q(exit_reason__icontains=query)
             | Q(handover_owner__user__name__icontains=query)
         )
-    from apps.hr.offboarding_service import accounts_past_last_working_day
-
     overdue_exits = (
         accounts_past_last_working_day().filter(staff_id__in=visible_ids).count()
     )
-
     rows = [
         {
             "cells": [
                 _cell("Team member", plan.staff.user.name, primary=True),
-                _cell("Role", plan.staff.title or plan.staff.user.active_role),
+                _cell("Country", plan.staff.country),
                 _cell("Last working day", plan.last_working_day),
+                _cell(
+                    "Reason",
+                    plan.get_exit_reason_display()
+                    if plan.exit_reason
+                    else "Not recorded",
+                ),
                 _cell(
                     "Handover owner",
                     plan.handover_owner.user.name
                     if plan.handover_owner
                     else "Unassigned",
                 ),
-                _cell(
-                    "Clearance",
-                    "Completed" if plan.clearance_completed else "Pending",
-                    status=True,
-                ),
                 _cell("Status", plan.status, status=True),
-            ]
+            ],
+            "actions": [{"label": "Open", "drawer": f"/offboarding/{plan.id}"}],
         }
         for plan in plans.order_by("last_working_day")
     ]
+    open_plans = plans.exclude(status="Closed")
     return _render_workspace(
         request,
         title="Staff Offboarding",
-        description="A controlled transition register covering handover ownership, final working dates, clearance, and closure state.",
+        eyebrow="Staffing and recruiting",
+        description=(
+            "Exits across the countries you oversee: the reason for leaving, the "
+            "handover, and the account closed on the last working day."
+        ),
         metrics=[
-            _metric("Plans", plans.count(), "offboarding records in scope"),
-            _metric(
-                "In progress",
-                plans.exclude(status="Closed").count(),
-                "active transitions",
-                "warning",
-            ),
+            _metric("In progress", open_plans.count(), "exits being worked", "warning"),
             _metric(
                 "Handover gaps",
-                plans.filter(handover_owner__isnull=True)
-                .exclude(status="Closed")
-                .count(),
+                open_plans.filter(handover_owner__isnull=True).count(),
                 "without a named owner",
                 "danger",
             ),
             _metric(
-                "Closed",
-                plans.filter(status="Closed").count(),
-                "completed transitions",
-                "success",
+                "Voluntary exits",
+                plans.filter(exit_reason__in=list(VOLUNTARY_EXIT_REASONS)).count(),
+                "resignations and retirements",
+                "info",
             ),
-            # Nothing read `last_working_day`, so this condition was invisible:
-            # an account stayed live past its approved termination date
-            # indefinitely, with the person still in every roster and scope.
             _metric(
                 "Past exit date, still active",
                 overdue_exits,
@@ -1482,8 +1641,12 @@ def offboarding_view(request):
             ),
         ],
         rows=rows,
-        primary_action={"label": "Open People Directory", "href": "/staff"},
-        empty_title="No offboarding plans in this scope",
+        header_actions=[
+            {"label": "Start an offboarding", "drawer": "/offboarding/new"}
+        ],
+        primary_action={"label": "Recruitment", "href": "/recruitment"},
+        empty_title="No offboarding in this scope",
+        empty_body="Start an offboarding when someone resigns, retires or is leaving.",
     )
 
 

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **412**
+Components and application partials: **413**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -257,6 +257,7 @@ Components and application partials: **412**
 | `partials/hr/distributed_summary.html` | application-partial | Reusable distributed summary interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label, keyboard focus visibility | /analytics/country-director<br>/analytics/program-lead<br>/my-targets<br>/performance-conversation<br>/performance-conversation/<str:review_id>/document/<str:window><br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/hr/extra_work_assign_drawer.html` | application-partial | Reusable extra work assign drawer interface primitive | canonical; default, disabled | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /extra-work/assign-drawer | 0 |
 | `partials/hr/extra_work_submit_drawer.html` | application-partial | Reusable extra work submit drawer interface primitive | canonical; default, disabled | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /extra-work/<str:assignment_id>/submit-drawer | 0 |
+| `partials/hr/form_drawer.html` | application-partial | Reusable form drawer interface primitive | info, {{ form_note_tone|default:; default | inherits containing page contract | accessible name and label | /candidate-pipeline/<str:application_id><br>/candidate-pipeline/new<br>/employee-relations/<str:case_id><br>/employee-relations/new<br>/offboarding/<str:plan_id><br>/offboarding/new<br>/onboarding/<str:plan_id><br>/recruitment/<str:vacancy_id> | 0 |
 | `partials/hr/module_register.html` | application-partial | Reusable module register interface primitive | {{ cell.tone }}; default | inherits containing page contract | accessible name and label | /candidate-pipeline<br>/compensation-benefits<br>/compliance-register<br>/culture-engagement<br>/employee-relations<br>/hr-analytics<br>/hr-audit-log<br>/offboarding | 0 |
 | `partials/hr/pd_dashboard/adjust_allocation_drawer.html` | application-partial | Reusable adjust allocation drawer interface primitive | canonical; default | inherits containing page contract | accessible name and label | /cpd-learning/adjust-allocation | 0 |
 | `partials/hr/pd_dashboard/body.html` | application-partial | Reusable body interface primitive | executive, {% if g.count %}warning{% else %}success{% endif %}; default, empty | explicit responsive contract | inherits semantic parent contract | /cpd-learning | 0 |

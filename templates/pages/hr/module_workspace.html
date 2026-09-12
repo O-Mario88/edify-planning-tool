@@ -6,7 +6,7 @@ hcos-workspace.css is used by this workspace alone; it used to load on
 every authenticated page.
 {% endcomment %}
 {% block feature_css %}
-<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260823aura1">
+<link rel="stylesheet" href="{% static 'css/hcos-workspace.css' %}?v=20260913hractions1">
 {% if workspace.key == "analytics" %}<link rel="stylesheet" href="{% static 'css/pages/analytics-dashboard.css' %}?v=20260909accountability1">{% endif %}
 {% endblock %}
 
@@ -22,15 +22,22 @@ every authenticated page.
 
   <header class="edify-page-header hcos-hero">
     <div class="hcos-hero__copy edify-page-header__lead">
-      <span class="hcos-eyebrow">Human Capital Operations</span>
+      <span class="hcos-eyebrow">{{ eyebrow|default:"Human Capital Operations" }}</span>
       <h1 id="hcos-title" class="edify-page-title edify-page-header__title">{{ title }}</h1>
       <p class="edify-page-header__description">{{ description }}</p>
     </div>
     <div class="hcos-hero__actions">
-      <a class="hcos-button hcos-button--primary" href="{{ primary_action.href }}">
+      {% for action in header_actions %}
+      <button type="button" class="hcos-button hcos-button--primary" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-hr-header-action>
+        <span>{{ action.label }}</span>
+      </button>
+      {% endfor %}
+      {% if primary_action %}
+      <a class="hcos-button {% if header_actions %}hcos-button--secondary{% else %}hcos-button--primary{% endif %}" href="{{ primary_action.href }}">
         <span>{{ primary_action.label }}</span>
         <span aria-hidden="true">→</span>
       </a>
+      {% endif %}
       <a class="hcos-button hcos-button--secondary" href="/dashboard">HR overview</a>
     </div>
   </header>
@@ -40,6 +47,8 @@ every authenticated page.
   {% if workspace.key == "analytics" %}
   {% include "components/analytics_decision_frame.html" with question="Where are workforce capacity, review workload or compliance gaps most likely to constrain delivery?" evidence="Live workforce, review and compliance records" freshness="Current operational scope" confidence="No unsupported demographic inference" %}
   {% endif %}
+
+  {% if notice %}<div class="edify-note" data-tone="{{ notice.tone|default:'info' }}" role="status">{{ notice.text }}</div>{% endif %}
 
   {% include "components/context_metrics.html" with items=metrics variant="executive" title=title|add:" context" %}
 

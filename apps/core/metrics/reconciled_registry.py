@@ -11469,6 +11469,15 @@ def _build(row: dict) -> MetricSpec:
     )
 
 
+# The HR programme registers rebuilt on 2026-09-13 (apps/core/metrics/
+# hr_programme_metrics.py) define their new tiles beside this generated list
+# rather than inside it.
+from apps.core.metrics.hr_programme_metrics import (  # noqa: E402
+    HR_PROGRAMME_METRIC_ROWS,
+)
+
+RECONCILED_METRIC_ROWS = RECONCILED_METRIC_ROWS + HR_PROGRAMME_METRIC_ROWS
+
 RECONCILED_METRICS: tuple[MetricSpec, ...] = tuple(
     _build(row) for row in RECONCILED_METRIC_ROWS
 )

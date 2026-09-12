@@ -2227,6 +2227,7 @@
         "apps/frontend/views/hr_views.py",
         "apps/hr/accountability_cache.py",
         "apps/hr/performance_engine.py",
+        "apps/hr/reach.py",
         "apps/messaging/services.py",
         "apps/professional_development/services.py",
         "apps/targets/apps.py",
@@ -2312,7 +2313,15 @@
         "frontend_views_hr_views_showing",
         "frontend_views_hr_views_staff_checked",
         "frontend_views_hr_views_triage",
-        "frontend_views_hr_views_vacancies"
+        "frontend_views_hr_views_vacancies",
+        "hr_programme_awaiting_supervisor",
+        "hr_programme_awaiting_triage",
+        "hr_programme_disciplinary_matters",
+        "hr_programme_offers",
+        "hr_programme_ready_for_activation",
+        "hr_programme_replacements",
+        "hr_programme_under_investigation",
+        "hr_programme_voluntary_exits"
       ],
       "metricsAffected": []
     },
@@ -3394,9 +3403,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "e234b4f335adef78d0b44baae1781685db42d116d23a596491c1b8eec2979143",
-    "sources": "141ba812a873342e5a7a226ca1f787b258f6ea3c735d8cf0ccde1743e568cbb5",
-    "sourceCount": 186,
+    "payload": "2a6b17a0899119b5e6021e998a07e4edf3d9531b551bbc9bd78fcf2f2ddad335",
+    "sources": "0007d11c9e06f1df094bc58aaced1cb2c44416a4f33a1cabd9c0775da16fd06b",
+    "sourceCount": 187,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

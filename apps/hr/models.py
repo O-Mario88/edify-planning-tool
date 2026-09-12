@@ -771,12 +771,34 @@ class SuccessionCandidate(TimeStampedModel):
 
 
 class ERCaseType(models.TextChoices):
+    # The Regional HR Director oversees "disciplinary matters" and "disputes
+    # and investigations" by name (owner, 2026-09-12), so both are types of
+    # their own rather than readings of "conduct" and "conflict".
+    DISCIPLINARY = "disciplinary", "Disciplinary matter"
     GRIEVANCE = "grievance", "Grievance"
+    DISPUTE = "dispute", "Dispute between staff"
     CONFLICT = "conflict", "Conflict"
     HARASSMENT = "harassment", "Harassment concern"
     CONDUCT = "conduct", "Conduct concern"
     WHISTLEBLOWING = "whistleblowing", "Whistleblowing"
     SAFEGUARDING = "safeguarding", "Safeguarding referral"
+
+
+class ERSeverity(models.TextChoices):
+    LOW = "low", "Low"
+    MEDIUM = "medium", "Medium"
+    HIGH = "high", "High"
+    CRITICAL = "critical", "Critical"
+
+
+class DisciplinarySanction(models.TextChoices):
+    NO_ACTION = "no_action", "No further action"
+    COUNSELLING = "counselling", "Counselling"
+    VERBAL_WARNING = "verbal_warning", "Verbal warning"
+    WRITTEN_WARNING = "written_warning", "Written warning"
+    FINAL_WARNING = "final_warning", "Final written warning"
+    SUSPENSION = "suspension", "Suspension"
+    DISMISSAL = "dismissal", "Dismissal"
 
 
 class ERCaseStatus(models.TextChoices):
@@ -813,9 +835,25 @@ class EmployeeRelationsCase(TimeStampedModel):
     case_type = models.CharField(
         max_length=64, choices=ERCaseType.choices, db_index=True
     )
-    severity = models.CharField(max_length=32, default="medium")
+    severity = models.CharField(
+        max_length=32, choices=ERSeverity.choices, default=ERSeverity.MEDIUM
+    )
     status = models.CharField(
         max_length=32, choices=ERCaseStatus.choices, default=ERCaseStatus.SUBMITTED
+    )
+    # The staff member who raised a grievance or is the other party to a
+    # dispute. `raised_by` records who opened the case (always HR); this is
+    # who brought it, which a dispute cannot be recorded without.
+    complainant_staff = models.ForeignKey(
+        StaffProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="relations_cases_raised_by_them",
+    )
+    hearing_date = models.DateField(null=True, blank=True)
+    sanction = models.CharField(
+        max_length=32, choices=DisciplinarySanction.choices, blank=True, default=""
     )
     case_owner = models.ForeignKey(
         User,
@@ -896,6 +934,23 @@ class PayrollReadinessRecord(TimeStampedModel):
 # ─── TRANSITIONS (OFFBOARDING) ───────────────────────────────────────────────
 
 
+class ExitReason(models.TextChoices):
+    """Why someone left. Voluntary and involuntary exits are counted apart in
+    turnover, because they call for different retention responses."""
+
+    RESIGNATION = "resignation", "Resignation"
+    END_OF_CONTRACT = "end_of_contract", "End of contract"
+    RETIREMENT = "retirement", "Retirement"
+    PROBATION_NOT_CONFIRMED = "probation_not_confirmed", "Probation not confirmed"
+    DISMISSAL = "dismissal", "Dismissal"
+    REDUNDANCY = "redundancy", "Redundancy"
+    DEATH_IN_SERVICE = "death_in_service", "Death in service"
+    OTHER = "other", "Other"
+
+
+VOLUNTARY_EXIT_REASONS = frozenset({ExitReason.RESIGNATION, ExitReason.RETIREMENT})
+
+
 class OffboardingPlan(TimeStampedModel):
     """timeline checklist for terminated or resigned staff."""
 
@@ -915,6 +970,10 @@ class OffboardingPlan(TimeStampedModel):
         related_name="assigned_handovers",
     )
     clearance_completed = models.BooleanField(default=False)
+    exit_reason = models.CharField(
+        max_length=32, choices=ExitReason.choices, blank=True, default=""
+    )
+    exit_note = models.TextField(blank=True, default="")
 
     class Meta:
         db_table = "hr_offboarding"

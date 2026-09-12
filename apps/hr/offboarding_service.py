@@ -141,6 +141,73 @@ def complete_offboarding(plan_id: str, principal, *, force: bool = False) -> dic
     }
 
 
+@transaction.atomic
+def open_offboarding(
+    staff_profile,
+    principal,
+    *,
+    last_working_day,
+    exit_reason: str,
+    handover_owner=None,
+    note: str = "",
+):
+    """Start an exit: record the last working day, why, and who takes over.
+
+    Nothing created an offboarding plan except a probation decision to end
+    employment, so a resignation had nowhere to be recorded and turnover could
+    not be counted (HR audit, 2026-09-12). Closing still goes through
+    `complete_offboarding`, which refuses while work is attached.
+    """
+    from apps.hr.models import ExitReason, OffboardingPlan
+    from apps.hr.reach import people_reach
+
+    _assert_may_offboard(principal)
+    if staff_profile is None:
+        raise BadRequest("Choose the employee who is leaving.")
+    if not people_reach(principal).allows_country(staff_profile.country):
+        raise Forbidden("You may only offboard staff in the countries you oversee.")
+    if staff_profile.user_id and staff_profile.user_id == getattr(
+        principal, "user_id", None
+    ):
+        raise Forbidden("You cannot start your own offboarding.")
+    if not last_working_day:
+        raise BadRequest("Record the last working day.")
+    if exit_reason not in ExitReason.values:
+        raise BadRequest("Choose why the employee is leaving.")
+    if handover_owner is not None and handover_owner.id == staff_profile.id:
+        raise BadRequest("The handover owner must be someone else.")
+
+    plan = (
+        OffboardingPlan.objects.select_for_update().filter(staff=staff_profile).first()
+    )
+    if plan is not None and plan.status == "Closed":
+        raise BadRequest("This employee has already been offboarded.")
+    if plan is None:
+        plan = OffboardingPlan(staff=staff_profile, status="Initiated")
+    plan.last_working_day = last_working_day
+    plan.exit_reason = exit_reason
+    plan.exit_note = note or ""
+    plan.handover_owner = handover_owner
+    plan.save()
+
+    from apps.audit.services import log as audit_log
+
+    audit_log(
+        action="hr.offboarding_opened",
+        subject_kind="offboarding_plan",
+        subject_id=plan.id,
+        actor_id=getattr(principal, "user_id", None),
+        actor_role=_principal_role(principal),
+        payload={
+            "staffId": staff_profile.id,
+            "lastWorkingDay": str(last_working_day),
+            "exitReason": exit_reason,
+            "handoverOwnerId": getattr(handover_owner, "id", None),
+        },
+    )
+    return plan
+
+
 def accounts_past_last_working_day():
     """Still-active accounts whose approved exit date has passed.
 

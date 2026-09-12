@@ -33,6 +33,7 @@ from .views import (
     finance_operating_views,
     closure_views,
     leave_views,
+    hr_programme_views,
     hr_views,
     pd_views,
     debrief_views,
@@ -2295,10 +2296,108 @@ urlpatterns = [
         hr_views.culture_engagement_view,
         name="culture_engagement",
     ),
+    # Staffing lifecycle actions (2026-09-13): vacancies, candidates, hiring,
+    # onboarding, probation and offboarding.
+    path(
+        "recruitment/new",
+        hr_programme_views.vacancy_request_drawer,
+        name="vacancy_request_drawer",
+    ),
+    path(
+        "recruitment/request",
+        hr_programme_views.vacancy_request,
+        name="vacancy_request",
+    ),
+    path(
+        "recruitment/<str:vacancy_id>",
+        hr_programme_views.vacancy_drawer,
+        name="vacancy_drawer",
+    ),
+    path(
+        "recruitment/<str:vacancy_id>/decide",
+        hr_programme_views.vacancy_decide,
+        name="vacancy_decide",
+    ),
+    path(
+        "candidate-pipeline/new",
+        hr_programme_views.application_record_drawer,
+        name="application_record_drawer",
+    ),
+    path(
+        "candidate-pipeline/record",
+        hr_programme_views.application_record,
+        name="application_record",
+    ),
+    path(
+        "candidate-pipeline/<str:application_id>",
+        hr_programme_views.application_drawer,
+        name="application_drawer",
+    ),
+    path(
+        "candidate-pipeline/<str:application_id>/advance",
+        hr_programme_views.application_advance,
+        name="application_advance",
+    ),
+    path(
+        "candidate-pipeline/<str:application_id>/hire",
+        hr_programme_views.application_hire,
+        name="application_hire",
+    ),
+    path(
+        "onboarding/<str:plan_id>",
+        hr_programme_views.onboarding_drawer,
+        name="onboarding_drawer",
+    ),
+    path(
+        "onboarding/<str:plan_id>/record",
+        hr_programme_views.onboarding_record,
+        name="onboarding_record",
+    ),
+    path(
+        "offboarding/new",
+        hr_programme_views.offboarding_start_drawer,
+        name="offboarding_start_drawer",
+    ),
+    path(
+        "offboarding/start",
+        hr_programme_views.offboarding_start,
+        name="offboarding_start",
+    ),
+    path(
+        "offboarding/<str:plan_id>",
+        hr_programme_views.offboarding_drawer,
+        name="offboarding_drawer",
+    ),
+    path(
+        "offboarding/<str:plan_id>/close",
+        hr_programme_views.offboarding_close,
+        name="offboarding_close",
+    ),
     path(
         "employee-relations",
         hr_views.employee_relations_view,
         name="employee_relations",
+    ),
+    # The case workflow (2026-09-13): the service existed; no screen called it.
+    path(
+        "employee-relations/new",
+        hr_programme_views.er_open_drawer,
+        name="employee_relations_open_drawer",
+    ),
+    path(
+        "employee-relations/open",
+        hr_programme_views.er_open,
+        name="employee_relations_open",
+    ),
+    path(
+        "employee-relations/<str:case_id>",
+        hr_programme_views.er_case_drawer,
+        name="employee_relations_case",
+    ),
+    path(
+        "employee-relations/<str:case_id>/advance",
+        hr_programme_views.er_advance,
+        name="employee_relations_advance",
     ),
     path("wellness", hr_views.wellness_view, name="wellness"),
     path(

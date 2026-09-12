@@ -7171,6 +7171,66 @@
    "view": "apps.frontend.views.hr_views.candidate_pipeline_view"
   },
   {
+   "page_permission": "candidate_pipeline",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/candidate-pipeline/<str:application_id>",
+   "route_name": "application_drawer",
+   "view": "apps.frontend.views.hr_programme_views.application_drawer"
+  },
+  {
+   "page_permission": "candidate_pipeline",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/candidate-pipeline/<str:application_id>/advance",
+   "route_name": "application_advance",
+   "view": "apps.frontend.views.hr_programme_views.application_advance"
+  },
+  {
+   "page_permission": "candidate_pipeline",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/candidate-pipeline/<str:application_id>/hire",
+   "route_name": "application_hire",
+   "view": "apps.frontend.views.hr_programme_views.application_hire"
+  },
+  {
+   "page_permission": "candidate_pipeline",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/candidate-pipeline/new",
+   "route_name": "application_record_drawer",
+   "view": "apps.frontend.views.hr_programme_views.application_record_drawer"
+  },
+  {
+   "page_permission": "candidate_pipeline",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/candidate-pipeline/record",
+   "route_name": "application_record",
+   "view": "apps.frontend.views.hr_programme_views.application_record"
+  },
+  {
    "page_permission": "clusters",
    "required_permissions": [],
    "role_exclusive": false,
@@ -8691,6 +8751,54 @@
    "route": "/employee-relations",
    "route_name": "employee_relations",
    "view": "apps.frontend.views.hr_views.employee_relations_view"
+  },
+  {
+   "page_permission": "employee_relations",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/employee-relations/<str:case_id>",
+   "route_name": "employee_relations_case",
+   "view": "apps.frontend.views.hr_programme_views.er_case_drawer"
+  },
+  {
+   "page_permission": "employee_relations",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/employee-relations/<str:case_id>/advance",
+   "route_name": "employee_relations_advance",
+   "view": "apps.frontend.views.hr_programme_views.er_advance"
+  },
+  {
+   "page_permission": "employee_relations",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/employee-relations/new",
+   "route_name": "employee_relations_open_drawer",
+   "view": "apps.frontend.views.hr_programme_views.er_open_drawer"
+  },
+  {
+   "page_permission": "employee_relations",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/employee-relations/open",
+   "route_name": "employee_relations_open",
+   "view": "apps.frontend.views.hr_programme_views.er_open"
   },
   {
    "page_permission": "escalations",
@@ -11986,6 +12094,54 @@
    "view": "apps.frontend.views.hr_views.offboarding_view"
   },
   {
+   "page_permission": "offboarding",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/offboarding/<str:plan_id>",
+   "route_name": "offboarding_drawer",
+   "view": "apps.frontend.views.hr_programme_views.offboarding_drawer"
+  },
+  {
+   "page_permission": "offboarding",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/offboarding/<str:plan_id>/close",
+   "route_name": "offboarding_close",
+   "view": "apps.frontend.views.hr_programme_views.offboarding_close"
+  },
+  {
+   "page_permission": "offboarding",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/offboarding/new",
+   "route_name": "offboarding_start_drawer",
+   "view": "apps.frontend.views.hr_programme_views.offboarding_start_drawer"
+  },
+  {
+   "page_permission": "offboarding",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/offboarding/start",
+   "route_name": "offboarding_start",
+   "view": "apps.frontend.views.hr_programme_views.offboarding_start"
+  },
+  {
    "page_permission": "onboarding",
    "required_permissions": [],
    "role_exclusive": false,
@@ -11996,6 +12152,30 @@
    "route": "/onboarding",
    "route_name": "onboarding",
    "view": "apps.frontend.views.hr_views.onboarding_view"
+  },
+  {
+   "page_permission": "onboarding",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/onboarding/<str:plan_id>",
+   "route_name": "onboarding_drawer",
+   "view": "apps.frontend.views.hr_programme_views.onboarding_drawer"
+  },
+  {
+   "page_permission": "onboarding",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/onboarding/<str:plan_id>/record",
+   "route_name": "onboarding_record",
+   "view": "apps.frontend.views.hr_programme_views.onboarding_record"
   },
   {
    "page_permission": "org_structure",
@@ -13609,6 +13789,58 @@
    "view": "apps.frontend.views.hr_views.recruitment_view"
   },
   {
+   "page_permission": "recruitment",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recruitment/<str:vacancy_id>",
+   "route_name": "vacancy_drawer",
+   "view": "apps.frontend.views.hr_programme_views.vacancy_drawer"
+  },
+  {
+   "page_permission": "recruitment",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recruitment/<str:vacancy_id>/decide",
+   "route_name": "vacancy_decide",
+   "view": "apps.frontend.views.hr_programme_views.vacancy_decide"
+  },
+  {
+   "page_permission": "recruitment",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recruitment/new",
+   "route_name": "vacancy_request_drawer",
+   "view": "apps.frontend.views.hr_programme_views.vacancy_request_drawer"
+  },
+  {
+   "page_permission": "recruitment",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recruitment/request",
+   "route_name": "vacancy_request",
+   "view": "apps.frontend.views.hr_programme_views.vacancy_request"
+  },
+  {
    "page_permission": "reports",
    "required_permissions": [],
    "role_exclusive": false,
@@ -14953,11 +15185,11 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 391,
-  "Admin": 787,
+  "Admin": 806,
   "BusinessTransformationOfficer": 219,
   "CCEO": 495,
-  "CountryDirector": 627,
-  "HumanResources": 270,
+  "CountryDirector": 631,
+  "HumanResources": 289,
   "ImpactAssessment": 508,
   "MfiLoanOfficer": 118,
   "MfiPartnerAdmin": 121,
@@ -14971,8 +15203,8 @@
  "summary": {
   "page_keys_declared": 152,
   "page_keys_in_navigation": 170,
-  "routes_guarded": 884,
-  "routes_total": 1073,
+  "routes_guarded": 903,
+  "routes_total": 1092,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },
