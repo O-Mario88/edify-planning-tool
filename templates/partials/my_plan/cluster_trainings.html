@@ -1,4 +1,4 @@
-<!-- Cluster Trainings Card -->
+<!-- Trainings Card: in-school trainings (a school) and cluster trainings (a cluster) -->
 <div class="card overflow-hidden">
 
 <!-- Card Header -->
@@ -6,7 +6,7 @@
 <div class="flex items-center gap-2">
 <span class="text-[18px]"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.2-3.4v5.2A2 2 0 0117 12.6 9.7 9.7 0 0112 14a9.7 9.7 0 01-5-1.4 2 2 0 01-1.2-1.8V9.6L12 14z"/></svg></span>
 <h2 class="text-[15px] font-semibold text-slate-800 tracking-tight">
-Cluster Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
+Trainings Planned for {% if period == 'week' %}This Week{% elif period == 'month' %}This Month{% elif period == 'quarter' %}This Quarter{% else %}This FY{% endif %}
 </h2>
 <span class="px-2 py-0.5 rounded-pill edify-text-caption font-semibold bg-[var(--edify-primary)]/10 text-[var(--edify-accent-text)] border border-[var(--edify-primary)]/20">
 {{ cluster_trainings|length }}
@@ -24,7 +24,7 @@ Open Planning
 <table class="edify-data-table mp-table edify-record-table">
 <thead>
 <tr>
-<th>Cluster Name</th>
+<th>School / Cluster</th>
 <th>Focus Intervention</th>
 <th>Date</th>
 <th class="text-center">Expected Participants</th>
@@ -35,7 +35,7 @@ Open Planning
 <tbody>
 {% for row in cluster_trainings %}
 <tr>
-<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.cluster_id %}<a href="/clusters/{{ row.cluster_id }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}</td>
+<td class="font-semibold text-slate-800 text-[14px]" data-record-title>{% if row.place_url %}<a href="{{ row.place_url }}" class="hover:underline">{{ row.cluster_name }}</a>{% else %}{{ row.cluster_name }}{% endif %}<span class="block edify-text-caption font-semibold text-slate-400">{{ row.activity_type_label }}</span></td>
 <td data-label="Intervention">
 <span class="inline-flex items-center rounded-pill px-2 py-0.5 edify-text-caption font-semibold tracking-wide edify-primary-soft edify-primary-text border ">
 {{ row.focus_intervention }}
@@ -53,7 +53,7 @@ Open Planning
 {% else %}
 <div class="edify-empty-state py-12 flex flex-col items-center justify-center">
 <p class="text-[32px] mb-2"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.2-3.4v5.2A2 2 0 0117 12.6 9.7 9.7 0 0112 14a9.7 9.7 0 01-5-1.4 2 2 0 01-1.2-1.8V9.6L12 14z"/></svg></p>
-<p class="text-[14px] font-bold edify-danger-text">No cluster trainings planned for this period.</p>
+<p class="text-[14px] font-bold edify-danger-text">No trainings planned for this period.</p>
 <a href="/planning" class="btn btn-primary h-8 mt-3 shadow-sm text-[12px]">Open Planning</a>
 </div>
 {% endif %}

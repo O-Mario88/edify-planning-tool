@@ -1171,7 +1171,20 @@ def get_frontend_context(principal, query: dict) -> dict:
             if a.school
             else "No SSA",
             # Cluster details
-            "cluster_name": a.cluster.name if a.cluster else "Unknown Cluster",
+            # The trainings card lists in-school trainings beside cluster
+            # trainings. An in-school training has a school and no cluster; it
+            # used to read "Unknown Cluster" there (owner, 2026-09-12), so the
+            # place is whichever the work has, with a link to its profile.
+            "cluster_name": (
+                a.cluster.name
+                if a.cluster
+                else (a.school.name if a.school else "Unassigned")
+            ),
+            "place_url": (
+                f"/clusters/{a.cluster.id}"
+                if a.cluster
+                else (f"/schools/{a.school.id}" if a.school else "")
+            ),
             "cluster_id": a.cluster.id if a.cluster else "",
             "cluster_district": a.cluster.district.name if a.cluster else "Unknown",
             "cluster_school_count": School.objects.filter(
