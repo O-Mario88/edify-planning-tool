@@ -534,7 +534,14 @@ class ClusterDrawerDeliveryTest(TestCase):
             'aria-live="polite"', 1
         )[0]
         self.assertIn('name="invited_school_ids"', attendance_row)
-        self.assertIn('name="scheduled_date"', attendance_row)
+        # The planned date sits under the per-school numbers and above the
+        # invited list, which takes the whole row (owner, 2026-09-12); it is
+        # no longer beside the list.
+        self.assertNotIn('name="scheduled_date"', attendance_row)
+        per_school_end = html.index('name="other_per_school"')
+        date_at = html.index('name="scheduled_date"')
+        list_at = html.index("data-cluster-training-attendance-row")
+        self.assertTrue(per_school_end < date_at < list_at)
         self.assertNotIn("Purpose for Meeting / Training", html)
         self.assertNotIn("Session Goal", html)
 

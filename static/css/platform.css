@@ -4097,9 +4097,17 @@ main [data-mobile-family="directory"] .school-filter-clear {
 @media (min-width: 48rem) {
   .school-record-row__summary { grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
   .school-record-row__summary--selectable { grid-template-columns: 2rem minmax(0, 1fr) auto; }
+  /* Every part is placed by name. A row locked to grid-row 1 with an auto
+     column is placed BEFORE auto-flowed items, so the actions took the first
+     column and the school's name was pushed to the far right on the cluster
+     profile (owner, 2026-09-12: "restore… alignment left, buttons on the
+     extreme right"). Name left, buttons right, on every list. */
+  .school-record-row__summary > .school-record-row__content { grid-column: 1; grid-row: 1; }
+  .school-record-row__summary--selectable > .school-record-row__select { grid-column: 1; grid-row: 1; }
+  .school-record-row__summary--selectable > .school-record-row__content { grid-column: 2; grid-row: 1; }
   .school-record-row__summary > .school-record-row__actions,
   .school-record-row__summary--selectable > .school-record-row__actions {
-    grid-column: auto; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end;
+    grid-column: 2; grid-row: 1; flex-wrap: nowrap; justify-content: flex-end;
     padding-inline-start: .5rem; padding-block-start: 0; max-inline-size: none;
   }
   .school-record-row__summary--selectable > .school-record-row__actions { grid-column: 3; }

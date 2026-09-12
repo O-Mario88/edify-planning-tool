@@ -2723,7 +2723,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23344,
+      "bytes": 23569,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",

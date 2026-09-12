@@ -209,7 +209,15 @@ hx-include="#action-planner-form"
     </div>
   </div>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4" data-cluster-training-attendance-row>
+  {% comment %}The planned date sits right under the per-school numbers, and
+  the invited list takes the whole row (owner, 2026-09-12: "the Schools
+  Invited table should fill the whole row; move the planned date below the
+  per-school input fields").{% endcomment %}
+  <div>
+    {% include "partials/clusters/planned_date_field.html" %}
+  </div>
+
+  <div data-cluster-training-attendance-row>
     <div>
       <div class="flex items-baseline justify-between gap-2 mb-1">
         <span class="edify-text-caption uppercase tracking-wider text-slate-400">Schools Invited <span class="text-rose-500">*</span></span>
@@ -218,7 +226,7 @@ hx-include="#action-planner-form"
         </button>
       </div>
       <div role="group" aria-label="Schools invited"
-           class="max-h-56 overflow-y-auto rounded-control border border-slate-200 edify-surface divide-y divide-slate-100">
+           class="max-h-72 overflow-y-auto rounded-control border border-slate-200 edify-surface divide-y divide-slate-100 w-full">
         {% for s in member_schools %}
         <label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50">
           <input type="checkbox" name="invited_school_ids" value="{{ s.id }}"
@@ -239,9 +247,6 @@ hx-include="#action-planner-form"
       <p class="mt-1 edify-text-caption font-medium normal-case tracking-normal text-slate-400">
         <span x-text="schoolsInvited"></span> of <span x-text="clusterSchools"></span> ticked. Untick the ones that do not qualify or did not confirm &mdash; a Literacy session does not reach secondary or vocational members.
       </p>
-    </div>
-    <div>
-      {% include "partials/clusters/planned_date_field.html" %}
     </div>
   </div>
 
