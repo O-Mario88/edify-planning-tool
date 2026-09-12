@@ -1825,3 +1825,221 @@ def pulse_respond(request, survey_id):
             "answered": has_answered(survey, request.user),
         },
     )
+
+
+# ── Employment compliance ────────────────────────────────────────────────────
+COMPLIANCE_PATH = "/compliance-register"
+
+
+@require_page_permission("compliance_register")
+@require_http_methods(["GET"])
+def compliance_requirement_drawer(request):
+    from apps.hr.compliance_service import ALL_COUNTRIES
+    from apps.hr.reach import people_reach
+
+    options = _country_options(request)
+    if people_reach(request.user).is_everything:
+        options = [(ALL_COUNTRIES, "Every country"), *options]
+    return _drawer(
+        request,
+        title="Add a requirement",
+        subtitle="An employment-law obligation every employee must meet",
+        action="/compliance-register/requirement/add",
+        submit="Add requirement",
+        fields=[
+            _field(
+                "country",
+                "Country",
+                type="select",
+                required=True,
+                options=options,
+                blank="Choose the country",
+            ),
+            _field(
+                "name",
+                "Requirement",
+                required=True,
+                maxlength=255,
+                placeholder="e.g. Signed employment contract",
+            ),
+            _field(
+                "description",
+                "What satisfies it",
+                type="textarea",
+                rows=3,
+                placeholder="The law or regulation, and the evidence expected",
+            ),
+            _field(
+                "is_mandatory",
+                "Mandatory for every employee",
+                type="checkbox",
+                value=True,
+            ),
+        ],
+    )
+
+
+@require_page_permission("compliance_register")
+@require_POST
+def compliance_requirement_add(request):
+    from apps.hr.compliance_service import add_requirement
+
+    data = request.POST
+    try:
+        requirement = add_requirement(
+            {
+                "country": data.get("country"),
+                "name": data.get("name"),
+                "description": data.get("description"),
+                "is_mandatory": data.get("is_mandatory"),
+            },
+            request.user,
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, COMPLIANCE_PATH)
+    messages.success(request, f"Requirement added: {requirement.name}.")
+    return _back(request, COMPLIANCE_PATH)
+
+
+def _evidence_fields(request, record=None):
+    from apps.hr.compliance_service import visible_requirements
+
+    fields = []
+    if record is None:
+        requirements = [
+            (r.id, f"{r.name} · {r.country}")
+            for r in visible_requirements(request.user).order_by("country", "name")
+        ]
+        fields += [
+            _field(
+                "staff_id",
+                "Employee",
+                type="select",
+                required=True,
+                value=request.GET.get("staff", ""),
+                options=_people_options(request),
+                blank="Choose the employee",
+            ),
+            _field(
+                "requirement_id",
+                "Requirement",
+                type="select",
+                required=True,
+                value=request.GET.get("requirement", ""),
+                options=requirements,
+                blank="Choose the requirement",
+            ),
+        ]
+    fields += [
+        _field(
+            "document_url",
+            "Link to the evidence",
+            value=getattr(record, "document_url", "") or "",
+            maxlength=512,
+            placeholder="Where the signed document is filed",
+        ),
+        _field(
+            "expiry_date",
+            "Expires on",
+            type="date",
+            value=record.expiry_date.isoformat()
+            if record is not None and record.expiry_date
+            else "",
+            help="Leave blank if it does not expire.",
+        ),
+        _field("verified", "I have checked the evidence", type="checkbox"),
+    ]
+    return fields
+
+
+@require_page_permission("compliance_register")
+@require_http_methods(["GET"])
+def compliance_evidence_drawer(request):
+    return _drawer(
+        request,
+        title="Record evidence",
+        subtitle="An employee's evidence against a requirement",
+        action="/compliance-register/save",
+        submit="Save",
+        note="The status follows the evidence and its expiry date.",
+        fields=_evidence_fields(request),
+    )
+
+
+def _visible_record(request, record_id):
+    from apps.hr.models import EmployeeComplianceRecord
+    from apps.hr.reach import people_reach, scope_by_staff
+
+    record = (
+        scope_by_staff(
+            EmployeeComplianceRecord.objects.select_related(
+                "staff__user", "requirement", "verified_by"
+            ),
+            people_reach(request.user),
+        )
+        .filter(id=record_id)
+        .first()
+    )
+    if record is None:
+        raise Http404("Compliance record not found.")
+    return record
+
+
+@require_page_permission("compliance_register")
+@require_http_methods(["GET"])
+def compliance_record_drawer(request, record_id):
+    record = _visible_record(request, record_id)
+    fields = [
+        _field("staff_id", "", type="hidden", value=record.staff_id),
+        _field("requirement_id", "", type="hidden", value=record.requirement_id),
+        *_evidence_fields(request, record),
+    ]
+    return _drawer(
+        request,
+        title=f"{record.requirement.name}",
+        subtitle=f"{record.staff.user.name} · {record.get_status_display()}",
+        action="/compliance-register/save",
+        submit="Save",
+        facts=[
+            {"label": "Requirement", "value": record.requirement.description or ""},
+            {
+                "label": "Verified by",
+                "value": record.verified_by.name if record.verified_by else "",
+            },
+        ],
+        fields=fields,
+    )
+
+
+@require_page_permission("compliance_register")
+@require_POST
+def compliance_evidence_save(request):
+    from apps.hr.compliance_service import record_evidence
+    from apps.hr.models import ComplianceRequirement
+
+    data = request.POST
+    try:
+        staff = _staff_in_reach(request, data.get("staff_id") or "")
+        requirement = ComplianceRequirement.objects.filter(
+            id=data.get("requirement_id") or ""
+        ).first()
+        record = record_evidence(
+            staff,
+            requirement,
+            {
+                "document_url": data.get("document_url"),
+                "expiry_date": _date(data.get("expiry_date")),
+                "verified": data.get("verified"),
+            },
+            request.user,
+        )
+    except Http404:
+        messages.error(request, "Choose an employee you oversee.")
+        return _back(request, COMPLIANCE_PATH)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, COMPLIANCE_PATH)
+    messages.success(
+        request,
+        f"{staff.user.name}: {record.requirement.name} is {record.get_status_display().lower()}.",
+    )
+    return _back(request, COMPLIANCE_PATH)

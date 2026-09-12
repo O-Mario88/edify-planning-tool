@@ -29,7 +29,11 @@ the People Analytics tab of the Analytics workspace (2026-09-05).
             {% if has_row_actions %}
             <td class="hcos-table__actions" data-record-action data-label="Actions">
               {% for action in row.actions %}
+              {% if action.href %}
+              <a class="hcos-row-action" href="{{ action.href }}">{{ action.label }}</a>
+              {% else %}
               <button type="button" class="hcos-row-action" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% endif %}
               {% endfor %}
             </td>
             {% endif %}

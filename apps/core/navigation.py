@@ -1716,6 +1716,11 @@ SIDEBAR_ITEMS = [
                 "page_key": "policy_compliance",
             },
             {
+                "label": "Employment Compliance",
+                "url": "/compliance-register",
+                "page_key": "compliance_register",
+            },
+            {
                 "label": "Leave Policies",
                 "url": "/leave/policies",
                 "page_key": "leave_policies",

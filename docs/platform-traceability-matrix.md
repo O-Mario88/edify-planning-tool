@@ -297,7 +297,7 @@ Steps: Concern → Verified context → Manager proposal → HR fairness review 
 | Models written | `accounts.StaffProfile`, `accounts.StaffSupervisorAssignment`, `accounts.User`, `audit.AuditLog`, `hr.PerformanceImprovementPlan`, `hr.RecoveryMilestone`, `sessions.Session` |
 | Notifications raised | — |
 | Audit actions (evidence) | `hr.pip_activated`, `hr.pip_outcome`, `hr.pip_recommended` |
-| Metrics computed in the run | `frontend_views_hr_views_6_12_months`, `frontend_views_hr_views_acting_roles`, `frontend_views_hr_views_active`, `frontend_views_hr_views_applications`, `frontend_views_hr_views_approved`, `frontend_views_hr_views_average_score`, `frontend_views_hr_views_closed`, `frontend_views_hr_views_compensation_profiles` _+69 more_ |
+| Metrics computed in the run | `frontend_views_hr_views_6_12_months`, `frontend_views_hr_views_acting_roles`, `frontend_views_hr_views_active`, `frontend_views_hr_views_applications`, `frontend_views_hr_views_approved`, `frontend_views_hr_views_average_score`, `frontend_views_hr_views_closed`, `frontend_views_hr_views_compensation_profiles` _+74 more_ |
 | Metrics whose sources it moves | — |
 
 ### `journey-14` · Team Oversight and Send School to

@@ -114,7 +114,10 @@
         var titleBar = Array.from(parent.children).find(function (child) {
           return child !== branch && !child.contains(table)
             && Boolean(child.compareDocumentPosition(branch) & Node.DOCUMENT_POSITION_FOLLOWING)
-            && !child.matches('.edify-page-header, form')
+            // A KPI panel is not a table's title (2026-09-13): it carries its
+            // own h2, so it was painted as the blue title bar of the next table
+            // in the same container, and its labels turned white on white.
+            && !child.matches('.edify-page-header, form, [data-context-metrics], .context-metrics')
             && !child.querySelector('h1, table, form, input, select, textarea, section, article')
             && child.querySelectorAll('h2, h3, h4').length <= 1
             && (child.matches('h2, h3, h4, caption') || child.querySelector('h2, h3, h4'));

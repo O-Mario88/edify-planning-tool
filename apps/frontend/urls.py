@@ -2441,6 +2441,32 @@ urlpatterns = [
     path(
         "pulse/<str:survey_id>", hr_programme_views.pulse_respond, name="pulse_respond"
     ),
+    # Employment compliance (2026-09-13).
+    path(
+        "compliance-register/requirement",
+        hr_programme_views.compliance_requirement_drawer,
+        name="compliance_requirement_drawer",
+    ),
+    path(
+        "compliance-register/requirement/add",
+        hr_programme_views.compliance_requirement_add,
+        name="compliance_requirement_add",
+    ),
+    path(
+        "compliance-register/new",
+        hr_programme_views.compliance_evidence_drawer,
+        name="compliance_evidence_drawer",
+    ),
+    path(
+        "compliance-register/save",
+        hr_programme_views.compliance_evidence_save,
+        name="compliance_evidence_save",
+    ),
+    path(
+        "compliance-register/<str:record_id>",
+        hr_programme_views.compliance_record_drawer,
+        name="compliance_record_drawer",
+    ),
     path(
         "employee-relations",
         hr_views.employee_relations_view,

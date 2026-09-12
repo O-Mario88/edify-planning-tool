@@ -34,6 +34,7 @@ def _row(
     category: str = "scale",
     unit: str = "count",
     drilldown: str | None = None,
+    denominator: str | None = None,
 ) -> dict:
     return {
         "key": f"hr_programme_{_slug(label)}",
@@ -47,6 +48,7 @@ def _row(
         "service": "apps.frontend.views.hr_views._metric",
         "source_models": models,
         "numerator": numerator,
+        "denominator": denominator,
         "date_basis": "not_time_bound",
         "period": "point_in_time",
         "scope": "The countries the Regional HR Director oversees (apps.hr.reach)",
@@ -71,6 +73,10 @@ _COMPENSATION = ("apps.hr.models.CompensationRecord",)
 _INCIDENT = ("apps.hr.models.SafetyIncident",)
 _RECOGNITION = ("apps.hr.models.StaffRecognition",)
 _PULSE = ("apps.hr.models.PulseSurvey", "apps.hr.models.PulseResponse")
+_DOCUMENTS = (
+    "apps.documents.models.DocumentAsset",
+    "apps.documents.models.DocumentAcknowledgement",
+)
 
 HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
     _row(
@@ -259,5 +265,63 @@ HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
         location="apps/frontend/views/hr_views.py:pulse_surveys_view",
         category="outcome",
         unit="score",
+    ),
+    _row(
+        "Published policies",
+        definition="Policies and manuals published or in effect for the director's countries.",
+        question="How many policies are in force?",
+        numerator="policy and manual documents with status published or effective",
+        models=_DOCUMENTS,
+        owner_page="policies",
+        location="apps/frontend/views/hr_views.py:policies_view",
+        category="scale",
+    ),
+    _row(
+        "Policies in review",
+        definition="Policies and manuals in draft, under review or returned for correction.",
+        question="How many policy changes are waiting on a decision?",
+        numerator="policy and manual documents with status draft, under_review or returned",
+        models=_DOCUMENTS,
+        owner_page="policies",
+        location="apps/frontend/views/hr_views.py:policies_view",
+        category="pending_action",
+    ),
+    _row(
+        "Acknowledgement rate",
+        definition=(
+            "Agreed acknowledgements as a share of every acknowledgement requested "
+            "on current policy versions, for the people the director oversees."
+        ),
+        question="Have staff acknowledged the policies that apply to them?",
+        numerator="acknowledgements with state agreed on current versions",
+        denominator=(
+            "acknowledgements with state agreed, pending or disagreed on current "
+            "versions, for people in the director's reach"
+        ),
+        models=_DOCUMENTS,
+        owner_page="policies",
+        location="apps/frontend/views/hr_views.py:policies_view",
+        category="compliance",
+        unit="percent",
+    ),
+    _row(
+        "Policy reviews due",
+        definition="Policies whose current version's review date falls within 60 days.",
+        question="Which policies are due for review?",
+        numerator="policy and manual documents whose current version review_date is within 60 days",
+        models=_DOCUMENTS,
+        owner_page="policies",
+        location="apps/frontend/views/hr_views.py:policies_view",
+        category="pending_action",
+    ),
+    _row(
+        "Disagreements",
+        definition="Staff who did not agree to a current policy version.",
+        question="Who has not agreed to a policy, and needs a conversation?",
+        numerator="acknowledgements with state disagreed on current versions",
+        models=_DOCUMENTS,
+        owner_page="policies",
+        location="apps/frontend/views/hr_views.py:policies_view",
+        category="risk",
     ),
 )

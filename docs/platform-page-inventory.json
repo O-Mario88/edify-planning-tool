@@ -6024,17 +6024,17 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3604,
+      "bytes": 3638,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline/<str:application_id>",
         "/candidate-pipeline/new",
         "/compensation-benefits/<str:staff_id>",
         "/compensation-benefits/new",
-        "/employee-relations/<str:case_id>",
-        "/employee-relations/new",
-        "/health-safety/<str:incident_id>",
-        "/health-safety/new"
+        "/compliance-register/<str:record_id>",
+        "/compliance-register/new",
+        "/compliance-register/requirement",
+        "/employee-relations/<str:case_id>"
       ],
       "findings": [],
       "forms": 1,
@@ -6057,7 +6057,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 2801,
+      "bytes": 2976,
       "deprecated_alternatives": [],
       "example_pages": [
         "/candidate-pipeline",
@@ -20086,6 +20086,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -22354,6 +22355,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -24456,6 +24458,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -25024,7 +25027,7 @@
       "permission_key": "compliance_register",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate compliance register within the frontend workflow.",
+      "purpose": "Compliance with country employment law, employee by employee.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -25038,6 +25041,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -25065,6 +25069,391 @@
       "test_status": "referenced-by-automated-test",
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compliance_record_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:coverage-review-required",
+        "permission:compliance_register"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-DB334B0C2E",
+      "page_title": "Compliance Record Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compliance_register",
+      "primary_action": "Compliance Record Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compliance record drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compliance-register/<str:record_id>",
+      "route_name": "compliance_record_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "coverage-review-required",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compliance_evidence_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:compliance_register"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-AC385A04B9",
+      "page_title": "Compliance Evidence Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compliance_register",
+      "primary_action": "Compliance Evidence Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compliance evidence drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compliance-register/new",
+      "route_name": "compliance_evidence_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "pass-automated-contract",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compliance_requirement_drawer",
+      "card_count": 0,
+      "charts": false,
+      "drawers": true,
+      "evidence": [
+        "template:partials/hr/form_drawer.html",
+        "test:referenced-by-automated-test",
+        "permission:compliance_register"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": true,
+      "header_variant": "fragment-owned-by-parent",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "pass-automated-contract",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-6434887040",
+      "page_title": "Compliance Requirement Drawer",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compliance_register",
+      "primary_action": "Compliance Requirement Drawer",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compliance requirement drawer within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "detected",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compliance-register/requirement",
+      "route_name": "compliance_requirement_drawer",
+      "search": "shared topbar search or none",
+      "secondary_actions": [
+        "{{ form_action }}"
+      ],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "components/drawers/base_drawer.html"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "drawer",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "pass-automated-contract",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "token-driven",
+      "theme_status": "pass-automated-contract",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compliance_requirement_add",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:compliance_register"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-EB42D38F2F",
+      "page_title": "Compliance Requirement Add",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compliance_register",
+      "primary_action": "Compliance Requirement Add",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compliance requirement add within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compliance-register/requirement/add",
+      "route_name": "compliance_requirement_add",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
+      "todos": false,
+      "typography_exceptions": []
+    },
+    {
+      "accessibility_status": "not-applicable-nonvisual",
+      "api_endpoints": [],
+      "app": "frontend",
+      "audit_events": true,
+      "automated_quality_score": 9.4,
+      "backend_module": "apps.frontend.views.hr_programme_views",
+      "backend_view": "apps.frontend.views.hr_programme_views.compliance_evidence_save",
+      "card_count": 0,
+      "charts": false,
+      "drawers": false,
+      "evidence": [
+        "test:referenced-by-automated-test",
+        "permission:compliance_register"
+      ],
+      "filters": "none",
+      "findings": [],
+      "fix_status": "fixed",
+      "forms": false,
+      "header_variant": "not-applicable-nonvisual-action",
+      "htmx_endpoints": [],
+      "implementation_status": "existing-routed-surface",
+      "kpi_count": "0",
+      "manual_quality_score": null,
+      "mobile_status": "not-applicable-nonvisual",
+      "modals": false,
+      "module": "frontend",
+      "notifications": false,
+      "page_id": "UI-PAGE-CAE42FDDA4",
+      "page_title": "Compliance Evidence Save",
+      "page_type": "interaction-fragment",
+      "per_page_css": [],
+      "permission_key": "compliance_register",
+      "primary_action": "Compliance Evidence Save",
+      "primary_user_decision": "What immediate step completes the parent workflow?",
+      "purpose": "Operate compliance evidence save within the frontend workflow.",
+      "remediation": "No automated remediation outstanding",
+      "responsive_state": "manual-review-required",
+      "role_access": [
+        "ADMIN",
+        "HR"
+      ],
+      "route": "/compliance-register/save",
+      "route_name": "compliance_evidence_save",
+      "search": "shared topbar search or none",
+      "secondary_actions": [],
+      "services_and_models": [
+        "apps.accounts.models",
+        "apps.hr.models"
+      ],
+      "shared_layout": [
+        "standalone-document-or-fragment"
+      ],
+      "state_coverage": {
+        "disabled": false,
+        "empty": false,
+        "error": false,
+        "loading": false
+      },
+      "surface_kind": "action",
+      "table_pattern": "none",
+      "tables": false,
+      "tablet_status": "not-applicable-nonvisual",
+      "tabs": {
+        "count": 0,
+        "type": "none"
+      },
+      "templates": [],
+      "test_status": "referenced-by-automated-test",
+      "theme_state": "not-applicable-nonvisual",
+      "theme_status": "not-applicable-nonvisual",
       "todos": false,
       "typography_exceptions": []
     },
@@ -28363,6 +28752,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -28450,6 +28840,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -28533,6 +28924,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -28620,6 +29012,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -31744,6 +32137,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -35985,6 +36379,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -38288,6 +38683,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -38373,6 +38769,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -38535,6 +38932,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -38619,6 +39017,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -45734,6 +46133,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -45821,6 +46221,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -45908,6 +46309,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -45995,6 +46397,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -49206,6 +49609,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -49670,6 +50074,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -49908,6 +50313,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53463,6 +53869,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53553,6 +53960,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53643,6 +54051,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53728,6 +54137,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53818,6 +54228,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53902,6 +54313,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -53986,6 +54398,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -54071,6 +54484,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -56042,7 +56456,7 @@
       "permission_key": "policies",
       "primary_action": "\u2192",
       "primary_user_decision": "Which queued record should be handled next?",
-      "purpose": "Operate policies & documents within the frontend workflow.",
+      "purpose": "The policies and manuals the Regional HR Director owns, and who has acknowledged them.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -56056,6 +56470,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -58717,6 +59132,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -59303,6 +59719,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -59542,6 +59959,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -59628,6 +60046,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -64434,6 +64853,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -64517,6 +64937,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -67503,6 +67924,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -68000,6 +68422,7 @@
       "services_and_models": [
         "apps.accounts.models",
         "apps.audit.models",
+        "apps.documents.models",
         "apps.hr.models",
         "apps.notifications.services",
         "apps.professional_development.models"
@@ -78858,6 +79281,72 @@
       ]
     },
     {
+      "callback": "apps.frontend.views.hr_programme_views.compliance_record_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compliance_register",
+      "required_permissions": [],
+      "route": "/compliance-register/<str:record_id>",
+      "route_name": "compliance_record_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.compliance_evidence_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compliance_register",
+      "required_permissions": [],
+      "route": "/compliance-register/new",
+      "route_name": "compliance_evidence_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.compliance_requirement_drawer",
+      "kind": "drawer",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compliance_register",
+      "required_permissions": [],
+      "route": "/compliance-register/requirement",
+      "route_name": "compliance_requirement_drawer",
+      "templates": [
+        "partials/hr/form_drawer.html"
+      ]
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.compliance_requirement_add",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compliance_register",
+      "required_permissions": [],
+      "route": "/compliance-register/requirement/add",
+      "route_name": "compliance_requirement_add",
+      "templates": []
+    },
+    {
+      "callback": "apps.frontend.views.hr_programme_views.compliance_evidence_save",
+      "kind": "action",
+      "methods": [
+        "GET"
+      ],
+      "page_permission": "compliance_register",
+      "required_permissions": [],
+      "route": "/compliance-register/save",
+      "route_name": "compliance_evidence_save",
+      "templates": []
+    },
+    {
       "callback": "apps.frontend.views.decision_views.core_school_health_view",
       "kind": "page",
       "methods": [
@@ -85579,30 +86068,30 @@
     "view and template source"
   ],
   "summary": {
-    "accessibility_contract_pass": 439,
+    "accessibility_contract_pass": 442,
     "activity_states": 24,
-    "all_routes": 1109,
+    "all_routes": 1114,
     "api_routes": 359,
     "component_templates": 413,
     "full_pages": 241,
-    "mobile_contract_pass": 439,
-    "nonvisual_actions": 181,
+    "mobile_contract_pass": 442,
+    "nonvisual_actions": 183,
     "page_types": {
       "administration-or-configuration": 25,
       "analytics": 19,
       "approval-or-verification": 19,
       "dashboard": 1,
-      "interaction-fragment": 376,
+      "interaction-fragment": 381,
       "operational-queue": 139,
       "planning-or-creation": 9,
       "record-detail": 25,
       "report": 28
     },
-    "partials_and_drawers": 195,
-    "permission_gated": 626,
+    "partials_and_drawers": 198,
+    "permission_gated": 631,
     "permission_keys": 112,
     "roles": 15,
-    "routed_surfaces": 641,
+    "routed_surfaces": 646,
     "scheduled_jobs": 26,
     "severity_counts": {
       "critical": 0,
@@ -85610,8 +86099,8 @@
       "low": 0,
       "medium": 0
     },
-    "tablet_contract_pass": 439,
-    "test_referenced": 585,
-    "theme_contract_pass": 439
+    "tablet_contract_pass": 442,
+    "test_referenced": 589,
+    "theme_contract_pass": 442
   }
 }

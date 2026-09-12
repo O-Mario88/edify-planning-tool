@@ -46,7 +46,7 @@ one column, as every platform drawer is.
     <select id="hr-field-{{ field.name }}" name="{{ field.name }}"{% if field.required %} required{% endif %}>
       {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}
       {% for option in field.options %}
-      <option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>
+      <option value="{{ option.0 }}"{% if option.0|stringformat:"s" == field.value|stringformat:"s" %} selected{% endif %}>{{ option.1 }}</option>
       {% endfor %}
     </select>
     {% else %}

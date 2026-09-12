@@ -653,11 +653,11 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
                 "journey-06": 2,
                 "journey-09": 6,
                 "journey-11": 8,
-                # Seventy-seven since 2026-09-13: the Regional HR Director's
+                # Eighty-two since 2026-09-13: the Regional HR Director's
                 # employee-relations, staffing, compensation, health and
-                # safety, recognition and pulse-survey registers count what
-                # they now measure.
-                "journey-13": 77,
+                # safety, recognition, pulse-survey, policy and compliance
+                # registers count what they now measure.
+                "journey-13": 82,
                 # Twelve since 2026-09-12: the oversight page gained the
                 # Regional Programme Lead's three region tiles beside the
                 # country and team families it already computed.

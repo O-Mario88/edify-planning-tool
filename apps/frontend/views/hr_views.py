@@ -23,7 +23,6 @@ from apps.core.permissions import render_access_denied, require_page_permission
 from apps.hr.models import (
     Application,
     CompensationRecord,
-    ComplianceRequirement,
     EmployeeComplianceRecord,
     OffboardingPlan,
     OnboardingPlan,
@@ -1705,6 +1704,15 @@ def payroll_readiness_view(request):
 
 @require_page_permission("compliance_register")
 def compliance_register_view(request):
+    """Compliance with country employment law, employee by employee.
+
+    Mandatory requirements an employee has no record against are listed first
+    as missing, so the register shows the gaps rather than only the evidence
+    someone already filed.
+    """
+    from apps.hr.compliance_service import compliance_gaps, visible_requirements
+    from apps.hr.models import ComplianceStatus
+
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
     records = EmployeeComplianceRecord.objects.filter(
@@ -1717,114 +1725,269 @@ def compliance_register_view(request):
             | Q(requirement__country__icontains=query)
             | Q(status__icontains=query)
         )
+    gaps = compliance_gaps(request.user)
+    if query:
+        needle = query.lower()
+        gaps = [
+            (profile, requirement)
+            for profile, requirement in gaps
+            if needle in profile.user.name.lower()
+            or needle in requirement.name.lower()
+            or needle in (profile.country or "").lower()
+            or needle in "missing"
+        ]
     rows = [
+        {
+            "cells": [
+                _cell("Team member", profile.user.name, primary=True),
+                _cell("Requirement", requirement.name),
+                _cell("Country", profile.country),
+                _cell("Expiry", None),
+                _cell("Verified by", "No evidence on file"),
+                _cell("Status", ComplianceStatus.MISSING.label, status=True),
+            ],
+            "actions": [
+                {
+                    "label": "Record",
+                    "drawer": (
+                        f"/compliance-register/new?staff={profile.id}"
+                        f"&requirement={requirement.id}"
+                    ),
+                }
+            ],
+        }
+        for profile, requirement in gaps
+    ]
+    urgency = {
+        ComplianceStatus.EXPIRED: 0,
+        ComplianceStatus.MISSING: 1,
+        ComplianceStatus.DUE_SOON: 2,
+        ComplianceStatus.COMPLIANT: 3,
+    }
+    ordered = sorted(
+        records.order_by("expiry_date", "staff__user__name"),
+        key=lambda record: urgency.get(record.status, 4),
+    )
+    rows += [
         {
             "cells": [
                 _cell("Team member", record.staff.user.name, primary=True),
                 _cell("Requirement", record.requirement.name),
-                _cell("Jurisdiction", record.requirement.country),
+                _cell("Country", record.requirement.country),
                 _cell("Expiry", record.expiry_date),
                 _cell(
                     "Verified by",
                     record.verified_by.name if record.verified_by else "Not verified",
                 ),
-                _cell("Status", record.status, status=True),
-            ]
+                _cell("Status", record.get_status_display(), status=True),
+            ],
+            "actions": [
+                {"label": "Update", "drawer": f"/compliance-register/{record.id}"}
+            ],
         }
-        for record in records.order_by("expiry_date", "staff__user__name")
+        for record in ordered
     ]
-    requirements = ComplianceRequirement.objects.all()
+    requirements = visible_requirements(request.user)
     return _render_workspace(
         request,
-        title="Compliance Register",
-        description="Employee compliance evidence connected to jurisdictional requirements, expiry dates, and named verification authority.",
+        title="Employment Compliance",
+        eyebrow="Policy and compliance",
+        description=(
+            "Country employment-law requirements (contracts, work permits, "
+            "statutory registrations) and the evidence each employee holds. A "
+            "status follows its document and expiry date."
+        ),
         metrics=[
-            _metric("Requirements", requirements.count(), "configured controls"),
+            _metric(
+                "Requirements", requirements.count(), "configured for your countries"
+            ),
             _metric(
                 "Compliant",
-                records.filter(status="Compliant").count(),
-                "verified records",
+                records.filter(status=ComplianceStatus.COMPLIANT).count(),
+                "evidence in date",
                 "success",
             ),
             _metric(
                 "Due soon",
-                records.filter(status="Due Soon").count(),
-                "approaching expiry",
+                records.filter(status=ComplianceStatus.DUE_SOON).count(),
+                "expiring within 30 days",
                 "warning",
             ),
             _metric(
                 "Missing or expired",
-                records.filter(status__in=["Missing", "Expired"]).count(),
+                records.filter(
+                    status__in=[ComplianceStatus.MISSING, ComplianceStatus.EXPIRED]
+                ).count()
+                + len(gaps),
                 "requiring remediation",
                 "danger",
             ),
         ],
         rows=rows,
-        primary_action={"label": "Review Policies", "href": "/policies"},
-        empty_title="No employee compliance records in this scope",
+        header_actions=[
+            {"label": "Record evidence", "drawer": "/compliance-register/new"},
+            {
+                "label": "Add a requirement",
+                "drawer": "/compliance-register/requirement",
+            },
+        ],
+        primary_action={"label": "Policies & Documents", "href": "/policies"},
+        empty_title="No employee compliance records yet",
+        empty_body=(
+            "Add the employment-law requirements for your countries, then record "
+            "each employee's evidence."
+        ),
     )
 
 
 @require_page_permission("policies")
 def policies_view(request):
-    query = (request.GET.get("q") or "").strip()
-    requirements = ComplianceRequirement.objects.annotate(
-        record_count=Count("employeecompliancerecord")
+    """The policies and manuals the Regional HR Director owns, and who has
+    acknowledged them.
+
+    This page listed `hr.ComplianceRequirement` rows, which nothing writes, and
+    said acknowledgements were not tracked "until a dedicated acknowledgement
+    model exists" while `DocumentAcknowledgement` recorded every agreement
+    behind the first-login gate (HR audit, 2026-09-12). It now lists the
+    documents themselves, per country, with their review dates and the
+    acknowledgement coverage of the people the director oversees.
+    """
+    from datetime import timedelta
+
+    from apps.documents.models import (
+        AcknowledgementState,
+        DocumentAcknowledgement,
+        DocumentAsset,
+        DocumentStatus,
+        DocumentType,
     )
+    from apps.hr.reach import people_reach, scope_profiles
+
+    reach = people_reach(request.user)
+    query = (request.GET.get("q") or "").strip()
+    documents = (
+        DocumentAsset.objects.filter(
+            document_type__in=[DocumentType.POLICY, DocumentType.MANUAL]
+        )
+        .exclude(status=DocumentStatus.ARCHIVED)
+        .select_related("current_version")
+    )
+    if not reach.is_everything:
+        documents = documents.filter(
+            Q(country="") | Q(country__in=list(reach.countries))
+        )
     if query:
-        requirements = requirements.filter(
-            Q(name__icontains=query)
-            | Q(description__icontains=query)
+        documents = documents.filter(
+            Q(title__icontains=query)
+            | Q(category__icontains=query)
             | Q(country__icontains=query)
         )
-    rows = [
-        {
-            "cells": [
-                _cell("Policy or requirement", requirement.name, primary=True),
-                _cell("Jurisdiction", requirement.country),
-                _cell(
-                    "Mandatory",
-                    "Mandatory" if requirement.is_mandatory else "Optional",
-                    status=True,
-                ),
-                _cell("Employee records", requirement.record_count),
-                _cell("Updated", requirement.updated_at.date()),
-            ]
-        }
-        for requirement in requirements.order_by("country", "name")
-    ]
+    documents = list(documents.order_by("title"))
+
+    people = set(
+        scope_profiles(StaffProfile.objects.all(), reach)
+        .exclude(user_id=None)
+        .values_list("user_id", flat=True)
+    )
+    version_ids = [d.current_version_id for d in documents if d.current_version_id]
+    counts: dict[tuple[str, str], int] = {}
+    acknowledgements = DocumentAcknowledgement.objects.filter(
+        version_id__in=version_ids
+    )
+    if not reach.is_everything:
+        acknowledgements = acknowledgements.filter(user_id__in=people)
+    for row in acknowledgements.values("document_id", "state").annotate(n=Count("id")):
+        counts[(row["document_id"], row["state"])] = row["n"]
+
+    today = date.today()
+    review_soon = today + timedelta(days=60)
+    rows = []
+    agreed_total = asked_total = disagreed_total = reviews_due = 0
+    for document in documents:
+        version = document.current_version
+        agreed = counts.get((document.id, AcknowledgementState.AGREED), 0)
+        pending = counts.get((document.id, AcknowledgementState.PENDING), 0)
+        disagreed = counts.get((document.id, AcknowledgementState.DISAGREED), 0)
+        asked = agreed + pending + disagreed
+        agreed_total += agreed
+        asked_total += asked
+        disagreed_total += disagreed
+        review_date = getattr(version, "review_date", None)
+        if review_date and review_date <= review_soon:
+            reviews_due += 1
+        rows.append(
+            {
+                "cells": [
+                    _cell("Document", document.title, primary=True),
+                    _cell("Type", document.get_document_type_display()),
+                    _cell("Country", document.country or "All countries"),
+                    _cell(
+                        "Version",
+                        f"v{version.version_number}" if version else "No version yet",
+                    ),
+                    _cell("Review by", review_date),
+                    _cell(
+                        "Acknowledged",
+                        f"{agreed} of {asked}"
+                        if document.acknowledgement_required
+                        else "Not required",
+                    ),
+                    _cell("Status", document.get_status_display(), status=True),
+                ],
+                "actions": [
+                    {"label": "Manage", "href": f"/documents/{document.slug}/manage"}
+                ],
+            }
+        )
+    published = sum(
+        1
+        for d in documents
+        if d.status in (DocumentStatus.PUBLISHED, DocumentStatus.EFFECTIVE)
+    )
+    awaiting = sum(
+        1
+        for d in documents
+        if d.status
+        in (DocumentStatus.DRAFT, DocumentStatus.UNDER_REVIEW, DocumentStatus.RETURNED)
+    )
     return _render_workspace(
         request,
-        title="Policies & Core Documents",
-        description="The configured compliance-policy register. Document acknowledgements are not claimed until a dedicated acknowledgement model exists.",
+        title="Policies & Documents",
+        eyebrow="Policy and compliance",
+        description=(
+            "The policies and manuals that apply to the countries you oversee: "
+            "their current version, when each is due for review, and who has "
+            "acknowledged it."
+        ),
         metrics=[
+            _metric("Published policies", published, "in force", "success"),
             _metric(
-                "Configured", requirements.count(), "policy and compliance controls"
+                "Policies in review", awaiting, "draft, in review or returned", "warning"
             ),
             _metric(
-                "Mandatory",
-                requirements.filter(is_mandatory=True).count(),
-                "required controls",
-                "warning",
-            ),
-            _metric(
-                "Optional",
-                requirements.filter(is_mandatory=False).count(),
-                "advisory controls",
+                "Acknowledgement rate",
+                f"{round(agreed_total * 100 / asked_total)}%" if asked_total else "—",
+                "of required acknowledgements agreed",
                 "info",
             ),
             _metric(
-                "Jurisdictions",
-                requirements.values("country").distinct().count(),
-                "countries or global scope",
+                "Policy reviews due",
+                reviews_due,
+                "review date within 60 days",
+                "warning",
+            ),
+            _metric(
+                "Disagreements",
+                disagreed_total,
+                "staff who did not agree",
+                "danger" if disagreed_total else "success",
             ),
         ],
         rows=rows,
-        primary_action={
-            "label": "Open Compliance Register",
-            "href": "/compliance-register",
-        },
-        empty_title="No policies or compliance controls configured",
+        header_actions=[{"label": "Publish a policy", "href": "/uploads/new"}],
+        primary_action={"label": "Policy Compliance", "href": "/policy-compliance"},
+        empty_title="No policies yet",
+        empty_body="Publish a policy or manual to track its review and acknowledgement here.",
     )
 
 
@@ -2020,6 +2183,22 @@ def people_analytics_section_view(request):
     )
 
 
+def _audit_action_label(action: str) -> str:
+    """ "hr.er_case_opened" reads "Er case opened" under its area, not as a code."""
+    area, _, name = (action or "").partition(".")
+    areas = {
+        "hr": "HR",
+        "pd": "Professional development",
+        "leave": "Leave",
+        "documents": "Policy",
+        "admin": "Accounts",
+    }
+    words = (name or area).replace("_", " ").replace(".", " ").strip()
+    if not words:
+        return action or "—"
+    return f"{areas.get(area, area.title())} · {words[0].upper()}{words[1:]}"
+
+
 @require_page_permission("hr_audit_log")
 def hr_audit_log_view(request):
     """The real HR trail, from the tamper-evident chain.
@@ -2035,11 +2214,14 @@ def hr_audit_log_view(request):
     from apps.audit.models import AuditLog
 
     query = (request.GET.get("q") or "").strip()
+    # Policy events (published, agreed, disagreed, commented) belong on the
+    # HR trail too: the director owns those policies (HR audit, 2026-09-12).
     events = AuditLog.objects.filter(
         Q(action__startswith="hr.")
         | Q(action__startswith="pd.")
         | Q(action__startswith="pd_")
         | Q(action__startswith="leave.")
+        | Q(action__startswith="documents.")
         | Q(action__startswith="admin.user")
         | Q(action__startswith="admin.supervisor")
     )
@@ -2062,7 +2244,7 @@ def hr_audit_log_view(request):
     rows = [
         {
             "cells": [
-                _cell("Action", event.action, primary=True),
+                _cell("Action", _audit_action_label(event.action), primary=True),
                 _cell(
                     "Actor",
                     actor_names.get(event.actor_id, event.actor_id or "System"),
@@ -2085,6 +2267,7 @@ def hr_audit_log_view(request):
     return _render_workspace(
         request,
         title="HR System Audit Log",
+        eyebrow="Policy and compliance",
         description="Sensitive people decisions as recorded on the platform's tamper-evident, hash-chained audit trail. Payload detail stays out of the list to limit incidental PII exposure.",
         metrics=[
             _metric("Events", total, "matching audit records"),
@@ -2107,7 +2290,9 @@ def hr_audit_log_view(request):
             ),
         ],
         rows=rows,
-        primary_action={"label": "Open System Health", "href": "/system-health"},
+        # System Health is Admin-only; the button refused HR (HR audit,
+        # 2026-09-12).
+        primary_action={"label": "HR Today", "href": "/hr-today"},
         empty_title="No HR audit events recorded yet",
     )
 

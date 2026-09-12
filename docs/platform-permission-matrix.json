@@ -7627,6 +7627,66 @@
    "view": "apps.frontend.views.hr_views.compliance_register_view"
   },
   {
+   "page_permission": "compliance_register",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/compliance-register/<str:record_id>",
+   "route_name": "compliance_record_drawer",
+   "view": "apps.frontend.views.hr_programme_views.compliance_record_drawer"
+  },
+  {
+   "page_permission": "compliance_register",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/compliance-register/new",
+   "route_name": "compliance_evidence_drawer",
+   "view": "apps.frontend.views.hr_programme_views.compliance_evidence_drawer"
+  },
+  {
+   "page_permission": "compliance_register",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/compliance-register/requirement",
+   "route_name": "compliance_requirement_drawer",
+   "view": "apps.frontend.views.hr_programme_views.compliance_requirement_drawer"
+  },
+  {
+   "page_permission": "compliance_register",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/compliance-register/requirement/add",
+   "route_name": "compliance_requirement_add",
+   "view": "apps.frontend.views.hr_programme_views.compliance_requirement_add"
+  },
+  {
+   "page_permission": "compliance_register",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/compliance-register/save",
+   "route_name": "compliance_evidence_save",
+   "view": "apps.frontend.views.hr_programme_views.compliance_evidence_save"
+  },
+  {
    "page_permission": "core_school_health",
    "required_permissions": [],
    "role_exclusive": false,
@@ -15398,11 +15458,11 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 392,
-  "Admin": 823,
+  "Admin": 828,
   "BusinessTransformationOfficer": 220,
   "CCEO": 496,
   "CountryDirector": 632,
-  "HumanResources": 306,
+  "HumanResources": 311,
   "ImpactAssessment": 509,
   "MfiLoanOfficer": 118,
   "MfiPartnerAdmin": 121,
@@ -15416,8 +15476,8 @@
  "summary": {
   "page_keys_declared": 156,
   "page_keys_in_navigation": 174,
-  "routes_guarded": 920,
-  "routes_total": 1109,
+  "routes_guarded": 925,
+  "routes_total": 1114,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },

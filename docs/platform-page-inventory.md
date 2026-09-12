@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **641**
-- All registered routes: **1109**
+- Routed product surfaces: **646**
+- All registered routes: **1114**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
@@ -13,9 +13,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Activity states: **24**
 - Shared component templates: **413**
 - Full pages: **241**
-- Partials and drawers: **195**
-- Permission-gated surfaces: **626**
-- Referenced by automated tests: **585**
+- Partials and drawers: **198**
+- Permission-gated surfaces: **631**
+- Referenced by automated tests: **589**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -191,6 +191,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-6A7759EFE6 | /completed-activities/<str:activity_id> | Completed Activity Record - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-863319037E | /completed-activities/<str:activity_id>/ | Completed Activity Record - Edify Command Center | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-49B65EC594 | /compliance-register | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-DB334B0C2E | /compliance-register/<str:record_id> | Compliance Record Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-AC385A04B9 | /compliance-register/new | Compliance Evidence Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6434887040 | /compliance-register/requirement | Compliance Requirement Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-EB42D38F2F | /compliance-register/requirement/add | Compliance Requirement Add | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-CAE42FDDA4 | /compliance-register/save | Compliance Evidence Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-674EDB9BA4 | /core-school-health | Core School Health | analytics | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-635D9F0FEB | /core-schools | Core Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-C4495A9FB9 | /core-schools/<str:plan_id> | Core School Plan | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

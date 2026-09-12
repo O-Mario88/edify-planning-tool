@@ -28,9 +28,13 @@ every authenticated page.
     </div>
     <div class="hcos-hero__actions">
       {% for action in header_actions %}
+      {% if action.href %}
+      <a class="hcos-button hcos-button--primary" href="{{ action.href }}" data-hr-header-action><span>{{ action.label }}</span></a>
+      {% else %}
       <button type="button" class="hcos-button hcos-button--primary" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-hr-header-action>
         <span>{{ action.label }}</span>
       </button>
+      {% endif %}
       {% endfor %}
       {% if primary_action %}
       <a class="hcos-button {% if header_actions %}hcos-button--secondary{% else %}hcos-button--primary{% endif %}" href="{{ primary_action.href }}">

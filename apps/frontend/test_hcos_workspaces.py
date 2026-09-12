@@ -91,5 +91,20 @@ class HCOSWorkspaceViewTestCase(TestCase):
         self.assertContains(performance, "Visible Team Member")
         self.assertContains(performance, "72%")
 
+        # The requirement is on the compliance register: the employee has no
+        # evidence against it yet, so it reads as a gap. The policies page lists
+        # documents (apps.documents), not requirements (2026-09-13).
+        compliance = self.client.get("/compliance-register")
+        self.assertContains(compliance, "Safeguarding policy")
+        self.assertContains(compliance, "No evidence on file")
+
+        from apps.documents.models import DocumentAsset, DocumentStatus, DocumentType
+
+        DocumentAsset.objects.create(
+            title="Staff Handbook",
+            slug="staff-handbook",
+            document_type=DocumentType.POLICY,
+            status=DocumentStatus.PUBLISHED,
+        )
         policies = self.client.get("/policies")
-        self.assertContains(policies, "Safeguarding policy")
+        self.assertContains(policies, "Staff Handbook")

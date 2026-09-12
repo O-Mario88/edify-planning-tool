@@ -99,10 +99,6 @@ KNOWN_READ_ONLY = {
         "Retired. claim_reimbursement() has no production caller; the live "
         "path is AdvanceRequest, and navigation.py de-links the dead queue."
     ),
-    "EmployeeComplianceRecord": (
-        "HR compliance register with no entry surface. The dashboard renders "
-        "an em dash rather than 0%, so the empty table is not read as failure."
-    ),
     "PayrollReadinessRecord": (
         "Payroll readiness register with no entry surface. Descoped from "
         "navigation like the two above, and the HR dashboard KPI renders an "
