@@ -39,6 +39,7 @@ def verify_or_exit() -> None:
     # still reported here at boot and stays visible as a standing System
     # Health finding (`apps/core/health.py`), so it can never pass silently.
     warnings = _check_email_delivery_configured()
+    warnings += _check_connection_lifetime_ignored()
     if warnings:
         sys.stderr.write(
             "Production environment warnings (not blocking boot):\n"
@@ -100,6 +101,26 @@ def _check_static_assets_collected() -> list[str]:
             "`python manage.py collectstatic --noinput` before starting the server."
         ]
     return []
+
+
+def _check_connection_lifetime_ignored() -> list[str]:
+    """Report a DB_CONN_MAX_AGE that settings refused to apply.
+
+    A persistent connection lifetime without a connection pool leaks sessions
+    under ASGI until the managed cluster refuses new ones, which is how
+    production went down on 2026-09-12. Settings therefore apply the lifetime
+    only when DB_USE_PGBOUNCER is set; this makes the refusal visible at every
+    boot instead of leaving an operator to believe the setting took effect.
+    """
+    from django.conf import settings
+
+    if not getattr(settings, "DB_CONN_MAX_AGE_IGNORED", False):
+        return []
+    return [
+        "DB_CONN_MAX_AGE is set but ignored: persistent database connections "
+        "need a connection pool in front of Postgres (set DB_USE_PGBOUNCER=true "
+        "with a pooled DATABASE_URL), otherwise they exhaust the database."
+    ]
 
 
 def _check_email_delivery_configured() -> list[str]:

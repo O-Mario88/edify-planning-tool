@@ -60,6 +60,58 @@ class AsgiConnectionLifecycleTest(SimpleTestCase):
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertEqual(result.stdout.strip(), "0")
 
+    def _settings_json(self, extra_env):
+        env = os.environ.copy()
+        env.pop("DB_USE_PGBOUNCER", None)
+        env.pop("DB_CONN_MAX_AGE", None)
+        env.update({"DJANGO_SETTINGS_MODULE": "config.settings.base", **extra_env})
+        result = subprocess.run(
+            [
+                sys.executable,
+                "-c",
+                "import json; from django.conf import settings; "
+                "print(json.dumps({'conn_max_age': "
+                "settings.DATABASES['default']['CONN_MAX_AGE'], "
+                "'ignored': settings.DB_CONN_MAX_AGE_IGNORED}))",
+            ],
+            cwd=ROOT,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=20,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        return json.loads(result.stdout)
+
+    def test_a_lifetime_on_a_direct_connection_is_refused(self):
+        """The 2026-09-12 outage: DB_CONN_MAX_AGE=60 on the direct connection
+        exhausted the managed cluster's connection slots."""
+        resolved = self._settings_json({"DB_CONN_MAX_AGE": "60"})
+        self.assertEqual(resolved["conn_max_age"], 0)
+        self.assertTrue(resolved["ignored"])
+
+    def test_a_lifetime_behind_the_pool_is_honoured(self):
+        resolved = self._settings_json(
+            {
+                "DB_CONN_MAX_AGE": "60",
+                "DB_USE_PGBOUNCER": "true",
+                "DATABASE_URL": "postgresql://runtime:secret@db.example:25061/edify?sslmode=require",
+            }
+        )
+        self.assertEqual(resolved["conn_max_age"], 60)
+        self.assertFalse(resolved["ignored"])
+
+    def test_the_boot_gate_reports_a_refused_lifetime(self):
+        from unittest import mock
+
+        from apps.core import boot_gates
+
+        with mock.patch.object(settings, "DB_CONN_MAX_AGE_IGNORED", True, create=True):
+            self.assertEqual(len(boot_gates._check_connection_lifetime_ignored()), 1)
+        with mock.patch.object(settings, "DB_CONN_MAX_AGE_IGNORED", False, create=True):
+            self.assertEqual(boot_gates._check_connection_lifetime_ignored(), [])
+
     def test_pooled_runtime_omits_unsupported_startup_options(self):
         env = os.environ.copy()
         env.update(

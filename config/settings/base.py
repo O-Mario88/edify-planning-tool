@@ -290,10 +290,16 @@ DATABASES["default"]["CONN_HEALTH_CHECKS"] = True
 # ``DB_CONN_MAX_AGE`` lifts that once a bounded pool is in front of Postgres
 # (DigitalOcean's connection pool / PgBouncer in transaction mode): with a
 # pool, a persistent connection is a local handle rather than a TLS handshake
-# to the managed cluster on every request — which is what the live site paid,
-# on a 1-vCPU instance, for each of a page's requests (2026-09-12). Unset, the
-# ASGI-safe default of 0 stands.
-DATABASES["default"]["CONN_MAX_AGE"] = int(os.environ.get("DB_CONN_MAX_AGE", "0") or 0)
+# to the managed cluster on every request. Without a pool it is a leak, so it
+# is honoured only when DB_USE_PGBOUNCER says a pool is there (below).
+#
+# That is enforced, not advised, since the production outage of 2026-09-12:
+# DB_CONN_MAX_AGE=60 was set on the web service's DIRECT connection, the
+# managed cluster ran out of slots within four hours ("remaining connection
+# slots are reserved for roles with the SUPERUSER attribute"), the live site
+# answered sign-in with a 500, and the next deploy's migrate job could not
+# connect at all.
+DB_CONN_MAX_AGE_REQUESTED = _as_int(os.environ.get("DB_CONN_MAX_AGE"), 0)
 
 # Managed PgBouncer rejects libpq's generic ``options`` startup parameter.
 # Pooled runtime roles therefore carry the same timeout policy as ALTER ROLE
@@ -301,6 +307,13 @@ DATABASES["default"]["CONN_MAX_AGE"] = int(os.environ.get("DB_CONN_MAX_AGE", "0"
 # session before an instance is allowed to serve traffic.  Migrations stay on
 # a direct connection and retain the per-connection options below.
 DB_USE_PGBOUNCER = _truthy(os.environ.get("DB_USE_PGBOUNCER"), fallback=False)
+
+DATABASES["default"]["CONN_MAX_AGE"] = (
+    DB_CONN_MAX_AGE_REQUESTED if DB_USE_PGBOUNCER else 0
+)
+# Surfaced as a boot warning (apps/core/boot_gates.py) so a lifetime set on a
+# direct connection is visible rather than silently ignored.
+DB_CONN_MAX_AGE_IGNORED = bool(DB_CONN_MAX_AGE_REQUESTED and not DB_USE_PGBOUNCER)
 
 # ── Database timeouts ────────────────────────────────────────────────────────
 # Postgres defaults all three of these to "wait forever", which is the wrong
