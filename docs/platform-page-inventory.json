@@ -2723,7 +2723,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23569,
+      "bytes": 23486,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -2737,7 +2737,7 @@
       "kind": "application-partial",
       "name": "Cluster Action Planner Drawer",
       "purpose": "Reusable cluster action planner drawer interface primitive",
-      "responsive_behavior": "explicit responsive contract",
+      "responsive_behavior": "inherits containing page contract",
       "states": [
         "default",
         "empty",
