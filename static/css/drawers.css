@@ -668,6 +668,18 @@
   display: block; margin-bottom: 6px;
 }
 
+/* A label that lays itself out as a row keeps that layout. The block rule
+   above outranks the `flex` utility (same specificity, later sheet), so a
+   checkbox list's text dropped under its box — the cluster planner's
+   Schools Invited read as two floors per school (owner, 2026-09-12). */
+.drawer-body label.flex,
+.drawer-body label.inline-flex {
+  display: flex;
+}
+.drawer-body label.inline-flex {
+  display: inline-flex;
+}
+
 /* Badges inside drawers */
 .drawer-body .badge,
 .drawer-body .inline-flex[class*="rounded"] {

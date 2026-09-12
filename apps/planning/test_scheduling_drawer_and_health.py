@@ -1094,3 +1094,19 @@ class PartnerMyPlanActionTest(TestCase):
         payload = get_todos(agency_user)
         titles = [row["title"] for row in payload["todos"]]
         self.assertIn("Prepare", titles)
+
+
+class DrawerLabelRowTest(SimpleTestCase):
+    """A checkbox label that lays itself out as a row keeps that layout inside a
+    drawer (owner, 2026-09-12: "make sure the school is in the same row as the
+    checkbox, not on the second floor"). drawers.css sets every drawer label to
+    block, which outranks the `flex` utility on the planner's invited-school
+    rows; the sheet now keeps flex labels flex."""
+
+    def test_the_drawer_stylesheet_keeps_flex_labels_on_one_row(self):
+        from pathlib import Path
+
+        css = Path("static/css/drawers.css").read_text()
+        self.assertIn(".drawer-body label.flex,\n.drawer-body label.inline-flex {\n  display: flex;\n}", css)
+        html = Path("templates/partials/clusters/cluster_action_planner_drawer.html").read_text()
+        self.assertIn('<label class="flex items-center gap-2.5 px-3 py-2 cursor-pointer hover:bg-slate-50">', html)
