@@ -1178,7 +1178,7 @@
    "audit_id": "KPI-SOURCE-061",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2631,
+   "line": 2636,
    "label": null,
    "keys": [
     "aging",
@@ -1268,7 +1268,7 @@
    "audit_id": "KPI-SOURCE-065",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2549,
+   "line": 2554,
    "label": "Requested (pipeline)",
    "keys": [
     "amount",
@@ -1286,7 +1286,7 @@
    "audit_id": "KPI-SOURCE-066",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2550,
+   "line": 2555,
    "label": "Pending Confirmation",
    "keys": [
     "amount",
@@ -1304,7 +1304,7 @@
    "audit_id": "KPI-SOURCE-067",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2551,
+   "line": 2556,
    "label": "Confirmed for Advance",
    "keys": [
     "amount",
@@ -1322,7 +1322,7 @@
    "audit_id": "KPI-SOURCE-068",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2552,
+   "line": 2557,
    "label": "Disbursed",
    "keys": [
     "amount",
@@ -1340,7 +1340,7 @@
    "audit_id": "KPI-SOURCE-069",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2553,
+   "line": 2558,
    "label": "Accounted",
    "keys": [
     "amount",
@@ -1358,7 +1358,7 @@
    "audit_id": "KPI-SOURCE-070",
    "kind": "breakdown-row",
    "module": "apps/analytics/cd_analytics_service.py",
-   "line": 2554,
+   "line": 2559,
    "label": "Returned",
    "keys": [
     "amount",
@@ -1513,7 +1513,7 @@
    "audit_id": "KPI-SOURCE-078",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1687,
+   "line": 1695,
    "label": null,
    "keys": [
     "bar_color",
@@ -1533,7 +1533,7 @@
    "audit_id": "KPI-SOURCE-079",
    "kind": "other",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 2073,
+   "line": 2081,
    "label": null,
    "keys": [
     "delta_pct",
@@ -1554,7 +1554,7 @@
    "audit_id": "KPI-SOURCE-080",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 1025,
+   "line": 1033,
    "label": null,
    "keys": [
     "band",
@@ -1578,7 +1578,7 @@
    "audit_id": "KPI-SOURCE-081",
    "kind": "breakdown-row",
    "module": "apps/analytics/pl_analytics_service.py",
-   "line": 985,
+   "line": 993,
    "label": null,
    "keys": [
     "band",
@@ -2318,7 +2318,7 @@
    "audit_id": "KPI-SOURCE-116",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 877,
+   "line": 879,
    "label": null,
    "keys": [
     "label",
@@ -2903,7 +2903,7 @@
    "audit_id": "KPI-SOURCE-147",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 122,
+   "line": 124,
    "label": "Search my plan by school, School ID, cluster, district or purpose",
    "keys": [
     "hx_get",
@@ -2926,7 +2926,7 @@
    "audit_id": "KPI-SOURCE-148",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 283,
+   "line": 285,
    "label": "Actual Accounted Spend",
    "keys": [
     "amount",
@@ -2945,7 +2945,7 @@
    "audit_id": "KPI-SOURCE-149",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2089,
+   "line": 2091,
    "label": null,
    "keys": [
     "count",
@@ -2963,7 +2963,7 @@
    "audit_id": "KPI-SOURCE-150",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2200,
+   "line": 2202,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -2986,7 +2986,7 @@
    "audit_id": "KPI-SOURCE-151",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 290,
+   "line": 292,
    "label": "Approved Operating Limit",
    "keys": [
     "amount",
@@ -3005,7 +3005,7 @@
    "audit_id": "KPI-SOURCE-152",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 300,
+   "line": 302,
    "label": "Minimum Viable Cost",
    "keys": [
     "amount",
@@ -3117,7 +3117,7 @@
    "audit_id": "KPI-SOURCE-158",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 747,
+   "line": 748,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -4743,7 +4743,7 @@
    "audit_id": "KPI-SOURCE-243",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 507,
+   "line": 508,
    "label": null,
    "keys": [
     "label",
@@ -4762,7 +4762,7 @@
    "audit_id": "KPI-SOURCE-244",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 1008,
+   "line": 1009,
    "label": null,
    "keys": [
     "label",
@@ -4780,7 +4780,7 @@
    "audit_id": "KPI-SOURCE-245",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 1074,
+   "line": 1075,
    "label": "Great Impact",
    "keys": [
     "label",
@@ -4797,7 +4797,7 @@
    "audit_id": "KPI-SOURCE-246",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 1075,
+   "line": 1076,
    "label": "Positive Impact",
    "keys": [
     "label",
@@ -4814,7 +4814,7 @@
    "audit_id": "KPI-SOURCE-247",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 1076,
+   "line": 1077,
    "label": "No Measurable Impact",
    "keys": [
     "label",
@@ -4831,7 +4831,7 @@
    "audit_id": "KPI-SOURCE-248",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 1077,
+   "line": 1078,
    "label": "Negative Impact",
    "keys": [
     "label",
@@ -4848,7 +4848,7 @@
    "audit_id": "KPI-SOURCE-249",
    "kind": "breakdown-row",
    "module": "apps/projects/impact_service.py",
-   "line": 1078,
+   "line": 1079,
    "label": "Not Measurable Yet",
    "keys": [
     "label",
@@ -28772,7 +28772,7 @@
   {
    "audit_id": "KPI-PAYLOAD-025",
    "module": "apps/planning/planning_service.py",
-   "line": 838,
+   "line": 840,
    "function": "get_dashboard_data",
    "target": "kpi_strip_items",
    "source_item_count": 8,
@@ -28910,7 +28910,7 @@
   {
    "audit_id": "KPI-PAYLOAD-029",
    "module": "apps/projects/impact_service.py",
-   "line": 752,
+   "line": 753,
    "function": "get_analytics",
    "target": "kpis",
    "source_item_count": 10,
