@@ -80,7 +80,7 @@ inset themselves — see components/mobile-shell.css.
 All design tokens (color, type, spacing, radius, shadow, motion, dark theme)
 live here. Templates consume tokens via var(--edify-*). -->
 <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260909anomalies1">
-<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260911meter1">
+<link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260912history1">
 <link rel="stylesheet" href="{% static 'css/components/sidebar.css' %}?v=20260907rail1">
 <link rel="stylesheet" href="{% static 'css/components/mobile-shell.css' %}?v=20260905map1">
 <link rel="stylesheet" href="{% static 'build/css/components/mobile-patterns.css' %}?v=20260909anomalies1">
@@ -213,6 +213,7 @@ controller exists by the time a drawer's x-init runs.
 {% endcomment %}
 <script defer src="{% static 'js/drawer-background.js' %}?v=20260906float1"></script>
 <script defer src="{% static 'js/form-refusal.js' %}?v=20260911refusal1"></script>
+<script src="{% static 'js/history-controls.js' %}?v=20260912history1" defer></script>
 <!-- Responsive SVGs use viewBox units internally. Counter their outer scale
      once so chart and map labels render at the same semantic type sizes as
      surrounding HTML, including content inserted by HTMX. -->

@@ -83,6 +83,25 @@ class="flex-1 flex flex-col min-w-0 overflow-hidden"
 <header class="edify-topbar shrink-0 relative z-10">
 <div class="edify-topbar__lead flex items-center gap-4 flex-1 min-w-0">
 {% comment %}
+Back · Forward · Refresh. The app installs as a standalone PWA, so an
+installed user has no browser chrome at all: these are the only way back from
+a deep link, forward again, or to reload a page that has frozen (owner,
+2026-09-12). static/js/history-controls.js disables back and forward when
+there is nowhere to go and spins the refresh icon until the page is gone.
+Forward is hidden on phones, where the row is already short of space.
+{% endcomment %}
+<nav class="edify-topbar__history flex items-center shrink-0" aria-label="Page history" data-history-controls>
+<button type="button" class="edify-topbar__icon-control edify-topbar__history-control flex items-center justify-center focus:outline-none" title="Back" aria-label="Go back" data-history-back>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15 5l-7 7 7 7"/></svg>
+</button>
+<button type="button" class="edify-topbar__icon-control edify-topbar__history-control edify-topbar__history-control--forward flex items-center justify-center focus:outline-none" title="Forward" aria-label="Go forward" data-history-forward>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"/></svg>
+</button>
+<button type="button" class="edify-topbar__icon-control edify-topbar__history-control edify-topbar__history-control--refresh flex items-center justify-center focus:outline-none" title="Refresh" aria-label="Refresh this page" data-history-refresh>
+<svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h5M20 20v-5h-5"/><path stroke-linecap="round" stroke-linejoin="round" d="M5.6 15A7 7 0 0 0 18 16.5M18.4 9A7 7 0 0 0 6 7.5"/></svg>
+</button>
+</nav>
+{% comment %}
 The hamburger is rendered only when the bottom bar is not. Below lg the bar's
 More control opens this same drawer, so keeping both put two openers for one
 drawer on a 390px row — and the topbar row is the one already short of space

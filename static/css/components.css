@@ -3498,6 +3498,39 @@ search:has(.edify-search-submit) input[type="search"] {
   box-shadow: var(--edify-focus-ring);
 }
 
+/* Back · Forward · Refresh (templates/layouts/shell.html). One tight group
+   at the left of the top bar, like a browser's own; a control with nowhere
+   to go fades rather than disappears, so the row never shifts. */
+.edify-topbar__history {
+  gap: 0.125rem;
+  margin-inline-end: 0.25rem;
+}
+.edify-topbar__history-control:disabled {
+  opacity: 0.38;
+  cursor: default;
+  background: transparent;
+  transform: none;
+}
+.edify-topbar__history-control.is-refreshing svg {
+  animation: edify-history-spin 0.8s linear infinite;
+}
+@keyframes edify-history-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .edify-topbar__history-control.is-refreshing svg {
+    animation: none;
+    opacity: 0.5;
+  }
+}
+@media (max-width: 48rem) {
+  .edify-topbar__history-control--forward {
+    display: none;
+  }
+}
+
 /* The account avatar is the ONE filled control in the top bar, styled to match
    the search button beside it: a solid brand circle with white initials. Every
    other top-bar icon (messages, notifications, help, report a problem, the
