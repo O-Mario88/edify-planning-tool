@@ -2696,7 +2696,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 7154,
+      "bytes": 7172,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/<str:cluster_id>/bulk-assign-drawer"
@@ -2723,7 +2723,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 23486,
+      "bytes": 23522,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -6063,7 +6063,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 8898,
+      "bytes": 8916,
       "deprecated_alternatives": [],
       "example_pages": [
         "/priorities/ssa-mapping/<str:item_id>/drawer"
@@ -6764,7 +6764,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 8189,
+      "bytes": 8207,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/attendance"
@@ -7881,7 +7881,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 21168,
+      "bytes": 21186,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"

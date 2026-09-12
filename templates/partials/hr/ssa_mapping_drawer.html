@@ -94,7 +94,7 @@
     {% endcomment %}
     <div>
       <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Follow-up window, in days after delivery</p>
-      <div class="mt-1.5 grid grid-cols-3 gap-2">
+      <div class="mt-1.5 grid grid-cols-3 gap-2" data-keep-columns>
         <div>
           <label for="fu-min" class="block edify-text-caption font-semibold text-slate-500">Earliest</label>
           <input id="fu-min" type="number" min="0" name="follow_up_min_days" value="{{ current.follow_up_min_days|default_if_none:'' }}"

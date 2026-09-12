@@ -1117,6 +1117,8 @@ class DrawerLabelRowTest(SimpleTestCase):
         self.assertLess(box, ident)
         self.assertLess(ident, name)
         self.assertNotIn('<span class="block', html[box:name])
+        # the per-school counts are digits, so they stay three across
+        self.assertEqual(html.count('<div class="grid grid-cols-3 gap-2" data-keep-columns>'), 2)
         self.assertIn('.drawer-body .grid:not(.grid-cols-7):not([data-keep-columns]) {\n  grid-template-columns: minmax(0, 1fr);\n}', css)
         self.assertNotIn("repeat(2, minmax(0, 1fr));\n    align-items: start;", css)
         self.assertIn('> [class*="col-span-"] {\n  grid-column: auto;\n}', css)
