@@ -714,17 +714,16 @@ SMS_LOG_BODIES = _truthy(os.environ.get("SMS_LOG_BODIES"), fallback=False)
 # the settings page); this turns it on for every account at once, for an
 # organisation that wants it mandatory rather than optional.
 MFA_REQUIRED_FOR_ALL = _truthy(os.environ.get("MFA_REQUIRED_FOR_ALL"), fallback=False)
-# Roles that must use a second factor whether or not they enrolled: the
-# accounts that approve money, administer users or see safeguarding records
-# (AEGIS review, 2026-09-12). Comma-separated EdifyRole values; an empty
-# MFA_REQUIRED_ROLES turns the role rule off. A person holding any of these
-# roles is asked for the code at their next sign-in.
+# Roles that must use a second factor whether or not they enrolled, as a
+# comma-separated list of EdifyRole values, e.g.
+# "Admin,CountryDirector,Accountant,Program Lead,RegionalVicePresident".
+# OFF by default: turning it on for the money and admin roles on 2026-09-12
+# locked the owner out of production, because the deployment's email
+# delivery was not reaching them and email was the only channel they had.
+# Turn it on only once a code can actually reach every person it covers.
 MFA_REQUIRED_ROLES = frozenset(
     role.strip()
-    for role in os.environ.get(
-        "MFA_REQUIRED_ROLES",
-        "Admin,CountryDirector,Accountant,Program Lead,RegionalVicePresident",
-    ).split(",")
+    for role in os.environ.get("MFA_REQUIRED_ROLES", "").split(",")
     if role.strip()
 )
 
