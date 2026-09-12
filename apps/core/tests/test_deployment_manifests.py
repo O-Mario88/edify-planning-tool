@@ -104,7 +104,10 @@ class AppPlatformSpecTests(SimpleTestCase):
 
         self.assertEqual(web["instance_size_slug"], "apps-s-1vcpu-1gb-fixed")
         self.assertEqual(web["instance_count"], 1)
-        self.assertEqual(_envs(web).get("WEB_CONCURRENCY"), "1")
+        # Two workers on the 1 GB instance (~200 MB each): the ASGI handler runs
+        # sync views on one thread per worker, so one worker serves one page
+        # at a time. Worker count does not change the bill (2026-09-12).
+        self.assertEqual(_envs(web).get("WEB_CONCURRENCY"), "2")
         self.assertEqual(worker["instance_size_slug"], "apps-s-1vcpu-0.5gb")
         self.assertTrue(database["production"])
         self.assertEqual(database["cluster_name"], "edify-production-db")

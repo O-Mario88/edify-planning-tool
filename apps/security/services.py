@@ -11,11 +11,13 @@ from apps.core.crypto import load_field_encryption_key
 # Empty today. The crypto module names its intended subjects — NetSuite ids,
 # MFA secrets, reset tokens, partner payment metadata — and of those, the
 # tokens are stored as SHA-256 hashes (better than encryption for a value that
-# only ever needs comparing) and so are the MFA codes: the second factor here
-# is a one-time code sent to an inbox or a phone, and it holds no long-lived
-# secret to encrypt. What remains genuinely unprotected at rest is the NetSuite
-# identifiers and the partner payment metadata.
-ENCRYPTED_FIELDS: tuple[str, ...] = ()
+# only ever needs comparing) and so are the emailed and texted MFA codes. The
+# authenticator-app channel (2026-09-12) is different: its shared secret must
+# be read back to check a code, so User.mfa_secret is stored through
+# encrypt_field wherever the deployment has a field key. What remains
+# genuinely unprotected at rest is the NetSuite identifiers and the partner
+# payment metadata.
+ENCRYPTED_FIELDS: tuple[str, ...] = ("accounts.User.mfa_secret",)
 
 
 def summary() -> dict:
