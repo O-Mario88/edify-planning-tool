@@ -43,7 +43,11 @@ class BudgetIntelligenceInsight(TimeStampedModel):
         max_length=16, choices=DecisionConfidenceLevel.choices
     )
     confidence_score = models.FloatField()
-    amount_affected = models.FloatField(null=True, blank=True)
+    # Shillings, never a float: money is decimal everywhere else on the
+    # platform (AEGIS review, 2026-09-12).
+    amount_affected = models.DecimalField(
+        max_digits=16, decimal_places=2, null=True, blank=True
+    )
     evidence_summary = models.JSONField(null=True, blank=True)
     financial_implication = models.CharField(max_length=512, null=True, blank=True)
     suggested_action = models.CharField(max_length=512)

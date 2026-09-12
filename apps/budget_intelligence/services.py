@@ -41,7 +41,7 @@ def snapshot(principal, query: dict) -> dict:
     total = qs.count()
     low_yield = qs.filter(impact_yield__in=["low", "weak"]).count()
     high_yield = qs.filter(impact_yield__in=["high", "healthy"]).count()
-    amount_at_risk = qs.aggregate(t=Sum("amount_affected"))["t"] or 0.0
+    amount_at_risk = float(qs.aggregate(t=Sum("amount_affected"))["t"] or 0)
 
     headline = "Budget posture is healthy. No critical financial risks detected."
     if total > 0:
@@ -76,7 +76,9 @@ def memo(insight_id: str) -> dict:
         "impactYield": i.impact_yield,
         "confidenceLevel": i.confidence_level,
         "confidenceScore": i.confidence_score,
-        "amountAffected": i.amount_affected,
+        "amountAffected": (
+            float(i.amount_affected) if i.amount_affected is not None else None
+        ),
         "financialImplication": i.financial_implication,
         "suggestedAction": i.suggested_action,
         "riskFlags": i.risk_flags,
@@ -357,7 +359,9 @@ def _serialize(i: BudgetIntelligenceInsight) -> dict:
         "impactYield": i.impact_yield,
         "confidenceLevel": i.confidence_level,
         "confidenceScore": i.confidence_score,
-        "amountAffected": i.amount_affected,
+        "amountAffected": (
+            float(i.amount_affected) if i.amount_affected is not None else None
+        ),
         "financialImplication": i.financial_implication,
         "suggestedAction": i.suggested_action,
         "riskFlags": i.risk_flags or [],
