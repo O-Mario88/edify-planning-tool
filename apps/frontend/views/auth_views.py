@@ -89,7 +89,11 @@ def _login_stats():
             reached.update(attended or [])
         return len(reached & portfolio_ids)
 
-    schools_reached = _schools_touched_by(completed)
+    # "Schools reached" is the portfolio itself: every school the programme
+    # operates in today, closed schools excluded (owner, 2026-09-12). It used
+    # to be the schools with any completed work this year, which made the
+    # first tile a smaller cousin of the visited and trained tiles beside it.
+    schools_reached = portfolio
     schools_visited = _schools_touched_by(
         completed.filter(activity_type__in=VISIT_TYPES)
     )

@@ -95,8 +95,10 @@ class LoginPortfolioStatsTest(TestCase):
         stats = self._stats()
         # Four active schools; the closed one is not in the denominator.
         self.assertEqual(stats["stat_portfolio"], "4")
+        # Reached IS the operating portfolio (owner, 2026-09-12): every school
+        # the programme works in today, the closed one excluded.
+        self.assertEqual(stats["stat_schools_reached"], "4")
         for key in (
-            "stat_schools_reached",
             "stat_schools_visited",
             "stat_schools_trained",
             "stat_ssa_completed",
@@ -110,8 +112,8 @@ class LoginPortfolioStatsTest(TestCase):
 
         stats = self._stats()
         self.assertEqual(stats["stat_schools_visited"], "2")
-        # A visit is also completed work, so it reaches the school too.
-        self.assertEqual(stats["stat_schools_reached"], "2")
+        # Reached is the whole operating portfolio, whatever was visited.
+        self.assertEqual(stats["stat_schools_reached"], "4")
         self.assertEqual(stats["stat_schools_trained"], "0")
 
     def test_a_cluster_training_counts_the_schools_that_attended_it(self):
@@ -123,7 +125,7 @@ class LoginPortfolioStatsTest(TestCase):
         )
         stats = self._stats()
         self.assertEqual(stats["stat_schools_trained"], "3")
-        self.assertEqual(stats["stat_schools_reached"], "3")
+        self.assertEqual(stats["stat_schools_reached"], "4")
 
     def test_work_at_a_closed_school_counts_for_nothing(self):
         self._activity(school=self.closed, kind=ActivityType.SCHOOL_VISIT)
@@ -173,8 +175,10 @@ class LoginPortfolioStatsTest(TestCase):
             "SSA completed",
         ):
             self.assertIn(label, html)
-        # The denominator is said once per metric, quietly, beside the count.
+        # Three fractions over the portfolio, and the portfolio itself first:
+        # "Schools reached" is every operating school (owner, 2026-09-12).
         self.assertEqual(html.count('data-component="context-metric"'), 4)
-        self.assertEqual(html.count(">of 4 ·"), 4)
+        self.assertEqual(html.count(">of 4 ·"), 3)
+        self.assertIn("Every operating school · closed schools excluded", html)
         self.assertNotIn("Field visits", html)
         self.assertNotIn("Target progress", html)
