@@ -1622,14 +1622,9 @@ def admin_users_view(request):
         or getattr(request.user, "active_role", None) == EdifyRole.ADMIN.value
     )
     if not viewer_is_admin:
-        viewer_country = getattr(
-            getattr(request.user, "staff_profile", None), "country", None
-        )
-        users = (
-            users.filter(staff_profile__country=viewer_country)
-            if viewer_country
-            else users.none()
-        )
+        from apps.hr.reach import people_reach, scope_users
+
+        users = scope_users(users, people_reach(request.user))
     if search:
         users = users.filter(
             Q(name__icontains=search)
@@ -1779,8 +1774,42 @@ def admin_user_detail_view(request, user_id):
 
     member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
 
+    # The list was scoped, the record was not: any holder of the Users page
+    # could open, deactivate, lock or reset the password of any account in any
+    # country by typing its URL — an Admin's included (HR audit, 2026-09-12).
+    # A record outside the viewer's reach does not exist for them, and no one
+    # but an Admin changes an Admin's account.
+    viewer_is_admin = (
+        request.user.is_superuser
+        or getattr(request.user, "active_role", None) == "Admin"
+    )
+    if not viewer_is_admin:
+        from django.http import Http404
+
+        from apps.hr.reach import user_in_reach
+
+        if member.id != request.user.id and not user_in_reach(request.user, member):
+            raise Http404("User not found.")
+
     if request.method == "POST":
         action = request.POST.get("action")
+        if not viewer_is_admin and action in {
+            "activate",
+            "deactivate",
+            "delete",
+            "invite",
+            "reset_password",
+            "unlock",
+            "lock",
+        }:
+            from apps.admin_users.services import assert_may_administer
+            from apps.core.exceptions import BadRequest as _BadRequest
+
+            try:
+                assert_may_administer(member, request.user)
+            except _BadRequest as exc:
+                messages.error(request, str(getattr(exc, "detail", exc)))
+                return redirect("frontend:admin_user_detail", user_id=user_id)
 
         if action == "edit":
             email = request.POST.get("email", "").lower().strip()

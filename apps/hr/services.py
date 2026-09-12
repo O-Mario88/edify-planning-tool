@@ -82,13 +82,9 @@ def _leave_country_scope(principal, qs):
     which is free text where an employee explains a medical or family
     circumstance. HR is a country function, not a global one.
     """
-    if getattr(principal, "active_role", "") == "Admin":
-        return qs
-    sp = getattr(principal, "staff_profile", None)
-    country = getattr(sp, "country", None)
-    if not country:
-        return qs.none()
-    return qs.filter(staff__country=country)
+    from apps.hr.reach import people_reach, scope_by_staff
+
+    return scope_by_staff(qs, people_reach(principal), "staff")
 
 
 def list_leave(principal, query: dict) -> list[dict]:

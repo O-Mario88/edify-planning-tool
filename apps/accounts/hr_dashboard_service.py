@@ -89,20 +89,14 @@ class HRDashboardService:
         them (2026-08-20 HR audit, Critical). The four filter arguments were
         accepted and never applied, so changing them changed nothing.
         """
-        profiles = StaffProfile.objects.select_related("user").filter(
-            user__deleted_at__isnull=True
+        from apps.hr.reach import people_reach, scope_profiles
+
+        profiles = scope_profiles(
+            StaffProfile.objects.select_related("user").filter(
+                user__deleted_at__isnull=True
+            ),
+            people_reach(user),
         )
-        role = getattr(user, "active_role", "")
-        viewer = getattr(user, "staff_profile", None)
-        if role != "Admin":
-            if role in {"Program Lead", "ProgramLead"} and viewer:
-                profiles = profiles.filter(
-                    Q(id=viewer.id) | Q(supervisor_links__supervisor=viewer)
-                ).distinct()
-            elif viewer and viewer.country:
-                profiles = profiles.filter(country=viewer.country)
-            else:
-                profiles = profiles.none()
         # A filter may narrow the scope; it may never widen it.
         if country and country not in ("", "all", "All"):
             profiles = profiles.filter(country=country)
@@ -576,14 +570,11 @@ class HRDashboardService:
     @staticmethod
     def _scope_label(user, country, department, visible_count):
         """Say plainly whose figures these are, and why there are none."""
-        role = getattr(user, "active_role", "")
-        viewer = getattr(user, "staff_profile", None)
-        if role == "Admin":
-            where = "All countries"
-        elif role in {"Program Lead", "ProgramLead"} and viewer:
-            where = "Your team"
-        elif viewer and viewer.country:
-            where = viewer.country
+        from apps.hr.reach import NONE, people_reach
+
+        reach = people_reach(user)
+        if reach.kind != NONE:
+            where = reach.label()
         else:
             return (
                 "No scope",

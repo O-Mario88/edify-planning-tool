@@ -512,16 +512,14 @@ def leave_tracker_view(request):
             supervisor__user=user
         ).values_list("supervisee_id", flat=True)
         qs = qs.filter(id__in=supervisee_ids)
-    elif role != "Admin":
+    else:
         # Only the PL arm was ever narrowed, so HR, CD and RVP each read every
-        # country's roster — including per-person SICK-leave balances. HR is a
-        # country function (apps/hr/services.py:79); this page is now too.
-        viewer = getattr(user, "staff_profile", None)
-        qs = (
-            qs.filter(country=viewer.country)
-            if viewer and viewer.country
-            else qs.none()
-        )
+        # country's roster — including per-person SICK-leave balances. The
+        # roster now follows apps.hr.reach: a Regional HR Director reads their
+        # region's countries, a CD or RVP their own country.
+        from apps.hr.reach import people_reach, scope_profiles
+
+        qs = scope_profiles(qs, people_reach(user))
 
     q = request.GET.get("q", "").strip()
     if q:

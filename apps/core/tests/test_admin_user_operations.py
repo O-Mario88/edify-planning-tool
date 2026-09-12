@@ -611,6 +611,12 @@ class UpdateUserPrivilegeEscalationTest(TestCase):
             password="pwd",
             is_active=True,
         )
+        # HR administers the people of the countries it oversees
+        # (apps.hr.reach), so the HR user and the staffer share a country.
+        for number, user in enumerate((self.hr, self.cd, self.staffer), start=1):
+            StaffProfile.objects.create(
+                user=user, staff_number=f"ESC-{number}", country="Uganda"
+            )
 
     def test_hr_cannot_self_promote_to_admin(self):
         from apps.admin_users.services import update_user
@@ -703,6 +709,104 @@ class UpdateUserPrivilegeEscalationTest(TestCase):
         self.assertEqual(res.status_code, 302)
         self.staffer.refresh_from_db()
         self.assertEqual(self.staffer.active_role, EdifyRole.CCEO.value)
+
+
+class UsersConsoleReachTest(TestCase):
+    """The Users list was scoped and the record was not: any holder of the
+    Users page could open and deactivate, lock or reset the password of any
+    account in any country by typing its URL, an Admin's included (HR audit,
+    2026-09-12)."""
+
+    def setUp(self):
+        self.hr = User.objects.create_user(
+            email="reach-hr@edify.test",
+            name="Reach HR",
+            roles=[EdifyRole.HUMAN_RESOURCES.value],
+            active_role=EdifyRole.HUMAN_RESOURCES.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.local = User.objects.create_user(
+            email="reach-local@edify.test",
+            name="Local Staffer",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.foreign = User.objects.create_user(
+            email="reach-foreign@edify.test",
+            name="Foreign Staffer",
+            roles=[EdifyRole.CCEO.value],
+            active_role=EdifyRole.CCEO.value,
+            password="pwd",
+            is_active=True,
+        )
+        self.local_admin = User.objects.create_user(
+            email="reach-admin@edify.test",
+            name="Local Admin",
+            roles=[EdifyRole.ADMIN.value],
+            active_role=EdifyRole.ADMIN.value,
+            password="pwd",
+            is_active=True,
+        )
+        for number, (user, country) in enumerate(
+            (
+                (self.hr, "Uganda"),
+                (self.local, "Uganda"),
+                (self.foreign, "Kenya"),
+                (self.local_admin, "Uganda"),
+            ),
+            start=1,
+        ):
+            StaffProfile.objects.create(
+                user=user, staff_number=f"REACH-{number}", country=country
+            )
+        self.client.force_login(self.hr)
+
+    def _detail(self, user):
+        return reverse("frontend:admin_user_detail", kwargs={"user_id": user.id})
+
+    def test_a_record_outside_the_reach_does_not_exist(self):
+        self.assertEqual(self.client.get(self._detail(self.foreign)).status_code, 404)
+        res = self.client.post(self._detail(self.foreign), {"action": "deactivate"})
+        self.assertEqual(res.status_code, 404)
+        self.foreign.refresh_from_db()
+        self.assertTrue(self.foreign.is_active)
+
+    def test_a_record_inside_the_reach_opens(self):
+        self.assertEqual(self.client.get(self._detail(self.local)).status_code, 200)
+
+    def test_hr_cannot_deactivate_or_lock_an_admin(self):
+        for action in ("deactivate", "lock", "reset_password"):
+            with self.subTest(action=action):
+                self.client.post(
+                    self._detail(self.local_admin),
+                    {"action": action, "new_password": "Temp-Password-123!"},
+                )
+                self.local_admin.refresh_from_db()
+                self.assertTrue(self.local_admin.is_active)
+                self.assertFalse(self.local_admin.lockout_escalated)
+
+    def test_the_service_refuses_it_too(self):
+        from apps.admin_users.services import disable
+        from apps.core.exceptions import BadRequest
+
+        with self.assertRaises(BadRequest):
+            disable(self.local_admin.id, self.hr)
+
+    def test_a_regional_hr_director_reaches_every_assigned_country(self):
+        from apps.accounts.models import StaffGeographyAssignment
+        from apps.hr.reach import people_reach, user_in_reach
+
+        kenya = Region.objects.create(name="Reach Kenya Region", country="Kenya")
+        StaffGeographyAssignment.objects.create(
+            staff=self.hr.staff_profile, region_id=kenya.id
+        )
+        reach = people_reach(self.hr)
+        self.assertEqual(reach.countries, ("Kenya",))
+        self.assertTrue(user_in_reach(self.hr, self.foreign))
+        self.assertFalse(user_in_reach(self.hr, self.local))
 
 
 class AccountLifecycleAuditTest(TestCase):

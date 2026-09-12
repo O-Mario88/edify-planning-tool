@@ -480,11 +480,22 @@ class FieldDebriefService:
             pass  # unrestricted
         elif role == EdifyRole.HUMAN_RESOURCES.value:
             # HR is read-only audience for people/capacity signals — sees
-            # everything non-restricted, plus restricted rows explicitly
-            # routed to HR (safeguarding/staff-safety) via recipients.
+            # everything non-restricted in the countries they oversee, plus
+            # restricted rows explicitly routed to HR (safeguarding/staff
+            # safety) via recipients.
+            from apps.accounts.models import StaffProfile
+            from apps.hr.reach import people_reach, scope_profiles
+
+            reach = people_reach(principal)
+            visible = Q(is_restricted_incident=False)
+            if not reach.is_everything:
+                visible &= Q(
+                    staff_id__in=scope_profiles(
+                        StaffProfile.objects.all(), reach
+                    ).values_list("id", flat=True)
+                )
             qs = qs.filter(
-                Q(is_restricted_incident=False)
-                | Q(recipients__recipient_user_id=principal.user_id)
+                visible | Q(recipients__recipient_user_id=principal.user_id)
             ).distinct()
         elif role == EdifyRole.IMPACT_ASSESSMENT.value:
             qs = qs.filter(

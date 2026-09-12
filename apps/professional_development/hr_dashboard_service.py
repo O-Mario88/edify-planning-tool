@@ -112,8 +112,23 @@ def _scoped_staff_ids(principal):
     from apps.accounts.models import StaffProfile
 
     role = getattr(principal, "active_role", "")
-    if role in ("HumanResources", "Admin"):
+    if role == "Admin":
         return None, None
+    if role == "HumanResources":
+        # The Regional HR Director oversees the countries of their region.
+        from apps.hr.reach import people_reach, scope_profiles
+
+        reach = people_reach(principal)
+        if reach.is_everything:
+            return None, None
+        return (
+            list(
+                scope_profiles(StaffProfile.objects.all(), reach).values_list(
+                    "id", flat=True
+                )
+            ),
+            None,
+        )
     if role == "CountryDirector":
         sp = StaffProfile.objects.filter(user=principal).first()
         country = sp.country if sp else None
@@ -737,20 +752,24 @@ class HRPDDashboardService:
         # post another country's name and rewrite that country's PD budget for
         # a whole role. Pin it to the actor's own country unless they are Admin.
         if getattr(principal, "active_role", "") != "Admin":
-            actor_country = getattr(
-                getattr(principal, "staff_profile", None), "country", None
-            )
-            if not actor_country:
-                raise Forbidden(
-                    "Your staff profile has no country, so an allocation "
-                    "cannot be scoped to you."
-                )
-            if country and country != actor_country:
-                raise Forbidden(
-                    "You may only set Professional Development allocations for "
-                    f"{actor_country}."
-                )
-            country = actor_country
+            from apps.hr.reach import people_reach
+
+            reach = people_reach(principal)
+            if not reach.is_everything:
+                if not reach.countries:
+                    raise Forbidden(
+                        "Your staff profile has no country, so an allocation "
+                        "cannot be scoped to you."
+                    )
+                if not country and len(reach.countries) == 1:
+                    country = reach.countries[0]
+                if country not in reach.countries:
+                    raise Forbidden(
+                        "You may only set Professional Development allocations "
+                        "for " + ", ".join(reach.countries) + "."
+                    )
+            elif not country:
+                raise BadRequest("Choose the country this allocation applies to.")
 
         amount_cents = int(round(amount_major * 100))
         if amount_cents < 0:

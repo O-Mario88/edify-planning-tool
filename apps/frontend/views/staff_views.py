@@ -57,20 +57,9 @@ def _directory_scope(user, qs):
     and every country's staff. Mirrors `hr_views._profile_scope`, which already
     gets this right for the HR workspaces.
     """
-    role = getattr(user, "active_role", "") or ""
-    if role == "Admin":
-        return qs
-    from apps.core.scoping import resolve_user_scope
+    from apps.hr.reach import people_reach, scope_users
 
-    if role == "Program Lead":
-        scope = resolve_user_scope(user)
-        team = set(scope.supervised_staff_ids or [])
-        return qs.filter(Q(staff_profile__id__in=team) | Q(id=user.id))
-    sp = getattr(user, "staff_profile", None)
-    country = getattr(sp, "country", None)
-    if not country:
-        return qs.none()
-    return qs.filter(staff_profile__country=country)
+    return scope_users(qs, people_reach(user))
 
 
 @require_page_permission("staff_directory")

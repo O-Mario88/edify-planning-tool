@@ -94,28 +94,18 @@ def _metric(label: str, value, helper: str, tone="info") -> dict:
 
 
 def _profile_scope(request):
-    """Return the staff scope visible to the active role.
+    """The People records the viewer may read — the one rule in apps.hr.reach.
 
-    Admin is organization-wide, PL is limited to its supervised team, and the
-    remaining leadership/people roles are country-scoped when their profile has
-    a country. This prevents a shared HR surface from widening data access.
+    Admin reads the organisation, a Regional HR Director the countries of
+    their region, a Programme Lead their team, every other role their own
+    country.
     """
+    from apps.hr.reach import people_reach, scope_profiles
 
     profiles = StaffProfile.objects.select_related("user").filter(
         user__deleted_at__isnull=True
     )
-    role = getattr(request.user, "active_role", "")
-    if role == "Admin":
-        return profiles
-
-    viewer = getattr(request.user, "staff_profile", None)
-    if role in {"Program Lead", "ProgramLead"} and viewer:
-        return profiles.filter(
-            Q(id=viewer.id) | Q(supervisor_links__supervisor=viewer)
-        ).distinct()
-    if viewer and viewer.country:
-        return profiles.filter(country=viewer.country)
-    return profiles.none()
+    return scope_profiles(profiles, people_reach(request.user))
 
 
 def _search_profiles(profiles, query: str):
@@ -278,13 +268,9 @@ def recruitment_view(request):
     vacancies = Vacancy.objects.select_related("reporting_manager").annotate(
         application_count=Count("applications")
     )
-    viewer = getattr(request.user, "staff_profile", None)
-    if request.user.active_role != "Admin":
-        vacancies = (
-            vacancies.filter(country=getattr(viewer, "country", ""))
-            if viewer
-            else vacancies.none()
-        )
+    from apps.hr.reach import people_reach, scope_by_country
+
+    vacancies = scope_by_country(vacancies, people_reach(request.user))
     if query:
         vacancies = vacancies.filter(
             Q(role__icontains=query)
@@ -348,13 +334,11 @@ def recruitment_view(request):
 def candidate_pipeline_view(request):
     query = (request.GET.get("q") or "").strip()
     applications = Application.objects.select_related("candidate", "vacancy")
-    viewer = getattr(request.user, "staff_profile", None)
-    if request.user.active_role != "Admin":
-        applications = (
-            applications.filter(vacancy__country=getattr(viewer, "country", ""))
-            if viewer
-            else applications.none()
-        )
+    from apps.hr.reach import people_reach, scope_by_country
+
+    applications = scope_by_country(
+        applications, people_reach(request.user), "vacancy__country"
+    )
     if query:
         applications = applications.filter(
             Q(candidate__name__icontains=query)

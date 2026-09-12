@@ -49,18 +49,23 @@ def visible_cases(principal):
     confidential case exists — including that it exists at all, which is why
     this filters rows rather than redacting fields.
     """
+    from apps.hr.reach import people_reach, scope_by_country
+
     qs = EmployeeRelationsCase.objects.select_related(
         "case_owner", "subject_staff__user", "investigator"
     )
     if _role(principal) == "Admin":
         return qs
-    country = _country(principal)
-    if not country or _role(principal) not in _HR_ROLES:
+    if _role(principal) not in _HR_ROLES:
         return qs.none()
     from django.db.models import Q
 
+    # The Regional HR Director (owner, 2026-09-12) reads the cases of every
+    # country they oversee. A confidential case stays visible only to the
+    # people working it: the director sees that confidential cases exist in
+    # the counts, never whom they concern.
     uid = getattr(principal, "user_id", None)
-    return qs.filter(country=country).filter(
+    return scope_by_country(qs, people_reach(principal)).filter(
         Q(is_confidential=False) | Q(case_owner_id=uid) | Q(investigator_id=uid)
     )
 
@@ -133,8 +138,10 @@ def open_case(data: dict, principal) -> EmployeeRelationsCase:
     )
     if not country:
         raise BadRequest("A country is required to scope this case.")
-    if _role(principal) != "Admin" and country != _country(principal):
-        raise Forbidden("You may only open cases in your own country.")
+    from apps.hr.reach import people_reach
+
+    if not people_reach(principal).allows_country(country):
+        raise Forbidden("You may only open cases in the countries you oversee.")
 
     case = EmployeeRelationsCase.objects.create(
         subject_staff=subject,

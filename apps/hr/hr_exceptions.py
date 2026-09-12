@@ -27,7 +27,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 
-from django.db.models import Count, Q, Sum
+from django.db.models import Count, Sum
 
 from apps.accounts.models import (
     Leave,
@@ -100,20 +100,12 @@ def scoped_profiles(principal):
     record of their own has no scope — that is a data-quality problem the
     exception queue itself reports, not something to paper over here.
     """
+    from apps.hr.reach import people_reach, scope_profiles
+
     profiles = StaffProfile.objects.select_related("user").filter(
         user__deleted_at__isnull=True
     )
-    role = getattr(principal, "active_role", "")
-    if role == "Admin":
-        return profiles
-    viewer = getattr(principal, "staff_profile", None)
-    if role in {"Program Lead", "ProgramLead"} and viewer:
-        return profiles.filter(
-            Q(id=viewer.id) | Q(supervisor_links__supervisor=viewer)
-        ).distinct()
-    if viewer and viewer.country:
-        return profiles.filter(country=viewer.country)
-    return profiles.none()
+    return scope_profiles(profiles, people_reach(principal))
 
 
 def _name(profile) -> str:

@@ -584,7 +584,11 @@ class HRDashboardTests(PDTestBase):
         self.kenya_cceo_sp.country = "Kenya"
         self.kenya_cceo_sp.save()
 
-    def test_hr_sees_every_country_unrestricted(self):
+    def test_hr_reads_the_countries_they_oversee(self):
+        """The Regional HR Director reads the countries their assigned
+        geography names (apps.hr.reach); with none assigned, their own."""
+        from apps.accounts.models import StaffGeographyAssignment
+        from apps.geography.models import Region
         from apps.professional_development.hr_dashboard_service import (
             HRPDDashboardService,
         )
@@ -593,7 +597,15 @@ class HRDashboardTests(PDTestBase):
         self._draft(self.kenya_cceo, status=PDStatus.IN_PROGRESS)
         ctx = HRPDDashboardService.get_dashboard(self.hr, {})
         self.assertIsNone(ctx["locked_country"])
-        self.assertEqual(ctx["tracker_total"], 2)
+        self.assertEqual(ctx["tracker_total"], 1, "unassigned: their own country")
+
+        for name, country in (("PD Uganda", "Uganda"), ("PD Kenya", "Kenya")):
+            region = Region.objects.create(name=name, country=country)
+            StaffGeographyAssignment.objects.create(
+                staff=self.hr_sp, region_id=region.id
+            )
+        ctx = HRPDDashboardService.get_dashboard(self.hr, {})
+        self.assertEqual(ctx["tracker_total"], 2, "both assigned countries")
 
     def test_country_director_locked_to_own_country(self):
         """CD's own StaffProfile is Uganda — the Kenyan CCEO's record must

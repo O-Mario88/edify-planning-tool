@@ -121,6 +121,11 @@ class UserDeletionPageTest(TestCase):
         self.second_admin = _user("page-admin2@edify.test", EdifyRole.ADMIN.value)
         self.hr = _user("page-hr@edify.test", EdifyRole.HUMAN_RESOURCES.value)
         self.cceo = _user("page-cceo@edify.test", EdifyRole.CCEO.value)
+        # HR opens the records of the people it oversees (apps.hr.reach).
+        for number, user in enumerate((self.hr, self.cceo), start=1):
+            StaffProfile.objects.create(
+                user=user, staff_number=f"DEL-PAGE-{number}", country="Uganda"
+            )
 
     def test_admin_deletes_via_page(self):
         client = Client()

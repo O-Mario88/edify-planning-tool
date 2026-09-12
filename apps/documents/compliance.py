@@ -40,8 +40,21 @@ def _scope_user_ids(principal) -> set[str] | None:
     line manager audit the whole country from a page built for their team.
     """
     role = getattr(principal, "active_role", "")
-    if role in ("HumanResources", "Admin", "RegionalVicePresident"):
+    if role in ("Admin", "RegionalVicePresident"):
         return None
+    if role == "HumanResources":
+        # The Regional HR Director reports on the countries they oversee.
+        from apps.accounts.models import StaffProfile
+        from apps.hr.reach import people_reach, scope_profiles
+
+        reach = people_reach(principal)
+        if reach.is_everything:
+            return None
+        return set(
+            scope_profiles(StaffProfile.objects.all(), reach)
+            .exclude(user_id=None)
+            .values_list("user_id", flat=True)
+        )
     if role == "CountryDirector":
         from apps.accounts.models import StaffProfile
 

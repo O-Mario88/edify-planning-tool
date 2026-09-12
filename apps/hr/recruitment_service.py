@@ -50,14 +50,18 @@ def _assert_recruiter(principal) -> None:
 
 
 def _assert_in_country(principal, country: str) -> None:
-    """HR is a country function. Admin is not bound."""
-    if _role(principal) == "Admin":
+    """Recruitment happens in the countries the actor oversees (apps.hr.reach)."""
+    from apps.hr.reach import people_reach
+
+    reach = people_reach(principal)
+    if reach.is_everything:
         return
-    actor = _country(principal)
-    if not actor:
+    if not reach.countries:
         raise Forbidden("Your staff profile has no country.")
-    if country and country != actor:
-        raise Forbidden(f"You may only manage recruitment for {actor}.")
+    if not country or country not in reach.countries:
+        raise Forbidden(
+            "You may only manage recruitment for " + ", ".join(reach.countries) + "."
+        )
 
 
 def _audit(action: str, subject_kind: str, subject_id: str, principal, payload=None):
@@ -77,11 +81,9 @@ def _audit(action: str, subject_kind: str, subject_id: str, principal, payload=N
 
 
 def scoped_vacancies(principal):
-    qs = Vacancy.objects.all()
-    if _role(principal) == "Admin":
-        return qs
-    country = _country(principal)
-    return qs.filter(country=country) if country else qs.none()
+    from apps.hr.reach import people_reach, scope_by_country
+
+    return scope_by_country(Vacancy.objects.all(), people_reach(principal))
 
 
 @transaction.atomic

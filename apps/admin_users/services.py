@@ -382,6 +382,9 @@ def _set_status(user_id: str, status: str, is_active: bool, principal=None) -> d
             user_id=user_id, accepted_at__isnull=True, revoked_at__isnull=True
         ).update(revoked_at=_tz.now())
     user = _get_user(user_id)
+    if principal is not None:
+        # Suspending, disabling or reactivating an Admin is an Admin's call.
+        assert_may_administer(user, principal)
     user.status = status
     user.is_active = is_active
     user.save(update_fields=["status", "is_active"])

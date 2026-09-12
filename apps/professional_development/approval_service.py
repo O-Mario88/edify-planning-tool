@@ -128,13 +128,15 @@ def _may_review_hr_stage(req: ProfessionalDevelopmentRequest, principal) -> bool
         return req.staff_id != (getattr(principal, "staff_profile_id", None) or "")
     actor_country = _principal_country(principal)
     if role == HR_ROLE:
-        # HR is a country function, not a global one. This was an
-        # unconditional `return True`, so an HR officer in one country could
+        # This was an unconditional `return True`, so HR in one country could
         # approve, return, reject, sign off and close a funded course for an
-        # employee in another — spawning that country's disbursement.
-        if not actor_country or not req.country:
+        # employee anywhere — spawning that country's disbursement. The
+        # Regional HR Director acts in the countries they oversee.
+        from apps.hr.reach import people_reach
+
+        if not req.country:
             return False
-        return actor_country == req.country
+        return people_reach(principal).allows_country(req.country)
     if role not in LEADERSHIP_ROLES:
         return False
     requester_is_hr = (
