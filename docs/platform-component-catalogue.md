@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **407**
+Components and application partials: **412**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -189,6 +189,11 @@ Components and application partials: **407**
 | `partials/dashboards/pl/urgent_action_sent.html` | application-partial | Reusable urgent action sent interface primitive | canonical; default | inherits containing page contract | announced dynamic state | /dashboard/pl-send-urgent-action | 0 |
 | `partials/dashboards/pl/urgent_schools_page.html` | application-partial | Reusable urgent schools page interface primitive | canonical; default | inherits containing page contract | accessible name and label | /dashboard/pl-urgent-schools | 0 |
 | `partials/dashboards/pl/view.html` | application-partial | Reusable view interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
+| `partials/dashboards/rpl/delivery_mix.html` | application-partial | Reusable delivery mix interface primitive | danger, {{ row.tone }}; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/rpl/follow_ups.html` | application-partial | Reusable follow ups interface primitive | danger; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/rpl/impact.html` | application-partial | Reusable impact interface primitive | {{ c.tone }}; default, empty | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
+| `partials/dashboards/rpl/lead_roster.html` | application-partial | Reusable lead roster interface primitive | danger, warning, {{ lead.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility | dynamic / parent-owned | 0 |
+| `partials/dashboards/rpl/priorities.html` | application-partial | Reusable priorities interface primitive | neutral; default | inherits containing page contract | accessible name and label | dynamic / parent-owned | 0 |
 | `partials/dashboards/rvp/_region_ranking.html` | application-partial | Reusable  region ranking interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
 | `partials/dashboards/rvp/approvals_drawer.html` | application-partial | Reusable approvals drawer interface primitive | canonical; default, empty | inherits containing page contract | inherits semantic parent contract | /rvp/approvals | 0 |
 | `partials/dashboards/rvp/map_view.html` | application-partial | Reusable map view interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | dynamic / parent-owned | 0 |
@@ -322,7 +327,7 @@ Components and application partials: **407**
 | `partials/oversight/partner_workspace.html` | application-partial | Reusable partner workspace interface primitive | executive; default | inherits containing page contract | accessible name and label | /partner-oversight/ | 0 |
 | `partials/oversight/period_filter_bar.html` | application-partial | Reusable period filter bar interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /country-planning-oversight/<br>/partner-oversight/<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/pl_workspace.html` | application-partial | Reusable pl workspace interface primitive | executive; default | explicit responsive contract | accessible name and label | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
-| `partials/oversight/team_country_workspace.html` | application-partial | Reusable team country workspace interface primitive | executive, warning; default | inherits containing page contract | accessible name and label, announced dynamic state | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
+| `partials/oversight/team_country_workspace.html` | application-partial | Reusable team country workspace interface primitive | executive, info; default | inherits containing page contract | accessible name and label, announced dynamic state | /team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/oversight/withdrawal_drawer.html` | application-partial | Reusable withdrawal drawer interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /partner-oversight/withdraw | 0 |
 | `partials/partner/invoice_drawer.html` | application-partial | Reusable invoice drawer interface primitive | canonical; default, error, disabled | explicit responsive contract | accessible name and label, announced dynamic state | /partner/invoices/new | 0 |
 | `partials/partners/create_partner_drawer.html` | application-partial | Reusable create partner drawer interface primitive | canonical; default, open | explicit responsive contract | accessible name and label, keyboard focus visibility | /partners/create | 0 |

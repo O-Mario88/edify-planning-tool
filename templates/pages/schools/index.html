@@ -20,7 +20,7 @@ data-mobile-family="directory"
 <div class="edify-page-header__lead">
 <p class="edify-page-eyebrow">Schools & Field</p>
 <h1 class="edify-page-title edify-page-header__title">School Directory</h1>
-<p class="edify-page-header__description">Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.</p>
+<p class="edify-page-header__description">{% if directory_read_only %}Your region's schools by Programme Lead: ownership, clustering, SSA readiness and planning status. Read-only.{% else %}Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.{% endif %}</p>
 </div>
 
 <!-- Action buttons -->

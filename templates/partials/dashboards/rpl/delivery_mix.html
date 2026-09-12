@@ -1,0 +1,27 @@
+{% comment %}
+Programme enhancement: how training, coaching and school follow-up are being
+delivered across the region. Bars are completed of planned; the caption is the
+share of work already due that is done, which is the figure that can be late.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-delivery-title" data-rpl-delivery-mix>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-delivery-title" class="rpl-card__title">Programme delivery</h2>
+      <span class="rpl-card__subtitle">Training, coaching and school follow-up across the region · completed of planned, FY {{ fy }}</span>
+    </div>
+  </header>
+  {% if summary.total_planned %}
+  <div class="rpl-mix" role="list">
+    {% for row in delivery_mix|slice:":8" %}
+    <div class="rpl-mix__row" role="listitem" data-family="{{ row.key }}">
+      <span class="rpl-mix__label" title="{{ row.hint }}">{{ row.label }}</span>
+      <span class="rpl-mix__track" role="img" aria-label="{{ row.completed }} of {{ row.planned }} planned completed"><span class="rpl-mix__fill" data-tone="{{ row.tone }}" style="inline-size: {{ row.completed_pct }}%"></span></span>
+      <span class="rpl-mix__figures"><strong>{{ row.completed }}</strong> of {{ row.planned }}</span>
+      <span class="rpl-mix__meta">{% if row.execution is not None %}{{ row.execution }}% of due{% elif row.planned %}Nothing due yet{% else %}Not planned{% endif %}{% if row.at_risk %} · <span data-tone="danger">{{ row.at_risk }} at risk</span>{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with message="Nothing is planned in your region for this year yet." hint="Delivery appears here as Programme Leads' teams schedule their work." compact="true" %}
+  {% endif %}
+</section>

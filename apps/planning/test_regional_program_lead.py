@@ -9,6 +9,11 @@ PLs, etc"
 
 Two halves, and the second is the point of the role: what it reads, and what
 it is refused.
+
+Then the role description (owner, same day): the Regional Lead for
+Christ-Centered Education directs and coaches the country programme teams of
+their region "across multiple operational countries". So the reach is whole
+countries, and the home is a dashboard built for coaching and reporting.
 """
 
 from __future__ import annotations
@@ -30,12 +35,12 @@ from apps.geography.models import District, Region, SubCounty
 from apps.schools.models import School
 
 
-def _person(uid, email, name, role):
+def _person(uid, email, name, role, country="Uganda"):
     user = User.objects.create(
         id=uid, email=email, name=name, roles=[role], active_role=role, is_active=True
     )
     profile = StaffProfile.objects.create(
-        user=user, staff_number=uid.upper(), country="Uganda", title=role
+        user=user, staff_number=uid.upper(), country=country, title=role
     )
     return user, profile
 
@@ -43,9 +48,17 @@ def _person(uid, email, name, role):
 class RegionalProgramLeadTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        # Two regions, so "regional" has to mean something.
-        cls.region = Region.objects.create(name="RPL Region")
-        cls.other_region = Region.objects.create(name="Other Region")
+        # Two countries, so "regional" has to mean something: the lead is
+        # assigned one Ugandan region, reads all of Uganda (the sibling
+        # region), and nothing of Kenya.
+        cls.region = Region.objects.create(name="RPL Region", country="Uganda")
+        cls.sibling_region = Region.objects.create(
+            name="Sibling Region", country="Uganda"
+        )
+        cls.other_region = Region.objects.create(name="Other Region", country="Kenya")
+        cls.sibling_district = District.objects.create(
+            name="Sibling District", region=cls.sibling_region, district_type="primary"
+        )
         cls.district = District.objects.create(
             name="RPL District", region=cls.region, district_type="primary"
         )
@@ -65,6 +78,13 @@ class RegionalProgramLeadTest(TestCase):
             name="Other Region School",
             region=cls.other_region,
             district=cls.other_district,
+            school_type="client",
+        )
+        cls.sibling_school = School.objects.create(
+            school_id="RPL-SIBLING",
+            name="Sibling Region School",
+            region=cls.sibling_region,
+            district=cls.sibling_district,
             school_type="client",
         )
 
@@ -88,7 +108,11 @@ class RegionalProgramLeadTest(TestCase):
         cls.school.save(update_fields=["account_owner_id"])
 
         cls.other_cceo, cls.other_cceo_sp = _person(
-            "rpl-other-cceo", "rpl-other@edify.org", "Officer Elsewhere", "CCEO"
+            "rpl-other-cceo",
+            "rpl-other@edify.org",
+            "Officer Elsewhere",
+            "CCEO",
+            country="Kenya",
         )
         StaffSchoolAssignment.objects.create(
             staff=cls.other_cceo_sp, school_id=cls.other_school.id
@@ -98,6 +122,17 @@ class RegionalProgramLeadTest(TestCase):
         cls.in_region = Activity.objects.create(
             activity_type="school_visit",
             school=cls.school,
+            fy="2026",
+            quarter="Q1",
+            delivery_type="staff",
+            responsible_staff_id=cls.cceo_sp.id,
+            status="scheduled",
+            scheduled_date=day,
+            planned_date=day.date(),
+        )
+        cls.in_sibling_region = Activity.objects.create(
+            activity_type="follow_up_visit",
+            school=cls.sibling_school,
             fy="2026",
             quarter="Q1",
             delivery_type="staff",
@@ -119,21 +154,30 @@ class RegionalProgramLeadTest(TestCase):
         )
 
     # ── What the role reads ──────────────────────────────────────────────
-    def test_the_oversight_scope_is_the_assigned_region(self):
+    def test_the_oversight_scope_is_the_assigned_region_s_country(self):
+        from apps.core.scoping import resolve_user_scope
         from apps.planning.oversight_service import resolve_oversight_scope
 
         scope = resolve_oversight_scope(self.rpl)
         self.assertEqual(scope.kind, "region")
         self.assertTrue(scope.is_region)
         self.assertTrue(scope.groups_by_lead, "the region lens reads many Leads")
-        self.assertEqual(scope.region_ids, (self.region.id,))
+        self.assertEqual(
+            set(scope.region_ids),
+            {self.region.id, self.sibling_region.id},
+            "an assigned region stands for its whole country",
+        )
+        user_scope = resolve_user_scope(self.rpl)
+        self.assertEqual(user_scope.region_countries, ["Uganda"])
+        self.assertTrue(user_scope.region_assigned)
 
-    def test_it_sees_its_region_s_activities_and_not_another_region_s(self):
+    def test_it_sees_its_countries_activities_and_not_another_country_s(self):
         from apps.planning.oversight_service import build_items
 
         ids = {item.activity_id for item in build_items(self.rpl, fy="2026")}
         self.assertIn(self.in_region.id, ids)
-        self.assertNotIn(self.out_of_region.id, ids, "a region is not the country")
+        self.assertIn(self.in_sibling_region.id, ids, "the same country's region")
+        self.assertNotIn(self.out_of_region.id, ids, "another country")
 
     def test_the_oversight_page_groups_the_region_by_program_lead(self):
         self.client.force_login(self.rpl)
@@ -142,14 +186,18 @@ class RegionalProgramLeadTest(TestCase):
         self.assertContains(page, "Lead In Region")
         self.assertContains(page, "program_lead=")
         self.assertNotContains(page, "Officer Elsewhere")
-        self.assertContains(page, "Region overview")
+        self.assertContains(page, "Regional overview")
 
-    def test_with_no_region_assigned_it_reads_nothing_and_says_why(self):
+    def test_with_no_countries_assigned_it_reads_every_country_and_says_so(self):
+        from apps.planning.oversight_service import build_items
+
         StaffGeographyAssignment.objects.filter(staff=self.rpl_sp).delete()
+        ids = {item.activity_id for item in build_items(self.rpl, fy="2026")}
+        self.assertIn(self.out_of_region.id, ids, "the RVP's rule for the same gap")
         self.client.force_login(self.rpl)
         page = self.client.get("/team-planning-oversight/")
         self.assertEqual(page.status_code, 200)
-        self.assertContains(page, "No region is assigned to your account yet")
+        self.assertContains(page, "No countries are assigned to your account yet")
 
     def test_it_may_follow_up_with_the_program_leads(self):
         from apps.frontend.views.oversight_views import may_delegate
@@ -159,13 +207,22 @@ class RegionalProgramLeadTest(TestCase):
         self.assertFalse(may_delegate(self.rpl, country=True))
         self.assertFalse(may_delegate(self.rpl, country=False))
 
-    def test_the_schools_directory_reads_the_region_grouped_by_lead(self):
+    def test_the_schools_directory_reads_the_countries_grouped_by_lead(self):
         self.client.force_login(self.rpl)
         page = self.client.get("/schools")
         self.assertEqual(page.status_code, 200)
         self.assertContains(page, "RPL School")
+        self.assertContains(page, "Sibling Region School")
         self.assertNotContains(page, "Other Region School")
         self.assertContains(page, "planning-owner-group")
+
+    def test_the_schools_directory_draws_no_controls_it_cannot_use(self):
+        self.client.force_login(self.rpl)
+        page = self.client.get("/schools")
+        self.assertTrue(page.context["directory_read_only"])
+        self.assertNotContains(page, 'id="select-all-schools"')
+        self.assertNotContains(page, "school-record-action")
+        self.assertContains(page, "Read-only.")
 
     def test_it_reads_the_priority_register_and_the_leads_targets(self):
         """Follow-up, not authorship: the canonical register and each Lead's
@@ -185,7 +242,7 @@ class RegionalProgramLeadTest(TestCase):
         self.assertEqual(
             dashboard["kpis"]["total_schools"],
             2,
-            "country overall: both regions' schools count toward the headline",
+            "country overall: both Ugandan regions count, Kenya does not",
         )
         self.assertEqual(set(dashboard["breakdowns"]), {"staff", "cluster", "partner"})
         self.client.force_login(self.rpl)
@@ -199,7 +256,7 @@ class RegionalProgramLeadTest(TestCase):
 
         officers = {user.id for user in supervised_users(self.rpl)}
         self.assertIn(self.cceo.id, officers)
-        self.assertNotIn(self.other_cceo.id, officers, "another region's officer")
+        self.assertNotIn(self.other_cceo.id, officers, "another country's officer")
         self.client.force_login(self.rpl)
         page = self.client.get("/team-targets", HTTP_HX_REQUEST="true")
         self.assertEqual(page.status_code, 200)
@@ -224,6 +281,124 @@ class RegionalProgramLeadTest(TestCase):
         page = self.client.get("/priorities/master")
         self.assertEqual(page.status_code, 200)
         self.assertFalse(page.context["is_scoped_viewer"])
+
+    # ── The dashboard (owner, 2026-09-12: "make it enterprise grade") ────
+    def test_the_dashboard_is_the_regional_lead_s_own_home(self):
+        self.client.force_login(self.rpl)
+        page = self.client.get("/dashboard?fy=2026")
+        self.assertEqual(page.status_code, 200, "no longer a redirect")
+        self.assertTemplateUsed(page, "pages/dashboards/rpl.html")
+        self.assertContains(page, "Regional Programme Lead Dashboard")
+        self.assertContains(page, "Programme Lead coaching")
+        self.assertEqual(page.context["reach"]["countries"], ["Uganda"])
+        self.assertEqual(page.context["reach_label"], "Uganda")
+        rows = {row["name"]: row for row in page.context["roster"]["rows"]}
+        self.assertEqual(rows["Lead In Region"]["planned"], 2)
+        self.assertEqual(rows["Lead In Region"]["team_size"], 1)
+        self.assertIn(
+            "program_lead=" + self.pl_sp.id, rows["Lead In Region"]["oversight_url"]
+        )
+        self.assertNotContains(page, "Officer Elsewhere")
+        families = {row["key"]: row for row in page.context["delivery_mix"]}
+        self.assertEqual(families["visits"]["planned"], 1)
+        self.assertEqual(families["coaching"]["planned"], 1)
+        countries = {row["name"]: row for row in page.context["countries"]}
+        self.assertEqual(countries["Uganda"]["planned"], 2)
+        self.assertNotIn("Kenya", countries)
+
+    def test_the_dashboard_counts_the_follow_ups_it_sent(self):
+        from apps.planning.action_models import TeamAction
+
+        TeamAction.objects.create(
+            condition_key="rpl-test:team",
+            issue_type="team_backlog",
+            school_id=self.school.id,
+            fy="2026",
+            sender_id=self.rpl.id,
+            sender_role="RegionalProgramLead",
+            recipient_id=self.pl.id,
+            recipient_role="Program Lead",
+            requested_action="Clear the team's scheduling backlog",
+            workflow_route="/team-planning-oversight/",
+            due_date=timezone.localdate() - datetime.timedelta(days=1),
+            detected_at=timezone.now(),
+        )
+        self.client.force_login(self.rpl)
+        page = self.client.get("/dashboard?fy=2026")
+        follow_ups = page.context["follow_ups"]
+        self.assertEqual((follow_ups["active"], follow_ups["overdue"]), (1, 1))
+        rows = {row["name"]: row for row in page.context["roster"]["rows"]}
+        self.assertEqual(rows["Lead In Region"]["open_follow_ups"], 1)
+        self.assertContains(page, "Clear the team&#x27;s scheduling backlog")
+        self.assertIn(
+            "1 follow-up past due",
+            [card["title"] for card in page.context["attention"]],
+        )
+
+    def test_the_delivery_families_classify_every_type_once(self):
+        from apps.analytics.rpl_dashboard_service import DELIVERY_FAMILIES, _family_of
+
+        seen: dict[str, str] = {}
+        for key, _label, _hint, members in DELIVERY_FAMILIES:
+            for member in members:
+                self.assertNotIn(
+                    member, seen, f"{member} in {seen.get(member)} and {key}"
+                )
+                seen[member] = key
+        self.assertEqual(_family_of("training"), "training")
+        self.assertEqual(_family_of("follow_up_visit"), "coaching")
+        self.assertEqual(_family_of("school_visit"), "visits")
+        self.assertEqual(_family_of("cluster_meeting"), "cluster")
+        self.assertEqual(_family_of("partner_activity"), "other")
+
+    def test_actions_sent_and_the_schools_directory_are_in_its_sidebar(self):
+        from apps.core.navigation import build_sidebar_for_user
+
+        urls = {
+            item["url"]
+            for section in build_sidebar_for_user(self.rpl, "/dashboard")
+            for item in section["items"]
+        }
+        self.assertIn("/actions/sent", urls, "follow-ups are tracked there")
+        self.assertIn("/schools", urls)
+        self.assertNotIn("/planning", urls)
+        self.client.force_login(self.rpl)
+        self.assertEqual(self.client.get("/actions/sent").status_code, 200)
+
+    def test_analytics_aggregates_read_its_countries(self):
+        """Every aggregate on /analytics read zero for this role: the shared
+        aggregate filter had no branch for it."""
+        from apps.core.scoping import aggregate_school_filter, resolve_user_scope
+
+        schools = set(
+            School.objects.filter(
+                aggregate_school_filter(resolve_user_scope(self.rpl))
+            ).values_list("id", flat=True)
+        )
+        self.assertEqual(schools, {self.school.id, self.sibling_school.id})
+
+    def test_the_analytics_overview_reads_its_countries(self):
+        """The overview has its own role branches and had none for this role,
+        so it fell to the field path and every figure read zero."""
+        from apps.analytics.analytics_dashboard_service import (
+            AnalyticsDashboardService,
+        )
+
+        School.objects.filter(id=self.school.id).update(enrollment=100)
+        School.objects.filter(id=self.sibling_school.id).update(enrollment=50)
+        School.objects.filter(id=self.other_school.id).update(enrollment=1000)
+        data = AnalyticsDashboardService.get_analytics_data(self.rpl, {"fy": "2026"})
+        values = {item["label"]: item["value"] for item in data["kpi_strip_items"]}
+        self.assertEqual(
+            values["Students Impacted"], "150", "Uganda's two, not Kenya's"
+        )
+
+    def test_the_ssa_scope_note_names_the_role_in_words(self):
+        from apps.analytics.ssa_performance_service import build_dashboard
+
+        note = build_dashboard(self.rpl, {"fy": "2026"})["scope"]["note"]
+        self.assertIn("Regional Program Lead", note)
+        self.assertNotIn("RegionalProgramLead", note)
 
     # ── What the role is refused ─────────────────────────────────────────
     def test_it_holds_no_planning_funding_or_verification_authority(self):

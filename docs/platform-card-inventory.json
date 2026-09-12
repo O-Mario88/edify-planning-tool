@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 620,
-  "templates": 228,
-  "distinct_titles": 589,
+  "titled_cards": 625,
+  "templates": 233,
+  "distinct_titles": 594,
   "with_card_key": 13,
   "untitled_surfaces": 789,
   "untitled_chrome": 179,
@@ -4862,6 +4862,51 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/dashboards/rpl/delivery_mix.html",
+   "line": 6,
+   "title": "Programme delivery",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/follow_ups.html",
+   "line": 5,
+   "title": "Coaching follow-ups",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/impact.html",
+   "line": 7,
+   "title": "Country programmes and impact",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/lead_roster.html",
+   "line": 7,
+   "title": "Programme Lead coaching",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/priorities.html",
+   "line": 6,
+   "title": "Regional priorities",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/dashboards/rvp/operations.html",
    "line": 39,
    "title": "3. Country Directors Performance",
@@ -6534,16 +6579,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 100,
-   "title": "SSA performance by staff, cluster and partner",
-   "heading_level": 2,
-   "has_card_key": false,
-   "classes": "sp-card sp-district-table-card",
-   "branch_path": []
-  },
-  {
-   "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 122,
+   "line": 95,
    "title": "District performance heat panel",
    "heading_level": 2,
    "has_card_key": false,
@@ -6552,7 +6588,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 132,
+   "line": 105,
    "title": "Intervention gaps by district",
    "heading_level": 2,
    "has_card_key": false,
@@ -6561,7 +6597,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 143,
+   "line": 116,
    "title": "Schools requiring urgent attentionUrgent-attention summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -6570,11 +6606,20 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 158,
+   "line": 131,
    "title": "Insights &amp; recommendations",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "sp-card sp-insights",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ssa/performance_workspace.html",
+   "line": 141,
+   "title": "SSA performance by staff, cluster and partner",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "sp-card sp-district-table-card sp-breakdowns-card",
    "branch_path": []
   },
   {

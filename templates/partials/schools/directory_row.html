@@ -1,9 +1,10 @@
 <li class="school-directory-row school-record-row" :class="{ 'is-expanded': openSchoolId === '{{ school.id }}' }">
   <div
-    class="school-record-row__summary school-record-row__summary--selectable"
+    class="school-record-row__summary{% if not directory_read_only %} school-record-row__summary--selectable{% endif %}"
     data-row-disclosure-summary
     @click="if (!$event.target.closest('a, button, input, label, select, textarea, [role=button]')) openSchoolId = openSchoolId === '{{ school.id }}' ? null : '{{ school.id }}'"
   >
+    {% if not directory_read_only %}
     <label class="school-record-row__select" for="select-school-{{ school.id }}">
       <input
         type="checkbox"
@@ -13,6 +14,7 @@
       >
       <span class="sr-only">Select {{ school.school_name }}</span>
     </label>
+    {% endif %}
 
     <div class="school-record-row__content">
       <button
@@ -53,6 +55,7 @@
       </div>
     </div>
 
+    {% if not directory_read_only %}
     <div class="school-record-row__actions">
       {% if "add_to_cluster" in school.available_actions %}
         <button
@@ -96,6 +99,7 @@
         </button>
       {% endif %}
     </div>
+    {% endif %}
   </div>
 
   <div id="school-directory-details-{{ school.id }}" class="school-record-row__details">

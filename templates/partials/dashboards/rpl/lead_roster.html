@@ -1,0 +1,63 @@
+{% load frontend_filters %}
+{% comment %}
+Leadership and coaching: every Programme Lead in the region, most in need of
+coaching first. Each figure is a fold of that Lead's Team Oversight rows, and
+"Open plan" lands on the same Lead's tab there.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-leads-title" data-rpl-lead-roster>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-leads-title" class="rpl-card__title">Programme Lead coaching</h2>
+      <span class="rpl-card__subtitle">Each country Programme Lead's team delivery, most in need of coaching first · FY {{ fy }}</span>
+    </div>
+    <a class="rpl-card__link" href="/team-planning-oversight/?fy={{ fy }}">All team plans <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Programme Lead coaching table; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Programme Leads in your region, ordered by coaching need, with their team's planned, delivered and at-risk work for FY {{ fy }}.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Programme Lead</th>
+          <th scope="col" class="is-num">Team</th>
+          <th scope="col" class="is-num">Planned</th>
+          <th scope="col">Delivered of due</th>
+          <th scope="col" class="is-num">At risk</th>
+          <th scope="col" class="is-num">Awaiting IA</th>
+          <th scope="col" class="is-num">Follow-ups</th>
+          <th scope="col">Status</th>
+          <th scope="col" class="is-end"><span class="sr-only">Team plan</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for lead in roster.rows|slice:":60" %}
+        <tr data-lead-tone="{{ lead.tone }}">
+          <th scope="row" data-record-title><span>{{ lead.name }}</span>{% if lead.country %}<span>{{ lead.country }}</span>{% endif %}</th>
+          <td class="is-num" data-label="Team" title="{{ lead.team_size }} CCEO{{ lead.team_size|pluralize }} supervised, {{ lead.active_officers }} with planned work">{{ lead.team_size }}</td>
+          <td class="is-num" data-label="Planned">{{ lead.planned }}</td>
+          <td data-label="Delivered of due">{% if lead.execution is not None %}<span data-tone="{{ lead.tone }}">{{ lead.execution }}%</span><span class="rpl-muted"> · {{ lead.completed }} of {{ lead.due }}</span>{% elif lead.planned %}<span class="rpl-muted">Nothing due yet</span>{% else %}<span class="rpl-muted">No plan</span>{% endif %}</td>
+          <td class="is-num" data-label="At risk">{% if lead.at_risk %}<span data-tone="danger">{{ lead.at_risk }}</span>{% else %}0{% endif %}</td>
+          <td class="is-num" data-label="Awaiting IA">{% if lead.awaiting_verification %}<span data-tone="warning">{{ lead.awaiting_verification }}</span>{% else %}0{% endif %}</td>
+          <td class="is-num" data-label="Follow-ups">{% if lead.open_follow_ups %}<a class="rpl-row-link" href="/actions/sent">{{ lead.open_follow_ups }} open</a>{% else %}<span class="rpl-muted">None</span>{% endif %}</td>
+          <td data-label="Status"><span data-tone="{{ lead.tone }}">{{ lead.tone_label }}</span></td>
+          <td class="is-end" data-label="Team plan"><a class="rpl-row-link" href="{{ lead.oversight_url }}">Open plan<span class="sr-only"> for {{ lead.name }}</span></a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="9" class="rpl-table__empty">
+            {% include "components/empty_state.html" with message="No Programme Leads work in your region yet." hint="A Programme Lead appears here once their staff record names a country in your region." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if roster.total > 60 %}
+  <div class="rpl-card__footnote">Showing 60 of {{ roster.total }} Programme Leads, most in need of coaching first. Team Oversight lists every one.</div>
+  {% endif %}
+  {% if roster.unassigned %}
+  <div class="rpl-card__footnote" data-tone="warning" data-rpl-unassigned-work>
+    {{ roster.unassigned.planned }} planned activit{{ roster.unassigned.planned|pluralize:"y,ies" }} belong to officers with no Programme Lead on record.
+    <a href="{{ roster.unassigned_url }}">Review the unassigned work</a>
+  </div>
+  {% endif %}
+</section>

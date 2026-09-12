@@ -1,0 +1,40 @@
+{% load frontend_filters %}
+{% comment %}
+Collaboration and reporting: programme impact the lead reports to the RVPs and
+the VP of CCE. Confirmed SSA results (latest per school in the year, as the SSA
+Performance page reads them) and each country programme's delivery.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-impact-title" data-rpl-impact>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-impact-title" class="rpl-card__title">Country programmes and impact</h2>
+      <span class="rpl-card__subtitle">Confirmed SSA results and delivery by country · FY {{ fy }}</span>
+    </div>
+    <a class="rpl-card__link" href="/ssa?fy={{ fy }}">SSA performance <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-impact">
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Average SSA score</span>
+      <strong class="rpl-impact__value">{% if ssa.average_score is not None %}{{ ssa.average_score|floatformat:1 }}<span class="rpl-impact__unit">/10</span>{% else %}No data{% endif %}</strong>
+      <span class="rpl-impact__meta">{% if ssa.average_score is not None %}Target {{ ssa.target|floatformat:1 }}{% else %}No confirmed assessment this year{% endif %}</span>
+    </div>
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Schools assessed</span>
+      <strong class="rpl-impact__value">{{ ssa.assessed|intcomma }}<span class="rpl-impact__unit"> of {{ ssa.total_schools|intcomma }}</span></strong>
+      <span class="rpl-impact__meta">{{ ssa.coverage|floatformat:"-1" }}% of schools</span>
+    </div>
+  </div>
+  <div class="rpl-countries" role="list">
+    {% for c in countries|slice:":12" %}
+    <div class="rpl-country" role="listitem">
+      <div class="rpl-country__head">
+        <span class="rpl-country__name">{{ c.name|default:"No country recorded" }}</span>
+        {% if c.execution is not None %}<span class="rpl-country__execution" data-tone="{{ c.tone }}">{{ c.execution }}% delivered</span>{% endif %}
+      </div>
+      <span class="rpl-country__meta">{{ c.leads }} PL{{ c.leads|pluralize }} · {{ c.officers }} staff with plans · {{ c.schools_reached|intcomma }} school{{ c.schools_reached|pluralize }} reached · {{ c.planned }} planned{% if c.ssa and c.ssa.average_score is not None %} · SSA {{ c.ssa.average_score|floatformat:1 }}{% endif %}</span>
+    </div>
+    {% empty %}
+    {% include "components/empty_state.html" with message="No country programme is in your region yet." compact="true" %}
+    {% endfor %}
+  </div>
+</section>

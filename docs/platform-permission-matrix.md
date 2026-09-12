@@ -17,7 +17,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | Program Lead | 559 |
 | CountryDirector | 627 |
 | RegionalVicePresident | 312 |
-| RegionalProgramLead | 256 |
+| RegionalProgramLead | 257 |
 | ImpactAssessment | 508 |
 | Accountant | 391 |
 | HumanResources | 270 |
@@ -78,7 +78,7 @@ hand-maintained copy of an authority is how SEC-01 happened.
 | `/accounts/weekly-requests/` | disbursements |  |  |  |  |  |  | Y |  |  |  |  |  |  |  | Y |
 | `/actions/<str:action_id>/<str:transition>` | my_actions | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
 | `/actions/mine` | my_actions | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y | Y |
-| `/actions/sent` | actions_sent |  | Y | Y | Y |  | Y |  |  |  |  |  |  |  |  | Y |
+| `/actions/sent` | actions_sent |  | Y | Y | Y | Y | Y |  |  |  |  |  |  |  |  | Y |
 | `/activities/<str:activity_id>` | my_plan | Y | Y | Y |  |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/activities/<str:activity_id>/attendance` | my_plan | Y | Y | Y |  |  | Y | Y |  | Y | Y | Y |  |  |  | Y |
 | `/activities/<str:activity_id>/attendance/action` | my_plan | Y | Y | Y |  |  | Y | Y |  | Y | Y | Y |  |  |  | Y |

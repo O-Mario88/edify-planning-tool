@@ -252,11 +252,12 @@ def resolve_oversight_scope(principal) -> OversightScope:
     ) or getattr(principal, "is_superuser", False):
         return OversightScope(kind="country")
 
-    # The Regional Programme Lead reads one region: every Programme Lead in it
-    # and every CCEO those Leads supervise, in the same Lead tabs the country
-    # lens uses (owner, 2026-09-12). The region comes from the geography
-    # assignments an administrator makes; with none they read nothing, and the
-    # page says so rather than quietly widening to the whole country.
+    # The Regional Programme Lead reads their region's countries: every
+    # Programme Lead in them and every CCEO those Leads supervise, in the same
+    # Lead tabs the country lens uses (owner, 2026-09-12). The reach comes from
+    # the geography an administrator assigns (apps.core.scoping
+    # `_regional_reach`); with none assigned it is every country, and the page
+    # says so.
     if role == EdifyRole.REGIONAL_PROGRAM_LEAD.value:
         from apps.core.scoping import resolve_user_scope as _resolve
 

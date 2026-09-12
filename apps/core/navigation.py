@@ -141,7 +141,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # queue. Both views filter to the signed-in user's rows, so there is no
     # wider set for a permissive gate to expose.
     "my_actions": ALL_ROLES,
-    "actions_sent": {PL, IA, CD, RVP, ADMIN},
+    # The Regional Programme Lead sends follow-ups to Programme Leads from
+    # Team Oversight, and the confirmation says they are tracked here.
+    "actions_sent": {PL, IA, CD, RVP, RPL, ADMIN},
     # IA holds My Targets since 2026-09-03: assessment visits and verifications
     # are measured work, not just planned work.
     "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN, IA},
@@ -1309,7 +1311,7 @@ SIDEBAR_ITEMS = [
                 "label": "Actions Sent",
                 "url": "/actions/sent",
                 "page_key": "actions_sent",
-                "visible_to": {PL, IA, CD, RVP},
+                "visible_to": {PL, IA, CD, RVP, RPL},
             },
             {
                 "label": "Upload Center",
@@ -1713,6 +1715,21 @@ SIDEBAR_ITEMS = [
                 "url": "/ia/attribution/",
                 "page_key": "ia_attribution",
                 "icon_key": "impact_analytics",
+            },
+        ],
+    },
+    {
+        # The Regional Programme Lead reads schools and does not work them, so
+        # they get the directory alone, without the field section's planning,
+        # cluster and coverage doors (owner, 2026-09-12).
+        "group_label": "SCHOOLS",
+        "visible_to": {RPL},
+        "items": [
+            {
+                "label": "Schools",
+                "url": "/schools",
+                "page_key": "schools",
+                "visible_to": {RPL},
             },
         ],
     },

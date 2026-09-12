@@ -11,7 +11,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Permission keys: **112**
 - Scheduled jobs: **26**
 - Activity states: **24**
-- Shared component templates: **407**
+- Shared component templates: **412**
 - Full pages: **237**
 - Partials and drawers: **179**
 - Permission-gated surfaces: **590**
@@ -547,7 +547,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-E363A7D6EE | /rvp/approvals | Rvp Approvals | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0C3C2C11B6 | /rvp/project/<str:project_id>/decision | Rvp Project Decision | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-4F342574B1 | /rvp/strategy-note | Rvp Strategy Note | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
-| UI-PAGE-9DCE536863 | /schools | School Directory | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-9DCE536863 | /schools | Schools | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-DBD42E0288 | /schools/<str:school_id> | School 360 | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-FD7106249F | /schools/<str:school_id>/add-to-cluster | Add To Cluster Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7B23BF68B2 | /schools/<str:school_id>/assign-to-project | Assign To Project Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

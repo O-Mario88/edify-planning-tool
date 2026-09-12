@@ -4356,6 +4356,127 @@
       "variants": []
     },
     {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1895,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Delivery Mix",
+      "purpose": "Reusable delivery mix interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rpl/delivery_mix.html",
+      "variants": [
+        "danger",
+        "{{ row.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 1916,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Follow Ups",
+      "purpose": "Reusable follow ups interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rpl/follow_ups.html",
+      "variants": [
+        "danger"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2660,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Impact",
+      "purpose": "Reusable impact interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rpl/impact.html",
+      "variants": [
+        "{{ c.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label",
+        "keyboard focus visibility"
+      ],
+      "bytes": 4468,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Lead Roster",
+      "purpose": "Reusable lead roster interface primitive",
+      "responsive_behavior": "explicit responsive contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/dashboards/rpl/lead_roster.html",
+      "variants": [
+        "danger",
+        "warning",
+        "{{ lead.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [
+        "accessible name and label"
+      ],
+      "bytes": 2053,
+      "deprecated_alternatives": [],
+      "example_pages": [],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Priorities",
+      "purpose": "Reusable priorities interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default"
+      ],
+      "tables": 0,
+      "template": "partials/dashboards/rpl/priorities.html",
+      "variants": [
+        "neutral"
+      ]
+    },
+    {
       "accessibility_requirements": [],
       "bytes": 2012,
       "deprecated_alternatives": [],
@@ -7625,7 +7746,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 3832,
+      "bytes": 3861,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -7646,7 +7767,7 @@
       "template": "partials/oversight/team_country_workspace.html",
       "variants": [
         "executive",
-        "warning"
+        "info"
       ]
     },
     {
@@ -8961,7 +9082,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 6047,
+      "bytes": 6196,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -9203,7 +9324,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6302,
+      "bytes": 6351,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -9330,7 +9451,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 20831,
+      "bytes": 20850,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -13799,6 +13920,7 @@
         "CD",
         "IA",
         "PL",
+        "RPL",
         "RVP"
       ],
       "route": "/actions/sent",
@@ -27138,6 +27260,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -27221,6 +27344,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -27301,6 +27425,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -27382,6 +27507,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48246,6 +48372,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48340,6 +48467,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48430,6 +48558,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48519,6 +48648,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48605,6 +48735,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48689,6 +48820,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48778,6 +48910,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48864,6 +48997,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -48948,6 +49082,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -57517,13 +57652,13 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-9DCE536863",
-      "page_title": "School Directory",
+      "page_title": "Schools",
       "page_type": "interaction-fragment",
       "per_page_css": [],
       "permission_key": "school_directory",
       "primary_action": "Open Upload Center",
       "primary_user_decision": "What immediate step completes the parent workflow?",
-      "purpose": "Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.",
+      "purpose": "Your region's schools by Programme Lead: ownership, clustering, SSA readiness and planning status. Read-only. Manage uploaded schools, ownership, clustering, SSA readiness, and planning status.",
       "remediation": "No automated remediation outstanding",
       "responsive_state": "shared-shell-contract",
       "role_access": [
@@ -62508,6 +62643,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -62600,6 +62736,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -62686,6 +62823,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -62770,6 +62908,7 @@
         "apps.accounts.models",
         "apps.activities.models",
         "apps.audit.services",
+        "apps.core.scoping",
         "apps.fund_requests.models",
         "apps.partners.models",
         "apps.partners.services",
@@ -82109,7 +82248,7 @@
     "activity_states": 24,
     "all_routes": 1073,
     "api_routes": 359,
-    "component_templates": 407,
+    "component_templates": 412,
     "full_pages": 237,
     "mobile_contract_pass": 419,
     "nonvisual_actions": 165,

@@ -1,0 +1,85 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Regional Programme Lead Dashboard · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+The Regional Programme Lead's home (owner, 2026-09-12): the Regional Lead for
+Christ-Centered Education, who gives strategic direction, coaching and
+reporting to the country programme teams of their region. Read-only by role:
+every control is a link into the page where the work is done.
+
+Order follows the role description: the regional pulse and what needs the
+lead today, the Programme Leads they coach, how training, follow-up and
+coaching are being delivered, then regional priorities, programme impact and
+the follow-ups they have sent.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-rpl-dashboard>
+
+  {% include "components/mobile_role_home.html" with eyebrow="Regional CCE leadership" headline="Regional coaching digest" description="Start with the Programme Lead who most needs coaching, then check the follow-ups you have sent." period_label="FY "|add:fy status_label=attention|length primary_action=mobile_primary_action %}
+
+  <div class="edify-page-header mobile-home-hide">
+    <div class="edify-page-header__lead">
+      <h1 class="edify-page-title edify-page-header__title">Regional Programme Lead Dashboard</h1>
+      <p class="edify-page-header__description">Strategic direction, coaching and delivery for Christ-Centered Education across your region's country programmes.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap bg-white/10 border border-white/15 edify-text-muted" data-rpl-reach>
+        <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-chart-green);"></span>
+        <span class="hidden sm:inline">{{ reach_label }} · {{ reach.lead_count }} PL{{ reach.lead_count|pluralize }} · {{ reach.officer_count }} CCEO{{ reach.officer_count|pluralize }} · {{ reach.school_count|intcomma }} schools</span>
+        <span class="sm:hidden">{{ reach_label }} · {{ reach.school_count|intcomma }} schools</span>
+      </span>
+      <a href="/team-planning-oversight/?fy={{ fy }}"
+         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors btn-primary shadow-sm edify-primary-solid">
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/></svg>
+        Open Team Oversight
+      </a>
+    </div>
+  </div>
+
+  <form method="get" class="edify-filter-bar" aria-label="Regional dashboard filters" x-data>
+    <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
+    <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+      {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}
+    </select>
+  </form>
+
+  {% if not reach.assigned %}
+  <div class="edify-note" data-tone="info" role="status" data-rpl-unassigned>
+    No countries are assigned to your account yet, so this dashboard reads every country on the platform.
+    An administrator narrows it to your region on your staff record, under geography.
+  </div>
+  {% endif %}
+
+  {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Regional pulse" %}
+
+  {% if attention %}
+  <section aria-labelledby="rpl-attention-title">
+    <h2 id="rpl-attention-title" class="rpl-section-title">Needs your attention</h2>
+    <div class="rpl-attention-grid" data-count="{{ attention|length }}">
+      {% for a in attention %}
+      <article class="rpl-attention" data-tone="{{ a.tone }}">
+        <h3 class="rpl-attention__title">{{ a.title }}</h3>
+        <span class="rpl-attention__body">{{ a.body }}</span>
+        <a href="{{ a.url }}" class="rpl-attention__link">{{ a.action }} <span aria-hidden="true">&rarr;</span></a>
+      </article>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+
+  {% include "partials/dashboards/rpl/lead_roster.html" %}
+
+  <div class="rpl-columns">
+    <div class="rpl-columns__main">
+      {% include "partials/dashboards/rpl/delivery_mix.html" %}
+      {% include "partials/dashboards/rpl/priorities.html" %}
+    </div>
+    <div class="rpl-columns__side">
+      {% include "partials/dashboards/rpl/impact.html" %}
+      {% include "partials/dashboards/rpl/follow_ups.html" %}
+    </div>
+  </div>
+</div>
+{% endblock %}

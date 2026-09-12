@@ -92,33 +92,6 @@
       </div>
     </section>
 
-    {% comment %}
-      The same confirmed results, by the staff member holding the school (under
-      their Programme Lead), by cluster and by the partner that collected them —
-      alongside the district table above (owner, 2026-09-12).
-    {% endcomment %}
-    <section class="sp-card sp-district-table-card" aria-labelledby="sp-breakdown-title"
-             x-data="{ by: 'staff' }" data-ssa-breakdowns>
-      <header class="sp-card__header">
-        <div><span class="sp-card__eyebrow">Who and where</span><h2 id="sp-breakdown-title">SSA performance by staff, cluster and partner</h2></div>
-      </header>
-      {# The platform's tab component (static/css/pages.css .edify-tab-btn). #}
-      <div class="edify-tab-container" role="tablist" aria-label="Group SSA performance by">
-        <button type="button" role="tab" id="sp-breakdown-tab-staff" aria-controls="sp-breakdown-panel-staff" class="edify-tab-btn" :class="{ 'active': by === 'staff' }" :aria-selected="by === 'staff'" @click="by = 'staff'" data-breakdown-tab="staff">Staff</button>
-        <button type="button" role="tab" id="sp-breakdown-tab-cluster" aria-controls="sp-breakdown-panel-cluster" class="edify-tab-btn" :class="{ 'active': by === 'cluster' }" :aria-selected="by === 'cluster'" @click="by = 'cluster'" data-breakdown-tab="cluster">Cluster</button>
-        <button type="button" role="tab" id="sp-breakdown-tab-partner" aria-controls="sp-breakdown-panel-partner" class="edify-tab-btn" :class="{ 'active': by === 'partner' }" :aria-selected="by === 'partner'" @click="by = 'partner'" data-breakdown-tab="partner">Partner</button>
-      </div>
-      <div class="sp-table-scroll" tabindex="0" role="tabpanel" id="sp-breakdown-panel-staff" aria-labelledby="sp-breakdown-tab-staff" x-show="by === 'staff'" data-breakdown="staff">
-        {% include "partials/ssa/breakdown_table.html" with key="staff" label="Staff" rows=breakdown_staff %}
-      </div>
-      <div class="sp-table-scroll" tabindex="0" role="tabpanel" id="sp-breakdown-panel-cluster" aria-labelledby="sp-breakdown-tab-cluster" x-show="by === 'cluster'" x-cloak data-breakdown="cluster">
-        {% include "partials/ssa/breakdown_table.html" with key="cluster" label="Cluster" rows=breakdown_cluster %}
-      </div>
-      <div class="sp-table-scroll" tabindex="0" role="tabpanel" id="sp-breakdown-panel-partner" aria-labelledby="sp-breakdown-tab-partner" x-show="by === 'partner'" x-cloak data-breakdown="partner">
-        {% include "partials/ssa/breakdown_table.html" with key="partner" label="Partner" rows=breakdown_partner %}
-      </div>
-    </section>
-
     <section class="sp-card sp-heat-panel" aria-labelledby="sp-heat-title">
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Portfolio risk</span><h2 id="sp-heat-title">District performance heat panel</h2></div></header>
       <div class="sp-district-tiles">
@@ -159,6 +132,33 @@
       <header class="sp-card__header"><div><span class="sp-card__eyebrow">Decision engine</span><h2 id="sp-insights-title">Insights &amp; recommendations</h2></div></header>
       <ul>{% for insight in dashboard.insights %}<li data-tone="{{ insight.tone }}"><span class="sp-insight-icon" aria-hidden="true">{% if insight.tone == 'success' %}<svg class="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="m5 13 4 4L19 7"/></svg>{% elif insight.tone == 'info' %}i{% else %}!{% endif %}</span><div><strong>{{ insight.title }}</strong><p>{{ insight.body }}</p><small>{{ insight.action }} →</small></div></li>{% endfor %}</ul>
     </aside>
+
+    {% comment %}
+      The same confirmed results, by the staff member holding the school (under
+      their Programme Lead), by cluster and by the partner that collected them —
+      alongside the district table above (owner, 2026-09-12).
+    {% endcomment %}
+    <section class="sp-card sp-district-table-card sp-breakdowns-card" aria-labelledby="sp-breakdown-title"
+             x-data="{ by: 'staff' }" data-ssa-breakdowns>
+      <header class="sp-card__header">
+        <div><span class="sp-card__eyebrow">Who and where</span><h2 id="sp-breakdown-title">SSA performance by staff, cluster and partner</h2></div>
+      </header>
+      {# The platform's tab component (static/css/pages.css .edify-tab-btn). #}
+      <div class="edify-tab-container" role="tablist" aria-label="Group SSA performance by">
+        <button type="button" role="tab" id="sp-breakdown-tab-staff" aria-controls="sp-breakdown-panel-staff" class="edify-tab-btn" :class="{ 'active': by === 'staff' }" :aria-selected="by === 'staff'" @click="by = 'staff'" data-breakdown-tab="staff">Staff</button>
+        <button type="button" role="tab" id="sp-breakdown-tab-cluster" aria-controls="sp-breakdown-panel-cluster" class="edify-tab-btn" :class="{ 'active': by === 'cluster' }" :aria-selected="by === 'cluster'" @click="by = 'cluster'" data-breakdown-tab="cluster">Cluster</button>
+        <button type="button" role="tab" id="sp-breakdown-tab-partner" aria-controls="sp-breakdown-panel-partner" class="edify-tab-btn" :class="{ 'active': by === 'partner' }" :aria-selected="by === 'partner'" @click="by = 'partner'" data-breakdown-tab="partner">Partner</button>
+      </div>
+      <div class="sp-table-scroll" tabindex="0" role="tabpanel" id="sp-breakdown-panel-staff" aria-labelledby="sp-breakdown-tab-staff" x-show="by === 'staff'" data-breakdown="staff">
+        {% include "partials/ssa/breakdown_table.html" with key="staff" label="Staff" rows=breakdown_staff %}
+      </div>
+      <div class="sp-table-scroll" tabindex="0" role="tabpanel" id="sp-breakdown-panel-cluster" aria-labelledby="sp-breakdown-tab-cluster" x-show="by === 'cluster'" x-cloak data-breakdown="cluster">
+        {% include "partials/ssa/breakdown_table.html" with key="cluster" label="Cluster" rows=breakdown_cluster %}
+      </div>
+      <div class="sp-table-scroll" tabindex="0" role="tabpanel" id="sp-breakdown-panel-partner" aria-labelledby="sp-breakdown-tab-partner" x-show="by === 'partner'" x-cloak data-breakdown="partner">
+        {% include "partials/ssa/breakdown_table.html" with key="partner" label="Partner" rows=breakdown_partner %}
+      </div>
+    </section>
 
     <section class="sp-card sp-fy-comparison" aria-labelledby="sp-fy-comparison-title">
       <header class="sp-card__header">

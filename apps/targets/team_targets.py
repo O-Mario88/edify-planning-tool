@@ -86,37 +86,44 @@ def supervised_users(pl_user) -> list[User]:
     CD/Admin get a country oversight lens (all active CCEOs)."""
     role = getattr(pl_user, "active_role", "")
     if role == "RegionalProgramLead":
-        # Every active CCEO holding a school in the Regional Programme Lead's
-        # region — the officers of all the Programme Leads they oversee
-        # (owner, 2026-09-12: "team performance progress by PL"). The page
-        # groups them under their Lead.
+        # Every active CCEO in the Regional Programme Lead's reach — the
+        # officers of all the Programme Leads they oversee (owner, 2026-09-12:
+        # "team performance progress by PL"). An officer is in reach when their
+        # staff record names one of the lead's countries, or when they hold a
+        # school in them (a record with no country still belongs where its
+        # schools are). The page groups them under their Lead.
+        from django.db.models import Q
+
         from apps.accounts.models import StaffSchoolAssignment
         from apps.core.scoping import resolve_user_scope
-
-        region_ids = resolve_user_scope(pl_user).region_ids or []
-        if not region_ids:
-            return []
         from apps.schools.models import School
 
+        scope = resolve_user_scope(pl_user)
+        if not scope.region_ids:
+            return []
         # StaffSchoolAssignment.school_id is a plain column, not a relation,
-        # so the region is resolved on School first.
-        region_school_ids = School.objects.filter(
-            region_id__in=region_ids, deleted_at__isnull=True
+        # so the reach is resolved on School first.
+        reach_school_ids = School.objects.filter(
+            region_id__in=scope.region_ids, deleted_at__isnull=True
         ).values("id")
         staff_ids = set(
             StaffSchoolAssignment.objects.filter(
-                school_id__in=region_school_ids
+                school_id__in=reach_school_ids
             ).values_list("staff_id", flat=True)
         )
+        in_reach = Q(staff_profile__id__in=staff_ids)
+        if scope.region_countries:
+            in_reach |= Q(staff_profile__country__in=scope.region_countries)
         return list(
             User.objects.filter(
-                staff_profile__id__in=staff_ids,
+                in_reach,
                 status="active",
                 deleted_at__isnull=True,
                 roles__contains=["CCEO"],
             )
             .select_related("staff_profile")
             .order_by("name")
+            .distinct()
         )
     if role in ("CountryDirector", "Admin"):
         return list(

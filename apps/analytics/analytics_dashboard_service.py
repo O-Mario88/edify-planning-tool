@@ -64,6 +64,20 @@ class AnalyticsDashboardService:
                 activities_qs = activities_qs.filter(
                     school__region_id__in=scope.region_ids
                 )
+        elif scope.region_scope:
+            # A Regional Programme Lead's analytics cover the countries they
+            # oversee (apps.core.scoping._regional_reach). Without this branch
+            # the role fell into the field path below, owned no school and no
+            # activity, and every figure on the page read zero. Cluster work
+            # with no school is placed by its cluster's district, as Team
+            # Oversight places it.
+            region_ids = scope.region_ids or []
+            schools_qs = schools_qs.filter(region_id__in=region_ids)
+            ssa_qs = ssa_qs.filter(school__region_id__in=region_ids)
+            activities_qs = activities_qs.filter(
+                Q(school__region_id__in=region_ids)
+                | Q(cluster__district__region_id__in=region_ids)
+            )
         elif not scope.country_scope:
             if scope.school_ids:
                 schools_qs = schools_qs.filter(id__in=scope.school_ids)

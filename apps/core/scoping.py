@@ -122,9 +122,13 @@ class UserScope:
     # instead of testing `region_ids` for emptiness, which conflated
     # "unassigned" with "assigned to nothing" and emptied the RVP's pages.
     rvp_region_scoped: bool = False
-    # True when this role reads one region's rows (REGION_ROLES) — the lens
+    # True when this role reads a region's rows (REGION_ROLES) — the lens
     # oversight and analytics narrow to `region_ids`.
     region_scope: bool = False
+    # The countries a region role oversees, and whether an administrator
+    # assigned them (False: none assigned, so every country is in reach).
+    region_countries: list[str] = field(default_factory=list)
+    region_assigned: bool = False
     can_view_school_level_detail: bool = True
     can_view_partner_data: bool = False
     can_view_financial_data: bool = False
@@ -195,6 +199,45 @@ def _derive_from_schools(school_ids: list[str], own_school_ids: list[str]) -> di
         "own_cluster_ids": _uniq([r["cluster_id"] for r in mine if r["cluster_id"]]),
         "own_core_school_ids": [r["id"] for r in mine if r["school_type"] == "core"],
     }
+
+
+def _regional_reach(assigned_region_ids) -> tuple[list[str], list[str], bool]:
+    """The regions, countries and assignment state of a region role.
+
+    A Regional Programme Lead is the Regional Lead for Christ-Centered
+    Education (owner, 2026-09-12): they direct and coach the country programme
+    teams of their region, "across multiple operational countries". Their
+    reach is therefore whole countries. The geography rows an administrator
+    writes name where they work, and every region of those countries is in
+    reach. With none assigned they read every country on the platform, which
+    is the RVP's rule for the same gap (see `rvp_region_scoped`), and their
+    pages say so rather than silently showing nothing.
+    """
+    try:
+        from apps.geography.models import Region
+    except Exception:  # noqa: BLE001 - geography may not be ready
+        return list(assigned_region_ids), [], bool(assigned_region_ids)
+
+    countries = (
+        _uniq(
+            Region.objects.filter(id__in=assigned_region_ids)
+            .order_by("country")
+            .values_list("country", flat=True)
+        )
+        if assigned_region_ids
+        else []
+    )
+    assigned = bool(countries)
+    if not countries:
+        countries = _uniq(
+            Region.objects.order_by("country").values_list("country", flat=True)
+        )
+    region_ids = _uniq(
+        Region.objects.filter(country__in=countries)
+        .order_by("name")
+        .values_list("id", flat=True)
+    )
+    return region_ids, countries, assigned
 
 
 def resolve_user_scope(user) -> UserScope:
@@ -511,6 +554,11 @@ def _resolve_user_scope_uncached(user) -> UserScope:
             if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
                 managed_staff_ids = _uniq([*managed_staff_ids, *supervised_staff_ids])
 
+    region_countries: list[str] = []
+    region_assigned = False
+    if role in REGION_ROLES:
+        region_ids, region_countries, region_assigned = _regional_reach(region_ids)
+
     country = ""
     if country_scope and role != EdifyRole.ADMIN.value and staff_id:
         # `staff_profile_id` above already fetched and cached the reverse
@@ -544,6 +592,8 @@ def _resolve_user_scope_uncached(user) -> UserScope:
         can_view_summary_only=summary_only,
         rvp_region_scoped=bool(summary_only and region_ids),
         region_scope=role in REGION_ROLES,
+        region_countries=region_countries,
+        region_assigned=region_assigned,
         can_view_school_level_detail=not summary_only,
         can_view_partner_data=has(Permission.PARTNER_VIEW.value),
         can_view_financial_data=has(Permission.BUDGET_VIEW_DETAIL.value)
@@ -901,10 +951,10 @@ def school_queryset(scope: UserScope, *, direct_only: bool = False):
     if scope.country_scope:
         return qs.filter(school_country_q(scope))
     if scope.region_scope:
-        # A region role READS its region's schools and operates on none of
-        # them: it holds no school, planning, cluster or funding authority
-        # (see rbac.py, EdifyRole.REGIONAL_PROGRAM_LEAD). With no region
-        # assigned it reads nothing rather than silently widening.
+        # A region role READS the schools of its countries and operates on
+        # none of them: it holds no school, planning, cluster or funding
+        # authority (see rbac.py, EdifyRole.REGIONAL_PROGRAM_LEAD). Its reach
+        # is resolved in `_regional_reach`.
         return (
             qs.filter(region_id__in=scope.region_ids) if scope.region_ids else qs.none()
         )
@@ -1086,14 +1136,14 @@ def scoped_school_queryset(scope: UserScope, base=None):
     if scope.country_scope:
         return qs.filter(school_country_q(scope))
     if scope.region_scope:
-        # A Regional Programme Lead's intelligence is country-wide: the owner
-        # asked for SSA performance "by staff, district, cluster, partner,
-        # country overall" and for country priority progress (2026-09-12),
-        # which is how a region is judged against the rest. The pages' own
-        # region and district filters narrow it. Their OPERATIONAL reach —
-        # the directory, oversight — stays bounded to their region; see
-        # school_queryset.
-        return qs.filter(school_country_q(scope))
+        # A Regional Programme Lead's intelligence covers the countries they
+        # oversee (owner, 2026-09-12: SSA performance "by staff, district,
+        # cluster, partner, country overall"); the pages' own region and
+        # district filters narrow it. The same reach as their operational
+        # reads, resolved once in `_regional_reach`.
+        return (
+            qs.filter(region_id__in=scope.region_ids) if scope.region_ids else qs.none()
+        )
     if scope.can_view_summary_only:
         if scope.rvp_region_scoped:
             return qs.filter(region_id__in=scope.region_ids)
@@ -1108,6 +1158,12 @@ def aggregate_school_filter(scope: UserScope) -> Q:
     country-wide counts (their purpose) but never row-level detail."""
     if scope.country_scope:
         return school_country_q(scope)
+    if scope.region_scope:
+        # Without this branch a Regional Programme Lead fell through to "no
+        # schools", and every aggregate on /analytics read zero for them.
+        return (
+            Q(region_id__in=scope.region_ids) if scope.region_ids else Q(id__in=_NONE)
+        )
     if scope.can_view_summary_only:
         return Q()
     if scope.school_ids:

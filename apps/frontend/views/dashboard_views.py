@@ -234,6 +234,57 @@ def _pl_map_context(user, fy, filters) -> dict:
     return {"pl_map_rows": table_rows}
 
 
+def _regional_lead_dashboard(request):
+    """The Regional Programme Lead dashboard.
+
+    Figures come from RegionalLeadDashboardService, which folds the same
+    oversight rows Team Oversight lists; the KPI panel is the oversight page's
+    own registered metrics, so the two pages cannot disagree.
+    """
+    from apps.analytics.rpl_dashboard_service import RegionalLeadDashboardService
+    from apps.core.cache_utils import cached_role_dashboard
+    from apps.core.fy import fy_options, get_operational_fy
+    from apps.frontend.views.oversight_views import _kpi_items
+
+    user = request.user
+    fy = (request.GET.get("fy") or "").strip()
+    if not fy.isdigit():
+        fy = get_operational_fy()
+    data = cached_role_dashboard(
+        "rpl",
+        user,
+        (fy,),
+        lambda: RegionalLeadDashboardService.get_dashboard(user, fy=fy),
+    )
+    countries = data["reach"]["countries"]
+    if len(countries) == 1:
+        reach_label = countries[0]
+    elif countries:
+        reach_label = f"{len(countries)} countries"
+    else:
+        reach_label = "No countries"
+    first = (data["attention"] or [None])[0]
+    names = (user.name or "").split()
+    context = {
+        **data,
+        "role": user.active_role,
+        "user_name": user.name,
+        "avatar_initials": "".join(n[0].upper() for n in names[:2]) or "US",
+        "fy_options": fy_options(),
+        "reach_label": reach_label,
+        "kpi_strip_items": _kpi_items(data["summary"], country=False, region=True),
+        "mobile_primary_action": (
+            {"label": first["action"], "url": first["url"]}
+            if first
+            else {
+                "label": "Open Team Oversight",
+                "url": f"/team-planning-oversight/?fy={fy}",
+            }
+        ),
+    }
+    return render(request, "pages/dashboards/rpl.html", context)
+
+
 @require_page_permission("dashboard")
 def dashboard_view(request):
     user = request.user
@@ -249,12 +300,11 @@ def dashboard_view(request):
     if role == "ImpactAssessment":
         return redirect("/ia/dashboard/")
 
-    # The Regional Programme Lead's home IS the oversight page: their region's
-    # Programme Leads in tabs, each Lead's CCEOs grouped inside (owner,
-    # 2026-09-12). There is no separate dashboard to build, because every
-    # figure they need is the one that page already computes.
+    # The Regional Programme Lead's home: the Regional Lead for
+    # Christ-Centered Education's coaching and reporting view over their
+    # region's country programmes (owner, 2026-09-12).
     if role == "RegionalProgramLead":
-        return redirect("/team-planning-oversight/")
+        return _regional_lead_dashboard(request)
 
     if role in ("PartnerAdmin", "PartnerFieldOfficer"):
         # Partner logins have no StaffProfile/country-cluster scope, so the

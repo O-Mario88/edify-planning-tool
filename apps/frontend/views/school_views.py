@@ -826,6 +826,10 @@ def school_directory_view(request):
         "can_schedule": RolePermissionService.can_schedule_activity(user),
         "can_upload_schools": _may_upload_schools(request),
         "can_add_ssa": _may_upload_ssa(request),
+        # The Regional Programme Lead reads the directory and works none of it,
+        # so the row selection, bulk bar and per-row assign buttons are not
+        # drawn for them: a control that can only answer "not you" is noise.
+        "directory_read_only": scope.region_scope,
     }
 
     if request.headers.get("HX-Request") == "true":

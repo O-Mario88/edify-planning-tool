@@ -313,6 +313,12 @@ def _program_lead_tabs(items, selected: str | None) -> tuple[list[dict], str, li
     return tabs, active["key"], active["items"]
 
 
+def _resolve_user_scope(user):
+    from apps.core.scoping import resolve_user_scope
+
+    return resolve_user_scope(user)
+
+
 @require_any_page_permission("team_planning_oversight", "team_targets")
 def team_planning_oversight_view(request):
     """One Team Oversight workspace for planning and target performance."""
@@ -375,10 +381,13 @@ def team_planning_oversight_view(request):
         "summary": summary,
         "kpis": _kpi_items(summary, country=scope.is_country, region=scope.is_region),
         "lens": lens,
-        "lens_label": {"region": "Region", "country": "Country", "team": "Team"}[lens],
-        # With no region assigned there is nothing to read, and the page says
-        # which administrator action fixes it rather than looking empty.
-        "region_unassigned": scope.is_region and not scope.region_ids,
+        "lens_label": {"region": "Regional", "country": "Country", "team": "Team"}[
+            lens
+        ],
+        # With no countries assigned the region lens reads every country, and
+        # the page says so and which administrator action narrows it.
+        "region_unassigned": scope.is_region
+        and not _resolve_user_scope(request.user).region_assigned,
         "visible_summary": summary,
         "groups": oversight.group_by_owner(visible),
         "advanced": advanced,

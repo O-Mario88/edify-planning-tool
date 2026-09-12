@@ -1,0 +1,30 @@
+{% comment %}
+Strategic guidance: the regional priorities and how far the plan has carried
+each one. The meter is the shared plan-linked meter, averaged over the
+priority's milestones that have an activity rule.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-priorities-title" data-rpl-priorities>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-priorities-title" class="rpl-card__title">Regional priorities</h2>
+      <span class="rpl-card__subtitle">{% if priorities.shown_fy %}FY {{ priorities.shown_fy }} regional plan{% if priorities.shown_fy != fy %}, the most recent regional cycle{% endif %} · progress linked to the plan{% else %}Regional CCE goals and their milestones{% endif %}</span>
+    </div>
+    <a class="rpl-card__link" href="/priorities/master">Priorities register <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  {% if priorities.rows %}
+  <div class="rpl-priorities" role="list">
+    {% for p in priorities.rows|slice:":12" %}
+    <div class="rpl-priority" role="listitem">
+      <div class="rpl-priority__head">
+        <span class="rpl-priority__title">{{ p.title }}</span>
+        {% if not p.is_published %}{% include "components/badge.html" with tone="neutral" label=p.status %}{% endif %}
+      </div>
+      <span class="rpl-priority__meta">{{ p.milestones }} milestone{{ p.milestones|pluralize }} · {{ p.measured }} linked to the plan{% if p.on_track %} · {{ p.on_track }} on track{% endif %}{% if p.country_translations %} · {{ p.country_translations }} country translation{{ p.country_translations|pluralize }}{% endif %}</span>
+      {% include "components/meter.html" with progress=p.progress %}
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with message="No regional priorities are recorded yet." hint="They appear here once the regional plan is entered in the priorities register." compact="true" %}
+  {% endif %}
+</section>

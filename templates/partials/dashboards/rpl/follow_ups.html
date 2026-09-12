@@ -1,0 +1,33 @@
+{% comment %}
+The follow-ups this lead has sent Programme Leads, and where each one stands.
+They are sent from a Lead's tab in Team Oversight and tracked in Actions Sent.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-follow-ups-title" data-rpl-follow-ups>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-follow-ups-title" class="rpl-card__title">Coaching follow-ups</h2>
+      <span class="rpl-card__subtitle">Actions you have sent to Programme Leads</span>
+    </div>
+    <a class="rpl-card__link" href="/actions/sent">Actions sent <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-follow-stats">
+    <div class="rpl-follow-stat"><strong>{{ follow_ups.active }}</strong><span>Open</span></div>
+    <div class="rpl-follow-stat"{% if follow_ups.overdue %} data-tone="danger"{% endif %}><strong>{{ follow_ups.overdue }}</strong><span>Past due</span></div>
+    <div class="rpl-follow-stat"><strong>{{ follow_ups.resolved }}</strong><span>Resolved this year</span></div>
+  </div>
+  {% if follow_ups.rows %}
+  <div class="rpl-follow-list" role="list">
+    {% for f in follow_ups.rows|slice:":5" %}
+    <div class="rpl-follow" role="listitem">
+      <div class="rpl-follow__head">
+        <span class="rpl-follow__who">{{ f.recipient }}</span>
+        <span class="rpl-follow__due"{% if f.is_overdue %} data-tone="danger"{% endif %}>{% if f.due_date %}Due {{ f.due_date|date:"j M" }}{% else %}No due date{% endif %}</span>
+      </div>
+      <span class="rpl-follow__what">{{ f.action }} · {{ f.state }}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with message="No follow-ups are open." hint="Send one to a Programme Lead from their team plan in Team Oversight." compact="true" %}
+  {% endif %}
+</section>

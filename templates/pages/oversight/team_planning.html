@@ -11,7 +11,7 @@
   <header class="edify-page-header">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-title edify-page-header__title">Team Oversight</h1>
-      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
+      <p class="edify-page-header__description">{% if active_oversight_view == "targets" %}Track validated team performance across the selected month, quarters, and full fiscal year.{% elif lens == "region" %}Your region's country programmes by Programme Lead: plans, team delivery and unresolved risks.{% elif country_lens %}Country plans, team delivery and unresolved risks.{% else %}Your team’s plans, delivery and unresolved risks.{% endif %}</p>
     </div>
     {% if active_oversight_view == "targets" %}
     <div class="tt-page-header__context" aria-label="Current reporting context">

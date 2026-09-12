@@ -50,6 +50,14 @@ def _fy_label(fy: str) -> str:
     return f"FY {end - 1}/{str(end)[-2:]}"
 
 
+def _role_name(role: str) -> str:
+    """A role's enum value as words: "RegionalProgramLead" reads "Regional
+    Program Lead" in the scope note rather than as a code."""
+    import re
+
+    return re.sub(r"(?<=[a-z])(?=[A-Z])", " ", role or "")
+
+
 def _round(value: float | None, digits: int = 2) -> float | None:
     return round(value, digits) if value is not None else None
 
@@ -430,6 +438,59 @@ def _breakdowns(assessed, schools) -> dict[str, list[dict]]:
     }
 
 
+def regional_ssa_headline(principal, *, fy: str) -> dict:
+    """Confirmed SSA results for one year, overall and by country.
+
+    The Regional Programme Lead's dashboard reads this (owner, 2026-09-12: the
+    regional lead reports programme impact to the RVPs and the VP of CCE). It
+    is this module's own fold with no quarter chosen: the latest confirmed
+    record per school in the year, averaged the way build_dashboard averages,
+    so the dashboard agrees with the SSA Performance page read for a year.
+    """
+    schools_qs, _scope = _scoped_schools(principal)
+    country_of = {
+        school_id: country or ""
+        for school_id, country in schools_qs.values_list("id", "region__country")
+    }
+    records = _record_rows(list(country_of), str(fy), None)
+    scores = _scores_by_record([record["id"] for record in records])
+
+    totals: dict[str, int] = defaultdict(int)
+    for country in country_of.values():
+        totals[country] += 1
+    assessed_by_country: dict[str, int] = defaultdict(int)
+    averages: dict[str, list[float]] = defaultdict(list)
+    everything: list[float] = []
+    for record in records:
+        country = country_of.get(record["school_id"])
+        if country is None:
+            continue
+        assessed_by_country[country] += 1
+        average = _resolved_average(record, scores.get(record["id"], {}))
+        if average is not None:
+            averages[country].append(average)
+            everything.append(average)
+
+    total = len(country_of)
+    assessed = sum(assessed_by_country.values())
+    return {
+        "fy": str(fy),
+        "total_schools": total,
+        "assessed": assessed,
+        "coverage": round(assessed * 100 / total, 1) if total else 0.0,
+        "average_score": _round(_average(everything)),
+        "target": TARGET_SCORE,
+        "by_country": {
+            country: {
+                "total_schools": count,
+                "assessed": assessed_by_country.get(country, 0),
+                "average_score": _round(_average(averages.get(country, []))),
+            }
+            for country, count in totals.items()
+        },
+    }
+
+
 def build_dashboard(principal, query: dict) -> dict:
     """Build the full SSA Performance view model from one role-scoped dataset."""
     schools_qs, scope = _scoped_schools(principal)
@@ -792,7 +853,7 @@ def build_dashboard(principal, query: dict) -> dict:
     scope_note = (
         "Regional summary only — school identities are protected."
         if scope.can_view_summary_only
-        else f"Showing only schools available to your {scope.active_role} role."
+        else f"Showing only schools available to your {_role_name(scope.active_role)} role."
     )
 
     trend = _trend(school_ids, selected_fy)

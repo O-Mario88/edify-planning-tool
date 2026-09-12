@@ -4,6 +4,7 @@
 {% endif %}
 
 <div class="school-directory-listbar">
+  {% if not directory_read_only %}
   <label class="school-directory-listbar__select" for="select-all-schools">
     <input
       type="checkbox"
@@ -21,6 +22,7 @@
     <button type="button" @click="matchStaffOpen = true">Match staff</button>
     <button type="button" class="is-clear" @click="selectedSchools = []">Clear</button>
   </div>
+  {% endif %}
 
   {% comment %}
   The count of what the search and filters actually matched, not the length of
