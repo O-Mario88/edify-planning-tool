@@ -15,8 +15,23 @@ register = template.Library()
 
 @register.simple_tag
 def professional_kpis(items, variant="executive", density=None):
-    """Keep every unique metric; responsive overflow controls visible count."""
-    return consolidate_kpi_items(items)
+    """Keep every unique metric; responsive overflow controls visible count.
+
+    An intervention named in a helper is abbreviated for the tile and kept
+    whole for its title (owner, 2026-09-12: "abbreviate the intervention
+    names inside the KPIs … in all the KPIs and stats strips").
+    """
+    from apps.core.interventions import abbreviate_interventions, mentions_intervention
+
+    prepared = []
+    for item in consolidate_kpi_items(items):
+        helper = item.get("helper") if hasattr(item, "get") else None
+        if mentions_intervention(helper):
+            item = dict(item)
+            item["helper_exact"] = helper
+            item["helper"] = abbreviate_interventions(helper)
+        prepared.append(item)
+    return prepared
 
 
 @register.simple_tag
@@ -153,6 +168,13 @@ def kpi_value(item):
         value = item.get("value", "—")
     exact = str(value) if value is not None else "—"
     result = {"exact": exact, "display": exact, "compact": False}
+    # "Exposure to the Word of God" reads as "WOG" in a tile; the title keeps
+    # the whole name (owner, 2026-09-12).
+    from apps.core.interventions import abbreviate_interventions, mentions_intervention
+
+    if mentions_intervention(exact):
+        result["display"] = abbreviate_interventions(exact)
+        return result
     match = re.fullmatch(
         r"(UGX|USD|EUR|GBP|KES|TZS|RWF)\s+(-?\d[\d,]*(?:\.\d+)?)", exact
     )

@@ -331,7 +331,7 @@ class CDAnalyticsTest(TestCase):
         ssa = d["ssa_interventions"]
         self.assertEqual(ssa["latest_fy"], FY)
         self.assertEqual(ssa["prev_fy"], PREV)
-        lship = next(r for r in ssa["rows"] if r["code"] == "Lship")
+        lship = next(r for r in ssa["rows"] if r["code"] == "LSHIP")
         # Confirmed FY2026 leadership avg = (7.0 + 5.0)/2 = 6.0. The unconfirmed
         # 1.0 record is excluded.
         self.assertEqual(lship["score"], 6.0)
@@ -532,7 +532,7 @@ class CDRefinedSpecTest(CDAnalyticsTest):
         hm = d["district_heatmap"]
         self.assertEqual(len(hm["codes"]), 8)
         self.assertEqual(
-            hm["codes"], ["CB", "WOG", "FH", "Lship", "GR", "LE", "TE", "Erlm't"]
+            hm["codes"], ["CB", "WOG", "FH", "LSHIP", "GR", "LE", "TE", "ENR"]
         )
         for row in hm["rows"]:
             self.assertEqual(len(row["cells"]), 8)

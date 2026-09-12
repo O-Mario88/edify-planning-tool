@@ -56,16 +56,8 @@ from apps.pl_review.services import (
 from apps.activities.models import Activity
 
 
-SSA_SCORE_ABBREVIATIONS = {
-    SsaIntervention.CHRISTLIKE_BEHAVIOUR.value: "CB",
-    SsaIntervention.EXPOSURE_TO_WORD_OF_GOD.value: "WOG",
-    SsaIntervention.FINANCIAL_HEALTH.value: "FH",
-    SsaIntervention.LEADERSHIP.value: "L",
-    SsaIntervention.GOVERNMENT_REQUIREMENT.value: "GR",
-    SsaIntervention.LEARNING_ENVIRONMENT.value: "LE",
-    SsaIntervention.TEACHING_ENVIRONMENT.value: "TE",
-    SsaIntervention.ENROLMENT.value: "ENR",
-}
+# One table for the whole platform (apps.core.interventions).
+from apps.core.interventions import INTERVENTION_ABBREVIATIONS as SSA_SCORE_ABBREVIATIONS  # noqa: E402
 
 
 def _forbid_staff_on_partner_activity(request, a):

@@ -103,15 +103,19 @@ PROJECT_TYPES = ("project_activity",)
 
 # SSA interventions in the canonical CSV column order (2026-07-15
 # clarification): (stored value, label, code).
+# The codes are the platform's one abbreviation table
+# (apps.core.interventions), so a heatmap column reads the same as a KPI.
+from apps.core.interventions import INTERVENTION_ABBREVIATIONS as _ABBR  # noqa: E402
+
 SSA_INTERVENTIONS = [
-    ("christlike_behaviour", "Christlike Behaviour", "CB"),
-    ("exposure_to_word_of_god", "Exposure to the Word of God", "WOG"),
-    ("financial_health", "Financial Health", "FH"),
-    ("leadership", "Leadership", "Lship"),
-    ("government_requirement", "Government Requirements", "GR"),
-    ("learning_environment", "Learning Environment", "LE"),
-    ("teaching_environment", "Teacher's Environment", "TE"),
-    ("enrolment", "Enrolment", "Erlm't"),
+    ("christlike_behaviour", "Christlike Behaviour", _ABBR["christlike_behaviour"]),
+    ("exposure_to_word_of_god", "Exposure to the Word of God", _ABBR["exposure_to_word_of_god"]),
+    ("financial_health", "Financial Health", _ABBR["financial_health"]),
+    ("leadership", "Leadership", _ABBR["leadership"]),
+    ("government_requirement", "Government Requirements", _ABBR["government_requirement"]),
+    ("learning_environment", "Learning Environment", _ABBR["learning_environment"]),
+    ("teaching_environment", "Teacher's Environment", _ABBR["teaching_environment"]),
+    ("enrolment", "Enrolment", _ABBR["enrolment"]),
 ]
 _INTERVENTION_LABELS = {v: (label, code) for v, label, code in SSA_INTERVENTIONS}
 

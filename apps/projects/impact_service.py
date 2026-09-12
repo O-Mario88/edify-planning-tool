@@ -31,16 +31,7 @@ from .planning_service import _scoped_projects
 
 
 INTERVENTION_LABELS = dict(SsaIntervention.choices)
-INTERVENTION_ABBR = {
-    "christlike_behaviour": "CB",
-    "exposure_to_word_of_god": "WOG",
-    "financial_health": "FH",
-    "leadership": "Lship",
-    "learning_environment": "LE",
-    "government_requirement": "GR",
-    "teaching_environment": "TE",
-    "enrolment": "Enrol.",
-}
+from apps.core.interventions import INTERVENTION_ABBREVIATIONS as INTERVENTION_ABBR  # noqa: E402
 CLASS_TONE = {
     "Great Impact": "success",
     "Positive Impact": "success",

@@ -387,7 +387,7 @@ class CDCommandCenterTest(TestCase):
         d = self._dash()
         self.assertEqual(
             d["ssa_matrix"]["codes"],
-            ["CB", "WOG", "FH", "Lship", "GR", "LE", "TE", "Erlm't"],
+            ["CB", "WOG", "FH", "LSHIP", "GR", "LE", "TE", "ENR"],
         )
         # Clusters only: the card is titled "Cluster SSA Heatmap" and the
         # Country Director reads geography on the map and the region table.
@@ -397,7 +397,7 @@ class CDCommandCenterTest(TestCase):
         self.assertTrue(all(r["kind"] == "cluster" for r in d["ssa_matrix"]["rows"]))
         alpha = d["ssa_matrix"]["rows"][0]
         self.assertEqual(len(alpha["cells"]), 8)
-        lship_idx = d["ssa_matrix"]["codes"].index("Lship")
+        lship_idx = d["ssa_matrix"]["codes"].index("LSHIP")
         self.assertEqual(alpha["cells"][lship_idx]["score"], 7.0)
 
     # 10 ─ priority schools from real workflow gaps
