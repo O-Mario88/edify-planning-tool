@@ -80,7 +80,7 @@
   <link rel="stylesheet" href="{% static 'build/css/design-system.css' %}?v=20260909perf3">
   <link rel="stylesheet" href="{% static 'build/css/components.css' %}?v=20260909perf3">
   <script defer src="{% static 'js/kpi-strips.js' %}?v=20260909perf1"></script>
-  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260909perf1">
+  <link rel="stylesheet" href="{% static 'css/login.css' %}?v=20260912focus1">
   <link rel="stylesheet" href="{% static 'css/components/platform-status.css' %}?v=20260816resilience1">
   <script defer src="{% static 'js/login.js' %}?v=20260909loginpolish3"></script>
   <script defer src="{% static 'js/platform-status.js' %}?v=20260816resilience1"></script>
@@ -88,7 +88,7 @@
 <body class="login-page">
 {% include "partials/pwa_launch.html" %}
   {% include "partials/connectivity_status.html" %}
-  <main class="login-shell">
+  <main class="login-shell" data-variant="{% block shell_variant %}split{% endblock %}">
     <section class="login-brand" aria-label="About Edify Planning and Monitoring">
       {% comment %}
       A div, not an <img>, because this is a backdrop rather than content: it

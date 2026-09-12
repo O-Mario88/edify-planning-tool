@@ -451,6 +451,54 @@ button {
     linear-gradient(135deg, #dff1fb 0%, #eef9fe 48%, #dceefa 100%);
 }
 
+/* Focus variant — one centred card over the blurred classroom photo, for a
+   screen that asks one thing of the person (the forced password change after
+   an administrator's reset). The brand panel steps aside at every width. */
+.login-shell[data-variant="focus"] {
+  grid-template-columns: 1fr;
+}
+
+.login-shell[data-variant="focus"] .login-brand {
+  display: none;
+}
+
+.login-shell[data-variant="focus"] .login-access {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: clamp(1.5rem, 4vw, 3rem);
+  background: var(--login-navy-950);
+}
+
+.login-shell[data-variant="focus"] .login-access::before {
+  position: absolute;
+  inset: -2rem;
+  z-index: -2;
+  content: "";
+  background: url("../images/login-classroom-portrait.jpg") center / cover no-repeat;
+  filter: blur(14px) saturate(.85);
+  transform: scale(1.06);
+}
+
+.login-shell[data-variant="focus"] .login-access::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  background: linear-gradient(180deg, rgba(0, 22, 43, .58) 0%, rgba(0, 36, 69, .74) 100%);
+}
+
+.login-shell[data-variant="focus"] .login-card {
+  width: min(100%, 29rem);
+  min-height: auto;
+  box-shadow: 0 30px 80px rgba(0, 19, 39, .42), inset 0 1px 0 #fff;
+}
+
+.login-shell[data-variant="focus"] .login-card__inner {
+  max-width: none;
+  padding: 2rem clamp(1.75rem, 4vw, 2.5rem) 1.75rem;
+}
+
 .login-card {
   display: flex;
   align-items: center;
@@ -548,6 +596,15 @@ button {
   font-size: var(--edify-text-body-size);
   font-weight: 400;
   transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+
+/* components.css's "gold standard" rule sets `main input[type="password"]`
+   to 12px padding with !important, which put the field icon over the
+   placeholder on the reset and change-password cards. A field that carries
+   an icon keeps its room for it. */
+.login-page .login-field__control > .login-field__icon ~ input {
+  padding-inline-start: 3.25rem !important;
+  padding-inline-end: 3rem !important;
 }
 
 .login-field input::placeholder {

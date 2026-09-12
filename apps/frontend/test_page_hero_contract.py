@@ -46,7 +46,6 @@ NAMED_HERO_FAMILIES = (".edify-page-header",)
 HEADERLESS_H1_TEMPLATES = {
     # The sign-in split panel: the h1 names the product on a marketing panel,
     # not a page inside the app shell.
-    "templates/layouts/auth.html": "auth brand panel, not a page header",
     "templates/pages/auth/login.html": "auth card heading",
     "templates/pages/auth/mfa_verify.html": "auth card heading",
     "templates/pages/auth/reset_password.html": "auth card heading",

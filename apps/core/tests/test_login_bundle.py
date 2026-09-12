@@ -33,14 +33,15 @@ CSS = ROOT / "static" / "css"
 
 LOGIN_LAYOUT = TEMPLATES / "layouts" / "login.html"
 
-# Everything that can render inside layouts/login.html. change_password.html is
-# deliberately absent: it extends layouts/auth.html, which goes through
-# base.html and does load the full stylesheet set.
+# Everything that can render inside layouts/login.html — since 2026-09-12 the
+# forced change-password screen too (it used to have its own layout that
+# loaded the full application bundle).
 LOGIN_LAYOUT_TEMPLATES = [
     LOGIN_LAYOUT,
     TEMPLATES / "partials" / "pwa_head.html",
     TEMPLATES / "pages" / "auth" / "login.html",
     TEMPLATES / "pages" / "auth" / "reset_password.html",
+    TEMPLATES / "pages" / "auth" / "change_password.html",
 ]
 
 RADIUS_TOKENS = (
@@ -191,7 +192,7 @@ class LoginBundleTests(SimpleTestCase):
         self.assertIn(".remember-control input:focus", css)
         self.assertIn('dataset.edifyInputModality = "pointer"', behavior)
         self.assertIn('dataset.edifyInputModality = "keyboard"', behavior)
-        self.assertIn("login.css' %}?v=20260909perf1", markup)
+        self.assertIn("login.css' %}?v=20260912focus1", markup)
         self.assertIn("login.js' %}?v=20260909loginpolish3", markup)
 
 
