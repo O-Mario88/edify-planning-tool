@@ -167,6 +167,11 @@ class _EventBus:
             self._queues[user_id].append(subscription)
         return subscription
 
+    def subscription_count(self, user_id: str) -> int:
+        """Open streams this account holds on this process."""
+        with self._lock:
+            return len(self._queues.get(user_id, ()))
+
     def unsubscribe(self, user_id: str, subscription: _Subscription) -> None:
         with self._lock:
             if subscription in self._queues.get(user_id, []):

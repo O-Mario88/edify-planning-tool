@@ -37,6 +37,7 @@ class StreamTransportTests(SimpleTestCase):
             self.assertIs(received, subscription)
 
         with patch("apps.realtime.views.bus") as bus:
+            bus.subscription_count.return_value = 0
             bus.subscribe.side_effect = subscribe
             bus.unsubscribe.side_effect = unsubscribe
             response = stream(self.request())
@@ -60,6 +61,7 @@ class StreamTransportTests(SimpleTestCase):
             return subscription
 
         with patch("apps.realtime.views.bus") as bus:
+            bus.subscription_count.return_value = 0
             bus.subscribe.side_effect = subscribe
             response = stream(self.request())
             iterator = response._iterator

@@ -52,6 +52,31 @@ def stream(request):
         )
         response.status_code = 401
         return response
+    # A cap per account and a rate per address (AEGIS review, 2026-09-12).
+    # Three streams is generous for a person; a tab left open in many windows
+    # or a reconnect loop stops here instead of holding the worker.
+    from django.conf import settings
+
+    from apps.core.throttling import throttle_by_ip
+
+    opens_per_minute = int(getattr(settings, "REALTIME_STREAM_OPENS_PER_MINUTE", 30))
+    if not throttle_by_ip(request, name="realtime_stream", limit=opens_per_minute):
+        response = StreamingHttpResponse(
+            ["data: too many stream opens, try again in a minute\n\n"],
+            content_type="text/event-stream",
+        )
+        response.status_code = 429
+        response["Retry-After"] = "60"
+        return response
+    cap = int(getattr(settings, "REALTIME_STREAMS_PER_USER", 3))
+    if bus.subscription_count(user_id) >= cap:
+        response = StreamingHttpResponse(
+            [f"data: this account already holds {cap} open streams\n\n"],
+            content_type="text/event-stream",
+        )
+        response.status_code = 429
+        response["Retry-After"] = "30"
+        return response
 
     # SSE streams are long-lived and run on a loop without doing DB operations.
     # We must close the Django database connection here so it is not held open
