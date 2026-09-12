@@ -9,9 +9,10 @@ events on the tamper-evident audit chain, and the data-repair command.
 from __future__ import annotations
 
 from datetime import timedelta
+from pathlib import Path
 
 from django.core.management import call_command
-from django.test import TestCase
+from django.test import SimpleTestCase, TestCase
 from django.utils import timezone
 from freezegun import freeze_time
 
@@ -719,3 +720,16 @@ class EntitlementGateTest(TestCase):
             ).count(),
             0,
         )
+
+
+class ProductionStaticCacheLifetimeTest(SimpleTestCase):
+    """base.py derives WHITENOISE_MAX_AGE from DEBUG, and prod.py only turns
+    DEBUG off after the star import — so the derived value is 0 in production.
+    The live site served every unhashed asset with max-age=0 on 2026-09-12.
+    prod.py pins the lifetime itself."""
+
+    def test_prod_pins_the_static_cache_lifetime_after_debug(self):
+        src = Path("config/settings/prod.py").read_text()
+        debug_at = src.index("DEBUG = False\n")
+        pinned_at = src.index("WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30")
+        self.assertLess(debug_at, pinned_at)

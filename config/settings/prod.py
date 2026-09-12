@@ -20,6 +20,13 @@ from apps.core.crypto import load_field_encryption_key
 IS_PRODUCTION = True
 NODE_ENV = "production"
 DEBUG = False
+
+# Static cache lifetime. base.py derives WHITENOISE_MAX_AGE from DEBUG, but
+# DEBUG is only switched off here, AFTER `from .base import *` ran — so the
+# derived value was 0 and the live site served every unhashed asset with
+# max-age=0 (measured 2026-09-12). Hashed names carry their own immutable
+# header; this is for the unhashed build/css/*.css and geojson references.
+WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30
 # Under prod settings the process identity IS production — never trust the
 # env var to say otherwise (a missing ENVIRONMENT must not weaken the stamp
 # guard on a production host).
