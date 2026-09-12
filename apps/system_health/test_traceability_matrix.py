@@ -654,7 +654,10 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
                 "journey-09": 6,
                 "journey-11": 8,
                 "journey-13": 60,
-                "journey-14": 9,
+                # Twelve since 2026-09-12: the oversight page gained the
+                # Regional Programme Lead's three region tiles beside the
+                # country and team families it already computed.
+                "journey-14": 12,
                 "journey-18": 13,
             },
             "display-metric journey coverage changed; rebuild the matrix and "
