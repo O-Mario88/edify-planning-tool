@@ -224,6 +224,18 @@ Django returns `DisallowedHost` for every request), `CSRF_TRUSTED_ORIGINS`
 rather than anything mentioning CSRF), and `APP_BASE_URL`, which is what
 invitation and password-reset emails build their links from.
 
+## 3a-bis. Web workers: why one is not enough
+
+Django's ASGI handler runs every synchronous view on one thread per worker
+process. With `WEB_CONCURRENCY=1` the whole site serves one page at a time:
+a one-second dashboard makes every other person wait a second, and a
+deploy's first request used to wait seven seconds of imports on top (now
+paid at boot by `config/warmup.py`). A worker is about 200 MB, so the
+1 GB instance runs two comfortably and the Dockerfile's default of three
+with headroom to spare. Set `WEB_CONCURRENCY` to 2 on the live spec (3 on
+a 2 GB instance). Keep `REDIS_URL` unset only while the instance count is
+one; the per-process cache is fine at one instance and wrong at two.
+
 ## 3b. Deploys follow CI, not the push
 
 `.github/workflows/deploy.yml` creates the App Platform deployment only after

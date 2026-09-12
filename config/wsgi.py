@@ -7,3 +7,7 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.prod")
 
 application = get_wsgi_application()
+
+from config.warmup import warm  # noqa: E402  (see config/warmup.py)
+
+warm()

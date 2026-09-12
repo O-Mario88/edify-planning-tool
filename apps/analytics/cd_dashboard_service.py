@@ -112,12 +112,27 @@ class CDDashboardService:
     def get_dashboard(
         user, fy: str | None = None, month: int | None = None, *, view="all"
     ) -> dict:
+        from django.conf import settings
+        from django.core.cache import cache
+
         from apps.core.request_cache import scoped
 
+        ttl = int(getattr(settings, "DASHBOARD_CACHE_SECONDS", 0) or 0)
+        key = (
+            f"cd-dashboard:{getattr(user, 'id', '')}:{country_for(user)}:"
+            f"{fy or get_operational_fy()}:{month or ''}:{view}"
+        )
+        if ttl:
+            cached = cache.get(key)
+            if cached is not None:
+                return cached
         with scoped():
-            return CDDashboardService._get_dashboard(
+            data = CDDashboardService._get_dashboard(
                 user, fy=fy, month=month, view=view
             )
+        if ttl:
+            cache.set(key, data, ttl)
+        return data
 
     @staticmethod
     def _get_dashboard(

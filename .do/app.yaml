@@ -314,8 +314,11 @@ services:
       # Set to "true" for the FIRST deploy only, then set it back to "false".
       - key: RUN_SEED
         value: "false"
+      # Intent (2026-09-12): two workers. Sync views serialise on one thread
+      # per worker, so one worker serves one page at a time — see DEPLOY.md
+      # §3a-bis. Flip on the LIVE spec through the safe procedure.
       - key: WEB_CONCURRENCY
-        value: "1"
+        value: "2"
 
       # ── Secrets — replace every one of these ───────────────────────────────
       # Generate with: openssl rand -hex 32

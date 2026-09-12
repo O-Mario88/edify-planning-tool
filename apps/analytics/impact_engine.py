@@ -51,7 +51,7 @@ import numpy as np
 import pandas as pd
 from django.db.models import Q
 from django.db.models.functions import Coalesce
-from scipy import stats
+
 
 from apps.accounts.models import StaffSchoolAssignment
 from apps.activities.models import Activity
@@ -437,7 +437,7 @@ def _spearman(x: pd.Series, y: pd.Series) -> dict:
             "ci_high": None,
             "verdict": "insufficient data",
         }
-    rho, p = stats.spearmanr(x, y)
+    rho, p = _scipy_stats().spearmanr(x, y)
     if np.isnan(rho):
         return {
             "rho": None,
@@ -476,7 +476,7 @@ def _mann_whitney(treated: pd.Series, untreated: pd.Series) -> dict:
     if n_t < MIN_GROUP_N or n_u < MIN_GROUP_N:
         return {**base, "effect": None, "p": None, "verdict": "insufficient data"}
     try:
-        _, p = stats.mannwhitneyu(treated, untreated, alternative="two-sided")
+        _, p = _scipy_stats().mannwhitneyu(treated, untreated, alternative="two-sided")
     except ValueError:  # all values identical
         return {**base, "effect": None, "p": None, "verdict": "insufficient data"}
     if np.isnan(p):
@@ -901,7 +901,7 @@ def geographic_performance(imp: pd.DataFrame, districts: dict[str, str]) -> dict
                 # outcome instead of leaking a warning into a request/test run.
                 with warnings.catch_warnings():
                     warnings.simplefilter("error", RuntimeWarning)
-                    _, p = stats.kruskal(*groups)
+                    _, p = _scipy_stats().kruskal(*groups)
             except (RuntimeWarning, ValueError):  # all-identical values
                 p = float("nan")
             if np.isnan(p):
@@ -1360,3 +1360,11 @@ def build_dashboard(principal, query: dict) -> dict:
             f"Rank-based tests (Spearman, Mann-Whitney, Kruskal-Wallis); groups under {MIN_GROUP_N} schools and correlations under {MIN_CORR_N} schools report 'insufficient data' rather than an unreliable number. Correlation is not causation — confounding, reverse causation and targeted support remain possible, so these results direct attention rather than prove attribution.",
         ],
     }
+
+
+def _scipy_stats():
+    """SciPy is four seconds of import on a one-vCPU worker (2026-09-12); it is
+    loaded the first time a statistic is computed, never at module import."""
+    from scipy import stats
+
+    return stats

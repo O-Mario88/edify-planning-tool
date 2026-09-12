@@ -736,6 +736,15 @@ REALTIME_STREAM_OPENS_PER_MINUTE = _as_int(
     os.environ.get("REALTIME_STREAM_OPENS_PER_MINUTE"), 30
 )
 
+# How long a role dashboard's computed payload is reused before it is rebuilt.
+# The Country Director dashboard is ~96 queries and over a second even warm
+# (2026-09-12); five minutes of reuse turn the second and later loads into one
+# cache read. Zero disables it, which the test settings do so every test sees
+# fresh figures.
+DASHBOARD_CACHE_SECONDS = (
+    0 if IS_TESTING else _as_int(os.environ.get("DASHBOARD_CACHE_SECONDS"), 300)
+)
+
 # Audit hash-chain seed for the genesis row. Override in deployments for a
 # trusted anchor.
 AUDIT_GENESIS_HASH = os.environ.get("AUDIT_GENESIS_HASH", "0" * 64)

@@ -17,7 +17,6 @@ from typing import Any
 
 import numpy as np
 import pandas as pd
-from scipy import stats
 
 
 ENGINE_NAME = "Edify Python Analytics Engine"
@@ -217,7 +216,7 @@ def trend_analysis(
     if np.unique(y).size == 1:
         slope, r_squared, p_value = 0.0, 0.0, 1.0
     else:
-        result = stats.linregress(x, y)
+        result = _scipy_stats().linregress(x, y)
         slope = float(result.slope)
         r_squared = float(result.rvalue**2)
         p_value = float(result.pvalue)
@@ -272,9 +271,9 @@ def correlation_analysis(
             "direction": "unknown",
         }
     if method == "pearson":
-        coefficient, p_value = stats.pearsonr(frame["left"], frame["right"])
+        coefficient, p_value = _scipy_stats().pearsonr(frame["left"], frame["right"])
     else:
-        coefficient, p_value = stats.spearmanr(frame["left"], frame["right"])
+        coefficient, p_value = _scipy_stats().spearmanr(frame["left"], frame["right"])
         method = "spearman"
     absolute = abs(float(coefficient))
     strength = (
@@ -413,3 +412,11 @@ __all__ = [
     "trend_analysis",
     "variance_analysis",
 ]
+
+
+def _scipy_stats():
+    """SciPy is four seconds of import on a one-vCPU worker (2026-09-12); it is
+    loaded the first time a statistic is computed, never at module import."""
+    from scipy import stats
+
+    return stats

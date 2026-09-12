@@ -36,7 +36,7 @@ import json
 from dataclasses import dataclass
 
 import pandas as pd
-from scipy import stats
+
 
 from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
 from apps.core.enums import SsaIntervention
@@ -510,7 +510,7 @@ class SchoolVisitEffectivenessAnalyticsService:
         assoc = {"n": n, "r": None, "p": None, "ci": None}
         valid = sch.dropna(subset=["overall_delta"])
         if len(valid) >= MIN_CORR_N and valid["visit_count"].nunique() > 1:
-            res = stats.pearsonr(valid["visit_count"], valid["overall_delta"])
+            res = _scipy_stats().pearsonr(valid["visit_count"], valid["overall_delta"])
             ci = res.confidence_interval(0.95)
             assoc = {
                 "n": int(len(valid)),
@@ -584,7 +584,7 @@ class SchoolVisitEffectivenessAnalyticsService:
                 "p": None,
             }
             if len(grp) >= MIN_CORR_N and grp["visit_count"].nunique() > 1:
-                res = stats.pearsonr(grp["visit_count"], grp["overall_delta"])
+                res = _scipy_stats().pearsonr(grp["visit_count"], grp["overall_delta"])
                 row["r"] = round(float(res.statistic), 4)
                 row["p"] = round(float(res.pvalue), 4)
             row["verdict"] = _verdict(row["p"], row["n"])
@@ -686,3 +686,11 @@ class SchoolVisitEffectivenessAnalyticsService:
             results=data,
             generated_at=timezone.now(),
         )
+
+
+def _scipy_stats():
+    """SciPy is four seconds of import on a one-vCPU worker (2026-09-12); it is
+    loaded the first time a statistic is computed, never at module import."""
+    from scipy import stats
+
+    return stats
