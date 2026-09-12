@@ -112,7 +112,13 @@ def _record_rows(school_ids: list[str], fy: str, quarter: str | None) -> list[di
         records = records.filter(quarter=quarter)
     rows = list(
         records.values(
-            "id", "school_id", "fy", "quarter", "date_of_ssa", "average_score"
+            "id",
+            "school_id",
+            "fy",
+            "quarter",
+            "date_of_ssa",
+            "average_score",
+            "collected_by_partner_id",
         ).order_by("school_id", "-date_of_ssa", "-created_at")
     )
     return _latest(rows, ("school_id",))
@@ -325,6 +331,105 @@ def _fy_improvement_monitor(school_ids: list[str]) -> dict:
     }
 
 
+def _breakdown_rows(assessed, schools, *, key, names, count_schools=True) -> list[dict]:
+    """Rows in the district table's shape, for any other grouping.
+
+    `count_schools` is False for a grouping with no school denominator — a
+    partner holds no portfolio, so its "total" is the schools it assessed.
+    """
+    totals: dict[str, int] = defaultdict(int)
+    if count_schools:
+        for school in schools:
+            group = key(school)
+            if group:
+                totals[group] += 1
+    members: dict[str, list[dict]] = defaultdict(list)
+    for row in assessed:
+        group = key(row)
+        if group:
+            members[group].append(row)
+    labels = dict(SsaIntervention.choices)
+    rows = []
+    for group in set(totals) | set(members):
+        items = members.get(group, [])
+        total = totals.get(group) or len(items)
+        average = _average(row["average"] for row in items)
+        weakest_key, weakest_average = None, None
+        for value, _label in SsaIntervention.choices:
+            cell = _average(row["scores"].get(value) for row in items)
+            if cell is not None and (weakest_average is None or cell < weakest_average):
+                weakest_key, weakest_average = value, cell
+        rows.append(
+            {
+                "id": group,
+                "name": names.get(group) or "Unnamed",
+                "schools_assessed": len(items),
+                "total_schools": total,
+                "average": _round(average),
+                "band": _band(average),
+                "weakest": labels.get(weakest_key, "—"),
+                "high_risk": sum(1 for row in items if row["is_high_risk"]),
+                "completion_rate": round(len(items) / total * 100, 1) if total else 0,
+            }
+        )
+    rows.sort(
+        key=lambda row: (row["average"] is None, -(row["average"] or 0), row["name"])
+    )
+    return rows
+
+
+def _breakdowns(assessed, schools) -> dict[str, list[dict]]:
+    """SSA performance by staff, by cluster and by partner.
+
+    Staff is the person holding the school, labelled under their Programme
+    Lead the way every oversight surface reads (``Lead · Officer``). Cluster
+    is the school's operational cluster. Partner is the partner that
+    collected the confirmed assessment — only partner-collected records carry
+    one, so the partner table covers exactly the work partners did.
+    """
+    from apps.clusters.models import Cluster
+    from apps.partners.models import Partner
+    from apps.planning.owner_groups import group_label, owner_directory
+
+    owner_ids = {
+        row["account_owner_id"] for row in schools if row.get("account_owner_id")
+    }
+    directory = owner_directory(owner_ids)
+    staff_names = {owner: group_label(directory.get(owner)) for owner in owner_ids}
+
+    cluster_ids = {row["cluster_id"] for row in schools if row.get("cluster_id")}
+    cluster_names = dict(
+        Cluster.objects.filter(id__in=cluster_ids).values_list("id", "name")
+    )
+
+    partner_ids = {row["partner_id"] for row in assessed if row.get("partner_id")}
+    partner_names = dict(
+        Partner.objects.filter(id__in=partner_ids).values_list("id", "name")
+    )
+
+    return {
+        "staff": _breakdown_rows(
+            assessed,
+            schools,
+            key=lambda row: row.get("account_owner_id"),
+            names=staff_names,
+        ),
+        "cluster": _breakdown_rows(
+            assessed,
+            schools,
+            key=lambda row: row.get("cluster_id"),
+            names=cluster_names,
+        ),
+        "partner": _breakdown_rows(
+            assessed,
+            schools,
+            key=lambda row: row.get("partner_id"),
+            names=partner_names,
+            count_schools=False,
+        ),
+    }
+
+
 def build_dashboard(principal, query: dict) -> dict:
     """Build the full SSA Performance view model from one role-scoped dataset."""
     schools_qs, scope = _scoped_schools(principal)
@@ -374,6 +479,8 @@ def build_dashboard(principal, query: dict) -> dict:
             "region__name",
             "district_id",
             "district__name",
+            "account_owner_id",
+            "cluster_id",
         ).order_by("district__name", "name")
     )
     schools_by_id = {row["id"]: row for row in schools}
@@ -401,6 +508,8 @@ def build_dashboard(principal, query: dict) -> dict:
             {
                 **school,
                 "record_id": record["id"],
+                # The partner that collected the assessment, when one did.
+                "partner_id": record.get("collected_by_partner_id"),
                 "average": average,
                 "scores": score_map,
                 "minimum_intervention": minimum_intervention,
@@ -514,6 +623,7 @@ def build_dashboard(principal, query: dict) -> dict:
     district_rows.sort(
         key=lambda row: (row["average"] is None, -(row["average"] or 0), row["name"])
     )
+    breakdowns = _breakdowns(assessed, schools)
     matrix_by_id = {row["id"]: row for row in matrix_rows}
     matrix_rows = [matrix_by_id[row["id"]] for row in district_rows]
     districts_below_target = [
@@ -733,6 +843,10 @@ def build_dashboard(principal, query: dict) -> dict:
         },
         "interventions": intervention_rows,
         "districts": district_rows,
+        # The same confirmed results, grouped by the staff member who holds
+        # the school (under their Programme Lead), by cluster and by the
+        # partner that collected them (owner, 2026-09-12).
+        "breakdowns": breakdowns,
         "matrix": matrix_rows,
         "urgent_schools": urgent_schools,
         "urgent_total": len(high_risk),

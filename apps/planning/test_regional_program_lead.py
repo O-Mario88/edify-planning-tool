@@ -174,6 +174,57 @@ class RegionalProgramLeadTest(TestCase):
         self.assertEqual(self.client.get("/priorities/master").status_code, 200)
         self.assertEqual(self.client.get("/team-targets").status_code, 200)
 
+    # ── Performance it reads (owner, 2026-09-12, second message) ─────────
+    def test_ssa_performance_reads_the_country_with_the_breakdowns(self):
+        """ "SSA performance by staff, district, cluster, partner, country
+        overall" — the intelligence surface is country-wide for this role,
+        and the page's own filters narrow it."""
+        from apps.analytics.ssa_performance_service import build_dashboard
+
+        dashboard = build_dashboard(self.rpl, {"fy": "2026"})
+        self.assertEqual(
+            dashboard["kpis"]["total_schools"],
+            2,
+            "country overall: both regions' schools count toward the headline",
+        )
+        self.assertEqual(set(dashboard["breakdowns"]), {"staff", "cluster", "partner"})
+        self.client.force_login(self.rpl)
+        page = self.client.get("/ssa")
+        self.assertEqual(page.status_code, 200)
+        for tab in ("staff", "cluster", "partner"):
+            self.assertContains(page, f'data-breakdown-tab="{tab}"')
+
+    def test_team_performance_lists_the_region_s_officers_under_their_lead(self):
+        from apps.targets.team_targets import supervised_users
+
+        officers = {user.id for user in supervised_users(self.rpl)}
+        self.assertIn(self.cceo.id, officers)
+        self.assertNotIn(self.other_cceo.id, officers, "another region's officer")
+        self.client.force_login(self.rpl)
+        page = self.client.get("/team-targets", HTTP_HX_REQUEST="true")
+        self.assertEqual(page.status_code, 200)
+        self.assertTrue(page.context["group_by_lead"])
+        self.assertEqual(
+            [(m["name"], m["lead_name"]) for m in page.context["members"]],
+            [("Officer In Region", "Lead In Region")],
+        )
+        # The progress table itself draws only once officers have agreed
+        # targets; when it does, a header row names each Lead.
+        from pathlib import Path
+
+        body = Path("templates/partials/targets/team/body.html").read_text()
+        self.assertIn("{% ifchanged member.lead_name %}", body)
+        self.assertIn('data-lead-group="{{ member.lead_name }}"', body)
+
+    def test_country_priority_progress_reads_the_country_figure(self):
+        """The register scopes the target column to the viewer's own
+        allocation only for Programme Leads, CCEOs and Project Coordinators;
+        everyone else, this role included, reads the country figure."""
+        self.client.force_login(self.rpl)
+        page = self.client.get("/priorities/master")
+        self.assertEqual(page.status_code, 200)
+        self.assertFalse(page.context["is_scoped_viewer"])
+
     # ── What the role is refused ─────────────────────────────────────────
     def test_it_holds_no_planning_funding_or_verification_authority(self):
         from apps.core.rbac import Permission
@@ -232,3 +283,45 @@ class RegionalProgramLeadTest(TestCase):
         self.assertEqual(
             self.client.get("/country-planning-oversight/")["Location"], "/dashboard"
         )
+
+
+class SsaPerformanceByPartnerTest(TestCase):
+    """The partner table counts exactly the work partners collected."""
+
+    def test_the_breakdowns_group_confirmed_results_by_partner_cluster_and_staff(self):
+        from apps.analytics.ssa_performance_service import _breakdowns
+
+        schools = [
+            {"id": "s1", "account_owner_id": "", "cluster_id": "c1"},
+            {"id": "s2", "account_owner_id": "", "cluster_id": "c1"},
+            {"id": "s3", "account_owner_id": "", "cluster_id": None},
+        ]
+        scores = {"leadership": 4.0, "enrolment": 6.0}
+        assessed = [
+            {
+                **schools[0],
+                "average": 5.0,
+                "scores": scores,
+                "is_high_risk": False,
+                "partner_id": "p1",
+            },
+            {
+                **schools[1],
+                "average": 3.0,
+                "scores": {"leadership": 2.0},
+                "is_high_risk": True,
+                "partner_id": None,
+            },
+        ]
+        result = _breakdowns(assessed, schools)
+        cluster = {row["id"]: row for row in result["cluster"]}
+        self.assertEqual(cluster["c1"]["schools_assessed"], 2)
+        self.assertEqual(cluster["c1"]["total_schools"], 2)
+        self.assertEqual(cluster["c1"]["average"], 4.0)
+        self.assertEqual(cluster["c1"]["high_risk"], 1)
+        partner = {row["id"]: row for row in result["partner"]}
+        self.assertEqual(list(partner), ["p1"], "only partner-collected results")
+        self.assertEqual(
+            partner["p1"]["total_schools"], 1, "a partner has no portfolio denominator"
+        )
+        self.assertEqual(result["staff"], [], "no owner, no staff row")

@@ -2,7 +2,7 @@
 
 Generated from every template under `templates/components` and `templates/partials`. Example pages come from the static include/extends dependency graph.
 
-Components and application partials: **406**
+Components and application partials: **407**
 
 | Component | Kind | Purpose | Variants / states | Responsive contract | Accessibility | Example pages | Findings |
 |---|---|---|---|---|---|---|---:|
@@ -387,8 +387,9 @@ Components and application partials: **406**
 | `partials/schools/table.html` | application-partial | Reusable table interface primitive | canonical; default, open | inherits containing page contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools | 0 |
 | `partials/schools/tabs.html` | application-partial | Reusable tabs interface primitive | canonical; default, loading, selected | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /schools | 0 |
 | `partials/schools/toast_success.html` | application-partial | Reusable toast success interface primitive | canonical; default, open | inherits containing page contract | accessible name and label | /analytics/customize-dashboard<br>/analytics/schedule-report<br>/clusters/<str:cluster_id>/bulk-assign-drawer<br>/schools/<str:school_id>/add-to-cluster<br>/schools/<str:school_id>/assign-to-project | 0 |
+| `partials/ssa/breakdown_table.html` | application-partial | Reusable breakdown table interface primitive | {{ row.band.tone }}; default, empty | inherits containing page contract | inherits semantic parent contract | /ssa | 0 |
 | `partials/ssa/manual_school_options.html` | application-partial | Reusable manual school options interface primitive | canonical; default | inherits containing page contract | inherits semantic parent contract | /ssa/manual/<br>/ssa/manual/schools | 0 |
-| `partials/ssa/performance_workspace.html` | application-partial | Reusable performance workspace interface primitive | danger, executive, lime, success, warning, {{ cell.band.tone }}, {{ district.band.tone }}, {{ insight.tone }}, {{ intervention.band.tone }}, {{ row.tone }}; default, empty | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /ssa | 0 |
+| `partials/ssa/performance_workspace.html` | application-partial | Reusable performance workspace interface primitive | danger, executive, lime, success, warning, {{ cell.band.tone }}, {{ district.band.tone }}, {{ insight.tone }}, {{ intervention.band.tone }}, {{ row.tone }}; default, empty, selected, open | explicit responsive contract | accessible name and label, keyboard focus visibility, announced dynamic state | /ssa | 0 |
 | `partials/ssa/score_group_columns.html` | application-partial | Reusable score group columns interface primitive | canonical; default, empty | inherits containing page contract | accessible name and label | /clusters<br>/core-schools<br>/partials/clusters/<str:cluster_id>/schools<br>/planning<br>/schools | 0 |
 | `partials/targets/_period_matrix.html` | application-partial | Reusable  period matrix interface primitive | {% if cell.pct == None %}neutral{% elif cell.pct >= 100 %}success{% elif cell.pct >= 60 %}warning{% else %}danger{% endif %}, {% if cell.pct == None %}neutral{% elif cell.pct >= 70 %}success{% elif cell.pct >= 50 %}warning{% else %}danger{% endif %}; default | inherits containing page contract | accessible name and label | /my-targets<br>/team-planning-oversight/<br>/team-targets<br>/team-targets/ | 0 |
 | `partials/targets/area_drawer.html` | application-partial | Reusable area drawer interface primitive | canonical; default | explicit responsive contract | inherits semantic parent contract | /my-targets/area-drawer | 0 |

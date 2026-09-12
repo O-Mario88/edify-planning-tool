@@ -9280,6 +9280,30 @@
     },
     {
       "accessibility_requirements": [],
+      "bytes": 1410,
+      "deprecated_alternatives": [],
+      "example_pages": [
+        "/ssa"
+      ],
+      "findings": [],
+      "forms": 0,
+      "htmx_controls": 0,
+      "kind": "application-partial",
+      "name": "Breakdown Table",
+      "purpose": "Reusable breakdown table interface primitive",
+      "responsive_behavior": "inherits containing page contract",
+      "states": [
+        "default",
+        "empty"
+      ],
+      "tables": 1,
+      "template": "partials/ssa/breakdown_table.html",
+      "variants": [
+        "{{ row.band.tone }}"
+      ]
+    },
+    {
+      "accessibility_requirements": [],
       "bytes": 197,
       "deprecated_alternatives": [],
       "example_pages": [
@@ -9306,7 +9330,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 18225,
+      "bytes": 20831,
       "deprecated_alternatives": [],
       "example_pages": [
         "/ssa"
@@ -9320,7 +9344,9 @@
       "responsive_behavior": "explicit responsive contract",
       "states": [
         "default",
-        "empty"
+        "empty",
+        "selected",
+        "open"
       ],
       "tables": 5,
       "template": "partials/ssa/performance_workspace.html",
@@ -9524,7 +9550,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 21138,
+      "bytes": 21527,
       "deprecated_alternatives": [],
       "example_pages": [
         "/team-planning-oversight/",
@@ -60285,8 +60311,8 @@
       "tables": true,
       "tablet_status": "pass-automated-contract",
       "tabs": {
-        "count": 0,
-        "type": "none"
+        "count": 3,
+        "type": "in-page-tabs"
       },
       "templates": [
         "pages/analytics/workspace.html",
@@ -82083,7 +82109,7 @@
     "activity_states": 24,
     "all_routes": 1073,
     "api_routes": 359,
-    "component_templates": 406,
+    "component_templates": 407,
     "full_pages": 237,
     "mobile_contract_pass": 419,
     "nonvisual_actions": 165,

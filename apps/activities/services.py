@@ -3145,7 +3145,16 @@ def complete_partner_ssa_support(activity_id: str, data: dict, principal) -> dic
                 "schoolId": school.school_id,
                 "dateOfSsa": assessment_date.isoformat(),
                 "scores": data.get("scores") or [],
+                # Who KEYED and verified the scores: IA or the monitoring
+                # staff member, so the record is confirmed in this act.
                 "collectorType": "ia" if is_ia else "staff",
+                # Who did the FIELDWORK: the partner delivering this SSA
+                # Support. Without it every partner assessment was credited to
+                # staff, and SSA performance by partner had nothing to count
+                # (2026-09-12). Passed alone, not as collectorType="partner",
+                # which would reopen verification on a record this act has
+                # just verified.
+                "collectedByPartnerId": a.assigned_partner_id,
             },
             principal,
         )

@@ -1085,6 +1085,15 @@ def scoped_school_queryset(scope: UserScope, base=None):
     )
     if scope.country_scope:
         return qs.filter(school_country_q(scope))
+    if scope.region_scope:
+        # A Regional Programme Lead's intelligence is country-wide: the owner
+        # asked for SSA performance "by staff, district, cluster, partner,
+        # country overall" and for country priority progress (2026-09-12),
+        # which is how a region is judged against the rest. The pages' own
+        # region and district filters narrow it. Their OPERATIONAL reach —
+        # the directory, oversight — stays bounded to their region; see
+        # school_queryset.
+        return qs.filter(school_country_q(scope))
     if scope.can_view_summary_only:
         if scope.rvp_region_scoped:
             return qs.filter(region_id__in=scope.region_ids)

@@ -1,8 +1,8 @@
 {
  "summary": {
-  "titled_cards": 619,
+  "titled_cards": 620,
   "templates": 228,
-  "distinct_titles": 588,
+  "distinct_titles": 589,
   "with_card_key": 13,
   "untitled_surfaces": 789,
   "untitled_chrome": 179,
@@ -6534,7 +6534,16 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 95,
+   "line": 100,
+   "title": "SSA performance by staff, cluster and partner",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "sp-card sp-district-table-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/ssa/performance_workspace.html",
+   "line": 122,
    "title": "District performance heat panel",
    "heading_level": 2,
    "has_card_key": false,
@@ -6543,7 +6552,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 105,
+   "line": 132,
    "title": "Intervention gaps by district",
    "heading_level": 2,
    "has_card_key": false,
@@ -6552,7 +6561,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 116,
+   "line": 143,
    "title": "Schools requiring urgent attentionUrgent-attention summary",
    "heading_level": 2,
    "has_card_key": false,
@@ -6561,7 +6570,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 131,
+   "line": 158,
    "title": "Insights &amp; recommendations",
    "heading_level": 2,
    "has_card_key": false,
@@ -6570,7 +6579,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 136,
+   "line": 163,
    "title": "SSA performance FY vs FY",
    "heading_level": 2,
    "has_card_key": false,
@@ -6579,7 +6588,7 @@
   },
   {
    "template": "templates/partials/ssa/performance_workspace.html",
-   "line": 178,
+   "line": 205,
    "title": "SSA performance trend by year",
    "heading_level": 2,
    "has_card_key": false,
@@ -6688,7 +6697,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 119,
+   "line": 125,
    "title": "Staff requiring support",
    "heading_level": 2,
    "has_card_key": false,
@@ -6697,7 +6706,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 144,
+   "line": 150,
    "title": "Recovery plans",
    "heading_level": 2,
    "has_card_key": false,
@@ -6706,7 +6715,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 168,
+   "line": 174,
    "title": "Validation issues",
    "heading_level": 2,
    "has_card_key": false,
@@ -6715,7 +6724,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 219,
+   "line": 225,
    "title": "Priority progress",
    "heading_level": 2,
    "has_card_key": false,
@@ -6724,7 +6733,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 236,
+   "line": 242,
    "title": "Team performance trend",
    "heading_level": 2,
    "has_card_key": false,
@@ -6733,7 +6742,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 286,
+   "line": 292,
    "title": "Partner contribution",
    "heading_level": 2,
    "has_card_key": false,
@@ -6742,7 +6751,7 @@
   },
   {
    "template": "templates/partials/targets/team/body.html",
-   "line": 307,
+   "line": 313,
    "title": "Districts most behind",
    "heading_level": 2,
    "has_card_key": false,

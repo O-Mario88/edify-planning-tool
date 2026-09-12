@@ -236,7 +236,8 @@ class PriorityWorkspaceMarkupTest(SimpleTestCase):
         self.assertNotIn('"url": "/target-distribution/team",', nav)
         # The routes and their page keys are untouched: this removed links, not
         # pages.
-        self.assertIn('"strategic_priorities": {RVP, CD, HR, ADMIN, IA, PL},', nav)
+        # RPL since 2026-09-12: the Regional Programme Lead reads priorities.
+        self.assertIn('"strategic_priorities": {RVP, RPL, CD, HR, ADMIN, IA, PL},', nav)
         self.assertIn('"team_target_distribution": {PL, ADMIN},', nav)
 
     def test_a_held_panel_is_keyed_by_route_when_there_is_no_view_parameter(self):

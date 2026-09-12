@@ -55,6 +55,10 @@ COUNTRY_AUTHOR_ROLES = ("CountryDirector",)
 PRIORITY_SETTING_MANAGER = {
     "CCEO": "Program Lead",
     "Program Lead": "CountryDirector",
+    # Follows up on the Programme Leads' priorities and sets none of them, so a
+    # Lead's priorities stay with the Country Director; the Regional Programme
+    # Lead's own conversation is with the Country Director too (2026-09-12).
+    "RegionalProgramLead": "CountryDirector",
     "ImpactAssessment": "CountryDirector",
     "ProjectCoordinator": "CountryDirector",
     "BusinessTransformationOfficer": "CountryDirector",

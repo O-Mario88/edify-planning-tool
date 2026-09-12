@@ -73,8 +73,14 @@ def ssa_performance_view(request):
             tone="danger",
         ),
     ]
+    breakdowns = dashboard.get("breakdowns") or {}
     context = {
         "dashboard": dashboard,
+        # One tabbed card, three panels (the template's tab ids are literal so
+        # the design-system scan can pair each tab with its panel).
+        "breakdown_staff": breakdowns.get("staff", []),
+        "breakdown_cluster": breakdowns.get("cluster", []),
+        "breakdown_partner": breakdowns.get("partner", []),
         "ssa_kpi_items": ssa_kpi_items,
         "can_add_ssa": _may_upload_ssa(request),
     }

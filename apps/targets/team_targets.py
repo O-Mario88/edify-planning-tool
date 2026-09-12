@@ -85,6 +85,39 @@ def supervised_users(pl_user) -> list[User]:
     """Active CCEOs directly supervised by this PL — the ONLY team lens.
     CD/Admin get a country oversight lens (all active CCEOs)."""
     role = getattr(pl_user, "active_role", "")
+    if role == "RegionalProgramLead":
+        # Every active CCEO holding a school in the Regional Programme Lead's
+        # region — the officers of all the Programme Leads they oversee
+        # (owner, 2026-09-12: "team performance progress by PL"). The page
+        # groups them under their Lead.
+        from apps.accounts.models import StaffSchoolAssignment
+        from apps.core.scoping import resolve_user_scope
+
+        region_ids = resolve_user_scope(pl_user).region_ids or []
+        if not region_ids:
+            return []
+        from apps.schools.models import School
+
+        # StaffSchoolAssignment.school_id is a plain column, not a relation,
+        # so the region is resolved on School first.
+        region_school_ids = School.objects.filter(
+            region_id__in=region_ids, deleted_at__isnull=True
+        ).values("id")
+        staff_ids = set(
+            StaffSchoolAssignment.objects.filter(
+                school_id__in=region_school_ids
+            ).values_list("staff_id", flat=True)
+        )
+        return list(
+            User.objects.filter(
+                staff_profile__id__in=staff_ids,
+                status="active",
+                deleted_at__isnull=True,
+                roles__contains=["CCEO"],
+            )
+            .select_related("staff_profile")
+            .order_by("name")
+        )
     if role in ("CountryDirector", "Admin"):
         return list(
             User.objects.filter(
@@ -475,6 +508,22 @@ class PLTeamTargetsService:
             )
         team_ids = [i for m in members for i in _user_ids(m["user"])]
 
+        # Grouped by Programme Lead for the Regional Programme Lead, who reads
+        # many Leads' teams at once (owner, 2026-09-12). Each officer carries
+        # their Lead's name and the table draws a header where it changes.
+        group_by_lead = getattr(pl_user, "active_role", "") == "RegionalProgramLead"
+        if group_by_lead:
+            from apps.planning.owner_groups import NO_LEAD, owner_directory
+
+            directory = owner_directory(
+                {m["staff_id"] for m in members if m.get("staff_id")}
+            )
+            for m in members:
+                entry = directory.get(m.get("staff_id") or "")
+                m["lead_name"] = (entry or {}).get("pl_name") or NO_LEAD
+            members.sort(
+                key=lambda m: (m["lead_name"] == NO_LEAD, m["lead_name"], m["name"])
+            )
         for m in members:
             ds = {
                 s.district.name
@@ -1261,6 +1310,7 @@ class PLTeamTargetsService:
             "summary_kpis": summary_kpis,
             "attention": attention,
             "members": members,
+            "group_by_lead": group_by_lead,
             "key_progress": key_progress,
             "distribution": distribution,
             "districts_behind": districts_behind,

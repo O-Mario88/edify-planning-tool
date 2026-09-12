@@ -42,6 +42,12 @@
           </thead>
           <tbody>
             {% for member in members %}
+            {% if group_by_lead %}{% ifchanged member.lead_name %}
+            {# One header per Programme Lead, for a reader of many teams. #}
+            <tr class="tt-lead-group" data-lead-group="{{ member.lead_name }}">
+              <th scope="colgroup" colspan="{{ matrix_heads|length|add:2 }}">{{ member.lead_name }}</th>
+            </tr>
+            {% endifchanged %}{% endif %}
             <tr class="tt-member-row"
                 data-bucket="{% if member.status == 'High Risk' or member.status == 'Critical' %}risk{% elif member.status == 'Slightly Behind' %}behind{% else %}ok{% endif %}"
                 @click="expandedStaff = expandedStaff === '{{ member.user_id }}' ? '' : '{{ member.user_id }}'"

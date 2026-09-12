@@ -1,0 +1,15 @@
+{% comment %}One SSA breakdown (staff, cluster or partner) — included by performance_workspace.html.{% endcomment %}
+<table class="sp-table">
+  <caption>Confirmed SSA performance by {{ label|lower }} for {{ dashboard.filters.fy_label }} {{ dashboard.filters.quarter }}</caption>
+  <thead><tr><th scope="col">#</th><th scope="col">{{ label }}</th><th scope="col">Assessed</th><th scope="col">Average</th><th scope="col">Highest weakness</th><th scope="col">High risk</th><th scope="col">Completion</th></tr></thead>
+  <tbody>
+  {% for row in rows|slice:":100" %}
+  <tr><td>{{ forloop.counter }}</td><th scope="row">{{ row.name }}</th><td>{{ row.schools_assessed }}/{{ row.total_schools }}</td><td><strong data-tone="{{ row.band.tone }}">{% if row.average != None %}{{ row.average }}{% else %}—{% endif %}</strong></td><td>{{ row.weakest }}</td><td><span class="sp-risk-count">{{ row.high_risk }}</span></td><td>{{ row.completion_rate }}%</td></tr>
+  {% empty %}
+  <tr><td colspan="7" class="sp-empty-cell">{% if key == "partner" %}No confirmed assessment in this selection was collected by a partner.{% else %}No {{ label|lower }} results for this selection.{% endif %}</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% if rows|length > 100 %}
+<p class="sp-table-note">Showing the first 100 of {{ rows|length }} {{ label|lower }} rows. Narrow the selection with the region or district filter.</p>
+{% endif %}

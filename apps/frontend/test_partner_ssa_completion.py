@@ -154,6 +154,10 @@ class PartnerSsaCompletionTest(TestCase):
         record = SsaRecord.objects.get(school=self.school)
         self.assertEqual(record.collector_type, "staff")
         self.assertEqual(record.verification_status, "confirmed")
+        # The partner did the fieldwork and is credited with it, while the
+        # record stays confirmed by the staff member who keyed it (2026-09-12:
+        # SSA performance by partner had nothing to count without this).
+        self.assertEqual(record.collected_by_partner_id, activity.assigned_partner_id)
         self.assertEqual(record.scores.count(), 8)
         self.assertIsNone(record.new_enrollment)
         self.assertEqual(self.school.enrollment, 420)
