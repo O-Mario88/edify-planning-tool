@@ -176,7 +176,10 @@ jobs:
     github:
       repo: O-Mario88/edify-planning-tool
       branch: main
-      deploy_on_push: true
+      # Intent (2026-09-12): deploys are created by .github/workflows/deploy.yml
+      # after CI passes. Flip this on the LIVE spec only once its secrets exist —
+      # see DEPLOY.md §3b. Until then App Platform deploys the push itself.
+      deploy_on_push: false
     instance_count: 1
     # Jobs are billed only while running. The migration workload is serial and
     # does not need the 1 GiB scalable tier.
@@ -232,7 +235,10 @@ services:
     github:
       repo: O-Mario88/edify-planning-tool
       branch: main
-      deploy_on_push: true
+      # Intent (2026-09-12): deploys are created by .github/workflows/deploy.yml
+      # after CI passes. Flip this on the LIVE spec only once its secrets exist —
+      # see DEPLOY.md §3b. Until then App Platform deploys the push itself.
+      deploy_on_push: false
 
     # The fixed 1 GiB tier is the largest web service that keeps the complete
     # production estate under the $37 ceiling. Run one Gunicorn worker so the
@@ -499,7 +505,10 @@ workers:
     github:
       repo: O-Mario88/edify-planning-tool
       branch: main
-      deploy_on_push: true
+      # Intent (2026-09-12): deploys are created by .github/workflows/deploy.yml
+      # after CI passes. Flip this on the LIVE spec only once its secrets exist —
+      # see DEPLOY.md §3b. Until then App Platform deploys the push itself.
+      deploy_on_push: false
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-0.5gb
     run_command: python manage.py runscheduler

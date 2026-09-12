@@ -1,0 +1,41 @@
+name: Uptime
+
+# An eye on production from outside it (AEGIS review, 2026-09-12). The app's
+# own incident queue cannot report that the app is unreachable, and the
+# platform's alerts watch CPU, memory and restarts, not whether a person can
+# reach the sign-in page. Every ten minutes this asks the readiness probe and
+# the sign-in page; a failed run is a GitHub notification to the person who
+# last touched this file, and shows red on the Actions tab.
+
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    name: Readiness and sign-in
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Readiness probe answers and the database is up
+        run: |
+          body=$(curl --silent --show-error --max-time 20 --write-out '\n%{http_code}' https://edifyplanning.app/api/health/ready)
+          code=$(printf '%s' "$body" | tail -n1)
+          json=$(printf '%s' "$body" | sed '$d')
+          echo "HTTP $code $json"
+          test "$code" = "200"
+          printf '%s' "$json" | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d.get("db") == "up", d'
+          printf '%s' "$json" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("::warning::cache is " + d.get("cache","?")) if d.get("cache") != "shared" else None'
+
+      - name: Sign-in page renders within five seconds
+        run: |
+          start=$(date +%s%N)
+          code=$(curl --silent --output /dev/null --max-time 20 --write-out '%{http_code}' https://edifyplanning.app/login)
+          ms=$(( ($(date +%s%N) - start) / 1000000 ))
+          echo "HTTP $code in ${ms} ms"
+          test "$code" = "200"
+          test "$ms" -lt 5000

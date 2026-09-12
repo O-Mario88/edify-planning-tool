@@ -224,6 +224,30 @@ Django returns `DisallowedHost` for every request), `CSRF_TRUSTED_ORIGINS`
 rather than anything mentioning CSRF), and `APP_BASE_URL`, which is what
 invitation and password-reset emails build their links from.
 
+## 3b. Deploys follow CI, not the push
+
+`.github/workflows/deploy.yml` creates the App Platform deployment only after
+the CI workflow has passed on `main`. Until the two secrets below exist it
+exits green with a notice and App Platform keeps deploying every push, so
+switch in this order:
+
+1. In the repository settings add `DIGITALOCEAN_ACCESS_TOKEN` (a token with
+   apps read/write) and `DIGITALOCEAN_APP_ID` (`doctl apps list`).
+2. Push any commit and confirm the Deploy workflow ran after CI and the
+   build endpoint reports that commit:
+   `curl -s https://edifyplanning.app/api/health/build | python3 -m json.tool`.
+3. Only then set `deploy_on_push: false` on the live app, through the safe
+   procedure in `.do/README.md` (export the live spec, edit a copy, diff,
+   apply). `.do/app.yaml` already records that intent.
+
+Branch protection on `main` refuses force-pushes. Required status checks
+were deliberately not added: they would also refuse direct pushes, which is
+how this repository is worked on; the Deploy workflow is the gate instead.
+
+`.github/workflows/uptime.yml` asks the readiness probe and the sign-in page
+every ten minutes from outside the platform. A failed run notifies the person
+who last edited that file, so keep that a person who is on call.
+
 ## 4. Storage verification and recovery
 
 The production settings fail closed when any required Spaces setting is

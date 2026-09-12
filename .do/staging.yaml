@@ -195,7 +195,10 @@ jobs:
     source_dir: /
     github:
       branch: staging
-      deploy_on_push: true
+      # Intent (2026-09-12): deploys are created by .github/workflows/deploy.yml
+      # after CI passes. Flip this on the LIVE spec only once its secrets exist —
+      # see DEPLOY.md §3b. Until then App Platform deploys the push itself.
+      deploy_on_push: false
       repo: O-Mario88/edify-planning-tool
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb
@@ -217,7 +220,10 @@ services:
     source_dir: /
     github:
       branch: staging
-      deploy_on_push: true
+      # Intent (2026-09-12): deploys are created by .github/workflows/deploy.yml
+      # after CI passes. Flip this on the LIVE spec only once its secrets exist —
+      # see DEPLOY.md §3b. Until then App Platform deploys the push itself.
+      deploy_on_push: false
       repo: O-Mario88/edify-planning-tool
     # Match production's two-web-instance, 2 GB failure domain so shared-cache,
     # locking, SSE, duplicate-submission and capacity checks are representative.
@@ -280,7 +286,10 @@ workers:
     source_dir: /
     github:
       branch: staging
-      deploy_on_push: true
+      # Intent (2026-09-12): deploys are created by .github/workflows/deploy.yml
+      # after CI passes. Flip this on the LIVE spec only once its secrets exist —
+      # see DEPLOY.md §3b. Until then App Platform deploys the push itself.
+      deploy_on_push: false
       repo: O-Mario88/edify-planning-tool
     instance_count: 1
     instance_size_slug: apps-s-1vcpu-1gb

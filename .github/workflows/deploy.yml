@@ -1,0 +1,67 @@
+name: Deploy
+
+# Production follows CI, not the push (AEGIS review, 2026-09-12). App
+# Platform used to deploy every push to main the moment it landed, so a red
+# suite or a failing security scan reached production in minutes. This
+# workflow waits for the CI run on main to finish and creates the App
+# Platform deployment only when it succeeded.
+#
+# It needs two repository secrets the owner sets once:
+#   DIGITALOCEAN_ACCESS_TOKEN  — a token with apps read/write
+#   DIGITALOCEAN_APP_ID        — the production app id (doctl apps list)
+# and the live app spec's `deploy_on_push` switched to false through the
+# safe procedure in .do/README.md. Until the secrets exist the job explains
+# itself and exits green, so nothing changes by accident.
+
+on:
+  # zizmor: ignore[dangerous-triggers] — this workflow checks out nothing and
+  # runs no code from the triggering run; it only reads its conclusion and
+  # head commit (through env, never template expansion) to deploy main.
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
+jobs:
+  production:
+    name: Create the App Platform deployment
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    timeout-minutes: 30
+    env:
+      APP_ID: ${{ secrets.DIGITALOCEAN_APP_ID }}
+      HAS_TOKEN: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN != '' }}
+      CI_RUN_ID: ${{ github.event.workflow_run.id }}
+      HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+    steps:
+      - name: Explain when the secrets are not set yet
+        if: ${{ env.HAS_TOKEN != 'true' || env.APP_ID == '' }}
+        run: |
+          echo "::notice::DIGITALOCEAN_ACCESS_TOKEN and DIGITALOCEAN_APP_ID are not both set."
+          echo "::notice::Deploys still follow App Platform's own deploy_on_push until they are. See DEPLOY.md §3b."
+
+      - name: Install doctl
+        if: ${{ env.HAS_TOKEN == 'true' && env.APP_ID != '' }}
+        uses: digitalocean/action-doctl@3cb3953159719656269e044e0e24ca16dd2a690f # v2.5.2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+
+      - name: Deploy the commit CI just approved
+        if: ${{ env.HAS_TOKEN == 'true' && env.APP_ID != '' }}
+        run: |
+          echo "CI run $CI_RUN_ID passed on $HEAD_SHA"
+          doctl apps create-deployment "$APP_ID" --wait --format ID,Phase,Cause
+
+      - name: Confirm what production is serving
+        if: ${{ env.HAS_TOKEN == 'true' && env.APP_ID != '' }}
+        run: |
+          served=$(curl --fail --silent --max-time 30 https://edifyplanning.app/api/health/build | python3 -c 'import json,sys; print(json.load(sys.stdin).get("release",""))')
+          echo "release served: $served"
+          test "$served" = "$HEAD_SHA"
