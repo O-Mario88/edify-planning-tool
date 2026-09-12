@@ -128,12 +128,18 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     The recipe (owner, 2026-09-06 catalogue):
 
     * A staff school mission is a visit day — transport by district and
-      lunch; a secondary district adds dinner, a night's accommodation and
-      breakfast — plus the activity's own rate: Client Staff Visit, Core
-      Staff Visit, SSA Support or OneTest.
+      lunch; a secondary district adds breakfast, dinner and a night's
+      accommodation — and that day is shared across every school planned
+      for it (apps/daily_visit_batches). The visit itself has no rate: the
+      owner retired Client/Core Staff Visit on 2026-09-12 ("we are adding
+      transport + lunch then divide by the number of schools planned for
+      that day"). A visit whose reason is OneTest adds the OneTest rate.
     * Partner school work is the partner's rate alone: Client or Core Partner
-      Visit for a visit or in-school training; Partner Meetings for a
-      partner-run training or a partner/project activity.
+      Visit for a visit, an in-school training or SSA Support — the owner
+      (2026-09-12): "SSA support is the same cost as follow up and other
+      partner school visit related activities"; Partner Meetings for a
+      partner-run training or a partner/project activity. A partner visit
+      whose reason is OneTest fetches the OneTest rate instead.
     * A group session is venue and facilitation per day, printing and
       photocopying of materials, the staff day, and the session's own rate:
       Cluster Meetings/Trainings, TOT trainings (which alone feed their
@@ -239,12 +245,18 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
     is_core = kind == "core" or activity_type in CORE_WORK_TYPES
     is_ssa = activity_type in SSA_WORK_TYPES
 
-    def staff_visit_rate_key() -> str:
+    def staff_visit_rate_key() -> str | None:
+        """The rate a school mission carries ON TOP of its visit day, or
+        None: every staff visit — client, core or SSA collection — is the
+        shared visit day alone; only a OneTest reason adds its rate."""
         if kind == "onetest":
             return "onetest"
-        if is_ssa:
-            return "ssa_support"
-        return "core_staff_visit" if is_core else "client_staff_visit"
+        return None
+
+    def add_mission_rate() -> None:
+        key = staff_visit_rate_key()
+        if key:
+            add_rate(key)
 
     if activity_type == "field_event":
         # Attendee-side field work — district meetings, boot camps, workshops.
@@ -277,10 +289,14 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         # Each partner workflow has one canonical, CD-visible rate. Do not
         # substitute a different activity's rate merely because the required
         # row is missing; `add` will mark that exact item as a blocker.
-        if is_in_school_training:
+        if kind == "onetest":
+            key = "onetest"
+            basis = "per OneTest visit"
+        elif is_in_school_training:
             key = "core_partner_visit" if is_core else "client_partner_visit"
             basis = "per school mission"
-        elif activity_type in VISIT_TYPES:
+        elif activity_type in VISIT_TYPES or is_ssa:
+            # SSA Support is a partner school visit and costs as one.
             key = "core_partner_visit" if is_core else "client_partner_visit"
             basis = "per activity"
         elif activity_type in TRAINING_TYPES:
@@ -301,7 +317,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
             nights = 1 if nights is None else max(0, int(nights))
         except (TypeError, ValueError):
             nights = 1
-        add_rate(staff_visit_rate_key())
+        add_mission_rate()
         add_staff_visit_day(1, nights=nights)
     elif activity_type in TRAINING_TYPES:
         # Every group training is the same session; a TOT training also has
@@ -317,7 +333,7 @@ def cost_for_activity(a: dict, rates: RateCard) -> ActivityCost:
         )
     else:
         # ssa_activity and anything else: a staff visit day plus its rate.
-        add_rate(staff_visit_rate_key())
+        add_mission_rate()
         add_staff_visit_day(1)
 
     # The costs the Country Director added for this activity's catalogue

@@ -38,6 +38,7 @@ PRIMARY_RATES = [
 ]
 SECONDARY_RATES = [
     ("secondary_transport_per_day", 330000),
+    ("secondary_breakfast_per_day", 40000),
     ("secondary_lunch_per_day", 30000),
     ("secondary_accommodation_per_night", 150000),
     ("secondary_overnight_dinner_per_day", 50000),

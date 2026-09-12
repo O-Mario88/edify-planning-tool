@@ -181,6 +181,7 @@ class PlanningReadinessTestCase(TestCase):
             "primary_lunch_per_day": 12000,
             "secondary_transport_per_day": 80000,
             "secondary_lunch_per_day": 12000,
+            "secondary_breakfast_per_day": 8000,
             "secondary_accommodation_per_night": 40000,
             "secondary_overnight_dinner_per_day": 12000,
         }
@@ -192,7 +193,7 @@ class PlanningReadinessTestCase(TestCase):
         self.assertEqual(cost_for_activity(a, rates).amount, 62000)
 
         secondary = cost_for_activity({**a, "districtType": "secondary"}, rates)
-        self.assertEqual(secondary.amount, 144000)
+        self.assertEqual(secondary.amount, 152000)
         self.assertFalse(secondary.cost_missing)
 
     def test_partner_visit_rate_basis_per_activity(self):

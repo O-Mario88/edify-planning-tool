@@ -76,7 +76,11 @@ def _keys(cost):
 
 
 class SchoolMissionsSharePriceTest(SimpleTestCase):
-    """Every staff school mission is one visit day plus the mission's rate."""
+    """Every staff school mission is one visit day — shared across the day's
+    schools by the Daily Visit Batch — and nothing else. The owner retired
+    the Client and Core Staff Visit rates on 2026-09-12, and SSA Support with
+    them (partner work, priced as a partner visit). Only a OneTest reason
+    adds its rate."""
 
     CLIENT = (
         "school_visit",
@@ -88,34 +92,49 @@ class SchoolMissionsSharePriceTest(SimpleTestCase):
     CORE = ("core_visit", "core_assessment_visit")
     SSA = ("baseline_ssa_visit", "school_visit_ssa_collection", "ssa_activity")
 
-    def test_a_client_school_mission_is_a_visit_day_plus_the_client_rate(self):
+    def test_a_client_school_mission_is_the_visit_day_alone(self):
         for activity_type in self.CLIENT:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="primary")
+                self.assertEqual(cost.amount, PRIMARY_STAFF_DAY)
                 self.assertEqual(
-                    cost.amount, PRIMARY_STAFF_DAY + RATES["client_staff_visit"]
+                    sorted(_keys(cost)), ["lunch_per_day", "primary_transport_per_day"]
                 )
-                self.assertIn("client_staff_visit", _keys(cost))
                 self.assertFalse(cost.cost_missing)
 
-    def test_a_core_school_mission_carries_the_core_rate(self):
+    def test_a_core_school_mission_is_the_visit_day_alone(self):
         for activity_type in self.CORE:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="primary")
-                self.assertEqual(
-                    cost.amount, PRIMARY_STAFF_DAY + RATES["core_staff_visit"]
-                )
+                self.assertEqual(cost.amount, PRIMARY_STAFF_DAY)
         by_profile = _cost(
             activityType="school_visit", districtType="primary", costingKind="core"
         )
-        self.assertIn("core_staff_visit", _keys(by_profile))
+        self.assertEqual(by_profile.amount, PRIMARY_STAFF_DAY)
+        self.assertNotIn("core_staff_visit", _keys(by_profile))
         self.assertNotIn("client_staff_visit", _keys(by_profile))
 
-    def test_ssa_work_carries_the_ssa_support_rate(self):
+    def test_the_staff_visit_rates_are_retired_even_when_a_card_carries_them(self):
+        """A saved snapshot or an old catalogue may still carry the keys; the
+        engine never prices with them, and the reference no longer lists them."""
+        from apps.budget.reference import RETIRED_VISIT_RATE_KEYS
+
+        self.assertEqual(
+            RETIRED_VISIT_RATE_KEYS,
+            {"client_staff_visit", "core_staff_visit", "ssa_support"},
+        )
+        self.assertTrue(RETIRED_VISIT_RATE_KEYS <= RETIRED_COST_SETTING_KEYS)
+        self.assertFalse(RETIRED_VISIT_RATE_KEYS & CANONICAL_RATE_KEYS)
+        for activity_type in self.CLIENT + self.CORE + self.SSA:
+            cost = _cost(activityType=activity_type, districtType="secondary")
+            self.assertFalse(RETIRED_VISIT_RATE_KEYS & set(_keys(cost)), activity_type)
+
+    def test_ssa_collection_by_staff_is_the_visit_day_alone(self):
         for activity_type in self.SSA:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="primary")
-                self.assertEqual(cost.amount, PRIMARY_STAFF_DAY + RATES["ssa_support"])
+                self.assertEqual(cost.amount, PRIMARY_STAFF_DAY)
+                self.assertNotIn("ssa_support", _keys(cost))
 
     def test_a_onetest_visit_carries_the_onetest_rate(self):
         cost = _cost(
@@ -127,11 +146,9 @@ class SchoolMissionsSharePriceTest(SimpleTestCase):
         for activity_type in self.CLIENT:
             with self.subTest(activity_type=activity_type):
                 cost = _cost(activityType=activity_type, districtType="secondary")
+                self.assertEqual(cost.amount, SECONDARY_STAFF_DAY)
                 self.assertEqual(
-                    cost.amount, SECONDARY_STAFF_DAY + RATES["client_staff_visit"]
-                )
-                self.assertEqual(
-                    sorted(k for k in _keys(cost) if k != "client_staff_visit"),
+                    sorted(_keys(cost)),
                     sorted(
                         [
                             "secondary_transport_per_day",
@@ -147,7 +164,7 @@ class SchoolMissionsSharePriceTest(SimpleTestCase):
         """The fallback used to add PRIMARY transport and lunch whatever the
         district, so secondary work was costed 95,000 short."""
         cost = _cost(activityType="story_gathering_visit", districtType="secondary")
-        self.assertEqual(cost.amount, SECONDARY_STAFF_DAY + RATES["client_staff_visit"])
+        self.assertEqual(cost.amount, SECONDARY_STAFF_DAY)
 
     def test_the_lunch_row_is_one_row(self):
         """The owner's list has one Lunch, not one per district."""
@@ -245,6 +262,31 @@ class PartnerWorkSharesOneRateTest(SimpleTestCase):
                 )
                 self.assertEqual(cost.amount, RATES["client_partner_visit"])
                 self.assertEqual(_keys(cost), ["client_partner_visit"])
+
+    def test_partner_ssa_support_costs_as_a_partner_school_visit(self):
+        """Owner, 2026-09-12: SSA Support is a partner visit at the same cost
+        as a follow-up or any other partner school visit."""
+        for activity_type in ("partner_ssa_collection", "school_visit_ssa_collection"):
+            with self.subTest(activity_type=activity_type):
+                cost = cost_for_activity(
+                    {"activityType": activity_type, "deliveryType": "partner"}, RATES
+                )
+                self.assertEqual(_keys(cost), ["client_partner_visit"])
+                self.assertEqual(cost.amount, RATES["client_partner_visit"])
+
+    def test_a_partner_onetest_visit_fetches_the_onetest_rate(self):
+        """Owner, 2026-09-12: OneTest is also a school visit, at its own cost;
+        when the reason for the visit is OneTest, that is the rate."""
+        cost = cost_for_activity(
+            {
+                "activityType": "school_visit",
+                "deliveryType": "partner",
+                "costingKind": "onetest",
+            },
+            RATES,
+        )
+        self.assertEqual(_keys(cost), ["onetest"])
+        self.assertEqual(cost.amount, RATES["onetest"])
 
     def test_partner_work_at_a_core_school_carries_the_core_partner_rate(self):
         cost = cost_for_activity(

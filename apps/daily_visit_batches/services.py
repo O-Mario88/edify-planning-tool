@@ -633,10 +633,11 @@ def _recalculate_and_write_lines(
         ]
         # Every member carries its activity-specific components ON TOP of its
         # per-diem pool share: a session's venue, facilitation and materials;
-        # a visit's own rate (Client/Core Staff Visit, SSA Support, OneTest)
-        # and any cost the Country Director linked to its catalogue item
-        # (owner's catalogue, 2026-09-06). Only the daily staff lines are
-        # shared; the recipe's copies of those are replaced by the pool.
+        # OneTest when the reason is OneTest, and any cost the Country
+        # Director linked to its catalogue item (owner's catalogue,
+        # 2026-09-06). A client, core or SSA visit by staff carries nothing
+        # but its share (owner, 2026-09-12). Only the daily staff lines are shared;
+        # the recipe's copies of those are replaced by the pool.
         from apps.budget.costing import cost_for_activity
         from apps.budget.costing_service import _with_linked_rates
 

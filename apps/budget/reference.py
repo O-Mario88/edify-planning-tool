@@ -25,12 +25,7 @@ from __future__ import annotations
 # already priced with, the key is kept and only the label changed, so every
 # saved cost line and every test that seeds the old key still reads.
 # key, label, default UGX.
-ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (
-    ("client_staff_visit", "Client Staff Visit", 0),
-    ("core_staff_visit", "Core Staff Visit", 0),
-    ("ssa_support", "SSA Support", 0),
-    ("onetest", "OneTest", 0),
-)
+ACTIVITY_RATES: tuple[tuple[str, str, int], ...] = (("onetest", "OneTest", 0),)
 PARTNER_RATES: tuple[tuple[str, str, int], ...] = (
     ("client_partner_visit", "Client Partner Visit", 40000),
     ("core_partner_visit", "Core Partner Visit", 40000),
@@ -58,9 +53,6 @@ TRAVEL_RATES: tuple[tuple[str, str, int], ...] = (
 
 # The basis each rate is charged on, shown under its label on Cost Settings.
 RATE_UNITS: dict[str, str] = {
-    "client_staff_visit": "per visit",
-    "core_staff_visit": "per visit",
-    "ssa_support": "per activity",
     "onetest": "per activity",
     "client_partner_visit": "per visit",
     "core_partner_visit": "per visit",
@@ -92,9 +84,6 @@ RATE_LABELS: dict[str, str] = {key: label for key, label, _cost in CANONICAL_RAT
 # always carries them, adds them at whatever the Country Director set.
 OPTIONAL_RATE_KEYS = frozenset(
     {
-        "client_staff_visit",
-        "core_staff_visit",
-        "ssa_support",
         "onetest",
         "cluster_meetings_trainings",
         "tot_trainings",
@@ -200,11 +189,21 @@ DUPLICATE_COST_SETTING_KEYS = frozenset(
         "programme_accommodation_per_night",
     }
 )
+# The owner retired three visit rates on 2026-09-12. A staff visit costs its
+# share of the day's transport and meals (the Daily Visit Batch pool divided
+# by the schools planned that day) and nothing else, so Client and Core
+# Staff Visit are gone. SSA Support is partner work priced as any partner
+# school visit, so it is gone too. The partner visit rates and OneTest stay.
+RETIRED_VISIT_RATE_KEYS = frozenset(
+    {"client_staff_visit", "core_staff_visit", "ssa_support"}
+)
+
 RETIRED_COST_SETTING_KEYS = (
     LEGACY_VISIT_COST_KEYS
     | LEGACY_CLUSTER_ACTIVITY_COST_KEYS
     | DUPLICATE_COST_SETTING_KEYS
     | RENAMED_COST_SETTING_KEYS
+    | RETIRED_VISIT_RATE_KEYS
 )
 
 

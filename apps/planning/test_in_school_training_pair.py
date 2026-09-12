@@ -145,7 +145,7 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         self.assertTrue(training_lines)
         self.assertEqual(
             {line.cost_setting_key for line in training_lines},
-            {"client_staff_visit", "primary_transport_per_day", "lunch_per_day"},
+            {"primary_transport_per_day", "lunch_per_day"},
         )
         self.assertFalse(
             ActivityScheduleCostLine.objects.filter(activity=visit).exists()

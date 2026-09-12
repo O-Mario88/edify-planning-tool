@@ -176,14 +176,13 @@ class WeeklyFundRequestsTest(APITestCase):
             201,
         )
 
-        # Confirm the governed transport + lunch split is persisted, with the
-        # visit's own rate (Client Staff Visit, 0 until the CD sets it).
+        # Confirm the governed transport + lunch split is persisted and that
+        # a staff visit carries nothing else (owner, 2026-09-12).
         lines = ActivityScheduleCostLine.objects.filter(activity_id=sv["id"])
-        self.assertEqual(lines.count(), 3)
+        self.assertEqual(lines.count(), 2)
         self.assertEqual(
             set(lines.values_list("cost_setting_key", "amount")),
             {
-                ("client_staff_visit", 0),
                 ("primary_transport_per_day", 50000),
                 ("lunch_per_day", 12000),
             },

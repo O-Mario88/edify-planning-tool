@@ -58,16 +58,20 @@ POOL_PLUS_RECIPE_TYPES = DAY_POOL_EXTRA_TYPES - {"field_event", "in_school_train
 # Breakfast. (Incidentals left the catalogue with the owner's list.)
 REQUIRED_KEYS = {
     "primary": ["primary_transport_per_day", "lunch_per_day"],
+    # Owner, 2026-09-12: "transport for secondary district + Lunch +
+    # breakfast + Dinner + Accommodation then divide by the number of
+    # schools planned for that day". Breakfast used to be optional.
     "secondary": [
         "secondary_transport_per_day",
         "lunch_per_day",
-        "secondary_accommodation_per_night",
+        "secondary_breakfast_per_day",
         "secondary_overnight_dinner_per_day",
+        "secondary_accommodation_per_night",
     ],
 }
-OPTIONAL_KEYS = {
+OPTIONAL_KEYS: dict[str, list[str]] = {
     "primary": [],
-    "secondary": ["secondary_breakfast_per_day"],
+    "secondary": [],
 }
 
 # Human labels for the cost-component keys, used on ActivityScheduleCostLine.label.

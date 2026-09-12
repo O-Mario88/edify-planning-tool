@@ -178,9 +178,8 @@ class CentralizedCostingTest(APITestCase):
         self.assertTrue(prev["canSchedule"], prev)
         self.assertEqual(prev["amount"], 15000 + 8000)
         labels = {l["lineItemType"] for l in prev["lines"]}
-        # The visit's own rate (Client Staff Visit) rides along at the
-        # catalogue default of 0 until the Country Director sets it.
-        self.assertEqual(labels, {"activity_rate", "transport", "lunch"})
+        # A staff visit carries no rate of its own (owner, 2026-09-12).
+        self.assertEqual(labels, {"transport", "lunch"})
         self.assertNotIn("breakfast", labels)
         self.assertNotIn("accommodation", labels)
 
@@ -227,7 +226,6 @@ class CentralizedCostingTest(APITestCase):
         self.assertEqual(
             labels,
             {
-                "activity_rate",
                 "transport",
                 "breakfast",
                 "lunch",
@@ -253,7 +251,7 @@ class CentralizedCostingTest(APITestCase):
             }
         )
         labels = {l["lineItemType"] for l in prev["lines"]}
-        self.assertEqual(labels, {"activity_rate", "transport", "lunch"})
+        self.assertEqual(labels, {"transport", "lunch"})
         self.assertEqual(prev["amount"], 15000 + 8000)
 
     # ── C. Group training ────────────────────────────────────────────────────

@@ -145,7 +145,7 @@ _KEY_LABEL = {
     "secondary_lunch_per_day": "Secondary district daily lunch pool",
     "secondary_accommodation_per_night": "Secondary district accommodation per night",
     "secondary_overnight_dinner_per_day": "Secondary district overnight dinner",
-    "secondary_breakfast_per_day": "Secondary district breakfast (optional)",
+    "secondary_breakfast_per_day": "Breakfast",
     "secondary_incidentals_per_day": "Secondary district incidentals (optional)",
     "programme_venue_per_day": "Programme event venue (per day)",
     "programme_participant_meal_cost_per_head": "Programme participant meals",
@@ -205,11 +205,11 @@ COSTING_PROFILE_LABELS = {
     "CLUSTER_TRAINING": "Cluster training (session + room + facilitator)",
     "CLUSTER_MEETING": "Cluster meeting (session + room)",
     "ONLINE_TRAINING": "Online training (room + facilitator)",
-    "STAFF_SCHOOL_VISIT": "Client school visit (visit day + Client Staff Visit)",
-    "CORE_SCHOOL_VISIT": "Core school visit (visit day + Core Staff Visit)",
+    "STAFF_SCHOOL_VISIT": "Client school visit (visit day shared across the day's schools)",
+    "CORE_SCHOOL_VISIT": "Core school visit (visit day shared across the day's schools)",
     "ONETEST": "OneTest (visit day + OneTest)",
     "ADMIN_PARTNER_MEETING": "Partner meeting (Partner Meetings)",
-    "SSA_DATA_GATHERING": "SSA data gathering (visit day + SSA Support)",
+    "SSA_DATA_GATHERING": "SSA data gathering (a visit day; partner-run, the partner visit rate)",
     "GROUP_YOUTH_CAMP": "Youth camp (room + facilitator)",
     "TOT_TRAINING": "TOT training (session + meals + room + facilitator)",
     "PROGRAMME_EVENT": "Programme event (room + facilitator)",
@@ -604,7 +604,8 @@ def preview(
         "canSchedule": result["canSchedule"],
         "dailyActivityCount": member_count,
         "allocationNote": (
-            f"Daily staff costs are shared across {member_count} planned activities, including this one. "
+            f"Daily staff costs are shared across {member_count} planned activities, including this one: "
+            f"UGX {int(cost.amount):,} for this one. "
             "Saving recalculates every share; rounding may change a share by one shilling per item."
             if member_count > 1
             else "Daily staff costs are shared automatically when more activities are planned for the same day."
