@@ -62,7 +62,7 @@ from apps.core.interventions import (
 )  # noqa: E402
 
 
-def _forbid_staff_on_partner_activity(request, a):
+def _forbid_staff_on_partner_activity(request, a, *, allow_confirmer=False):
     """Partner-owned activities are read-only for staff monitors.
 
     Returns an HttpResponseForbidden when the activity is partner-delivered
@@ -70,6 +70,12 @@ def _forbid_staff_on_partner_activity(request, a):
     partner (i.e. a staff/monitoring user). Returns None when the actor IS
     the assigned partner's user, or when the activity is staff-delivered —
     so partners keep full use of these endpoints via /partner/my-plan.
+
+    `allow_confirmer` opens the one act staff DO hold on partner work: the
+    monitoring staff member enters the Salesforce record, and that completes
+    the activity (owner, 2026-09-12). The partner's own deliverable — the
+    visit form or the attendance form, the counts, the money — stays the
+    partner's, so every other door keeps the default.
     """
     if a.delivery_type != "partner":
         return None
@@ -77,6 +83,10 @@ def _forbid_staff_on_partner_activity(request, a):
 
     scope = resolve_user_scope(request.user)
     if a.assigned_partner_id and a.assigned_partner_id in (scope.partner_ids or []):
+        return None
+    if allow_confirmer and RolePermissionService.can_confirm_partner_activity(
+        request.user, a
+    ):
         return None
     return HttpResponseForbidden("Partner-owned activity — staff can only monitor.")
 
@@ -312,6 +322,15 @@ def activity_detail_view(request, activity_id):
 
     context = {
         "act": a,
+        # The monitoring staff member — and Impact Assessment — record the
+        # partner's Salesforce entry here, and that completes the activity
+        # (owner, 2026-09-12). SSA Support has its own drawer, which also
+        # carries the scores and the enrolment.
+        "may_confirm_partner_work": (
+            a.status == "awaiting_ia_verification"
+            and not is_partner_ssa_support_activity(a)
+            and RolePermissionService.can_confirm_partner_activity(request.user, a)
+        ),
         "evidence_list": evidence_list,
         "status_label": status_label,
         "status_class": status_class,
@@ -1626,6 +1645,14 @@ def salesforce_id_drawer_view(request, activity_id):
     context = {
         "act": a,
         "drawer_size": "sm",
+        # Says what the button will do: on partner work awaiting verification,
+        # recording the ID completes the activity (owner, 2026-09-12).
+        "confirms_partner_work": (
+            a.delivery_type == "partner"
+            and a.status == "awaiting_ia_verification"
+            and not is_partner_ssa_support_activity(a)
+            and RolePermissionService.can_confirm_partner_activity(request.user, a)
+        ),
     }
     return render(request, "partials/my_plan/salesforce_id_drawer.html", context)
 
@@ -1636,7 +1663,7 @@ def salesforce_id_action(request, activity_id):
     if not RolePermissionService.can_view_record(request.user, a):
         return HttpResponseForbidden("Access Denied.")
 
-    forbidden = _forbid_staff_on_partner_activity(request, a)
+    forbidden = _forbid_staff_on_partner_activity(request, a, allow_confirmer=True)
     if forbidden:
         return forbidden
 
@@ -1653,6 +1680,40 @@ def salesforce_id_action(request, activity_id):
                 '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">Error: Salesforce ID is locked after IA confirmation. Ask IA to return the activity to make a correction.</div>',
                 status=400,
             )
+
+        # For partner work the Salesforce entry IS the completion: the partner
+        # uploaded its form, and whoever records the entry — Impact Assessment
+        # or the monitoring staff member — completes the activity with it
+        # (owner, 2026-09-12). SSA Support is the exception, because its
+        # completion also carries the eight scores and pupil enrolment, so it
+        # keeps its own drawer and this door points there.
+        if a.delivery_type == "partner" and a.status == "awaiting_ia_verification":
+            if is_partner_ssa_support_activity(a):
+                return HttpResponse(
+                    '<div class="p-3 bg-amber-50 text-amber-800 rounded-surface '
+                    'text-[12px] font-bold">This is SSA Support — complete it from '
+                    "the Complete drawer, which records the scores and the "
+                    "enrolment with the Salesforce ID.</div>",
+                    status=400,
+                )
+            try:
+                ia_confirm(
+                    a.id,
+                    {
+                        "salesforceId": salesforce_id,
+                        "verificationNote": request.POST.get(
+                            "verification_note", ""
+                        ).strip(),
+                    },
+                    request.user,
+                )
+            except Exception as e:
+                return error_fragment(e, status=400)
+            if request.headers.get("HX-Request") == "true":
+                response = HttpResponse("<script>window.location.reload();</script>")
+                response["HX-Trigger"] = "close-drawer"
+                return response
+            return local_redirect(f"/my-plan/{activity_id}")
 
         kind = sf_kind(a.activity_type)
         entry_source = (

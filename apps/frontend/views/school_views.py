@@ -600,6 +600,26 @@ def school_directory_view(request):
     schools_qs = schools_qs.annotate(
         _project_count=Count("project_assignments", distinct=True)
     )
+    # Grouped by the people responsible — Program Lead, then the CCEO who
+    # holds the school — for a country role who reads the whole portfolio
+    # (owner, 2026-09-11 for Planning, 2026-09-12 for this directory: "IA
+    # should have access to schools and planning and my plan but grouped by
+    # PL"). Sorted by name for someone whose portfolio IS their list. An
+    # explicit ?group= is the reader's choice either way.
+    _group = request.GET.get("group")
+    if _group is None:
+        _group = "owner" if scope.country_scope else "name"
+    group_by_owner = _group == "owner"
+    owner_group_directory: dict = {}
+    owner_group_counts: dict = {}
+    if group_by_owner:
+        from apps.planning.owner_groups import owner_order
+
+        schools_qs, owner_group_directory = owner_order(schools_qs)
+        owner_group_counts = {
+            (row["account_owner_id"] or ""): row["n"]
+            for row in schools_qs.values("account_owner_id").annotate(n=Count("id"))
+        }
     paginator = Paginator(schools_qs, per_page)
     page_obj = paginator.get_page(page_number)
     pages_list = list(
@@ -632,8 +652,9 @@ def school_directory_view(request):
                 staff_names_by_owner_id[staff.id] = staff.user.name
                 staff_names_by_owner_id[staff.user_id] = staff.user.name
 
-    view_models = [
-        SchoolDirectoryViewModel.from_school(
+    view_models = []
+    for s in page_obj:
+        row = SchoolDirectoryViewModel.from_school(
             s,
             user,
             clusters_dict,
@@ -641,8 +662,15 @@ def school_directory_view(request):
             progress=progress_by_school.get(s.id),
             staff_names_by_owner_id=staff_names_by_owner_id,
         )
-        for s in page_obj
-    ]
+        if group_by_owner:
+            # Group headers, drawn where the owner changes.
+            from apps.planning.owner_groups import group_label as _group_label
+
+            key = s.account_owner_id or ""
+            row["group_key"] = key
+            row["group_label"] = _group_label(owner_group_directory.get(key))
+            row["group_count"] = owner_group_counts.get(key, 0)
+        view_models.append(row)
 
     # Default Selected School Intelligence
     selected_school_data = None
@@ -732,6 +760,8 @@ def school_directory_view(request):
         "pages_list": pages_list,
         "per_page": per_page,
         "view_models": view_models,
+        "group_by_owner": group_by_owner,
+        "selected_group": "owner" if group_by_owner else "name",
         "kpi_strip_items": kpi_strip_items,
         "regions": regions,
         "districts": districts,

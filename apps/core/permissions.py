@@ -452,19 +452,22 @@ class RolePermissionService:
         )
 
     @staticmethod
-    def can_complete_partner_ssa_support(user, activity) -> bool:
-        """Allow IA or the named staff monitor to record partner SSA results.
+    def can_confirm_partner_activity(user, activity) -> bool:
+        """Who may record a partner activity's Salesforce entry and complete it.
 
-        This is deliberately narrower than evidence upload or record
-        visibility: entering the eight authoritative scores, changing pupil
-        enrolment, and completing the partner activity releases it into the
-        finance chain. A supervisor who can merely see the school must not be
-        able to do that, and the delivery partner must never verify its own
-        assessment.
+        Owner, 2026-09-12: "The IA and Staff can enter partner visits into
+        Salesforce and use the Salesforce ID to complete partner activities.
+        Partner just have to upload the visit form or training attendance."
+        So: Impact Assessment, or the staff member named as the activity's
+        monitor — and nobody else. A supervisor who can merely see the school
+        must not be able to do it, and the delivering partner must never
+        confirm its own work.
+
+        Deliberately narrower than record visibility, because confirming is
+        what releases the work into the finance chain: it is the state the
+        accountant's clearance payment reads.
         """
-        from apps.activities.services import is_partner_ssa_support_activity
-
-        if not is_partner_ssa_support_activity(activity):
+        if activity is None or getattr(activity, "delivery_type", "") != "partner":
             return False
         if RolePermissionService.can_verify_ia(user, activity):
             return True
@@ -476,7 +479,18 @@ class RolePermissionService:
             return False
         from apps.core.scoping import owner_ids
 
-        return activity.monitored_by_staff_id in owner_ids(user)
+        monitor = getattr(activity, "monitored_by_staff_id", None)
+        return bool(monitor) and monitor in owner_ids(user)
+
+    @staticmethod
+    def can_complete_partner_ssa_support(user, activity) -> bool:
+        """The same authority, for the SSA variant of that act — which also
+        carries the eight authoritative scores and pupil enrolment."""
+        from apps.activities.services import is_partner_ssa_support_activity
+
+        if not is_partner_ssa_support_activity(activity):
+            return False
+        return RolePermissionService.can_confirm_partner_activity(user, activity)
 
     @staticmethod
     def can_enter_activity_sf_id(user, activity) -> bool:

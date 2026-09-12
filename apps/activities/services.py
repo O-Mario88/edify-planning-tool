@@ -3202,7 +3202,17 @@ def ia_confirm(activity_id: str, data: dict | None = None, principal=None) -> di
     # reaching this function through any future unguarded caller.
     from apps.core.permissions import RolePermissionService
 
-    if not RolePermissionService.can_verify_ia(principal, a):
+    # Partner-delivered work is confirmed by Impact Assessment OR by the staff
+    # member monitoring it, both of whom enter the Salesforce record for a
+    # partner (owner, 2026-09-12). Staff-delivered work stays IA-only: there
+    # the person who ran it must never be the person who verifies it.
+    if a.delivery_type == "partner":
+        if not RolePermissionService.can_confirm_partner_activity(principal, a):
+            raise Forbidden(
+                "Only Impact Assessment or this activity's monitoring staff "
+                "member may confirm partner work."
+            )
+    elif not RolePermissionService.can_verify_ia(principal, a):
         raise Forbidden("Only Impact Assessment may verify this work.")
     return _confirm_activity_after_authorization(
         a,

@@ -7146,7 +7146,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 1811,
+      "bytes": 2029,
       "deprecated_alternatives": [],
       "example_pages": [
         "/activities/<str:activity_id>/salesforce-id"
@@ -7163,7 +7163,9 @@
       ],
       "tables": 0,
       "template": "partials/my_plan/salesforce_id_drawer.html",
-      "variants": []
+      "variants": [
+        "info"
+      ]
     },
     {
       "accessibility_requirements": [],
@@ -9199,7 +9201,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 5897,
+      "bytes": 6302,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -13829,7 +13831,8 @@
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
-        "GET /my-plan/{{ act.id }}/complete-drawer"
+        "GET /my-plan/{{ act.id }}/complete-drawer",
+        "GET /activities/{{ act.id }}/salesforce-id"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -44583,7 +44586,8 @@
       "htmx_endpoints": [
         "GET /activities/{{ act.id }}/partner-ssa-complete",
         "GET /my-plan/{{ act.id }}/reschedule-drawer",
-        "GET /my-plan/{{ act.id }}/complete-drawer"
+        "GET /my-plan/{{ act.id }}/complete-drawer",
+        "GET /activities/{{ act.id }}/salesforce-id"
       ],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",

@@ -2252,7 +2252,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 140,
+   "line": 152,
    "title": "Verification Evidence",
    "heading_level": 2,
    "has_card_key": false,
@@ -2261,7 +2261,7 @@
   },
   {
    "template": "templates/pages/my_plan/detail.html",
-   "line": 176,
+   "line": 188,
    "title": "Activity Timeline",
    "heading_level": 2,
    "has_card_key": false,

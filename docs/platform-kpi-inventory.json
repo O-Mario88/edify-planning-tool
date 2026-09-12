@@ -2903,7 +2903,7 @@
    "audit_id": "KPI-SOURCE-147",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 124,
+   "line": 134,
    "label": "Search my plan by school, School ID, cluster, district or purpose",
    "keys": [
     "hx_get",
@@ -2926,7 +2926,7 @@
    "audit_id": "KPI-SOURCE-148",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 285,
+   "line": 295,
    "label": "Actual Accounted Spend",
    "keys": [
     "amount",
@@ -2945,7 +2945,7 @@
    "audit_id": "KPI-SOURCE-149",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2095,
+   "line": 2156,
    "label": null,
    "keys": [
     "count",
@@ -2963,7 +2963,7 @@
    "audit_id": "KPI-SOURCE-150",
    "kind": "other",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 2206,
+   "line": 2267,
    "label": "Search evidence by school, School ID, cluster or Salesforce ID",
    "keys": [
     "hidden",
@@ -2986,7 +2986,7 @@
    "audit_id": "KPI-SOURCE-151",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 292,
+   "line": 302,
    "label": "Approved Operating Limit",
    "keys": [
     "amount",
@@ -3005,7 +3005,7 @@
    "audit_id": "KPI-SOURCE-152",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/my_plan_views.py",
-   "line": 302,
+   "line": 312,
    "label": "Minimum Viable Cost",
    "keys": [
     "amount",
@@ -3117,7 +3117,7 @@
    "audit_id": "KPI-SOURCE-158",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 748,
+   "line": 778,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",

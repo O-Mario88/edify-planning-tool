@@ -248,6 +248,12 @@ _EXEMPT_VIEW_NAMES = {
     "mfa_verify_view",
     "mfa_resend_view",
     "mfa_settings_view",
+    # Enrolling an authenticator app is the same personal, own-account surface
+    # as mfa_settings_view beside it: login_required, acting only on
+    # request.user, with no page a role could be granted or refused
+    # (2026-09-12).
+    "mfa_app_setup_view",
+    "mfa_app_remove_view",
     "switch_role_view",
     "force_change_password_view",
     # Policy-agreement surfaces are exempt from the policy gate by design (a

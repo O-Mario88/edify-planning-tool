@@ -43,6 +43,12 @@
     @click.outside="openSchoolId = null"
   >
   {% for school in view_models %}
+    {% if group_by_owner %}{% ifchanged school.group_key %}
+    <li class="planning-owner-group" role="presentation" data-owner-group="{{ school.group_key }}">
+      <span class="planning-owner-group__label">{{ school.group_label }}</span>
+      <span class="planning-owner-group__count">{{ school.group_count }} school{{ school.group_count|pluralize }}</span>
+    </li>
+    {% endifchanged %}{% endif %}
     {% include "partials/schools/directory_row.html" with school=school %}
   {% endfor %}
   </ul>
