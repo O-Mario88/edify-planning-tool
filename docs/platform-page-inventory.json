@@ -22203,7 +22203,7 @@
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
-      "header_variant": "semantic-standalone-header",
+      "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
       "kpi_count": "0",
@@ -22213,11 +22213,11 @@
       "module": "frontend",
       "notifications": false,
       "page_id": "UI-PAGE-D3BB0CD510",
-      "page_title": "Change Password",
+      "page_title": "Set a new password",
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "",
-      "primary_action": "Set New Password &amp; Continue",
+      "primary_action": "Review operational workspace",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Force password change page. Users with must_change_password=True are redirected here and cannot navigate away until they set a new password.",
       "remediation": "No automated remediation outstanding",
@@ -22236,7 +22236,7 @@
         "apps.ssa.models"
       ],
       "shared_layout": [
-        "layouts/auth.html"
+        "layouts/login.html"
       ],
       "state_coverage": {
         "disabled": false,
@@ -22259,12 +22259,7 @@
       "theme_state": "token-driven",
       "theme_status": "pass-automated-contract",
       "todos": false,
-      "typography_exceptions": [
-        "text-[12px]",
-        "text-[13px]",
-        "text-[14px]",
-        "text-[16px]"
-      ]
+      "typography_exceptions": []
     },
     {
       "accessibility_status": "pass-automated-contract",
