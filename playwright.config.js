@@ -25,13 +25,22 @@ module.exports = defineConfig({
     reducedMotion: 'reduce',
   },
   projects: [
-    { name: 'chromium-desktop', use: { ...devices['Desktop Chrome'] } },
-    { name: 'firefox-desktop', use: { ...devices['Desktop Firefox'] } },
-    { name: 'webkit-desktop', use: { ...devices['Desktop Safari'] } },
-    { name: 'android-360', use: { ...devices['Galaxy S9+'] } },
-    { name: 'iphone-390', use: { ...devices['iPhone 13'] } },
+    // Clears each seeded account's first-login agreements before any journey
+    // signs in (see e2e/seeded-accounts.setup.js). Runs in Chromium whichever
+    // browser project depends on it.
+    {
+      name: 'seeded-accounts',
+      testMatch: /seeded-accounts\.setup\.js/,
+      use: { ...devices['Desktop Chrome'] },
+    },
+    { name: 'chromium-desktop', dependencies: ['seeded-accounts'], use: { ...devices['Desktop Chrome'] } },
+    { name: 'firefox-desktop', dependencies: ['seeded-accounts'], use: { ...devices['Desktop Firefox'] } },
+    { name: 'webkit-desktop', dependencies: ['seeded-accounts'], use: { ...devices['Desktop Safari'] } },
+    { name: 'android-360', dependencies: ['seeded-accounts'], use: { ...devices['Galaxy S9+'] } },
+    { name: 'iphone-390', dependencies: ['seeded-accounts'], use: { ...devices['iPhone 13'] } },
     {
       name: 'tablet-768',
+      dependencies: ['seeded-accounts'],
       use: {
         ...devices['iPad (gen 7)'],
         viewport: { width: 768, height: 1024 },
