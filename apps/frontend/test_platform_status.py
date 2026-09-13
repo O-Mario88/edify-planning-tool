@@ -61,7 +61,9 @@ class PlatformStatusContractTest(SimpleTestCase):
         """The concurrency guard answers 503 with Retry-After before the view
         runs; the page keeps its DOM and tells the user nothing was changed."""
         behavior = _read("static/js/platform-status.js")
-        self.assertIn("xhr.status === 503 && xhr.getResponseHeader('Retry-After')", behavior)
+        self.assertIn(
+            "xhr.status === 503 && xhr.getResponseHeader('Retry-After')", behavior
+        )
         self.assertIn("showBusy(", behavior)
         self.assertIn("Nothing was changed", behavior)
         guard = _read("apps/core/concurrency.py")

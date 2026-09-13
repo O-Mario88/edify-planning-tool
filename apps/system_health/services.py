@@ -524,9 +524,11 @@ def _workflow_issues() -> dict:
     )
     missing_evidence_files = 0
     evidence_checked = 0
-    for evidence in EvidenceRecord.objects.filter(quarantined=False).order_by(
-        "-created_at"
-    ).only("uri")[:evidence_probe_limit]:
+    for evidence in (
+        EvidenceRecord.objects.filter(quarantined=False)
+        .order_by("-created_at")
+        .only("uri")[:evidence_probe_limit]
+    ):
         evidence_checked += 1
         try:
             present = file_exists(EVIDENCE_NAMESPACE, evidence.uri)

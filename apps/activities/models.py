@@ -406,7 +406,9 @@ class Activity(SoftDeleteModel):
             models.Index(fields=["cluster"]),
             models.Index(fields=["catalogue_item", "fy", "status"]),
             models.Index(fields=["catalogue_item", "focus_intervention"]),
-            models.Index(fields=["fy", "ssa_alignment"], name="idx_activity_fy_ssa_alignment"),
+            models.Index(
+                fields=["fy", "ssa_alignment"], name="idx_activity_fy_ssa_alignment"
+            ),
             models.Index(fields=["fy", "quarter"]),
             models.Index(fields=["responsible_staff_id"]),
             # The exact filter TargetAchievementService.rebuild() runs once

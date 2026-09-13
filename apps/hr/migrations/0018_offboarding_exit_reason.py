@@ -4,20 +4,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('hr', '0017_employee_relations_disciplinary_disputes'),
+        ("hr", "0017_employee_relations_disciplinary_disputes"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='offboardingplan',
-            name='exit_note',
-            field=models.TextField(blank=True, default=''),
+            model_name="offboardingplan",
+            name="exit_note",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='offboardingplan',
-            name='exit_reason',
-            field=models.CharField(blank=True, choices=[('resignation', 'Resignation'), ('end_of_contract', 'End of contract'), ('retirement', 'Retirement'), ('probation_not_confirmed', 'Probation not confirmed'), ('dismissal', 'Dismissal'), ('redundancy', 'Redundancy'), ('death_in_service', 'Death in service'), ('other', 'Other')], default='', max_length=32),
+            model_name="offboardingplan",
+            name="exit_reason",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("resignation", "Resignation"),
+                    ("end_of_contract", "End of contract"),
+                    ("retirement", "Retirement"),
+                    ("probation_not_confirmed", "Probation not confirmed"),
+                    ("dismissal", "Dismissal"),
+                    ("redundancy", "Redundancy"),
+                    ("death_in_service", "Death in service"),
+                    ("other", "Other"),
+                ],
+                default="",
+                max_length=32,
+            ),
         ),
     ]

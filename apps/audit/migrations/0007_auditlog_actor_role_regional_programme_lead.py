@@ -4,15 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('audit', '0006_alter_auditlog_subject_id'),
+        ("audit", "0006_alter_auditlog_subject_id"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='auditlog',
-            name='actor_role',
-            field=models.CharField(blank=True, choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('RegionalProgramLead', 'RegionalProgramLead'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('BusinessTransformationOfficer', 'BusinessTransformationOfficer'), ('MfiPartnerAdmin', 'MfiPartnerAdmin'), ('MfiLoanOfficer', 'MfiLoanOfficer'), ('Admin', 'Admin')], max_length=64, null=True),
+            model_name="auditlog",
+            name="actor_role",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("RegionalProgramLead", "RegionalProgramLead"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("BusinessTransformationOfficer", "BusinessTransformationOfficer"),
+                    ("MfiPartnerAdmin", "MfiPartnerAdmin"),
+                    ("MfiLoanOfficer", "MfiLoanOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+                null=True,
+            ),
         ),
     ]

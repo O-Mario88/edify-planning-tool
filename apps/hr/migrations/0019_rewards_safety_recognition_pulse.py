@@ -8,123 +8,284 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('accounts', '0028_user_roles_regional_programme_lead'),
-        ('hr', '0018_offboarding_exit_reason'),
+        ("accounts", "0028_user_roles_regional_programme_lead"),
+        ("hr", "0018_offboarding_exit_reason"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='compensationrecord',
-            name='currency',
-            field=models.CharField(default='UGX', max_length=8),
+            model_name="compensationrecord",
+            name="currency",
+            field=models.CharField(default="UGX", max_length=8),
         ),
         migrations.AddField(
-            model_name='compensationrecord',
-            name='effective_date',
+            model_name="compensationrecord",
+            name="effective_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='compensationrecord',
-            name='medical_cover',
-            field=models.CharField(choices=[('none', 'No medical cover'), ('individual', 'Individual'), ('family', 'Employee and family')], default='none', max_length=16),
+            model_name="compensationrecord",
+            name="medical_cover",
+            field=models.CharField(
+                choices=[
+                    ("none", "No medical cover"),
+                    ("individual", "Individual"),
+                    ("family", "Employee and family"),
+                ],
+                default="none",
+                max_length=16,
+            ),
         ),
         migrations.AddField(
-            model_name='compensationrecord',
-            name='next_review_date',
+            model_name="compensationrecord",
+            name="next_review_date",
             field=models.DateField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='compensationrecord',
-            name='other_benefits',
-            field=models.TextField(blank=True, default=''),
+            model_name="compensationrecord",
+            name="other_benefits",
+            field=models.TextField(blank=True, default=""),
         ),
         migrations.AddField(
-            model_name='compensationrecord',
-            name='pension_scheme',
-            field=models.CharField(blank=True, default='', max_length=128),
+            model_name="compensationrecord",
+            name="pension_scheme",
+            field=models.CharField(blank=True, default="", max_length=128),
         ),
         migrations.AlterField(
-            model_name='compensationrecord',
-            name='status',
-            field=models.CharField(choices=[('HR Review', 'In HR review'), ('Approved', 'Approved')], default='HR Review', max_length=32),
+            model_name="compensationrecord",
+            name="status",
+            field=models.CharField(
+                choices=[("HR Review", "In HR review"), ("Approved", "Approved")],
+                default="HR Review",
+                max_length=32,
+            ),
         ),
         migrations.CreateModel(
-            name='PulseSurvey',
+            name="PulseSurvey",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('title', models.CharField(max_length=255)),
-                ('countries', models.JSONField(default=list)),
-                ('opens_on', models.DateField()),
-                ('closes_on', models.DateField()),
-                ('status', models.CharField(choices=[('open', 'Open'), ('closed', 'Closed')], default='open', max_length=16)),
-                ('created_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("title", models.CharField(max_length=255)),
+                ("countries", models.JSONField(default=list)),
+                ("opens_on", models.DateField()),
+                ("closes_on", models.DateField()),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[("open", "Open"), ("closed", "Closed")],
+                        default="open",
+                        max_length=16,
+                    ),
+                ),
+                (
+                    "created_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'hr_pulse_survey',
+                "db_table": "hr_pulse_survey",
             },
         ),
         migrations.CreateModel(
-            name='StaffRecognition',
+            name="StaffRecognition",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('country', models.CharField(db_index=True, max_length=64)),
-                ('category', models.CharField(choices=[('values', "Living Edify's values"), ('excellence', 'Excellence in delivery'), ('teamwork', 'Teamwork'), ('innovation', 'Innovation'), ('above_and_beyond', 'Above and beyond'), ('service_milestone', 'Service milestone')], max_length=32)),
-                ('citation', models.TextField()),
-                ('awarded_on', models.DateField()),
-                ('awarded_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
-                ('staff', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='recognitions', to='accounts.staffprofile')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("country", models.CharField(db_index=True, max_length=64)),
+                (
+                    "category",
+                    models.CharField(
+                        choices=[
+                            ("values", "Living Edify's values"),
+                            ("excellence", "Excellence in delivery"),
+                            ("teamwork", "Teamwork"),
+                            ("innovation", "Innovation"),
+                            ("above_and_beyond", "Above and beyond"),
+                            ("service_milestone", "Service milestone"),
+                        ],
+                        max_length=32,
+                    ),
+                ),
+                ("citation", models.TextField()),
+                ("awarded_on", models.DateField()),
+                (
+                    "awarded_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
+                (
+                    "staff",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="recognitions",
+                        to="accounts.staffprofile",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'hr_staff_recognition',
+                "db_table": "hr_staff_recognition",
             },
         ),
         migrations.CreateModel(
-            name='PulseResponse',
+            name="PulseResponse",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('respondent_key', models.CharField(max_length=64)),
-                ('country', models.CharField(db_index=True, max_length=64)),
-                ('scores', models.JSONField(default=dict)),
-                ('comment', models.TextField(blank=True, default='')),
-                ('survey', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='responses', to='hr.pulsesurvey')),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("respondent_key", models.CharField(max_length=64)),
+                ("country", models.CharField(db_index=True, max_length=64)),
+                ("scores", models.JSONField(default=dict)),
+                ("comment", models.TextField(blank=True, default="")),
+                (
+                    "survey",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="responses",
+                        to="hr.pulsesurvey",
+                    ),
+                ),
             ],
             options={
-                'db_table': 'hr_pulse_response',
-                'constraints': [models.UniqueConstraint(fields=('survey', 'respondent_key'), name='uniq_pulse_response')],
+                "db_table": "hr_pulse_response",
+                "constraints": [
+                    models.UniqueConstraint(
+                        fields=("survey", "respondent_key"), name="uniq_pulse_response"
+                    )
+                ],
             },
         ),
         migrations.CreateModel(
-            name='SafetyIncident',
+            name="SafetyIncident",
             fields=[
-                ('created_at', models.DateTimeField(auto_now_add=True, db_index=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('id', apps.core.models.CuidField(default=apps.core.cuid.cuid, max_length=30, primary_key=True, serialize=False)),
-                ('country', models.CharField(db_index=True, max_length=64)),
-                ('incident_date', models.DateField()),
-                ('location', models.CharField(blank=True, default='', max_length=255)),
-                ('category', models.CharField(choices=[('injury', 'Injury'), ('road_traffic', 'Road traffic incident'), ('illness', 'Work-related illness'), ('near_miss', 'Near miss'), ('security', 'Security incident'), ('hazard', 'Hazard reported'), ('other', 'Other')], db_index=True, max_length=32)),
-                ('severity', models.CharField(choices=[('low', 'Low'), ('medium', 'Medium'), ('high', 'High'), ('critical', 'Critical')], default='medium', max_length=16)),
-                ('description', models.TextField()),
-                ('immediate_action', models.TextField(blank=True, default='')),
-                ('corrective_action', models.TextField(blank=True, default='')),
-                ('days_lost', models.PositiveIntegerField(default=0)),
-                ('status', models.CharField(choices=[('reported', 'Reported'), ('investigating', 'Investigating'), ('action', 'Corrective action in progress'), ('closed', 'Closed')], default='reported', max_length=16)),
-                ('closed_at', models.DateTimeField(blank=True, null=True)),
-                ('affected_staff', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='safety_incidents', to='accounts.staffprofile')),
-                ('reported_by', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='+', to=settings.AUTH_USER_MODEL)),
+                ("created_at", models.DateTimeField(auto_now_add=True, db_index=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "id",
+                    apps.core.models.CuidField(
+                        default=apps.core.cuid.cuid,
+                        max_length=30,
+                        primary_key=True,
+                        serialize=False,
+                    ),
+                ),
+                ("country", models.CharField(db_index=True, max_length=64)),
+                ("incident_date", models.DateField()),
+                ("location", models.CharField(blank=True, default="", max_length=255)),
+                (
+                    "category",
+                    models.CharField(
+                        choices=[
+                            ("injury", "Injury"),
+                            ("road_traffic", "Road traffic incident"),
+                            ("illness", "Work-related illness"),
+                            ("near_miss", "Near miss"),
+                            ("security", "Security incident"),
+                            ("hazard", "Hazard reported"),
+                            ("other", "Other"),
+                        ],
+                        db_index=True,
+                        max_length=32,
+                    ),
+                ),
+                (
+                    "severity",
+                    models.CharField(
+                        choices=[
+                            ("low", "Low"),
+                            ("medium", "Medium"),
+                            ("high", "High"),
+                            ("critical", "Critical"),
+                        ],
+                        default="medium",
+                        max_length=16,
+                    ),
+                ),
+                ("description", models.TextField()),
+                ("immediate_action", models.TextField(blank=True, default="")),
+                ("corrective_action", models.TextField(blank=True, default="")),
+                ("days_lost", models.PositiveIntegerField(default=0)),
+                (
+                    "status",
+                    models.CharField(
+                        choices=[
+                            ("reported", "Reported"),
+                            ("investigating", "Investigating"),
+                            ("action", "Corrective action in progress"),
+                            ("closed", "Closed"),
+                        ],
+                        default="reported",
+                        max_length=16,
+                    ),
+                ),
+                ("closed_at", models.DateTimeField(blank=True, null=True)),
+                (
+                    "affected_staff",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="safety_incidents",
+                        to="accounts.staffprofile",
+                    ),
+                ),
+                (
+                    "reported_by",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.SET_NULL,
+                        related_name="+",
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
             options={
-                'db_table': 'hr_safety_incident',
-                'indexes': [models.Index(fields=['country', 'status'], name='hr_safety_i_country_632f7d_idx')],
+                "db_table": "hr_safety_incident",
+                "indexes": [
+                    models.Index(
+                        fields=["country", "status"],
+                        name="hr_safety_i_country_632f7d_idx",
+                    )
+                ],
             },
         ),
     ]

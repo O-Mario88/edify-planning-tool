@@ -913,10 +913,14 @@ def schedule_modal_view(request):
             "ssa_need": ssa_need,
             "ssa_need_rows": ssa_need.rows[:4],
             "ssa_priority_rows": [
-                row for row in ssa_need.rows if row["intervention"] in ssa_need.priorities
+                row
+                for row in ssa_need.rows
+                if row["intervention"] in ssa_need.priorities
             ],
             "selected_focus_intervention": (
-                ssa_need.priorities[0] if action == "meeting" and ssa_need.priorities else ""
+                ssa_need.priorities[0]
+                if action == "meeting" and ssa_need.priorities
+                else ""
             ),
             "intervention_need_options": [
                 (code, label, need_by_code.get(code))

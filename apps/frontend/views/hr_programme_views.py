@@ -2172,7 +2172,10 @@ def recovery_drawer(request, plan_id):
             {"label": "Conduct case", "value": plan.escalated_case.get_status_display()}
         )
     subtitle = f"{plan.get_plan_type_display()} · {plan.get_status_display()}"
-    if plan.status == RecoveryStatus.DRAFT and plan.plan_type == RecoveryPlanType.FORMAL:
+    if (
+        plan.status == RecoveryStatus.DRAFT
+        and plan.plan_type == RecoveryPlanType.FORMAL
+    ):
         return _drawer(
             request,
             title=plan.staff.user.name,
@@ -2181,8 +2184,7 @@ def recovery_drawer(request, plan_id):
             submit="Authorise the plan",
             facts=facts,
             note=(
-                "Authorising starts a 90-day plan with 30, 60 and 90-day "
-                "reviews."
+                "Authorising starts a 90-day plan with 30, 60 and 90-day " "reviews."
             ),
             fields=[
                 _field(
@@ -2246,7 +2248,9 @@ def recovery_activate(request, plan_id):
         activate_pip(plan, request.user, action_plan=action_plan)
     except SERVICE_ERRORS as exc:
         return _refused(request, exc, RECOVERY_PATH)
-    messages.success(request, f"Improvement plan authorised for {plan.staff.user.name}.")
+    messages.success(
+        request, f"Improvement plan authorised for {plan.staff.user.name}."
+    )
     return _back(request, RECOVERY_PATH)
 
 

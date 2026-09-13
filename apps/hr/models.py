@@ -277,7 +277,9 @@ class EmployeeComplianceRecord(TimeStampedModel):
     )
     requirement = models.ForeignKey(ComplianceRequirement, on_delete=models.CASCADE)
     status = models.CharField(
-        max_length=32, choices=ComplianceStatus.choices, default=ComplianceStatus.MISSING
+        max_length=32,
+        choices=ComplianceStatus.choices,
+        default=ComplianceStatus.MISSING,
     )  # derived from the evidence and its expiry (apps/hr/compliance_service.py)
     document_url = models.CharField(max_length=512, null=True, blank=True)
     expiry_date = models.DateField(null=True, blank=True)

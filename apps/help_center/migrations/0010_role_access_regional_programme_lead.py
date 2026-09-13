@@ -4,15 +4,33 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('help_center', '0009_publish_rollout_scope_note'),
+        ("help_center", "0009_publish_rollout_scope_note"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='helparticleroleaccess',
-            name='role',
-            field=models.CharField(choices=[('CCEO', 'CCEO'), ('Program Lead', 'Program Lead'), ('CountryDirector', 'CountryDirector'), ('RegionalVicePresident', 'RegionalVicePresident'), ('RegionalProgramLead', 'RegionalProgramLead'), ('ImpactAssessment', 'ImpactAssessment'), ('Accountant', 'Accountant'), ('HumanResources', 'HumanResources'), ('ProjectCoordinator', 'ProjectCoordinator'), ('PartnerAdmin', 'PartnerAdmin'), ('PartnerFieldOfficer', 'PartnerFieldOfficer'), ('BusinessTransformationOfficer', 'BusinessTransformationOfficer'), ('MfiPartnerAdmin', 'MfiPartnerAdmin'), ('MfiLoanOfficer', 'MfiLoanOfficer'), ('Admin', 'Admin')], max_length=64),
+            model_name="helparticleroleaccess",
+            name="role",
+            field=models.CharField(
+                choices=[
+                    ("CCEO", "CCEO"),
+                    ("Program Lead", "Program Lead"),
+                    ("CountryDirector", "CountryDirector"),
+                    ("RegionalVicePresident", "RegionalVicePresident"),
+                    ("RegionalProgramLead", "RegionalProgramLead"),
+                    ("ImpactAssessment", "ImpactAssessment"),
+                    ("Accountant", "Accountant"),
+                    ("HumanResources", "HumanResources"),
+                    ("ProjectCoordinator", "ProjectCoordinator"),
+                    ("PartnerAdmin", "PartnerAdmin"),
+                    ("PartnerFieldOfficer", "PartnerFieldOfficer"),
+                    ("BusinessTransformationOfficer", "BusinessTransformationOfficer"),
+                    ("MfiPartnerAdmin", "MfiPartnerAdmin"),
+                    ("MfiLoanOfficer", "MfiLoanOfficer"),
+                    ("Admin", "Admin"),
+                ],
+                max_length=64,
+            ),
         ),
     ]

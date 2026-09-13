@@ -1476,9 +1476,7 @@ def create(
     # Where the plan's target intervention came from, recorded with the SSA
     # verdict (apps.ssa.plan_alignment): the planner, a course, a project, a
     # source session, the catalogue mapping, or the SSA itself.
-    focus_source = (
-        "planner" if (focus or data.get("purposeIntervention")) else ""
-    )
+    focus_source = "planner" if (focus or data.get("purposeIntervention")) else ""
     if training_course is not None:
         if not getattr(training_course, "is_training_course", False):
             raise BadRequest("Select a training from the governed Training Catalogue.")
@@ -1953,9 +1951,9 @@ def create(
             # decides whether this plan targets an intervention at all, not the
             # standard In-school Training profile that prices it.
             mapping_modes = set(
-                training_course.intervention_mappings.filter(
-                    active=True
-                ).values_list("mapping_mode", flat=True)
+                training_course.intervention_mappings.filter(active=True).values_list(
+                    "mapping_mode", flat=True
+                )
             )
         if (
             ssa_default_focus

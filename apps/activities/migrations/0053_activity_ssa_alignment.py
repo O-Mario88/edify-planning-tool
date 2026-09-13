@@ -4,25 +4,44 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('activities', '0052_schoolvisitfeedback'),
-        ('activity_catalogue', '0013_costing_profiles_2026_09_06'),
-        ('clusters', '0004_backfill_cluster_portfolio_owners'),
-        ('daily_visit_batches', '0002_dailyvisitbatch_actual_field_cost_per_school_and_more'),
-        ('geography', '0006_region_country'),
-        ('schools', '0021_school_uniq_school_salesforce_account_id'),
-        ('ssa', '0008_ssarecommendation'),
+        ("activities", "0052_schoolvisitfeedback"),
+        ("activity_catalogue", "0013_costing_profiles_2026_09_06"),
+        ("clusters", "0004_backfill_cluster_portfolio_owners"),
+        (
+            "daily_visit_batches",
+            "0002_dailyvisitbatch_actual_field_cost_per_school_and_more",
+        ),
+        ("geography", "0006_region_country"),
+        ("schools", "0021_school_uniq_school_salesforce_account_id"),
+        ("ssa", "0008_ssarecommendation"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='activity',
-            name='ssa_alignment',
-            field=models.CharField(blank=True, choices=[('priority', 'Targets an SSA priority'), ('off_priority', 'Targets an intervention the SSA does not prioritise'), ('no_focus', 'Names no SSA intervention'), ('no_ssa', 'No verified SSA to inform it'), ('ssa_collection', 'Collects the SSA'), ('not_applicable', 'Not school-improvement work')], default='', max_length=24),
+            model_name="activity",
+            name="ssa_alignment",
+            field=models.CharField(
+                blank=True,
+                choices=[
+                    ("priority", "Targets an SSA priority"),
+                    (
+                        "off_priority",
+                        "Targets an intervention the SSA does not prioritise",
+                    ),
+                    ("no_focus", "Names no SSA intervention"),
+                    ("no_ssa", "No verified SSA to inform it"),
+                    ("ssa_collection", "Collects the SSA"),
+                    ("not_applicable", "Not school-improvement work"),
+                ],
+                default="",
+                max_length=24,
+            ),
         ),
         migrations.AddIndex(
-            model_name='activity',
-            index=models.Index(fields=['fy', 'ssa_alignment'], name='idx_activity_fy_ssa_alignment'),
+            model_name="activity",
+            index=models.Index(
+                fields=["fy", "ssa_alignment"], name="idx_activity_fy_ssa_alignment"
+            ),
         ),
     ]

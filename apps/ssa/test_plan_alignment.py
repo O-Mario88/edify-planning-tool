@@ -38,7 +38,9 @@ def _assess_member(school, scores: dict):
         verification_status="confirmed",
     )
     for intervention, score in scores.items():
-        SsaScore.objects.create(ssa_record=record, intervention=intervention, score=score)
+        SsaScore.objects.create(
+            ssa_record=record, intervention=intervention, score=score
+        )
     return record
 
 
@@ -66,7 +68,9 @@ class SchoolPlanAlignmentTest(StandardSupportBase):
             focusIntervention=SsaIntervention.CHRISTLIKE_BEHAVIOUR,
         )
         activity = Activity.objects.get(id=result["id"])
-        self.assertEqual(activity.focus_intervention, SsaIntervention.CHRISTLIKE_BEHAVIOUR)
+        self.assertEqual(
+            activity.focus_intervention, SsaIntervention.CHRISTLIKE_BEHAVIOUR
+        )
         self.assertEqual(activity.ssa_alignment, SsaAlignment.OFF_PRIORITY)
         reason = activity.recommendation_source["ssa"]["reason"]
         self.assertIn("Financial Health", reason, "names the need the SSA ranks first")
@@ -80,7 +84,9 @@ class SchoolPlanAlignmentTest(StandardSupportBase):
         activity = Activity.objects.get(id=result["id"])
         self.assertEqual(activity.focus_intervention, SsaIntervention.LEADERSHIP)
         self.assertEqual(activity.ssa_alignment, SsaAlignment.PRIORITY)
-        self.assertEqual(activity.recommendation_source["ssa"]["focusSource"], "planner")
+        self.assertEqual(
+            activity.recommendation_source["ssa"]["focusSource"], "planner"
+        )
 
     def test_collection_and_relationship_work_are_informed_without_a_target(self):
         collection = Activity.objects.get(
@@ -122,7 +128,9 @@ class SchoolPlanAlignmentTest(StandardSupportBase):
         )
         self.assertEqual(activity.ssa_alignment, SsaAlignment.NO_SSA)
         self.assertIsNone(activity.focus_intervention)
-        self.assertIn("No verified SSA", activity.recommendation_source["ssa"]["reason"])
+        self.assertIn(
+            "No verified SSA", activity.recommendation_source["ssa"]["reason"]
+        )
 
 
 class ClusterPlanAlignmentTest(StandardSupportBase):
@@ -179,7 +187,9 @@ class RecommendationLifecycleTest(StandardSupportBase):
         generate_for_school(self.school, fy=get_operational_fy())
 
     def recommendation(self, intervention):
-        return SsaRecommendation.objects.get(school=self.school, intervention=intervention)
+        return SsaRecommendation.objects.get(
+            school=self.school, intervention=intervention
+        )
 
     def test_a_plan_marks_its_recommendation_planned_then_delivered(self):
         activity = Activity.objects.get(
@@ -370,7 +380,9 @@ class EditedFocusIsRejudgedTest(StandardSupportBase):
         self.assertEqual(financial.state, RecommendationState.ACCEPTED)
         self.assertIsNone(financial.planned_activity_id)
 
-        patch_activity(activity.id, {"focusIntervention": SsaIntervention.LEADERSHIP}, self.user)
+        patch_activity(
+            activity.id, {"focusIntervention": SsaIntervention.LEADERSHIP}, self.user
+        )
         activity.refresh_from_db()
         self.assertEqual(activity.ssa_alignment, SsaAlignment.PRIORITY)
         self.assertEqual(

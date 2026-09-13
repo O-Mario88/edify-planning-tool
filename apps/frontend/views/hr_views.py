@@ -1005,9 +1005,11 @@ def performance_reviews_view(request):
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    reviews = PerformanceReview.objects.filter(
-        staff_id__in=visible_ids
-    ).filter(Q(fy=fy) | Q(fy__isnull=True)).select_related("staff__user", "manager__user")
+    reviews = (
+        PerformanceReview.objects.filter(staff_id__in=visible_ids)
+        .filter(Q(fy=fy) | Q(fy__isnull=True))
+        .select_related("staff__user", "manager__user")
+    )
     if query:
         reviews = reviews.filter(
             Q(staff__user__name__icontains=query)
@@ -1029,7 +1031,9 @@ def performance_reviews_view(request):
     today = date.today()
     rows = []
     for review in reviews.order_by("due_date", "staff__user__name"):
-        overdue = review.stage not in done and review.due_date and review.due_date < today
+        overdue = (
+            review.stage not in done and review.due_date and review.due_date < today
+        )
         rows.append(
             {
                 "cells": [
@@ -2136,7 +2140,10 @@ def policies_view(request):
         metrics=[
             _metric("Published policies", published, "in force", "success"),
             _metric(
-                "Policies in review", awaiting, "draft, in review or returned", "warning"
+                "Policies in review",
+                awaiting,
+                "draft, in review or returned",
+                "warning",
             ),
             _metric(
                 "Acknowledgement rate",

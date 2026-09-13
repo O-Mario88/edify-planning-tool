@@ -78,7 +78,10 @@ _DOCUMENTS = (
     "apps.documents.models.DocumentAcknowledgement",
 )
 
-_PEOPLE = ("apps.accounts.models.StaffProfile", "apps.accounts.models.StaffSupervisorAssignment")
+_PEOPLE = (
+    "apps.accounts.models.StaffProfile",
+    "apps.accounts.models.StaffSupervisorAssignment",
+)
 _REVIEWS = ("apps.hr.models.PerformanceReview",)
 _PLANS = ("apps.hr.models.PerformanceImprovementPlan",)
 

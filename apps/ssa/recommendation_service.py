@@ -361,7 +361,9 @@ def sync_recommendations(*, fy: str | None = None, limit: int | None = None) -> 
         .exclude(latest_ssa_id=None)
         .annotate(
             recorded=Exists(
-                SsaRecommendation.objects.filter(ssa_record_id=OuterRef("latest_ssa_id"))
+                SsaRecommendation.objects.filter(
+                    ssa_record_id=OuterRef("latest_ssa_id")
+                )
             )
         )
         .filter(recorded=False)
@@ -403,7 +405,13 @@ def sync_recommendations(*, fy: str | None = None, limit: int | None = None) -> 
             )
         )
         .filter(answering=False)
-        .only("id", "school_id", "cluster_id", "focus_intervention", "ssa_recommendation_id")
+        .only(
+            "id",
+            "school_id",
+            "cluster_id",
+            "focus_intervention",
+            "ssa_recommendation_id",
+        )
     )
     linked = 0
     for activity in live_plans.iterator(chunk_size=200):

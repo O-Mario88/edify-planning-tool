@@ -1163,9 +1163,7 @@ class CDAnalyticsService:
 
             pairs = memoize(
                 ("cd_analytics.profile_pairs",),
-                lambda: list(
-                    StaffProfile.objects.values_list("id", "user_id")
-                ),
+                lambda: list(StaffProfile.objects.values_list("id", "user_id")),
             )
             known_staff = {s for s in staff_ids if s}
             wanted_users = {u for u in user_ids if u}
@@ -1965,9 +1963,7 @@ class CDAnalyticsService:
             weak_label = "—"
             if latest and c_ids:
                 records = [
-                    record
-                    for sid in c_ids
-                    for record in records_by_school.get(sid, [])
+                    record for sid in c_ids for record in records_by_school.get(sid, [])
                 ]
                 averages = [
                     r.average_score for r in records if r.average_score is not None

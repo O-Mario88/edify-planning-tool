@@ -228,7 +228,9 @@ def cluster_need(cluster_id, school_ids=None) -> ClusterNeed:
     return ClusterNeed(
         member_count=len(members),
         rows=rows,
-        priorities=_priority_codes([(row["intervention"], row["average"]) for row in rows]),
+        priorities=_priority_codes(
+            [(row["intervention"], row["average"]) for row in rows]
+        ),
         assessed_schools=len(records),
         source_ssa_ids=sorted(record.id for record in records.values())[:50],
     )
@@ -623,9 +625,9 @@ def rejudge(activity, *, focus_source: str = "planner") -> PlanEvidence:
             activity.save(update_fields=["ssa_recommendation", "updated_at"])
     modes = (
         set(
-            activity.catalogue_item.intervention_mappings.filter(active=True).values_list(
-                "mapping_mode", flat=True
-            )
+            activity.catalogue_item.intervention_mappings.filter(
+                active=True
+            ).values_list("mapping_mode", flat=True)
         )
         if activity.catalogue_item_id
         else set()

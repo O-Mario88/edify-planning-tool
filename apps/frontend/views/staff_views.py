@@ -273,7 +273,9 @@ def staff_directory_view(request):
                     u.active_role, ROLE_LABELS.get(u.active_role, u.active_role)
                 ),
                 "district": where,
-                "reports_to": ", ".join(sorted(reports_to.get(getattr(profile, "id", None), []))),
+                "reports_to": ", ".join(
+                    sorted(reports_to.get(getattr(profile, "id", None), []))
+                ),
                 "status": u.status,
                 "profile_id": profile.id if profile else None,
                 "onboarding_state": getattr(profile, "onboarding_state", "unknown")

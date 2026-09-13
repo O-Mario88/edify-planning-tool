@@ -766,7 +766,7 @@ class PlanningDashboardService:
                     "pending_scheduling",
                     "partner_pending_schedule",
                     "assigned_to_partner_pending_scheduling",
-                ]
+                ],
             ).values_list("school_id", flat=True)
         )
 

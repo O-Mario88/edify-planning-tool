@@ -58,7 +58,9 @@ class DatabaseConcurrencyGuardMiddleware:
         self.semaphore = threading.BoundedSemaphore(limit) if limit > 0 else None
         self.timeout = float(getattr(settings, "WEB_QUEUE_TIMEOUT_SECONDS", 20) or 20)
         self.exempt = tuple(
-            getattr(settings, "WEB_CONCURRENCY_EXEMPT_PREFIXES", DEFAULT_EXEMPT_PREFIXES)
+            getattr(
+                settings, "WEB_CONCURRENCY_EXEMPT_PREFIXES", DEFAULT_EXEMPT_PREFIXES
+            )
         )
         self._waiting = 0
         self._lock = threading.Lock()
@@ -123,12 +125,12 @@ def busy_response(request, *, retry_after: int) -> HttpResponse:
         )
     else:
         response = HttpResponse(
-            "<!doctype html><html lang=\"en\"><head><meta charset=\"utf-8\">"
+            '<!doctype html><html lang="en"><head><meta charset="utf-8">'
             f'<meta http-equiv="refresh" content="{retry_after}">'
-            "<meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">"
+            '<meta name="viewport" content="width=device-width, initial-scale=1">'
             "<title>Busy · Edify</title></head>"
             '<body style="font-family:system-ui,sans-serif;padding:2rem;color:#1e293b">'
-            "<h1 style=\"font-size:1.25rem\">The platform is busy</h1>"
+            '<h1 style="font-size:1.25rem">The platform is busy</h1>'
             "<p>Many people are working at once. This page will try again in a "
             "few seconds.</p></body></html>",
             status=503,

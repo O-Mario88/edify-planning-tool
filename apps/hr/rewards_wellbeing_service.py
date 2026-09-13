@@ -200,7 +200,9 @@ def incident_transitions(incident) -> list[tuple[str, str]]:
 
 
 @transaction.atomic
-def advance_incident(incident, principal, *, to_status: str, corrective_action: str = ""):
+def advance_incident(
+    incident, principal, *, to_status: str, corrective_action: str = ""
+):
     from apps.hr.models import SafetyIncidentStatus
 
     _assert_hr(principal)
@@ -217,9 +219,7 @@ def advance_incident(incident, principal, *, to_status: str, corrective_action: 
     if to_status == SafetyIncidentStatus.CLOSED:
         incident.closed_at = timezone.now()
     incident.save()
-    _audit(
-        f"hr.safety_incident_{to_status}", "safety_incident", incident.id, principal
-    )
+    _audit(f"hr.safety_incident_{to_status}", "safety_incident", incident.id, principal)
     return incident
 
 
@@ -341,7 +341,9 @@ def close_pulse_survey(survey, principal):
 
 def _respondent_key(survey_id: str, user_id: str) -> str:
     secret = str(getattr(settings, "SECRET_KEY", "")).encode()
-    return hmac.new(secret, f"{survey_id}:{user_id}".encode(), hashlib.sha256).hexdigest()
+    return hmac.new(
+        secret, f"{survey_id}:{user_id}".encode(), hashlib.sha256
+    ).hexdigest()
 
 
 def is_open_for(survey, user) -> bool:
@@ -407,7 +409,9 @@ def survey_results(survey) -> dict:
         if average is not None:
             totals.append(average)
         favourable = (
-            round(sum(1 for v in values if v >= 4) * 100 / len(values)) if values else None
+            round(sum(1 for v in values if v >= 4) * 100 / len(values))
+            if values
+            else None
         )
         rows.append(
             {

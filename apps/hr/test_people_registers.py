@@ -49,7 +49,9 @@ def _metrics(response):
 class PeopleRegistersTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.hr, cls.hr_sp = _person("pr-hr@edify.test", "HumanResources", department="HR")
+        cls.hr, cls.hr_sp = _person(
+            "pr-hr@edify.test", "HumanResources", department="HR"
+        )
         cls.lead, cls.lead_sp = _person("pr-lead@edify.test", "Program Lead")
         cls.officer, cls.officer_sp = _person("pr-officer@edify.test")
         cls.kenyan, cls.kenyan_sp = _person("pr-kenyan@edify.test", country="Kenya")
@@ -186,7 +188,9 @@ class PeopleRegistersTest(TestCase):
 class PeopleDirectoryTest(TestCase):
     @classmethod
     def setUpTestData(cls):
-        cls.hr, cls.hr_sp = _person("pd-hr@edify.test", "HumanResources", department="HR")
+        cls.hr, cls.hr_sp = _person(
+            "pd-hr@edify.test", "HumanResources", department="HR"
+        )
         cls.lead, cls.lead_sp = _person("pd-lead@edify.test", "Program Lead")
         cls.officer, cls.officer_sp = _person("pd-officer@edify.test")
         cls.kenyan, _ = _person("pd-kenyan@edify.test", country="Kenya")

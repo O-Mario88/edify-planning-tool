@@ -34,7 +34,9 @@ class Command(BaseCommand):
     help = "Report how SSA informed live plans are; optionally backfill recommendations and verdicts."
 
     def add_arguments(self, parser):
-        parser.add_argument("--fy", default=None, help="Fiscal year (default: operational FY).")
+        parser.add_argument(
+            "--fy", default=None, help="Fiscal year (default: operational FY)."
+        )
         parser.add_argument(
             "--generate",
             action="store_true",
@@ -46,7 +48,10 @@ class Command(BaseCommand):
             help="Judge live plans that carry no verdict and link their recommendations.",
         )
         parser.add_argument(
-            "--limit", type=int, default=0, help="Stop after this many schools or plans."
+            "--limit",
+            type=int,
+            default=0,
+            help="Stop after this many schools or plans.",
         )
 
     def handle(self, *args, **options):
@@ -92,7 +97,9 @@ class Command(BaseCommand):
         ).exclude(school__isnull=True, cluster__isnull=True)
         verdicts = Counter(live.values_list("ssa_alignment", flat=True))
         by_type: dict[str, Counter] = defaultdict(Counter)
-        for activity_type, alignment in live.values_list("activity_type", "ssa_alignment"):
+        for activity_type, alignment in live.values_list(
+            "activity_type", "ssa_alignment"
+        ):
             by_type[activity_type][alignment or "unjudged"] += 1
         total = sum(verdicts.values())
         informed = sum(verdicts.get(value, 0) for value in INFORMED)

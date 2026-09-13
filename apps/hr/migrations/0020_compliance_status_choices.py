@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('hr', '0019_rewards_safety_recognition_pulse'),
+        ("hr", "0019_rewards_safety_recognition_pulse"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='employeecompliancerecord',
-            name='status',
-            field=models.CharField(choices=[('Compliant', 'Compliant'), ('Due Soon', 'Due soon'), ('Expired', 'Expired'), ('Missing', 'Missing')], default='Missing', max_length=32),
+            model_name="employeecompliancerecord",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("Compliant", "Compliant"),
+                    ("Due Soon", "Due soon"),
+                    ("Expired", "Expired"),
+                    ("Missing", "Missing"),
+                ],
+                default="Missing",
+                max_length=32,
+            ),
         ),
     ]

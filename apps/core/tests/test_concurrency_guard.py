@@ -36,7 +36,9 @@ class ConcurrencyGuardTest(SimpleTestCase):
     def _hold_one_slot(self, guard, entered):
         result = {}
         thread = threading.Thread(
-            target=lambda: result.setdefault("response", guard(self.factory.get("/dashboard")))
+            target=lambda: result.setdefault(
+                "response", guard(self.factory.get("/dashboard"))
+            )
         )
         thread.start()
         self.assertTrue(entered.wait(2), "the first request never reached the view")
@@ -118,9 +120,13 @@ class ConcurrencyGuardTest(SimpleTestCase):
 
     def test_production_bounds_it_by_default_and_it_sits_before_the_session(self):
         middleware = settings.MIDDLEWARE
-        self.assertIn("apps.core.concurrency.DatabaseConcurrencyGuardMiddleware", middleware)
+        self.assertIn(
+            "apps.core.concurrency.DatabaseConcurrencyGuardMiddleware", middleware
+        )
         self.assertLess(
-            middleware.index("apps.core.concurrency.DatabaseConcurrencyGuardMiddleware"),
+            middleware.index(
+                "apps.core.concurrency.DatabaseConcurrencyGuardMiddleware"
+            ),
             middleware.index("django.contrib.sessions.middleware.SessionMiddleware"),
         )
         prod = (Path(settings.BASE_DIR) / "config/settings/prod.py").read_text()
