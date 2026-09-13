@@ -56,3 +56,13 @@ class PlatformStatusContractTest(SimpleTestCase):
         self.assertIn("@media (max-width: 30rem)", styles)
         self.assertIn("@media (prefers-reduced-motion: no-preference)", styles)
         self.assertIn("@media (forced-colors: active)", styles)
+
+    def test_a_request_refused_at_peak_says_so_without_clearing_the_page(self):
+        """The concurrency guard answers 503 with Retry-After before the view
+        runs; the page keeps its DOM and tells the user nothing was changed."""
+        behavior = _read("static/js/platform-status.js")
+        self.assertIn("xhr.status === 503 && xhr.getResponseHeader('Retry-After')", behavior)
+        self.assertIn("showBusy(", behavior)
+        self.assertIn("Nothing was changed", behavior)
+        guard = _read("apps/core/concurrency.py")
+        self.assertIn('response["Retry-After"]', guard)

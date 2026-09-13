@@ -46,6 +46,26 @@
     restoredTimer = window.setTimeout(function () { banner.hidden = true; }, 5000);
   }
 
+  var busyTimer = null;
+
+  // The web process refused the request before it ran (apps.core.concurrency):
+  // nothing was changed, and the same action succeeds once the peak passes.
+  function showBusy(retryAfterSeconds) {
+    var banner = connectivityBanner();
+    if (!banner || banner.dataset.state === 'offline') return;
+    window.clearTimeout(restoredTimer);
+    window.clearTimeout(busyTimer);
+    banner.dataset.state = 'busy';
+    banner.querySelector('[data-connectivity-title]').textContent = 'The platform is busy';
+    banner.querySelector('[data-connectivity-detail]').textContent =
+      'Many people are working at once. Nothing was changed. Try again in a few seconds.';
+    banner.hidden = false;
+    announce('The platform is busy. Nothing was changed. Try again in a few seconds.', 'assertive');
+    busyTimer = window.setTimeout(function () {
+      if (banner.dataset.state === 'busy') banner.hidden = true;
+    }, (Math.max(retryAfterSeconds || 0, 5) + 3) * 1000);
+  }
+
   function showSessionExpired() {
     var dialog = document.getElementById('edify-session-expired-dialog');
     if (!dialog || dialog.open) return;
@@ -93,12 +113,19 @@
       event.detail.shouldSwap = false;
       event.detail.isError = false;
       showSessionExpired();
+      return;
+    }
+    if (xhr.status === 503 && xhr.getResponseHeader('Retry-After')) {
+      event.detail.shouldSwap = false;
+      event.detail.isError = false;
+      showBusy(parseInt(xhr.getResponseHeader('Retry-After'), 10));
     }
   });
 
   window.EdifyPlatformStatus = Object.freeze({
     showOffline: showOffline,
     showRestored: showRestored,
-    showSessionExpired: showSessionExpired
+    showSessionExpired: showSessionExpired,
+    showBusy: showBusy
   });
 })();
