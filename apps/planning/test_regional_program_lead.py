@@ -306,6 +306,37 @@ class RegionalProgramLeadTest(TestCase):
         self.assertEqual(countries["Uganda"]["planned"], 2)
         self.assertNotIn("Kenya", countries)
 
+    def test_invalid_filter_is_normalised_in_tab_links(self):
+        self.client.force_login(self.rpl)
+        page = self.client.get("/dashboard?fy=9999&view=coaching")
+        self.assertEqual(page.status_code, 200)
+        self.assertNotEqual(page.context["fy"], "9999")
+        for tab in page.context["dashboard_tabs"]["tabs"]:
+            self.assertNotIn("9999", tab["url"])
+        self.assertContains(page, 'data-dashboard-live')
+        self.assertContains(page, 'href="/dashboard?view=coaching"')
+
+    def test_focused_workflows_preserve_scope_period_and_view(self):
+        self.client.force_login(self.rpl)
+        expected = {
+            "coaching": "partials/dashboards/rpl/lead_roster.html",
+            "programmes": "partials/dashboards/rpl/ssa_needs.html",
+            "reporting": "partials/dashboards/rpl/report.html",
+        }
+        for view, template in expected.items():
+            with self.subTest(view=view):
+                page = self.client.get(f"/dashboard?fy=2026&view={view}",
+                    HTTP_HX_TARGET="rpl-dashboard-view-shell", HTTP_HX_REQUEST="true")
+                self.assertEqual(page.status_code, 200)
+                self.assertTemplateUsed(page, template)
+                self.assertEqual(page.context["reach"]["countries"], ["Uganda"])
+                self.assertContains(page, 'fy=2026&amp;view=coaching')
+                self.assertContains(page, 'hx-swap-oob="outerHTML"')
+                self.assertNotContains(page, '<html')
+                self.assertEqual(page.cookies["edify_dashboard_view_rpl"].value, view)
+        remembered = self.client.get("/dashboard?fy=2026")
+        self.assertEqual(remembered.context["dashboard_view"], "reporting")
+
     def test_the_dashboard_counts_the_follow_ups_it_sent(self):
         from apps.planning.action_models import TeamAction
 

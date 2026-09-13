@@ -11,6 +11,8 @@
     {% include "partials/ia/_geography_cards.html" %}
   </div>
 </div>
-{% else %}
+{% elif dashboard_view == "operations" %}
 {% include "partials/ia/operations.html" with show_geography=False %}
+{% else %}
+{% include "partials/ia/outcomes.html" %}
 {% endif %}

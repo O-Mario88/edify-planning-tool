@@ -6433,3 +6433,44 @@ a.hrd-figure:focus-visible {
     display: none;
   }
 }
+
+/* Leadership workflows share the dashboard rail; additional views scroll on
+   small screens instead of shrinking the labels into the two-view layout. */
+@media (max-width: 48rem) {
+  main :is([data-rpl-dashboard], [data-hr-director-dashboard]) .dashboard-view-nav .edify-section-nav__inner {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    max-inline-size: 100%;
+  }
+  main :is([data-rpl-dashboard], [data-hr-director-dashboard]) .dashboard-view-nav .edify-section-nav__link {
+    flex: 0 0 auto !important;
+    inline-size: auto !important;
+    min-inline-size: 8.5rem !important;
+  }
+  main :is([data-rpl-dashboard], [data-hr-director-dashboard]) :is(.mobile-role-home__context, .mobile-role-home__action) {
+    grid-column: 1 / -1;
+  }
+}
+
+/* The shell owns the panel gap at every breakpoint. */
+main :is([data-rpl-dashboard], [data-hr-director-dashboard]) [data-dashboard-view-shell] {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Filter selects and actions use the same platform control height. */
+main .edify-page-canvas :is(#rpl-workflow-filters, #hr-workflow-filters)[data-component="filter-toolbar"] > .edify-filter-field > select.edify-focus-surface {
+  height: var(--edify-action-button-block-size) !important;
+  min-height: var(--edify-action-button-block-size) !important;
+  max-height: var(--edify-action-button-block-size) !important;
+  block-size: var(--edify-action-button-block-size) !important;
+  min-block-size: var(--edify-action-button-block-size) !important;
+  max-block-size: var(--edify-action-button-block-size) !important;
+}
+main :is(#rpl-workflow-filters, #hr-workflow-filters) .edify-filter-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}

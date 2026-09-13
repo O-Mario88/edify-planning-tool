@@ -1791,17 +1791,70 @@ def ia_dashboard_view(request):
     )
 
     dashboard_view, view_explicit = resolve_dashboard_view(
-        request, role_key="ia", default="map"
+        request,
+        role_key="ia",
+        default="outcomes",
+        allowed=(
+            "outcomes",
+            "collection",
+            "framework",
+            "learning",
+            "reports",
+            "map",
+            "operations",
+        ),
     )
     context = _ia_dashboard_context(request)
     context["ia_dashboard_tabs"] = True
     context["dashboard_view"] = dashboard_view
+    if dashboard_view not in ("map", "operations"):
+        from django.core.paginator import Paginator
+        from apps.analytics.ia_workflow import outcome_workspace
+
+        workspace = outcome_workspace(request.user, request.GET)
+        rows = workspace["rows"]
+        gap = request.GET.get("gap", "")
+        if dashboard_view == "collection":
+            rows = [row for row in rows if not row["measured"]]
+            if gap:
+                rows = [row for row in rows if row["state"] == gap]
+        context["ia_outcomes"] = workspace
+        context["ia_mobile_status"] = f"{workspace['unmeasured']} unmeasured"
+        context["ia_mobile_period"] = "Recorded project assessments"
+        context["ia_evidence_page"] = Paginator(rows, 25).get_page(
+            request.GET.get("page")
+        )
+        context["ia_gap"] = gap
+        context["ia_can_export"] = RolePermissionService.can_export(
+            request.user, "ia_dashboard"
+        )
+        context["mobile_primary_action"] = {
+            "label": "Coordinate assessments",
+            "url": "/ia/dashboard/?view=collection",
+        }
     context["dashboard_tabs"] = dashboard_view_tabs(
         request,
         active=dashboard_view,
         panel_id="ia-dashboard-view",
         view_template="partials/ia/view.html",
         tabs=[
+            ("outcomes", "Outcomes", "School change and the strength of its evidence"),
+            ("collection", "Collection", "Missing baselines and follow-up assessments"),
+            (
+                "framework",
+                "Framework",
+                "Define how programmes contribute to transformation",
+            ),
+            (
+                "learning",
+                "Programme learning",
+                "Interpret training, lending and technology results",
+            ),
+            (
+                "reports",
+                "Impact reports",
+                "Prepare traceable findings and recommendations",
+            ),
             (
                 "map",
                 "Map",
@@ -1814,7 +1867,7 @@ def ia_dashboard_view(request):
             ),
         ],
         base_url="/ia/dashboard/",
-        keep=(),
+        keep=("project",),
     )
     if dashboard_view == "map":
         from apps.analytics.country_map_context import country_map_context

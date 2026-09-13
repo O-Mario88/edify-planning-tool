@@ -1,0 +1,124 @@
+{% load kpi_metrics table_pagination %}
+<div class="space-y-4" data-ia-outcome-workspace>
+  <form id="ia-outcome-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface p-3 border border-[var(--edify-border)] rounded-surface shadow-sm">
+    <input type="hidden" name="view" value="{{ dashboard_view }}">
+    <div class="flex flex-col min-w-[150px] flex-1">
+    <label class="edify-filter-label" for="ia-outcome-project">Project</label>
+      <select id="ia-outcome-project" name="project" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+        <option value="">All accessible projects</option>
+        {% for project in ia_outcomes.projects %}<option value="{{ project.project_id }}" {% if ia_outcomes.project == project.project_id %}selected{% endif %}>{{ project.project__name }}</option>{% endfor %}
+      </select>
+    </div>
+    {% if dashboard_view == "collection" %}
+    <div class="flex flex-col min-w-[150px] flex-1">
+    <label class="edify-filter-label" for="ia-collection-gap">Collection need</label>
+      <select id="ia-collection-gap" name="gap" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+        <option value="">All unmeasured records</option>
+        <option value="baseline_missing" {% if ia_gap == "baseline_missing" %}selected{% endif %}>Missing baseline</option>
+        <option value="overdue" {% if ia_gap == "overdue" %}selected{% endif %}>Overdue follow-up</option>
+        <option value="due" {% if ia_gap == "due" %}selected{% endif %}>Due today</option>
+        <option value="upcoming" {% if ia_gap == "upcoming" %}selected{% endif %}>Upcoming follow-up</option>
+        <option value="not_scheduled" {% if ia_gap == "not_scheduled" %}selected{% endif %}>Not scheduled</option>
+        <option value="evidence_review" {% if ia_gap == "evidence_review" %}selected{% endif %}>Evidence review</option>
+      </select>
+    </div>
+    {% endif %}
+    <button class="btn btn-primary h-8" type="submit">Apply filters</button>
+    <a class="btn btn-ghost h-8" href="/ia/dashboard/?view={{ dashboard_view }}">Reset</a>
+  </form>
+
+  <section class="space-y-3" aria-labelledby="ia-outcome-summary">
+    <div class="flex flex-wrap items-start justify-between gap-2">
+      <div>
+        <h2 id="ia-outcome-summary" class="text-[15px] font-bold edify-text tracking-tight">School outcomes and evidence readiness</h2>
+        <p class="edify-text-caption edify-text-muted mt-1">{{ ia_outcomes.scope_label }} · Project-school enrolments</p>
+      </div>
+      <span class="edify-text-caption edify-text-muted">{{ ia_outcomes.period }}</span>
+    </div>
+    {% kpi_strip %}
+      {% kpi_metric %}{% kpi_label %}Measured{% endkpi_label %}{{ ia_outcomes.measured }} / {{ ia_outcomes.total }}{% kpi_helper %}Confirmed assessment pairs{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Improved{% endkpi_label %}{{ ia_outcomes.improved }}{% kpi_helper %}Among measured pairs{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Declined{% endkpi_label %}{{ ia_outcomes.declined }}{% kpi_helper %}Among measured pairs{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Missing baseline{% endkpi_label %}{{ ia_outcomes.baseline_missing }}{% kpi_helper %}Collect or confirm evidence{% endkpi_helper %}{% kpi_link %}/ia/dashboard/?view=collection&amp;gap=baseline_missing&amp;project={{ ia_outcomes.project|urlencode }}{% endkpi_link %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Overdue follow-up{% endkpi_label %}{{ ia_outcomes.overdue }}{% kpi_helper %}Coordinate assessment{% endkpi_helper %}{% kpi_link %}/ia/dashboard/?view=collection&amp;gap=overdue&amp;project={{ ia_outcomes.project|urlencode }}{% endkpi_link %}{% endkpi_metric %}
+    {% endkpi_strip %}
+    <details class="analytics-context-disclosure">
+      <summary>Evidence context <span>{{ ia_outcomes.unmeasured }} unmeasured enrolments</span></summary>
+      <div class="p-4 space-y-2 edify-text-caption edify-text-muted">
+        <p class="edify-text-caption edify-text-muted leading-relaxed">{{ ia_outcomes.maintained }} maintained strong performance · {{ ia_outcomes.no_change }} unchanged · {{ ia_outcomes.due }} follow-ups due today · {{ ia_outcomes.not_scheduled }} without a follow-up date.</p>
+        <p class="edify-text-caption edify-text-muted leading-relaxed">{{ ia_outcomes.limitation }}</p>
+      </div>
+    </details>
+  </section>
+
+  {% if dashboard_view == "framework" %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
+    <h2 class="text-[15px] font-bold edify-text tracking-tight">Measurement framework</h2>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">Connect training, lending and educational technology to an intended school outcome before interpreting delivery as success.</p>
+    <ol class="list-decimal pl-5 space-y-3 text-[13px] edify-text-muted leading-relaxed">
+      <li>Choose the SSA intervention and explain the programme's expected contribution.</li>
+      <li>Define baseline eligibility, expected direction, meaningful change and the follow-up window.</li>
+      <li>Publish the measurement mapping through the existing approval workflow; retain its version for enrolled schools.</li>
+      <li>Review domain scores with classroom observations, discipleship evidence and school feedback. Record limitations in the impact report.</li>
+    </ol>
+    <div class="flex flex-wrap gap-2">
+    <a class="btn btn-primary h-8" href="/priorities/ssa-mapping">Manage measurement mappings</a>
+    <a class="btn btn-secondary h-8" href="/priorities">Review strategic priorities</a>
+    </div>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">IA owns measurement quality and interpretation. Programme staff coordinate delivery and field evidence; authorised leadership retains strategic approval.</p>
+  </section>
+  {% elif dashboard_view == "learning" %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
+    <h2 class="text-[15px] font-bold edify-text tracking-tight">Programme learning</h2>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">Compare outcomes with programme exposure, investigate declining or unchanged schools, and agree a follow-up action with the programme team.</p>
+    <div class="flex flex-wrap gap-3">
+      <a class="btn btn-primary h-8" href="/impact">Training and EdTech contribution analysis</a>
+      <a class="btn btn-secondary h-8" href="/business-transformation/impact-reports">Lending impact evidence</a>
+      <a class="btn btn-secondary h-8" href="/projects">Project outcomes</a>
+    </div>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">Use qualitative evidence to explain the observed changes. Attendance, loans disbursed and devices deployed describe delivery; outcome claims require subsequent evidence.</p>
+  </section>
+  {% elif dashboard_view == "reports" %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
+    <h2 class="text-[15px] font-bold edify-text tracking-tight">Draft impact report</h2>
+    <p class="edify-text-caption edify-text-muted leading-relaxed">Download a draft containing this project's selection, measured and missing evidence, assessment references, mapping versions and your interpretation. Review it before sharing with leadership, donors or schools.</p>
+    {% if ia_can_export %}
+    <form method="post" action="{% url 'frontend:ia_impact_report_download' %}" class="space-y-5">
+      {% csrf_token %}<input type="hidden" name="project" value="{{ ia_outcomes.project }}">
+      <div class="space-y-1.5"><label class="block text-[12px] font-semibold edify-text" for="ia-report-findings">Findings and qualitative evidence references</label><textarea id="ia-report-findings" class="w-full px-3 py-2 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] edify-text edify-focus-surface" name="findings" rows="4" maxlength="10000" placeholder="Describe spiritual, educational and sustainability findings, including contrary evidence and sources."></textarea></div>
+      <div class="space-y-1.5"><label class="block text-[12px] font-semibold edify-text" for="ia-report-limitations">Additional limitations</label><textarea id="ia-report-limitations" class="w-full px-3 py-2 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] edify-text edify-focus-surface" name="limitations" rows="3" maxlength="10000" placeholder="Describe missing follow-ups, selection effects and alternative explanations."></textarea></div>
+      <div class="space-y-1.5"><label class="block text-[12px] font-semibold edify-text" for="ia-report-recommendations">Recommendations, action owners and follow-up dates</label><textarea id="ia-report-recommendations" class="w-full px-3 py-2 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] edify-text edify-focus-surface" name="recommendations" rows="4" maxlength="10000" placeholder="State what should change, who will act and when the findings will be reviewed."></textarea></div>
+      <p class="edify-text-caption">Narrative is included in the downloaded draft; it is not saved in the platform or sent to recipients.</p>
+      <button type="submit" class="btn btn-primary h-8">Download draft impact report (CSV)</button>
+    </form>
+    {% else %}<p class="edify-text-caption edify-text-muted leading-relaxed">Report download requires export permission.</p>{% endif %}
+  </section>
+  {% else %}
+    {% if dashboard_view == "outcomes" %}
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
+      <h2 class="text-[15px] font-bold edify-text tracking-tight">SSA outcome domains</h2>
+      <p class="edify-text-caption edify-text-muted leading-relaxed">Mean score change among measured enrolments, on the 0–10 SSA scale. These domains support assessment of spiritual formation, educational quality and sustainability.</p>
+      <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left" data-mobile-table="scroll">
+        <caption class="sr-only">SSA domains with paired evidence</caption>
+        <thead><tr><th scope="col">Domain</th><th scope="col">Measured enrolments</th><th scope="col">Mean change</th></tr></thead>
+        <tbody>{% for domain in ia_outcomes.domains %}<tr><td>{{ domain.name }}</td><td class="tabular-nums">{{ domain.pairs }}</td><td class="tabular-nums">{{ domain.delta|default_if_none:"Not measured" }}</td></tr>{% endfor %}</tbody>
+      </table></div></div>
+    </section>
+    {% endif %}
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm p-5 space-y-4">
+      <h2 class="text-[15px] font-bold edify-text tracking-tight">{% if dashboard_view == "collection" %}Assessment collection worklist{% else %}School evidence and next actions{% endif %}</h2>
+      <p class="edify-text-caption edify-text-muted leading-relaxed">Open a school to review its evidence or coordinate the next assessment.</p>
+      <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden"><div class="overflow-x-auto"><table class="w-full text-left" data-mobile-table="scroll">
+        <caption class="sr-only">Project-school evidence and collection actions</caption>
+        <thead><tr><th scope="col">School / project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Action</th></tr></thead>
+        <tbody>{% for row in ia_evidence_page %}<tr>
+          <td><a class="block font-semibold edify-primary-text" href="/schools/{{ row.school_id }}">{{ row.school }}</a><span class="edify-text-muted" aria-hidden="true"> · </span><a class="block edify-text-caption edify-text-muted mt-1" href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
+          <td>{{ row.intervention }}</td><td title="Baseline → follow-up" class="tabular-nums">{{ row.baseline|default_if_none:"Missing" }} → {{ row.follow_up|default_if_none:"Missing" }}</td>
+          <td>{% if row.state == "overdue" or row.state == "declined" %}{% include "components/badge.html" with label=row.status tone="danger" %}{% elif row.measured %}{% include "components/badge.html" with label=row.status tone="success" %}{% else %}{% include "components/badge.html" with label=row.status tone="warning" %}{% endif %}</td><td>{{ row.due|default:"Not scheduled" }}</td><td>{{ row.owner }}</td><td><a class="btn btn-secondary h-8" title="{{ row.action }}" aria-label="{{ row.action }} — {{ row.school }}" href="/schools/{{ row.school_id }}">Review</a></td>
+        </tr>{% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with title="No matching records" message="No assessment records match this selection." hint="Choose another project or collection need to review its evidence." compact="true" %}</td></tr>{% endfor %}</tbody>
+      </table></div></div>
+      {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}
+      {% include "components/table_pager.html" with pager=evidence_pager param="page" %}
+    </section>
+  {% endif %}
+</div>

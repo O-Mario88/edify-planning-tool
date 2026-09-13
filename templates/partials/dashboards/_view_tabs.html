@@ -19,7 +19,7 @@ selected after a click (owner, 2026-09-05: "the tab highlight has a bug").{% end
 htmx swaps it into the shell that is already on the page: swapping the shell
 itself (outerHTML) detached the element htmx was still tracking and threw
 on every click (2026-09-06).{% endcomment %}
-{% if not dashboard_tabs_inner %}<div id="{{ dashboard_tabs.panel_id }}-shell" data-dashboard-view-shell>{% endif %}
+{% if not dashboard_tabs_inner %}<div id="{{ dashboard_tabs.panel_id }}-shell" data-dashboard-view-shell{% if dashboard_live %} data-dashboard-live{% endif %}>{% endif %}
 {% comment %}The tab answers the press, not the server. Fetching a view takes
 about half a second of dashboard on the server, and until the response landed
 the rail showed no sign of having been clicked at all — so the tabs read as
@@ -43,11 +43,10 @@ rail a moment later, and an error puts the old one back.{% endcomment %}
            const chosen = other.dataset.serverActive === 'true';
            other.classList.toggle('is-active', chosen);
            other.setAttribute('aria-selected', chosen ? 'true' : 'false');
+           other.setAttribute('tabindex', chosen ? '0' : '-1');
          });
        "
-       x-data
-       @keydown.arrow-right.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const i = tabs.indexOf(document.activeElement); (tabs[i + 1] || tabs[0]).focus()"
-       @keydown.arrow-left.prevent="const tabs = [...$el.querySelectorAll('[role=tab]')]; const i = tabs.indexOf(document.activeElement); (tabs[i - 1] || tabs[tabs.length - 1]).focus()">
+       x-data>
     {% for tab in dashboard_tabs.tabs %}
     <a href="{{ tab.url }}"
        id="dashboard-tab-{{ tab.key }}"

@@ -114,7 +114,7 @@ class IADashboardDesignContractTest(SimpleTestCase):
         self.assertIn("align-items: start", self.css)
 
     def test_reporting_period_sits_below_the_reporting_scope(self):
-        scope = "results enter finance, targets and leadership analytics."
+        scope = "spiritual formation and educational outcomes."
         period = "{{ date_range }}"
         action = "Review verification queue"
 

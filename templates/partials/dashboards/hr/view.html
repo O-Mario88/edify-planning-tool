@@ -1,2 +1,4 @@
+{% if dashboard_tabs_inner %}<input type="hidden" id="hr-filter-view" name="view" value="{{ dashboard_view }}" hx-swap-oob="outerHTML">
+<a id="hr-filter-reset" href="/dashboard?view={{ dashboard_view }}" class="btn btn-secondary h-9" hx-swap-oob="outerHTML">Reset</a>{% endif %}
 {% comment %}The chosen view: operations or the map.{% endcomment %}
 {% if dashboard_view == "map" %}{% include "partials/dashboards/hr/map_view.html" %}{% else %}{% include "partials/dashboards/hr/operations.html" %}{% endif %}

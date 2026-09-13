@@ -286,7 +286,7 @@ def _regional_lead_dashboard(request):
 
     user = request.user
     fy = (request.GET.get("fy") or "").strip()
-    if not fy.isdigit():
+    if fy not in fy_options():
         fy = get_operational_fy()
     # The lead's own engagements and reports feed the rhythm, report and
     # training sections; keying the snapshot on their last change shows a
@@ -336,7 +336,37 @@ def _regional_lead_dashboard(request):
             }
         ),
     }
-    return render(request, "pages/dashboards/rpl.html", context)
+    from apps.frontend.views.dashboard_view_state import (
+        dashboard_view_tabs, remember_dashboard_view, resolve_dashboard_view,
+    )
+
+    selected_view, explicit = resolve_dashboard_view(
+        request, role_key="rpl", default="overview",
+        allowed=("overview", "coaching", "programmes", "reporting"),
+    )
+    context["dashboard_live"] = True
+    context["dashboard_view"] = selected_view
+    context["mobile_status_label"] = f"Needs attention: {len(data['attention'])}"
+    context["dashboard_tabs"] = dashboard_view_tabs(
+        request, active=selected_view, panel_id="rpl-dashboard-view",
+        view_template="partials/dashboards/rpl/view.html",
+        tabs=[
+            ("overview", "Overview", "Regional programme priorities and progress"),
+            ("coaching", "Coaching", "Coach Programme Leads and track follow-ups"),
+            ("programmes", "Programmes", "Use school needs to guide training and evaluate delivery"),
+            ("reporting", "Reporting", "Prepare regional reports and review programme impact"),
+        ],
+        keep=("fy",),
+        values={"fy": fy},
+    )
+    if request.headers.get("HX-Target") == "rpl-dashboard-view-shell":
+        response = render(request, "partials/dashboards/_view_tabs.html",
+                          {**context, "dashboard_tabs_inner": True})
+    else:
+        response = render(request, "pages/dashboards/rpl.html", context)
+    if explicit:
+        remember_dashboard_view(response, role_key="rpl", view=selected_view)
+    return response
 
 
 @require_page_permission("dashboard")
@@ -657,8 +687,11 @@ def dashboard_view(request):
             "mobile_primary_action": mobile_action,
         }
         dashboard_view, view_explicit = resolve_dashboard_view(
-            request, role_key="hr", default="operations"
+            request, role_key="hr", default="operations",
+            allowed=("operations", "staffing", "talent", "wellbeing", "compliance", "rewards", "map"),
         )
+        context["dashboard_live"] = True
+        context["mobile_status_label"] = f"Needs attention: {len(data['attention'])}"
         context["dashboard_view"] = dashboard_view
         context["dashboard_tabs"] = dashboard_view_tabs(
             request,
@@ -671,9 +704,15 @@ def dashboard_view(request):
                     "Operations",
                     "Staffing, performance, relations, wellbeing and compliance",
                 ),
+                ("staffing", "Staffing", "Recruit, onboard and retain employees"),
+                ("talent", "Talent", "Performance reviews, recovery plans and professional development"),
+                ("wellbeing", "Wellbeing", "Employee relations, safety and morale"),
+                ("compliance", "Compliance", "Policy and employment-law obligations"),
+                ("rewards", "Pay & leave", "Leave, compensation and benefits"),
                 ("map", "Map", "The country map and its distribution table"),
             ],
             keep=("fy", "country", "department"),
+            values={"fy": fy, "country": country, "department": department},
         )
         if dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context

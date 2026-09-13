@@ -59,10 +59,12 @@ def dashboard_view_tabs(
     tabs: list[tuple[str, str, str]],
     base_url: str = "/dashboard",
     keep: tuple[str, ...] = ("fy", "month", "activity_type"),
+    values: dict | None = None,
 ) -> dict:
     """The context the shared tab rail renders: one real URL per view, carrying
     the dashboard's own filters so a tab never resets the period."""
-    carried = [(k, request.GET.get(k)) for k in keep if request.GET.get(k)]
+    filters = request.GET if values is None else values
+    carried = [(k, filters.get(k)) for k in keep if filters.get(k)]
     out = []
     for key, label, description in tabs:
         query = urlencode([*carried, ("view", key)])

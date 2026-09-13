@@ -275,7 +275,7 @@ class DirectorDashboardPageTest(TestCase):
     @classmethod
     def setUpTestData(cls):
         cls.hr, _ = _person("dp-hr@edify.test", "HumanResources")
-        cls.officer, cls.officer_sp = _person("dp-officer@edify.test")
+        cls.officer, cls.officer_sp = _person("dp-officer@edify.test", department="Programmes")
 
     def setUp(self):
         self.client.force_login(self.hr)
@@ -306,6 +306,36 @@ class DirectorDashboardPageTest(TestCase):
         # The people and capacity signals from field debriefs are read here;
         # the HR sidebar leaves Field Debrief to the people who file them.
         self.assertIn("Field capacity signals", html)
+
+    def test_filter_tabs_use_validated_values_and_reset_keeps_view(self):
+        page = self.client.get("/dashboard?view=talent&fy=9999&country=Kenya&department=Unknown")
+        self.assertEqual(page.status_code, 200)
+        for tab in page.context["dashboard_tabs"]["tabs"]:
+            self.assertNotIn("9999", tab["url"])
+            self.assertNotIn("Kenya", tab["url"])
+            self.assertNotIn("Unknown", tab["url"])
+        self.assertContains(page, 'data-dashboard-live')
+        self.assertContains(page, 'href="/dashboard?view=talent"')
+        self.assertContains(page, 'edify-filter-field platform-filter-compact')
+
+    def test_focused_workflows_render_only_the_selected_people_programme(self):
+        sections = {"staffing": "staffing", "talent": "performance",
+                    "wellbeing": "wellbeing", "compliance": "compliance", "rewards": "rewards"}
+        for view, section in sections.items():
+            with self.subTest(view=view):
+                page = self.client.get(
+                    f"/dashboard?fy=2026&country=Uganda&department=Programmes&view={view}",
+                    HTTP_HX_TARGET="hr-dashboard-view-shell", HTTP_HX_REQUEST="true")
+                self.assertEqual(page.status_code, 200)
+                self.assertContains(page, f'data-hr-section="{section}"')
+                for other in set(sections.values()) - {section}:
+                    self.assertNotContains(page, f'data-hr-section="{other}"')
+                self.assertContains(page, 'country=Uganda&amp;department=Programmes')
+                self.assertContains(page, 'hx-swap-oob="outerHTML"')
+                self.assertNotContains(page, '<html')
+                self.assertEqual(page.cookies["edify_dashboard_view_hr"].value, view)
+        remembered = self.client.get("/dashboard")
+        self.assertEqual(remembered.context["dashboard_view"], "rewards")
 
     def test_the_export_carries_figures_never_names(self):
         OffboardingPlan.objects.create(

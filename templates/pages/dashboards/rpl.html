@@ -19,7 +19,7 @@ they have sent (full role description, 2026-09-13).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-rpl-dashboard>
 
-  {% include "components/mobile_role_home.html" with eyebrow="Regional CCE leadership" headline="Regional coaching digest" description="Start with the Programme Lead who most needs coaching, then check the follow-ups you have sent." period_label="FY "|add:fy status_label=attention|length primary_action=mobile_primary_action %}
+  {% include "components/mobile_role_home.html" with eyebrow="Regional CCE leadership" headline="Regional coaching digest" description="Start with the Programme Lead who most needs coaching, then check the follow-ups you have sent." period_label="FY "|add:fy status_label=mobile_status_label primary_action=mobile_primary_action %}
 
   <div class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
@@ -27,7 +27,7 @@ they have sent (full role description, 2026-09-13).
       <p class="edify-page-header__description">Strategic direction, coaching and delivery for Christ-Centered Education across your region's country programmes.</p>
     </div>
     <div class="edify-page-header__controls">
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap bg-white/10 border border-white/15 edify-text-muted" data-rpl-reach>
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap edify-surface border border-[var(--edify-border)] edify-text-muted" data-rpl-reach>
         <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-chart-green);"></span>
         <span class="hidden sm:inline">{{ reach_label }} · {{ reach.lead_count }} PL{{ reach.lead_count|pluralize }} · {{ reach.officer_count }} CCEO{{ reach.officer_count|pluralize }} · {{ reach.school_count|intcomma }} schools</span>
         <span class="sm:hidden">{{ reach_label }} · {{ reach.school_count|intcomma }} schools</span>
@@ -40,11 +40,16 @@ they have sent (full role description, 2026-09-13).
     </div>
   </div>
 
-  <form method="get" class="edify-filter-bar" aria-label="Regional dashboard filters" x-data>
-    <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
-    <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+  <form method="get" id="rpl-workflow-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="Regional dashboard filters" x-data>
+    <input type="hidden" id="rpl-filter-view" name="view" value="{{ dashboard_view }}">
+    <div class="edify-filter-field platform-filter-compact"><label for="rpl-fy" class="edify-filter-label">Fiscal year</label>
+    <select aria-label="Fiscal year" id="rpl-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
       {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}
-    </select>
+    </select></div>
+    <div class="edify-filter-actions">
+      <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+      <a id="rpl-filter-reset" href="/dashboard?view={{ dashboard_view }}" class="btn btn-secondary h-9">Reset</a>
+    </div>
   </form>
 
   {% if not reach.assigned %}
@@ -71,22 +76,7 @@ they have sent (full role description, 2026-09-13).
   </section>
   {% endif %}
 
-  {% include "partials/dashboards/rpl/lead_roster.html" %}
+  {% include "partials/dashboards/_view_tabs.html" %}
 
-  <div class="rpl-columns">
-    <div class="rpl-columns__main">
-      {% include "partials/dashboards/rpl/ssa_needs.html" %}
-      {% include "partials/dashboards/rpl/training_quality.html" %}
-      {% include "partials/dashboards/rpl/delivery_mix.html" %}
-      {% include "partials/dashboards/rpl/priorities.html" %}
-    </div>
-    <div class="rpl-columns__side">
-      {% include "partials/dashboards/rpl/rhythm.html" %}
-      {% include "partials/dashboards/rpl/report.html" %}
-      {% include "partials/dashboards/rpl/networks.html" %}
-      {% include "partials/dashboards/rpl/impact.html" %}
-      {% include "partials/dashboards/rpl/follow_ups.html" %}
-    </div>
-  </div>
 </div>
 {% endblock %}

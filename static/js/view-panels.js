@@ -43,6 +43,10 @@
 
   if (window.__edifyViewPanels) return;
 
+  // Filtered leadership workflows also update controls outside the panel.
+  // Use server swaps so filters, role preferences and history stay in sync.
+  if (document.querySelector("[data-dashboard-live]")) return;
+
   /* view name -> the detached panel element for it */
   var parked = new Map();
   /* Which view the panel currently in the shell belongs to. */

@@ -12,6 +12,7 @@ Every card links to the register where the work is done.
 {% endcomment %}
 <div class="hrd-operations" data-hr-operations>
 
+  {% if dashboard_view == "operations" or dashboard_view == "staffing" %}
   {# ── Staffing, recruiting and retention ───────────────────────────────── #}
   <section class="hrd-section" aria-labelledby="hrd-staffing-title" data-hr-section="staffing">
     <div class="hrd-section__head">
@@ -105,6 +106,9 @@ Every card links to the register where the work is done.
     </div>
   </section>
 
+  {% endif %}
+
+  {% if dashboard_view == "operations" or dashboard_view == "talent" %}
   {# ── Performance, talent and development ──────────────────────────────── #}
   <section class="hrd-section" aria-labelledby="hrd-performance-title" data-hr-section="performance">
     <div class="hrd-section__head">
@@ -190,6 +194,9 @@ Every card links to the register where the work is done.
     </div>
   </section>
 
+  {% endif %}
+
+  {% if dashboard_view == "operations" or dashboard_view == "wellbeing" %}
   {# ── Employee relations, safety, recognition and morale ───────────────── #}
   <section class="hrd-section" aria-labelledby="hrd-wellbeing-title" data-hr-section="wellbeing">
     <div class="hrd-section__head">
@@ -323,6 +330,9 @@ Every card links to the register where the work is done.
     </div>
   </section>
 
+  {% endif %}
+
+  {% if dashboard_view == "operations" or dashboard_view == "compliance" %}
   {# ── Policy and employment-law compliance ─────────────────────────────── #}
   <section class="hrd-section" aria-labelledby="hrd-compliance-title" data-hr-section="compliance">
     <div class="hrd-section__head">
@@ -393,6 +403,9 @@ Every card links to the register where the work is done.
     </div>
   </section>
 
+  {% endif %}
+
+  {% if dashboard_view == "operations" or dashboard_view == "rewards" %}
   {# ── Leave, pay and benefits ──────────────────────────────────────────── #}
   <section class="hrd-section" aria-labelledby="hrd-rewards-title" data-hr-section="rewards">
     <div class="hrd-section__head">
@@ -465,6 +478,9 @@ Every card links to the register where the work is done.
     </div>
   </section>
 
+  {% endif %}
+
+  {% if dashboard_view == "operations" or dashboard_view == "operations" %}
   {# ── Deadlines and programme actions ──────────────────────────────────── #}
   <div class="edify-card-row hrd-grid hrd-grid--wide-narrow">
     <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-deadlines-title" data-hr-deadlines>
@@ -532,6 +548,7 @@ Every card links to the register where the work is done.
       </div>
     </section>
   </div>
+  {% endif %}
 </div>
 
 {{ workforce_overview|json_script:"hr-workforce-trend" }}

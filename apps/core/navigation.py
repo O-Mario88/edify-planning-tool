@@ -917,7 +917,7 @@ IA_SECTIONS = [
         "page_key": "ia_dashboard",
         "match": "exact",
         "cluster": "verification",
-        "description": "Verification workload, risk and data confidence.",
+        "description": "School outcomes, assessment collection, measurement frameworks and impact reporting.",
     },
     {
         "key": "activities",

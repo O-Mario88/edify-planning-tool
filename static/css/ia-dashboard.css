@@ -3,6 +3,33 @@
   color: var(--edify-text);
 }
 
+/* IA has seven workflow views. The shared two-tab mobile rule would shrink
+   their labels into each other; retain the platform's scrolling tab rail. */
+@media (max-width: 48rem) {
+  main .ia-dashboard .dashboard-view-nav .edify-section-nav__inner {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    max-inline-size: 100%;
+  }
+
+  main .ia-dashboard .dashboard-view-nav .edify-section-nav__link {
+    flex: 0 0 auto !important;
+    inline-size: auto !important;
+    min-inline-size: 8.5rem !important;
+  }
+
+  main .ia-dashboard #ia-outcome-filters[data-component="filter-toolbar"] > .flex {
+    flex: 1 1 12rem !important;
+    min-inline-size: min(100%, 12rem) !important;
+  }
+
+  main .ia-dashboard .mobile-role-home__context,
+  main .ia-dashboard .mobile-role-home__action {
+    grid-column: 1 / -1;
+  }
+}
+
 .ia-dashboard svg {
   width: 1.1rem;
   height: 1.1rem;

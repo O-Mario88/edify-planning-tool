@@ -30,6 +30,7 @@ from .views import (
     impact_views,
     ssa_views,
     ia_views,
+    ia_outcome_views,
     finance_operating_views,
     closure_views,
     leave_views,
@@ -964,6 +965,11 @@ urlpatterns = [
         name="ia_duplicate_action",
     ),
     path("ia/dashboard/", ia_views.ia_dashboard_view, name="ia_dashboard"),
+    path(
+        "ia/impact-report/download",
+        ia_outcome_views.impact_report_download,
+        name="ia_impact_report_download",
+    ),
     path("ia/notifications/", ia_views.ia_notifications_view, name="ia_notifications"),
     path("ia/compare/", ia_views.ia_compare_view, name="ia_compare"),
     path(

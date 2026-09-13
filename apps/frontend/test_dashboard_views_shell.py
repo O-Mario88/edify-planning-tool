@@ -179,7 +179,7 @@ class DashboardViewRenderTest(TestCase):
             (self.cd, "/dashboard"),
             (self.pl, "/dashboard"),
             (self.rvp, "/dashboard"),
-            (self.ia, "/ia/dashboard/"),
+            (self.ia, "/ia/dashboard/?view=map"),
         ):
             with self.subTest(role=user.active_role):
                 response = self._get(user, url)

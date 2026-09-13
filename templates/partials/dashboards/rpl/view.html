@@ -1,0 +1,36 @@
+{% if dashboard_tabs_inner %}<input type="hidden" id="rpl-filter-view" name="view" value="{{ dashboard_view }}" hx-swap-oob="outerHTML">
+<a id="rpl-filter-reset" href="/dashboard?view={{ dashboard_view }}" class="btn btn-secondary h-9" hx-swap-oob="outerHTML">Reset</a>{% endif %}
+<div class="space-y-4" data-rpl-workflow="{{ dashboard_view }}">
+{% if dashboard_view == "overview" %}
+  {% include "partials/dashboards/rpl/lead_roster.html" %}
+
+  <div class="rpl-columns">
+    <div class="rpl-columns__main">
+      {% include "partials/dashboards/rpl/ssa_needs.html" %}
+      {% include "partials/dashboards/rpl/training_quality.html" %}
+      {% include "partials/dashboards/rpl/delivery_mix.html" %}
+      {% include "partials/dashboards/rpl/priorities.html" %}
+    </div>
+    <div class="rpl-columns__side">
+      {% include "partials/dashboards/rpl/rhythm.html" %}
+      {% include "partials/dashboards/rpl/report.html" %}
+      {% include "partials/dashboards/rpl/networks.html" %}
+      {% include "partials/dashboards/rpl/impact.html" %}
+      {% include "partials/dashboards/rpl/follow_ups.html" %}
+    </div>
+  </div>
+{% elif dashboard_view == "coaching" %}
+  {% include "partials/dashboards/rpl/lead_roster.html" %}
+  {% include "partials/dashboards/rpl/rhythm.html" %}
+  {% include "partials/dashboards/rpl/follow_ups.html" %}
+{% elif dashboard_view == "programmes" %}
+  {% include "partials/dashboards/rpl/ssa_needs.html" %}
+  {% include "partials/dashboards/rpl/priorities.html" %}
+  {% include "partials/dashboards/rpl/training_quality.html" %}
+  {% include "partials/dashboards/rpl/delivery_mix.html" %}
+  {% include "partials/dashboards/rpl/networks.html" %}
+{% elif dashboard_view == "reporting" %}
+  {% include "partials/dashboards/rpl/report.html" %}
+  {% include "partials/dashboards/rpl/impact.html" %}
+{% endif %}
+</div>
