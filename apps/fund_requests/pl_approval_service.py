@@ -526,12 +526,25 @@ def get_pl_fund_approvals(principal, filters=None):
     # runs for a CCEO whose row is missing.)
     from .weekly_service import generate_weekly_fund_request
 
+    # Every officer's weekly row for the week in one read; this was a query
+    # per officer on each lead's approval queue and To-Do build.
+    from .models import WeeklyFundRequest
+
+    weekly_by_officer = {
+        row.responsible_user: row
+        for row in WeeklyFundRequest.objects.filter(
+            responsible_user__in=[
+                c["user_id"] for c in cceos if lines_by_cceo.get(c["user_id"])
+            ],
+            week_start_date=week_start,
+        )
+    }
     plans = []
     for c in cceos:
         c_lines = lines_by_cceo.get(c["user_id"], [])
         if not c_lines:
             continue
-        wfr = _weekly_request_for(c["user_id"], week_start)
+        wfr = weekly_by_officer.get(c["user_id"])
         if wfr is None:
             try:
                 wfr = generate_weekly_fund_request(c["user_id"], week_start.isoformat())

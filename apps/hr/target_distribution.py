@@ -26,7 +26,7 @@ from datetime import date, timedelta
 from decimal import Decimal, InvalidOperation
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q, Sum
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest
@@ -1414,51 +1414,40 @@ def milestone_plan_progress(
             activities = activities.filter(fy=year)
         if activity_ids is not None:
             activities = activities.filter(id__in=activity_ids)
-        planned_q = activities.filter(status__in=PLANNED_OUTPUT_STATUSES)
-        completed_q = activities.filter(status__in=COMPLETED_WORK_STATUSES)
+        planned_filter = Q(status__in=PLANNED_OUTPUT_STATUSES)
+        completed_filter = Q(status__in=COMPLETED_WORK_STATUSES)
 
+        # Planned and completed in one conditional aggregate per milestone
+        # (they were two reads each), over the same rows the separate reads
+        # saw: distinct schools, summed attendance, or counted activities.
         bases = {rule.counting_basis for rule in rules}
         if bases & SCHOOL_BASES:
             unit = "schools"
-
-            def measure(qs):
-                return (
-                    qs.exclude(school__isnull=True)
-                    .values("school_id")
-                    .distinct()
-                    .count()
-                )
-
-            planned = measure(planned_q)
-            completed = measure(completed_q)
+            measures = {
+                "planned": Count("school_id", distinct=True, filter=planned_filter),
+                "completed": Count("school_id", distinct=True, filter=completed_filter),
+            }
         elif bases & TEACHER_BASES:
             unit = "teachers"
-            planned = sum(
-                value or 0
-                for value in planned_q.values_list("expected_participants", flat=True)
-            )
-            completed = sum(
-                value or 0
-                for value in completed_q.values_list("teachers_attended", flat=True)
-            )
+            measures = {
+                "planned": Sum("expected_participants", filter=planned_filter),
+                "completed": Sum("teachers_attended", filter=completed_filter),
+            }
         elif bases & LEADER_BASES:
             unit = "leaders"
-            planned = sum(
-                value or 0
-                for value in planned_q.values_list("expected_participants", flat=True)
-            )
-            completed = sum(
-                value or 0
-                for value in completed_q.values_list("leaders_attended", flat=True)
-            )
+            measures = {
+                "planned": Sum("expected_participants", filter=planned_filter),
+                "completed": Sum("leaders_attended", filter=completed_filter),
+            }
         else:
             unit = "activities"
-
-            def measure(qs):
-                return qs.count()
-
-            planned = measure(planned_q)
-            completed = measure(completed_q)
+            measures = {
+                "planned": Count("id", filter=planned_filter),
+                "completed": Count("id", filter=completed_filter),
+            }
+        totals = activities.aggregate(**measures)
+        planned = totals["planned"] or 0
+        completed = totals["completed"] or 0
         from .milestone_progress import _aggregate_credits
 
         verified = Decimal(

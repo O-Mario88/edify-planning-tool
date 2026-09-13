@@ -2499,7 +2499,7 @@
    "audit_id": "KPI-SOURCE-125",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1345,
+   "line": 1360,
    "label": "Week",
    "keys": [
     "label",
@@ -2516,7 +2516,7 @@
    "audit_id": "KPI-SOURCE-126",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1346,
+   "line": 1361,
    "label": "Amount",
    "keys": [
     "label",
@@ -2533,7 +2533,7 @@
    "audit_id": "KPI-SOURCE-127",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1347,
+   "line": 1362,
    "label": "Name",
    "keys": [
     "label",
@@ -4757,7 +4757,7 @@
    "audit_id": "KPI-SOURCE-250",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 744,
+   "line": 757,
    "label": "Amount",
    "keys": [
     "label",
@@ -4774,7 +4774,7 @@
    "audit_id": "KPI-SOURCE-251",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 745,
+   "line": 758,
    "label": "Name",
    "keys": [
     "label",
@@ -4791,7 +4791,7 @@
    "audit_id": "KPI-SOURCE-252",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 746,
+   "line": 759,
    "label": "Status",
    "keys": [
     "label",
@@ -4808,7 +4808,7 @@
    "audit_id": "KPI-SOURCE-253",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 681,
+   "line": 694,
    "label": "{\u2026} Visits",
    "keys": [
     "count",
@@ -4827,7 +4827,7 @@
    "audit_id": "KPI-SOURCE-254",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 687,
+   "line": 700,
    "label": "{\u2026} Partner",
    "keys": [
     "count",
@@ -4846,7 +4846,7 @@
    "audit_id": "KPI-SOURCE-255",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 693,
+   "line": 706,
    "label": "{\u2026} Clusters",
    "keys": [
     "count",
@@ -4865,7 +4865,7 @@
    "audit_id": "KPI-SOURCE-256",
    "kind": "breakdown-row",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 699,
+   "line": 712,
    "label": "{\u2026} Trainings",
    "keys": [
     "count",
@@ -30856,7 +30856,7 @@
   {
    "audit_id": "KPI-PAYLOAD-021",
    "module": "apps/fund_requests/pl_approval_service.py",
-   "line": 574,
+   "line": 587,
    "function": "get_pl_fund_approvals",
    "target": "kpis",
    "source_item_count": 4,

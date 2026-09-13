@@ -482,18 +482,33 @@ def partner_payments_view(request):
         .distinct()
     )
 
+    # Planned and paid totals in two grouped reads; per row these were one or
+    # two aggregate queries each, a hundred on a month-end queue.
+    from apps.activities.models import ActivityScheduleCostLine
+
+    planned_by_activity = dict(
+        ActivityScheduleCostLine.objects.filter(
+            activity_id__in=[act.id for act in [*advance_queue, *payments]]
+        )
+        .values("activity_id")
+        .annotate(s=_Sum("amount"))
+        .order_by()
+        .values_list("activity_id", "s")
+    )
+    paid_by_activity = dict(
+        PartnerPayment.objects.filter(activity_id__in=[act.id for act in payments])
+        .values("activity_id")
+        .annotate(s=_Sum("amount_paid"))
+        .order_by()
+        .values_list("activity_id", "s")
+    )
     for act in advance_queue:
-        planned = act.schedule_cost_lines.aggregate(s=_Sum("amount"))["s"] or 0
+        planned = planned_by_activity.get(act.id) or 0
         act.planned_total = planned
         act.mou_advance = planned // 2
     for act in payments:
-        planned = act.schedule_cost_lines.aggregate(s=_Sum("amount"))["s"] or 0
-        paid = (
-            PartnerPayment.objects.filter(activity=act).aggregate(
-                s=_Sum("amount_paid")
-            )["s"]
-            or 0
-        )
+        planned = planned_by_activity.get(act.id) or 0
+        paid = paid_by_activity.get(act.id) or 0
         act.planned_total = planned
         act.advance_paid = paid
         act.balance_due = max(planned - paid, 0)
