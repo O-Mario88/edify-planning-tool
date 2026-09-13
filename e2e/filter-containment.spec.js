@@ -44,7 +44,10 @@ test('Planning filters retain gaps through resizing and HTMX changes',async({pag
  await signIn(page,'accountant@edify.org','edify',{acceptRequiredAgreements:false});
  await page.goto('/planning');
  const form=page.locator('#filters-form');
- await expect(form.locator('.edify-filter-field')).toHaveCount(6);
+ // Group joined the row when Planning learned to group schools by Program Lead and CCEO (owner, 2026-09-11).
+ const filters=['fy','quarter','district','staff','group','planning_readiness','ssa_status'];
+ await expect(form.locator('.edify-filter-field')).toHaveCount(filters.length);
+ for(const name of filters)await expect(form.locator(`.edify-filter-field select[name=${name}]`)).toHaveCount(1);
  for(const width of [390,768,1048,1290,1600]){
   await page.setViewportSize({width,height:900});
   for(const theme of ['theme-light','theme-dark','theme-blue']){

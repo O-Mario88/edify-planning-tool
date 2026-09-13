@@ -21,8 +21,10 @@ test('blue login and compact Planning and leave strips at every device size',asy
   await expect(page.locator('main')).toBeVisible();
   if(route==='/planning'){
    await expect(page.locator('#planning-intelligence-panel')).toHaveCount(0);
-   await expect(page.locator('main .context-metrics__fact')).toHaveCount(9);
+   // Ten facts since the SSA-Informed Plans headline joined the strip (owner, 2026-09-13).
+   await expect(page.locator('main .context-metrics__fact')).toHaveCount(10);
    await expect(page.locator('main .context-metrics__label').filter({hasText:'Not grouped in cluster'})).toHaveCount(1);
+   await expect(page.locator('main .context-metrics__label').filter({hasText:'SSA-Informed Plans'})).toHaveCount(1);
   }else{
    await expect(page.locator('.pto-page > .context-metrics .context-metrics__fact')).toHaveCount(6);
    await expect(page.locator('.pto-balance-tile,.pto-hero-balance,.pto-signal-grid')).toHaveCount(0);

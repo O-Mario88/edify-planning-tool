@@ -14,7 +14,8 @@ test('login surfaces, padding and icon-free fields stay consistent across viewpo
   expect(data.kpi).toBe(data.impact);
   if(width>1120){expect(data.logoTop).toBeGreaterThanOrEqual(32);expect(data.cardBottom).toBeLessThanOrEqual(height-16);}
   await expect(page.locator('.login-field__control > svg')).toHaveCount(0);
-  await page.screenshot({path:`test-results/login-polish/${info.project.name}-${width}.png`,fullPage:true});
+  // Evidence only. CSS pixels: at the phone projects' device scale a full-page capture of a 1920px layout outran the action timeout.
+  await page.screenshot({path:`test-results/login-polish/${info.project.name}-${width}.png`,fullPage:true,scale:'css'});
  }
  await page.getByRole('button',{name:'Show password',exact:true}).click();
  await expect(page.locator('#current-password')).toHaveAttribute('type','text');await expect(page.locator('[data-eye-closed]')).toBeVisible();

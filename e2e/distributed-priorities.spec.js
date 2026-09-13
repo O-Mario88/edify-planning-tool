@@ -1,22 +1,26 @@
 const {test,expect}=require('@playwright/test');
 const {signIn}=require('./helpers/auth');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
-for(const [email,analytics] of [
+for(const [email,analytics,priorities='/priorities'] of [
  ['cceo@edify.org','/analytics'],['pl1@edify.org','/analytics/program-lead'],
  ['cd@edify.org','/analytics/country-director'],['rvp@edify.org','/analytics'],
  ['ia@edify.org','/analytics'],['hr@edify.org','/analytics'],
- ['accountant@edify.org','/analytics'],['coordinator@edify.org','/analytics'],['admin@edify.org','/analytics']
+ // The Accountant has no priority surface: /priorities refuses them and their agreement stays at /my-performance (2026-09-11).
+ ['accountant@edify.org','/analytics','/my-performance'],['coordinator@edify.org','/analytics'],['admin@edify.org','/analytics']
 ]) test(`${email} priorities and analytics are responsive and coherent`,async({page},info)=>{
  test.setTimeout(180000);const errors=[];page.on('pageerror',e=>errors.push(e.message));
  await signIn(page,email,'edify',{acceptRequiredAgreements:false});
  const dashboard=await page.goto('/dashboard');expect(dashboard.status()).toBeLessThan(400);
- const response=await page.goto('/priorities?fy=2026');expect(response.status()).toBe(200);
+ if(priorities!=='/priorities'){await page.goto('/priorities?fy=2026');expect(new URL(page.url()).pathname).not.toBe('/priorities');}
+ const response=await page.goto(priorities+'?fy=2026');expect(response.status()).toBe(200);
  await expect(page.locator('[data-edify-tab][aria-current=page]')).toHaveText('Distributed Priorities');
  for(const label of ['Core Values','Spiritual Formation','Professional Development']){
   await page.getByRole('link',{name:label,exact:true}).click();
   await expect(page.locator('[data-edify-tab][aria-current=page]')).toHaveText(label);
  }
  await page.getByRole('link',{name:'Distributed Priorities',exact:true}).click();
+ // The tab is a link: let its page load before resizing. Firefox can hang resizing a page mid-navigation.
+ await expect(page.locator('[data-edify-tab][aria-current=page]')).toHaveText('Distributed Priorities');await page.waitForLoadState('load');
  for(const [width,height] of [[390,844],[768,1024],[1366,768]]){
   await page.setViewportSize({width,height});
   for(const theme of ['theme-light','theme-dark dark','theme-blue dark']){

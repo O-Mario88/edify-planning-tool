@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { test, expect } = require('@playwright/test');
 const { signIn } = require('./helpers/auth');
+const { localRoleAccounts } = require('./helpers/accounts');
 const indexedSelectors = require('../static/build/css/selectors.json');
 
 // A platform crawl visits hundreds of pages; videos/traces of the entire
@@ -14,22 +15,6 @@ const inventory = JSON.parse(
 
 const baseURL = process.env.EDIFY_E2E_BASE_URL || 'http://127.0.0.1:8000';
 const defaultPassword = process.env.EDIFY_E2E_PASSWORD || 'edify';
-const localRoleAccounts = [
-  ['CCEO', 'CCEO', 'cceo@edify.org'],
-  ['PL', 'PL', 'pl1@edify.org'],
-  ['CD', 'CD', 'cd@edify.org'],
-  ['RVP', 'RVP', 'rvp@edify.org'],
-  ['IA', 'IA', 'ia@edify.org'],
-  ['ACCOUNTANT', 'ACCOUNTANT', 'accountant@edify.org'],
-  ['HR', 'HR', 'hr@edify.org'],
-  ['PROJECT_COORDINATOR', 'PROJECT_COORDINATOR', 'coordinator@edify.org'],
-  ['PARTNER_ADMIN', 'PARTNER', 'partner-admin@edify.org'],
-  ['PARTNER', 'PARTNER', 'partner@edify.org'],
-  ['BUSINESS_TRANSFORMATION', 'BUSINESS_TRANSFORMATION', 'business-transformation@edify.org'],
-  ['MFI_ADMIN', 'MFI_ADMIN', 'mfi-admin@edify.org'],
-  ['MFI_OFFICER', 'MFI_OFFICER', 'mfi-officer@edify.org'],
-  ['ADMIN', 'ADMIN', 'admin@edify.org'],
-];
 
 const productionHosts = new Set([
   'edifyplanning.app',

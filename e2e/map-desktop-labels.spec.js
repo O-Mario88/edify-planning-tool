@@ -1,5 +1,6 @@
 const {test, expect} = require('@playwright/test');
 const {signIn} = require('./helpers/auth');
+const {mapInView} = require('./helpers/map');
 test.use({video:'off',trace:'off',serviceWorkers:'block'});
 test('desktop labels survive laptop heights and district drilldown', async({page}) => {
   const errors=[]; page.on('pageerror', e=>errors.push(e.message));
@@ -10,18 +11,18 @@ test('desktop labels survive laptop heights and district drilldown', async({page
   for (const [width,height] of [[1280,720],[1366,768],[1440,900],[1920,1080],[2560,1440]]) {
     await page.setViewportSize({width,height});
     await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).length)).toBeGreaterThan(15);
-    await expect.poll(()=>svg.evaluate(e=>Math.round(e.getBoundingClientRect().bottom))).toBeLessThanOrEqual(height);
+    await expect.poll(async()=>{const map=await mapInView(page);return Math.abs(map.windowHeight-map.bottom-24);}).toBeLessThanOrEqual(24);
     if (height === 1440) {
       await expect.poll(async () => (await svg.boundingBox())?.height || 0).toBeGreaterThan(560);
     }
   }
   await page.setViewportSize({width:1366,height:768});
-  await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.every(n=>n.dataset.labelPlacement))).toBe(true);
-  const overlaps=await page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>{
-    const boxes=nodes.filter(n=>getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).map(n=>n.getBoundingClientRect());
-    return boxes.flatMap((a,i)=>boxes.slice(i+1).filter(b=>a.left<b.right && a.right>b.left && a.top<b.bottom && a.bottom>b.top)).length;
-  });
-  expect(overlaps).toBe(0);
+  // Every district keeps its name on the national overview. A name with no clear space inside its boundary takes
+  // the least crowded spot rather than vanishing (owner, 2026-09-11: the labels had disappeared), so names of small
+  // neighbouring districts may touch at laptop size; none is hidden. Placement runs in idle slices and restarts on every resize,
+  // so after the sweep above it settles in seconds, not frames.
+  const districts=await page.locator('#sr-cam path[data-district]').evaluateAll(paths=>new Set(paths.map(p=>p.dataset.district)).size);
+  await expect.poll(()=>page.locator('#sr-cam .sr-dl').evaluateAll(nodes=>nodes.filter(n=>n.dataset.labelPlacement && n.dataset.labelPlacement!=='hidden' && getComputedStyle(n).display!=='none' && Number(getComputedStyle(n).opacity)>0).length),{timeout:30000}).toBe(districts);
   await page.screenshot({path:'/tmp/edify-map-labels-laptop.png'});
   await page.locator('#sr-cam path[data-district="Wakiso"]').first().press('Enter');
   await expect(page.locator('#sr-cam .sr-scl').first()).toBeVisible({timeout:25000});
