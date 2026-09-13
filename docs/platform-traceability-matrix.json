@@ -2546,7 +2546,6 @@
         "apps/business_transformation/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
-        "apps/core/audit_hash.py",
         "apps/core/concurrency.py",
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
@@ -2678,7 +2677,6 @@
         "apps/business_transformation/services.py",
         "apps/business_transformation/signals.py",
         "apps/clusters/eligibility.py",
-        "apps/core/audit_hash.py",
         "apps/core/concurrency.py",
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
@@ -2817,7 +2815,6 @@
         "apps/business_transformation/models.py",
         "apps/business_transformation/services.py",
         "apps/clusters/eligibility.py",
-        "apps/core/audit_hash.py",
         "apps/core/concurrency.py",
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
@@ -2978,7 +2975,6 @@
         "apps/business_transformation/models.py",
         "apps/business_transformation/services.py",
         "apps/clusters/eligibility.py",
-        "apps/core/audit_hash.py",
         "apps/core/concurrency.py",
         "apps/core/context_processors.py",
         "apps/core/cuid.py",
@@ -3471,8 +3467,8 @@
     }
   ],
   "fingerprint": {
-    "payload": "e4b1980d914a010f7790eb2af52ed1fd3289b50b8ab117fb01dc3dfbadb3b899",
-    "sources": "bc7085151ec0245dcf519ba6075a1ad163a1ccfcd8df5292b05c9fd519e9808f",
+    "payload": "b83eadb45c451009325957b65ac81c6c11bc5e1f0781d24e251db83c1ccac084",
+    "sources": "e2d34e8d43489a510bda80b63a162d49e2b663edce02551b24a1c3a7be605e6b",
     "sourceCount": 190,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }

@@ -741,6 +741,18 @@ def outbox_drain_job():
     run_tracked_job("outbox_drain", _do_outbox_drain)
 
 
+def _do_audit_chain_seal() -> int:
+    from apps.audit.services import seal_pending
+
+    return seal_pending()
+
+
+def audit_chain_seal_job():
+    if not _enabled():
+        return
+    run_tracked_job("audit_chain_seal", _do_audit_chain_seal)
+
+
 # ── Admin platform maintenance ───────────────────────────────────────────────
 def _do_admin_maintenance_generation() -> int:
     """Turn every due MaintenanceTemplate into scheduled Admin work.

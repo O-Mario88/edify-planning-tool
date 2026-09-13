@@ -98,6 +98,10 @@ touch instead of forcing Chromium to rematch the entire 50+ check dashboard.
 <div class="p-4 bg-amber-50 text-amber-800 rounded-surface text-[12px] font-semibold border border-amber-150">
 Could not verify the audit chain: {{ health.auditChainIntegrity.error }}
 </div>
+{% elif health.auditChainIntegrity.brokenAt is None and health.auditChainIntegrity.unsealedRows %}
+<div class="p-4 bg-amber-50 text-amber-800 rounded-surface text-[12px] font-semibold border border-amber-150">
+{{ health.auditChainIntegrity.unsealedRows }} committed audit row{{ health.auditChainIntegrity.unsealedRows|pluralize }} older than ten minutes {{ health.auditChainIntegrity.unsealedRows|pluralize:"is,are" }} not chained yet. The scheduled seal retries every five minutes; check that the scheduler is running.
+</div>
 {% else %}
 <div class="p-4 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-semibold border border-rose-150">
 Chain integrity broken at sequence #{{ health.auditChainIntegrity.brokenAt }}. Investigate immediately.

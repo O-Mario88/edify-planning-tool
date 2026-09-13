@@ -2,6 +2,10 @@
 Audit service — appends a hash-chained AuditLog row under a serialized
 transaction (select_for_update on the tail). Faithful port of audit.service.
 
+Inside a caller's transaction the row is written unsealed and chained when
+that transaction commits (see ``_seal_after_commit``), so the chain lock is
+held for one short append, not for the caller's whole unit of work.
+
 Audit is best-effort by default. Tier-1 value-bearing callers pass
 ``required=True`` so an audit failure rolls the enclosing transaction back.
 The request provenance (ip/user-agent/correlationId) is read from the request
@@ -13,7 +17,7 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-from django.db import connection, transaction
+from django.db import DEFAULT_DB_ALIAS, connection, connections, transaction
 from django.utils import timezone
 
 from apps.core.logging_filters import escape_control_characters
@@ -107,25 +111,28 @@ def log(
             correlation_id=correlation_id or (ctx.correlation_id if ctx else None),
             payload=payload,
         )
+        # Inside a caller's transaction, taking the chain lock here held it
+        # until that whole transaction committed: a lead bulk-scheduling six
+        # visits kept every other audited action on the platform waiting four
+        # seconds (measured 2026-09-13), and a long enough batch pushes the
+        # waiters past the statement timeout. The row is written unsealed
+        # instead and chained the moment the caller commits, so the lock is
+        # held for one short append. A rolled-back transaction takes its
+        # unsealed rows with it, exactly as it took chained rows before.
+        deferred = _inside_callers_transaction()
         with transaction.atomic():
-            if connection.vendor == "postgresql":
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT pg_advisory_xact_lock(%s)",
-                        [_AUDIT_CHAIN_LOCK_ID],
-                    )
-            # The advisory lock above serializes the empty-chain case and every
-            # append. select_for_update remains useful as defence in depth and
-            # for database backends without PostgreSQL advisory locks.
-            last = (
-                AuditLog.objects.select_for_update()
-                .order_by("-seq")
-                .only("hash", "seq")
-                .first()
-            )
-            prev_hash = last.hash if last else None
-            next_seq = (last.seq + 1) if last else 1
-            hash_value = chain_hash(prev_hash or "", canonical_audit(fields))
+            if deferred:
+                prev_hash = next_seq = hash_value = None
+                _seal_after_commit()
+            else:
+                _take_chain_lock()
+                # The advisory lock serializes the empty-chain case and every
+                # append. select_for_update remains useful as defence in depth
+                # and for database backends without PostgreSQL advisory locks.
+                last = _chain_tail(for_update=True)
+                prev_hash = last.hash if last else None
+                next_seq = (last.seq + 1) if last else 1
+                hash_value = chain_hash(prev_hash or "", canonical_audit(fields))
             audit_row = AuditLog.objects.create(
                 seq=next_seq,
                 action=fields.action,
@@ -155,13 +162,21 @@ def log(
                 try:
                     from apps.realtime.domain_events import publish_audit_event
 
+                    audit_seq = audit_row.seq
+                    if audit_seq is None:
+                        # Sealed by the commit callback registered before this.
+                        audit_seq = (
+                            AuditLog.objects.filter(id=audit_row.id)
+                            .values_list("seq", flat=True)
+                            .first()
+                        )
                     publish_audit_event(
                         event_type=fields.action,
                         subject_kind=fields.subject_kind,
                         subject_id=fields.subject_id,
                         actor_id=fields.actor_id,
                         payload=event_payload,
-                        audit_seq=audit_row.seq,
+                        audit_seq=audit_seq,
                         success=fields.success,
                         reason=fields.reason,
                     )
@@ -241,7 +256,9 @@ def verify_chain(*, full: bool = False) -> dict:
             prev_hash = checkpoint.verified_hash
             start_after = checkpoint.verified_through_seq
 
-    rows = AuditLog.objects.order_by("seq")
+    # Unsealed rows belong to a transaction that has not committed yet, or to
+    # one whose commit-time seal has not run; they join the chain when sealed.
+    rows = AuditLog.objects.filter(seq__isnull=False).order_by("seq")
     if start_after is not None:
         rows = rows.filter(seq__gt=start_after)
 
@@ -300,4 +317,80 @@ def _row_to_fields(row: AuditLog) -> CanonicalAuditFields:
     )
 
 
-__all__ = ["log", "verify_chain"]
+def _inside_callers_transaction(using: str = DEFAULT_DB_ALIAS) -> bool:
+    """Whether log() runs inside an atomic block opened by application code.
+
+    A test case's own wrapping blocks do not count: they never commit, so a
+    row deferred inside them would never be sealed.
+    """
+    return any(
+        not getattr(block, "_from_testcase", False)
+        for block in connections[using].atomic_blocks
+    )
+
+
+def _take_chain_lock() -> None:
+    if connection.vendor == "postgresql":
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT pg_advisory_xact_lock(%s)", [_AUDIT_CHAIN_LOCK_ID])
+
+
+def _chain_tail(*, for_update: bool = False):
+    # Unsealed rows have no seq, and PostgreSQL sorts NULL first in a
+    # descending order: without the filter the "tail" would be one of them.
+    rows = AuditLog.objects.filter(seq__isnull=False)
+    if for_update:
+        rows = rows.select_for_update()
+    return rows.order_by("-seq").only("hash", "seq").first()
+
+
+def _seal_after_commit(using: str = DEFAULT_DB_ALIAS) -> None:
+    """Register one seal for the caller's outermost transaction."""
+    conn = connections[using]
+    outermost = next(
+        (b for b in conn.atomic_blocks if not getattr(b, "_from_testcase", False)),
+        None,
+    )
+    if outermost is None or getattr(outermost, "_edify_audit_seal", False):
+        return
+    outermost._edify_audit_seal = True
+    transaction.on_commit(_seal_committed_rows, using=using)
+
+
+def _seal_committed_rows() -> None:
+    try:
+        seal_pending()
+    except Exception as exc:  # noqa: BLE001 - the scheduled seal retries
+        logger.error("Audit seal after commit failed: %s", exc)
+
+
+def seal_pending(*, limit: int = 5000) -> int:
+    """Chain committed unsealed rows onto the tail, oldest first.
+
+    Runs after each caller's commit and, as a safety net, on a schedule. Rows
+    of transactions still open are invisible here and wait for their own
+    commit. Returns how many rows were sealed.
+    """
+    with transaction.atomic():
+        _take_chain_lock()
+        pending = list(
+            AuditLog.objects.select_for_update()
+            .filter(seq__isnull=True)
+            .order_by("created_at", "id")[:limit]
+        )
+        if not pending:
+            return 0
+        last = _chain_tail()
+        prev_hash = last.hash if last else None
+        next_seq = (last.seq + 1) if last else 1
+        for row in pending:
+            row.seq = next_seq
+            row.prev_hash = prev_hash
+            row.hash = chain_hash(prev_hash or "", canonical_audit(_row_to_fields(row)))
+            prev_hash = row.hash
+            next_seq += 1
+        AuditLog.objects.bulk_update(pending, ["seq", "prev_hash", "hash"])
+    return len(pending)
+
+
+__all__ = ["log", "seal_pending", "verify_chain"]

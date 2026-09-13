@@ -79,6 +79,7 @@ class Command(BaseCommand):
             "data_quality_scan": jobs.data_quality_scan_job,
             "ssa_recommendation_sync": jobs.ssa_recommendation_sync_job,
             "outbox_drain": jobs.outbox_drain_job,
+            "audit_chain_seal": jobs.audit_chain_seal_job,
             "autopilot_weekly_proposals": jobs.autopilot_weekly_proposals_job,
             "scheduler_watchdog": jobs.scheduler_watchdog_job,
         }

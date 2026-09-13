@@ -353,8 +353,23 @@ def _audit_chain_integrity() -> dict:
     try:
         from apps.audit.services import verify_chain
 
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.audit.models import AuditLog
+
         result = verify_chain()
-        return {"clean": result["ok"], "brokenAt": result["brokenAt"]}
+        # Rows are chained when their transaction commits; one still unsealed
+        # minutes later means that seal never ran (the scheduled seal retries).
+        unsealed = AuditLog.objects.filter(
+            seq__isnull=True, created_at__lt=timezone.now() - timedelta(minutes=10)
+        ).count()
+        return {
+            "clean": result["ok"] and not unsealed,
+            "brokenAt": result["brokenAt"],
+            "unsealedRows": unsealed,
+        }
     except Exception as exc:  # noqa: BLE001 — the health page must render regardless
         return {"clean": None, "brokenAt": None, "error": str(exc)}
 

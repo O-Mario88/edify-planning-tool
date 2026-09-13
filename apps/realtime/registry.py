@@ -275,6 +275,25 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="audit_chain_seal",
+        description=(
+            "Chains committed audit rows whose commit-time seal did not run "
+            "(a process that stopped between commit and seal)."
+        ),
+        cron="every 5 minutes Africa/Nairobi",
+        cron_kwargs={"minute": "*/5"},
+        expected_runtime_seconds=10,
+        max_interval_minutes=30,
+        idempotent=True,
+        idempotency_note=(
+            "Sealing runs under the audit chain lock and only touches rows "
+            "without a sequence; a repeated or overlapping run finds nothing "
+            "left to seal."
+        ),
+        retryable=True,
+        max_retries=1,
+    ),
+    JobSpec(
         name="outbox_drain",
         description=(
             "Drains due durable-outbox events to their handlers with "

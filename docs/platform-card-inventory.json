@@ -4,9 +4,9 @@
   "templates": 234,
   "distinct_titles": 601,
   "with_card_key": 13,
-  "untitled_surfaces": 785,
+  "untitled_surfaces": 786,
   "untitled_chrome": 179,
-  "untitled_nested": 252,
+  "untitled_nested": 253,
   "untitled_headless": 354,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
@@ -3210,7 +3210,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 102,
+   "line": 106,
    "title": "Scheduling Rules",
    "heading_level": 3,
    "has_card_key": false,
@@ -3219,7 +3219,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 130,
+   "line": 134,
    "title": "Background Automation",
    "heading_level": 3,
    "has_card_key": false,
@@ -3228,7 +3228,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 149,
+   "line": 153,
    "title": "Staff Time Standard",
    "heading_level": 3,
    "has_card_key": false,
@@ -3237,7 +3237,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 185,
+   "line": 189,
    "title": "Durable Outbox",
    "heading_level": 3,
    "has_card_key": false,
@@ -3246,7 +3246,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 207,
+   "line": 211,
    "title": "External Integrations",
    "heading_level": 3,
    "has_card_key": false,
@@ -3255,7 +3255,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 227,
+   "line": 231,
    "title": "Data Quality Queues",
    "heading_level": 3,
    "has_card_key": false,
@@ -3264,7 +3264,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 252,
+   "line": 256,
    "title": "Authentication Lockout",
    "heading_level": 3,
    "has_card_key": false,
@@ -3273,7 +3273,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 268,
+   "line": 272,
    "title": "Unmatched SSA Queue",
    "heading_level": 3,
    "has_card_key": false,
@@ -3282,7 +3282,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 289,
+   "line": 293,
    "title": "Operational Exception Ledger",
    "heading_level": 3,
    "has_card_key": false,
@@ -3291,7 +3291,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1092,
+   "line": 1096,
    "title": "Design System Quality Lints",
    "heading_level": 3,
    "has_card_key": false,
@@ -3300,7 +3300,7 @@
   },
   {
    "template": "templates/pages/system_health/index.html",
-   "line": 1125,
+   "line": 1129,
    "title": "Professional Development",
    "heading_level": 3,
    "has_card_key": false,

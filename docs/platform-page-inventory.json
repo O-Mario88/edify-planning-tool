@@ -69440,6 +69440,20 @@
         "retryable": true
       },
       {
+        "cron": "every 5 minutes Africa/Nairobi",
+        "cron_kwargs": {
+          "minute": "*/5"
+        },
+        "description": "Chains committed audit rows whose commit-time seal did not run (a process that stopped between commit and seal).",
+        "expected_runtime_seconds": 10,
+        "idempotency_note": "Sealing runs under the audit chain lock and only touches rows without a sequence; a repeated or overlapping run finds nothing left to seal.",
+        "idempotent": true,
+        "max_interval_minutes": 30,
+        "max_retries": 1,
+        "name": "audit_chain_seal",
+        "retryable": true
+      },
+      {
         "cron": "every minute Africa/Nairobi",
         "cron_kwargs": {
           "minute": "*"
@@ -86582,7 +86596,7 @@
     "permission_keys": 112,
     "roles": 15,
     "routed_surfaces": 651,
-    "scheduled_jobs": 27,
+    "scheduled_jobs": 28,
     "severity_counts": {
       "critical": 0,
       "high": 0,
