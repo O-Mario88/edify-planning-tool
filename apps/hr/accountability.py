@@ -85,6 +85,40 @@ def allocation_priorities(
     )
 
 
+def _contract_scope_label(role, country, recipient_ids) -> str:
+    if recipient_ids is not None:
+        return "Selected employees and monitored partners"
+    if role == "Program Lead":
+        return "You and your team"
+    if country is not None or role in {
+        "CountryDirector",
+        "RegionalVicePresident",
+        "Admin",
+    }:
+        return "Country delivery"
+    return "Your delivery and monitored partners"
+
+
+def _approved_allocations_exist(fy) -> bool:
+    """Whether the year has any approved allocation on a live, approved milestone.
+
+    Asked once per request per year. Pages that read the contract of every
+    lead and CCEO on a roster used to run each person's team resolution and
+    allocation query even in a year where nothing had been approved yet.
+    """
+    from apps.core.request_cache import memoize
+
+    return memoize(
+        ("approved-allocations-exist", str(fy)),
+        lambda: MilestoneAllocation.objects.filter(
+            status="approved",
+            milestone__priority__fy=fy,
+            milestone__active=True,
+            milestone__definition_status="approved",
+        ).exists(),
+    )
+
+
 def _allocation_priorities(
     user,
     fy=None,
@@ -106,6 +140,18 @@ def _allocation_priorities(
     if staff is None and country is None and recipient_ids is None:
         return {"rows": [], "pct": None, "fy": fy, "scope": "Assigned priorities"}
     role = getattr(user, "active_role", "")
+    scope_label = _contract_scope_label(role, country, recipient_ids)
+    if not _approved_allocations_exist(fy):
+        # Nothing is approved for anyone this year: every scope below reads an
+        # empty contract, so skip the per-person team and allocation lookups.
+        return {
+            "rows": [],
+            "pct": None,
+            "fy": fy,
+            "scope": scope_label,
+            "start": start,
+            "end": end,
+        }
     allocations = (
         MilestoneAllocation.objects.filter(
             status="approved",
@@ -120,7 +166,6 @@ def _allocation_priorities(
         allocations = allocations.filter(
             allocated_to_type="employee", employee_id__in=recipient_ids
         )
-        scope_label = "Selected employees and monitored partners"
     elif role == "Program Lead":
         from django.db.models import Q
         from .contribution_scope import owner_ids
@@ -136,7 +181,6 @@ def _allocation_priorities(
                 & ~Q(milestone_id__in=team_roots.values("milestone_id"))
             )
         )
-        scope_label = "You and your team"
     elif country is not None or role in {
         "CountryDirector",
         "RegionalVicePresident",
@@ -157,10 +201,8 @@ def _allocation_priorities(
             allocations = allocations.filter(
                 milestone__priority__country_id=country
             ).filter(Q(employee__isnull=True) | Q(employee__country=country))
-        scope_label = "Country delivery"
     else:
         allocations = allocations.filter(allocated_to_type="employee", employee=staff)
-        scope_label = "Your delivery and monitored partners"
     groups = defaultdict(list)
     for allocation in allocations:
         groups[str(allocation.milestone_id)].append(allocation)
@@ -173,6 +215,17 @@ def _allocation_priorities(
     from .target_distribution import milestone_plan_progress
     from apps.activities.models import Activity
 
+    # The people whose delivery counts, in both identifier spaces, resolved
+    # once: this used to run once per milestone for every recipient set.
+    recipient_owner_ids = None
+    if recipient_ids is not None:
+        from apps.accounts.models import StaffProfile
+
+        recipient_owner_ids = set(recipient_ids) | set(
+            StaffProfile.objects.filter(id__in=recipient_ids).values_list(
+                "user_id", flat=True
+            )
+        )
     rows = []
     for group in groups.values():
         milestone = group[0].milestone
@@ -221,13 +274,8 @@ def _allocation_priorities(
             )
         elif recipient_ids is not None:
             from django.db.models import Q
-            from apps.accounts.models import StaffProfile
 
-            ids = set(recipient_ids) | set(
-                StaffProfile.objects.filter(id__in=recipient_ids).values_list(
-                    "user_id", flat=True
-                )
-            )
+            ids = recipient_owner_ids
             activities = activities.filter(
                 Q(responsible_staff_id__in=ids)
                 | Q(delivery_type="partner", monitored_by_staff_id__in=ids)

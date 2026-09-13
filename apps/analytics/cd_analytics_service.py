@@ -875,6 +875,7 @@ class CDAnalyticsService:
         """
         supervisors = CDAnalyticsService._cceo_supervisor_map(cd)
         rows = []
+        contract_empty = CDAnalyticsService._resolve_contract_empty(cd)
         for staff_id, user_id, name in CDAnalyticsService._cceo_identities(cd):
             pct, achieved, target = CDAnalyticsService._weighted_achievement(
                 cd.fy,
@@ -883,6 +884,7 @@ class CDAnalyticsService:
                 [staff_id],
                 areas=cd.areas or None,
                 per_user_series=cd.per_user_series or None,
+                contract_known_empty=contract_empty,
             )
             rows.append(
                 {
@@ -1077,6 +1079,53 @@ class CDAnalyticsService:
         )
 
     @staticmethod
+    def _resolve_contract_empty(cd, *, pls=None, staff_ids=None) -> bool:
+        """Whether no allocation is approved this year for anyone on the
+        country roster: the leads, their teams, and every CCEO.
+
+        Asked once per page. When it is true, every per-person contract lookup
+        (a query and two prefetches each, for each lead, each lead's team and
+        each CCEO on the leaderboard) would come back empty.
+        """
+        if cd.contract_empty is not None:
+            return cd.contract_empty
+        from apps.hr.models import MilestoneAllocation
+
+        pls = pls if pls is not None else CDAnalyticsService._pls()
+        if staff_ids is None:
+            teams = CDAnalyticsService._pl_cceos_batch(pls, cd)
+            staff_ids = {
+                c["staff_id"]
+                for members in teams.values()
+                for c in members
+                if c.get("staff_id")
+            }
+        roster = set(staff_ids) | {
+            staff_id
+            for staff_id, _user_id, _name in CDAnalyticsService._cceo_identities(cd)
+            if staff_id
+        }
+        pl_staff = set(
+            StaffProfile.objects.filter(
+                user_id__in=[pl.id for pl in pls], deleted_at__isnull=True
+            ).values_list("id", flat=True)
+        )
+        cd.contract_empty = not (
+            MilestoneAllocation.objects.filter(
+                status="approved",
+                milestone__priority__fy=cd.fy,
+                milestone__active=True,
+                milestone__definition_status="approved",
+            )
+            .filter(
+                Q(allocated_to_type="employee", employee_id__in=roster | pl_staff)
+                | Q(allocated_to_type="team", team_id__in=pl_staff)
+            )
+            .exists()
+        )
+        return cd.contract_empty
+
+    @staticmethod
     def _weighted_achievement(
         fy,
         quarter,
@@ -1105,11 +1154,26 @@ class CDAnalyticsService:
         if not contract_known_empty:
             from apps.hr.accountability import allocation_priorities
 
-            ids = list(
-                StaffProfile.objects.filter(
-                    Q(id__in=staff_ids) | Q(user_id__in=user_ids)
-                ).values_list("id", flat=True)
+            # The profiles named by either identifier, resolved from one
+            # request-wide map rather than a query per call: every per-person
+            # call used to make its own, forty-two on one seed load of the CD
+            # analytics page. Same rule as the query it replaces: a profile
+            # whose id or user id was given, deleted profiles excluded.
+            from apps.core.request_cache import memoize
+
+            pairs = memoize(
+                ("cd_analytics.profile_pairs",),
+                lambda: list(
+                    StaffProfile.objects.values_list("id", "user_id")
+                ),
             )
+            known_staff = {s for s in staff_ids if s}
+            wanted_users = {u for u in user_ids if u}
+            ids = [
+                profile_id
+                for profile_id, profile_user_id in pairs
+                if profile_id in known_staff or profile_user_id in wanted_users
+            ]
             month = (
                 quarter[0]
                 if isinstance(quarter, (list, tuple)) and len(quarter) == 1
@@ -1521,6 +1585,7 @@ class CDAnalyticsService:
             # Team-pooled weighted pct — the SAME math as the KPI strip,
             # scoped to this PL's CCEOs (never a re-ratio of already-weighted
             # per-CCEO numbers, which would silently unweight the team total).
+            contract_empty = CDAnalyticsService._resolve_contract_empty(cd)
             pl_pct, _pl_a, _pl_t = CDAnalyticsService._weighted_achievement(
                 cd.fy,
                 cd.target_period,
@@ -1529,6 +1594,7 @@ class CDAnalyticsService:
                 principal=pl,
                 areas=cd.areas or None,
                 per_user_series=cd.per_user_series or None,
+                contract_known_empty=contract_empty,
             )
             cceo_pcts = []
             for c in cceos:
@@ -1539,6 +1605,7 @@ class CDAnalyticsService:
                     [c["staff_id"]],
                     areas=cd.areas or None,
                     per_user_series=cd.per_user_series or None,
+                    contract_known_empty=contract_empty,
                 )
                 if t:
                     cceo_pcts.append(pct)
@@ -1877,34 +1944,49 @@ class CDAnalyticsService:
             )
         }
 
+        # The SSA figures, read once for every member school of every cluster
+        # and folded per cluster below by that cluster's OWN membership (the
+        # union described above), so the numbers are those the three queries a
+        # cluster used to make produced — without making them per cluster.
+        records_by_school: dict = {}
+        if latest:
+            all_member_ids = {sid for ids in cluster_school.values() for sid in ids}
+            for record in SsaRecord.objects.filter(
+                school_id__in=all_member_ids,
+                verification_status="confirmed",
+                fy=latest,
+            ).prefetch_related("scores"):
+                records_by_school.setdefault(record.school_id, []).append(record)
+
         rows = []
         for idx, cid in enumerate(sorted(cluster_school.keys()), start=1):
             c_ids = list(cluster_school[cid])
             avg = weak = None
             weak_label = "—"
             if latest and c_ids:
-                rids = list(
-                    SsaRecord.objects.filter(
-                        school_id__in=c_ids, verification_status="confirmed", fy=latest
-                    ).values_list("id", flat=True)
-                )
-                avg = _ssa_score(
-                    SsaRecord.objects.filter(id__in=rids).aggregate(
-                        a=Avg("average_score")
-                    )["a"]
-                )
-                bi = (
-                    SsaScore.objects.filter(ssa_record_id__in=rids)
-                    .values("intervention")
-                    .annotate(a=Avg("score"))
-                    .order_by("a")
-                    .first()
-                )
-                if bi:
-                    weak_label = _INTERVENTION_LABELS.get(
-                        bi["intervention"], (bi["intervention"], "")
-                    )[0]
-                    weak = _ssa_score(bi["a"])
+                records = [
+                    record
+                    for sid in c_ids
+                    for record in records_by_school.get(sid, [])
+                ]
+                averages = [
+                    r.average_score for r in records if r.average_score is not None
+                ]
+                avg = _ssa_score(sum(averages) / len(averages)) if averages else None
+                by_intervention: dict = {}
+                for record in records:
+                    for score in record.scores.all():
+                        if score.score is not None:
+                            by_intervention.setdefault(score.intervention, []).append(
+                                score.score
+                            )
+                if by_intervention:
+                    code, values = min(
+                        by_intervention.items(),
+                        key=lambda item: (sum(item[1]) / len(item[1]), item[0]),
+                    )
+                    weak_label = _INTERVENTION_LABELS.get(code, (code, ""))[0]
+                    weak = _ssa_score(sum(values) / len(values))
             counts = activity_counts.get(cid) or {}
             trainings = counts.get("trainings", 0)
             visits = counts.get("visits", 0)
@@ -2120,30 +2202,7 @@ class CDAnalyticsService:
         # every per-lead contract lookup below would return nothing after its
         # own handful of queries — a cost that grew with the number of
         # Program Leads (test_the_cost_does_not_grow_with_the_number_of_program_leads).
-        if cd.contract_empty is None:
-            from apps.hr.models import MilestoneAllocation
-
-            pl_staff = set(
-                StaffProfile.objects.filter(
-                    user_id__in=[pl.id for pl in pls], deleted_at__isnull=True
-                ).values_list("id", flat=True)
-            )
-            cd.contract_empty = not (
-                MilestoneAllocation.objects.filter(
-                    status="approved",
-                    milestone__priority__fy=cd.fy,
-                    milestone__active=True,
-                    milestone__definition_status="approved",
-                )
-                .filter(
-                    Q(
-                        allocated_to_type="employee",
-                        employee_id__in=all_staff | pl_staff,
-                    )
-                    | Q(allocated_to_type="team", team_id__in=pl_staff)
-                )
-                .exists()
-            )
+        CDAnalyticsService._resolve_contract_empty(cd, pls=pls, staff_ids=all_staff)
         for pl in CDAnalyticsService._pls():
             cceos = CDAnalyticsService._pl_cceos(pl, cd)
             all_school_ids = set()
