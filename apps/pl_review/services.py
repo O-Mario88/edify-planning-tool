@@ -78,36 +78,256 @@ def _owning_staff_id(activity) -> str | None:
     )
 
 
-def queue(principal) -> list[dict]:
-    """Activities awaiting THIS reviewer's confirmation."""
+def may_review(principal, activity) -> bool:
+    """The review rule as a yes/no, for callers deciding whether to offer it.
+
+    `RolePermissionService.can_review_activity` used to answer this for a
+    Programme Lead from `supervised_staff_ids` alone: one id space, no monitor
+    fallback and no self-check. A completion filed under the CCEO's User id, or
+    a partner activity attributed to its monitor, was therefore refused at the
+    page while the service below would have accepted it — the queue listed the
+    row and its Approve button answered "you do not supervise the owner". Both
+    doors now ask this one function, so they cannot disagree again.
+
+    Status is not part of the answer: whether the work is *waiting* for review
+    is the service's question (`_get_reviewable`), not the permission's.
+    """
+    if activity is None:
+        return False
+    if _is_admin(principal):
+        return True
+    owner = _owning_staff_id(activity)
+    if not owner or owner in _own_ids(principal):
+        return False
+    return owner in _reviewer_staff_ids(principal)
+
+
+def _queue_queryset(principal):
+    """The completions waiting on THIS reviewer, as an unevaluated queryset."""
     from django.db.models import Q
 
+    qs = Activity.objects.filter(deleted_at__isnull=True, status="submitted_to_pl")
+    if _is_admin(principal):
+        return qs
+    reviewable = _reviewer_staff_ids(principal)
+    if not reviewable:
+        return qs.none()
+    mine = _own_ids(principal)
+    # Staff-delivered work is attributed by responsible_staff_id; partner
+    # work by the monitoring staff member. Never surface the reviewer's
+    # own submission, whichever id space it was written in.
+    return qs.filter(
+        Q(responsible_staff_id__in=reviewable)
+        | Q(
+            responsible_staff_id__isnull=True,
+            monitored_by_staff_id__in=reviewable,
+        )
+    ).exclude(
+        Q(responsible_staff_id__in=mine)
+        | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=mine)
+    )
+
+
+def _people(owner_ids) -> tuple[dict[str, str], dict[str, str]]:
+    """Names and StaffProfile ids for people filed under either id space.
+
+    One query. Returns ``(names, profile_of)`` keyed by every id a person's
+    work may carry, so a row filed under a User id and one filed under the
+    StaffProfile id resolve to the same name and the same filter value.
+    """
+    from django.db.models import Q
+
+    from apps.accounts.models import StaffProfile
+
+    ids = {i for i in owner_ids if i}
+    names: dict[str, str] = {}
+    profile_of: dict[str, str] = {}
+    if not ids:
+        return names, profile_of
+    for profile_id, user_id, name in StaffProfile.objects.filter(
+        Q(id__in=ids) | Q(user_id__in=ids)
+    ).values_list("id", "user_id", "user__name"):
+        for key in (profile_id, user_id):
+            if key:
+                names[key] = name or ""
+                profile_of[key] = profile_id
+    return names, profile_of
+
+
+def queue(principal) -> list[dict]:
+    """Activities awaiting THIS reviewer's confirmation.
+
+    Each row carries the cluster's name and the submitter's name as well as
+    the school's, so a To-Do built from it can say "Cluster training at Mukono
+    North from Grace" rather than "Activity at the field". Both come from one
+    join and one name lookup, whatever the queue's length.
+    """
     from apps.activities.services import _serialize
 
-    qs = Activity.objects.filter(deleted_at__isnull=True, status="submitted_to_pl")
-    if not _is_admin(principal):
-        reviewable = _reviewer_staff_ids(principal)
-        if not reviewable:
-            return []
-        mine = _own_ids(principal)
-        # Staff-delivered work is attributed by responsible_staff_id; partner
-        # work by the monitoring staff member. Never surface the reviewer's
-        # own submission, whichever id space it was written in.
-        qs = qs.filter(
-            Q(responsible_staff_id__in=reviewable)
-            | Q(
-                responsible_staff_id__isnull=True,
-                monitored_by_staff_id__in=reviewable,
-            )
-        ).exclude(
-            Q(responsible_staff_id__in=mine)
-            | Q(responsible_staff_id__isnull=True, monitored_by_staff_id__in=mine)
+    activities = list(
+        _queue_queryset(principal)
+        .select_related("school", "cluster")
+        .order_by("-updated_at")
+    )
+    names, _profile_of = _people(_owning_staff_id(a) for a in activities)
+    return [
+        _serialize(a, owner_name=names.get(_owning_staff_id(a) or "", ""))
+        for a in activities
+    ]
+
+
+#: Days a completion may wait before the register reads it as late. The review
+#: carries no service-level agreement of its own; a working week is when a
+#: completion the officer submitted starts holding up Impact Assessment.
+REVIEW_WAIT_ALERT_DAYS = 7
+
+
+def _attendance_label(activity) -> str:
+    """Who the session reached, as the officer recorded it at completion."""
+    parts = []
+    if activity.teachers_attended:
+        parts.append(f"{activity.teachers_attended} teachers")
+    if activity.leaders_attended:
+        parts.append(f"{activity.leaders_attended} leaders")
+    if activity.other_participants:
+        parts.append(f"{activity.other_participants} others")
+    schools = len(activity.attended_school_ids or [])
+    if activity.cluster_id and not activity.school_id and schools:
+        parts.append(f"{schools} school{'s' if schools != 1 else ''}")
+    return " · ".join(parts)
+
+
+def review_register(principal, *, cceo: str = "", today=None) -> dict:
+    """The review queue as the register the Completion Reviews page shows.
+
+    One row per completion waiting on this reviewer, oldest first — the one
+    that has waited longest is the one holding up Impact Assessment. Every
+    column is read in bulk: the activities with their school and cluster in one
+    join, the submitters' names in one lookup, the evidence counts in one
+    grouped query and the submission moments in one more. Nothing is fetched
+    per row, so a lead with forty completions waiting pays what a lead with
+    one does.
+
+    `cceo` narrows to one submitter (a StaffProfile or User id); the options
+    offered are the submitters actually present, so the filter never offers a
+    name that returns nothing.
+    """
+    from django.db.models import Count
+
+    from apps.activities.models import ActivityCompletionVerification
+    from apps.core.interventions import INTERVENTION_LABELS, intervention_abbr
+    from apps.evidence.models import EvidenceRecord
+
+    today = today or timezone.localdate()
+    activities = list(
+        _queue_queryset(principal).select_related(
+            "school", "cluster", "school__district"
         )
-    return [_serialize(a) for a in qs.select_related("school").order_by("-updated_at")]
+    )
+    # Owner options are keyed by the StaffProfile id where there is one, so the
+    # filter value is the same whichever id space a row was filed under.
+    owner_keys = {_owning_staff_id(a) for a in activities} - {None, ""}
+    names, profile_of = _people(owner_keys)
+
+    wanted = (cceo or "").strip()
+    wanted_profile = profile_of.get(wanted, wanted)
+    options = sorted(
+        {
+            (profile_of.get(owner, owner), names.get(owner, "") or "Unnamed officer")
+            for owner in owner_keys
+        },
+        key=lambda pair: pair[1].lower(),
+    )
+    if wanted:
+        activities = [
+            a
+            for a in activities
+            if profile_of.get(_owning_staff_id(a) or "", _owning_staff_id(a))
+            == wanted_profile
+        ]
+
+    ids = [a.id for a in activities]
+    evidence = {
+        row["activity_id"]: row["n"]
+        for row in EvidenceRecord.objects.filter(activity_id__in=ids, quarantined=False)
+        .values("activity_id")
+        .annotate(n=Count("id"))
+    }
+    submitted = dict(
+        ActivityCompletionVerification.objects.filter(activity_id__in=ids).values_list(
+            "activity_id", "updated_at"
+        )
+    )
+
+    rows = []
+    for a in activities:
+        owner = _owning_staff_id(a) or ""
+        # The completion row is written at the moment of submission and not
+        # again until review, so it dates the wait; updated_at is the fallback
+        # for rows submitted before completions carried one.
+        since = submitted.get(a.id) or a.updated_at
+        waited = max((today - timezone.localtime(since).date()).days, 0) if since else 0
+        when = a.actual_delivery_date or a.planned_date
+        if when is None and a.scheduled_date:
+            when = timezone.localtime(a.scheduled_date).date()
+        files = evidence.get(a.id, 0)
+        if a.school_id:
+            where, where_kind = a.school.name, "School"
+        elif a.cluster_id:
+            where, where_kind = a.cluster.name, "Cluster"
+        else:
+            where, where_kind = (a.venue or "", "Venue")
+        rows.append(
+            {
+                "id": a.id,
+                "owner_id": owner,
+                "cceo": names.get(owner, "") or "Unnamed officer",
+                "activity": a.activity_name_snapshot or a.get_activity_type_display(),
+                "where": where,
+                "where_kind": where_kind,
+                "district": (
+                    getattr(a.school.district, "name", "")
+                    if a.school_id and a.school.district_id
+                    else ""
+                ),
+                "date": when,
+                "intervention": intervention_abbr(a.focus_intervention)
+                if a.focus_intervention
+                else "",
+                "intervention_label": INTERVENTION_LABELS.get(
+                    a.focus_intervention or "", ""
+                ),
+                "attendance": _attendance_label(a),
+                "evidence_files": files,
+                "evidence": (
+                    f"{files} file{'s' if files != 1 else ''}" if files else "No files"
+                ),
+                "evidence_tone": "" if files else "warning",
+                "salesforce_id": a.salesforce_activity_id or "",
+                "days_waiting": waited,
+                "wait_tone": "danger" if waited >= REVIEW_WAIT_ALERT_DAYS else "",
+                "delivery_type": a.delivery_type,
+            }
+        )
+    rows.sort(key=lambda row: (-row["days_waiting"], row["cceo"].lower()))
+    return {"rows": rows, "cceo_options": options, "cceo": wanted_profile}
+
+
+def reviewable_activity(activity_id: str, principal) -> Activity:
+    """The one completion, only if it is waiting on this reviewer.
+
+    The drawers read through here so a guessed id answers with the same
+    refusal the decision itself would give.
+    """
+    return _get_reviewable(activity_id, principal)
 
 
 def _get_reviewable(activity_id: str, principal) -> Activity:
-    a = Activity.objects.filter(id=activity_id, deleted_at__isnull=True).first()
+    a = (
+        Activity.objects.filter(id=activity_id, deleted_at__isnull=True)
+        .select_related("school", "cluster")
+        .first()
+    )
     if not a:
         raise NotFoundError("Activity not found.")
     if a.status != "submitted_to_pl":
@@ -191,7 +411,12 @@ def return_activity(activity_id: str, data: dict, principal) -> dict:
     from apps.activities.services import _serialize
 
     a = _get_reviewable(activity_id, principal)
-    reason = (data or {}).get("reason")
+    reason = str((data or {}).get("reason") or "").strip()
+    if not reason:
+        # The officer is told why in the notification below; a return with no
+        # reason arrives as "fix this" with nothing to fix. The form marks the
+        # field required, and this is the rule behind it for every door.
+        raise BadRequest("Say what needs correcting before returning a completion.")
     a.status = "returned_by_pl"
     a.pl_review_note = reason
     a.pl_reviewed_at = timezone.now()

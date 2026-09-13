@@ -2616,6 +2616,377 @@ urlpatterns = [
     path("offboarding", hr_views.offboarding_view, name="offboarding"),
     path("hr-analytics", hr_views.hr_analytics_view, name="hr_analytics"),
     path("hr-audit-log", hr_views.hr_audit_log_view, name="hr_audit_log"),
+    # Program Lead alignment (2026-09-13): each track registers its routes in
+    # its own block.
+    # ── PL alignment · T ──
+    # ── end T ──
+    # ── PL alignment · C1 ──
+    # Coaching (owner, 2026-09-13): the Programme Lead's coaching log and the
+    # officer's acknowledgements, the coaching the Regional Lead shares with a
+    # Programme Lead, and training feedback passed on to the officer who
+    # delivered it. coaching_views is reached through cce_leadership_views
+    # while this file's import list is lead-owned. Literal paths first.
+    path(
+        "team/coaching/new",
+        cce_leadership_views.coaching_views.coaching_new_drawer,
+        name="team_coaching_new_drawer",
+    ),
+    path(
+        "team/coaching/record",
+        cce_leadership_views.coaching_views.coaching_record,
+        name="team_coaching_record",
+    ),
+    path(
+        "team/coaching/<str:record_id>/update",
+        cce_leadership_views.coaching_views.coaching_update,
+        name="team_coaching_update",
+    ),
+    path(
+        "team/coaching/<str:record_id>/share/save",
+        cce_leadership_views.coaching_views.coaching_share,
+        name="team_coaching_share",
+    ),
+    path(
+        "team/coaching/<str:record_id>/share",
+        cce_leadership_views.coaching_views.coaching_share_drawer,
+        name="team_coaching_share_drawer",
+    ),
+    path(
+        "team/coaching/<str:record_id>/follow-up/save",
+        cce_leadership_views.coaching_views.coaching_follow_up,
+        name="team_coaching_follow_up",
+    ),
+    path(
+        "team/coaching/<str:record_id>/follow-up",
+        cce_leadership_views.coaching_views.coaching_follow_up_drawer,
+        name="team_coaching_follow_up_drawer",
+    ),
+    path(
+        "team/coaching/<str:record_id>",
+        cce_leadership_views.coaching_views.coaching_drawer,
+        name="team_coaching_drawer",
+    ),
+    path(
+        "team/coaching",
+        cce_leadership_views.coaching_views.team_coaching_view,
+        name="team_coaching",
+    ),
+    path(
+        "my-coaching/<str:record_id>/acknowledge",
+        cce_leadership_views.coaching_views.my_coaching_acknowledge,
+        name="my_coaching_acknowledge",
+    ),
+    path(
+        "my-coaching/<str:record_id>",
+        cce_leadership_views.coaching_views.my_coaching_drawer,
+        name="my_coaching_drawer",
+    ),
+    path(
+        "my-coaching",
+        cce_leadership_views.coaching_views.my_coaching_view,
+        name="my_coaching",
+    ),
+    path(
+        "cce-leadership/coaching/<str:engagement_id>/acknowledge",
+        cce_leadership_views.regional_coaching_acknowledge,
+        name="cce_regional_coaching_acknowledge",
+    ),
+    path(
+        "cce-leadership/coaching/<str:engagement_id>",
+        cce_leadership_views.regional_coaching_drawer,
+        name="cce_regional_coaching_drawer",
+    ),
+    path(
+        "cce-leadership/coaching",
+        cce_leadership_views.regional_coaching_view,
+        name="cce_regional_coaching",
+    ),
+    path(
+        "cce-leadership/engagements/<str:engagement_id>/share/save",
+        cce_leadership_views.engagement_share,
+        name="cce_engagement_share",
+    ),
+    path(
+        "cce-leadership/engagements/<str:engagement_id>/share",
+        cce_leadership_views.engagement_share_drawer,
+        name="cce_engagement_share_drawer",
+    ),
+    path(
+        "cce-leadership/feedback/<str:engagement_id>/pass",
+        cce_leadership_views.feedback_pass,
+        name="cce_feedback_pass",
+    ),
+    # ── end C1 ──
+    # ── PL alignment · C2 ──
+    # The reviewer agrees submitted priorities, records a recovery-plan
+    # check-in, and returns a team development request with a reason.
+    path(
+        "performance-conversation/<str:review_id>/agree-priorities",
+        hr_views.performance_agree_priorities_view,
+        name="performance_agree_priorities",
+    ),
+    path(
+        "recovery-plans/<str:plan_id>/check-in",
+        hr_programme_views.recovery_check_in,
+        name="recovery_check_in",
+    ),
+    path(
+        "cpd-learning/return",
+        hr_views.pd_supervisor_return_drawer,
+        name="pd_supervisor_return_drawer",
+    ),
+    # ── end C2 ──
+    # ── PL alignment · P1 ──
+    # Programme Rollout (owner, 2026-09-13): the Programme Lead's rollout of
+    # trainings, school self-assessments and spiritual transformation across
+    # the team, and the read-only school lists its figures open. The module is
+    # resolved here rather than in the shared import list above so this block
+    # stays self-contained while the tracks integrate.
+    path(
+        "programme-rollout/schools",
+        __import__(
+            "apps.frontend.views.programme_rollout_views",
+            fromlist=["school_list_drawer"],
+        ).school_list_drawer,
+        name="programme_rollout_schools",
+    ),
+    path(
+        "programme-rollout",
+        __import__(
+            "apps.frontend.views.programme_rollout_views",
+            fromlist=["programme_rollout_view"],
+        ).programme_rollout_view,
+        name="programme_rollout",
+    ),
+    # ── end P1 ──
+    # ── PL alignment · P2 ──
+    # Completion Reviews: the drawer that opens a completion and the one that
+    # returns it with a reason. The two decisions keep their routes above.
+    path(
+        "pl/review-queue/<str:activity_id>/drawer",
+        my_plan_views.pl_review_drawer,
+        name="pl_review_drawer",
+    ),
+    path(
+        "pl/review-queue/<str:activity_id>/return-drawer",
+        my_plan_views.pl_return_drawer,
+        name="pl_return_drawer",
+    ),
+    # ── end P2 ──
+    # ── PL alignment · S1 ──
+    # Team Guidance (owner, 2026-09-13): the guidance a Programme Lead issues
+    # to their officers on the priorities (the fourth tab of the Priorities
+    # page), and the officer's acknowledgement from their own Priorities page.
+    # The module is resolved here rather than in the shared import list above
+    # so this block stays self-contained while the tracks integrate. Literal
+    # paths first.
+    path(
+        "priorities/guidance/new",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_new_drawer"],
+        ).guidance_new_drawer,
+        name="team_guidance_new_drawer",
+    ),
+    path(
+        "priorities/guidance/record",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_record"],
+        ).guidance_record,
+        name="team_guidance_record",
+    ),
+    path(
+        "priorities/guidance/inbox",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_inbox_panel"],
+        ).guidance_inbox_panel,
+        name="team_guidance_inbox",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/edit",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_edit_drawer"],
+        ).guidance_edit_drawer,
+        name="team_guidance_edit_drawer",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/update",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_update"],
+        ).guidance_update,
+        name="team_guidance_update",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/issue/save",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_issue"],
+        ).guidance_issue,
+        name="team_guidance_issue",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/issue",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_issue_drawer"],
+        ).guidance_issue_drawer,
+        name="team_guidance_issue_drawer",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/review/save",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_review"],
+        ).guidance_review,
+        name="team_guidance_review",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/review",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_review_drawer"],
+        ).guidance_review_drawer,
+        name="team_guidance_review_drawer",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/withdraw/save",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_withdraw"],
+        ).guidance_withdraw,
+        name="team_guidance_withdraw",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/withdraw",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_withdraw_drawer"],
+        ).guidance_withdraw_drawer,
+        name="team_guidance_withdraw_drawer",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/acknowledge/save",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_acknowledge"],
+        ).guidance_acknowledge,
+        name="team_guidance_acknowledge",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>/acknowledge",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_acknowledge_drawer"],
+        ).guidance_acknowledge_drawer,
+        name="team_guidance_acknowledge_drawer",
+    ),
+    path(
+        "priorities/guidance/<str:guidance_id>",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["guidance_drawer"],
+        ).guidance_drawer,
+        name="team_guidance_drawer",
+    ),
+    path(
+        "priorities/guidance",
+        __import__(
+            "apps.frontend.views.team_guidance_views",
+            fromlist=["team_guidance_view"],
+        ).team_guidance_view,
+        name="team_guidance",
+    ),
+    # ── end S1 ──
+    # ── PL alignment · S2 ──
+    # The partner engagement log (owner, 2026-09-13): record, change, follow up
+    # and share a Programme Lead's or Country Director's engagement with a
+    # training partner. The module is resolved here rather than in the shared
+    # import list above (lead-owned) so this block stays self-contained.
+    # Literal paths first.
+    path(
+        "partner-engagements/new",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_new_drawer"],
+        ).engagement_new_drawer,
+        name="partner_engagement_new_drawer",
+    ),
+    path(
+        "partner-engagements/record",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_record"],
+        ).engagement_record,
+        name="partner_engagement_record",
+    ),
+    path(
+        "partner-engagements/<str:engagement_id>/update",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_update"],
+        ).engagement_update,
+        name="partner_engagement_update",
+    ),
+    path(
+        "partner-engagements/<str:engagement_id>/follow-up/save",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_follow_up"],
+        ).engagement_follow_up,
+        name="partner_engagement_follow_up",
+    ),
+    path(
+        "partner-engagements/<str:engagement_id>/follow-up",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_follow_up_drawer"],
+        ).engagement_follow_up_drawer,
+        name="partner_engagement_follow_up_drawer",
+    ),
+    path(
+        "partner-engagements/<str:engagement_id>/share/save",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_share"],
+        ).engagement_share,
+        name="partner_engagement_share",
+    ),
+    path(
+        "partner-engagements/<str:engagement_id>/share",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_share_drawer"],
+        ).engagement_share_drawer,
+        name="partner_engagement_share_drawer",
+    ),
+    path(
+        "partner-engagements/<str:engagement_id>",
+        __import__(
+            "apps.frontend.views.partner_engagement_views",
+            fromlist=["engagement_drawer"],
+        ).engagement_drawer,
+        name="partner_engagement_drawer",
+    ),
+    # ── end S2 ──
+    # ── PL alignment · D ──
+    # ── end D ──
+    # IA review (2026-09-13): each track registers its routes in its own block.
+    # ── IA review · IA-N ──
+    # ── end IA-N ──
+    # ── IA review · IA-F ──
+    # ── end IA-F ──
+    # ── IA review · IA-C ──
+    # ── end IA-C ──
+    # ── IA review · IA-P ──
+    # ── end IA-P ──
+    # ── IA review · IA-L ──
+    # ── end IA-L ──
+    # ── IA review · IA-R ──
+    # ── end IA-R ──
     # Render sign-in directly. A former launch screen added a client-side timer
     # and two extra assets before the first useful interaction.
     path("", auth_views.login_view, name="index"),

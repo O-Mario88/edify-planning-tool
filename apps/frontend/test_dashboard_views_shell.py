@@ -238,9 +238,12 @@ class DashboardViewRenderTest(TestCase):
         self.assertNotIn("subregionMap()", html)
         self.assertIn("Country Program Leads Performance", html)
         self.assertIn("data-cd-verification", html)
+        # The Program Lead's "operations" is an alias of Team since the
+        # dashboard followed the role's responsibilities (2026-09-13).
         html = self._get(self.pl, "/dashboard?view=operations").content.decode()
         self.assertNotIn("subregionMap()", html)
-        self.assertIn("CCEO Performance", html)
+        self.assertIn('data-pl-view="team"', html)
+        self.assertIn("Your officers", html)
         html = self._get(self.rvp, "/dashboard?view=operations").content.decode()
         self.assertNotIn("subregionMap()", html)
         self.assertIn("Country Directors Performance", html)
@@ -314,8 +317,11 @@ class DashboardViewRenderTest(TestCase):
     def test_the_filter_forms_carry_the_view(self):
         html = self._get(self.cd, "/dashboard?view=operations").content.decode()
         self.assertIn('name="view" value="operations"', html)
+        html = self._get(self.pl, "/dashboard?view=coaching").content.decode()
+        self.assertIn('name="view" value="coaching"', html)
+        # A retired view name is carried under the name of its heir.
         html = self._get(self.pl, "/dashboard?view=operations").content.decode()
-        self.assertIn('name="view" value="operations"', html)
+        self.assertIn('name="view" value="team"', html)
         html = self._get(self.rvp, "/dashboard?view=operations").content.decode()
         self.assertIn('name="view" value="operations"', html)
 

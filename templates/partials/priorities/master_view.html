@@ -18,7 +18,7 @@ styled only the view you happened to enter from.{% endcomment %}
       <p class="edify-page-eyebrow">Strategy</p>
       <h1 class="edify-page-title edify-page-header__title">Uganda Priorities</h1>
       <p class="edify-page-header__description">
-        {% if is_scoped_viewer %}The country plan with <strong>your</strong> approved share of every target — the number in the last column is yours, not the country total.{% else %}The Uganda Master Priority Plan, exactly as sourced — priorities, milestones, activities and Uganda's targets · FY {{ fy }}.{% endif %}
+        {% if is_team_lead_viewer %}The country plan with the target your team <strong>received</strong> from Impact Assessment and <strong>your own share</strong> of it once you distribute it within the team — neither is the country total.{% elif is_scoped_viewer %}The country plan with <strong>your</strong> approved share of every target — the number in the last column is yours, not the country total.{% else %}The Uganda Master Priority Plan, exactly as sourced — priorities, milestones, activities and Uganda's targets · FY {{ fy }}.{% endif %}
       </p>
     </div>
   </div>
@@ -48,7 +48,12 @@ styled only the view you happened to enter from.{% endcomment %}
             <th class="px-4 py-3 w-[160px]">Priorities</th>
             <th class="px-4 py-3 min-w-[320px]">Milestones</th>
             <th class="px-4 py-3 min-w-[220px]">Activities</th>
+            {% if is_team_lead_viewer %}
+            <th class="px-4 py-3 whitespace-nowrap" title="The target Impact Assessment allocated to your team">Team received</th>
+            <th class="px-4 py-3 whitespace-nowrap" title="Your own share after distributing the team target">My share</th>
+            {% else %}
             <th class="px-4 py-3 whitespace-nowrap">{% if is_scoped_viewer %}My Target{% else %}Uganda's Targets{% endif %}</th>
+            {% endif %}
             <th class="px-4 py-3 whitespace-nowrap min-w-[160px]" title="Completed against target, from the plan">Progress</th>
           </tr>
         </thead>
@@ -79,6 +84,24 @@ styled only the view you happened to enter from.{% endcomment %}
             <td class="px-4 py-3.5 text-slate-600">
               {% if row.activities %}{{ row.activities|join:", " }}{% else %}<span class="text-slate-300">—</span>{% endif %}
             </td>
+            {% if is_team_lead_viewer %}
+            <td class="px-4 py-3.5 tabular-nums whitespace-nowrap" data-team-received>
+              {% if row.team_value %}
+              <span class="font-bold text-slate-800">{{ row.team_value }}{% if row.is_percent %}%{% endif %}</span>
+              {% if row.team_is_draft %}<span class="ml-1 edify-text-caption font-bold text-amber-600">draft</span>{% endif %}
+              {% else %}
+              <span class="text-slate-300" title="No team target allocated to you for this milestone">—</span>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3.5 tabular-nums whitespace-nowrap" data-my-share>
+              {% if row.share_value %}
+              <span class="font-bold text-slate-800">{{ row.share_value }}{% if row.is_percent %}%{% endif %}</span>
+              {% if row.share_is_draft %}<span class="ml-1 edify-text-caption font-bold text-amber-600">draft</span>{% endif %}
+              {% else %}
+              <span class="text-slate-300" title="You have not kept a share of this target">—</span>
+              {% endif %}
+            </td>
+            {% else %}
             <td class="px-4 py-3.5 tabular-nums whitespace-nowrap">
               {% if is_scoped_viewer %}
                 {% if row.my_value %}
@@ -91,6 +114,7 @@ styled only the view you happened to enter from.{% endcomment %}
               <span class="font-bold text-slate-800">{{ row.target_display }}</span>
               {% endif %}
             </td>
+            {% endif %}
             <td class="px-4 py-3.5">{% with plan=plan_progress|get_item:row.milestone.id %}{% include "components/meter.html" with progress=plan %}{% endwith %}</td>
           </tr>
           {% endfor %}
@@ -99,6 +123,6 @@ styled only the view you happened to enter from.{% endcomment %}
       </table>
     </div>
   </div>
-  <p class="edify-text-caption font-medium text-slate-500">{{ total_rows }} milestones across {{ groups|length }} priority groups · source text shown exactly as approved{% if is_scoped_viewer %} · your figures come from your approved allocations{% endif %}.</p>
+  <p class="edify-text-caption font-medium text-slate-500">{{ total_rows }} milestones across {{ groups|length }} priority groups · source text shown exactly as approved{% if is_team_lead_viewer %} · team and share figures come from your allocations; distribute the team target on the My Team tab{% elif is_scoped_viewer %} · your figures come from your approved allocations{% endif %}.</p>
   {% endif %}
 </div>

@@ -1,0 +1,261 @@
+{% load table_pagination frontend_filters %}
+{% comment %}
+Spiritual transformation (Programme Rollout, owner 2026-09-13): Christlike
+Behaviour and Exposure to the Word of God — the team's averages against the
+previous confirmed cycle (the PL analytics figures), per officer; the schools
+where either is among the three weakest interventions and whether a response
+is planned this year; the Christian Transformation, CC-SEL and camp programmes
+delivered by officers and partners; and the Regional Lead's Biblical-integration
+ratings. A plan control appears only on the lead's own schools: a supervised
+school is its officer's to plan. Figures:
+apps.analytics.programme_rollout_service.spiritual_rollout.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-spiritual-scores-title" data-rollout-spiritual-scores>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-spiritual-scores-title" class="rpl-card__title">Christlike Behaviour and the Word of God</h2>
+      <span class="rpl-card__subtitle">{% if rollout.summary.latest_fy %}Latest confirmed cycle FY {{ rollout.summary.latest_fy }}{% if rollout.summary.prev_fy %} against FY {{ rollout.summary.prev_fy }}{% endif %}{% else %}No confirmed SSA cycle yet{% endif %}</span>
+    </div>
+    <a class="rpl-card__link" href="/ssa?fy={{ fy }}">SSA performance <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-impact rpl-impact--four">
+    {% for score in rollout.scores %}
+    <div class="rpl-impact__figure" data-spiritual-score="{{ score.code }}">
+      <span class="rpl-impact__label" title="{{ score.name }}">{{ score.abbr }} · {{ score.name }}</span>
+      <strong class="rpl-impact__value">{% if score.score is not None %}{{ score.score|floatformat:1 }}<span class="rpl-impact__unit"> / 10</span>{% else %}No data{% endif %}</strong>
+      <span class="rpl-impact__meta">{% if score.delta is not None %}<span data-tone="{% if score.delta > 0 %}success{% elif score.delta < 0 %}danger{% else %}neutral{% endif %}">{% if score.delta > 0 %}+{% endif %}{{ score.delta|floatformat:1 }}</span> vs FY {{ rollout.summary.prev_fy }} · {{ score.band }}{% elif score.score is not None %}{{ score.band }} · no earlier cycle{% else %}No confirmed assessment{% endif %}</span>
+    </div>
+    {% endfor %}
+    <div class="rpl-impact__figure"{% if rollout.summary.weak_without_plan %} data-tone="warning"{% endif %}>
+      <span class="rpl-impact__label">Weak schools without a plan</span>
+      <strong class="rpl-impact__value">{{ rollout.summary.weak_without_plan|intcomma }}<span class="rpl-impact__unit"> of {{ rollout.summary.weak_schools|intcomma }}</span></strong>
+      <span class="rpl-impact__meta">Spiritual pair among the three weakest</span>
+    </div>
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Biblical integration</span>
+      <strong class="rpl-impact__value">{% if rollout.summary.spiritual_biblical is not None %}{{ rollout.summary.spiritual_biblical }}<span class="rpl-impact__unit"> / 4</span>{% else %}No data{% endif %}</strong>
+      <span class="rpl-impact__meta">Regional Lead, on {{ rollout.summary.spiritual_observed }} spiritual programme{{ rollout.summary.spiritual_observed|pluralize }}</span>
+    </div>
+  </div>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Spiritual scores by officer; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each officer's portfolio average for Christlike Behaviour and Exposure to the Word of God on the latest confirmed cycle, the change from the previous cycle, and the schools weak in either with and without a plan.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Officer</th>
+          <th scope="col" class="is-num">Schools</th>
+          {% for score in rollout.scores %}
+          <th scope="col" class="is-num" title="{{ score.name }}">{{ score.abbr }}</th>
+          <th scope="col" class="is-num" title="Change in {{ score.name }} from the previous cycle">{{ score.abbr }} change</th>
+          {% endfor %}
+          <th scope="col" class="is-num">Weak schools</th>
+          <th scope="col" class="is-num">Without a plan</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rollout.officers|slice:":60" %}
+        <tr>
+          <th scope="row" data-record-title><span>{% if row.profile_url %}<a href="{{ row.profile_url }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</span></th>
+          <td class="is-num" data-label="Schools">{{ row.portfolio|intcomma }}</td>
+          {% for score in row.scores %}
+          <td class="is-num" data-label="{{ score.abbr }}" title="{{ score.name }}">{% if score.score is not None %}<span data-tone="{{ score.tone }}">{{ score.score|floatformat:1 }}</span>{% else %}<span class="rpl-muted">No SSA</span>{% endif %}</td>
+          <td class="is-num" data-label="{{ score.abbr }} change">{% if score.delta is not None %}{% if score.delta > 0 %}+{% endif %}{{ score.delta|floatformat:1 }}{% else %}—{% endif %}</td>
+          {% endfor %}
+          <td class="is-num" data-label="Weak schools">{{ row.weak_schools|intcomma }}</td>
+          <td class="is-num" data-label="Without a plan">{% if row.weak_without_plan %}<span data-tone="danger">{{ row.weak_without_plan|intcomma }}</span>{% else %}0{% endif %}</td>
+          <td class="is-end" data-record-action data-label="Actions"><a href="{{ row.oversight_url }}" class="rpl-row-link rounded-control">Oversight</a></td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="9">
+            {% include "components/empty_state.html" with message="No officers or portfolio schools on this team yet." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% paginate rollout.weak_schools "weak_page" 10 as weak_pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-weak-title" data-rollout-weak-schools>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-weak-title" class="rpl-card__title">Schools weakest in {{ rollout.summary.pair }}</h2>
+      <span class="rpl-card__subtitle">One of the pair among the school's three weakest interventions, schools without a planned response first · {{ weak_pager.total|intcomma }} school{{ weak_pager.total|pluralize }}</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Schools weakest in the spiritual interventions; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Portfolio schools where Christlike Behaviour or Exposure to the Word of God is among the three weakest interventions on the latest confirmed SSA, with the officer, the scores and any activity planned this year that targets them.</caption>
+      <thead>
+        <tr>
+          <th scope="col">School</th>
+          <th scope="col">Officer</th>
+          <th scope="col">Cluster</th>
+          <th scope="col">Weak areas</th>
+          <th scope="col">Planned response</th>
+          <th scope="col">State</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in weak_pager.rows %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.name }}</span></th>
+          <td data-label="Officer">{{ row.officer|default:"—" }}</td>
+          <td data-label="Cluster">{{ row.cluster|default:"Not in a cluster" }}</td>
+          <td data-label="Weak areas">{% for w in row.weak %}<span data-tone="{{ w.tone }}" title="{{ w.name }}">{{ w.abbr }} {{ w.score|floatformat:1 }}</span>{% if not forloop.last %} · {% endif %}{% endfor %}</td>
+          <td data-label="Planned response">{{ row.responses }}</td>
+          <td data-label="State"><span data-tone="{{ row.tone }}">{{ row.state }}</span></td>
+          <td class="is-end" data-record-action data-label="Actions">
+            <a href="{{ row.school_url }}" class="rpl-row-link rounded-control">School</a>
+            {% if row.plan_url %}<a href="{{ row.school_url }}" hx-get="{{ row.plan_url }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Plan</a>{% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="7">
+            {% include "components/empty_state.html" with message="No portfolio school has the spiritual pair among its three weakest interventions." hint="Schools appear here from their latest confirmed SSA." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=weak_pager param="weak_page" %}
+  <div class="rpl-card__footnote">A response is any activity this year at the school, or at its cluster, whose focus or secondary interventions include the weak area. Plan is offered on your own schools only; an officer plans their own.</div>
+</section>
+
+<div class="rpl-columns">
+  <div class="rpl-columns__main">
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-programmes-title" data-rollout-spiritual-programmes>
+      <header class="rpl-card__header">
+        <div class="rpl-card__heading">
+          <h2 id="rollout-programmes-title" class="rpl-card__title">Spiritual programmes</h2>
+          <span class="rpl-card__subtitle">Christian Transformation courses, CC-SEL and camps · FY {{ fy }}</span>
+        </div>
+      </header>
+      <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Spiritual programmes; scroll sideways for more columns">
+        <table class="rpl-table" data-mobile-table="scroll">
+          <caption class="sr-only">Each spiritual transformation programme the team planned this year: planned, delivered, still to deliver, staff and partner delivery, and schools reached.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Programme</th>
+              <th scope="col">Family</th>
+              <th scope="col" class="is-num">Planned</th>
+              <th scope="col" class="is-num">Delivered</th>
+              <th scope="col" class="is-num">Still to deliver</th>
+              <th scope="col" class="is-num">Staff · partner</th>
+              <th scope="col" class="is-num">Schools reached</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rollout.programmes|slice:":40" %}
+            <tr>
+              <th scope="row" data-record-title><span>{{ row.name }}</span></th>
+              <td data-label="Family">{{ row.family }}</td>
+              <td class="is-num" data-label="Planned">{{ row.planned }}</td>
+              <td class="is-num" data-label="Delivered">{{ row.delivered }}</td>
+              <td class="is-num" data-label="Still to deliver">{{ row.to_deliver }}</td>
+              <td class="is-num" data-label="Staff · partner">{{ row.by_staff }} · {{ row.by_partner }}</td>
+              <td class="is-num" data-label="Schools reached">{{ row.schools_reached|intcomma }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td class="rpl-table__empty" colspan="7">
+                {% include "components/empty_state.html" with message="No Christian Transformation, CC-SEL or camp programme is planned by the team this year." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+  <div class="rpl-columns__side">
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-deliverers-title" data-rollout-spiritual-deliverers>
+      <header class="rpl-card__header">
+        <div class="rpl-card__heading">
+          <h2 id="rollout-deliverers-title" class="rpl-card__title">Delivered by officers and partners</h2>
+          <span class="rpl-card__subtitle">Delivered sessions by programme family</span>
+        </div>
+      </header>
+      <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Spiritual programmes by deliverer; scroll sideways for more columns">
+        <table class="rpl-table" data-mobile-table="scroll">
+          <caption class="sr-only">Spiritual programme sessions delivered this year by each officer and training partner, by programme family, with sessions still to deliver.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Delivered by</th>
+              {% for family in rollout.families %}<th scope="col" class="is-num">{{ family.name }}</th>{% endfor %}
+              <th scope="col" class="is-num">Still to deliver</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rollout.deliverers|slice:":40" %}
+            <tr>
+              <th scope="row" data-record-title title="{{ row.kind }}"><span>{{ row.name }}</span></th>
+              <td class="is-num" data-label="Christian Transformation">{{ row.christian_transformation }}</td>
+              <td class="is-num" data-label="CC-SEL">{{ row.cc_sel }}</td>
+              <td class="is-num" data-label="Camps">{{ row.camp }}</td>
+              <td class="is-num" data-label="Still to deliver">{{ row.to_deliver }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td class="rpl-table__empty" colspan="5">
+                {% include "components/empty_state.html" with message="Nothing delivered or scheduled yet." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+{% paginate rollout.observations "biblical_page" 10 as biblical_pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-biblical-title" data-rollout-biblical>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-biblical-title" class="rpl-card__title">Biblical integration ratings</h2>
+      <span class="rpl-card__subtitle">The Regional Lead's shared observations of the team's trainings{% if rollout.summary.biblical is not None %} · average {{ rollout.summary.biblical }} of 4 across {{ rollout.summary.observed }}{% endif %}</span>
+    </div>
+    <a class="rpl-card__link" href="/cce-leadership/feedback">Training feedback <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Biblical integration ratings; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each training the Regional Lead observed this year: who delivered it, when, its Biblical integration rating out of 4, the recommendation and whether it has been answered.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Training</th>
+          <th scope="col">Delivered by</th>
+          <th scope="col">Observed</th>
+          <th scope="col">Biblical integration</th>
+          <th scope="col">Recommendation</th>
+          <th scope="col">State</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in biblical_pager.rows %}
+        <tr{% if row.is_spiritual %} data-spiritual-programme{% endif %}>
+          <th scope="row" data-record-title><span>{{ row.training }}</span></th>
+          <td data-label="Delivered by">{{ row.delivered_by }}</td>
+          <td data-label="Observed">{{ row.held_on|date:"j M Y" }}</td>
+          <td data-label="Biblical integration">{% if row.biblical %}<span data-tone="{{ row.biblical_tone }}">{{ row.biblical_label }}</span>{% else %}<span class="rpl-muted">Not rated</span>{% endif %}</td>
+          <td data-label="Recommendation">{{ row.recommendation|default:"—" }}</td>
+          <td data-label="State">{{ row.state }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="6">
+            {% include "components/empty_state.html" with message="No observation has been shared with you this year." hint="Biblical integration is the first criterion the Regional Lead rates on every training observed." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=biblical_pager param="biblical_page" %}
+</section>

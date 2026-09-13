@@ -15,13 +15,16 @@
     <div class="edify-page-header__controls">
       {% if can_assign %}
       <button type="button"
-              hx-get="/extra-work/assign-drawer" hx-target="#drawer-container" hx-swap="innerHTML"
+              hx-get="/extra-work/assign-drawer?fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
               class="inline-flex h-8 items-center rounded-control edify-primary-solid edify-primary-hover px-3.5 text-[12px] font-bold text-white transition-colors">
         Assign Extra Work
       </button>
       {% endif %}
     </div>
   </div>
+
+  {% comment %}Actions Sent and Extra Work are one Team Assignments strip for a Programme Lead (2026-09-13).{% endcomment %}
+  {% include "partials/_section_nav.html" %}
 
   {% if not summary.policy_approved and summary.verified %}
   <div class="rounded-surface border border-amber-200 bg-amber-50 px-4 py-3 text-[13px] font-semibold text-amber-800">

@@ -1,4 +1,12 @@
-"""Flags service — CD→PL flag handoff (CD raises; assigned PL acts)."""
+"""Flags service — CD→PL flag handoff (CD raises; assigned PL acts).
+
+The loop closes both ways (Program Lead alignment, owner 2026-09-13: the PL
+"partners with … country directors to align goals"). The Country Director
+raises a flag to a Programme Lead in their own country; the PL acknowledges it
+and later resolves it with a note saying what was done; each step tells the
+Country Director, and each step closes the notice it answers, so neither side
+carries a stale "Respond to Flag" row once the other has acted.
+"""
 
 from __future__ import annotations
 
@@ -9,7 +17,13 @@ from apps.audit.services import log as audit_log
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.rbac import EdifyRole
 
-from .models import CdFlag
+from .models import CdFlag, CdFlagStatus
+
+# The conditions this channel announces, named so the transition that answers
+# one can close it (apps.notifications.services.resolve_condition).
+FLAG_RAISED = "cd_flag_raised"
+FLAG_ACKNOWLEDGED = "cd_flag_acknowledged"
+FLAG_RESOLVED = "cd_flag_resolved"
 
 
 def raise_flag(data: dict, principal) -> dict:
@@ -22,6 +36,11 @@ def raise_flag(data: dict, principal) -> dict:
     assigned_to = data.get("assignedToUserId")
     if not assigned_to:
         raise BadRequest("assignedToUserId is required.")
+    # The picker only offers the Programme Leads in the director's country;
+    # the same rule is enforced here, so a hand-edited form cannot hand a flag
+    # to a Programme Lead in another country (or to someone who is not one).
+    if str(assigned_to) not in {row["id"] for row in program_leads(principal)}:
+        raise BadRequest("Choose a Programme Lead in your country.")
     flag = CdFlag.objects.create(
         raised_by_user_id=principal.user_id,
         raised_by_name=principal.name,
@@ -41,7 +60,7 @@ def raise_flag(data: dict, principal) -> dict:
         from apps.notifications.services import WorkflowNotificationService
 
         WorkflowNotificationService.trigger(
-            event_type="cd_flag_raised",
+            event_type=FLAG_RAISED,
             category="leadership",
             priority="high" if flag.priority == "high" else "normal",
             title="Flag from the Country Director",
@@ -64,13 +83,26 @@ def program_leads(principal) -> list[dict]:
     it previously returned every Program Lead's name and email to any caller
     holding analytics.view — a staff directory by side door. Email is dropped
     entirely; assignment needs an id and a name, nothing more.
+
+    A Country Director assigns within their own country (the country on their
+    staff profile, the platform's country boundary — apps.core.scoping
+    person_country_q). The picker listed every Programme Lead in the
+    deployment, so a second country's leads were one click away. Admin, and a
+    director with no country on file, keep the deployment-wide list.
     """
     role = getattr(principal, "active_role", "")
     if role not in (EdifyRole.COUNTRY_DIRECTOR.value, EdifyRole.ADMIN.value):
         raise Forbidden("Only the Country Director assigns flags to a Program Lead.")
-    users = User.objects.filter(deleted_at__isnull=True, status="active")
-    pls = [u for u in users if EdifyRole.COUNTRY_PROGRAM_LEAD.value in (u.roles or [])]
-    return [{"id": u.id, "name": u.name} for u in pls]
+    from apps.core.scoping import person_country_q, resolve_user_scope
+
+    users = User.objects.filter(
+        deleted_at__isnull=True,
+        status="active",
+        roles__contains=[EdifyRole.COUNTRY_PROGRAM_LEAD.value],
+    )
+    if role == EdifyRole.COUNTRY_DIRECTOR.value:
+        users = users.filter(person_country_q(resolve_user_scope(principal), "id"))
+    return [{"id": u.id, "name": u.name} for u in users.order_by("name")]
 
 
 # Roles allowed to read the whole flag board rather than just their own rows.
@@ -118,6 +150,13 @@ def list_flags(query: dict, principal) -> list[dict]:
 
 
 def update_flag(flag_id: str, data: dict, principal) -> dict:
+    """The assigned Programme Lead acknowledges or resolves a flag.
+
+    Resolving requires a note — the Country Director raised the flag to get
+    something done, and a flag closed with no word on what was done teaches
+    them to stop raising flags. Both steps notify the raiser and close the
+    notice the step answers.
+    """
     # Re-derive from the readable set: taking the id straight from the request
     # would let a caller act on a flag they can't see.
     flag = flags_visible_to(principal).filter(id=flag_id).first()
@@ -128,11 +167,22 @@ def update_flag(flag_id: str, data: dict, principal) -> dict:
     if not (is_assignee or role == EdifyRole.ADMIN.value):
         raise Forbidden("Only the assigned Program Lead may act on this flag.")
     action = data.get("action", "acknowledge")
-    note = data.get("note")
+    if action not in ("acknowledge", "resolve"):
+        raise BadRequest("Unknown flag action.")
+    if flag.status == CdFlagStatus.RESOLVED:
+        raise BadRequest("This flag is already resolved.")
+    note = (data.get("note") or "").strip()
     if action == "acknowledge":
-        flag.status = "acknowledged"
-    elif action == "resolve":
-        flag.status = "resolved"
+        if flag.status != CdFlagStatus.OPEN:
+            raise BadRequest("This flag has already been acknowledged.")
+        flag.status = CdFlagStatus.ACKNOWLEDGED
+    else:
+        if not note:
+            raise BadRequest(
+                "Add a resolution note saying what was done — the Country "
+                "Director reads it."
+            )
+        flag.status = CdFlagStatus.RESOLVED
         flag.resolved_at = timezone.now()
         flag.resolution_note = note
     if note and not flag.resolution_note:
@@ -146,7 +196,52 @@ def update_flag(flag_id: str, data: dict, principal) -> dict:
         actor_role=role,
         payload={"status": flag.status},
     )
+    _close_the_loop(flag, action, principal, note)
     return _serialize(flag)
+
+
+def _close_the_loop(flag: CdFlag, action: str, principal, note: str) -> None:
+    """Tell the raising Country Director, and close what this step answers.
+
+    Acknowledging answers the Programme Lead's "Respond to Flag" notice;
+    resolving answers it too (a flag can be resolved straight from open) and
+    also the director's "acknowledged" notice, which was waiting for this.
+    Never fails the flag over a notice.
+    """
+    try:
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            resolve_condition,
+        )
+
+        answered = [FLAG_RAISED]
+        if action == "resolve":
+            answered.append(FLAG_ACKNOWLEDGED)
+        resolve_condition(answered, "CdFlag", flag.id)
+        if not flag.raised_by_user_id:
+            return
+        actor = getattr(principal, "name", None) or "The Programme Lead"
+        about = flag.scope_name or flag.category or "your flag"
+        if action == "acknowledge":
+            title = f"{actor} acknowledged your flag"
+            body = f"{about}: {flag.note or ''}"
+            event = FLAG_ACKNOWLEDGED
+        else:
+            title = f"{actor} resolved your flag"
+            body = f"{about}: {note}"
+            event = FLAG_RESOLVED
+        WorkflowNotificationService.trigger(
+            event_type=event,
+            category="leadership",
+            priority="normal",
+            title=title,
+            body=body[:500],
+            context_type="CdFlag",
+            context_id=flag.id,
+            recipients=[flag.raised_by_user_id],
+        )
+    except Exception:  # noqa: BLE001 - never fail the flag over a notice
+        pass
 
 
 def _serialize(f: CdFlag) -> dict:

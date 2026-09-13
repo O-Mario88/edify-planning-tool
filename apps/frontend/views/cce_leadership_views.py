@@ -1,11 +1,16 @@
 """Screens for the CCE Regional Lead's own records (owner, 2026-09-13).
 
 The engagement log (coaching conversations, meetings, visits and training
-observations), the training feedback a Programme Lead acknowledges, and the
+observations), the training feedback a Programme Lead acknowledges, the
+coaching conversations the Regional Lead shares with a Programme Lead, and the
 monthly report the RVP reviews. Rules, permissions and audit rows live in
 apps.cce_leadership.services; these views render and route, so a refusal the
 service raises is the message the reader sees. Drawers reuse the one-column
 form drawer the HR programme actions introduced (partials/hr/form_drawer.html).
+
+Training Feedback and Regional Lead Coaching are the Programme Lead's two
+sections of the "Regional Lead" workspace (apps.core.navigation
+REGIONAL_LEAD_SECTIONS); the shared template includes the section strip.
 """
 
 from __future__ import annotations
@@ -13,11 +18,12 @@ from __future__ import annotations
 from datetime import date, timedelta
 
 from django.contrib import messages
-from django.shortcuts import render
+from django.db import transaction
+from django.shortcuts import redirect, render
 from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
-from apps.cce_leadership import services
+from apps.cce_leadership import coaching, services
 from apps.cce_leadership.models import (
     OBSERVATION_CRITERIA,
     RATING_SCALE,
@@ -31,18 +37,18 @@ from apps.core.fy import (
     get_quarter_for_date,
     get_operational_fy,
 )
+from apps.core.exceptions import BadRequest
 from apps.core.metrics import render_precomputed_metric_for_source
 from apps.core.permissions import require_page_permission
 from apps.frontend.views.hr_programme_views import (
     SERVICE_ERRORS,
-    _back,
     _drawer,
     _field,
-    _refused,
 )
 
 ENGAGEMENTS_URL = "/cce-leadership/engagements"
 FEEDBACK_URL = "/cce-leadership/feedback"
+COACHING_URL = "/cce-leadership/coaching"
 REPORTS_URL = "/cce-leadership/reports"
 
 KIND_LABELS = dict(EngagementKind.choices)
@@ -100,6 +106,7 @@ def _render(
     notice=None,
     filters=None,
     rhythm=None,
+    autoload_drawer="",
 ):
     return render(
         request,
@@ -118,8 +125,31 @@ def _render(
             "notice": notice,
             "filters": filters,
             "rhythm": rhythm,
+            "autoload_drawer": autoload_drawer,
         },
     )
+
+
+def _back(request, fallback: str):
+    """Back to the register the drawer was opened from, never off-site, and
+    without the ?open= that opened the drawer (or it would open again)."""
+    from apps.frontend.views.coaching_views import safe_return_url
+
+    return redirect(safe_return_url(request, fallback, drop=("open",)))
+
+
+def _refused(request, exc, fallback):
+    messages.error(request, str(getattr(exc, "detail", exc)))
+    return _back(request, fallback)
+
+
+def _autoload(request, queryset, base: str) -> str:
+    """The record drawer a To-Do or notification link (?open=<id>) asks for,
+    when the record is one the reader may open."""
+    target = (request.GET.get("open") or "").strip()
+    if target and queryset.filter(id=target).exists():
+        return f"{base}/{target}"
+    return ""
 
 
 def _lead_names(reach) -> dict[str, str]:
@@ -134,13 +164,24 @@ def _author_names(author_ids) -> dict[str, str]:
 
 # ── Engagement log ───────────────────────────────────────────────────────────
 def _feedback_state(engagement) -> tuple[str, str]:
-    if not engagement.is_observation:
+    """Where a shareable engagement stands with the Programme Lead: the
+    feedback on an observation, or the notes of a coaching conversation."""
+    if engagement.kind not in services.SHAREABLE_KINDS:
         return "", ""
     if engagement.acknowledged_at:
         return "Acknowledged", "success"
     if engagement.feedback_shared_at:
         return "Awaiting the Programme Lead", "warning"
     return "Not shared yet", "neutral"
+
+
+def _can_share(request, engagement) -> bool:
+    return (
+        _is_lead(request)
+        and engagement.author_id == services._uid(request.user)
+        and engagement.kind in services.SHAREABLE_KINDS
+        and not engagement.feedback_shared_at
+    )
 
 
 @require_page_permission("cce_engagements")
@@ -165,6 +206,14 @@ def engagements_view(request):
             for staff_id in engagement.program_lead_ids
         )
         state, tone = _feedback_state(engagement)
+        actions = [{"label": "Open", "drawer": f"{ENGAGEMENTS_URL}/{engagement.id}"}]
+        if _can_share(request, engagement) and engagement.program_lead_ids:
+            actions.append(
+                {
+                    "label": "Share",
+                    "drawer": f"{ENGAGEMENTS_URL}/{engagement.id}/share",
+                }
+            )
         rows.append(
             {
                 "cells": [
@@ -172,11 +221,9 @@ def engagements_view(request):
                     _cell("Kind", KIND_LABELS.get(engagement.kind, engagement.kind)),
                     _cell("Held", _day(engagement.held_on)),
                     _cell("With", with_whom or engagement.country),
-                    _cell("Feedback", state, tone=tone),
+                    _cell("Shared with the lead", state, tone=tone),
                 ],
-                "actions": [
-                    {"label": "Open", "drawer": f"{ENGAGEMENTS_URL}/{engagement.id}"}
-                ],
+                "actions": actions,
             }
         )
 
@@ -358,7 +405,22 @@ def _general_fields(reach, *, engagement=None, kind=""):
             if engagement and engagement.follow_up_due
             else "",
         ),
-    ]
+    ] + (
+        [
+            _field(
+                "share_now",
+                "Share the coaching notes with the Programme Lead now",
+                type="checkbox",
+                help=(
+                    "Coaching conversations only. They read the subject, what was "
+                    "discussed, the actions agreed and the follow-up date, and are "
+                    "asked to acknowledge them. Shared notes can no longer be edited."
+                ),
+            )
+        ]
+        if engagement is None or engagement.kind == EngagementKind.PL_COACHING
+        else []
+    )
 
 
 def _observation_fields(request, reach, *, engagement=None):
@@ -505,17 +567,33 @@ def engagement_new_drawer(request):
     )
 
 
+def _refuse_unshareable(data, kind) -> None:
+    """A ticked "share now" on an engagement nobody acknowledges is refused
+    before anything is saved, rather than silently ignored."""
+    if data.get("share_now") and kind not in services.SHAREABLE_KINDS:
+        raise BadRequest(
+            "Only a coaching conversation or a training observation is shared with "
+            "the Programme Lead. Untick “share” to record this engagement."
+        )
+
+
+def _shared_message(engagement, verb: str) -> str:
+    what = "Observation" if engagement.is_observation else "Coaching conversation"
+    return f"{what} {verb} and shared with the Programme Lead."
+
+
 @require_page_permission("cce_engagements")
 @require_POST
 def engagement_record(request):
     data = _engagement_data(request)
     try:
-        engagement = services.record_engagement(request.user, data)
-        if engagement.is_observation and data.get("share_now"):
-            services.share_feedback(request.user, engagement.id)
-            messages.success(
-                request, "Observation recorded and shared with the Programme Lead."
-            )
+        _refuse_unshareable(data, (data.get("kind") or "").strip())
+        with transaction.atomic():
+            engagement = services.record_engagement(request.user, data)
+            if data.get("share_now"):
+                services.share_feedback(request.user, engagement.id)
+        if engagement.feedback_shared_at:
+            messages.success(request, _shared_message(engagement, "recorded"))
         else:
             messages.success(request, "Engagement recorded.")
     except SERVICE_ERRORS as exc:
@@ -574,6 +652,15 @@ def _engagement_facts(engagement, names) -> list[dict]:
             {"label": "Agreed actions", "value": engagement.agreed_actions},
             {"label": "Follow up by", "value": _day(engagement.follow_up_due)},
         ]
+        if engagement.kind == EngagementKind.PL_COACHING:
+            facts += [
+                {"label": "Shared", "value": _day(engagement.feedback_shared_at)},
+                {"label": "Acknowledged", "value": _day(engagement.acknowledged_at)},
+                {
+                    "label": "Programme Lead's response",
+                    "value": engagement.lead_response,
+                },
+            ]
     return facts
 
 
@@ -604,7 +691,7 @@ def engagement_drawer(request, engagement_id):
             subtitle=KIND_LABELS.get(engagement.kind, engagement.kind),
             facts=_engagement_facts(engagement, names),
             empty=(
-                "This feedback has been shared with the Programme Lead and can no longer be edited."
+                "This has been shared with the Programme Lead and can no longer be edited."
                 if engagement.feedback_shared_at
                 else "Read only."
             ),
@@ -614,7 +701,11 @@ def engagement_drawer(request, engagement_id):
         note = "The feedback stays private to you until you share it."
     else:
         fields = _general_fields(reach, engagement=engagement)
-        note = ""
+        note = (
+            "The notes stay private to you until you share them with the Programme Lead."
+            if engagement.kind == EngagementKind.PL_COACHING
+            else ""
+        )
     return _drawer(
         request,
         title=engagement.subject,
@@ -631,14 +722,86 @@ def engagement_drawer(request, engagement_id):
 def engagement_update(request, engagement_id):
     data = _engagement_data(request)
     try:
-        engagement = services.update_engagement(request.user, engagement_id, data)
-        if engagement.is_observation and data.get("share_now"):
-            services.share_feedback(request.user, engagement.id)
-            messages.success(
-                request, "Observation saved and shared with the Programme Lead."
-            )
+        with transaction.atomic():
+            engagement = services.update_engagement(request.user, engagement_id, data)
+            _refuse_unshareable(data, engagement.kind)
+            if data.get("share_now"):
+                services.share_feedback(request.user, engagement.id)
+        if engagement.feedback_shared_at:
+            messages.success(request, _shared_message(engagement, "saved"))
         else:
             messages.success(request, "Engagement saved.")
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, ENGAGEMENTS_URL)
+    return _back(request, ENGAGEMENTS_URL)
+
+
+@require_page_permission("cce_engagements")
+@require_http_methods(["GET"])
+def engagement_share_drawer(request, engagement_id):
+    """Confirm handing an observation's feedback or a coaching conversation's
+    notes to the Programme Leads it names."""
+    engagement = (
+        services.engagements_visible_to(request.user).filter(id=engagement_id).first()
+    )
+    if engagement is None:
+        return _drawer(
+            request,
+            title="Share with the Programme Lead",
+            subtitle="Regional CCE leadership",
+            empty="This engagement is not in your log.",
+        )
+    names = _lead_names(services.lead_reach(request.user))
+    facts = _engagement_facts(engagement, names)
+    if not _can_share(request, engagement):
+        return _drawer(
+            request,
+            title="Share with the Programme Lead",
+            subtitle=engagement.subject,
+            facts=facts,
+            empty=(
+                f"Shared on {_day(engagement.feedback_shared_at)}."
+                if engagement.feedback_shared_at
+                else "Only a coaching conversation or a training observation you "
+                "recorded is shared with the Programme Lead."
+            ),
+        )
+    if not engagement.program_lead_ids:
+        return _drawer(
+            request,
+            title="Share with the Programme Lead",
+            subtitle=engagement.subject,
+            facts=facts,
+            empty="Name the Programme Lead in the engagement before sharing it.",
+        )
+    return _drawer(
+        request,
+        title="Share with the Programme Lead",
+        subtitle=engagement.subject,
+        facts=facts,
+        action=f"{ENGAGEMENTS_URL}/{engagement.id}/share/save",
+        submit="Share",
+        note=(
+            "The Programme Lead reads the feedback and is asked to acknowledge it."
+            if engagement.is_observation
+            else "The Programme Lead reads the subject, what was discussed, the "
+            "actions agreed and the follow-up date, and is asked to acknowledge them."
+        )
+        + " Once shared it can no longer be edited.",
+    )
+
+
+@require_page_permission("cce_engagements")
+@require_POST
+def engagement_share(request, engagement_id):
+    try:
+        engagement = services.share_feedback(request.user, engagement_id)
+        messages.success(
+            request,
+            "Shared with the Programme Lead. They have been asked to acknowledge it."
+            if not engagement.is_observation
+            else "Feedback shared with the Programme Lead.",
+        )
     except SERVICE_ERRORS as exc:
         return _refused(request, exc, ENGAGEMENTS_URL)
     return _back(request, ENGAGEMENTS_URL)
@@ -648,18 +811,32 @@ def engagement_update(request, engagement_id):
 @require_page_permission("cce_training_feedback")
 @require_http_methods(["GET"])
 def feedback_view(request):
-    """Observations of the reader's trainings, and what was done about them."""
-    observations = list(
-        services.feedback_visible_to(request.user).order_by("-held_on", "-created_at")[
-            :500
-        ]
-    )
+    """Observations of the reader's trainings, and what was done about them.
+
+    The Programme Lead reads who delivered each training — an officer on their
+    team or a training partner — instead of the country they already know, can
+    open the training itself, and sees which feedback they passed on.
+    """
+    visible = services.feedback_visible_to(request.user)
+    observations = list(visible.order_by("-held_on", "-created_at")[:500])
     authors = _author_names(o.author_id for o in observations)
     is_pl = request.user.active_role == services.PROGRAM_LEAD
+    deliverers = (
+        services.delivered_by(o.activity for o in observations if o.activity_id)
+        if is_pl
+        else {}
+    )
+    passed = (
+        coaching.passed_engagement_ids(o.id for o in observations) if is_pl else set()
+    )
     rows = []
     for observation in observations:
         if observation.acknowledged_at:
-            state, tone = "Acknowledged", "success"
+            state, tone = (
+                ("Acknowledged · passed to the officer", "success")
+                if observation.id in passed
+                else ("Acknowledged", "success")
+            )
         elif observation.feedback_shared_at:
             state = (
                 "Awaiting your acknowledgement"
@@ -669,6 +846,14 @@ def feedback_view(request):
             tone = "warning"
         else:
             state, tone = "Not shared yet", "neutral"
+        actions = [{"label": "Open", "drawer": f"{FEEDBACK_URL}/{observation.id}"}]
+        if is_pl and observation.activity_id:
+            actions.append(
+                {
+                    "label": "Open training",
+                    "href": f"/activities/{observation.activity_id}",
+                }
+            )
         rows.append(
             {
                 "cells": [
@@ -680,7 +865,12 @@ def feedback_view(request):
                         primary=True,
                     ),
                     _cell("Observed", _day(observation.held_on)),
-                    _cell("Country", observation.country),
+                    _cell(
+                        "Delivered by",
+                        deliverers.get(observation.activity_id, ""),
+                    )
+                    if is_pl
+                    else _cell("Country", observation.country),
                     _cell("Regional Lead", authors.get(observation.author_id, "")),
                     _cell(
                         "Rating",
@@ -694,9 +884,7 @@ def feedback_view(request):
                     ),
                     _cell("State", state, tone=tone),
                 ],
-                "actions": [
-                    {"label": "Open", "drawer": f"{FEEDBACK_URL}/{observation.id}"}
-                ],
+                "actions": actions,
             }
         )
     shared = [o for o in observations if o.feedback_shared_at]
@@ -727,14 +915,19 @@ def feedback_view(request):
         eyebrow="Training quality",
         description=(
             "The Regional Lead observes trainings and offers constructive critique. "
-            "The Programme Lead acknowledges each piece of feedback and says what "
-            "will change."
+            "The Programme Lead acknowledges each piece of feedback, says what "
+            "will change, and passes it to the officer who delivered the training."
+            if is_pl
+            else "The Regional Lead observes trainings and offers constructive "
+            "critique. The Programme Lead acknowledges each piece of feedback and "
+            "says what will change."
         ),
         metrics=metrics,
         rows=rows,
         register_title="Observed trainings",
         empty_title="No training feedback yet",
         empty_body="Feedback appears here when the Regional Lead shares an observation of a training.",
+        autoload_drawer=_autoload(request, visible, FEEDBACK_URL),
     )
 
 
@@ -774,27 +967,27 @@ def feedback_drawer(request, engagement_id):
             ),
         },
     )
-    can_acknowledge = (
-        request.user.active_role == services.PROGRAM_LEAD
-        and observation.feedback_shared_at
-        and not observation.acknowledged_at
-    )
-    if not can_acknowledge:
-        return _drawer(
-            request,
-            title="Training feedback",
-            subtitle=observation.subject,
-            facts=facts,
-            empty="Acknowledged." if observation.acknowledged_at else "Read only.",
+    is_pl = request.user.active_role == services.PROGRAM_LEAD
+    officer = None
+    already_passed = False
+    if is_pl and observation.activity_id:
+        facts.insert(
+            2,
+            {
+                "label": "Delivered by",
+                "value": services.delivered_by([observation.activity]).get(
+                    observation.activity_id, ""
+                ),
+            },
         )
-    return _drawer(
-        request,
-        title="Training feedback",
-        subtitle=observation.subject,
-        facts=facts,
-        action=f"{FEEDBACK_URL}/{observation.id}/acknowledge",
-        submit="Acknowledge feedback",
-        fields=[
+        officer = coaching.delivering_team_member(request.user, observation.activity)
+        already_passed = bool(coaching.passed_engagement_ids([observation.id]))
+    officer_name = getattr(getattr(officer, "user", None), "name", "") or "the officer"
+    can_acknowledge = (
+        is_pl and observation.feedback_shared_at and not observation.acknowledged_at
+    )
+    if can_acknowledge:
+        fields = [
             _field(
                 "response",
                 "Your response",
@@ -803,23 +996,310 @@ def feedback_drawer(request, engagement_id):
                 rows=4,
                 placeholder="What will change in the training, with whom, and by when",
             )
-        ],
+        ]
+        if officer is not None:
+            fields.append(
+                _field(
+                    "pass_to_cceo",
+                    f"Pass this feedback to {officer_name}, who delivered it",
+                    type="checkbox",
+                    help=(
+                        "Shared with them as coaching, with the ratings, the Regional "
+                        "Lead's feedback and your response as the actions agreed. "
+                        "They are asked to acknowledge it."
+                    ),
+                )
+            )
+        return _drawer(
+            request,
+            title="Training feedback",
+            subtitle=observation.subject,
+            facts=facts,
+            action=f"{FEEDBACK_URL}/{observation.id}/acknowledge",
+            submit="Acknowledge feedback",
+            fields=fields,
+        )
+    if (
+        is_pl
+        and observation.acknowledged_at
+        and officer is not None
+        and not already_passed
+    ):
+        return _drawer(
+            request,
+            title="Training feedback",
+            subtitle=observation.subject,
+            facts=facts,
+            action=f"{FEEDBACK_URL}/{observation.id}/pass",
+            submit=f"Pass to {officer_name}",
+            note=(
+                f"Acknowledged. Pass it to {officer_name}, who delivered the training, "
+                "as coaching they acknowledge: the ratings, the Regional Lead's "
+                "feedback and your response as the actions agreed."
+            ),
+        )
+    return _drawer(
+        request,
+        title="Training feedback",
+        subtitle=observation.subject,
+        facts=facts,
+        empty=(
+            "Acknowledged and passed to the officer who delivered it."
+            if already_passed
+            else "Acknowledged."
+            if observation.acknowledged_at
+            else "Read only."
+        ),
     )
 
 
 @require_page_permission("cce_training_feedback")
 @require_POST
 def feedback_acknowledge(request, engagement_id):
+    """Acknowledge the feedback and, when asked, pass it to the officer who
+    delivered the training — both or neither, so a refused hand-on never
+    leaves an acknowledgement behind that the lead did not mean on its own."""
+    pass_on = bool(request.POST.get("pass_to_cceo"))
     try:
-        services.acknowledge_feedback(
-            request.user, engagement_id, request.POST.get("response", "")
-        )
+        with transaction.atomic():
+            services.acknowledge_feedback(
+                request.user, engagement_id, request.POST.get("response", "")
+            )
+            if pass_on:
+                coaching.pass_feedback_to_cceo(request.user, engagement_id)
         messages.success(
-            request, "Feedback acknowledged. The Regional Lead has been told."
+            request,
+            "Feedback acknowledged and passed to the officer. The Regional Lead has been told."
+            if pass_on
+            else "Feedback acknowledged. The Regional Lead has been told.",
         )
     except SERVICE_ERRORS as exc:
         return _refused(request, exc, FEEDBACK_URL)
     return _back(request, FEEDBACK_URL)
+
+
+@require_page_permission("cce_training_feedback")
+@require_POST
+def feedback_pass(request, engagement_id):
+    try:
+        coaching.pass_feedback_to_cceo(request.user, engagement_id)
+        messages.success(
+            request, "Feedback passed to the officer, who is asked to acknowledge it."
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, FEEDBACK_URL)
+    return _back(request, FEEDBACK_URL)
+
+
+# ── Regional Lead coaching ───────────────────────────────────────────────────
+@require_page_permission("cce_training_feedback")
+@require_http_methods(["GET"])
+def regional_coaching_view(request):
+    """Coaching conversations the Regional Lead shared with the Programme
+    Lead, and the lead's answer to the actions agreed. The Regional Lead reads
+    their own here too; the Country Director has none to read."""
+    today = timezone.localdate()
+    visible = services.regional_coaching_visible_to(request.user)
+    engagements = list(visible.order_by("-held_on", "-created_at")[:500])
+    is_pl = request.user.active_role == services.PROGRAM_LEAD
+    authors = _author_names(e.author_id for e in engagements)
+    lead_names = {}
+    if not is_pl:
+        from apps.accounts.models import StaffProfile
+
+        lead_names = dict(
+            StaffProfile.objects.filter(
+                id__in={i for e in engagements for i in e.program_lead_ids}
+            ).values_list("id", "user__name")
+        )
+    rows = []
+    for engagement in engagements:
+        if engagement.acknowledged_at:
+            state, tone = "Acknowledged", "success"
+        elif engagement.feedback_shared_at:
+            state = (
+                "Awaiting your acknowledgement"
+                if is_pl
+                else "Awaiting the Programme Lead"
+            )
+            tone = "warning"
+        else:
+            state, tone = "Not shared yet", "neutral"
+        follow_up = _day(engagement.follow_up_due)
+        if (
+            engagement.follow_up_due
+            and engagement.follow_up_due < today
+            and not engagement.acknowledged_at
+        ):
+            follow_up = f"{follow_up} · passed"
+        cells = [
+            _cell("Conversation", engagement.subject, primary=True),
+            _cell("Held", _day(engagement.held_on)),
+        ]
+        cells.append(
+            _cell("Regional Lead", authors.get(engagement.author_id, ""))
+            if is_pl
+            else _cell(
+                "Programme Leads",
+                ", ".join(
+                    lead_names.get(i, "Programme Lead")
+                    for i in engagement.program_lead_ids
+                ),
+            )
+        )
+        cells += [
+            _cell("Actions agreed", engagement.agreed_actions),
+            _cell("Follow up by", follow_up),
+            _cell("State", state, tone=tone),
+        ]
+        rows.append(
+            {
+                "cells": cells,
+                "actions": [
+                    {
+                        "label": "Acknowledge"
+                        if is_pl and not engagement.acknowledged_at
+                        else "Open",
+                        "drawer": f"{COACHING_URL}/{engagement.id}",
+                    }
+                ],
+            }
+        )
+    shared = [e for e in engagements if e.feedback_shared_at]
+    awaiting = sum(1 for e in shared if not e.acknowledged_at)
+    metrics = [
+        _metric(
+            "Regional Lead Coaching Awaiting Acknowledgement",
+            awaiting,
+            "shared, not yet acknowledged",
+            "warning" if awaiting else "info",
+        ),
+        _metric(
+            "Regional Lead Coaching Acknowledged",
+            sum(1 for e in shared if e.acknowledged_at),
+            "with the Programme Lead's response",
+            "success",
+        ),
+    ]
+    notice = None
+    if request.user.active_role == services.COUNTRY_DIRECTOR:
+        notice = {
+            "tone": "info",
+            "text": (
+                "Coaching the Regional Lead shares stays between the Regional Lead "
+                "and each Programme Lead. Training feedback on your country's "
+                "trainings is on Training Feedback."
+            ),
+        }
+    return _render(
+        request,
+        title="Regional Lead Coaching",
+        eyebrow="Collaboration",
+        description=(
+            "Coaching conversations your Regional Lead shared with you: what was "
+            "discussed and the actions agreed. Acknowledge each one and say what "
+            "you will do."
+            if is_pl
+            else "Coaching conversations the Regional Lead shared with Programme "
+            "Leads, and each lead's response."
+        ),
+        metrics=metrics,
+        rows=rows,
+        register_title="Coaching conversations",
+        empty_title="No coaching shared yet",
+        empty_body=(
+            "Coaching appears here when your Regional Lead shares the notes of a "
+            "coaching conversation with you."
+            if is_pl
+            else "Coaching appears here once it is shared with a Programme Lead."
+        ),
+        notice=notice,
+        autoload_drawer=_autoload(request, visible, COACHING_URL),
+    )
+
+
+@require_page_permission("cce_training_feedback")
+@require_http_methods(["GET"])
+def regional_coaching_drawer(request, engagement_id):
+    engagement = (
+        services.regional_coaching_visible_to(request.user)
+        .filter(id=engagement_id)
+        .first()
+    )
+    if engagement is None:
+        return _drawer(
+            request,
+            title="Regional Lead coaching",
+            subtitle="Collaboration",
+            empty="This coaching was not shared with you.",
+        )
+    from apps.accounts.models import StaffProfile
+
+    names = dict(
+        StaffProfile.objects.filter(id__in=engagement.program_lead_ids).values_list(
+            "id", "user__name"
+        )
+    )
+    facts = [
+        fact
+        for fact in _engagement_facts(engagement, names)
+        if fact["label"] not in ("Kind", "Country")
+    ]
+    facts.insert(
+        0,
+        {
+            "label": "Regional Lead",
+            "value": _author_names([engagement.author_id]).get(
+                engagement.author_id, ""
+            ),
+        },
+    )
+    can_acknowledge = (
+        request.user.active_role == services.PROGRAM_LEAD
+        and engagement.feedback_shared_at
+        and not engagement.acknowledged_at
+    )
+    if not can_acknowledge:
+        return _drawer(
+            request,
+            title="Regional Lead coaching",
+            subtitle=engagement.subject,
+            facts=facts,
+            empty="Acknowledged." if engagement.acknowledged_at else "Read only.",
+        )
+    return _drawer(
+        request,
+        title="Regional Lead coaching",
+        subtitle=engagement.subject,
+        facts=facts,
+        action=f"{COACHING_URL}/{engagement.id}/acknowledge",
+        submit="Acknowledge coaching",
+        fields=[
+            _field(
+                "response",
+                "Your response",
+                type="textarea",
+                required=True,
+                rows=4,
+                placeholder="What you will do about each action agreed, and by when",
+            )
+        ],
+    )
+
+
+@require_page_permission("cce_training_feedback")
+@require_POST
+def regional_coaching_acknowledge(request, engagement_id):
+    try:
+        services.acknowledge_regional_coaching(
+            request.user, engagement_id, request.POST.get("response", "")
+        )
+        messages.success(
+            request, "Coaching acknowledged. The Regional Lead has been told."
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, COACHING_URL)
+    return _back(request, COACHING_URL)
 
 
 # ── Monthly reports ──────────────────────────────────────────────────────────
@@ -1175,3 +1655,9 @@ def report_review(request, report_id):
     except SERVICE_ERRORS as exc:
         return _refused(request, exc, REPORTS_URL)
     return _back(request, REPORTS_URL)
+
+
+# The Programme Lead's coaching screens live in coaching_views. During the
+# Programme Lead alignment apps/frontend/urls.py reaches them through this
+# module, which it already imports (its import list is lead-owned).
+from apps.frontend.views import coaching_views  # noqa: E402,F401

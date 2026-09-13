@@ -1,0 +1,160 @@
+{% load kpi_metrics %}
+{% load frontend_filters %}
+{% comment %}
+Programme implementation (owner, 2026-09-13): the school self-assessment
+rollout and the intervention heatmap, training delivery by family, the two
+spiritual transformation interventions against the previous cycle, completed
+work by month, and — last, shown once — the schools needing urgent attention.
+Programme Rollout holds the full picture behind each card.
+{% endcomment %}
+<div class="space-y-4" data-pl-view="programmes">
+  <div class="rpl-columns">
+    <div class="rpl-columns__main">
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-ssa-rollout-title" data-pl-ssa-rollout>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-ssa-rollout-title" class="rpl-card__title">School self-assessment rollout</h2>
+            <span class="rpl-card__subtitle">Your portfolio's schools this financial year, each counted once in the furthest state it has reached · FY {{ fy }}</span>
+          </div>
+          <a class="rpl-card__link" href="{{ rollout_urls.ssa }}">SSA rollout <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% kpi_strip %}
+          {% kpi_metric %}{% kpi_label %}Confirmed{% endkpi_label %}{{ ssa_rollout.confirmed|intcomma }}<span class="edify-metric__unit"> / {{ ssa_rollout.portfolio|intcomma }}</span>{% kpi_helper %}{{ ssa_rollout.coverage_pct }}% of schools{% endkpi_helper %}{% endkpi_metric %}
+          {% kpi_metric %}{% kpi_label %}Awaiting verification{% endkpi_label %}{{ ssa_rollout.submitted|intcomma }}{% kpi_helper %}submitted to Impact Assessment{% endkpi_helper %}{% endkpi_metric %}
+          {% kpi_metric %}{% kpi_label %}Collection planned{% endkpi_label %}{{ ssa_rollout.scheduled|intcomma }}{% kpi_helper %}SSA work in the plan{% endkpi_helper %}{% endkpi_metric %}
+          {% kpi_metric %}{% kpi_label %}Not yet planned{% endkpi_label %}{{ ssa_rollout.not_planned|intcomma }}{% kpi_helper %}no SSA and no collection planned{% endkpi_helper %}{% endkpi_metric %}
+        {% endkpi_strip %}
+      </section>
+
+      <section class="pl-intelligence-card rounded-surface p-4 flex flex-col edify-surface border edify-border edify-shadow-sm" aria-labelledby="pl-ssa-intelligence-title">
+        <h2 id="pl-ssa-intelligence-title" class="text-[13px] font-semibold mb-1 edify-text">SSA Intelligence</h2>
+        <p class="text-[12px] mb-2 edify-text-subtle">By cluster, latest confirmed cycle (score out of 10)</p>
+        {% include "partials/dashboards/pl/ssa_intelligence.html" %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-execution-title" data-pl-execution>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-execution-title" class="rpl-card__title">{{ delivery_by_month.title }}</h2>
+            <span class="rpl-card__subtitle">Completed work by month and delivery family, with the share of the year's plan done · field execution, not IA-verified</span>
+          </div>
+        </header>
+        {% if delivery_by_month.has_work %}
+        <div id="plExecutionChart" class="w-full min-h-[220px]" role="img" aria-label="Completed team activities by month and delivery family for FY {{ fy }}"></div>
+        {{ delivery_by_month|json_script:"pl-execution-payload" }}
+        {% else %}
+        {% include "components/empty_state.html" with message="No completed work this year yet." hint="Completed activities appear here month by month as your team delivers." compact="true" %}
+        {% endif %}
+      </section>
+
+    </div>
+    <div class="rpl-columns__side">
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-delivery-title" data-pl-delivery-mix>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-delivery-title" class="rpl-card__title">Training and delivery</h2>
+            <span class="rpl-card__subtitle">{{ training_counts.delivered }} of {{ training_counts.planned }} trainings delivered · {{ training_counts.schools_trained|intcomma }} schools trained · completed of planned by family</span>
+          </div>
+          <a class="rpl-card__link" href="{{ rollout_urls.trainings }}">Trainings <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% if delivery_mix %}
+        <div class="rpl-mix" role="list">
+          {% for row in delivery_mix %}
+          <div class="rpl-mix__row" role="listitem" data-family="{{ row.key }}">
+            <span class="rpl-mix__label" title="{{ row.hint }}">{{ row.label }}</span>
+            <span class="rpl-mix__track" role="img" aria-label="{{ row.completed }} of {{ row.planned }} planned completed"><span class="rpl-mix__fill" data-tone="{{ row.tone }}" style="inline-size: {{ row.completed_pct }}%"></span></span>
+            <span class="rpl-mix__figures"><strong>{{ row.completed }}</strong> of {{ row.planned }}</span>
+            <span class="rpl-mix__meta">{% if row.planned %}{{ row.completed_pct }}% done{% else %}Not planned{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        {% include "components/empty_state.html" with message="Nothing is planned for your team this year yet." compact="true" %}
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-spiritual-title" data-pl-spiritual>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-spiritual-title" class="rpl-card__title">Spiritual transformation</h2>
+            <span class="rpl-card__subtitle">{% if spiritual.latest_fy %}FY {{ spiritual.latest_fy }} confirmed SSA{% if spiritual.prev_fy %} against FY {{ spiritual.prev_fy }}{% endif %}{% else %}Christlike Behaviour and Exposure to the Word of God{% endif %}</span>
+          </div>
+          <a class="rpl-card__link" href="{{ rollout_urls.spiritual }}">Spiritual <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="rpl-follow-list" role="list">
+          {% for row in spiritual.rows %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">{{ row.label }} ({{ row.code }})</span>
+              <span class="rpl-follow__due">{% if row.score is not None %}<strong data-tone="{{ row.tone }}">{{ row.score|floatformat:1 }}</strong> / 10{% else %}No confirmed SSA{% endif %}</span>
+            </div>
+            <span class="rpl-follow__what">{{ row.change }}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <div class="pl-intelligence-grid">
+    <div id="urgent-schools" class="pl-intelligence-card rounded-surface overflow-hidden flex flex-col scroll-mt-20 edify-surface border edify-border edify-shadow-sm">
+      <div class="flex items-start justify-between gap-3 px-4 py-3 border-b edify-border-bottom">
+        <div>
+          <h2 class="text-[13px] font-semibold edify-text">Schools Needing Urgent Attention</h2>
+          <p class="mt-0.5 text-[12px] edify-text-muted">Your schools and your officers' schools, most urgent first. Schedule your own; send an officer's to them.</p>
+        </div>
+        <span class="inline-flex min-w-6 items-center justify-center rounded-pill px-2 py-1 text-[12px] font-semibold edify-danger-text edify-danger-soft">{{ urgent_pagination.total }}</span>
+      </div>
+      <div id="urgent-schools-content" class="flex-1" aria-live="polite">
+        {% include "partials/dashboards/pl/urgent_schools_page.html" %}
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if delivery_by_month.has_work %}
+<script>
+(function () {
+  /* Completed work by month, stacked by delivery family, with the cumulative
+     share of the year's plan on the rate axis. The shared mixed-trend form, so
+     it reads as the same chart family as every other role dashboard. */
+  var el = document.getElementById('plExecutionChart');
+  var payloadEl = document.getElementById('pl-execution-payload');
+  if (!el || !payloadEl || !window.EdifyChartSystem) { return; }
+  var payload = JSON.parse(payloadEl.textContent);
+
+  function build() {
+    var isDark = document.documentElement.classList.contains('dark');
+    var seriesCount = payload.series.length + 1;
+    var cfg = window.EdifyChartSystem.mixedTrend(seriesCount);
+    cfg.series = payload.series.map(function (s) {
+      return { name: s.name, type: 'column', data: s.data };
+    });
+    cfg.series.push({ name: 'Share of plan done', type: 'line', data: payload.cumulative_pct });
+    cfg.chart.height = 220;
+    cfg.chart.stacked = true;
+    cfg.labels = payload.labels;
+    cfg.xaxis.type = 'category';
+    var first = payload.series[0].name;
+    cfg.yaxis = payload.series.map(function (s, i) {
+      return i === 0
+        ? window.EdifyChartSystem.countAxis('', { seriesName: first })
+        : { seriesName: first, show: false };
+    });
+    cfg.yaxis.push(window.EdifyChartSystem.rateAxis());
+    cfg.tooltip.theme = isDark ? 'dark' : 'light';
+    return cfg;
+  }
+
+  var chart = window.EdifyChartSystem.renderDetached(el, build());
+  window.addEventListener('edify-theme-change', function () {
+    if (chart) { chart.destroy(); }
+    el.replaceChildren();
+    chart = window.EdifyChartSystem.renderDetached(el, build());
+  });
+})();
+</script>
+{% endif %}

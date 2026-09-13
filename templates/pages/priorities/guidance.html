@@ -1,0 +1,17 @@
+{% extends "layouts/shell.html" %}
+
+{% block title %}Team Guidance · Priorities · Edify{% endblock %}
+
+{% block feature_css %}
+{% include "partials/priorities/_workspace_css.html" %}
+{% endblock %}
+
+{% block shell_content %}
+<div class="edify-page-canvas space-y-4" data-mobile-family="performance">
+  {% comment %}The fourth tab of the Priorities page (owner, 2026-09-13):
+  Priority Setting · Target Distribution · My Team · Team Guidance. A reader
+  with only this view gets it bare.{% endcomment %}
+  {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs.html" %}{% else %}{% include "partials/priorities/guidance_view.html" %}{% endif %}
+</div>
+{% include "partials/priorities/_workspace_scripts.html" %}
+{% endblock %}

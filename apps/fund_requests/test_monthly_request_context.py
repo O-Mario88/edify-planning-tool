@@ -73,12 +73,14 @@ class MonthlyRequestPageRendersTest(TestCase):
 
     @classmethod
     def setUpTestData(cls):
+        # A Country Director: the Programme Lead no longer holds the retired
+        # monthly request page (Programme Lead alignment, 2026-09-13).
         cls.pl = User.objects.create(
-            id="mrp-pl",
-            email="mrp-pl@edify.org",
-            name="MRP Lead",
-            roles=["Program Lead"],
-            active_role="Program Lead",
+            id="mrp-cd",
+            email="mrp-cd@edify.org",
+            name="MRP Director",
+            roles=["CountryDirector"],
+            active_role="CountryDirector",
             is_active=True,
         )
 

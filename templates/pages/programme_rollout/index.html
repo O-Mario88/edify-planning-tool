@@ -1,0 +1,57 @@
+{% extends "layouts/shell.html" %}
+{% load frontend_filters %}
+
+{% block title %}Programme Rollout · Edify{% endblock %}
+
+{% block shell_content %}
+{% comment %}
+Programme Rollout (owner, 2026-09-13): the Programme Lead coordinates the
+rollout of training programmes, school self-assessments and spiritual
+transformation interventions across the officers they supervise. One header
+and one filter bar, then a rail of three tabs; a tab swaps only its panel
+(partials/programme_rollout/view.html), carries the year, and is a real URL
+other pages link to (/programme-rollout?view=ssa).
+
+The page is a read. Every control is a link to the record that answers a row
+or a read-only list of schools; planning stays with the officer who owns the
+school (apps/frontend/views/programme_rollout_views.py).
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-programme-rollout>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <span class="cce-eyebrow">Programme implementation</span>
+      <h1 class="edify-page-title edify-page-header__title">Programme Rollout</h1>
+      <p class="edify-page-header__description">Coordinate the rollout of training programmes, school self-assessments and spiritual transformation interventions across your team.</p>
+    </div>
+    <div class="edify-page-header__controls">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap edify-surface border border-[var(--edify-border)] edify-text-muted" data-rollout-reach>
+        <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-chart-green);"></span>
+        <span>{% if scope.support_view %}{{ scope.lead_name }} · {% endif %}{{ scope.officer_count }} officer{{ scope.officer_count|pluralize }} · {{ scope.school_count|intcomma }} school{{ scope.school_count|pluralize }}</span>
+      </span>
+      <a href="/team-planning-oversight/?fy={{ fy }}" class="btn btn-secondary h-8">Open Team Oversight</a>
+    </div>
+  </div>
+
+  <form method="get" id="rollout-filters" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface border border-[var(--edify-border)] rounded-surface p-3" aria-label="Programme rollout filters">
+    <input type="hidden" id="rollout-filter-view" name="view" value="{{ view }}">
+    {% if lead_options %}
+    <div class="edify-filter-field platform-filter-compact"><label for="rollout-lead" class="edify-filter-label">Programme Lead</label>
+    <select aria-label="Programme Lead" id="rollout-lead" name="lead" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+      {% for option in lead_options %}<option value="{{ option.0 }}"{% if option.0 == lead %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+    </select></div>
+    {% endif %}
+    <div class="edify-filter-field platform-filter-compact"><label for="rollout-fy" class="edify-filter-label">Fiscal year</label>
+    <select aria-label="Fiscal year" id="rollout-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+      {% for opt in fy_options %}<option value="{{ opt }}"{% if fy == opt %} selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+    </select></div>
+    <div class="edify-filter-actions">
+      <button type="submit" class="btn btn-primary h-9">Apply filters</button>
+      <a id="rollout-filter-reset" href="/programme-rollout?view={{ view }}" class="btn btn-secondary h-9">Reset</a>
+    </div>
+  </form>
+
+  {% if notice %}<div class="edify-note" data-tone="{{ notice.tone }}" role="status" data-rollout-notice>{{ notice.text }}</div>{% endif %}
+
+  {% include "partials/dashboards/_view_tabs.html" %}
+</div>
+{% endblock %}

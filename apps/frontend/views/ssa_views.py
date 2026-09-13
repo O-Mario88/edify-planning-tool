@@ -39,7 +39,10 @@ def ssa_performance_view(request):
         render_kpi_item(
             "ssa_completion_rate",
             MetricValue.ratio(kpis["assessed"], kpis["total_schools"]),
-            helper=f"{kpis['assessed']} confirmed this quarter",
+            helper=(
+                f"{kpis['assessed']} confirmed this "
+                f"{'financial year' if dashboard['filters']['is_full_year'] else 'quarter'}"
+            ),
             tone="success",
         ),
         render_kpi_item(
@@ -118,11 +121,17 @@ def ssa_performance_export_view(request):
     if not dashboard["scope"]["can_export"]:
         return HttpResponseForbidden("Your role cannot export SSA performance data.")
 
+    # The export follows the page's period: the full financial year unless a
+    # quarter was chosen, read by the same service call as the page.
     fy = dashboard["filters"]["fy"]
-    quarter = dashboard["filters"]["quarter"]
+    period = (
+        "full-year"
+        if dashboard["filters"]["is_full_year"]
+        else dashboard["filters"]["quarter"].lower()
+    )
     response = HttpResponse(content_type="text/csv")
     response["Content-Disposition"] = (
-        f'attachment; filename="ssa-performance-fy{fy}-{quarter.lower()}.csv"'
+        f'attachment; filename="ssa-performance-fy{fy}-{period}.csv"'
     )
     writer = csv.writer(response)
     writer.writerow(
@@ -162,6 +171,8 @@ def ssa_template_download_view(request):
       "last" or a year like "2025" → previous FY (baseline, upload once)
       "current" or a year like "2026" → current FY (requires baseline first)
     """
+    if not _may_upload_ssa(request):
+        return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
     from apps.core.fy import get_operational_fy
 
     current_fy = get_operational_fy()
@@ -192,6 +203,12 @@ def ssa_template_download_view(request):
     return response
 
 
+#: What a reader without ssa.upload is told at every upload surface.
+UPLOAD_ONLY_MESSAGE = (
+    "Only Impact Assessment and administrators upload official SSA scores."
+)
+
+
 def _may_upload_ssa(request) -> bool:
     """Official SSA creation requires the SSA_UPLOAD permission, not just the
     page. The page key "ssa" is open to CD/RVP/PL/CCEO for READING, but a
@@ -203,14 +220,31 @@ def _may_upload_ssa(request) -> bool:
     return has_permission(request.user, Permission.SSA_UPLOAD.value)
 
 
+def _visible_batches(request):
+    """The SSA import batches this reader may open.
+
+    The preview and result pages took a batch id straight from the URL, so
+    anyone holding the page key could read — and, through the preview's
+    finalise form, reach — somebody else's import by guessing its id. Impact
+    Assessment and Admin run the imports and keep every batch; anyone else who
+    uploads sees their own (Programme Lead alignment, 2026-09-13).
+    """
+    from apps.core.rbac import EdifyRole
+
+    batches = SSAImportBatch.objects.all()
+    if request.user.active_role in (
+        EdifyRole.IMPACT_ASSESSMENT.value,
+        EdifyRole.ADMIN.value,
+    ):
+        return batches
+    return batches.filter(uploaded_by=request.user.user_id)
+
+
 @require_page_permission("ssa")
 def ssa_manual_entry_view(request):
     """Create one authoritative SSA record without using a spreadsheet."""
     if not _may_upload_ssa(request):
-        return render_access_denied(
-            request,
-            "Only Impact Assessment and administrators may add official SSA scores.",
-        )
+        return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
 
     scope = resolve_user_scope(request.user)
     scoped_schools = school_queryset(scope)
@@ -303,12 +337,11 @@ def ssa_manual_school_options_view(request):
 
 @require_page_permission("ssa")
 def ssa_upload_center_view(request):
+    # The page itself is the uploader's, not just its POST: page access to
+    # "ssa" is a reading permission, and the upload centre has nothing to read.
+    if not _may_upload_ssa(request):
+        return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
     if request.method == "POST":
-        if not _may_upload_ssa(request):
-            messages.error(
-                request, "Only Impact Assessment may upload official SSA data."
-            )
-            return redirect("/ssa/upload/")
         file = request.FILES.get("file")
         if not file:
             messages.error(request, "A file is required for upload.")
@@ -318,7 +351,8 @@ def ssa_upload_center_view(request):
             result = upload_ssa_file(file, request.user)
             # Find the newly created batch
             batch = (
-                SSAImportBatch.objects.filter(uploaded_by=request.user.user_id)
+                _visible_batches(request)
+                .filter(uploaded_by=request.user.user_id)
                 .order_by("-created_at")
                 .first()
             )
@@ -341,16 +375,15 @@ def ssa_upload_center_view(request):
 
 @require_page_permission("ssa")
 def ssa_upload_preview_view(request, batch_id):
-    batch = get_object_or_404(SSAImportBatch, id=batch_id)
+    # The commit is the moment records are minted, and the preview is its
+    # form — both halves take the upload gate, and the batch must be one this
+    # reader may open.
+    if not _may_upload_ssa(request):
+        return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
+    batch = get_object_or_404(_visible_batches(request), id=batch_id)
     rows = batch.rows.all()
 
     if request.method == "POST":
-        # The commit is the moment records are minted — same gate as upload.
-        if not _may_upload_ssa(request):
-            messages.error(
-                request, "Only Impact Assessment may finalize an SSA import."
-            )
-            return redirect("/ssa")
         result = import_ssa_batch(batch, request.user)
         messages.success(
             request,
@@ -381,7 +414,9 @@ def ssa_upload_preview_view(request, batch_id):
 
 @require_page_permission("ssa")
 def ssa_upload_result_view(request, batch_id):
-    batch = get_object_or_404(SSAImportBatch, id=batch_id)
+    if not _may_upload_ssa(request):
+        return render_access_denied(request, UPLOAD_ONLY_MESSAGE)
+    batch = get_object_or_404(_visible_batches(request), id=batch_id)
     rows = batch.rows.all()
 
     context = {

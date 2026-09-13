@@ -1,0 +1,83 @@
+{% load kpi_metrics %}
+{% load frontend_filters %}
+{% comment %}
+Performance management and coaching (owner, 2026-09-13): for each officer, where
+their review stands and whether it waits on the lead, any recovery plan, a
+catch-up plan or development request to decide, the last coaching conversation,
+and evidence quality (work returned, Activity SF IDs pending). Each figure leads
+to the page where it is acted on; nothing is decided here.
+{% endcomment %}
+<div class="space-y-4" data-pl-view="coaching">
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-coaching-summary-title" data-pl-coaching-summary>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="pl-coaching-summary-title" class="rpl-card__title">Coaching this month</h2>
+        <span class="rpl-card__subtitle">One-to-ones, notes shared with officers and agreed follow-ups</span>
+      </div>
+      <a class="rpl-card__link" href="{{ coaching_links.coaching }}">Coaching log <span aria-hidden="true">&rarr;</span></a>
+    </header>
+    {% kpi_strip %}
+      {% kpi_metric %}{% kpi_label %}Coached this month{% endkpi_label %}{{ coaching_summary.coached_this_month }}<span class="edify-metric__unit"> / {{ coaching_summary.team_size }}</span>{% kpi_helper %}officers with a one-to-one{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Awaiting acknowledgement{% endkpi_label %}{{ coaching_summary.awaiting_acknowledgement }}{% kpi_helper %}shared notes not yet answered{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Follow-ups due{% endkpi_label %}{{ coaching_summary.follow_ups_due }}{% kpi_helper %}agreed actions past their date{% endkpi_helper %}{% endkpi_metric %}
+      {% kpi_metric %}{% kpi_label %}Drafts{% endkpi_label %}{{ coaching_summary.drafts }}{% kpi_helper %}notes not yet shared{% endkpi_helper %}{% endkpi_metric %}
+    {% endkpi_strip %}
+  </section>
+
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-coaching-title" data-pl-coaching>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="pl-coaching-title" class="rpl-card__title">Performance and coaching by officer</h2>
+        <span class="rpl-card__subtitle">{{ coaching_totals.reviews_waiting }} review{{ coaching_totals.reviews_waiting|pluralize }} waiting on you · {{ coaching_totals.catch_up }} catch-up plan{{ coaching_totals.catch_up|pluralize }} · {{ coaching_totals.pd_to_review }} development request{{ coaching_totals.pd_to_review|pluralize }} to review · FY {{ fy }}</span>
+      </div>
+      <div class="rpl-card__actions">
+        <a class="rpl-card__link" href="{{ coaching_links.reviews }}">Performance Reviews</a>
+        <a class="rpl-card__link" href="{{ coaching_links.recovery }}">Recovery Plans</a>
+        <a class="rpl-card__link" href="{{ coaching_links.development }}">Professional Development</a>
+      </div>
+    </header>
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Performance and coaching by officer; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">Each officer's review stage, recovery plan, plans and requests waiting on you, last coaching conversation and evidence quality.</caption>
+        <thead>
+          <tr>
+            <th scope="col">CCEO</th>
+            <th scope="col">Review</th>
+            <th scope="col">Recovery plan</th>
+            <th scope="col" class="is-num">Catch-up plans</th>
+            <th scope="col" class="is-num">PD to review</th>
+            <th scope="col">Last coaching</th>
+            <th scope="col" class="is-num">Returned</th>
+            <th scope="col" class="is-num">SF IDs pending</th>
+            <th scope="col" class="is-end"><span class="sr-only">Open</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in coaching_rows|slice:":60" %}
+          <tr>
+            <th scope="row" data-record-title><span>{{ row.name }}</span></th>
+            <td data-label="Review">{% if row.review_stage %}{% if row.review_waiting_on_you %}<span data-tone="warning">{{ row.review_stage }} · waiting on you</span>{% else %}{{ row.review_stage }}{% endif %}{% else %}<span class="rpl-muted">No review this year</span>{% endif %}</td>
+            <td data-label="Recovery plan">{% if row.recovery_plan %}<span data-tone="warning">{{ row.recovery_plan }}</span>{% else %}<span class="rpl-muted">None</span>{% endif %}</td>
+            <td class="is-num" data-label="Catch-up plans">{% if row.catch_up %}<a class="rpl-row-link" href="{{ coaching_links.team_targets }}">{{ row.catch_up }} to approve</a>{% else %}0{% endif %}</td>
+            <td class="is-num" data-label="PD to review">{% if row.pd_to_review %}<a class="rpl-row-link" href="{{ coaching_links.development }}">{{ row.pd_to_review }} to review</a>{% else %}0{% endif %}</td>
+            <td data-label="Last coaching">{% if row.last_coaching %}{{ row.last_coaching|date:"j M" }}{% if row.last_coaching_kind %}<span class="rpl-muted"> · {{ row.last_coaching_kind }}</span>{% endif %}{% if row.coaching_open_follow_up %} <span data-tone="warning">follow-up open</span>{% endif %}{% else %}<span class="rpl-muted">Not coached yet</span>{% endif %}</td>
+            <td class="is-num" data-label="Returned">{% if row.returned %}<span data-tone="danger">{{ row.returned }}</span>{% else %}0{% endif %}</td>
+            <td class="is-num" data-label="SF IDs pending">{% if row.sf_pending %}<span data-tone="warning">{{ row.sf_pending }}</span>{% else %}0{% endif %}</td>
+            <td class="is-end" data-label="Open"><a class="rpl-row-link rounded-control" href="{{ row.coaching_url }}">Coaching<span class="sr-only"> for {{ row.name }}</span></a> <a class="rpl-row-link rounded-control" href="{{ row.conversation_url }}">Conversation<span class="sr-only"> with {{ row.name }}</span></a></td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="9" class="rpl-table__empty">
+              {% include "components/empty_state.html" with message="No officers are on your team yet." hint="Officers appear here once they are assigned to you as their supervisor." compact="true" %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if coaching_totals.returned or coaching_totals.sf_pending %}
+    <div class="rpl-card__footnote">{{ coaching_totals.returned }} returned activit{{ coaching_totals.returned|pluralize:"y,ies" }} and {{ coaching_totals.sf_pending }} completed activit{{ coaching_totals.sf_pending|pluralize:"y,ies" }} without an Activity SF ID. <a href="/dashboard/pl-drilldown?drill=sf_backlog&amp;fy={{ fy }}" hx-get="/dashboard/pl-drilldown?drill=sf_backlog&amp;fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML">See the SF IDs pending</a> or open the <a href="{{ coaching_links.evidence }}">Evidence Center</a>.</div>
+    {% endif %}
+  </section>
+</div>

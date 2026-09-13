@@ -1,0 +1,296 @@
+{% load table_pagination frontend_filters %}
+{% comment %}
+Trainings (Programme Rollout, owner 2026-09-13): the year's team trainings by
+SSA intervention (Christlike Behaviour and the Word of God first), by governed
+course and by officer, what is due in the next 30 days, and what the Regional
+Lead's shared observations say about courses and partners. "Delivered" is
+verified or closed work; "held, in review" is a training that happened and is
+still being completed or verified. Figures:
+apps.analytics.programme_rollout_service.trainings_rollout.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-interventions-title" data-rollout-interventions>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-interventions-title" class="rpl-card__title">Trainings by SSA intervention</h2>
+      <span class="rpl-card__subtitle">All eight interventions, the spiritual pair first · FY {{ fy }}</span>
+    </div>
+    <a class="rpl-card__link" href="/programme-rollout?view=spiritual&amp;{{ carry_query }}">Spiritual transformation <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Trainings by SSA intervention; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">The team's trainings this year by the SSA intervention each targets: planned, delivered, held and in review, schools reached, teachers and leaders trained, and who delivered them.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Intervention</th>
+          <th scope="col" class="is-num">Planned</th>
+          <th scope="col" class="is-num">Delivered</th>
+          <th scope="col" class="is-num">Held, in review</th>
+          <th scope="col" class="is-num">Schools reached</th>
+          <th scope="col" class="is-num">Teachers</th>
+          <th scope="col" class="is-num">Leaders</th>
+          <th scope="col" class="is-num">By staff</th>
+          <th scope="col" class="is-num">By partners</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rollout.interventions %}
+        <tr data-intervention="{{ row.code }}">
+          <th scope="row" data-record-title title="{{ row.name }}"><span>{{ row.abbr }} · {{ row.name }}</span></th>
+          <td class="is-num" data-label="Planned">{{ row.planned }}</td>
+          <td class="is-num" data-label="Delivered">{% if row.planned %}<span data-tone="{% if row.delivered_share >= 80 %}success{% elif row.delivered_share >= 50 %}warning{% else %}neutral{% endif %}">{{ row.delivered }}</span>{% else %}0{% endif %}</td>
+          <td class="is-num" data-label="Held, in review">{{ row.in_review }}</td>
+          <td class="is-num" data-label="Schools reached">{{ row.schools_reached|intcomma }}</td>
+          <td class="is-num" data-label="Teachers">{{ row.teachers|intcomma }}</td>
+          <td class="is-num" data-label="Leaders">{{ row.leaders|intcomma }}</td>
+          <td class="is-num" data-label="By staff">{{ row.by_staff }}</td>
+          <td class="is-num" data-label="By partners">{{ row.by_partner }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+
+{% paginate rollout.courses "course_page" 12 as course_pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-courses-title" data-rollout-courses>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-courses-title" class="rpl-card__title">Trainings by course</h2>
+      <span class="rpl-card__subtitle">The governed Training Catalogue, with the Regional Lead's observations of each · {{ course_pager.total }} course{{ course_pager.total|pluralize }}</span>
+    </div>
+    <a class="rpl-card__link" href="/cce-leadership/feedback">Training feedback <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Trainings by course; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each governed training course this year: its category and intervention, planned and delivered sessions, schools, teachers and leaders reached, staff and partner delivery, and the Regional Lead's average rating.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Course</th>
+          <th scope="col">Category</th>
+          <th scope="col">Intervention</th>
+          <th scope="col" class="is-num">Planned</th>
+          <th scope="col" class="is-num">Delivered</th>
+          <th scope="col" class="is-num">Schools reached</th>
+          <th scope="col" class="is-num">Teachers and leaders</th>
+          <th scope="col" class="is-num">Staff · partner</th>
+          <th scope="col" class="is-num">Regional Lead rating</th>
+          <th scope="col" class="is-num">Open recommendations</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in course_pager.rows %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.name }}</span></th>
+          <td data-label="Category">{{ row.category }}</td>
+          <td data-label="Intervention" title="{{ row.intervention_name }}">{{ row.abbr }}</td>
+          <td class="is-num" data-label="Planned">{{ row.planned }}</td>
+          <td class="is-num" data-label="Delivered">{{ row.delivered }}</td>
+          <td class="is-num" data-label="Schools reached">{{ row.schools_reached|intcomma }}</td>
+          <td class="is-num" data-label="Teachers and leaders">{{ row.teachers|add:row.leaders|intcomma }}</td>
+          <td class="is-num" data-label="Staff · partner">{{ row.by_staff }} · {{ row.by_partner }}</td>
+          <td class="is-num" data-label="Regional Lead rating">{% if row.rating is not None %}<span data-tone="{% if row.rating >= 3 %}success{% elif row.rating >= 2 %}warning{% else %}danger{% endif %}">{{ row.rating }} of 4</span> <span class="rpl-muted">({{ row.observed }})</span>{% else %}<span class="rpl-muted">Not observed</span>{% endif %}</td>
+          <td class="is-num" data-label="Open recommendations">{% if row.open_recommendations %}<span data-tone="warning">{{ row.open_recommendations }}</span>{% else %}0{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="10">
+            {% include "components/empty_state.html" with message="No training course is active in the catalogue." hint="Courses appear here once the Training Catalogue holds them, with zeros until the team plans one." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=course_pager param="course_page" %}
+</section>
+
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-officer-trainings-title" data-rollout-officer-trainings>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-officer-trainings-title" class="rpl-card__title">Trainings by officer</h2>
+      <span class="rpl-card__subtitle">Each officer's trainings and how much of their portfolio is trained this year</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Trainings by officer; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each officer's trainings this year, the share of their portfolio trained, teachers and leaders reached, staff and partner delivery and their next training.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Officer</th>
+          <th scope="col" class="is-num">Planned</th>
+          <th scope="col" class="is-num">Delivered</th>
+          <th scope="col" class="is-num">Held, in review</th>
+          <th scope="col" class="is-num">Schools trained</th>
+          <th scope="col" class="is-num">Teachers and leaders</th>
+          <th scope="col" class="is-num">Staff · partner</th>
+          <th scope="col">Next training</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rollout.officers|slice:":60" %}
+        <tr>
+          <th scope="row" data-record-title><span>{% if row.profile_url %}<a href="{{ row.profile_url }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</span></th>
+          <td class="is-num" data-label="Planned">{{ row.planned }}</td>
+          <td class="is-num" data-label="Delivered">{{ row.delivered }}</td>
+          <td class="is-num" data-label="Held, in review">{{ row.in_review }}</td>
+          <td class="is-num" data-label="Schools trained">{% if row.portfolio %}<span data-tone="{% if row.trained_share >= 80 %}success{% elif row.trained_share >= 50 %}warning{% else %}danger{% endif %}">{{ row.schools_trained }} of {{ row.portfolio }}</span>{% else %}<span class="rpl-muted">No schools</span>{% endif %}</td>
+          <td class="is-num" data-label="Teachers and leaders">{{ row.teachers|add:row.leaders|intcomma }}</td>
+          <td class="is-num" data-label="Staff · partner">{{ row.by_staff }} · {{ row.by_partner }}</td>
+          <td data-label="Next training">{% if row.next_training %}{{ row.next_training|date:"j M Y" }}{% else %}<span class="rpl-muted">None scheduled</span>{% endif %}</td>
+          <td class="is-end" data-record-action data-label="Actions">
+            {% if row.schools_untrained %}<a href="{{ schools_url }}?kind=not_trained&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=not_trained&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not yet trained</a>{% endif %}
+            <a href="{{ row.oversight_url }}" class="rpl-row-link rounded-control">Oversight</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="9">
+            {% include "components/empty_state.html" with message="No officers or portfolio schools on this team yet." hint="Officers appear here once HR records you as their supervisor." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rpl-card__footnote">Schools trained counts a verified training at the school or a confirmed attendance at a verified cluster training, the rule every page uses. Oversight opens the officer's plan in Team Oversight, read-only.</div>
+</section>
+
+<div class="rpl-columns">
+  <div class="rpl-columns__main">
+    {% paginate rollout.upcoming "upcoming_page" 10 as upcoming_pager %}
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-upcoming-title" data-rollout-upcoming>
+      <header class="rpl-card__header">
+        <div class="rpl-card__heading">
+          <h2 id="rollout-upcoming-title" class="rpl-card__title">Trainings in the next {{ rollout.upcoming_days }} days</h2>
+          <span class="rpl-card__subtitle">{{ upcoming_pager.total }} scheduled across the team</span>
+        </div>
+      </header>
+      <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Upcoming trainings; scroll sideways for more columns">
+        <table class="rpl-table" data-mobile-table="scroll">
+          <caption class="sr-only">Team trainings planned for the next {{ rollout.upcoming_days }} days, where, who delivers them and their state.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">Training</th>
+              <th scope="col">School or cluster</th>
+              <th scope="col">Delivered by</th>
+              <th scope="col">Intervention</th>
+              <th scope="col">State</th>
+              <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in upcoming_pager.rows %}
+            <tr>
+              <td data-label="Date">{{ row.date|date:"j M" }}</td>
+              <th scope="row" data-record-title><span>{{ row.training }}</span></th>
+              <td data-label="School or cluster">{{ row.place }}</td>
+              <td data-label="Delivered by">{{ row.delivered_by }}{% if row.delivery == "Partner" %} <span class="rpl-muted">(partner)</span>{% endif %}</td>
+              <td data-label="Intervention">{{ row.abbr }}</td>
+              <td data-label="State">{{ row.status_label }}</td>
+              <td class="is-end" data-record-action data-label="Actions"><a href="{{ row.url }}" class="rpl-row-link rounded-control">Open</a></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td class="rpl-table__empty" colspan="7">
+                {% include "components/empty_state.html" with message="No team training is scheduled in the next 30 days." hint="Officers schedule trainings from Planning; partner trainings appear once the partner sets a date." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% include "components/table_pager.html" with pager=upcoming_pager param="upcoming_page" %}
+    </section>
+  </div>
+
+  <div class="rpl-columns__side">
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-observed-title" data-rollout-observations>
+      <header class="rpl-card__header">
+        <div class="rpl-card__heading">
+          <h2 id="rollout-observed-title" class="rpl-card__title">Regional Lead observations</h2>
+          <span class="rpl-card__subtitle">Average ratings by who delivered · FY {{ fy }}</span>
+        </div>
+        <a class="rpl-card__link" href="/cce-leadership/feedback">Open feedback <span aria-hidden="true">&rarr;</span></a>
+      </header>
+      <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Observation ratings by deliverer">
+        <table class="rpl-table" data-mobile-table="scroll">
+          <caption class="sr-only">The Regional Lead's shared observations of the team's trainings this year, by who delivered them: trainings observed, average rating out of 4, Biblical integration and open recommendations.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Delivered by</th>
+              <th scope="col" class="is-num">Observed</th>
+              <th scope="col" class="is-num">Rating</th>
+              <th scope="col" class="is-num">Biblical integration</th>
+              <th scope="col" class="is-num">Open</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in rollout.observations_by_deliverer|slice:":30" %}
+            <tr>
+              <th scope="row" data-record-title title="{{ row.kind }}"><span>{{ row.name }}</span></th>
+              <td class="is-num" data-label="Observed">{{ row.observed }}</td>
+              <td class="is-num" data-label="Rating">{% if row.rating is not None %}{{ row.rating }} of 4{% else %}—{% endif %}</td>
+              <td class="is-num" data-label="Biblical integration">{% if row.biblical is not None %}{{ row.biblical }} of 4{% else %}—{% endif %}</td>
+              <td class="is-num" data-label="Open">{% if row.open_recommendations %}<span data-tone="warning">{{ row.open_recommendations }}</span>{% else %}0{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td class="rpl-table__empty" colspan="5">
+                {% include "components/empty_state.html" with message="No observation has been shared with you this year." hint="The Regional Lead's feedback on a training appears here once it is shared." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</div>
+
+{% paginate rollout.recommendations "recommendation_page" 10 as recommendation_pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-recommendations-title" data-rollout-recommendations>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-recommendations-title" class="rpl-card__title">Strengthen or replace recommendations</h2>
+      <span class="rpl-card__subtitle">What the Regional Lead asked to change, unanswered first · {{ recommendation_pager.total }} this year</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Recommendations; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Regional Lead recommendations to strengthen or replace a training this year, with who delivered it, the rating, whether you have answered, and any partner follow-up you recorded.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Training</th>
+          <th scope="col">Delivered by</th>
+          <th scope="col">Observed</th>
+          <th scope="col">Recommendation</th>
+          <th scope="col" class="is-num">Rating</th>
+          <th scope="col">State</th>
+          <th scope="col">Partner follow-up</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in recommendation_pager.rows %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.training }}</span></th>
+          <td data-label="Delivered by">{{ row.delivered_by }}</td>
+          <td data-label="Observed">{{ row.held_on|date:"j M Y" }}</td>
+          <td data-label="Recommendation">{{ row.recommendation }}</td>
+          <td class="is-num" data-label="Rating">{% if row.rating is not None %}{{ row.rating }} of 4{% else %}—{% endif %}</td>
+          <td data-label="State"><span data-tone="{{ row.state_tone }}">{{ row.state }}</span></td>
+          <td data-label="Partner follow-up">{% if row.follow_up %}{{ row.follow_up }}{% else %}<span class="rpl-muted">None recorded</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="7">
+            {% include "components/empty_state.html" with message="No training was recommended for strengthening or replacement this year." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=recommendation_pager param="recommendation_page" %}
+</section>

@@ -253,16 +253,39 @@ def _items_owned_by(items, owner_ids) -> list:
     ]
 
 
+#: The Programme Lead's default tab: their own work and every officer's, in one
+#: list grouped by the person answerable for each row.
+WHOLE_TEAM_TAB = "team"
+
+
 def _team_owner_tabs(scope, items, selected: str) -> tuple[list[dict], str, list]:
+    """Whole team, My Work, then one tab per supervised officer.
+
+    Whole team comes first and is the default (Programme Lead alignment,
+    2026-09-13): leading a team starts from the team, and opening on "My Work"
+    showed a lead with no portfolio of their own an empty page. The officer
+    tabs stay so a lead can narrow to one person; the fund-approval "View Full
+    Plan" link still lands on that officer, whichever id space it carries.
+    """
     members = _team_members(scope)
     own_items = _items_owned_by(items, scope.own_ids)
     tabs = [
+        {
+            # Everything the team lens holds. `build_items` already bounded it
+            # to the lead and their officers — including partner work reached
+            # through a school or cluster they own — so this tab re-filters
+            # nothing and cannot lose a row the officer tabs would show.
+            "key": WHOLE_TEAM_TAB,
+            "label": "Whole team",
+            "count": len(items),
+            "items": list(items),
+        },
         {
             "key": "mine",
             "label": "My Work",
             "count": len(own_items),
             "items": own_items,
-        }
+        },
     ]
     for member in members:
         member_items = _items_owned_by(items, member["owner_ids"])
@@ -363,7 +386,7 @@ def team_planning_oversight_view(request):
     selected = (
         (request.GET.get("program_lead") or "").strip()
         if country_lens
-        else (request.GET.get("owner") or "mine").strip()
+        else (request.GET.get("owner") or WHOLE_TEAM_TAB).strip()
     )
     if country_lens:
         tabs, selected, visible = _program_lead_tabs(items, selected)
@@ -412,6 +435,12 @@ def team_planning_oversight_view(request):
         "active_oversight_view": "planning",
         "can_view_team_targets": can_view_targets,
         "can_view_team_planning": can_view_planning,
+        # The header link to completed work missing its evidence, drawn only
+        # for readers who may open the Evidence Centre (the Accountant and the
+        # RVP reach this page and may not).
+        "can_open_evidence": RolePermissionService.can_view_page(
+            request.user, "evidence_center"
+        ),
     }
 
     if request.headers.get("HX-Request") == "true":
@@ -668,8 +697,9 @@ def team_planning_export_view(request):
             items, (request.GET.get("program_lead") or "").strip()
         )
     else:
+        # The export follows the tab the page shows, Whole team by default.
         _, _, visible = _team_owner_tabs(
-            scope, items, (request.GET.get("owner") or "mine").strip()
+            scope, items, (request.GET.get("owner") or WHOLE_TEAM_TAB).strip()
         )
     return _export_response(visible, f"team-planning-oversight-{period['fy']}.csv")
 
@@ -990,6 +1020,31 @@ def partner_oversight_view(request):
         in ("CountryDirector", "Program Lead", "Admin"),
     }
 
+    # The partnership work beside the delivery (owner, 2026-09-13): the
+    # meetings, orientations and quality follow-ups the Programme Lead and the
+    # Country Director hold with a partner, for the period's FY and the partner
+    # tab in view. Only the roles that record engagements (and Admin, who
+    # reads them) see the section; the officer, IA and the Accountant read
+    # partner delivery here, not the partnership log.
+    from apps.partners import engagement_services
+
+    if (
+        engagement_services.can_record(request.user)
+        or request.user.active_role == "Admin"
+    ):
+        from apps.frontend.views import partner_engagement_views
+
+        context["engagement"] = partner_engagement_views.engagement_register(
+            request,
+            fy=period["fy"],
+            partner_id=None if partner_id == "all" else partner_id,
+            rows_in_fy=True,
+        )
+        context["engagement_show_metrics"] = True
+        context["engagement_autoload"] = partner_engagement_views.autoload_drawer(
+            request
+        )
+
     if request.headers.get("HX-Request") == "true":
         return render(request, "partials/oversight/partner_workspace.html", context)
     return render(request, "pages/oversight/partner_oversight.html", context)
@@ -1070,6 +1125,7 @@ def partner_oversight_detail_view(request):
     from apps.planning.partner_oversight_actions import (
         CCEO_ADDRESSED_RISKS,
         PARTNER_ADDRESSED_RISKS,
+        escalation_addressee_label,
     )
 
     # Which send each risk offers is decided here, from who the risk names as
@@ -1098,6 +1154,8 @@ def partner_oversight_detail_view(request):
             "item": item,
             "lineage": _partner_lineage(item),
             "can_act": _partner_scope(request.user)["kind"] == "team",
+            # Who Escalate reaches, from the reader's reporting line.
+            "escalate_to": escalation_addressee_label(request.user),
         },
     )
 
@@ -1184,10 +1242,13 @@ def partner_oversight_send_action_view(request):
             )
             message = f"Sent to {_recipient_name(action)}. Tracked under Actions Sent."
         elif intent == "escalate":
-            action = actions.escalate_to_country_director(
+            escalation = actions.escalate_to_country_director(
                 sender=request.user, item=item, note=note
             )
-            message = f"Escalated to {_recipient_name(action)}."
+            message = (
+                f"Escalated to the {escalation.get_addressed_role_display()}. "
+                "Follow it on Escalations."
+            )
         else:
             return _action_response(request, "Unknown action.", ok=False)
     except ActionError as exc:

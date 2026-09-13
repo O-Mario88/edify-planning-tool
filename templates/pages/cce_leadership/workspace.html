@@ -5,11 +5,17 @@
 
 {% block shell_content %}
 {% comment %}
-One register page for the CCE Regional Lead's records (owner, 2026-09-13):
-the engagement log, training feedback and the monthly reports. The view
-(apps/frontend/views/cce_leadership_views.py) hands it a header, registered
-KPI tiles, rows of text cells with a tone, and the drawer each row opens. The
-cards and table take the Regional Programme Lead dashboard's grammar.
+One register page for the CCE leadership records (owner, 2026-09-13): the
+Regional Lead's engagement log, training feedback, Regional Lead coaching and
+the monthly reports, and the Programme Lead's coaching of their officers
+(/team/coaching, /my-coaching). The views (apps/frontend/views/
+cce_leadership_views.py, coaching_views.py) hand it a header, registered KPI
+tiles, rows of text cells with a tone, and the drawer or page each row action
+opens. The cards and table take the Regional Programme Lead dashboard's grammar.
+
+`panel_template` adds one card above the register (the Programme Lead's
+"This month's one-to-ones"). `autoload_drawer` is a drawer URL the view built
+from a To-Do or notification link (?open=…); it opens once the page loads.
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-cce-workspace>
   <div class="edify-page-header">
@@ -27,9 +33,13 @@ cards and table take the Regional Programme Lead dashboard's grammar.
     {% endif %}
   </div>
 
+  {% include "partials/_section_nav.html" %}
+
   {% if notice %}<div class="edify-note" data-tone="{{ notice.tone|default:'info' }}" role="status">{{ notice.text }}</div>{% endif %}
 
   {% include "components/context_metrics.html" with items=metrics variant="executive" title=title|add:" at a glance" %}
+
+  {% if panel_template %}{% include panel_template %}{% endif %}
 
   {% paginate rows "register_page" as pager %}
   <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="cce-register-title" data-cce-register>
@@ -80,7 +90,11 @@ cards and table take the Regional Programme Lead dashboard's grammar.
             {% if has_row_actions %}
             <td class="is-end" data-record-action data-label="Actions">
               {% for action in row.actions %}
+              {% if action.href %}
+              <a href="{{ action.href }}" class="rpl-row-link rounded-control">{{ action.label }}</a>
+              {% else %}
               <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% endif %}
               {% endfor %}
             </td>
             {% endif %}
@@ -100,5 +114,7 @@ cards and table take the Regional Programme Lead dashboard's grammar.
   </section>
 
   {% if rhythm %}{% include "partials/dashboards/rpl/rhythm.html" with rhythm_limit=12 %}{% endif %}
+
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-cce-autoload></div>{% endif %}
 </div>
 {% endblock %}

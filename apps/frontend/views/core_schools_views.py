@@ -17,7 +17,7 @@ from apps.core.permissions import (
     get_visit_target_school_or_404,
 )
 from apps.core.exceptions import BadRequest
-from apps.core.fy import get_operational_fy
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.enums import SsaIntervention
 from apps.schools.models import School
 from apps.geography.models import Region, District
@@ -70,7 +70,10 @@ def _core_page_size(request) -> int:
 @require_page_permission("core_schools")
 def core_schools_view(request):
     """Core Schools planning main dashboard view."""
-    fy = request.GET.get("fy", "2026")
+    # The operational year unless a year the platform offers is chosen
+    # (Programme Lead alignment, 2026-09-13): "2026" was a literal default.
+    requested_fy = (request.GET.get("fy") or "").strip()
+    fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
 
     # 1. Filters
     filters = {
@@ -286,6 +289,7 @@ def core_schools_view(request):
     context = {
         "fy": fy,
         "selected_fy": fy,
+        "fy_options": fy_options(),
         "selected_region": filters["region"],
         "selected_district": filters["district"],
         "selected_staff": filters["staff"],

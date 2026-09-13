@@ -89,6 +89,10 @@ RESTRICTED_ROUTING = {
     RestrictedIncidentCategory.OTHER: (EdifyRole.COUNTRY_DIRECTOR.value,),
 }
 
+# A debrief the author finished and the supervising Programme Lead has not yet
+# read and answered: freshly submitted, or updated after a clarification.
+REVIEWABLE_STATUSES = (DebriefStatus.SUBMITTED, DebriefStatus.UPDATED)
+
 RISK_ROUTING = {
     RiskLevel.PL_ATTENTION: (),  # PL already routed as the default recipient
     RiskLevel.CD_ATTENTION: (EdifyRole.COUNTRY_DIRECTOR.value,),
@@ -516,7 +520,13 @@ class FieldDebriefService:
                 | Q(recipients__recipient_user_id=principal.user_id)
             ).distinct()
         elif role == EdifyRole.COUNTRY_PROGRAM_LEAD.value and sp:
-            team_ids = team_staff_ids(sp.id)
+            # Direct supervisees, plus an absent lead's officers while this lead
+            # covers them (apps.hr.team_roster.team_members, 2026-09-13).
+            from apps.hr.team_roster import team_member_ids
+
+            team_ids = sorted(
+                set(team_staff_ids(sp.id)) | set(team_member_ids(principal))
+            )
             partner_ids = list(scope.partner_ids or [])
             qs = qs.filter(
                 Q(staff_id=sp.id)
@@ -612,6 +622,118 @@ class FieldDebriefService:
             context_id=debrief.id,
             recipients=[debrief.submitted_by_user_id],
         )
+        return debrief
+
+    # ── Supervision (Programme Lead alignment, 2026-09-13) ────────────────
+    # "Line-management, supervision, leadership, and support to CCEOs": the
+    # officer's supervising Programme Lead reads each debrief and answers it.
+    # Before this a debrief could be clarified or escalated but never simply
+    # reviewed, so the lead had no way to say "read, and here is my feedback"
+    # and the officer never heard back on routine days.
+
+    @staticmethod
+    def supervises(principal, debrief: DailyDebrief) -> bool:
+        """Whether the principal is the Programme Lead this debrief's author
+        reports to (team_members, cover included). Never their own debrief."""
+        if (
+            getattr(principal, "active_role", "")
+            != EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        ):
+            return False
+        if not debrief.staff_id or debrief.submitted_by_user_id == principal.user_id:
+            return False
+        from apps.hr.team_roster import team_member_ids
+
+        return debrief.staff_id in set(team_member_ids(principal))
+
+    @staticmethod
+    def awaiting_review(principal, qs: QuerySet | None = None) -> QuerySet:
+        """The team's debriefs this Programme Lead has not reviewed yet: the
+        "Awaiting my review" tab. Empty for every other role."""
+        if (
+            getattr(principal, "active_role", "")
+            != EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        ):
+            return DailyDebrief.objects.none()
+        from apps.hr.team_roster import team_member_ids
+
+        team_ids = team_member_ids(principal)
+        if not team_ids:
+            return DailyDebrief.objects.none()
+        base = qs if qs is not None else FieldDebriefService.scoped_queryset(principal)
+        return base.filter(
+            staff_id__in=team_ids, status__in=REVIEWABLE_STATUSES
+        ).exclude(submitted_by_user_id=principal.user_id)
+
+    @staticmethod
+    def mark_reviewed(principal, debrief_id: str, feedback: str) -> DailyDebrief:
+        """The supervising Programme Lead records that they read the debrief,
+        with feedback for the officer. The officer is notified.
+
+        Out-of-scope debriefs stay 404 (get_one); a reader in scope who is not
+        the author's Programme Lead is refused. Only a debrief waiting for
+        review (submitted, or updated after clarification) can be reviewed,
+        and feedback is required — a review with nothing in it tells the
+        officer nothing.
+        """
+        debrief = FieldDebriefService.get_one(principal, debrief_id)
+        if not FieldDebriefService.supervises(principal, debrief):
+            raise Forbidden(
+                "Only the Programme Lead this officer reports to may mark their "
+                "debrief reviewed."
+            )
+        if debrief.status not in REVIEWABLE_STATUSES:
+            raise BadRequest("This debrief is not waiting for your review.")
+        feedback = (feedback or "").strip()
+        if not feedback:
+            raise BadRequest(
+                "Write your feedback for the officer before marking it reviewed."
+            )
+        debrief.status = DebriefStatus.REVIEWED
+        debrief.review_note = feedback
+        debrief.reviewed_by_user_id = principal.user_id
+        debrief.reviewed_at = timezone.now()
+        debrief.save(
+            update_fields=[
+                "status",
+                "review_note",
+                "reviewed_by_user_id",
+                "reviewed_at",
+            ]
+        )
+
+        from apps.audit.services import log as audit_log
+        from apps.notifications.services import (
+            WorkflowNotificationService,
+            resolve_condition,
+        )
+
+        audit_log(
+            action="field_debrief_reviewed",
+            subject_kind="DailyDebrief",
+            subject_id=debrief.id,
+            actor_id=principal.user_id,
+            actor_role=getattr(principal, "active_role", ""),
+            payload={"title": debrief.title},
+        )
+        # The lead's own "routed" notice is answered; other readers' are not.
+        resolve_condition(
+            ["field_debrief_routed"],
+            "field_debrief",
+            debrief.id,
+            recipient_ids=[principal.user_id],
+        )
+        if debrief.submitted_by_user_id:
+            WorkflowNotificationService.trigger(
+                event_type="field_debrief_reviewed",
+                category="field_debrief",
+                priority="normal",
+                title=f"Debrief reviewed: {debrief.title}",
+                body=feedback[:300],
+                context_type="field_debrief",
+                context_id=debrief.id,
+                recipients=[debrief.submitted_by_user_id],
+            )
         return debrief
 
     @staticmethod

@@ -946,48 +946,35 @@ class PlatformDesignSystemQualityTest(SimpleTestCase):
             f"viewport workspaces and drawers: {offenders}",
         )
 
-    def test_program_lead_funding_card_sits_to_the_right_of_ssa_intelligence(self):
+    def test_program_lead_programmes_view_keeps_ssa_intelligence_without_funding(self):
+        """Funding & Execution and Team Backlog left the Program Lead dashboard
+        on 2026-09-13 (owner): they answered none of the role's
+        responsibilities, and Fund Approvals is where a lead reads a team's
+        money. SSA Intelligence stays, in the Programmes view, with the
+        school risk list shown once at the foot of that view."""
+        pl_dir = ROOT / "templates/partials/dashboards/pl"
         dashboard = _read("templates/partials/dashboards/pl/body.html")
-        funding = _read("templates/partials/dashboards/pl/funding_execution.html")
-        pages = _read("static/css/pages.css")
+        programmes = _read("templates/partials/dashboards/pl/programmes_view.html")
+        every_view = {path.name: path.read_text() for path in pl_dir.glob("*.html")}
 
-        # Packing columns: SSA Intelligence and Team Backlog stack in the
-        # flexible left track, finance keeps the compact right one. Both
-        # left-column cards answer "what is wrong in my portfolio", and
-        # pairing them fills the height the taller finance column used to
-        # leave as blank space beside a single short card. DOM order is
-        # left column top-to-bottom, then right — which is the order the
-        # page is read in, so assistive tech and the eye agree.
-        self.assertIn('class="pl-ssa-funding-grid edify-pack-cols"', dashboard)
-        self.assertIn('class="edify-pack-col"', dashboard)
-        self.assertIn('aside class="pl-funding-card ', dashboard)
+        for name, text in every_view.items():
+            with self.subTest(template=name):
+                self.assertNotIn("Funding &amp; Execution", text)
+                self.assertNotIn("funding_execution.html", text)
+                self.assertNotIn("Team Backlog", text)
+        self.assertFalse((pl_dir / "funding_execution.html").exists())
+        self.assertFalse((pl_dir / "backlog_snapshot.html").exists())
+        self.assertIn("partials/dashboards/pl/ssa_intelligence.html", programmes)
         self.assertLess(
-            dashboard.index("SSA Intelligence"), dashboard.index("Team Backlog")
+            programmes.index("SSA Intelligence"),
+            programmes.index("Schools Needing Urgent Attention"),
         )
-        self.assertLess(
-            dashboard.index("Team Backlog"), dashboard.index("Funding &amp; Execution")
-        )
-        self.assertIn("pl-funding-card__body", dashboard)
-        self.assertIn("pl-funding-summary", funding)
-        self.assertLess(
-            funding.index("pl-funding-donut"), funding.index("pl-funding-statuses")
-        )
-        self.assertIn("container: pl-dashboard / inline-size", pages)
-        # Narrow workspaces stack in DOM order; wide dashboard containers give
-        # SSA the flexible left track and place finance in the compact right.
-        self.assertIn(
-            """.pl-ssa-funding-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);""",
-            pages,
-        )
-        self.assertIn("@container pl-dashboard (min-width: 64rem)", pages)
-        self.assertIn(
-            "grid-template-columns: minmax(0, 2.35fr) minmax(17rem, 0.8fr)",
-            pages,
-        )
-        self.assertIn(".pl-ssa-matrix-scroll, .pl-urgent-table-scroll", pages)
-        self.assertIn("overflow-x: clip", pages)
+        # Shown once: the risk list is a card in Programmes and nowhere else.
+        # `dashboard` is the body with every view it includes expanded.
+        heading = "Schools Needing Urgent Attention</h2>"
+        self.assertEqual(dashboard.count(heading), 1)
+        self.assertEqual(sum(text.count(heading) for text in every_view.values()), 1)
+        self.assertEqual(programmes.count(heading), 1)
 
     def test_priority_milestones_use_the_compact_reference_record_grid(self):
         # Priority Setting is a tab of the Priorities page since

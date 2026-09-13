@@ -172,12 +172,13 @@ accountability record, because the CCEO is not the one who is late.
     </dl>
   </section>
 
-  {% if can_act %}
+  {% if can_act and escalate_to %}
   <section aria-labelledby="partner-escalate" class="border-t edify-border pt-3">
     <h3 id="partner-escalate" class="text-sm font-semibold mb-1">Escalate</h3>
     <p class="edify-text-caption edify-text-muted mb-2">
       For when asking has not moved it. A Program Lead cannot replace a partner
-      or reprice the work; the Country Director can.
+      or reprice the work; the Country Director can. The escalation goes to
+      {{ escalate_to }} and is decided on Escalations.
     </p>
     <form hx-post="/partner-oversight/send"
           hx-target="#partner-send-result-escalate"
@@ -190,7 +191,7 @@ accountability record, because the CCEO is not the one who is late.
       <input id="escalation-note" name="note" type="text" required
              class="h-9 px-3 rounded-control border edify-border text-sm edify-note-field"
              placeholder="What have you already tried?">
-      <button type="submit" class="btn h-8">Escalate to Country Director</button>
+      <button type="submit" class="btn h-8">Escalate</button>
     </form>
     <div id="partner-send-result-escalate" class="mt-2"></div>
   </section>

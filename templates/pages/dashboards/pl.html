@@ -6,58 +6,48 @@
 {% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}{% endblock %}
 
 {% block shell_content %}
-<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]">
+{% comment %}
+The Programme Lead's home (owner, 2026-09-13), organised around the five
+responsibilities of the role: strategic direction, team leadership,
+performance management, programme implementation and collaboration. The team
+pulse and Leadership Attention stay fixed; the rail swaps one view at a time.
+The dashboard is a read — every control opens the page where the work is done.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-pl-dashboard>
 
-  {% include "components/mobile_role_home.html" with eyebrow="Program leadership" headline="Move the team forward" description="Resolve the highest-risk team issue, then review performance and approvals." period_label="FY "|add:fy status_label=scope_meta.school_count primary_action=mobile_primary_action %}
+  {% include "components/mobile_role_home.html" with eyebrow="Program leadership" headline="Lead the team forward" description="Start with what your team is waiting on, then coach, direct and follow up." period_label="FY "|add:fy status_label=mobile_status_label primary_action=mobile_primary_action %}
 
-  {% comment %}
-  The canonical page header. This markup used to carry the surface inline —
-  background and border referencing --header-band-bg / --header-band-border,
-  variables that were defined nowhere, so the effect came from the fallback
-  literal. It looked right and was unavailable to every other page. The
-  surface now lives in .edify-page-header and real tokens.
-  {% endcomment %}
   <header class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
       <h1 class="edify-page-header__title edify-page-title">Program Lead Dashboard</h1>
-      <p class="edify-page-header__description">Team execution, approvals, targets, planning quality &amp; operations.</p>
+      <p class="edify-page-header__description">Set direction, lead and coach your CCEOs, roll out training, SSA and spiritual transformation, and work with the Regional Lead, the Country Director and training partners.</p>
     </div>
-    {% comment %}Scope, not a filter. This sat inside the filter form, which
-    put a read-only statement in a row of controls and — on a phone, where
-    the row stacks — dropped a three-line block between the filters and the
-    KPIs. The Country Director dashboard already states its scope here; this
-    is the same statement in the same place.{% endcomment %}
+    {% comment %}Scope, not a filter: a read-only statement of whose work this is.{% endcomment %}
     <div class="edify-page-header__controls">
-      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap edify-surface border edify-border edify-text-muted">
+      <span class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-pill edify-text-caption font-semibold whitespace-nowrap edify-surface border edify-border edify-text-muted" data-pl-scope>
         <span class="h-1.5 w-1.5 rounded-pill" style="background:var(--edify-success);"></span>
-        <span class="hidden sm:inline">{{ scope_meta.cceo_count }} CCEOs · {{ scope_meta.school_count }} schools</span>
-        <span class="sm:hidden">{{ scope_meta.school_count }} schools</span>
+        <span class="hidden sm:inline">{{ scope_meta.cceo_count }} CCEO{{ scope_meta.cceo_count|pluralize }} · {{ scope_meta.school_count|intcomma }} schools</span>
+        <span class="sm:hidden">{{ scope_meta.school_count|intcomma }} schools</span>
       </span>
     </div>
   </header>
 
-    <form id="pl-dashboard-filters"
-          hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
-          hx-trigger="change delay:80ms" hx-push-url="false"
-          class="edify-filter-bar" aria-label="Program lead dashboard filters">
-      <input type="hidden" name="view" value="{{ dashboard_view }}">
-      <div class="edify-page-header-control">
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
-        <select aria-label="Fiscal year" name="fy" class="focus:outline-none">
-          {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
-        </select>
-      </div>
-      <div class="edify-page-header-control">
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">Activity</span>
-        <select aria-label="Activity type" name="activity_type" class="focus:outline-none">
-          <option value="">All</option>
-          <option value="school_visit" {% if filters.activity_type == 'school_visit' %}selected{% endif %}>School Visits</option>
-          <option value="training" {% if filters.activity_type == 'training' %}selected{% endif %}>Trainings</option>
-          <option value="cluster_meeting" {% if filters.activity_type == 'cluster_meeting' %}selected{% endif %}>Cluster Meetings</option>
-          <option value="partner_activity" {% if filters.activity_type == 'partner_activity' %}selected{% endif %}>Partner</option>
-        </select>
-      </div>
-    </form>
+  {% comment %}One filter, the year: every figure on the page reads it. The view
+  travels with the form so a year change keeps the tab you are on.{% endcomment %}
+  <form id="pl-dashboard-filters"
+        hx-get="/dashboard" hx-target="#pl-dashboard-body" hx-swap="innerHTML"
+        hx-trigger="change delay:80ms" hx-push-url="true"
+        class="edify-filter-bar" aria-label="Program lead dashboard filters">
+    <input type="hidden" id="pl-filter-view" name="view" value="{{ dashboard_view }}">
+    {% if fy_options|length > 1 %}
+    <div class="edify-page-header-control">
+      <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
+      <select aria-label="Fiscal year" name="fy" class="focus:outline-none">
+        {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
+      </select>
+    </div>
+    {% endif %}
+  </form>
 
   <div id="pl-dashboard-body">
     {% include "partials/dashboards/pl/body.html" %}

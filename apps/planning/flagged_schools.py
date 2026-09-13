@@ -51,7 +51,11 @@ def team_flagged_schools(principal, *, fy: str, month: int | None = None) -> dic
     from apps.activities.models import Activity
     from apps.core.fy import get_operational_fy
     from apps.planning.action_models import ACTIVE_STATES, TeamAction
-    from apps.planning.urgent_attention import _PRECEDENCE, resolve_urgent_issue
+    from apps.planning.urgent_attention import (
+        _PRECEDENCE,
+        resolve_urgent_issue,
+        support_facts,
+    )
 
     fy = fy or get_operational_fy()
     month = int(month or date.today().month)
@@ -101,9 +105,12 @@ def team_flagged_schools(principal, *, fy: str, month: int | None = None) -> dic
 
     buckets: dict[tuple[str, str], list] = {}
     total = 0
+    # The classifier's facts for every planned school at once, rather than
+    # three to five queries per school inside the loop.
+    facts = support_facts(list(by_school), fy)
     for school_id, acts in by_school.items():
         school = acts[0].school
-        issue = resolve_urgent_issue(school, fy, acts)
+        issue = resolve_urgent_issue(school, fy, acts, facts=facts)
         # "Support complete" is not a flag. The card drops these for the same
         # reason: a page of problems that lists non-problems trains people to
         # skim it.

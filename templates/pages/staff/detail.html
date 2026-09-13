@@ -7,7 +7,12 @@
 {% block shell_content %}
 <div class="edify-profile-page px-4 sm:px-6 py-5 space-y-4 max-w-[1100px] mx-auto">
 <!-- Breadcrumb -->
-{% include "partials/_back_link.html" with back_href="/staff" back_label="Staff Directory" %}
+{% comment %}The back link names the list the profile was opened from (?from= or the referrer, resolved in staff_profile_view); the directory is the fallback.{% endcomment %}
+{% if back_href and back_href != "/staff" %}
+{% include "partials/_back_link.html" with back_href=back_href back_label=back_label %}
+{% else %}
+{% include "partials/_back_link.html" with back_href="/staff" back_label="People Directory" %}
+{% endif %}
 
 <!-- Page hero -->
 <div class="edify-page-header edify-page-hero">
@@ -33,6 +38,36 @@
 {% legacy_kpi_item "Completed activities" completed_count helper="Current reporting scope" tone="success" icon="check" as completed_kpi %}
 {% collect_kpi_items overdue_kpi completed_kpi as staff_activity_kpis %}
 {% include "components/context_metrics.html" with items=staff_activity_kpis variant="executive" density="compact" title="Activity headline" %}
+
+{% if supervision %}
+{% comment %}
+The line manager's panel (Programme Lead alignment, 2026-09-13): shown only to
+the Programme Lead this officer reports to. Read-only facts with the same
+definitions My Team uses, and links to the pages where each action is taken.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="staff-supervision-title" data-staff-supervision>
+<header class="rpl-card__header">
+<div class="rpl-card__heading">
+<h2 id="staff-supervision-title" class="rpl-card__title">Supervision</h2>
+<span class="rpl-card__subtitle">You line-manage {{ member.name }}.</span>
+</div>
+</header>
+<dl class="hr-drawer-facts">
+{% for fact in supervision.facts %}
+<div class="hr-drawer-facts__row">
+<dt>{{ fact.heading }}</dt>
+<dd>{% if fact.tone %}<span data-tone="{{ fact.tone }}">{{ fact.text }}</span>{% else %}{{ fact.text }}{% endif %}</dd>
+</div>
+{% endfor %}
+</dl>
+<div class="flex flex-wrap gap-2">
+<a href="{{ supervision.conversation_url }}" class="btn btn-primary h-8">Open performance conversation</a>
+<a href="{{ supervision.coaching_url }}" class="btn btn-secondary h-8">Coaching log</a>
+<button type="button" class="btn btn-secondary h-8" hx-get="{{ supervision.targets_drawer_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Team Targets</button>
+<a href="{{ supervision.leave_url }}" class="btn btn-secondary h-8">Leave</a>
+</div>
+</section>
+{% endif %}
 
 <!-- Annual SSA Progress (Assigned Schools) -->
 {% if staff_progress %}

@@ -22,7 +22,10 @@ class ProgramLeadCCEOPerformanceTableTest(SimpleTestCase):
             "Schools",
             "Delivery",
             "Exceptions",
-            "Route quality",
+            # Route quality measured the officers as route planners; the
+            # column now counts the handoffs each officer is waiting on the
+            # lead to decide (Program Lead alignment, 2026-09-13).
+            "Waiting on you",
             "Risk",
             "Action",
         ):
@@ -46,6 +49,7 @@ class ProgramLeadCCEOPerformanceTableTest(SimpleTestCase):
         self.assertIn("{{ c.verified_pct }}% verified", self.template)
         self.assertIn("SF pending", self.template)
         self.assertIn("backlog", self.template)
+        self.assertNotIn("route_quality", self.template)
 
     def test_row_action_is_a_named_native_button(self):
         self.assertIn('<button type="button"', self.template)
@@ -84,7 +88,7 @@ class ProgramLeadCCEOPerformanceTableTest(SimpleTestCase):
                 self.assertIn(token, self.styles)
 
         for visible_label in (
-            "{{ c.route_quality }}",
+            "{{ c.waiting }} to decide",
             "{{ c.risk }}",
             "SF pending",
             "backlog",

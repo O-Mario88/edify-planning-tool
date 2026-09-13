@@ -13,9 +13,12 @@ Strict precedence, SSA first:
   5. The canonical engine's top unresolved recommendation.
 
 One school appears once, under its highest issue. Everything is delegated:
-SSA validity = confirmed current-FY record; completion = IA_VERIFIED_STATUSES;
-entitlement = client one visit + one training per FY, core = package slots;
-ranking = ssa.recommendation_engine. Nothing is recomputed here.
+SSA validity = confirmed current-FY record; a visit counts once IA_VERIFIED;
+"trained" is `activities.cluster_attendance.trained_school_ids` — the school's
+own training or its attendance at a cluster session, the one definition every
+surface shares (Programme Lead alignment, 2026-09-13); entitlement = client one
+visit + one training per FY, core = package slots; ranking =
+ssa.recommendation_engine. Nothing is recomputed here.
 """
 
 from __future__ import annotations
@@ -82,29 +85,74 @@ def _schedule_context(month_activities, kinds) -> str | None:
     return None
 
 
-def resolve_urgent_issue(school, fy: str, month_activities: list) -> dict:
+def support_facts(school_ids, fy: str) -> dict[str, set[str]]:
+    """What the precedence below needs to know about many schools, in bulk.
+
+    ``{"ssa": ..., "visited": ..., "trained": ...}`` — each the set of school
+    ids for which it holds this FY. Five queries whatever the number of
+    schools, where asking one school at a time cost three per school on every
+    card and oversight page that lists them. Pass the result to
+    `resolve_urgent_issue(..., facts=...)`.
+
+    Trained reads `trained_school_ids`, so a school that sat through a verified
+    cluster training no longer reads "No Training" here while its profile and
+    the analytics cockpit call it trained.
+    """
+    from apps.activities.cluster_attendance import trained_school_ids
+    from apps.activities.models import Activity
+    from apps.ssa.models import SsaRecord
+
+    ids = [i for i in dict.fromkeys(school_ids) if i]
+    if not ids:
+        return {"ssa": set(), "visited": set(), "trained": set()}
+    return {
+        "ssa": set(
+            SsaRecord.objects.filter(
+                school_id__in=ids,
+                fy=fy,
+                verification_status="confirmed",
+                deleted_at__isnull=True,
+            ).values_list("school_id", flat=True)
+        ),
+        "visited": set(
+            Activity.objects.filter(
+                school_id__in=ids,
+                activity_type__in=_VISIT_TYPES,
+                fy=fy,
+                status__in=IA_VERIFIED_STATUSES,
+                deleted_at__isnull=True,
+            ).values_list("school_id", flat=True)
+        ),
+        "trained": trained_school_ids(ids, fy=fy),
+    }
+
+
+def resolve_urgent_issue(
+    school, fy: str, month_activities: list, *, facts: dict | None = None
+) -> dict:
     """The mandate's decision logic, verbatim in precedence.
 
     Stamps every issue with its `condition_key` so callers never have to
     reconstruct one — a key built in two places is a key that drifts, and a
     drifted key silently defeats both deduplication and auto-resolution.
+
+    `facts` is `support_facts` for a set containing this school. Callers that
+    resolve many schools pass it; one school on its own computes its own.
     """
-    issue = _resolve_issue(school, fy, month_activities)
+    issue = _resolve_issue(school, fy, month_activities, facts=facts)
     issue["condition_key"] = condition_key(
         school.id, issue["key"], fy, issue.get("intervention", "")
     )
     return issue
 
 
-def _resolve_issue(school, fy: str, month_activities: list) -> dict:
-    from apps.ssa.models import SsaRecord
+def _resolve_issue(
+    school, fy: str, month_activities: list, *, facts: dict | None = None
+) -> dict:
+    if facts is None:
+        facts = support_facts([school.id], fy)
 
-    has_current_ssa = SsaRecord.objects.filter(
-        school=school,
-        fy=fy,
-        verification_status="confirmed",
-        deleted_at__isnull=True,
-    ).exists()
+    has_current_ssa = school.id in facts["ssa"]
 
     if not has_current_ssa:
         ssa_planned = any("ssa" in (a.activity_type or "") for a in month_activities)
@@ -122,19 +170,8 @@ def _resolve_issue(school, fy: str, month_activities: list) -> dict:
             "action_mode": "drawer",
         }
 
-    from apps.activities.models import Activity
-
-    def _done(kinds) -> bool:
-        return Activity.objects.filter(
-            school=school,
-            activity_type__in=kinds,
-            fy=fy,
-            status__in=IA_VERIFIED_STATUSES,
-            deleted_at__isnull=True,
-        ).exists()
-
-    visit_done = _done(_VISIT_TYPES)
-    training_done = _done(_TRAINING_TYPES)
+    visit_done = school.id in facts["visited"]
+    training_done = school.id in facts["trained"]
 
     if not visit_done and not training_done:
         return {
@@ -248,10 +285,11 @@ def monthly_urgent_schools(
     for a in planned:
         by_school.setdefault(a.school_id, []).append(a)
 
+    facts = support_facts(list(by_school), fy)
     rows = []
     for school_id, acts in by_school.items():
         school = acts[0].school
-        issue = resolve_urgent_issue(school, fy, acts)
+        issue = resolve_urgent_issue(school, fy, acts, facts=facts)
         first = acts[0]
         rows.append(
             {

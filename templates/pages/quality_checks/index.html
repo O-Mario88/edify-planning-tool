@@ -54,29 +54,73 @@
 </div>
 {% endif %}
 
-<div class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm">
-{% if flags %}<ul class="divide-y divide-slate-100">{% for f in flags %}<li class="px-5 py-3.5 flex items-center justify-between gap-3">
-<div class="min-w-0">
-<p class="text-[14px] font-bold text-slate-800">{{ f.scope_name|default:"Flag" }}</p>
-<p class="edify-text-caption text-slate-500 mt-0.5">{{ f.note }}</p>
-<p class="edify-text-caption text-slate-400 mt-0.5">{{ f.raised_by_name|default:"System" }} · {{ f.created_at }}</p>
+{% comment %}
+The flag register (Program Lead alignment, 2026-09-13). A plain table: the
+Country Director reads who each flag waits on and the note it was resolved
+with; the assigned Programme Lead acknowledges it in place and resolves it from
+a one-column drawer that asks what was done.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="flag-register-title" data-flag-register>
+<header class="rpl-card__header">
+<div class="rpl-card__heading">
+<h2 id="flag-register-title" class="rpl-card__title">Quality flags</h2>
+<span class="rpl-card__subtitle">{{ rows|length }} flag{{ rows|length|pluralize }}{% if rows|length == 50 %} · the 50 most recent{% endif %}</span>
 </div>
-<div class="flex items-center gap-2 shrink-0">
-<span class="edify-text-caption font-bold px-2 py-0.5 rounded-pill bg-amber-50 text-amber-700">{{ f.status }}</span>
-{% if can_act and f.assigned_to_user_id == current_user_id and f.status != "resolved" %}
-<form method="POST" class="inline">
+</header>
+<div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Quality flags; scroll sideways for more columns">
+<table class="rpl-table" data-mobile-table="scroll">
+<caption class="sr-only">Quality flags raised by the Country Director</caption>
+{% if rows %}
+<thead>
+<tr>
+<th scope="col">Flag</th>
+<th scope="col">Note</th>
+<th scope="col">Raised by</th>
+<th scope="col">Assigned to</th>
+<th scope="col">Priority</th>
+<th scope="col">Due</th>
+<th scope="col">Status</th>
+<th scope="col">Resolution</th>
+{% if can_act %}<th scope="col" class="is-end"><span class="sr-only">Actions</span></th>{% endif %}
+</tr>
+</thead>
+{% endif %}
+<tbody>
+{% for row in rows %}
+{% with f=row.flag %}
+<tr data-flag-row="{{ f.id }}">
+<th scope="row" data-record-title><span>{% firstof f.scope_name f.category "Flag" %}</span></th>
+<td data-label="Note">{{ f.note|default:"—" }}{% if f.recommended_action %} · {{ f.recommended_action }}{% endif %}</td>
+<td data-label="Raised by">{{ f.raised_by_name|default:"—" }} · {{ f.created_at|date:"j M Y" }}</td>
+<td data-label="Assigned to">{{ row.assignee|default:"—" }}</td>
+<td data-label="Priority"><span data-tone="{% if f.priority == 'high' %}danger{% else %}neutral{% endif %}">{{ f.priority|title }}</span></td>
+<td data-label="Due">{{ f.due_date|default:"—" }}</td>
+<td data-label="Status"><span data-tone="{{ row.status_tone }}">{{ row.status_label }}</span></td>
+<td data-label="Resolution">{{ f.resolution_note|default:"—" }}</td>
+{% if can_act %}
+<td class="is-end" data-record-action data-label="Actions">
+{% if row.may_act %}
+{% if f.status == "open" %}
+<form method="POST" action="/quality-checks" class="inline">
 {% csrf_token %}
-<input type="hidden" name="action" value="{% if f.status == 'open' %}acknowledge{% else %}resolve{% endif %}">
+<input type="hidden" name="action" value="acknowledge">
 <input type="hidden" name="flag_id" value="{{ f.id }}">
-<button type="submit" class="edify-text-caption font-bold px-2.5 py-1 rounded-control border border-[var(--edify-border)] hover:bg-slate-50">
-{% if f.status == "open" %}Acknowledge{% else %}Resolve{% endif %}
-</button>
+<button type="submit" class="rpl-row-link rounded-control">Acknowledge</button>
 </form>
 {% endif %}
+<button type="button" class="rpl-row-link rounded-control" hx-get="/quality-checks?resolve={{ f.id }}" hx-target="#drawer-container" hx-swap="innerHTML">Resolve</button>
+{% endif %}
+</td>
+{% endif %}
+</tr>
+{% endwith %}
+{% empty %}
+<tr><td class="rpl-table__empty">{% include "components/empty_state.html" with message="No quality flags raised" hint="Flags the Country Director raises to a Programme Lead appear here." compact="true" %}</td></tr>
+{% endfor %}
+</tbody>
+</table>
 </div>
-</li>{% endfor %}</ul>
-{% else %}<div class="p-12 text-center"><p class="text-[36px] mb-3"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-4.35-4.35M17 10.5a6.5 6.5 0 11-13 0 6.5 6.5 0 0113 0z"/></svg></p><p class="text-[14px] font-bold text-slate-600">No quality flags raised</p></div>{% endif %}
-</div>
-
+</section>
+{% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-flag-autoload></div>{% endif %}
 </div>
 {% endblock %}

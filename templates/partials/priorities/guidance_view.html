@@ -1,0 +1,104 @@
+{% load table_pagination %}
+{% comment %}
+The Team Guidance view of the Priorities page (owner, 2026-09-13): the
+guidance a Programme Lead issued to their officers on the country priorities,
+how many officers acknowledged each piece, and the reviews due.
+
+A TAB, not a page, like its siblings: the rail swaps this panel, so its
+header, tiles, filters and register all travel inside it. Rendered by
+apps/frontend/views/team_guidance_views.py team_guidance_view; the rules are
+apps/cce_leadership/guidance.py. Tiles come from the reconciled registry
+(apps/core/metrics/team_guidance_metrics.py); the register is plain text with
+a tone on status words. `autoload_drawer` is the drawer a To-Do or a
+notification link asked for (?open=…); it opens once the panel is on screen.
+{% endcomment %}
+<div class="team-guidance-workspace space-y-4 text-[color:var(--edify-text)]" aria-labelledby="team-guidance-title" data-team-guidance>
+  <div class="edify-page-header">
+    <div class="edify-page-header__lead">
+      <p class="edify-page-eyebrow">{{ guidance_eyebrow }}</p>
+      <h1 id="team-guidance-title" class="edify-page-title edify-page-header__title">{{ guidance_title }}</h1>
+      <p class="edify-page-header__description">{{ guidance_description }}</p>
+    </div>
+    {% if guidance_header_actions %}
+    <div class="edify-page-header__controls">
+      {% for action in guidance_header_actions %}
+      <button type="button" class="btn {% if forloop.first %}btn-primary{% else %}btn-secondary{% endif %} h-8" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-team-guidance-action>{{ action.label }}</button>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if guidance_notice %}<div class="edify-note" data-tone="{{ guidance_notice.tone|default:'info' }}" role="status">{{ guidance_notice.text }}</div>{% endif %}
+
+  {% include "components/context_metrics.html" with items=guidance_metrics variant="executive" title="Team guidance at a glance" %}
+
+  {% paginate guidance_rows "guidance_page" as pager %}
+  <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="team-guidance-register-title" data-team-guidance-register>
+    <header class="rpl-card__header">
+      <div class="rpl-card__heading">
+        <h2 id="team-guidance-register-title" class="rpl-card__title">Guidance issued · FY{{ fy }}</h2>
+        <span class="rpl-card__subtitle">{{ pager.total }} record{{ pager.total|pluralize }}</span>
+      </div>
+    </header>
+
+    <form method="get" action="/priorities/guidance" class="edify-filter-bar" aria-label="Team guidance filters" x-data>
+      {% for field in guidance_filters %}
+      {% if field.options|length > 1 %}
+      <label class="cce-filter">
+        <span class="cce-filter__label">{{ field.label }}</span>
+        <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
+          {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}
+          {% for option in field.options %}<option value="{{ option.0 }}"{% if option.0 == field.value %} selected{% endif %}>{{ option.1 }}</option>{% endfor %}
+        </select>
+      </label>
+      {% else %}
+      <input type="hidden" name="{{ field.name }}" value="{{ field.value }}">
+      {% endif %}
+      {% endfor %}
+    </form>
+
+    <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Team guidance; scroll sideways for more columns">
+      <table class="rpl-table" data-mobile-table="scroll">
+        <caption class="sr-only">Team guidance issued for FY{{ fy }}</caption>
+        {% if pager.rows %}
+        <thead>
+          <tr>
+            {% for cell in pager.rows.0.cells %}<th scope="col">{{ cell.heading }}</th>{% endfor %}
+            {% if guidance_has_row_actions %}<th scope="col" class="is-end"><span class="sr-only">Actions</span></th>{% endif %}
+          </tr>
+        </thead>
+        {% endif %}
+        <tbody>
+          {% for row in pager.rows %}
+          <tr>
+            {% for cell in row.cells %}
+            {% if cell.primary %}
+            <th scope="row" data-record-title><span>{{ cell.text }}</span></th>
+            {% else %}
+            <td data-label="{{ cell.heading }}">{% if cell.tone %}<span data-tone="{{ cell.tone }}">{{ cell.text }}</span>{% else %}{{ cell.text }}{% endif %}</td>
+            {% endif %}
+            {% endfor %}
+            {% if guidance_has_row_actions %}
+            <td class="is-end" data-record-action data-label="Actions">
+              {% for action in row.actions %}
+              <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+              {% endfor %}
+            </td>
+            {% endif %}
+          </tr>
+          {% empty %}
+          <tr>
+            <td class="rpl-table__empty">
+              {% include "components/empty_state.html" with message=guidance_empty_title hint=guidance_empty_body compact="true" %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    {% include "components/table_pager.html" with pager=pager param="guidance_page" %}
+  </section>
+
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-team-guidance-autoload></div>{% endif %}
+</div>

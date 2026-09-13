@@ -16,10 +16,10 @@
         </select>
       </label>
       <label class="sp-field" for="sp-quarter">
-        <span>Quarter</span>
+        <span>Period</span>
         <select id="sp-quarter" name="quarter">
-          {% for quarter in dashboard.filters.quarters %}
-          <option value="{{ quarter }}"{% if quarter == dashboard.filters.quarter %} selected{% endif %}>{{ quarter }} · {% if quarter == 'Q1' %}Oct–Dec{% elif quarter == 'Q2' %}Jan–Mar{% elif quarter == 'Q3' %}Apr–Jun{% else %}Jul–Sep{% endif %}</option>
+          {% for option in dashboard.filters.period_options %}
+          <option value="{{ option.0 }}"{% if option.0 == dashboard.filters.quarter %} selected{% endif %}>{{ option.1 }}</option>
           {% endfor %}
         </select>
       </label>
@@ -47,7 +47,7 @@
     </div>
     <p class="sp-scope-note">
       <span aria-hidden="true"></span>{{ dashboard.scope.note }}
-      Current view: {{ dashboard.filters.fy_label }} · {{ dashboard.filters.quarter }} · {{ dashboard.filters.region_name }} · {{ dashboard.filters.district_name }}.
+      Current view: {{ dashboard.filters.fy_label }} · {{ dashboard.filters.period_label }} · {{ dashboard.filters.region_name }} · {{ dashboard.filters.district_name }}.
     </p>
     <noscript><button type="submit" class="sp-export">Apply filters</button></noscript>
   </form>
@@ -79,7 +79,7 @@
       </header>
       <div class="sp-table-scroll" tabindex="0" aria-label="Scrollable district SSA performance table">
         <table class="sp-table">
-          <caption>Confirmed SSA performance by district for {{ dashboard.filters.fy_label }} {{ dashboard.filters.quarter }}</caption>
+          <caption>Confirmed SSA performance by district for {{ dashboard.filters.fy_label }} · {{ dashboard.filters.period_label }}</caption>
           <thead><tr><th scope="col">#</th><th scope="col">District</th><th scope="col">Assessed</th><th scope="col">Average</th><th scope="col">Highest weakness</th><th scope="col">High risk</th><th scope="col">Completion</th></tr></thead>
           <tbody>
           {% for district in dashboard.districts %}

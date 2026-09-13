@@ -53,7 +53,6 @@ from apps.accounts.models import (
 from apps.projects.models import Project, ProjectSchoolAssignment
 from apps.core_schools.models import CorePlan, CoreActivitySlot
 from apps.audit.models import AuditLog
-from apps.flags.models import CdFlag
 from apps.clusters.models import Cluster
 from apps.core.fy import get_operational_fy, get_quarter_for_date, fy_options
 from apps.targets.models import TargetSetting, TargetType
@@ -1354,14 +1353,24 @@ def coverage_view(request):
     requested_fy = (request.GET.get("fy") or "").strip()
     fy = requested_fy if requested_fy in fy_choices else get_operational_fy()
 
-    from apps.core.scoping import resolve_user_scope, scoped_school_queryset
+    from apps.core.activity_types import VISIT_TYPES
+    from apps.core.scoping import (
+        cluster_queryset,
+        resolve_user_scope,
+        scoped_school_queryset,
+    )
 
+    scope = resolve_user_scope(request.user)
     # The CD's country, not the deployment.
-    schools = scoped_school_queryset(resolve_user_scope(request.user), active_schools())
+    schools = scoped_school_queryset(scope, active_schools())
     total_schools = schools.count()
     visited_ids = set(
         Activity.objects.filter(
-            activity_type__in=["school_visit", "follow_up_visit", "coaching_visit"],
+            # Every visit kind the platform counts as a visit, from the one
+            # shared vocabulary. Three hand-picked types left core, SSA
+            # collection and in-school support visits out of "reached"
+            # (Programme Lead alignment, 2026-09-13).
+            activity_type__in=VISIT_TYPES,
             status__in=COMPLETED_WORK_STATUSES,
             deleted_at__isnull=True,
             fy=fy,
@@ -1375,7 +1384,22 @@ def coverage_view(request):
     # School.cluster_id is the canonical cluster membership source. Build the
     # counts in one aggregate query instead of reading the legacy assignment
     # projection, which could diverge after an interrupted update.
-    clusters = list(Cluster.objects.filter(deleted_at__isnull=True).order_by("name"))
+    # The reader's clusters, by the same rule every cluster picker uses: the
+    # table listed every cluster in the deployment beside school counts that
+    # were already scoped, so a Country Director read other countries'
+    # clusters as holding no schools.
+    scoped_clusters = cluster_queryset(scope, base=Cluster.objects.all())
+    if scoped_clusters is not None and scope.rvp_region_scoped:
+        # The picker rule reads every cluster for a summary role; this table
+        # sits beside a region-bounded school count, so it takes the region.
+        scoped_clusters = scoped_clusters.filter(
+            district__region_id__in=scope.region_ids
+        )
+    clusters = list(
+        (scoped_clusters if scoped_clusters is not None else Cluster.objects.none())
+        .select_related("district")
+        .order_by("name")
+    )
     school_counts = {
         row["cluster_id"]: row["count"]
         for row in schools.exclude(cluster_id__isnull=True)
@@ -3065,30 +3089,21 @@ def project_assign_school_action_view(request, project_id):
     return redirect("frontend:project_detail", project_id=project_id)
 
 
-@require_page_permission("completed_activities")
-def completed_activities_view(request):
-    """Completed activities history."""
-    activities = (
-        Activity.objects.filter(
-            status__in=COMPLETED_WORK_STATUSES,
-            deleted_at__isnull=True,
-        )
-        .select_related("school", "cluster")
-        .order_by("-updated_at")[:60]
-    )
-    context = {"activities": activities}
-    return render(request, "pages/completed_activities/index.html", context)
-
-
 @require_page_permission("quality_checks")
 def quality_checks_view(request):
     """Quality checks — the CD-raised / PL-assigned flag handoff (apps.flags).
     IA/Admin get the global monitoring view; the CD sees (and raises) the
     flags they raised; the PL sees (and acts on) the flags assigned to them.
     Reuses apps.flags.services — the same logic the /api/flags/* endpoints
-    use — rather than re-implementing the raise/acknowledge/resolve rules."""
+    use — rather than re-implementing the raise/acknowledge/resolve rules.
+
+    Resolving takes a note (Program Lead alignment, 2026-09-13): the
+    Programme Lead opens a one-column drawer (`?resolve=<flag id>`) and says
+    what was done, and the Country Director reads it in the Resolution column.
+    A refusal from the service is shown, never swallowed."""
     from django.contrib import messages
     from apps.flags import services as flag_services
+    from apps.flags.models import CdFlagStatus
     from apps.core.rbac import EdifyRole
     from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 
@@ -3120,32 +3135,81 @@ def quality_checks_view(request):
                     request, "Flag raised and assigned to the Program Lead."
                 )
             elif action in ("acknowledge", "resolve"):
-                flag_id = request.POST.get("flag_id")
-                flag = CdFlag.objects.filter(id=flag_id).first()
-                if not flag or (
-                    flag.assigned_to_user_id != request.user.id
-                    and role != EdifyRole.ADMIN.value
-                ):
-                    messages.error(
-                        request, "You may only act on flags assigned to you."
-                    )
-                else:
-                    flag_services.update_flag(
-                        flag_id,
-                        {"action": action, "note": request.POST.get("note")},
-                        request.user,
-                    )
-                    messages.success(request, f"Flag {action}d.")
+                # The service re-derives the flag from what this reader may
+                # see and refuses anyone but the assignee (or Admin).
+                flag_services.update_flag(
+                    request.POST.get("flag_id") or "",
+                    {"action": action, "note": request.POST.get("note")},
+                    request.user,
+                )
+                messages.success(
+                    request,
+                    "Flag acknowledged. The Country Director has been told."
+                    if action == "acknowledge"
+                    else "Flag resolved. The Country Director has your note.",
+                )
+            else:
+                messages.error(request, "Unknown flag action.")
         except (BadRequest, Forbidden, NotFoundError) as exc:
-            messages.error(request, str(exc))
+            messages.error(request, str(getattr(exc, "detail", exc)))
         return redirect("frontend:quality_checks")
 
-    qs = CdFlag.objects.all().order_by("-created_at")
-    if role == EdifyRole.COUNTRY_DIRECTOR.value:
-        qs = qs.filter(raised_by_user_id=request.user.id)
-    elif role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
-        qs = qs.filter(assigned_to_user_id=request.user.id)
-    # IA / Admin: unfiltered — the global monitoring audience.
+    qs = flag_services.flags_visible_to(request.user)
+
+    resolve_id = (request.GET.get("resolve") or "").strip()
+    autoload_drawer = ""
+    if resolve_id and request.headers.get("HX-Request") != "true":
+        # A To-Do link (?resolve=<id>) opens the page with the drawer on load.
+        if qs.filter(id=resolve_id).exists():
+            autoload_drawer = f"/quality-checks?resolve={resolve_id}"
+        resolve_id = ""
+    if resolve_id:
+        from apps.frontend.views.hr_programme_views import _drawer, _field
+
+        flag = qs.filter(id=resolve_id).first()
+        subtitle = "Quality flag from the Country Director"
+        if (
+            not flag
+            or not is_pl
+            or (
+                flag.assigned_to_user_id != request.user.id
+                and role != EdifyRole.ADMIN.value
+            )
+            or flag.status == CdFlagStatus.RESOLVED
+        ):
+            return _drawer(
+                request,
+                title="Resolve flag",
+                subtitle=subtitle,
+                empty="Only the Programme Lead a flag is assigned to resolves it, "
+                "and only while it is still open.",
+            )
+        return _drawer(
+            request,
+            title="Resolve flag",
+            subtitle=subtitle,
+            action="/quality-checks",
+            submit="Resolve flag",
+            facts=[
+                {"label": "About", "value": flag.scope_name or flag.category},
+                {"label": "Raised by", "value": flag.raised_by_name},
+                {"label": "Flag", "value": flag.note},
+                {"label": "Recommended action", "value": flag.recommended_action},
+            ],
+            fields=[
+                _field("action", "", type="hidden", value="resolve"),
+                _field("flag_id", "", type="hidden", value=flag.id),
+                _field(
+                    "note",
+                    "Resolution note",
+                    type="textarea",
+                    required=True,
+                    rows=4,
+                    maxlength=2000,
+                    help="What was done. The Country Director reads this.",
+                ),
+            ],
+        )
 
     # Arriving from an analytics drill-down: the entity and, when known, the
     # Program Lead come along so the director does not re-type what they
@@ -3161,13 +3225,46 @@ def quality_checks_view(request):
             "category",
         )
     }
+    flags = list(qs[:50])
+    # The person each flag waits on, named in one query rather than per row.
+    from apps.accounts.models import User as _User
+
+    assignees = dict(
+        _User.objects.filter(
+            id__in={f.assigned_to_user_id for f in flags if f.assigned_to_user_id}
+        ).values_list("id", "name")
+    )
+    status_tones = {
+        CdFlagStatus.OPEN: "warning",
+        CdFlagStatus.ACKNOWLEDGED: "info",
+        CdFlagStatus.RESOLVED: "success",
+    }
+    rows = [
+        {
+            "flag": f,
+            "assignee": assignees.get(f.assigned_to_user_id, ""),
+            "status_label": CdFlagStatus(f.status).label
+            if f.status in CdFlagStatus.values
+            else f.status,
+            "status_tone": status_tones.get(f.status, "neutral"),
+            "may_act": is_pl
+            and f.status != CdFlagStatus.RESOLVED
+            and (
+                f.assigned_to_user_id == request.user.id
+                or role == EdifyRole.ADMIN.value
+            ),
+        }
+        for f in flags
+    ]
     context = {
-        "flags": qs[:50],
+        "flags": flags,
+        "rows": rows,
         "can_raise": is_cd,
         "can_act": is_pl,
         "program_leads": flag_services.program_leads(request.user) if is_cd else [],
         "current_user_id": request.user.id,
         "prefill": prefill,
+        "autoload_drawer": autoload_drawer,
     }
     return render(request, "pages/quality_checks/index.html", context)
 

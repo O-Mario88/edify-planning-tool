@@ -19,6 +19,9 @@ Three surfaces answered the same question from three sidebar entries:
                                                     distribution among their
                                                     supervised CCEOs
 
+A fourth view joined on 2026-09-13 — Team Guidance (/priorities/guidance), the
+guidance a Programme Lead issues to their officers on those priorities.
+
 A Country Director had the first two, filed in two different sidebar groups —
 and the second one under MY PERFORMANCE, which is not what it is. An Impact
 Assessment officer had only Priorities, so on a country with no master yet it
@@ -79,6 +82,16 @@ TEAM_DISTRIBUTION_ROLES = (
     EdifyRole.ADMIN.value,
 )
 
+# Team Guidance (owner, 2026-09-13): the Programme Lead's role description
+# asks them to lead "priority setting, planning, and communication for CCE
+# initiatives". Setting and distribution are the tabs before it; the guidance
+# a lead issues to their officers about those priorities is the fourth, for
+# the roles holding the team_guidance page key.
+TEAM_GUIDANCE_ROLES = (
+    EdifyRole.COUNTRY_PROGRAM_LEAD.value,
+    EdifyRole.ADMIN.value,
+)
+
 PANEL_ID = "priority-workspace-view"
 SHELL_ID = f"{PANEL_ID}-shell"
 
@@ -91,6 +104,10 @@ def may_see_team_distribution(user) -> bool:
     return getattr(user, "active_role", "") in TEAM_DISTRIBUTION_ROLES
 
 
+def may_see_team_guidance(user) -> bool:
+    return getattr(user, "active_role", "") in TEAM_GUIDANCE_ROLES
+
+
 def master_url_for(user) -> str:
     return _MASTER_URL.get(getattr(user, "active_role", ""), "/priorities/master")
 
@@ -98,8 +115,8 @@ def master_url_for(user) -> str:
 def priority_workspace_tabs(request, *, active: str, view_template: str) -> dict | None:
     """The rail for the Priorities page, or None when the reader has one view.
 
-    `active` names the view being rendered: "setting", "distribution" or
-    "team". The financial year travels with the press — every view here is
+    `active` names the view being rendered: "setting", "distribution",
+    "team" or "guidance". The financial year travels with the press — every view here is
     read a year at a time, and a tab that dropped it would send a reader
     looking at FY2027 back to the operational year.
     """
@@ -139,6 +156,16 @@ def priority_workspace_tabs(request, *, active: str, view_template: str) -> dict
                 "description": "This Program Lead's own distribution among the CCEOs they supervise",
                 "url": url("/target-distribution/team"),
                 "active": active == "team",
+            }
+        )
+    if may_see_team_guidance(request.user):
+        tabs.append(
+            {
+                "key": "guidance",
+                "label": "Team Guidance",
+                "description": "Guidance this Programme Lead issued to their officers on the priorities, and each officer's acknowledgement",
+                "url": url("/priorities/guidance"),
+                "active": active == "guidance",
             }
         )
     # One tab is not a tab bar.

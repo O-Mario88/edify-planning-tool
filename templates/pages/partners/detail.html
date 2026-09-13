@@ -136,6 +136,13 @@ contract every profile page shares.
 {% include "components/empty_state.html" with message="No activities have been assigned to this organisation yet." %}
 {% endif %}
 </div>
+
+{% comment %}The partnership log for this organisation (owner, 2026-09-13):
+present for the roles that record engagements and for readers who have some to
+read — a partner login reads the ones shared with it.{% endcomment %}
+{% if engagement %}
+{% include "partials/partners/engagement_register.html" %}
+{% endif %}
 </div>
 
 <!-- Right Column: the numbers and the people -->

@@ -16,7 +16,7 @@ and without the counts and the empty state below that read as a broken control
       <h3 id="district-priorities-title">District delivery gaps</h3>
       <p>Ranked by urgency and grouped by sub-region.</p>
     </div>
-    <a href="/reports" class="analytics-text-link">View reports</a>
+    {% if can_open_reports %}<a href="/reports" class="analytics-text-link">View reports</a>{% endif %}
   </header>
 
   {% if target_by_district_groups %}

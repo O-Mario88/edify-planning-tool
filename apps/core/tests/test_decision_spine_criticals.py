@@ -74,7 +74,7 @@ class FlagsApiAuthorizationTests(TestCase):
     def test_non_assignee_cannot_resolve_a_flag(self):
         with self.assertRaises(Exception) as ctx:
             flag_services.update_flag(
-                self.flag.id, {"action": "resolve"}, self.other_pl
+                self.flag.id, {"action": "resolve", "note": "x"}, self.other_pl
             )
         self.assertIsInstance(ctx.exception, Exception)
         self.flag.refresh_from_db()
@@ -82,10 +82,15 @@ class FlagsApiAuthorizationTests(TestCase):
 
     def test_raiser_cannot_resolve_their_own_flag(self):
         with self.assertRaises(Forbidden):
-            flag_services.update_flag(self.flag.id, {"action": "resolve"}, self.cd)
+            flag_services.update_flag(
+                self.flag.id, {"action": "resolve", "note": "x"}, self.cd
+            )
 
     def test_assignee_can_resolve(self):
-        flag_services.update_flag(self.flag.id, {"action": "resolve"}, self.pl)
+        # A resolution note is required (Program Lead alignment, 2026-09-13).
+        flag_services.update_flag(
+            self.flag.id, {"action": "resolve", "note": "Reviewed."}, self.pl
+        )
         self.flag.refresh_from_db()
         self.assertEqual(self.flag.status, "resolved")
 

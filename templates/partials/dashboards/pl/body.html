@@ -1,56 +1,36 @@
 {% load frontend_filters %}
 <div class="pl-dashboard-stack space-y-4">
 
-  {# ── KPI strip ──────────────────────────────────────────────────────── #}
-  {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Team pulse" drilldown_mode="program_lead_dashboard" %}
-
-  {# ── Leadership Attention ───────────────────────────────────────────── #}
-  {% if leadership_attention %}
-  <div>
-    <h2 class="text-[13px] font-semibold mb-2 edify-text">Leadership Attention</h2>
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-3">
-      {% for a in leadership_attention %}
-      <div class="rounded-surface p-3.5 flex items-start gap-3"
-           style="background:
-             {% if a.tone == 'danger' %}var(--edify-danger-light)
-             {% elif a.tone == 'success' %}var(--edify-success-light)
-             {% else %}var(--edify-warning-light){% endif %};
-             border:1px solid
-             {% if a.tone == 'danger' %}rgba(239,68,68,.12)
-             {% elif a.tone == 'success' %}rgba(16,185,129,.12)
-             {% else %}rgba(245,158,11,.12){% endif %};">
-        <div class="h-9 w-9 rounded-surface flex items-center justify-center shrink-0"
-             style="background:{% if a.tone == 'danger' %}var(--edify-danger)
-             {% elif a.tone == 'success' %}var(--edify-success)
-             {% else %}var(--edify-warning){% endif %};">
-          {% include "partials/analytics/pl/_icon.html" with name=a.icon %}
-        </div>
-        <div class="flex-1 min-w-0">
-          <p class="text-[13px] font-semibold" style="
-                    color:{% if a.tone == 'danger' %}var(--edify-danger)
-                    {% elif a.tone == 'success' %}var(--edify-success)
-                    {% else %}var(--edify-warning){% endif %};">{{ a.title }}</p>
-          <p class="text-[12px] mt-1 leading-[1.4] edify-text-muted">{{ a.line1 }}</p>
-          <p class="text-[12px] leading-[1.4] edify-text-muted">{{ a.line2 }}</p>
-          <a href="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}"
-             hx-get="/dashboard/pl-drilldown{{ a.link }}&fy={{ fy }}" hx-target="#drawer-container" hx-swap="innerHTML"
-             class="inline-block mt-1.5 text-[12px] font-semibold"
-             style="
-                    color:{% if a.tone == 'danger' %}var(--edify-danger-text)
-                    {% elif a.tone == 'success' %}var(--edify-success-text)
-                    {% else %}var(--edify-warning-text){% endif %};">{{ a.action }} &rarr;</a>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
+  {% comment %}Team pulse: six registered tiles, one headline per
+  responsibility, each opening the view that explains it.{% endcomment %}
+  {% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="Team pulse" %}
 
   {% comment %}
-  Two views under the fixed part of the dashboard (owner, 2026-09-05): the
-  team's districts on the map, and the operations the lead works from. The
-  KPI strip and Leadership Attention above never move; a tab swaps only the
-  view container.
+  Leadership Attention: at most four things that need the lead now, drawn from
+  every responsibility. The heading always renders; a quiet day says so rather
+  than filling the band with green "all clear" cards.
+  {% endcomment %}
+  <section aria-labelledby="pl-attention-title" data-pl-attention>
+    <h2 id="pl-attention-title" class="rpl-section-title">Leadership Attention</h2>
+    {% if leadership_attention %}
+    <div class="rpl-attention-grid" data-count="{{ leadership_attention|length }}">
+      {% for a in leadership_attention %}
+      <article class="rpl-attention" data-tone="{{ a.tone }}">
+        <span class="pl-attention__responsibility">{{ a.responsibility }}</span>
+        <h3 class="rpl-attention__title">{{ a.title }}</h3>
+        <span class="rpl-attention__body">{{ a.body }}</span>
+        <a href="{{ a.url }}" class="rpl-attention__link">{{ a.action }} <span aria-hidden="true">&rarr;</span></a>
+      </article>
+      {% endfor %}
+    </div>
+    {% else %}
+    {% include "components/empty_state.html" with message="Nothing needs your attention right now." hint="Escalations, Country Director flags, Regional Lead feedback, officers at risk, leave conflicts and late partner work appear here as they arise." compact="true" %}
+    {% endif %}
+  </section>
+
+  {% comment %}
+  The views under the fixed part: Map (default) · Priorities · Team · Coaching ·
+  Programmes · Collaboration. A tab swaps only the view container.
   {% endcomment %}
   {% include "partials/dashboards/_view_tabs.html" %}
 </div>

@@ -239,6 +239,27 @@ def _week_label(week_start):
     return f"{week_start:%b %d} – {week_end:%b %d}, {week_end:%Y}"
 
 
+def _earliest_awaiting_week(cceos, fy, status):
+    """The first week holding a request from these requesters at `status`.
+
+    One indexed query. None when nothing waits, so the caller opens on the
+    current week rather than an arbitrary one.
+    """
+    from .models import WeeklyFundRequest
+
+    user_ids = [c["user_id"] for c in cceos if c.get("user_id")]
+    if not user_ids:
+        return None
+    return (
+        WeeklyFundRequest.objects.filter(
+            responsible_user__in=user_ids, status=status, fy=fy
+        )
+        .order_by("week_start_date")
+        .values_list("week_start_date", flat=True)
+        .first()
+    )
+
+
 def _weekly_request_for(cceo_user_id, week_start):
     from .models import WeeklyFundRequest
 
@@ -454,19 +475,35 @@ def get_pl_fund_approvals(principal, filters=None):
         else ActivityScheduleCostLine.objects.none()
     )
 
-    # Default to the team's busiest funded month (so the page opens populated),
-    # then to that month's busiest week. Money moves weekly: the month filter
-    # only narrows the week picker.
-    if not filters.get("month") and all_ids:
-        busiest = (
-            week_base.filter(month__isnull=False)
+    week_start = None
+    if filters.get("week"):
+        try:
+            week_start = _week_floor(_date.fromisoformat(str(filters["week"])[:10]))
+        except ValueError:
+            week_start = None
+
+    # Opening the page with no week or month chosen (Programme Lead alignment,
+    # 2026-09-13): the earliest week in which a request from the team is
+    # waiting on THIS approver, else the current week. It used to open on the
+    # team's busiest funded month and that month's busiest week, which put a
+    # lead in front of a week with nothing to decide while a request sat
+    # unapproved in another. The layout is unchanged (owner rule); only where
+    # it opens moved.
+    if week_start is None and not filters.get("month"):
+        week_start = _earliest_awaiting_week(cceos, fy, awaiting_status(principal))
+        if week_start is None:
+            week_start = _week_floor(timezone.localdate())
+    if week_start is not None and not filters.get("month"):
+        # The week's own month drives the picker, taken from its funded lines
+        # where there are any so the picker lists the weeks around it.
+        week_month = (
+            week_base.filter(week_start_date=week_start, month__isnull=False)
             .values("month")
             .annotate(n=Count("id"))
             .order_by("-n")
             .first()
         )
-        if busiest:
-            month = int(busiest["month"])
+        month = int(week_month["month"]) if week_month else week_start.month
 
     month_weeks = list(
         week_base.filter(month=month)
@@ -475,13 +512,9 @@ def get_pl_fund_approvals(principal, filters=None):
         .order_by("week_start_date")
     )
 
-    week_start = None
-    if filters.get("week"):
-        try:
-            week_start = _week_floor(_date.fromisoformat(str(filters["week"])[:10]))
-        except ValueError:
-            week_start = None
     if week_start is None:
+        # A month was chosen without a week: that month's busiest week, so
+        # narrowing by month still lands somewhere with plans in it.
         if month_weeks:
             week_start = max(month_weeks, key=lambda w: w["n"])["week_start_date"]
         else:

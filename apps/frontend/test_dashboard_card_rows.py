@@ -25,7 +25,6 @@ class DashboardCardRowContractTest(SimpleTestCase):
     def test_role_dashboards_use_shared_intrinsic_height_rows(self):
         dashboard_templates = (
             "templates/partials/dashboards/cd/body.html",
-            "templates/partials/dashboards/pl/body.html",
             "templates/partials/dashboards/hr/body.html",
             "templates/partials/analytics/cd/body.html",
             "templates/partials/analytics/pl/body.html",
@@ -64,21 +63,32 @@ class DashboardCardRowContractTest(SimpleTestCase):
         self.assertEqual(source.count("data-cd-analytics-wide-card"), 1)
         self.assertNotIn("lg:grid-cols-3 gap-5 items-start", source)
 
-    def test_pl_dashboard_rows_fill_the_twelve_column_grid(self):
-        source = self._source("templates/partials/dashboards/pl/body.html")
-        team_row = source[source.index("Team Performance + Personal Targets") :]
-        team_row = team_row[: team_row.index("CCEO Performance owns the full row")]
-        self.assertIn("lg:col-span-7", team_row)
-        self.assertIn("lg:col-span-5", team_row)
-        self.assertNotIn("lg:col-span-4", team_row)
+    def test_pl_dashboard_views_pack_two_intrinsic_columns(self):
+        """The Program Lead's views (2026-09-13) share the Regional Lead
+        dashboard's two-column packing: a main and a side column, each
+        stacking its own cards at their own height, so a short card never
+        leaves a hole beside a tall one."""
+        css = self._source("static/css/pages.css")
+        columns = css.split(".rpl-columns {", 1)[1].split("}", 1)[0]
+        self.assertIn("align-items: start;", columns)
+        for view in ("priorities", "team", "programmes", "collaboration"):
+            with self.subTest(view=view):
+                source = self._source(
+                    f"templates/partials/dashboards/pl/{view}_view.html"
+                )
+                self.assertIn('class="rpl-columns"', source)
+                self.assertIn('class="rpl-columns__main"', source)
+                self.assertIn('class="rpl-columns__side"', source)
+                self.assertNotIn("lg:col-span-", source)
 
     def test_pl_cceo_performance_owns_full_row_without_approval_queue(self):
-        source = self._source("templates/partials/dashboards/pl/body.html")
+        source = self._source("templates/partials/dashboards/pl/team_view.html")
         cceo_row = source[source.index("data-pl-cceo-performance-row") :]
-        cceo_row = cceo_row[: cceo_row.index("Schools Needing Urgent Attention")]
+        cceo_row = cceo_row[: cceo_row.index('class="rpl-columns"')]
 
-        self.assertIn("lg:col-span-12", cceo_row)
+        # The roster sits above the two columns, on a row of its own.
         self.assertIn('aria-labelledby="pl-cceo-performance-title"', cceo_row)
+        self.assertIn("dashboards/pl/cceo_performance.html", cceo_row)
         self.assertNotIn("Approval Queue", cceo_row)
         self.assertNotIn("dashboards/pl/approval_queue.html", cceo_row)
 

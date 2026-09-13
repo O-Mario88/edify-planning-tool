@@ -128,6 +128,10 @@ class MappingStatus(models.TextChoices):
     """A published mapping is what completed activities were measured under."""
 
     DRAFT = "draft", "Draft"
+    # Submitted by one IA officer and waiting for a second one — or, where the
+    # country has a single IA officer, the Country Director's acknowledgement
+    # (owner, 2026-09-13). Only a PUBLISHED rule measures anything.
+    IN_REVIEW = "in_review", "In review"
     PUBLISHED = "published", "Published"
     SUPERSEDED = "superseded", "Superseded"
     RETIRED = "retired", "Retired"
@@ -433,6 +437,15 @@ class ActivityInterventionMapping(TimeStampedModel):
     version = models.PositiveIntegerField(default=1)
     approved_by = models.CharField(max_length=30, blank=True, default="")
     approved_at = models.DateTimeField(null=True, blank=True)
+    # The review that published the rule (apps.impact.review): whoever wrote a
+    # measurement rule never publishes it alone.
+    submitted_by = models.CharField(max_length=30, blank=True, default="")
+    submitted_at = models.DateTimeField(null=True, blank=True)
+    reviewed_by = models.CharField(max_length=30, blank=True, default="")
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+    review_basis = models.CharField(max_length=16, blank=True, default="")
+    review_note = models.TextField(blank=True, default="")
+    change_reason = models.TextField(blank=True, default="")
     effective_from = models.DateField(null=True, blank=True)
     effective_to = models.DateField(null=True, blank=True)
     country = models.CharField(max_length=64, blank=True, default="")

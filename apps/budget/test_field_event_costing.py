@@ -182,24 +182,31 @@ class FieldEventEndToEndTest(TestCase):
             title="CCEO",
             primary_district_id=self.home.id,
         )
-        fy = get_operational_fy()
-        # Reference data seeds the active Uganda catalogue; rate it rather
-        # than fighting the one-active-catalogue-per-country constraint.
-        catalogue = CostCatalogue.objects.filter(
-            country="Uganda", fy=fy, is_active=True
-        ).first() or CostCatalogue.objects.create(
-            country="Uganda", fy=fy, version=901, is_active=True
-        )
-        for key, unit in RATES.items():
-            CostSetting.objects.update_or_create(
-                key=key,
-                fy=fy,
-                catalogue=catalogue,
-                defaults={
-                    "label": key.replace("_", " ").title(),
-                    "unit_cost": unit,
-                },
+        # The tests schedule a few weeks ahead, which crosses into the next
+        # financial year from mid-September (it failed on 2026-09-14), so rate
+        # the catalogue of every FY those dates can fall in.
+        fys = {
+            get_operational_fy(),
+            get_operational_fy(date.today() + timedelta(days=35)),
+        }
+        for fy in sorted(fys):
+            # Reference data seeds the active Uganda catalogue; rate it rather
+            # than fighting the one-active-catalogue-per-country constraint.
+            catalogue = CostCatalogue.objects.filter(
+                country="Uganda", fy=fy, is_active=True
+            ).first() or CostCatalogue.objects.create(
+                country="Uganda", fy=fy, version=901, is_active=True
             )
+            for key, unit in RATES.items():
+                CostSetting.objects.update_or_create(
+                    key=key,
+                    fy=fy,
+                    catalogue=catalogue,
+                    defaults={
+                        "label": key.replace("_", " ").title(),
+                        "unit_cost": unit,
+                    },
+                )
 
         class _Principal:
             user_id = self.owner.id

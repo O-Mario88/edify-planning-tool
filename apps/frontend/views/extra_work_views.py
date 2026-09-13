@@ -72,6 +72,50 @@ def extra_work_page(request):
     )
 
 
+def _milestone_options(principal, fy: str):
+    """The milestones an assignment may link to: the assigner's own country's
+    priorities in the strategy cycle for the page's year.
+
+    The picker listed Uganda's milestones to every assigner in every country,
+    whatever year (Programme Lead alignment, 2026-09-13). A country with no
+    priorities of its own in that cycle links to the regional priorities it
+    would translate, and a year with no cycle yet opens the newest open cycle
+    — the rule the Priorities page opens with.
+    """
+    from apps.hr.models import PriorityMilestone, StrategicPriorityCycle
+
+    country = (
+        getattr(getattr(principal, "staff_profile", None), "country", "") or ""
+    ).strip()
+    live = PriorityMilestone.objects.select_related("priority").exclude(
+        priority__status="archived"
+    )
+    cycle_fy = fy
+    if not live.filter(priority__fy=fy).exists():
+        cycle_fy = (
+            StrategicPriorityCycle.objects.exclude(status="archived")
+            .order_by("-financial_year")
+            .values_list("financial_year", flat=True)
+            .first()
+        )
+    if not cycle_fy:
+        return live.none()
+    in_cycle = live.filter(priority__fy=cycle_fy)
+    own = (
+        in_cycle.filter(priority__level="country", priority__country_id=country)
+        if country
+        else in_cycle.none()
+    )
+    chosen = (
+        own
+        if own.exists()
+        else in_cycle.filter(
+            priority__level="regional", priority__country_id__isnull=True
+        )
+    )
+    return chosen.order_by("priority__sequence", "source_order")
+
+
 @require_page_permission("extra_work")
 def extra_work_assign_drawer(request):
     role = getattr(request.user, "active_role", "")
@@ -94,17 +138,17 @@ def extra_work_assign_drawer(request):
         assignees = User.objects.filter(
             id__in=list(supervised_ids), is_active=True
         ).order_by("name")
-    from apps.hr.models import PriorityMilestone
+    from apps.core.fy import fy_options, get_operational_fy
 
-    milestones = PriorityMilestone.objects.filter(
-        priority__level="country", priority__country_id="Uganda"
-    ).order_by("priority__sequence", "source_order")
+    fy = (request.GET.get("fy") or "").strip()
+    if fy not in fy_options():
+        fy = get_operational_fy()
     return render(
         request,
         "partials/hr/extra_work_assign_drawer.html",
         {
             "assignees": assignees.exclude(id=request.user.id)[:200],
-            "milestones": milestones[:120],
+            "milestones": _milestone_options(request.user, fy)[:120],
             "categories": ExtraAssignment.CATEGORIES,
             "drawer_size": "md",
         },

@@ -296,3 +296,209 @@ class RegionalCceReport(TimeStampedModel):
         indexes = [
             models.Index(fields=["status", "period"], name="idx_cce_report_status"),
         ]
+
+
+# ── The Programme Lead's records, one level down (owner, 2026-09-13) ─────────
+# The Programme Lead's role description asks them to supervise, coach and
+# review the Christ-Centered Education Officers they line-manage, and to lead
+# priority setting and communication for CCE initiatives in the country. The
+# Regional Lead's engagement log above coaches Programme Leads; these records
+# carry the same practice to the officers, and — like an engagement — none of
+# it is planned work: no cost, no fund request, no calendar entry.
+
+
+class CoachingKind(models.TextChoices):
+    ONE_TO_ONE = "one_to_one", "Monthly one-to-one"
+    FIELD_OBSERVATION = "field_observation", "School visit observation"
+    TRAINING_OBSERVATION = "training_observation", "Training observation"
+    PERFORMANCE_CHECKIN = "performance_checkin", "Performance check-in"
+    DEBRIEF_FEEDBACK = "debrief_feedback", "Field debrief feedback"
+    RECOGNITION = "recognition", "Recognition"
+    REGIONAL_FEEDBACK = (
+        "regional_feedback",
+        "Regional Lead feedback passed on",
+    )
+
+
+# Kinds that watch the officer deliver, and so take the observation rubric.
+OBSERVED_COACHING_KINDS = frozenset(
+    {
+        CoachingKind.FIELD_OBSERVATION,
+        CoachingKind.TRAINING_OBSERVATION,
+        CoachingKind.REGIONAL_FEEDBACK,
+    }
+)
+
+
+def _ratings_one_to_four(prefix: str) -> models.CheckConstraint:
+    condition = Q()
+    for field, _label, _help in OBSERVATION_CRITERIA:
+        condition &= Q(**{f"{field}__isnull": True}) | Q(**{f"{field}__range": (1, 4)})
+    return models.CheckConstraint(condition=condition, name=f"{prefix}_one_to_four")
+
+
+class CceoCoaching(TimeStampedModel):
+    """One coaching conversation, observation or piece of feedback a Programme
+    Lead gives an officer they supervise. Shared records reach the officer, who
+    acknowledges them with a response."""
+
+    id = CuidField()
+    # User id of the Programme Lead who held it.
+    author_id = models.CharField(max_length=30, db_index=True)
+    cceo_staff_id = models.CharField(max_length=30, db_index=True)
+    cceo_user_id = models.CharField(max_length=30, db_index=True)
+    kind = models.CharField(max_length=32, choices=CoachingKind.choices)
+    held_on = models.DateField()
+    fy = models.CharField(max_length=16, db_index=True)
+    country = models.CharField(max_length=64, blank=True, default="")
+    subject = models.CharField(max_length=255)
+    strengths = models.TextField(blank=True, default="")
+    growth_areas = models.TextField(blank=True, default="")
+    agreed_actions = models.TextField(blank=True, default="")
+    follow_up_due = models.DateField(null=True, blank=True)
+
+    # What was observed or answered, when there is a record to point at.
+    activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cceo_coaching",
+    )
+    debrief = models.ForeignKey(
+        "debriefs.DailyDebrief",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="coaching",
+    )
+    source_engagement = models.ForeignKey(
+        RegionalEngagement,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="passed_to_cceos",
+    )
+
+    rating_biblical_integration = models.PositiveSmallIntegerField(
+        null=True, blank=True
+    )
+    rating_need_alignment = models.PositiveSmallIntegerField(null=True, blank=True)
+    rating_facilitation = models.PositiveSmallIntegerField(null=True, blank=True)
+    rating_participation = models.PositiveSmallIntegerField(null=True, blank=True)
+    rating_application = models.PositiveSmallIntegerField(null=True, blank=True)
+
+    shared_at = models.DateTimeField(null=True, blank=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    cceo_response = models.TextField(blank=True, default="")
+    follow_up_done_at = models.DateTimeField(null=True, blank=True)
+    follow_up_note = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "cce_cceo_coaching"
+        ordering = ["-held_on", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["author_id", "held_on"], name="idx_cceo_coaching_author"
+            ),
+            models.Index(
+                fields=["cceo_staff_id", "held_on"], name="idx_cceo_coaching_cceo"
+            ),
+            models.Index(
+                fields=["country", "held_on"], name="idx_cceo_coaching_country"
+            ),
+        ]
+        constraints = [_ratings_one_to_four("cceo_coaching_ratings")]
+
+    @property
+    def is_observation(self) -> bool:
+        return self.kind in OBSERVED_COACHING_KINDS
+
+    @property
+    def is_shared(self) -> bool:
+        return self.shared_at is not None
+
+    @property
+    def is_acknowledged(self) -> bool:
+        return self.acknowledged_at is not None
+
+    @property
+    def ratings(self) -> list[int]:
+        return [
+            value
+            for value in (
+                getattr(self, field) for field, _l, _h in OBSERVATION_CRITERIA
+            )
+            if value
+        ]
+
+    @property
+    def average_rating(self) -> float | None:
+        ratings = self.ratings
+        return round(sum(ratings) / len(ratings), 1) if ratings else None
+
+
+class TeamGuidance(TimeStampedModel):
+    """Priority guidance a Programme Lead issues to the officers they supervise:
+    what to do about a country priority, and the change expected in schools.
+    Each recipient acknowledges it (TeamGuidanceReceipt)."""
+
+    id = CuidField()
+    author_id = models.CharField(max_length=30, db_index=True)
+    fy = models.CharField(max_length=16, db_index=True)
+    country = models.CharField(max_length=64, blank=True, default="")
+    title = models.CharField(max_length=200)
+    priority = models.ForeignKey(
+        "hr.StrategicPriority",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="team_guidance",
+    )
+    milestone = models.ForeignKey(
+        "hr.PriorityMilestone",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="team_guidance",
+    )
+    instruction = models.TextField()
+    expected_change = models.TextField(blank=True, default="")
+    review_on = models.DateField(null=True, blank=True)
+    # Null while the lead is still drafting; set once it reaches the team.
+    issued_at = models.DateTimeField(null=True, blank=True)
+    withdrawn_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "cce_team_guidance"
+        ordering = ["-issued_at", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["author_id", "issued_at"], name="idx_team_guidance_author"
+            ),
+        ]
+
+    @property
+    def is_issued(self) -> bool:
+        return self.issued_at is not None and self.withdrawn_at is None
+
+
+class TeamGuidanceReceipt(TimeStampedModel):
+    id = CuidField()
+    guidance = models.ForeignKey(
+        TeamGuidance, on_delete=models.CASCADE, related_name="receipts"
+    )
+    recipient_staff_id = models.CharField(max_length=30, db_index=True)
+    recipient_user_id = models.CharField(max_length=30, db_index=True)
+    acknowledged_at = models.DateTimeField(null=True, blank=True)
+    response = models.TextField(blank=True, default="")
+
+    class Meta:
+        db_table = "cce_team_guidance_receipt"
+        ordering = ["created_at"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["guidance", "recipient_staff_id"],
+                name="uniq_team_guidance_recipient",
+            ),
+        ]

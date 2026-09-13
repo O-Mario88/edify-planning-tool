@@ -272,6 +272,102 @@ def _pl_map_context(user, fy, filters) -> dict:
     return {"pl_map_rows": table_rows}
 
 
+def _program_lead_dashboard(request, avatar_initials: str):
+    """The Program Lead dashboard.
+
+    A fixed part — the team pulse tiles and Leadership Attention — above one
+    view at a time: Map (the default, owner 2026-09-05), Priorities, Team,
+    Coaching, Programmes or Collaboration, one per responsibility in the role
+    description (owner, 2026-09-13). The service builds only the fixed part and
+    the chosen view; a tab click builds the view alone. "operations", the old
+    second view, still resolves — from a remembered cookie or a bookmark — to
+    Team, and the cookie is rewritten under the new name.
+    """
+    from apps.analytics.pl_dashboard_service import (
+        DEFAULT_VIEW,
+        TEAM_OVERSIGHT_URL,
+        VIEW_ALIASES,
+        VIEW_TABS,
+        VIEWS,
+        ProgramLeadDashboardService,
+        normalise_view,
+    )
+    from apps.core.fy import fy_options, get_operational_fy
+
+    user = request.user
+    fy = (request.GET.get("fy") or "").strip()
+    if fy not in fy_options():
+        fy = get_operational_fy()
+    raw_urgent_page = (request.GET.get("urgent_page") or "").strip()
+    urgent_page = int(raw_urgent_page) if raw_urgent_page.isdigit() else 1
+    asked, explicit = resolve_dashboard_view(
+        request,
+        role_key="pl",
+        default=DEFAULT_VIEW,
+        allowed=(*VIEWS, *VIEW_ALIASES),
+    )
+    view = normalise_view(asked)
+    # A remembered "operations" is rewritten as "team" on the next response.
+    remember = explicit or asked != view
+    tab_swap = request.headers.get("HX-Target") == "pl-dashboard-view-shell"
+    data = ProgramLeadDashboardService.get_dashboard(
+        user,
+        fy=fy,
+        view=view,
+        urgent_page=urgent_page,
+        include_fixed=not tab_swap,
+    )
+    attention = data.get("leadership_attention") or []
+    first = attention[0] if attention else None
+    context = {
+        **data,
+        "role": user.active_role,
+        "user_name": user.name,
+        "avatar_initials": avatar_initials,
+        "fy": fy,
+        "fy_options": fy_options(),
+        "dashboard_view": view,
+        "mobile_status_label": f"Needs attention: {len(attention)}",
+        # The phone opens on the most pressing thing the lead has to do; with
+        # nothing waiting, on the team's plans.
+        "mobile_primary_action": (
+            {"label": first["action"], "url": first["url"]}
+            if first
+            else {
+                "label": "Open Team Oversight",
+                "url": f"{TEAM_OVERSIGHT_URL}?fy={fy}",
+            }
+        ),
+    }
+    context["dashboard_tabs"] = dashboard_view_tabs(
+        request,
+        active=view,
+        panel_id="pl-dashboard-view",
+        view_template="partials/dashboards/pl/view.html",
+        tabs=list(VIEW_TABS),
+        keep=("fy",),
+        values={"fy": fy},
+    )
+    if view == "map":
+        from apps.analytics.country_map_context import country_map_context
+
+        context.update(country_map_context(fy))
+        context.update(_pl_map_context(user, fy, {}))
+    if tab_swap:
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
+    elif request.headers.get("HX-Request") == "true":
+        response = render(request, "partials/dashboards/pl/body.html", context)
+    else:
+        response = render(request, "pages/dashboards/pl.html", context)
+    if remember:
+        remember_dashboard_view(response, role_key="pl", view=view)
+    return response
+
+
 def _regional_lead_dashboard(request):
     """The Regional Programme Lead dashboard.
 
@@ -337,31 +433,48 @@ def _regional_lead_dashboard(request):
         ),
     }
     from apps.frontend.views.dashboard_view_state import (
-        dashboard_view_tabs, remember_dashboard_view, resolve_dashboard_view,
+        dashboard_view_tabs,
+        remember_dashboard_view,
+        resolve_dashboard_view,
     )
 
     selected_view, explicit = resolve_dashboard_view(
-        request, role_key="rpl", default="overview",
+        request,
+        role_key="rpl",
+        default="overview",
         allowed=("overview", "coaching", "programmes", "reporting"),
     )
     context["dashboard_live"] = True
     context["dashboard_view"] = selected_view
     context["mobile_status_label"] = f"Needs attention: {len(data['attention'])}"
     context["dashboard_tabs"] = dashboard_view_tabs(
-        request, active=selected_view, panel_id="rpl-dashboard-view",
+        request,
+        active=selected_view,
+        panel_id="rpl-dashboard-view",
         view_template="partials/dashboards/rpl/view.html",
         tabs=[
             ("overview", "Overview", "Regional programme priorities and progress"),
             ("coaching", "Coaching", "Coach Programme Leads and track follow-ups"),
-            ("programmes", "Programmes", "Use school needs to guide training and evaluate delivery"),
-            ("reporting", "Reporting", "Prepare regional reports and review programme impact"),
+            (
+                "programmes",
+                "Programmes",
+                "Use school needs to guide training and evaluate delivery",
+            ),
+            (
+                "reporting",
+                "Reporting",
+                "Prepare regional reports and review programme impact",
+            ),
         ],
         keep=("fy",),
         values={"fy": fy},
     )
     if request.headers.get("HX-Target") == "rpl-dashboard-view-shell":
-        response = render(request, "partials/dashboards/_view_tabs.html",
-                          {**context, "dashboard_tabs_inner": True})
+        response = render(
+            request,
+            "partials/dashboards/_view_tabs.html",
+            {**context, "dashboard_tabs_inner": True},
+        )
     else:
         response = render(request, "pages/dashboards/rpl.html", context)
     if explicit:
@@ -495,85 +608,9 @@ def dashboard_view(request):
         return response
 
     elif role == "Program Lead":
-        # Program Lead Command Dashboard — the PL's supervised-team operating
-        # cockpit. Everything is scoped to this PL's supervised CCEOs by
-        # ProgramLeadDashboardService (never country-wide, never another PL).
-        from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
-        from apps.core.fy import fy_options, get_operational_fy
-
-        fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-        month = (request.GET.get("month") or "").strip() or None
-        filters = {"activity_type": request.GET.get("activity_type")}
-        raw_urgent_page = (request.GET.get("urgent_page") or "").strip()
-        urgent_page = int(raw_urgent_page) if raw_urgent_page.isdigit() else 1
-        data = ProgramLeadDashboardService.get_dashboard(
-            request.user,
-            fy=fy,
-            month=month,
-            filters=filters,
-            urgent_page=urgent_page,
-        )
-        urgent_pagination_query = {"fy": fy}
-        if filters["activity_type"]:
-            urgent_pagination_query["activity_type"] = filters["activity_type"]
-        leadership_attention = data.get("leadership_attention") or []
-        if leadership_attention:
-            first_attention = leadership_attention[0]
-            attention_link = first_attention.get("link") or "?drill=attention"
-            mobile_primary_action = {
-                "label": first_attention.get("action") or "Review team attention",
-                "url": f"/dashboard/pl-drilldown{attention_link}&fy={fy}",
-            }
-        else:
-            mobile_primary_action = {
-                "label": "Open team plan",
-                "url": "/my-plan",
-            }
-        context = {
-            **data,
-            "role": role,
-            "user_name": user.name,
-            "avatar_initials": avatar_initials,
-            "fy_options": fy_options(),
-            "urgent_pagination_query": urlencode(urgent_pagination_query),
-            "mobile_primary_action": mobile_primary_action,
-        }
-        dashboard_view, view_explicit = resolve_dashboard_view(
-            request, role_key="pl", default="map"
-        )
-        context["dashboard_view"] = dashboard_view
-        context["dashboard_tabs"] = dashboard_view_tabs(
-            request,
-            active=dashboard_view,
-            panel_id="pl-dashboard-view",
-            view_template="partials/dashboards/pl/view.html",
-            tabs=[
-                ("map", "Map", "Your region's districts shaded by team delivery"),
-                (
-                    "operations",
-                    "Operations",
-                    "Team performance, CCEOs, SSA, funding and actions",
-                ),
-            ],
-        )
-        if dashboard_view == "map":
-            from apps.analytics.country_map_context import country_map_context
-
-            context.update(country_map_context(fy))
-            context.update(_pl_map_context(request.user, fy, filters))
-        if request.headers.get("HX-Target") == "pl-dashboard-view-shell":
-            response = render(
-                request,
-                "partials/dashboards/_view_tabs.html",
-                {**context, "dashboard_tabs_inner": True},
-            )
-        elif request.headers.get("HX-Request") == "true":
-            response = render(request, "partials/dashboards/pl/body.html", context)
-        else:
-            response = render(request, "pages/dashboards/pl.html", context)
-        if view_explicit:
-            remember_dashboard_view(response, role_key="pl", view=dashboard_view)
-        return response
+        # The Programme Lead's home, organised around the five
+        # responsibilities of the role (owner, 2026-09-13).
+        return _program_lead_dashboard(request, avatar_initials)
 
     elif role == "RegionalVicePresident":
         # RVP Dashboard — the regional approval cockpit: country monthly
@@ -687,8 +724,18 @@ def dashboard_view(request):
             "mobile_primary_action": mobile_action,
         }
         dashboard_view, view_explicit = resolve_dashboard_view(
-            request, role_key="hr", default="operations",
-            allowed=("operations", "staffing", "talent", "wellbeing", "compliance", "rewards", "map"),
+            request,
+            role_key="hr",
+            default="operations",
+            allowed=(
+                "operations",
+                "staffing",
+                "talent",
+                "wellbeing",
+                "compliance",
+                "rewards",
+                "map",
+            ),
         )
         context["dashboard_live"] = True
         context["mobile_status_label"] = f"Needs attention: {len(data['attention'])}"
@@ -705,7 +752,11 @@ def dashboard_view(request):
                     "Staffing, performance, relations, wellbeing and compliance",
                 ),
                 ("staffing", "Staffing", "Recruit, onboard and retain employees"),
-                ("talent", "Talent", "Performance reviews, recovery plans and professional development"),
+                (
+                    "talent",
+                    "Talent",
+                    "Performance reviews, recovery plans and professional development",
+                ),
                 ("wellbeing", "Wellbeing", "Employee relations, safety and morale"),
                 ("compliance", "Compliance", "Policy and employment-law obligations"),
                 ("rewards", "Pay & leave", "Leave, compensation and benefits"),
@@ -1465,7 +1516,8 @@ def program_lead_dashboard_view(request):
 # ── Program Lead Command Dashboard — drill-downs + inline approve ────────────
 @require_page_permission("dashboard")
 def pl_dashboard_drilldown_view(request):
-    """Scoped drill-down drawer for the PL Command Dashboard KPIs/backlog cards."""
+    """The drawers the Program Lead dashboard's views open, scoped to the
+    lead's own team (ProgramLeadDashboardService.drilldown)."""
     if request.user.active_role not in ("Program Lead", "Admin"):
         from django.http import HttpResponseForbidden
 
@@ -1475,10 +1527,7 @@ def pl_dashboard_drilldown_view(request):
 
     drill = (request.GET.get("drill") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    month = (request.GET.get("month") or "").strip() or None
-    payload = ProgramLeadDashboardService.drilldown(
-        request.user, drill, fy=fy, month=month
-    )
+    payload = ProgramLeadDashboardService.drilldown(request.user, drill, fy=fy)
     return render(
         request,
         "partials/dashboards/pl/drilldown.html",
@@ -1494,21 +1543,19 @@ def pl_urgent_schools_page_view(request):
     if request.user.active_role not in ("Program Lead", "Admin"):
         return HttpResponseForbidden("Program Lead only.")
 
-    from apps.analytics.pl_analytics_service import resolve_pl_scope
-    from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
+    from apps.analytics.pl_dashboard_service import (
+        DashboardContext,
+        ProgramLeadDashboardService,
+    )
     from apps.core.fy import get_operational_fy
 
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    filters = {"activity_type": request.GET.get("activity_type")}
     raw_page = (request.GET.get("urgent_page") or "").strip()
     page = int(raw_page) if raw_page.isdigit() else 1
-    pls = resolve_pl_scope(request.user, filters)
+    ctx = DashboardContext(request.user, fy)
     urgent_pagination = ProgramLeadDashboardService.urgent_schools_page(
-        request.user, pls, fy, filters, page=page
+        request.user, ctx.pls, fy, {}, page=page
     )
-    pagination_query = {"fy": fy}
-    if filters["activity_type"]:
-        pagination_query["activity_type"] = filters["activity_type"]
     return render(
         request,
         "partials/dashboards/pl/urgent_schools_page.html",
@@ -1516,7 +1563,7 @@ def pl_urgent_schools_page_view(request):
             "fy": fy,
             "urgent_schools": urgent_pagination["rows"],
             "urgent_pagination": urgent_pagination,
-            "urgent_pagination_query": urlencode(pagination_query),
+            "urgent_pagination_query": urlencode({"fy": fy, "view": "programmes"}),
             "can_assign_partner": RolePermissionService.can_assign_to_partner(
                 request.user
             ),
@@ -1526,10 +1573,14 @@ def pl_urgent_schools_page_view(request):
 
 @require_page_permission("dashboard")
 def pl_dashboard_approve_view(request):
-    """Approve a supervised CCEO's weekly fund request straight from the
-    dashboard approval queue, then re-render the dashboard body. The service
-    enforces that a PL can only approve a supervised CCEO's request (never
-    their own — those route to the CD)."""
+    """Retired: the dashboard no longer approves anything in place.
+
+    Approving a weekly fund request from the dashboard drawer re-rendered the
+    page body without its view rail, and decided the request without its week,
+    its lines or a way to return it with a reason. Fund Approvals is where a
+    lead decides a request (Program Lead alignment, 2026-09-13). A stale page
+    that still posts here is sent there, and nothing is approved on the way.
+    """
     if (
         request.user.active_role not in ("Program Lead", "Admin")
         or request.method != "POST"
@@ -1537,27 +1588,13 @@ def pl_dashboard_approve_view(request):
         from django.http import HttpResponseForbidden
 
         return HttpResponseForbidden("Not allowed.")
-    from apps.analytics.pl_dashboard_service import ProgramLeadDashboardService
-    from apps.core.fy import fy_options, get_operational_fy
-    from apps.fund_requests.weekly_service import approve_weekly_request
+    from apps.analytics.pl_dashboard_service import FUND_APPROVALS_URL
 
-    kind = request.GET.get("kind")
-    rid = request.GET.get("id")
-    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-    error = None
-    if kind == "weekly_fund" and rid:
-        try:
-            approve_weekly_request(rid, request.user)
-        except Exception as e:  # noqa: BLE001
-            error = str(e)
-    data = ProgramLeadDashboardService.get_dashboard(request.user, fy=fy)
-    context = {
-        **data,
-        "fy_options": fy_options(),
-        "approve_error": error,
-        "urgent_pagination_query": urlencode({"fy": fy}),
-    }
-    return render(request, "partials/dashboards/pl/body.html", context)
+    if request.headers.get("HX-Request") == "true":
+        response = HttpResponse(status=204)
+        response["HX-Redirect"] = FUND_APPROVALS_URL
+        return response
+    return redirect(FUND_APPROVALS_URL)
 
 
 @require_page_permission("dashboard")

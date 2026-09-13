@@ -845,6 +845,22 @@ def partner_detail_view(request, partner_id):
         "activities": activities,
         "completed": counts["completed"],
     }
+
+    # The partnership log for this organisation (owner, 2026-09-13): the
+    # engagements the reader may read, the whole history, and the Record
+    # button for the Programme Lead and the Country Director. A To-Do or a
+    # notification opens a record or the record drawer on load
+    # (?engagement=<id>&step=…, ?record=1&source=<observation>).
+    from apps.frontend.views import partner_engagement_views
+
+    engagement = partner_engagement_views.engagement_register(
+        request, fy=get_operational_fy(), partner_id=partner.id
+    )
+    if engagement["can_record"] or engagement["rows"]:
+        context["engagement"] = engagement
+        context["engagement_autoload"] = partner_engagement_views.autoload_drawer(
+            request, partner_id=partner.id
+        )
     return render(request, "pages/partners/detail.html", context)
 
 

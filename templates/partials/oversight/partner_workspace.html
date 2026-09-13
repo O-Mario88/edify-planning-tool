@@ -368,4 +368,13 @@ schedule, and none edits a CCEO's record.
   {% else %}
   {% include "components/empty_state.html" with title="No partner work in this period" message="When a CCEO hands a school's support to a partner, it appears here — first as an assignment waiting on the partner's date, then with its cost once they schedule." %}
   {% endif %}
+
+  {% comment %}
+  The partnership log (owner, 2026-09-13): what the Programme Lead and the
+  Country Director do with partners to build their capacity, for this FY and
+  the partner tab in view. Present only for the roles that record or read it.
+  {% endcomment %}
+  {% if engagement %}
+  {% include "partials/partners/engagement_register.html" with engagement_title="Partner engagements this FY" %}
+  {% endif %}
 </section>

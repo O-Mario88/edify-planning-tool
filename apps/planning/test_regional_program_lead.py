@@ -313,7 +313,7 @@ class RegionalProgramLeadTest(TestCase):
         self.assertNotEqual(page.context["fy"], "9999")
         for tab in page.context["dashboard_tabs"]["tabs"]:
             self.assertNotIn("9999", tab["url"])
-        self.assertContains(page, 'data-dashboard-live')
+        self.assertContains(page, "data-dashboard-live")
         self.assertContains(page, 'href="/dashboard?view=coaching"')
 
     def test_focused_workflows_preserve_scope_period_and_view(self):
@@ -325,14 +325,17 @@ class RegionalProgramLeadTest(TestCase):
         }
         for view, template in expected.items():
             with self.subTest(view=view):
-                page = self.client.get(f"/dashboard?fy=2026&view={view}",
-                    HTTP_HX_TARGET="rpl-dashboard-view-shell", HTTP_HX_REQUEST="true")
+                page = self.client.get(
+                    f"/dashboard?fy=2026&view={view}",
+                    HTTP_HX_TARGET="rpl-dashboard-view-shell",
+                    HTTP_HX_REQUEST="true",
+                )
                 self.assertEqual(page.status_code, 200)
                 self.assertTemplateUsed(page, template)
                 self.assertEqual(page.context["reach"]["countries"], ["Uganda"])
-                self.assertContains(page, 'fy=2026&amp;view=coaching')
+                self.assertContains(page, "fy=2026&amp;view=coaching")
                 self.assertContains(page, 'hx-swap-oob="outerHTML"')
-                self.assertNotContains(page, '<html')
+                self.assertNotContains(page, "<html")
                 self.assertEqual(page.cookies["edify_dashboard_view_rpl"].value, view)
         remembered = self.client.get("/dashboard?fy=2026")
         self.assertEqual(remembered.context["dashboard_view"], "reporting")

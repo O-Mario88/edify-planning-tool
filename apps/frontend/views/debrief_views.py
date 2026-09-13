@@ -20,7 +20,10 @@ from apps.core.permissions import require_page_permission
 
 from apps.debriefs.action_service import DebriefActionRoutingService
 from apps.debriefs.dashboard_service import FieldDebriefDashboardService
-from apps.debriefs.field_debrief_service import FieldDebriefService
+from apps.debriefs.field_debrief_service import (
+    REVIEWABLE_STATUSES,
+    FieldDebriefService,
+)
 from apps.debriefs.insight_service import InsightReviewService
 from apps.debriefs.peer_solution_service import PeerSolutionService
 
@@ -72,6 +75,19 @@ def field_debrief_detail_view(request, debrief_id):
         debrief = FieldDebriefService.get_one(request.user, debrief_id)
     except NotFoundError as exc:
         raise Http404(str(exc)) from exc
+    # The supervising Programme Lead reviews the debrief and can turn it into
+    # a coaching conversation (2026-09-13). Nobody else is offered either.
+    supervises = FieldDebriefService.supervises(request.user, debrief)
+    reviewer_name = ""
+    if debrief.reviewed_by_user_id and debrief.status == "reviewed":
+        from apps.accounts.models import User
+
+        reviewer_name = (
+            User.objects.filter(id=debrief.reviewed_by_user_id)
+            .values_list("name", flat=True)
+            .first()
+            or ""
+        )
     context = {
         "debrief": debrief,
         "activity_links": list(debrief.activity_links.select_related("activity")),
@@ -91,6 +107,14 @@ def field_debrief_detail_view(request, debrief_id):
             "Admin",
         ),
         "is_own": debrief.submitted_by_user_id == request.user.user_id,
+        "can_review": supervises and debrief.status in REVIEWABLE_STATUSES,
+        "coaching_drawer_url": (
+            f"/team/coaching/new?cceo={debrief.staff_id}"
+            f"&kind=debrief_feedback&debrief={debrief.id}"
+            if supervises
+            else ""
+        ),
+        "reviewer_name": reviewer_name,
     }
     return render(request, "pages/debriefs/detail.html", context)
 
@@ -289,6 +313,13 @@ def field_debrief_action_view(request):
                 request.user, debrief_id, request.POST.get("note", "")
             )
             messages.success(request, "Clarification requested.")
+        elif action == "mark_reviewed":
+            FieldDebriefService.mark_reviewed(
+                request.user, debrief_id, request.POST.get("feedback", "")
+            )
+            messages.success(
+                request, "Debrief marked reviewed. The officer has your feedback."
+            )
         elif action == "update_after_clarification":
             FieldDebriefService.update_after_clarification(
                 request.user,

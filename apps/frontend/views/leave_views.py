@@ -505,12 +505,15 @@ def leave_tracker_view(request):
     role = get_user_role_slug(user)
 
     qs = StaffProfile.objects.filter(deleted_at__isnull=True).select_related("user")
+    supervisee_ids: list[str] = []
     if role == "PL":
         from apps.accounts.models import StaffSupervisorAssignment
 
-        supervisee_ids = StaffSupervisorAssignment.objects.filter(
-            supervisor__user=user
-        ).values_list("supervisee_id", flat=True)
+        supervisee_ids = list(
+            StaffSupervisorAssignment.objects.filter(supervisor__user=user).values_list(
+                "supervisee_id", flat=True
+            )
+        )
         qs = qs.filter(id__in=supervisee_ids)
     else:
         # Only the PL arm was ever narrowed, so HR, CD and RVP each read every
@@ -620,9 +623,18 @@ def leave_tracker_view(request):
         # exist before HR creates one — a new hire, or a role granted ahead of
         # the record. Reading `.id` regardless raised, so the page 500d rather
         # than showing the nothing they are correctly scoped to.
+        #
+        # The lead's own cover, and any cover involving the people they
+        # approve leave for — who is acting for an officer on leave, and which
+        # officer is covering someone else (Programme Lead alignment,
+        # 2026-09-13). It showed only the lead's own, so the tracker's cover
+        # panel was empty while the team's handovers ran.
         sp_id = getattr(user, "staff_profile_id", None)
+        people = [i for i in [sp_id, *supervisee_ids] if i]
         coverages = (
-            coverages.filter(Q(original_staff_id=sp_id) | Q(covering_staff_id=sp_id))
+            coverages.filter(
+                Q(original_staff_id__in=people) | Q(covering_staff_id__in=people)
+            )
             if sp_id
             else coverages.none()
         )
@@ -1152,11 +1164,6 @@ def leave_calendar_view(request):
     pending = Leave.objects.filter(status="pending").select_related(
         "staff__user", "covering_staff__user"
     )
-    if not approves_leave:
-        own = request.user.staff_profile_id
-        mine = Q(staff_id=own) | Q(covering_staff_id=own) if own else Q(pk__in=[])
-        approved = approved.filter(mine)
-        pending = pending.filter(mine)
     # `status="active"` alone is not "live" — nothing ever writes "expired",
     # so that filter matched every assignment ever created. The window is the
     # real test, and it is what the five authority checks already apply.
@@ -1164,6 +1171,41 @@ def leave_calendar_view(request):
     coverages = TemporaryCoverageAssignment.objects.filter(
         status="active", start_datetime__lte=_now, end_datetime__gte=_now
     ).select_related("original_staff__user", "covering_staff__user")
+    if not approves_leave:
+        own = request.user.staff_profile_id
+        mine = Q(staff_id=own) | Q(covering_staff_id=own) if own else Q(pk__in=[])
+        approved = approved.filter(mine)
+        pending = pending.filter(mine)
+        # The same boundary for cover: only arrangements the reader is part of.
+        coverages = (
+            coverages.filter(Q(original_staff_id=own) | Q(covering_staff_id=own))
+            if own
+            else coverages.none()
+        )
+    elif getattr(request.user, "active_role", "") == "Program Lead":
+        # A Programme Lead approves their own team's leave, not the country's:
+        # the calendar showed every employee's absence — sick leave included —
+        # to every lead (privacy fix, Programme Lead alignment 2026-09-13). The
+        # lead sees their own leave and their supervisees', cover included, and
+        # the cover arrangements touching those people. The Country Director,
+        # the RVP and HR keep the reach they approve for.
+        from apps.core.scoping import resolve_user_scope
+
+        own = request.user.staff_profile_id
+        people = [
+            i
+            for i in [
+                own,
+                *(resolve_user_scope(request.user).supervised_staff_ids or []),
+            ]
+            if i
+        ]
+        team = Q(staff_id__in=people) | Q(covering_staff_id__in=people)
+        approved = approved.filter(team)
+        pending = pending.filter(team)
+        coverages = coverages.filter(
+            Q(original_staff_id__in=people) | Q(covering_staff_id__in=people)
+        )
 
     # 4. Public Holidays & Blackout Calendar Blocks
     blocks = CalendarBlock.objects.filter(is_active=True)
@@ -1662,9 +1704,8 @@ def team_availability_view(request):
     # Absence set against field work still booked in the same week. The
     # heatmap's own status label hides this: "On Leave" overwrites the
     # workload cell, so stranded school visits were invisible at team level.
-    collisions = TeamAvailabilityService.collision_report(
-        supervisor_profile=sp, country_scope=country_scope, weeks=week_count
-    )
+    # Read from the matrix above rather than rebuilding it (2026-09-13).
+    collisions = TeamAvailabilityService.collision_report_from(matrix)
 
     # Generate list of header weeks labels
     today = date.today()

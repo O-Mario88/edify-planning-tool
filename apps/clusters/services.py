@@ -25,6 +25,7 @@ from django.db.models import Avg, Count, Max, Min, Prefetch, Q, Sum
 
 from apps.core.enums import ClusterRecordStatus, SsaIntervention
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.rbac import Permission
 from apps.core.scoping import cluster_queryset, resolve_user_scope
 from apps.geography.models import District, SubCounty
@@ -1381,7 +1382,11 @@ class ClusterDashboardService:
 
         # 2. Filters from request
         q = request.GET.get("q", "").strip()
-        fy = request.GET.get("fy", "2026").strip()
+        # The operational year unless a year the platform offers is chosen; a
+        # hard-coded "2026" kept the page on last year's figures once the year
+        # turned (Programme Lead alignment, 2026-09-13).
+        requested_fy = request.GET.get("fy", "").strip()
+        fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
         district_id = request.GET.get("district", "").strip()
         sub_county_id = request.GET.get("sub_county", "").strip()
         staff_id = request.GET.get("staff", "").strip()
@@ -1750,6 +1755,10 @@ class ClusterDashboardService:
             "kpis": kpis,
             "kpi_strip_items": kpi_strip_items,
             "risk_counts": risk_counts,
+            # The validated year and the choices, so the page's selector shows
+            # the year these figures were read for.
+            "fy": fy,
+            "fy_options": fy_options(),
             # Filter options built from base_qs — the same scoped, active,
             # non-deleted set this page lists — rather than from the national
             # geography tables.

@@ -240,6 +240,7 @@ def _fund_request_todos(principal, role):
         "Program Lead": "submitted_to_pl",
         "CountryDirector": "submitted_to_cd",
     }.get(role)
+    supervised: list[str] = []
     if approver_status:
         approver_qs = WeeklyFundRequest.objects.filter(status=approver_status)
         if role == "Program Lead":
@@ -247,18 +248,37 @@ def _fund_request_todos(principal, role):
             # never another PL's portfolio.
             from apps.accounts.models import StaffSupervisorAssignment
 
-            supervised = StaffSupervisorAssignment.objects.filter(
-                supervisor__user_id=uid
-            ).values_list("supervisee__user_id", flat=True)
-            approver_qs = approver_qs.filter(responsible_user__in=list(supervised))
-        for w in approver_qs.order_by("-week_start_date")[:15]:
+            supervised = list(
+                StaffSupervisorAssignment.objects.filter(
+                    supervisor__user_id=uid
+                ).values_list("supervisee__user_id", flat=True)
+            )
+            approver_qs = approver_qs.filter(responsible_user__in=supervised)
+        approvals = list(approver_qs.order_by("-week_start_date")[:15])
+        owner_names = {}
+        if role == "Program Lead" and approvals:
+            from apps.accounts.models import User
+
+            owner_names = dict(
+                User.objects.filter(
+                    id__in={w.responsible_user for w in approvals}
+                ).values_list("id", "name")
+            )
+        for w in approvals:
+            # One To-Do per request (Program Lead alignment, 2026-09-13). A
+            # lead decides a team week in Fund Approvals, beside the week's
+            # lines and the return-with-reason control; the second, per-officer
+            # "Review Fund Plan" row that pointed at the same page is gone.
+            # The Country Director keeps the request's own page.
+            owner = owner_names.get(w.responsible_user)
             todos.append(
                 {
                     "id": f"wfr-appr-{w.id}",
                     "title": "Approve Fund Request",
                     # Money a team is waiting on is not medium, and it is not
                     # undated: the week it funds is the deadline.
-                    "description": f"Fund request {w.week_start_date:%b %-d}–{w.week_end_date:%b %-d} awaits your approval",
+                    "description": (f"{owner}'s week of " if owner else "Fund request ")
+                    + f"{w.week_start_date:%b %-d}–{w.week_end_date:%b %-d} awaits your approval",
                     "category": "Approval",
                     "priority": "high",
                     "status_key": "waiting_me",
@@ -270,7 +290,11 @@ def _fund_request_todos(principal, role):
                     "due_tone": "neutral",
                     "linked": f"Weekly Fund Request · {w.week_start_date:%b %-d}",
                     "action_label": "Review",
-                    "action_url": f"/fund-requests/weekly/{w.id}",
+                    "action_url": (
+                        "/fund-approvals"
+                        if role == "Program Lead"
+                        else f"/fund-requests/weekly/{w.id}"
+                    ),
                     "actionable": True,
                     "source": "Finance approval",
                     "_due_sort": w.week_start_date or date.max,
@@ -290,14 +314,25 @@ def _fund_request_todos(principal, role):
             )
         )
         if role == "Program Lead":
-            from apps.accounts.models import StaffSupervisorAssignment
+            acct_qs = acct_qs.filter(responsible_user_id__in=supervised)
+        advances = list(acct_qs.order_by("-accountability_submitted_at")[:15])
+        # The weekly request each advance was drawn on, in one read. The row
+        # used to link to `w.id` — whichever weekly request the approval loop
+        # above happened to finish on, or a NameError when it had none — so
+        # the approver landed on another week, or the whole finance source
+        # vanished from the queue.
+        from apps.fund_requests.models import WeeklyFundRequestLine
 
-            supervised = StaffSupervisorAssignment.objects.filter(
-                supervisor__user_id=uid
-            ).values_list("supervisee__user_id", flat=True)
-            acct_qs = acct_qs.filter(responsible_user_id__in=list(supervised))
-        for adv in acct_qs.order_by("-accountability_submitted_at")[:15]:
+        request_of_line = dict(
+            WeeklyFundRequestLine.objects.filter(
+                activity_budget_line_id__in={
+                    a.budget_line_id for a in advances if a.budget_line_id
+                }
+            ).values_list("activity_budget_line_id", "weekly_fund_request_id")
+        )
+        for adv in advances:
             claim = adv.status == "reimbursement_pl_pending"
+            weekly_id = request_of_line.get(adv.budget_line_id)
             todos.append(
                 {
                     "id": f"adv-plakt-{adv.id}",
@@ -321,7 +356,15 @@ def _fund_request_todos(principal, role):
                     "due_tone": "neutral",
                     "linked": "Fund Accountability",
                     "action_label": "Review",
-                    "action_url": f"/fund-requests/weekly/{w.id}",
+                    "action_url": (
+                        f"/fund-requests/weekly/{weekly_id}"
+                        if weekly_id
+                        else (
+                            "/fund-approvals"
+                            if role == "Program Lead"
+                            else "/fund-requests/weekly"
+                        )
+                    ),
                     "actionable": True,
                     "source": "Finance approval",
                     "_due_sort": date.max,
@@ -435,7 +478,15 @@ def _fund_request_todos(principal, role):
 def _school_quality_todos(scope):
     from apps.schools.models import School
 
-    ids = scope.own_school_ids or scope.school_ids
+    # A Programme Lead's data-quality chores are their own schools'. Falling
+    # back to the team's put every officer's missing contact and unclustered
+    # school on the lead's desk, as work the officer owns and the lead cannot
+    # plan into (owner rule: nobody plans into another's portfolio;
+    # 2026-09-13). An empty own portfolio is an empty list, not the team's.
+    if getattr(scope, "active_role", None) == "Program Lead":
+        ids = scope.own_school_ids
+    else:
+        ids = scope.own_school_ids or scope.school_ids
     if not ids:
         return []
     qs = School.objects.filter(id__in=ids, deleted_at__isnull=True)
@@ -721,21 +772,37 @@ def _partner_invoice_todos(principal, role):
             "Pay",
             "/accounts/partner-payments",
         )
-    invoices = list(
-        PartnerInvoice.objects.filter(status=wanted_status).order_by("created_at")[:20]
-    )
+    invoices = PartnerInvoice.objects.filter(status=wanted_status)
     # A Program Lead's desk holds only THEIR team's invoices — the confirm
     # action itself is scoped the same way (_pl_may_act), so an unscoped
     # To-Do here was both leadership spam and an unactionable row
     # (2026-08-19 audit F5).
     if role == "Program Lead":
-        from apps.fund_requests.partner_invoices import _supervising_pl_user_ids
+        # The rule of partner_invoices._supervising_pl_user_ids — an invoice
+        # is the lead's when an item's activity belongs (responsible, else
+        # monitoring staff on partner delivery) to someone the lead
+        # supervises — asked in the query instead of three reads per invoice,
+        # and before the cut to twenty, so another team's older invoices can
+        # no longer push this lead's off the queue (2026-09-13).
+        from apps.accounts.models import StaffSupervisorAssignment
 
-        invoices = [
-            inv
-            for inv in invoices
-            if principal.user_id in _supervising_pl_user_ids(inv)
-        ]
+        supervisee_ids: set[str] = set()
+        for staff_id, user_id in StaffSupervisorAssignment.objects.filter(
+            supervisor__user_id=principal.user_id
+        ).values_list("supervisee_id", "supervisee__user_id"):
+            supervisee_ids.add(staff_id)
+            if user_id:
+                supervisee_ids.add(user_id)
+        if not supervisee_ids:
+            return []
+        invoices = invoices.filter(
+            Q(items__activity__responsible_staff_id__in=supervisee_ids)
+            | Q(
+                items__activity__responsible_staff_id__isnull=True,
+                items__activity__monitored_by_staff_id__in=supervisee_ids,
+            )
+        ).distinct()
+    invoices = list(invoices.order_by("created_at")[:20])
     from apps.partners.models import Partner
 
     names = dict(
@@ -1462,45 +1529,6 @@ def _leave_todos(principal, role):
             }
         )
     return todos
-
-
-def _pl_fund_todos(principal, role):
-    """PL 'Review {CCEO} Fund Plan' To-Dos — one per supervised CCEO whose fund
-    plan awaits approval. Auto-closes when the PL approves/returns (status moves
-    off 'Awaiting Approval')."""
-    if role not in ("Program Lead", "Admin"):
-        return []
-    try:
-        from apps.fund_requests.pl_approval_service import get_pl_fund_approvals
-
-        d = get_pl_fund_approvals(principal, {})
-    except Exception:  # noqa: BLE001
-        return []
-    todos = []
-    for q in d.get("queue", []):
-        if q["status"] not in ("Awaiting Approval", "Ready", "Needs Review"):
-            continue
-        todos.append(
-            {
-                "id": f"plfund-{q['cceo_user_id']}",
-                "title": f"Review {q['name']} Fund Plan",
-                "description": f"{q['total_fmt']} — {d['month_label']} fund plan awaits your approval",
-                "category": "Budget Approval",
-                "priority": "medium" if q["status"] == "Needs Review" else "high",
-                "status_key": "waiting_me",
-                "status_label": "Waiting on Me",
-                "status_tone": "info",
-                "due_label": "—",
-                "due_tone": "neutral",
-                "linked": f"Fund Plan · {q['name']}",
-                "action_label": "Review",
-                "action_url": "/fund-approvals",
-                "actionable": True,
-                "source": "Fund approval",
-                "_due_sort": date.max,
-            }
-        )
-    return todos[:8]
 
 
 def _accountant_todos(principal, role):
@@ -2280,10 +2308,68 @@ def _cce_leadership_todos(principal, role, today):
         return []
 
 
+_CORE_DONE_STATUSES = frozenset(
+    {
+        "Completed",
+        "Accountant Confirmed",
+        "ia_verified",
+        "iaVerify",
+        "accountant_confirmed",
+    }
+)
+_CORE_IN_FLIGHT_STATUSES = frozenset(
+    {
+        "Scheduled",
+        "scheduled",
+        "Submitted",
+        "submitted",
+        "IA Pending",
+        "ia_pending",
+    }
+)
+_CORE_RETURNED_STATUSES = frozenset({"Returned", "returned"})
+_CORE_KINDS = (
+    ("assessment", "Assessment"),
+    ("visit", "Visit"),
+    ("training", "Training"),
+)
+
+
+def _core_plan_gaps(plan) -> tuple[list, list]:
+    """(returned slots, [(kind label, next unscheduled slot)]) for one plan,
+    read from its prefetched slots."""
+    slots = list(plan.slots.all())
+    returned = [sl for sl in slots if sl.status in _CORE_RETURNED_STATUSES]
+    missing = []
+    for kind, label in _CORE_KINDS:
+        nxt = next(
+            (
+                sl
+                for sl in sorted(
+                    (sl for sl in slots if sl.activity_type == kind),
+                    key=lambda sl: sl.sequence_number,
+                )
+                if sl.status not in _CORE_DONE_STATUSES
+                and sl.status not in _CORE_IN_FLIGHT_STATUSES
+                and sl.status not in _CORE_RETURNED_STATUSES
+            ),
+            None,
+        )
+        if nxt is not None:
+            missing.append((kind, label, nxt))
+    return returned, missing
+
+
 def _core_school_todos(principal, role):
     """Core package To-Dos — the next missing slot per assigned core school,
     plus returned core work. Derived live: scheduling or fixing the slot makes
-    the item disappear."""
+    the item disappear.
+
+    A Programme Lead gets these rows for their OWN core schools only, and one
+    follow-up per officer whose core schools have gaps (Program Lead
+    alignment, 2026-09-13). The lead used to inherit a slot-by-slot row for
+    every core school in the team — work the officer owns and the lead cannot
+    plan into — which buried the lead's own queue under the team's."""
     if role not in ("CCEO", "Program Lead"):
         return []
     from datetime import date as _date
@@ -2294,85 +2380,52 @@ def _core_school_todos(principal, role):
         from apps.schools.models import School
 
         scope = resolve_user_scope(principal)
-        school_pks = list(scope.school_ids or [])
-        if not school_pks:
-            return []
-        sids = list(
-            School.objects.filter(
-                id__in=school_pks, school_type="core", deleted_at__isnull=True
-            ).values_list("school_id", flat=True)
+        own_pks = list(
+            scope.own_school_ids if role == "Program Lead" else scope.school_ids or []
         )
-        if not sids:
-            return []
-        names = dict(
-            School.objects.filter(school_id__in=sids).values_list("school_id", "name")
-        )
-        done = {
-            "Completed",
-            "Accountant Confirmed",
-            "ia_verified",
-            "iaVerify",
-            "accountant_confirmed",
-        }
-        in_flight = {
-            "Scheduled",
-            "scheduled",
-            "Submitted",
-            "submitted",
-            "IA Pending",
-            "ia_pending",
-        }
         out = []
-        plans = (
-            CorePlan.objects.filter(school_id__in=sids, fy=get_operational_fy())
-            .exclude(status__in=["Cancelled", "cancelled"])
-            .prefetch_related("slots")
+        fy = get_operational_fy()
+        own_codes = (
+            dict(
+                School.objects.filter(
+                    id__in=own_pks, school_type="core", deleted_at__isnull=True
+                ).values_list("school_id", "name")
+            )
+            if own_pks
+            else {}
         )
-        for plan in plans[:40]:
-            slots = list(plan.slots.all())
-            returned = [sl for sl in slots if sl.status in ("Returned", "returned")]
-            for sl in returned[:2]:
-                out.append(
-                    {
-                        "id": f"core-returned-{sl.id}",
-                        "title": f"Fix returned core {sl.activity_type} — {names.get(plan.school_id, plan.school_id)}",
-                        "description": sl.returned_reason
-                        or "Returned by verification — correct and resubmit.",
-                        "category": "Core Schools",
-                        "priority": "high",
-                        "status_key": "returned",
-                        "status_label": "Returned",
-                        "status_tone": "danger",
-                        "due_label": "—",
-                        "due_tone": "neutral",
-                        "linked": names.get(plan.school_id, plan.school_id),
-                        "action_label": "Open Core Schools",
-                        "action_url": "/core-schools",
-                        "actionable": True,
-                        "source": "Core Schools",
-                        "_due_sort": _date.today(),
-                    }
-                )
-            for kind, label in (
-                ("assessment", "Assessment"),
-                ("visit", "Visit"),
-                ("training", "Training"),
-            ):
-                kind_slots = sorted(
-                    [sl for sl in slots if sl.activity_type == kind],
-                    key=lambda sl: sl.sequence_number,
-                )
-                nxt = next(
-                    (
-                        sl
-                        for sl in kind_slots
-                        if sl.status not in done
-                        and sl.status not in in_flight
-                        and sl.status not in ("Returned", "returned")
-                    ),
-                    None,
-                )
-                if nxt is not None:
+        if own_codes:
+            plans = (
+                CorePlan.objects.filter(school_id__in=list(own_codes), fy=fy)
+                .exclude(status__in=["Cancelled", "cancelled"])
+                .prefetch_related("slots")
+            )
+            for plan in plans[:40]:
+                name = own_codes.get(plan.school_id, plan.school_id)
+                returned, missing = _core_plan_gaps(plan)
+                for sl in returned[:2]:
+                    out.append(
+                        {
+                            "id": f"core-returned-{sl.id}",
+                            "title": f"Fix returned core {sl.activity_type} — {name}",
+                            "description": sl.returned_reason
+                            or "Returned by verification — correct and resubmit.",
+                            "category": "Core Schools",
+                            "priority": "high",
+                            "status_key": "returned",
+                            "status_label": "Returned",
+                            "status_tone": "danger",
+                            "due_label": "—",
+                            "due_tone": "neutral",
+                            "linked": name,
+                            "action_label": "Open Core Schools",
+                            "action_url": "/core-schools",
+                            "actionable": True,
+                            "source": "Core Schools",
+                            "_due_sort": _date.today(),
+                        }
+                    )
+                for kind, label, nxt in missing:
                     slot_tag = (
                         "Core Assessment"
                         if kind == "assessment"
@@ -2381,7 +2434,7 @@ def _core_school_todos(principal, role):
                     out.append(
                         {
                             "id": f"core-slot-{nxt.id}",
-                            "title": f"Schedule {slot_tag} — {names.get(plan.school_id, plan.school_id)}",
+                            "title": f"Schedule {slot_tag} — {name}",
                             "description": "Core package slot not yet scheduled this financial year.",
                             "category": "Core Schools",
                             "priority": "medium",
@@ -2390,7 +2443,7 @@ def _core_school_todos(principal, role):
                             "status_tone": "info",
                             "due_label": "—",
                             "due_tone": "neutral",
-                            "linked": names.get(plan.school_id, plan.school_id),
+                            "linked": name,
                             "action_label": "Plan Now",
                             "action_url": "/core-schools",
                             "actionable": True,
@@ -2398,9 +2451,104 @@ def _core_school_todos(principal, role):
                             "_due_sort": _date.today(),
                         }
                     )
-        return out[:12]
+        out = out[:12]
     except Exception:  # noqa: BLE001 — core To-Dos must never break the queue
+        logger.exception("Core school To-Dos failed")
+        out = []
+    if role == "Program Lead":
+        # Separately guarded: a failure in the team's follow-ups must not
+        # take the lead's own core slots off the queue, or the reverse.
+        try:
+            out += _team_core_school_todos(principal, get_operational_fy())
+        except Exception:  # noqa: BLE001 — core To-Dos must never break the queue
+            logger.exception("Team core school To-Dos failed")
+    return out
+
+
+def _team_core_school_todos(principal, fy) -> list[dict]:
+    """One follow-up per officer whose core schools have unscheduled or
+    returned slots — supervision, not the officer's planning. Five reads for
+    the whole team: the team, its school assignments, which of those schools
+    are core, the plans and their slots."""
+    from apps.accounts.models import StaffSchoolAssignment
+    from apps.core_schools.models import CorePlan
+    from apps.hr.team_roster import team_members
+    from apps.schools.models import School
+
+    members = team_members(principal)
+    if not members:
         return []
+    name_of = {m.id: (m.user.name if m.user_id else "") or "CCEO" for m in members}
+    # StaffSchoolAssignment.school_id holds the School pk as a plain column
+    # (no relation to join through), and CorePlan keys on the school code.
+    staff_by_school: dict[str, set[str]] = {}
+    for staff_id, school_pk in StaffSchoolAssignment.objects.filter(
+        staff_id__in=list(name_of)
+    ).values_list("staff_id", "school_id"):
+        staff_by_school.setdefault(school_pk, set()).add(staff_id)
+    if not staff_by_school:
+        return []
+    officers_of: dict[str, set[str]] = {}
+    for school_pk, code in School.objects.filter(
+        id__in=list(staff_by_school), school_type="core", deleted_at__isnull=True
+    ).values_list("id", "school_id"):
+        officers_of.setdefault(code, set()).update(staff_by_school[school_pk])
+    if not officers_of:
+        return []
+    gaps: dict[str, dict] = {}
+    for plan in (
+        CorePlan.objects.filter(school_id__in=list(officers_of), fy=fy)
+        .exclude(status__in=["Cancelled", "cancelled"])
+        .prefetch_related("slots")
+    ):
+        returned, missing = _core_plan_gaps(plan)
+        if not returned and not missing:
+            continue
+        for staff_id in officers_of.get(plan.school_id, ()):
+            entry = gaps.setdefault(
+                staff_id, {"schools": 0, "missing": 0, "returned": 0}
+            )
+            entry["schools"] += 1
+            entry["missing"] += len(missing)
+            entry["returned"] += len(returned)
+    today = date.today()
+    out = []
+    for staff_id, entry in sorted(gaps.items(), key=lambda kv: name_of[kv[0]]):
+        name = name_of[staff_id]
+        parts = []
+        if entry["missing"]:
+            parts.append(
+                f"{entry['missing']} slot{'s' if entry['missing'] != 1 else ''} "
+                "not yet scheduled"
+            )
+        if entry["returned"]:
+            parts.append(f"{entry['returned']} returned")
+        out.append(
+            {
+                "id": f"core-team-{staff_id}",
+                "title": f"Follow up {name}'s core school plan",
+                "description": (
+                    " and ".join(parts)
+                    + f" across {entry['schools']} core school"
+                    + ("s" if entry["schools"] != 1 else "")
+                    + " this financial year."
+                ),
+                "category": "Programme Implementation",
+                "priority": "high" if entry["returned"] else "medium",
+                "status_key": "waiting_me",
+                "status_label": "Waiting on Me",
+                "status_tone": "warning" if entry["returned"] else "info",
+                "due_label": "—",
+                "due_tone": "neutral",
+                "linked": f"{name} · core schools",
+                "action_label": "Open Core Schools",
+                "action_url": "/core-schools",
+                "actionable": True,
+                "source": "Core Schools",
+                "_due_sort": today,
+            }
+        )
+    return out
 
 
 def _team_target_todos(principal, role):
@@ -3254,9 +3402,19 @@ def _business_transformation_todos(principal, role, today):
         EdifyRole.CCEO.value,
         EdifyRole.COUNTRY_PROGRAM_LEAD.value,
     }:
+        loans = lending_impact.scoped_impact_loans(principal)
+        if role == EdifyRole.COUNTRY_PROGRAM_LEAD.value:
+            # The verification visit is the school owner's to plan. A lead's
+            # impact reach spans the team's schools, but only their own are
+            # theirs to visit (2026-09-13); an officer's school stays on the
+            # officer's queue, and the row opens the school profile the lead
+            # can reach rather than a workspace they no longer hold.
+            loans = loans.filter(
+                school_id__in=resolve_user_scope(principal).own_school_ids
+            )
         for requirement in (
             LoanVerificationRequirement.objects.filter(
-                loan_id__in=lending_impact.scoped_impact_loans(principal).values("id"),
+                loan_id__in=loans.values("id"),
                 activity__isnull=True,
                 status__in=[
                     VerificationRequirementStatus.NEEDS_SCHEDULING,
@@ -3588,12 +3746,149 @@ def _business_transformation_todos(principal, role, today):
     return out
 
 
+# ── The Programme Lead's queue, grouped by responsibility (2026-09-13) ──────
+# The role description names five responsibilities, and the sidebar groups
+# the lead's pages under them. A lead's rows from this module carry the group
+# of the page they open, so the To-Do category filter reads as the role does;
+# the lead's own field work keeps its execution categories. Builders in
+# MODULE_TODO_BUILDERS set their own category from the same vocabulary.
+PL_RESPONSIBILITY_CATEGORIES = (
+    "Strategic Direction",
+    "Team Leadership",
+    "Performance & Coaching",
+    "Programme Implementation",
+    "Collaboration",
+    "Finance & Budget",
+)
+_PL_CATEGORY_BY_PREFIX: tuple[tuple[str, str], ...] = (
+    ("wfr-appr-", "Finance & Budget"),
+    ("adv-plakt-", "Finance & Budget"),
+    ("plrev-", "Programme Implementation"),
+    ("pl-analytics-", "Programme Implementation"),
+    ("core-team-", "Programme Implementation"),
+    ("team-sfid-backlog", "Programme Implementation"),
+    ("leave-", "Team Leadership"),
+    ("debrief-escalated-", "Team Leadership"),
+    ("debrief-recommendation-", "Team Leadership"),
+    ("debrief-support-", "Team Leadership"),
+    ("debrief-restricted-", "Team Leadership"),
+    ("team-risk-", "Performance & Coaching"),
+    ("team-catchup-queue", "Performance & Coaching"),
+    ("pd-review-", "Performance & Coaching"),
+    ("cdflag-", "Collaboration"),
+    ("cce-feedback-", "Collaboration"),
+    ("visitreq-", "Collaboration"),
+    # A partner invoice is confirmed in Fund Approvals, a Finance & Budget page.
+    ("pinv-", "Finance & Budget"),
+)
+# The lead's own field chores: work they carry as a planner and staff member,
+# not a handoff from the team or a collaborator. Everything else a lead sees
+# is a leadership handoff (see is_leadership_handoff).
+_FIELD_CHORE_PREFIXES = (
+    "act-",
+    "tact-",
+    "sch-",
+    "core-slot-",
+    "core-returned-",
+    "route-",
+    "target-",
+    "wfr-",
+    "wfrreceipt-",
+    "frmonth-",
+    "frreceipt-",
+    "pd-own-",
+    "debrief-clarify-",
+    "debrief-action-",
+    "xw-",
+    "pdelay-",
+    "pret-",
+    "psa-",
+    "bt-",
+)
+
+
+def pl_responsibility_for(todo: dict) -> str | None:
+    """The responsibility group a Programme Lead's row belongs to, or None
+    for the lead's own field work and for rows this module did not build."""
+    row_id = str(todo.get("id") or "")
+    for prefix, category in _PL_CATEGORY_BY_PREFIX:
+        if row_id.startswith(prefix):
+            return category
+    return None
+
+
+def is_leadership_handoff(todo: dict) -> bool:
+    """Whether a row is a handoff the lead decides rather than their own field
+    chore: a responsibility row, or any row outside the field-chore families
+    (the module builders' coaching, reviews, guidance and escalations)."""
+    if todo.get("category") in PL_RESPONSIBILITY_CATEGORIES:
+        return True
+    if pl_responsibility_for(todo):
+        return True
+    row_id = str(todo.get("id") or "")
+    return not row_id.startswith(_FIELD_CHORE_PREFIXES)
+
+
 def get_todos(principal) -> dict:
     """The full derived To-Do queue for a principal, sorted by priority then due."""
     from apps.core.request_cache import scoped
 
     with scoped():
         return _get_todos(principal)
+
+
+# To-Do builders that live beside the records they read (Program Lead
+# alignment, 2026-09-13). Each entry is "module.path:function" with the
+# signature fn(principal, role, today) -> list[dict] in this queue's row
+# shape; like every source here, one failing builder never breaks the queue.
+MODULE_TODO_BUILDERS: tuple[str, ...] = (
+    # ── PL alignment · T ──
+    "apps.flags.escalation_todos:pl_escalation_todos",
+    # ── end T ──
+    # ── PL alignment · C1 ──
+    "apps.cce_leadership.todos:coaching_todos",
+    # ── end C1 ──
+    # ── PL alignment · C2 ──
+    "apps.hr.review_todos:reviewer_todos",
+    # ── end C2 ──
+    # ── PL alignment · P1 ──
+    # ── end P1 ──
+    # ── PL alignment · P2 ──
+    # ── end P2 ──
+    # ── PL alignment · S1 ──
+    "apps.hr.distribution_todos:distribution_todos",
+    "apps.cce_leadership.guidance_todos:guidance_todos",
+    # ── end S1 ──
+    # ── PL alignment · S2 ──
+    "apps.partners.engagement_todos:partner_engagement_todos",
+    # ── end S2 ──
+    # ── IA review · IA-N ──
+    # ── end IA-N ──
+    # ── IA review · IA-F ──
+    # ── end IA-F ──
+    # ── IA review · IA-C ──
+    # ── end IA-C ──
+    # ── IA review · IA-P ──
+    # ── end IA-P ──
+    # ── IA review · IA-L ──
+    # ── end IA-L ──
+    # ── IA review · IA-R ──
+    # ── end IA-R ──
+)
+
+
+def _module_todos(principal, role, today) -> list[dict]:
+    from importlib import import_module
+
+    out: list[dict] = []
+    for path in MODULE_TODO_BUILDERS:
+        module_name, _, attr = path.partition(":")
+        try:
+            builder = getattr(import_module(module_name), attr)
+            out += builder(principal, role, today) or []
+        except Exception:  # noqa: BLE001 - one source never breaks the queue
+            logger.exception("To-Do builder %s failed", path)
+    return out
 
 
 def _get_todos(principal) -> dict:
@@ -3620,7 +3915,6 @@ def _get_todos(principal) -> dict:
     todos += _school_quality_todos(scope)
     todos += _ia_todos(principal, role)
     todos += _leave_todos(principal, role)
-    todos += _pl_fund_todos(principal, role)
     todos += _accountant_todos(principal, role)
     todos += _country_budget_todos(principal, role)
     todos += _cost_catalogue_todos(principal, role)
@@ -3638,6 +3932,11 @@ def _get_todos(principal) -> dict:
     todos += _pd_todos(principal, role)
     todos += _field_debrief_todos(principal, role)
     todos += _business_transformation_todos(principal, role, today)
+    todos += _module_todos(principal, role, today)
+
+    if role == "Program Lead":
+        for t in todos:
+            t["category"] = pl_responsibility_for(t) or t["category"]
 
     todos.sort(key=lambda t: (PRIORITY_ORDER.get(t["priority"], 9), t["_due_sort"]))
     for t in todos:

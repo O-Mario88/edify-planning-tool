@@ -281,7 +281,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -298,7 +297,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -315,7 +313,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -2920,7 +2917,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "Accountant",
@@ -2938,7 +2934,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "Accountant",
@@ -2956,7 +2951,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "Accountant",
@@ -2974,7 +2968,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "Accountant",
@@ -3022,7 +3015,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "Accountant",
@@ -5153,7 +5145,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -5172,7 +5163,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -5191,7 +5181,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -5210,7 +5199,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -5229,7 +5217,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "HumanResources",
@@ -5246,7 +5233,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "HumanResources",
@@ -5263,7 +5249,6 @@
    ],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -6981,7 +6966,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -7014,7 +6998,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -7047,7 +7030,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "RegionalProgramLead",
@@ -7070,7 +7052,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -7092,7 +7073,6 @@
    "role_exclusive": false,
    "roles": [
     "CCEO",
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -7231,6 +7211,48 @@
    "view": "apps.frontend.views.hr_programme_views.application_record"
   },
   {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/coaching",
+   "route_name": "cce_regional_coaching",
+   "view": "apps.frontend.views.cce_leadership_views.regional_coaching_view"
+  },
+  {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/coaching/<str:engagement_id>",
+   "route_name": "cce_regional_coaching_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.regional_coaching_drawer"
+  },
+  {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/coaching/<str:engagement_id>/acknowledge",
+   "route_name": "cce_regional_coaching_acknowledge",
+   "view": "apps.frontend.views.cce_leadership_views.regional_coaching_acknowledge"
+  },
+  {
    "page_permission": "cce_engagements",
    "required_permissions": [],
    "role_exclusive": false,
@@ -7253,6 +7275,30 @@
    "route": "/cce-leadership/engagements/<str:engagement_id>",
    "route_name": "cce_engagement_drawer",
    "view": "apps.frontend.views.cce_leadership_views.engagement_drawer"
+  },
+  {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements/<str:engagement_id>/share",
+   "route_name": "cce_engagement_share_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.engagement_share_drawer"
+  },
+  {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements/<str:engagement_id>/share/save",
+   "route_name": "cce_engagement_share",
+   "view": "apps.frontend.views.cce_leadership_views.engagement_share"
   },
   {
    "page_permission": "cce_engagements",
@@ -7331,6 +7377,20 @@
    "route": "/cce-leadership/feedback/<str:engagement_id>/acknowledge",
    "route_name": "cce_feedback_acknowledge",
    "view": "apps.frontend.views.cce_leadership_views.feedback_acknowledge"
+  },
+  {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/feedback/<str:engagement_id>/pass",
+   "route_name": "cce_feedback_pass",
+   "view": "apps.frontend.views.cce_leadership_views.feedback_pass"
   },
   {
    "page_permission": "cce_reports",
@@ -8377,7 +8437,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -8433,6 +8492,21 @@
    "route": "/cpd-learning/adjust-allocation",
    "route_name": "pd_dashboard_adjust_allocation",
    "view": "apps.frontend.views.hr_views.pd_dashboard_adjust_allocation_view"
+  },
+  {
+   "page_permission": "cpd_learning",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/cpd-learning/return",
+   "route_name": "pd_supervisor_return_drawer",
+   "view": "apps.frontend.views.hr_views.pd_supervisor_return_drawer"
   },
   {
    "page_permission": "culture_engagement",
@@ -8861,7 +8935,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "Accountant",
@@ -10323,7 +10396,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "HumanResources",
@@ -10456,6 +10528,19 @@
    "route": "/ia/history/",
    "route_name": "ia_history",
    "view": "apps.frontend.views.ia_views.ia_history_view"
+  },
+  {
+   "page_permission": "ia_dashboard",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CountryDirector",
+    "ImpactAssessment",
+    "Admin"
+   ],
+   "route": "/ia/impact-report/download",
+   "route_name": "ia_impact_report_download",
+   "view": "apps.frontend.views.ia_outcome_views.impact_report_download"
   },
   {
    "page_permission": "ia_notifications",
@@ -11699,6 +11784,42 @@
    "view": "apps.business_transformation.frontend_views.mfi_portal_page"
   },
   {
+   "page_permission": "my_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Admin"
+   ],
+   "route": "/my-coaching",
+   "route_name": "my_coaching",
+   "view": "apps.frontend.views.coaching_views.my_coaching_view"
+  },
+  {
+   "page_permission": "my_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Admin"
+   ],
+   "route": "/my-coaching/<str:record_id>",
+   "route_name": "my_coaching_drawer",
+   "view": "apps.frontend.views.coaching_views.my_coaching_drawer"
+  },
+  {
+   "page_permission": "my_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Admin"
+   ],
+   "route": "/my-coaching/<str:record_id>/acknowledge",
+   "route_name": "my_coaching_acknowledge",
+   "view": "apps.frontend.views.coaching_views.my_coaching_acknowledge"
+  },
+  {
    "page_permission": "my_performance",
    "required_permissions": [],
    "role_exclusive": false,
@@ -12285,8 +12406,6 @@
    "role_exclusive": false,
    "roles": [
     "Program Lead",
-    "CountryDirector",
-    "HumanResources",
     "Admin"
    ],
    "route": "/my-team",
@@ -12559,6 +12678,206 @@
    "route": "/partials/costing/preview",
    "route_name": "cost_preview",
    "view": "apps.frontend.views.planning_views.cost_preview_partial"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/<str:engagement_id>",
+   "route_name": "partner_engagement_drawer",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_drawer"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/<str:engagement_id>/follow-up",
+   "route_name": "partner_engagement_follow_up_drawer",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_follow_up_drawer"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/<str:engagement_id>/follow-up/save",
+   "route_name": "partner_engagement_follow_up",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_follow_up"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/<str:engagement_id>/share",
+   "route_name": "partner_engagement_share_drawer",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_share_drawer"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/<str:engagement_id>/share/save",
+   "route_name": "partner_engagement_share",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_share"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/<str:engagement_id>/update",
+   "route_name": "partner_engagement_update",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_update"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/new",
+   "route_name": "partner_engagement_new_drawer",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_new_drawer"
+  },
+  {
+   "page_permission": "partner_detail",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "PartnerAdmin",
+    "PartnerFieldOfficer",
+    "BusinessTransformationOfficer",
+    "MfiPartnerAdmin",
+    "MfiLoanOfficer",
+    "Admin"
+   ],
+   "route": "/partner-engagements/record",
+   "route_name": "partner_engagement_record",
+   "view": "apps.frontend.views.partner_engagement_views.engagement_record"
   },
   {
    "page_permission": "partner_oversight",
@@ -13201,6 +13520,25 @@
     "ProjectCoordinator",
     "Admin"
    ],
+   "route": "/performance-conversation/<str:review_id>/agree-priorities",
+   "route_name": "performance_agree_priorities",
+   "view": "apps.frontend.views.hr_views.performance_agree_priorities_view"
+  },
+  {
+   "page_permission": "performance_conversations",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "ImpactAssessment",
+    "Accountant",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
    "route": "/performance-conversation/<str:review_id>/document/<str:window>",
    "route_name": "performance_document",
    "view": "apps.frontend.views.hr_views.performance_document_view"
@@ -13392,16 +13730,11 @@
    "view": "apps.frontend.views.leave_views.request_leave_drawer_view"
   },
   {
-   "page_permission": "planning",
+   "page_permission": "pl_review_queue",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "Accountant",
-    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/pl/review-queue",
@@ -13409,16 +13742,11 @@
    "view": "apps.frontend.views.my_plan_views.pl_queue_view"
   },
   {
-   "page_permission": "planning",
+   "page_permission": "pl_review_queue",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "Accountant",
-    "ProjectCoordinator",
     "Admin"
    ],
    "route": "/pl/review-queue/<str:activity_id>/confirm",
@@ -13426,21 +13754,40 @@
    "view": "apps.frontend.views.my_plan_views.pl_confirm_action"
   },
   {
-   "page_permission": "planning",
+   "page_permission": "pl_review_queue",
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "CCEO",
     "Program Lead",
-    "CountryDirector",
-    "ImpactAssessment",
-    "Accountant",
-    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/pl/review-queue/<str:activity_id>/drawer",
+   "route_name": "pl_review_drawer",
+   "view": "apps.frontend.views.my_plan_views.pl_review_drawer"
+  },
+  {
+   "page_permission": "pl_review_queue",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
     "Admin"
    ],
    "route": "/pl/review-queue/<str:activity_id>/return",
    "route_name": "pl_return",
    "view": "apps.frontend.views.my_plan_views.pl_return_action"
+  },
+  {
+   "page_permission": "pl_review_queue",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/pl/review-queue/<str:activity_id>/return-drawer",
+   "route_name": "pl_return_drawer",
+   "view": "apps.frontend.views.my_plan_views.pl_return_drawer"
   },
   {
    "page_permission": "planning",
@@ -13708,6 +14055,207 @@
    "view": "apps.frontend.views.target_distribution_views.priorities_workspace_page"
   },
   {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance",
+   "route_name": "team_guidance",
+   "view": "apps.frontend.views.team_guidance_views.team_guidance_view"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>",
+   "route_name": "team_guidance_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_drawer"
+  },
+  {
+   "page_permission": "priorities_master",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/acknowledge",
+   "route_name": "team_guidance_acknowledge_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_acknowledge_drawer"
+  },
+  {
+   "page_permission": "priorities_master",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/acknowledge/save",
+   "route_name": "team_guidance_acknowledge",
+   "view": "apps.frontend.views.team_guidance_views.guidance_acknowledge"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/edit",
+   "route_name": "team_guidance_edit_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_edit_drawer"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/issue",
+   "route_name": "team_guidance_issue_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_issue_drawer"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/issue/save",
+   "route_name": "team_guidance_issue",
+   "view": "apps.frontend.views.team_guidance_views.guidance_issue"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/review",
+   "route_name": "team_guidance_review_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_review_drawer"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/review/save",
+   "route_name": "team_guidance_review",
+   "view": "apps.frontend.views.team_guidance_views.guidance_review"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/update",
+   "route_name": "team_guidance_update",
+   "view": "apps.frontend.views.team_guidance_views.guidance_update"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/withdraw",
+   "route_name": "team_guidance_withdraw_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_withdraw_drawer"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/<str:guidance_id>/withdraw/save",
+   "route_name": "team_guidance_withdraw",
+   "view": "apps.frontend.views.team_guidance_views.guidance_withdraw"
+  },
+  {
+   "page_permission": "priorities_master",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "CCEO",
+    "Program Lead",
+    "CountryDirector",
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "ImpactAssessment",
+    "HumanResources",
+    "ProjectCoordinator",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/inbox",
+   "route_name": "team_guidance_inbox",
+   "view": "apps.frontend.views.team_guidance_views.guidance_inbox_panel"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/new",
+   "route_name": "team_guidance_new_drawer",
+   "view": "apps.frontend.views.team_guidance_views.guidance_new_drawer"
+  },
+  {
+   "page_permission": "team_guidance",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/priorities/guidance/record",
+   "route_name": "team_guidance_record",
+   "view": "apps.frontend.views.team_guidance_views.guidance_record"
+  },
+  {
    "page_permission": "priorities_master",
    "required_permissions": [],
    "role_exclusive": false,
@@ -13826,6 +14374,30 @@
    "route": "/profile",
    "route_name": "profile",
    "view": "apps.frontend.views.staff_views.profile_view"
+  },
+  {
+   "page_permission": "programme_rollout",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/programme-rollout",
+   "route_name": "programme_rollout",
+   "view": "apps.frontend.views.programme_rollout_views.programme_rollout_view"
+  },
+  {
+   "page_permission": "programme_rollout",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "Admin"
+   ],
+   "route": "/programme-rollout/schools",
+   "route_name": "programme_rollout_schools",
+   "view": "apps.frontend.views.programme_rollout_views.school_list_drawer"
   },
   {
    "page_permission": "projects",
@@ -14264,6 +14836,19 @@
     "HumanResources",
     "Admin"
    ],
+   "route": "/recovery-plans/<str:plan_id>/check-in",
+   "route_name": "recovery_check_in",
+   "view": "apps.frontend.views.hr_programme_views.recovery_check_in"
+  },
+  {
+   "page_permission": "recovery_plans",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "HumanResources",
+    "Admin"
+   ],
    "route": "/recovery-plans/<str:plan_id>/outcome",
    "route_name": "recovery_outcome",
    "view": "apps.frontend.views.hr_programme_views.recovery_outcome"
@@ -14364,7 +14949,6 @@
    "required_permissions": [],
    "role_exclusive": false,
    "roles": [
-    "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
     "ImpactAssessment",
@@ -15500,6 +16084,132 @@
    "view": "apps.frontend.views.staff_views.team_targets_validation_backlog_view"
   },
   {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching",
+   "route_name": "team_coaching",
+   "view": "apps.frontend.views.coaching_views.team_coaching_view"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/<str:record_id>",
+   "route_name": "team_coaching_drawer",
+   "view": "apps.frontend.views.coaching_views.coaching_drawer"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/<str:record_id>/follow-up",
+   "route_name": "team_coaching_follow_up_drawer",
+   "view": "apps.frontend.views.coaching_views.coaching_follow_up_drawer"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/<str:record_id>/follow-up/save",
+   "route_name": "team_coaching_follow_up",
+   "view": "apps.frontend.views.coaching_views.coaching_follow_up"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/<str:record_id>/share",
+   "route_name": "team_coaching_share_drawer",
+   "view": "apps.frontend.views.coaching_views.coaching_share_drawer"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/<str:record_id>/share/save",
+   "route_name": "team_coaching_share",
+   "view": "apps.frontend.views.coaching_views.coaching_share"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/<str:record_id>/update",
+   "route_name": "team_coaching_update",
+   "view": "apps.frontend.views.coaching_views.coaching_update"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/new",
+   "route_name": "team_coaching_new_drawer",
+   "view": "apps.frontend.views.coaching_views.coaching_new_drawer"
+  },
+  {
+   "page_permission": "team_coaching",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/team/coaching/record",
+   "route_name": "team_coaching_record",
+   "view": "apps.frontend.views.coaching_views.coaching_record"
+  },
+  {
    "page_permission": "today",
    "required_permissions": [],
    "role_exclusive": false,
@@ -15703,27 +16413,27 @@
   "Admin"
  ],
  "routes_reachable_by_role": {
-  "Accountant": 392,
-  "Admin": 847,
-  "BusinessTransformationOfficer": 220,
-  "CCEO": 496,
-  "CountryDirector": 635,
-  "HumanResources": 316,
-  "ImpactAssessment": 509,
-  "MfiLoanOfficer": 118,
-  "MfiPartnerAdmin": 121,
-  "PartnerAdmin": 205,
-  "PartnerFieldOfficer": 205,
-  "Program Lead": 568,
-  "ProjectCoordinator": 415,
-  "RegionalProgramLead": 273,
-  "RegionalVicePresident": 319
+  "Accountant": 398,
+  "Admin": 896,
+  "BusinessTransformationOfficer": 228,
+  "CCEO": 508,
+  "CountryDirector": 658,
+  "HumanResources": 329,
+  "ImpactAssessment": 519,
+  "MfiLoanOfficer": 126,
+  "MfiPartnerAdmin": 129,
+  "PartnerAdmin": 213,
+  "PartnerFieldOfficer": 213,
+  "Program Lead": 587,
+  "ProjectCoordinator": 424,
+  "RegionalProgramLead": 299,
+  "RegionalVicePresident": 332
  },
  "summary": {
-  "page_keys_declared": 159,
-  "page_keys_in_navigation": 177,
-  "routes_guarded": 944,
-  "routes_total": 1133,
+  "page_keys_declared": 164,
+  "page_keys_in_navigation": 188,
+  "routes_guarded": 993,
+  "routes_total": 1182,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },

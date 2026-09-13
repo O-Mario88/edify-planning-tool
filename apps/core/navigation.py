@@ -111,6 +111,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Main sidebar routes
     "dashboard": ALL_ROLES,
     "todos": ALL_ROLES,
+    # Not the Programme Lead's (owner, 2026-09-13): the workspace gave a PL case
+    # rows it could not act on. A PL's Business Transformation duty — school
+    # financial-health support — runs from the school profile, which holds its
+    # own permission (BUSINESS_TRANSFORMATION_SCHOOL_SUPPORT_MANAGE).
     "business_transformation": {
         BUSINESS_TRANSFORMATION,
         CD,
@@ -118,7 +122,6 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         RVP,
         ADMIN,
         CCEO,
-        PL,
         HR,
         ACCOUNTANT,
         PARTNER,
@@ -135,7 +138,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     },
     "business_transformation_finance": {BUSINESS_TRANSFORMATION},
     "business_transformation_government": {BUSINESS_TRANSFORMATION},
-    "business_transformation_reports": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER},
+    # A Programme Lead has no loan portfolio, so the page only ever rendered
+    # empty for them (Programme Lead alignment, 2026-09-13).
+    "business_transformation_reports": ALL_ROLES - {MFI_ADMIN, MFI_OFFICER, PL},
     "mfi_portal": {MFI_ADMIN, MFI_OFFICER},
     # Anyone can be handed a school action, so everyone can read their own
     # queue. Both views filter to the signed-in user's rows, so there is no
@@ -151,6 +156,21 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cce_engagements": {RPL, ADMIN},
     "cce_training_feedback": {PL, CD, RPL, ADMIN},
     "cce_reports": {RPL, RVP, ADMIN},
+    # ── The Programme Lead's role description (owner, 2026-09-13) ──────────
+    # Coaching the officers they line-manage: the lead writes the log, the
+    # officer reads and acknowledges what was shared with them, and the
+    # Country Director and the Regional Lead read their country's or region's
+    # coaching (apps.cce_leadership.coaching decides the rows).
+    "team_coaching": {PL, CD, RPL, ADMIN},
+    "my_coaching": {CCEO, ADMIN},
+    # Priority guidance the lead issues to the team: a tab of Priorities.
+    "team_guidance": {PL, ADMIN},
+    # The rollout of training programmes, school self-assessments and
+    # spiritual transformation interventions across the lead's team.
+    "programme_rollout": {PL, ADMIN},
+    # The lead confirms the team's completed work before Impact Assessment
+    # verifies it — the platform's most-used handoff, now with its own door.
+    "pl_review_queue": {PL, ADMIN},
     # IA holds My Targets since 2026-09-03: assessment visits and verifications
     # are measured work, not just planned work.
     "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN, IA},
@@ -318,7 +338,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "cluster_detail": {CCEO, PL, IA, CD, ADMIN},
     "partners": ALL_ROLES,
     "partner_detail": ALL_ROLES,
-    "coverage": {CD, PL, RVP, HR, PROJECT_COORDINATOR, ADMIN, IA},
+    # The Programme Lead reads training and SSA reach per officer on
+    # Programme Rollout instead (2026-09-13).
+    "coverage": {CD, RVP, HR, PROJECT_COORDINATOR, ADMIN, IA},
     # Calendar is a shared read-only operational surface. The view applies its
     # own role-to-staff audience rule before returning schedules.
     "calendar": ALL_ROLES,
@@ -351,7 +373,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # weekly requests route to the Country Director, who had no queue page.
     "fund_approvals": {PL, CD, ADMIN},
     "fund_requests": {CCEO, PL, CD, IA, ACCOUNTANT, PROJECT_COORDINATOR, ADMIN},
-    "monthly_request": {CD, PL, RVP, ACCOUNTANT, IA, PROJECT_COORDINATOR, ADMIN},
+    # The Programme Lead's monthly submission to the CD is retired — the
+    # country budget no longer reads it and the page only redirects to /budget.
+    "monthly_request": {CD, RVP, ACCOUNTANT, IA, PROJECT_COORDINATOR, ADMIN},
     "my_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN},
     "monthly_budget": {CCEO, PL, CD, IA, ACCOUNTANT, ADMIN, RVP, PROJECT_COORDINATOR},
     "country_budget": {CD, ACCOUNTANT, IA, RVP, ADMIN},
@@ -372,7 +396,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "pl_analytics": {PL, ADMIN},
     # The Country Director's national leadership-intelligence cockpit — country-wide.
     "cd_analytics": {CD, ADMIN},
-    "reports": {CD, PL, IA, RVP, PROJECT_COORDINATOR, ADMIN},
+    # Not the Programme Lead's: its achieved counts are not portfolio-scoped
+    # for a PL, and team achievement against allocated targets lives on Team
+    # Oversight > Target Performance (Programme Lead alignment, 2026-09-13).
+    "reports": {CD, IA, RVP, PROJECT_COORDINATOR, ADMIN},
     "completed_archive": {IA, ADMIN},
     "completed_activities": {CCEO, PL, PROJECT_COORDINATOR, IA, ADMIN, CD, ACCOUNTANT},
     # RBAC matrix grants USER_MANAGE to CD and HR as well as Admin
@@ -430,7 +457,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # for the platform's whole life — permissions granted, detectors firing,
     # no page to open. Audience matches LEADERSHIP_ENGINE_VIEW holders who can
     # act on what they see.
-    "decision_intelligence": {CD, RVP, PL, ACCOUNTANT, HR, ADMIN},
+    # Not the Programme Lead's (2026-09-13): its insights are country- and
+    # region-wide and the page let a PL review and rescan them deployment-wide.
+    "decision_intelligence": {CD, RVP, ACCOUNTANT, HR, ADMIN},
     # Schools losing ground. Same audience as SSA intelligence; the service
     # withholds school identity from summary-only roles.
     "declining_schools": {CD, RVP, PL, IA, CCEO, PROJECT_COORDINATOR, ADMIN},
@@ -445,7 +474,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # Staff directory permissions
     "staff": {HR, PL, CD, RVP, ADMIN},
     "staff_directory": {HR, PL, CD, RVP, ADMIN},
-    "my_team": {PL, CD, HR, ADMIN},
+    # The Programme Lead's team home (owner, 2026-09-13). The CD and HR only
+    # ever got an empty team here; they read people from the directory.
+    "my_team": {PL, ADMIN},
     "ssa": {IA, CD, RVP, PL, CCEO, ADMIN},
     # SSA Performance is an intelligence surface for every role. Its service
     # applies school/region/partner/project scope before computing any metric.
@@ -527,6 +558,18 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "ia_samples": {IA, CD, ADMIN},
     "ia_attribution": {IA, CD, ADMIN},
     "ia_upload_center": {IA, ADMIN},
+    # ── Impact Assessment by role description (IA review, 2026-09-13) ──────
+    # The framework IA measures against; school evidence the SSA does not
+    # capture (learning results, discipleship indicators, EdTech use); what
+    # works across training, lending and EdTech; lending evidence to verify;
+    # Most Significant Change stories to review; and impact reports, which the
+    # RVP also reads because donor versions need the RVP's approval.
+    "ia_framework": {IA, CD, ADMIN},
+    "ia_school_evidence": {IA, CD, ADMIN},
+    "ia_learning": {IA, CD, ADMIN},
+    "ia_lending_evidence": {IA, CD, ADMIN},
+    "ia_stories": {IA, ADMIN},
+    "impact_reports": {IA, CD, RVP, ADMIN},
     # Finance operations sidebar visibility (views gate on "disbursements")
     "finance_advances": {ACCOUNTANT, ADMIN},
     "finance_partner_payments": {ACCOUNTANT, ADMIN},
@@ -582,7 +625,10 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     "ssa_mapping": {CD, IA, RVP, PL, PROJECT_COORDINATOR, ADMIN},
     # §18 Extra Assigned Work: CD/PL assign, CCEO executes; Admin supports.
     "extra_work": {CD, PL, CCEO, ADMIN},
-    "hr_today": {HR, CD, PL, RVP, ADMIN},
+    # HR's exception queue. Its items link to HR-only pages, so a Programme
+    # Lead met a dead end on every row; the manager-owned exceptions reach the
+    # PL on My Team instead (2026-09-13).
+    "hr_today": {HR, CD, RVP, ADMIN},
     "team_target_distribution": {PL, ADMIN},
     "recovery_plans": {HR, PL, ADMIN},
     "culture_engagement": {HR, ADMIN},
@@ -724,6 +770,18 @@ ICONS.update(
         "cce_engagements": ICONS["todos"],
         "cce_reports": ICONS["reports"],
         "cce_training_feedback": ICONS["escalations"],
+        "team_coaching": ICONS["performance_conversations"],
+        "my_coaching": ICONS["performance_conversations"],
+        "team_guidance": ICONS["strategic_priorities"],
+        "programme_rollout": ICONS["ssa"],
+        "pl_review_queue": ICONS["fund_approvals"],
+        "ia_framework": ICONS["strategic_priorities"],
+        "ia_school_evidence": ICONS["ia_upload_center"],
+        "ia_learning": ICONS["impact_analytics"],
+        "ia_lending_evidence": ICONS["disbursements"],
+        "ia_stories": ICONS["performance_conversations"],
+        "impact_reports": ICONS["reports"],
+        "my_team": ICONS["team_targets"],
         "uploads": ICONS["ia_upload_center"],
         "closed_schools": ICONS["completed_archive"],
         "leave_tracker": ICONS["team_availability"],
@@ -1041,6 +1099,124 @@ LEAVE_SECTIONS = [
         "cluster": "leave",
         "description": "Public holidays and periods leave cannot be taken.",
     },
+    # The approver's side of the same question (Programme Lead alignment,
+    # 2026-09-13): the requests to decide, the team's balances and cover, and
+    # who is away when. Approvers used to reach these from three sidebar links
+    # in two groups; people without the keys never see them.
+    {
+        "key": "approvals",
+        "label": "Approvals",
+        "url": "/leave/approvals",
+        "page_key": "leave_approvals",
+        "cluster": "team_leave",
+        "description": "Leave requests waiting for your decision.",
+    },
+    {
+        "key": "tracker",
+        "label": "Leave Tracker",
+        "url": "/leave/tracker",
+        "page_key": "leave_tracker",
+        "cluster": "team_leave",
+        "description": "Balances, upcoming leave and cover for the people you approve.",
+    },
+    {
+        "key": "availability",
+        "label": "Team Availability",
+        "url": "/leave/team-availability",
+        "page_key": "team_availability",
+        "cluster": "team_leave",
+        "description": "Who is away in the weeks ahead, and the field work it touches.",
+    },
+]
+
+# ── The Programme Lead's team workspaces (owner, 2026-09-13) ─────────────────
+# The role description asks a Programme Lead to coach the officers they
+# line-manage and take part in their performance reviews. Those pages were HR
+# registers the PL inherited in three HR-director groups; for the PL they are
+# one strip under "Performance & Coaching". Each section keeps its own route,
+# permission and tests — only how the lead moves between them changed.
+TEAM_PERFORMANCE_SECTIONS = [
+    {
+        "key": "coaching",
+        "label": "Coaching",
+        "url": "/team/coaching",
+        "page_key": "team_coaching",
+        "cluster": "team_performance",
+        "description": "Coaching conversations, observations and feedback for your officers.",
+    },
+    {
+        "key": "reviews",
+        "label": "Performance Reviews",
+        "url": "/performance-reviews",
+        "page_key": "performance_reviews",
+        "cluster": "team_performance",
+        "description": "Each officer's agreement, review window and conversation.",
+    },
+    {
+        "key": "support",
+        "label": "Recovery Plans",
+        "url": "/recovery-plans",
+        "page_key": "recovery_plans",
+        "cluster": "team_performance",
+        "description": "Performance support plans for officers who need them.",
+    },
+    {
+        "key": "development",
+        "label": "Professional Development",
+        "url": "/cpd-learning",
+        "page_key": "cpd_learning",
+        "cluster": "team_performance",
+        "description": "The team's development requests and approvals.",
+    },
+    {
+        "key": "policies",
+        "label": "Policy Compliance",
+        "url": "/policy-compliance",
+        "page_key": "policy_compliance",
+        "cluster": "team_performance",
+        "description": "Which officers have acknowledged the policies that apply to them.",
+    },
+]
+
+# Work the lead handed to officers by name: school follow-ups and extra work.
+TEAM_ASSIGNMENT_SECTIONS = [
+    {
+        "key": "actions_sent",
+        "label": "Actions Sent",
+        "url": "/actions/sent",
+        "page_key": "actions_sent",
+        "cluster": "team_assignments",
+        "description": "Follow-ups you sent to your officers and their state.",
+    },
+    {
+        "key": "extra_work",
+        "label": "Extra Work",
+        "url": "/extra-work",
+        "page_key": "extra_work",
+        "cluster": "team_assignments",
+        "description": "Extra assignments you gave your officers, and their submissions.",
+    },
+]
+
+# The Regional Lead's side of the lead's collaboration: training observations
+# to acknowledge and the coaching the Regional Lead shared with them.
+REGIONAL_LEAD_SECTIONS = [
+    {
+        "key": "training_feedback",
+        "label": "Training Feedback",
+        "url": "/cce-leadership/feedback",
+        "page_key": "cce_training_feedback",
+        "cluster": "regional_lead",
+        "description": "The Regional Lead's observations of your team's trainings.",
+    },
+    {
+        "key": "regional_coaching",
+        "label": "Regional Lead Coaching",
+        "url": "/cce-leadership/coaching",
+        "page_key": "cce_training_feedback",
+        "cluster": "regional_lead",
+        "description": "Coaching the Regional Lead shared with you, and the actions agreed.",
+    },
 ]
 
 # Every multi-page workspace, keyed by the eyebrow its section strip shows.
@@ -1056,6 +1232,23 @@ WORKSPACES = {
     "ia": {"label": "Impact Assessment", "sections": IA_SECTIONS},
     "analytics": {"label": "Analytics", "sections": ANALYTICS_SECTIONS},
     "leave": {"label": "Leave", "sections": LEAVE_SECTIONS},
+    # `visible_to` narrows a workspace to the roles whose navigation it
+    # organises; HR and the CD open the same pages from their own groups.
+    "team_performance": {
+        "label": "Performance & Coaching",
+        "sections": TEAM_PERFORMANCE_SECTIONS,
+        "visible_to": {PL},
+    },
+    "team_assignments": {
+        "label": "Team Assignments",
+        "sections": TEAM_ASSIGNMENT_SECTIONS,
+        "visible_to": {PL},
+    },
+    "regional_lead": {
+        "label": "Regional Lead",
+        "sections": REGIONAL_LEAD_SECTIONS,
+        "visible_to": {PL},
+    },
 }
 
 
@@ -1149,6 +1342,9 @@ def build_workspace(user, current_path: str = "") -> dict | None:
         workspaces = [item for item in workspaces if item[0] != "ia"]
 
     for key, workspace in workspaces:
+        audience = workspace.get("visible_to")
+        if audience is not None and role not in audience:
+            continue
         sections = build_sections(workspace["sections"], user, current_path)
         if len(sections) > 1 and any(s["active"] for s in sections):
             groups_by_key: dict[str, dict] = {}
@@ -1226,7 +1422,8 @@ SIDEBAR_ITEMS = [
                 # Not the Regional HR Director's: programme planning and target
                 # pacing for a team HR does not supervise rendered empty for
                 # them (HR audit, 2026-09-12).
-                "visible_to": {PL, CD, IA, RVP, RPL, ACCOUNTANT, ADMIN},
+                # The Programme Lead's copy sits in PROGRAMME IMPLEMENTATION.
+                "visible_to": {CD, IA, RVP, RPL, ACCOUNTANT, ADMIN},
                 "extra_active_paths": ("/team-targets",),
             },
             {
@@ -1269,6 +1466,9 @@ SIDEBAR_ITEMS = [
                 "label": "Priorities",
                 "url": "/priorities",
                 "page_key": "priorities_master",
+                # The Programme Lead's copy opens the tabbed workspace from
+                # STRATEGIC DIRECTION.
+                "visible_to": PAGE_PERMISSIONS["priorities_master"] - {PL},
                 "role_urls": {
                     IA: "/target-distribution",
                     CD: "/target-distribution",
@@ -1288,6 +1488,8 @@ SIDEBAR_ITEMS = [
                 "label": "Extra Work",
                 "url": "/extra-work",
                 "page_key": "extra_work",
+                # A Programme Lead reaches it as a Team Assignments section.
+                "visible_to": PAGE_PERMISSIONS["extra_work"] - {PL},
             },
             {
                 "label": "My Plan",
@@ -1314,6 +1516,9 @@ SIDEBAR_ITEMS = [
                 "label": "My Professional Development",
                 "url": "/my-professional-development",
                 "page_key": "my_professional_development",
+                # The Programme Lead's copy sits in MY PERFORMANCE, beside the
+                # agreement it develops.
+                "visible_to": PAGE_PERMISSIONS["my_professional_development"] - {PL},
             },
             {
                 "label": "To-Do",
@@ -1327,6 +1532,9 @@ SIDEBAR_ITEMS = [
                 "label": "My Actions",
                 "url": "/actions/mine",
                 "page_key": "my_actions",
+                # For a Programme Lead these are the Country Director's and the
+                # Regional Lead's asks, so they sit in COLLABORATION.
+                "visible_to": PAGE_PERMISSIONS["my_actions"] - {PL},
             },
             {
                 # The CD's flags to Program Leads (apps.flags). Permitted for
@@ -1336,7 +1544,9 @@ SIDEBAR_ITEMS = [
                 "url": "/quality-checks",
                 "page_key": "quality_checks",
                 "icon_key": "todos",
-                "visible_to": {CD, PL, IA},
+                # Admin is listed now that the Programme Lead's copy lives in
+                # COLLABORATION: an override only yields to a duplicate.
+                "visible_to": {CD, IA, ADMIN},
             },
             {
                 # The other end of the same rows. Only the roles that can send
@@ -1344,7 +1554,7 @@ SIDEBAR_ITEMS = [
                 "label": "Actions Sent",
                 "url": "/actions/sent",
                 "page_key": "actions_sent",
-                "visible_to": {PL, IA, CD, RVP, RPL},
+                "visible_to": {IA, CD, RVP, RPL, ADMIN},
             },
             {
                 # The CCE Regional Lead's coaching conversations, meetings,
@@ -1367,7 +1577,7 @@ SIDEBAR_ITEMS = [
                 "label": "Training Feedback",
                 "url": "/cce-leadership/feedback",
                 "page_key": "cce_training_feedback",
-                "visible_to": {PL, CD},
+                "visible_to": {CD, ADMIN},
             },
             {
                 "label": "Upload Center",
@@ -1388,7 +1598,7 @@ SIDEBAR_ITEMS = [
                 "page_key": "daily_debrief",
                 # A field submission tool. The people and capacity signals HR
                 # needs from it are summarised on the HR dashboard.
-                "visible_to": PAGE_PERMISSIONS["daily_debrief"] - {HR},
+                "visible_to": PAGE_PERMISSIONS["daily_debrief"] - {HR, PL},
             },
             {
                 # Everyone who can raise or decide an escalation: the field
@@ -1397,17 +1607,19 @@ SIDEBAR_ITEMS = [
                 "label": "Escalations",
                 "url": "/escalations",
                 "page_key": "escalations",
-                "visible_to": {CCEO, PROJECT_COORDINATOR, PL, CD, RVP, ADMIN},
+                "visible_to": {CCEO, PROJECT_COORDINATOR, CD, RVP, ADMIN},
             },
             {
                 "label": "Leave & Personal Time Off",
                 "url": "/personal-time-off/",
                 "page_key": "personal_time_off",
+                "visible_to": PAGE_PERMISSIONS["personal_time_off"] - {PL},
             },
             {
                 "label": "Leave Approvals",
                 "url": "/leave/approvals",
                 "page_key": "leave_approvals",
+                "visible_to": PAGE_PERMISSIONS["leave_approvals"] - {PL},
             },
             {
                 # Leave administration: the roster, balances and cover across
@@ -1472,6 +1684,9 @@ SIDEBAR_ITEMS = [
                 "label": "Closed Schools",
                 "url": "/schools/closed",
                 "page_key": "closed_schools",
+                # Not in a Programme Lead's sidebar: the archive stays linked from
+                # the close drawer and the directory (2026-09-13).
+                "visible_to": PAGE_PERMISSIONS["closed_schools"] - {PL},
             },
             {
                 "label": "Core Schools",
@@ -1498,26 +1713,32 @@ SIDEBAR_ITEMS = [
                 "url": "/partners",
                 "page_key": "partners",
                 "extra_active_paths": ["/partner-oversight/"],
+                # Training partners are a Programme Lead's collaboration, so
+                # their copy sits in COLLABORATION.
+                "visible_to": PAGE_PERMISSIONS["partners"] - {PL},
             },
             {
                 "label": "Projects",
                 "url": "/projects",
                 "page_key": "projects",
+                # A Programme Lead staffs no projects; project links from the
+                # school drawer still open (2026-09-13).
+                "visible_to": PAGE_PERMISSIONS["projects"] - {PL},
             },
             {
                 "label": "Coverage",
                 "url": "/coverage",
                 "page_key": "coverage",
             },
-            {
-                "label": "Leave Tracker",
-                "url": "/leave/tracker",
-                "page_key": "leave_tracker",
-            },
+            # Leave Tracker and Team Availability were registered here for the
+            # Programme Lead alone; they are sections of the Leave workspace now,
+            # reached from TEAM LEADERSHIP > Team Leave (2026-09-13). Team
+            # Availability stays registered for Admin, whose only link it was.
             {
                 "label": "Team Availability",
                 "url": "/leave/team-availability",
                 "page_key": "team_availability",
+                "visible_to": PAGE_PERMISSIONS["team_availability"] - {PL},
             },
         ],
     },
@@ -1626,6 +1847,28 @@ SIDEBAR_ITEMS = [
                 "url": "/my-targets",
                 "page_key": "my_target",
             },
+            # The coaching and feedback the officer's Programme Lead shared with
+            # them, to read and acknowledge (2026-09-13).
+            {
+                "label": "My Coaching",
+                "url": "/my-coaching",
+                "page_key": "my_coaching",
+                "visible_to": {CCEO},
+            },
+            # The Programme Lead's own development and leave sit with their own
+            # agreement, so MY WORK holds only the day's work (2026-09-13).
+            {
+                "label": "My Professional Development",
+                "url": "/my-professional-development",
+                "page_key": "my_professional_development",
+                "visible_to": {PL},
+            },
+            {
+                "label": "Leave & Personal Time Off",
+                "url": "/personal-time-off/",
+                "page_key": "personal_time_off",
+                "visible_to": {PL},
+            },
         ],
     },
     # ── The Regional Human Resource Director's programmes ───────────────────
@@ -1645,6 +1888,8 @@ SIDEBAR_ITEMS = [
                 "label": "People Directory",
                 "url": "/staff",
                 "page_key": "staff",
+                # A Programme Lead's people are their team, on My Team.
+                "visible_to": PAGE_PERMISSIONS["staff"] - {PL},
             },
             {
                 "label": "Organization Structure",
@@ -1686,20 +1931,25 @@ SIDEBAR_ITEMS = [
                 "url": "/hr/performance-cycle",
                 "page_key": "performance_console",
             },
+            # A Programme Lead reaches these three as sections of their own
+            # Performance & Coaching workspace (2026-09-13).
             {
                 "label": "Performance Reviews",
                 "url": "/performance-reviews",
                 "page_key": "performance_reviews",
+                "visible_to": PAGE_PERMISSIONS["performance_reviews"] - {PL},
             },
             {
                 "label": "Recovery Plans",
                 "url": "/recovery-plans",
                 "page_key": "recovery_plans",
+                "visible_to": PAGE_PERMISSIONS["recovery_plans"] - {PL},
             },
             {
                 "label": "CPD & Learning",
                 "url": "/cpd-learning",
                 "page_key": "cpd_learning",
+                "visible_to": PAGE_PERMISSIONS["cpd_learning"] - {PL},
             },
         ],
     },
@@ -1750,6 +2000,7 @@ SIDEBAR_ITEMS = [
                 "label": "Policy Compliance",
                 "url": "/policy-compliance",
                 "page_key": "policy_compliance",
+                "visible_to": PAGE_PERMISSIONS["policy_compliance"] - {PL},
             },
             {
                 "label": "Employment Compliance",
@@ -1780,7 +2031,9 @@ SIDEBAR_ITEMS = [
                 "page_key": "work_plan",
                 # A programme activity plan; the Regional HR Director plans
                 # none (HR audit, 2026-09-12).
-                "visible_to": PAGE_PERMISSIONS["work_plan"] - {HR},
+                # The Programme Lead's copy sits in STRATEGIC DIRECTION: for them
+                # it is the country plan they help set, not a finance queue.
+                "visible_to": PAGE_PERMISSIONS["work_plan"] - {HR, PL},
             },
             {
                 "label": "Weekly Advance Request",
@@ -1945,6 +2198,169 @@ SIDEBAR_ITEMS = [
             },
         ],
     },
+    # ── The Programme Lead, by role description (owner, 2026-09-13) ─────────
+    # "Strategic direction; team leadership and management; performance
+    # management; programme implementation; collaboration." One group per
+    # responsibility, in that order (ROLE_SIDEBAR_GROUP_ORDER). Shared pages are
+    # registered again here with `visible_to: {PL}`, and their original entries
+    # exclude the PL, so each page appears once; Admin's override skips these
+    # copies because each duplicates a page Admin already has.
+    {
+        "group_label": "STRATEGIC DIRECTION",
+        "visible_to": {PL},
+        "items": [
+            {
+                # One link to the tabbed Priorities page (owner, 2026-09-07):
+                # Priority Setting, Target Distribution, My Team and Team
+                # Guidance. /priorities would open the lead's own agreement,
+                # which MY PERFORMANCE already links.
+                "label": "Priorities",
+                "url": "/priorities/master",
+                "page_key": "priorities_master",
+                "visible_to": {PL},
+                "extra_active_paths": (
+                    "/strategic-priorities",
+                    "/target-distribution/team",
+                    "/priorities/guidance",
+                ),
+            },
+            {
+                "label": "Work Plan",
+                "url": "/work-plan",
+                "page_key": "work_plan",
+                "visible_to": {PL},
+            },
+        ],
+    },
+    {
+        "group_label": "TEAM LEADERSHIP",
+        "visible_to": {PL},
+        "items": [
+            {
+                # The team home: every officer with their delivery, targets,
+                # reviews, coaching and leave, and what waits on the lead.
+                "label": "My Team",
+                "url": "/my-team",
+                "page_key": "my_team",
+                "visible_to": {PL},
+            },
+            {
+                "label": "Team Leave",
+                "url": "/leave/approvals",
+                "page_key": "leave_approvals",
+                "visible_to": {PL},
+                "extra_active_paths": ("/leave/tracker", "/leave/team-availability"),
+            },
+            {
+                "label": "Field Debrief",
+                "url": "/debriefs",
+                "page_key": "daily_debrief",
+                "visible_to": {PL},
+            },
+            {
+                "label": "Escalations",
+                "url": "/escalations",
+                "page_key": "escalations",
+                "visible_to": {PL},
+            },
+            {
+                # Actions Sent and Extra Work, one workspace strip.
+                "label": "Team Assignments",
+                "url": "/actions/sent",
+                "page_key": "actions_sent",
+                "icon_key": "extra_work",
+                "visible_to": {PL},
+                "extra_active_paths": ("/extra-work",),
+            },
+        ],
+    },
+    {
+        "group_label": "PERFORMANCE & COACHING",
+        "visible_to": {PL},
+        "items": [
+            {
+                "label": "Coaching",
+                "url": "/team/coaching",
+                "page_key": "team_coaching",
+                "visible_to": {PL},
+            },
+            {
+                # Performance Reviews, Recovery Plans, Professional Development
+                # and Policy Compliance, one workspace strip.
+                "label": "Team Performance",
+                "url": "/performance-reviews",
+                "page_key": "performance_reviews",
+                "visible_to": {PL},
+                "extra_active_paths": (
+                    "/recovery-plans",
+                    "/cpd-learning",
+                    "/policy-compliance",
+                ),
+            },
+        ],
+    },
+    {
+        "group_label": "PROGRAMME IMPLEMENTATION",
+        "visible_to": {PL},
+        "items": [
+            {
+                "label": "Team Oversight",
+                "url": "/team-planning-oversight/",
+                "page_key": "team_planning_oversight",
+                "visible_to": {PL},
+                "extra_active_paths": ("/team-targets",),
+            },
+            {
+                "label": "Completion Reviews",
+                "url": "/pl/review-queue",
+                "page_key": "pl_review_queue",
+                "visible_to": {PL},
+            },
+            {
+                "label": "Programme Rollout",
+                "url": "/programme-rollout",
+                "page_key": "programme_rollout",
+                "visible_to": {PL},
+            },
+        ],
+    },
+    {
+        "group_label": "COLLABORATION",
+        "visible_to": {PL},
+        "items": [
+            {
+                # Training feedback and the coaching the Regional Lead shares.
+                "label": "Regional Lead",
+                "url": "/cce-leadership/feedback",
+                "page_key": "cce_training_feedback",
+                "visible_to": {PL},
+                "extra_active_paths": ("/cce-leadership/coaching",),
+            },
+            {
+                # The Country Director's flags to this lead.
+                "label": "Quality Flags",
+                "url": "/quality-checks",
+                "page_key": "quality_checks",
+                "icon_key": "todos",
+                "visible_to": {PL},
+            },
+            {
+                "label": "My Actions",
+                "url": "/actions/mine",
+                "page_key": "my_actions",
+                "visible_to": {PL},
+            },
+            {
+                # Local training organisations: delivery oversight and the
+                # partnership work that builds their capacity.
+                "label": "Partners",
+                "url": "/partners",
+                "page_key": "partners",
+                "visible_to": {PL},
+                "extra_active_paths": ["/partner-oversight/"],
+            },
+        ],
+    },
     {
         "group_label": "QUALITY & INSIGHTS",
         "items": [
@@ -2052,10 +2468,37 @@ SIDEBAR_GROUP_PRIORITY = {
 }
 
 
-def _sidebar_sections_in_display_order() -> list[dict]:
-    return sorted(
+# A role whose work is not field-first reads its sidebar in the order of its
+# own role description. The Programme Lead leads a team before working a
+# portfolio (owner, 2026-09-13), so their responsibility groups come first and
+# their own schools after. Groups not listed keep the global order after them.
+ROLE_SIDEBAR_GROUP_ORDER: dict[str, tuple[str, ...]] = {
+    PL: (
+        "MY WORK",
+        "STRATEGIC DIRECTION",
+        "TEAM LEADERSHIP",
+        "PERFORMANCE & COACHING",
+        "PROGRAMME IMPLEMENTATION",
+        "COLLABORATION",
+        "SCHOOLS & FIELD",
+        "FINANCE & BUDGET",
+        "MY PERFORMANCE",
+        "QUALITY & INSIGHTS",
+    ),
+}
+
+
+def _sidebar_sections_in_display_order(role: str | None = None) -> list[dict]:
+    ordered = sorted(
         SIDEBAR_ITEMS,
         key=lambda section: SIDEBAR_GROUP_PRIORITY.get(section["group_label"], 3),
+    )
+    preferred = ROLE_SIDEBAR_GROUP_ORDER.get(role or "")
+    if not preferred:
+        return ordered
+    rank = {label: index for index, label in enumerate(preferred)}
+    return sorted(
+        ordered, key=lambda section: rank.get(section["group_label"], len(rank))
     )
 
 
@@ -2116,7 +2559,7 @@ def build_sidebar_for_user(user, current_path: str) -> list[dict]:
     # is the only registration of that page — but no page is ever offered
     # twice in one sidebar.
     _page_key_counts: dict[str, int] = {}
-    ordered_sections = _sidebar_sections_in_display_order()
+    ordered_sections = _sidebar_sections_in_display_order(role)
 
     for _sec in ordered_sections:
         _audience = _sec.get("visible_to")

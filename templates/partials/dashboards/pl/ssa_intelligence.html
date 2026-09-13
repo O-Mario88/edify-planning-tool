@@ -9,8 +9,13 @@ The ramp is per-point (0-10) rather than per-band. Four bands paint 5.0 and
 6.9 identically, and on a matrix whose entire purpose is comparison that hides
 the differences a reader is scanning for.
 {% endcomment %}
-<div class="pl-ssa-matrix-scroll overflow-x-auto flex-1" data-table-scroll-region>
+<div class="space-y-2">
   {% if ssa_matrix.rows %}
+  {% regroup ssa_matrix.rows|dictsort:"district" by district as districts %}
+  {% for district in districts %}
+  <details class="analytics-context-disclosure" data-ssa-district>
+    <summary>{{ district.grouper }} <span>{{ district.list|length }} cluster{{ district.list|length|pluralize }}</span></summary>
+    <div class="pl-ssa-matrix-scroll overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="{{ district.grouper }} cluster SSA scores">
   <table class="pl-ssa-matrix edify-table w-full whitespace-nowrap" data-mobile-table="scroll">
     <caption class="sr-only">
       Average SSA score out of 10 for each intervention, by cluster. Cells are
@@ -20,14 +25,14 @@ the differences a reader is scanning for.
     <thead>
       <tr>
         <th scope="col" class="px-2.5 py-2 text-left">Cluster</th>
-        {% for code in ssa_matrix.codes %}
+        {% for code in ssa_matrix.codes|slice:":8" %}
         <th scope="col" class="px-1.5 py-2 text-center">{{ code }}</th>
         {% endfor %}
         <th scope="col" class="px-1.5 py-2 text-center">Overall</th>
       </tr>
     </thead>
     <tbody>
-      {% for r in ssa_matrix.rows %}
+      {% for r in district.list %}
       <tr>
         <th scope="row" class="px-2.5 py-[7px] text-left">{{ r.name }}</th>
         {% for cell in r.cells %}
@@ -42,6 +47,9 @@ the differences a reader is scanning for.
       {% endfor %}
     </tbody>
   </table>
+    </div>
+  </details>
+  {% endfor %}
   {% else %}
   <div class="flex items-center justify-center py-8">
     <p class="edify-text-subtle text-[12px] font-semibold">No verified SSA in your clusters yet.</p>

@@ -313,7 +313,13 @@ class BudgetSpecificationTest(TestCase):
             "/budget", {"fy": "2026", "date": "2026-07-08", "budget_scope": "my"}
         )
         self.assertEqual(response.context["total"], 100000)
-        for url in ("/budgets/monthly", "/accounts/monthly-request/"):
+        for user, url in (
+            (self.pl, "/budgets/monthly"),
+            # The retired monthly request is the CD's bookmark now; the
+            # Programme Lead no longer holds it (2026-09-13).
+            (self.cd, "/accounts/monthly-request/"),
+        ):
+            self.client.force_login(user)
             response = self.client.get(url, {"fy": "2026", "month": "July"})
             self.assertEqual(response.status_code, 302)
             self.assertTrue(response.url.startswith("/budget?"))

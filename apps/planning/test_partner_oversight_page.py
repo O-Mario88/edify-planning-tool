@@ -241,18 +241,29 @@ class SendRoutingTest(PageFixture):
             actions.escalate_to_country_director(sender=self.pl_user, item=item)
 
     def test_escalation_reaches_the_country_director(self):
+        """Through the escalation channel, to the lead's own director
+        (Program Lead alignment, 2026-09-13): a TeamAction went to the
+        deployment's first director on file and never reached /escalations."""
+        from apps.accounts.models import StaffSupervisorAssignment
+        from apps.flags.models import LeadershipEscalation
+
         director_user, director = self._staff(
             "cd2@p.test", "Direktor", EdifyRole.COUNTRY_DIRECTOR
+        )
+        StaffSupervisorAssignment.objects.create(
+            supervisee=self.pl, supervisor=director
         )
         assignment = self.assign()
         item = svc.build_item_by_assignment(assignment.id)
 
-        action = actions.escalate_to_country_director(
+        escalation = actions.escalate_to_country_director(
             sender=self.pl_user, item=item, note="Called them twice, no date."
         )
 
-        self.assertEqual(action.recipient_id, director_user.id)
-        self.assertEqual(action.issue_type, "partner_delivery_escalation")
+        self.assertIsInstance(escalation, LeadershipEscalation)
+        self.assertEqual(escalation.assigned_to_user_id, director_user.id)
+        self.assertEqual(escalation.scope_id, assignment.id)
+        self.assertFalse(TeamAction.objects.exists())
 
 
 class SendScopeTest(PageFixture):

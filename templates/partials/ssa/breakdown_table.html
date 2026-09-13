@@ -1,6 +1,6 @@
 {% comment %}One SSA breakdown (staff, cluster or partner) — included by performance_workspace.html.{% endcomment %}
 <table class="sp-table">
-  <caption>Confirmed SSA performance by {{ label|lower }} for {{ dashboard.filters.fy_label }} {{ dashboard.filters.quarter }}</caption>
+  <caption>Confirmed SSA performance by {{ label|lower }} for {{ dashboard.filters.fy_label }} · {{ dashboard.filters.period_label }}</caption>
   <thead><tr><th scope="col">#</th><th scope="col">{{ label }}</th><th scope="col">Assessed</th><th scope="col">Average</th><th scope="col">Highest weakness</th><th scope="col">High risk</th><th scope="col">Completion</th></tr></thead>
   <tbody>
   {% for row in rows|slice:":100" %}

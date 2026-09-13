@@ -1,0 +1,56 @@
+{% comment %}
+Guidance from the officer's Programme Lead, on the officer's own Priorities
+page (owner, 2026-09-13). The page (templates/pages/hr/my_performance.html)
+belongs to the performance agreement, so this panel loads itself from
+apps/frontend/views/team_guidance_views.py guidance_inbox_panel once the page
+is on screen. Every piece still waiting is listed, then the most recent
+acknowledged ones; each opens the acknowledge drawer. `autoload_drawer` opens
+the piece a notification or To-Do link named (?guidance=…).
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="team-guidance-inbox-title" data-team-guidance-inbox>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="team-guidance-inbox-title" class="rpl-card__title">Guidance from your Programme Lead</h2>
+      <span class="rpl-card__subtitle">{% if inbox_waiting %}{{ inbox_waiting }} waiting for your acknowledgement{% else %}{{ inbox_total }} received · nothing waiting{% endif %}</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Guidance from your Programme Lead; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Guidance from your Programme Lead</caption>
+      {% if inbox_rows %}
+      <thead>
+        <tr>
+          {% for cell in inbox_rows.0.cells|slice:":12" %}<th scope="col">{{ cell.heading }}</th>{% endfor %}
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        {% for row in inbox_rows %}
+        <tr>
+          {% for cell in row.cells %}
+          {% if cell.primary %}
+          <th scope="row" data-record-title><span>{{ cell.text }}</span></th>
+          {% else %}
+          <td data-label="{{ cell.heading }}">{% if cell.tone %}<span data-tone="{{ cell.tone }}">{{ cell.text }}</span>{% else %}{{ cell.text }}{% endif %}</td>
+          {% endif %}
+          {% endfor %}
+          <td class="is-end" data-record-action data-label="Actions">
+            {% for action in row.actions %}
+            <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% endfor %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% include "components/empty_state.html" with message="No guidance from your Programme Lead yet." hint="Guidance your Programme Lead issues on the priorities appears here for you to acknowledge." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if inbox_hidden %}<p class="edify-text-caption px-4 py-2">{{ inbox_hidden }} older acknowledged guidance not shown.</p>{% endif %}
+  {% if autoload_drawer %}<div hidden hx-get="{{ autoload_drawer }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-team-guidance-autoload></div>{% endif %}
+</section>

@@ -1,5 +1,11 @@
 {% load table_pagination %}
 <div class="flex items-center gap-1 border-b overflow-x-auto edify-border">
+  {% if can_review_team %}
+  {% comment %}The supervising Programme Lead's review queue: team debriefs submitted or updated and not yet reviewed (2026-09-13).{% endcomment %}
+  <button type="button" hx-get="/debriefs?partial=table&tab=awaiting_review" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML" data-debrief-tab="awaiting_review"
+    class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
+    style="{% if tab == 'awaiting_review' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">Awaiting my review ({{ awaiting_review_count }})</button>
+  {% endif %}
   <button type="button" hx-get="/debriefs?partial=table&tab=all" hx-target="#debrief-tracker-wrap" hx-swap="innerHTML"
     class="px-3 py-2 edify-text-caption font-bold whitespace-nowrap border-b-2 transition-colors"
     style="{% if tab == 'all' %}border-color:var(--edify-accent, var(--edify-chart-blue)); color:var(--edify-text);{% else %}border-color:transparent; color:var(--edify-text-muted, var(--edify-text-subtle));{% endif %}">All Debriefs</button>
@@ -65,7 +71,7 @@
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="9" class="py-8 text-center text-slate-400 font-semibold">No Field Debriefs match these filters.</td></tr>
+      <tr><td colspan="9" class="py-8 text-center text-slate-400 font-semibold">{% if tab == "awaiting_review" %}No team debriefs are waiting for your review.{% else %}No Field Debriefs match these filters.{% endif %}</td></tr>
       {% endfor %}
     </tbody>
   </table>

@@ -18,11 +18,15 @@ truth. Design rules, from the mandate and the platform's own invariants:
 
 from __future__ import annotations
 
+import logging
+
 from django.db import transaction
 from django.utils import timezone
 
 from apps.core.exceptions import BadRequest, Forbidden
 from apps.targets.my_targets import IA_VERIFIED_STATUSES, PERFORMANCE_METRIC_TO_AREA
+
+logger = logging.getLogger(__name__)
 
 
 # ── Canonical metric registry ────────────────────────────────────────────────
@@ -841,10 +845,12 @@ def activate_window(cycle, window: str, principal, deadline=None):
     from apps.hr.models import PerformanceReview
 
     count = 0
+    staff_ids = []
     for review in PerformanceReview.objects.filter(
         fy=cycle.fy, review_type="annual_priorities"
     ):
         take_snapshot(review, window)
+        staff_ids.append(review.staff_id)
         count += 1
     try:
         from apps.audit.services import log as audit_log
@@ -859,7 +865,121 @@ def activate_window(cycle, window: str, principal, deadline=None):
         )
     except Exception:  # noqa: BLE001
         pass
+    _notify_reviewers_window_opened(cycle, window, staff_ids)
     return count
+
+
+WINDOW_LABELS = {
+    "priority_setting": "FY priority setting",
+    "q1": "Q1",
+    "mid_year": "mid-year",
+    "q3": "Q3",
+    "year_end": "end-of-year",
+}
+
+
+def _notify_reviewers_window_opened(cycle, window: str, staff_ids) -> None:
+    """Tell every live reviewer the conversations they hold are open.
+
+    Activation told nobody. HR opened the quarter and each Programme Lead
+    found out when an officer asked, or when the window closed with the
+    conversations unheld (Program Lead alignment, 2026-09-13). One notice per
+    reviewer names the people whose conversation is now theirs to hold;
+    reviewers are resolved in bulk with the same rule
+    apps.hr.review_authority applies one person at a time.
+    """
+    try:
+        reviewers = reviewers_by_staff(staff_ids)
+        by_reviewer: dict[str, dict] = {}
+        for reviewee_id, reviewer in reviewers.items():
+            if reviewer is None or not reviewer.user_id:
+                continue
+            entry = by_reviewer.setdefault(
+                reviewer.user_id, {"reviewer": reviewer, "names": []}
+            )
+            entry["names"].append(reviewer.reviewee_names.get(reviewee_id, ""))
+        if not by_reviewer:
+            return
+        from apps.notifications.services import WorkflowNotificationService
+
+        label = WINDOW_LABELS.get(window, window.replace("_", " "))
+        for user_id, entry in by_reviewer.items():
+            names = sorted(n for n in entry["names"] if n)
+            shown = ", ".join(names[:4])
+            if len(names) > 4:
+                shown += f" and {len(names) - 4} more"
+            WorkflowNotificationService.trigger(
+                event_type="performance_window_opened",
+                category="hr",
+                priority="high",
+                title=f"The {label} performance conversations are open",
+                body=(
+                    f"HR opened the {label} window for FY{cycle.fy}. Hold the "
+                    f"conversation with {shown or 'the people you review'} and "
+                    "sign each one off before the window closes."
+                ),
+                context_type="PerformanceCycle",
+                context_id=f"{cycle.fy}:{window}",
+                recipients=[user_id],
+            )
+    except Exception:  # noqa: BLE001 — a notice never blocks the activation
+        logger.exception(
+            "performance window notice failed for FY%s %s", cycle.fy, window
+        )
+
+
+def reviewers_by_staff(staff_ids) -> dict:
+    """{reviewee StaffProfile id: reviewer StaffProfile or None}, in bulk.
+
+    The same rule as apps.hr.review_authority.reviewer_for — the supervisor
+    link whose holder has the role the reviewee's role is reviewed by, still
+    employed and not suspended or exited — resolved with three queries for any
+    number of people instead of one per person. Where two links qualify the
+    lowest id wins, as ``reviewer_for``'s unordered ``first()`` does. Each
+    reviewer carries ``reviewee_names`` for the caller's messages.
+    """
+    from apps.accounts.models import StaffProfile, StaffSupervisorAssignment
+    from apps.hr.review_authority import LIVE_STATES, REVIEWER_ROLE_FOR
+
+    ids = list(dict.fromkeys(i for i in staff_ids if i))
+    if not ids:
+        return {}
+    reviewees = {
+        row["id"]: row
+        for row in StaffProfile.objects.filter(id__in=ids).values(
+            "id", "user__active_role", "user__name"
+        )
+    }
+    links = list(
+        StaffSupervisorAssignment.objects.filter(supervisee_id__in=ids).values_list(
+            "supervisee_id", "supervisor_id"
+        )
+    )
+    supervisors = {
+        profile.id: profile
+        for profile in StaffProfile.objects.filter(
+            id__in={supervisor for _, supervisor in links},
+            user__is_active=True,
+            user__deleted_at__isnull=True,
+            onboarding_state__in=LIVE_STATES,
+        ).select_related("user")
+    }
+    result: dict = {staff_id: None for staff_id in ids}
+    for reviewee_id, supervisor_id in sorted(links, key=lambda link: link[1]):
+        if result.get(reviewee_id) is not None:
+            continue
+        reviewee = reviewees.get(reviewee_id)
+        supervisor = supervisors.get(supervisor_id)
+        if reviewee is None or supervisor is None:
+            continue
+        expected = REVIEWER_ROLE_FOR.get(reviewee["user__active_role"] or "", ())
+        if supervisor.user.active_role not in expected:
+            continue
+        if not hasattr(supervisor, "reviewee_names"):
+            supervisor.reviewee_names = {}
+        supervisor.reviewee_names[reviewee_id] = reviewee["user__name"] or ""
+        result[reviewee_id] = supervisor
+    return result
 
 
 def close_window(cycle, principal):
@@ -1032,7 +1152,22 @@ def save_employee_input(priority, data: dict, principal):
     priority.save(
         update_fields=["employee_reflection", "employee_rating", "updated_at"]
     )
+    if (priority.employee_reflection or "").strip() or priority.employee_rating:
+        _stamp_employee_reflection(review)
     return priority
+
+
+def _stamp_employee_reflection(review) -> None:
+    """Record WHEN the employee last spoke on this agreement.
+
+    Reflections live on the priority and carry over from one window to the
+    next, so the text alone cannot say whether the employee has spoken in
+    THIS window. The manager's sign-off waits for that (Program Lead
+    alignment, 2026-09-13); the stamp is what makes the question answerable
+    without a per-window copy of every reflection.
+    """
+    review.employee_reflection_at = timezone.now()
+    review.save(update_fields=["employee_reflection_at", "updated_at"])
 
 
 def save_manager_input(priority, data: dict, principal):
@@ -1194,6 +1329,8 @@ def save_value_reflection(commitment, data: dict, principal):
     if not fields:
         raise Forbidden("You have no writable column on this commitment.")
     commitment.save(update_fields=[*fields, "updated_at"])
+    if is_employee and (commitment.employee_reflection or "").strip():
+        _stamp_employee_reflection(review)
     return commitment
 
 
@@ -1407,7 +1544,14 @@ def reopen_conversation(review, window: str, reason: str, principal):
 
 
 def sign_off(review, window: str, principal):
-    """Lock the snapshot permanently."""
+    """Lock the snapshot permanently.
+
+    The manager may not lock a conversation the employee has not spoken in:
+    until the employee's reflection for this window is saved, the reviewer's
+    sign-off is refused with a message saying so (Program Lead alignment,
+    2026-09-13). The employee may sign their own, and HR keeps the governance
+    lock it always had.
+    """
     from apps.hr.models import PerformanceSnapshot
 
     snap = PerformanceSnapshot.objects.filter(review=review, window=window).first()
@@ -1415,11 +1559,207 @@ def sign_off(review, window: str, principal):
         raise BadRequest("No snapshot exists for that window.")
     if snap.signed_off_at:
         return snap
+    is_employee = review.staff.user_id == getattr(principal, "user_id", None)
+    if not is_employee and getattr(principal, "active_role", "") not in _HR_ROLES:
+        progress = conversation_progress([review], window).get(review.id, {})
+        if not progress.get("reflection_saved"):
+            name = getattr(getattr(review.staff, "user", None), "name", None)
+            label = WINDOW_LABELS.get(window, window.replace("_", " "))
+            raise BadRequest(
+                f"{name or 'The employee'} has not saved their reflection for "
+                f"the {label} conversation yet. Sign-off opens once they have."
+            )
     snap.signed_off_at = timezone.now()
     snap.signed_off_by_id = getattr(principal, "user_id", None)
     snap.save(update_fields=["signed_off_at", "signed_off_by", "updated_at"])
     _audit_review(review, "hr.performance_signed_off", principal, {"window": window})
     return snap
+
+
+def conversation_progress(reviews, window: str) -> dict:
+    """Where each conversation stands in one window, for many reviews at once.
+
+    {review id: {"priorities", "manager_saved", "reflection_saved",
+    "snapshot", "signed_off_at"}} from three queries whatever the number of
+    reviews, so a team register and a To-Do builder never read per person.
+
+    Ratings and words live on the priority and carry over between windows,
+    so "saved" is judged against the window's snapshot: a manager column
+    counts once it was written after the window's figures were frozen, and
+    the employee's reflection counts once they spoke after that moment
+    (``PerformanceReview.employee_reflection_at``). A reflection written
+    before the stamp existed has no time; it is taken as this window's rather
+    than blocking a conversation already under way. With no window open the
+    columns are counted as they stand.
+    """
+    from apps.hr.models import PerformancePriority, PerformanceSnapshot, ValueCommitment
+
+    reviews = [r for r in reviews if r is not None]
+    if not reviews:
+        return {}
+    ids = [r.id for r in reviews]
+    open_window = bool(window and window != "none")
+    snapshots = {}
+    if open_window:
+        snapshots = {
+            row["review_id"]: row
+            for row in PerformanceSnapshot.objects.filter(
+                review_id__in=ids, window=window
+            ).values("review_id", "taken_at", "signed_off_at")
+        }
+    priorities: dict[str, list[dict]] = {}
+    for row in PerformancePriority.objects.filter(review_id__in=ids).values(
+        "review_id",
+        "manager_rating",
+        "manager_assessment",
+        "employee_reflection",
+        "employee_rating",
+        "updated_at",
+    ):
+        priorities.setdefault(row["review_id"], []).append(row)
+    value_reflections = set(
+        ValueCommitment.objects.filter(review_id__in=ids)
+        .exclude(employee_reflection__isnull=True)
+        .exclude(employee_reflection="")
+        .values_list("review_id", flat=True)
+    )
+
+    out = {}
+    for review in reviews:
+        snap = snapshots.get(review.id)
+        since = snap["taken_at"] if snap else None
+        rows = priorities.get(review.id, [])
+        manager_saved = sum(
+            1
+            for row in rows
+            if (row["manager_rating"] or (row["manager_assessment"] or "").strip())
+            and (since is None or row["updated_at"] >= since)
+        )
+        spoke = (
+            any(
+                (row["employee_reflection"] or "").strip() or row["employee_rating"]
+                for row in rows
+            )
+            or review.id in value_reflections
+            or bool((review.employee_reflection or "").strip())
+        )
+        stamped = review.employee_reflection_at
+        reflection_saved = spoke and (
+            stamped is None or since is None or stamped >= since
+        )
+        out[review.id] = {
+            "priorities": len(rows),
+            "manager_saved": manager_saved,
+            "reflection_saved": bool(reflection_saved),
+            "snapshot": snap is not None,
+            "signed_off_at": snap["signed_off_at"] if snap else None,
+        }
+    return out
+
+
+# The quarterly rating conversations. Priority setting is where an agreement is
+# drafted and agreed, not rated, so it asks the reviewer to agree priorities
+# rather than to hold a conversation.
+CONVERSATION_WINDOWS = ("q1", "mid_year", "q3", "year_end")
+REVIEW_DONE_STAGES = ("closed", "employee_acknowledged", "signed_and_archived")
+
+
+def team_review_rows(principal, *, fy: str | None = None, today=None) -> list[dict]:
+    """The people this principal reviews, and what each conversation needs.
+
+    One row per reviewee (``review_authority.reviewees_of``, never the
+    principal themself, never someone whose account was removed): their
+    annual agreement for the year, the open window, the conversation's
+    progress in it, their resolved reviewer, and the three things a reviewer
+    can owe — priorities waiting on them, a conversation still to hold, a
+    review past its due date. The Performance Reviews page and the reviewer
+    To-Dos read these rows so the page and the queue agree. A fixed number of
+    queries for any team size.
+    """
+    from datetime import date
+
+    from apps.core.fy import get_operational_fy
+    from apps.hr.models import PerformanceCycle, PerformanceReview, ReviewStage
+    from apps.hr.review_authority import reviewees_of
+
+    today = today or date.today()
+    fy = fy or get_operational_fy()
+    own_profile_id = getattr(principal, "staff_profile_id", None)
+    reviewees = list(
+        reviewees_of(principal)
+        .exclude(id=own_profile_id)
+        .filter(deleted_at__isnull=True, user__deleted_at__isnull=True)
+        .order_by("user__name")
+    )
+    if not reviewees:
+        return []
+    ids = [profile.id for profile in reviewees]
+    cycle = PerformanceCycle.objects.filter(fy=fy).first()
+    window = cycle.active_window if cycle else "none"
+    reviews = list(
+        PerformanceReview.objects.filter(staff_id__in=ids, fy=fy).order_by(
+            "due_date", "created_at"
+        )
+    )
+    annual = {}
+    by_staff: dict[str, list] = {}
+    for review in reviews:
+        by_staff.setdefault(review.staff_id, []).append(review)
+        if review.review_type == "annual_priorities":
+            annual.setdefault(review.staff_id, review)
+    progress = conversation_progress(list(annual.values()), window)
+    reviewers = reviewers_by_staff(ids)
+    stage_labels = dict(ReviewStage.choices)
+
+    rows = []
+    for profile in reviewees:
+        review = annual.get(profile.id)
+        state = progress.get(review.id, {}) if review else {}
+        agreement_waiting = bool(
+            review and review.stage == ReviewStage.PRIORITIES_MANAGER_REVIEW
+        )
+        conversation_open = bool(
+            review
+            and window in CONVERSATION_WINDOWS
+            and state.get("snapshot")
+            and review.stage
+            not in (
+                ReviewStage.NOT_STARTED,
+                ReviewStage.PRIORITIES_DRAFT,
+                ReviewStage.PRIORITIES_MANAGER_REVIEW,
+            )
+        )
+        hold_needed = conversation_open and not state.get("signed_off_at")
+        overdue = [
+            r
+            for r in by_staff.get(profile.id, [])
+            if r.due_date
+            and r.due_date < today
+            and r.stage not in REVIEW_DONE_STAGES
+            and r.status not in ("Completed", "Closed")
+        ]
+        rows.append(
+            {
+                "profile": profile,
+                "name": profile.user.name if profile.user_id else profile.id,
+                "review": review,
+                "stage_label": stage_labels.get(review.stage, review.stage)
+                if review
+                else "",
+                "window": window,
+                "window_label": WINDOW_LABELS.get(window, "") if window else "",
+                "priorities": state.get("priorities", 0),
+                "manager_saved": state.get("manager_saved", 0),
+                "reflection_saved": state.get("reflection_saved", False),
+                "snapshot": state.get("snapshot", False),
+                "signed_off_at": state.get("signed_off_at"),
+                "reviewer": reviewers.get(profile.id),
+                "agreement_waiting": agreement_waiting,
+                "hold_needed": hold_needed,
+                "overdue_reviews": overdue,
+            }
+        )
+    return rows
 
 
 def _audit_cycle(cycle, action: str, principal, payload: dict) -> None:
@@ -1586,7 +1926,18 @@ def recommend_pip(staff, reason, principal, cause="capacity", start=None):
     creates a DRAFT plan only. Nothing here activates anything, and no score
     ever reaches this function on its own (§15, §20)."""
     from apps.hr.models import PerformanceImprovementPlan, RecoveryPlanType
+    from apps.hr.review_authority import is_oversight, is_reviewer_of
 
+    # Nobody recommends a formal plan for themselves, and outside HR only the
+    # person who reviews the employee may: a Programme Lead's reach includes
+    # their own People record and any supervision link, but a recommendation
+    # is the reviewer's judgment (Program Lead alignment, 2026-09-13).
+    if staff.user_id and staff.user_id == getattr(principal, "user_id", None):
+        raise Forbidden("You cannot recommend a performance plan for yourself.")
+    if not is_oversight(principal) and not is_reviewer_of(staff, principal):
+        raise Forbidden(
+            "Only the employee's reviewer or HR may recommend a formal plan."
+        )
     if not (reason or "").strip():
         raise BadRequest("A PIP recommendation needs its reason recorded.")
     today = timezone.now().date()
@@ -1702,6 +2053,72 @@ def pip_outcome(plan, outcome, note, principal):
     )
     _audit_pip(plan, "hr.pip_outcome", principal, {"outcome": outcome})
     return plan
+
+
+LIVE_RECOVERY_STATUSES = ("active", "progress_review", "extended")
+
+
+def record_recovery_check_in(
+    plan, principal, *, held_on, note: str, milestone_id: str | None = None
+):
+    """The reviewer records a check-in on a live plan, optionally closing a
+    milestone it reached.
+
+    The plan's 30/60/90-day milestones and its check-ins had models and no
+    writer: HR authorised a plan and nobody could record that the reviews it
+    promised ever happened (Program Lead alignment, 2026-09-13). The person
+    who reviews the employee (or their active cover) writes them; HR
+    authorises and decides the outcome, as before.
+    """
+    from apps.hr.models import RecoveryCheckIn
+    from apps.hr.review_authority import is_reviewer_of
+
+    if not is_reviewer_of(plan.staff, principal):
+        raise Forbidden("Only the employee's reviewer records a check-in.")
+    if plan.status not in LIVE_RECOVERY_STATUSES:
+        raise BadRequest(
+            "Check-ins are recorded while a plan is active; this one is "
+            f"{plan.get_status_display().lower()}."
+        )
+    note = (note or "").strip()
+    if not note:
+        raise BadRequest("Record what the check-in found.")
+    if held_on is None:
+        raise BadRequest("Record the date the check-in was held.")
+    today = timezone.localdate()
+    if held_on > today:
+        raise BadRequest("A check-in cannot be dated in the future.")
+    if plan.start_date and held_on < plan.start_date:
+        raise BadRequest("A check-in cannot be dated before the plan started.")
+    milestone = None
+    if milestone_id:
+        milestone = plan.milestones.filter(id=milestone_id).first()
+        if milestone is None:
+            raise BadRequest("That milestone is not part of this plan.")
+        if milestone.is_complete:
+            raise BadRequest(f"“{milestone.description}” is already complete.")
+    with transaction.atomic():
+        check_in = RecoveryCheckIn.objects.create(
+            plan=plan,
+            held_on=held_on,
+            note=note[:4000],
+            recorded_by_id=getattr(principal, "user_id", None),
+        )
+        if milestone is not None:
+            milestone.is_complete = True
+            milestone.completed_at = timezone.now()
+            milestone.save(update_fields=["is_complete", "completed_at", "updated_at"])
+        _audit_pip(
+            plan,
+            "hr.recovery_check_in_recorded",
+            principal,
+            {
+                "checkInId": check_in.id,
+                "heldOn": held_on.isoformat(),
+                "milestoneCompleted": milestone.id if milestone else None,
+            },
+        )
+    return check_in
 
 
 def _audit_pip(plan, action, principal, payload):

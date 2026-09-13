@@ -1,0 +1,152 @@
+{% load kpi_metrics %}
+{% load frontend_filters %}
+{% comment %}
+Collaboration (owner, 2026-09-13): the Regional Lead's training feedback and
+coaching to acknowledge, the Country Director's flags and the escalations
+waiting on the Country Director or delegated back, visit requests, and the
+training partners — their delivery, invoices to confirm and the engagements
+the lead has recorded with them.
+{% endcomment %}
+<div class="space-y-4" data-pl-view="collaboration">
+  <div class="rpl-columns">
+    <div class="rpl-columns__main">
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-regional-title" data-pl-regional-lead>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-regional-title" class="rpl-card__title">Regional Lead</h2>
+            <span class="rpl-card__subtitle">{{ collaboration.regional_feedback.count }} training feedback · {{ collaboration.regional_coaching.count }} coaching for you, waiting for your acknowledgement</span>
+          </div>
+          <div class="rpl-card__actions">
+            <a class="rpl-card__link" href="{{ collaboration_urls.feedback }}">Training Feedback</a>
+            <a class="rpl-card__link" href="{{ collaboration_urls.coaching }}">Regional Lead Coaching <span aria-hidden="true">&rarr;</span></a>
+          </div>
+        </header>
+        {% if collaboration.regional_feedback.rows or collaboration.regional_coaching.rows %}
+        <div class="rpl-follow-list" role="list">
+          {% for row in collaboration.regional_feedback.rows %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">{{ row.subject }}</span>
+              <span class="rpl-follow__due">Observed {{ row.held_on|date:"j M" }}</span>
+            </div>
+            <span class="rpl-follow__what">Training feedback{% if row.recommendation %} · {{ row.recommendation }}{% endif %}</span>
+          </div>
+          {% endfor %}
+          {% for row in collaboration.regional_coaching.rows %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">{{ row.subject }}</span>
+              <span class="rpl-follow__due">Held {{ row.held_on|date:"j M" }}</span>
+            </div>
+            <span class="rpl-follow__what">Coaching conversation with you</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        {% include "components/empty_state.html" with message="Nothing from the Regional Lead is waiting on you." hint="Feedback on your team's trainings and coaching the Regional Lead shares with you appear here to acknowledge." compact="true" %}
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-cd-title" data-pl-country-director>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-cd-title" class="rpl-card__title">Country Director</h2>
+            <span class="rpl-card__subtitle">{{ collaboration.cd_flags.open }} flag{{ collaboration.cd_flags.open|pluralize }} to answer{% if collaboration.cd_flags.overdue %} ({{ collaboration.cd_flags.overdue }} overdue){% endif %} · {{ collaboration.escalations.awaiting }} escalation{{ collaboration.escalations.awaiting|pluralize }} awaiting a decision · {{ collaboration.escalations.delegated_back }} delegated back</span>
+          </div>
+          <div class="rpl-card__actions">
+            <a class="rpl-card__link" href="{{ collaboration_urls.flags }}">Quality Flags</a>
+            <a class="rpl-card__link" href="{{ collaboration_urls.escalations }}">Escalations <span aria-hidden="true">&rarr;</span></a>
+          </div>
+        </header>
+        {% if collaboration.cd_flags.rows or collaboration.escalations.awaiting_rows or collaboration.escalations.delegated_rows %}
+        <div class="rpl-follow-list" role="list">
+          {% for row in collaboration.cd_flags.rows|slice:":6" %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">Flag · {{ row.scope }}</span>
+              <span class="rpl-follow__due"{% if row.overdue %} data-tone="danger"{% endif %}>{% if row.due %}Due {{ row.due|date:"j M" }}{% else %}{{ row.status }}{% endif %}</span>
+            </div>
+            <span class="rpl-follow__what">{{ row.note }}</span>
+          </div>
+          {% endfor %}
+          {% for row in collaboration.escalations.awaiting_rows %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">Escalation · {{ row.subject }}</span>
+              <span class="rpl-follow__due"{% if row.overdue %} data-tone="danger"{% endif %}>{{ row.age_days }}d open</span>
+            </div>
+            <span class="rpl-follow__what">{{ row.status }} · awaiting the Country Director's decision</span>
+          </div>
+          {% endfor %}
+          {% for row in collaboration.escalations.delegated_rows %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">Delegated back · {{ row.subject }}</span>
+              <span class="rpl-follow__due" data-tone="danger">Yours to act on</span>
+            </div>
+            <span class="rpl-follow__what">{{ row.note|default:"The decision was delegated back to you." }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        {% include "components/empty_state.html" with message="No open flags or escalations with the Country Director." compact="true" %}
+        {% endif %}
+      </section>
+
+    </div>
+    <div class="rpl-columns__side">
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-partners-title" data-pl-partners>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-partners-title" class="rpl-card__title">Training partners</h2>
+            <span class="rpl-card__subtitle">Partner-delivered work your team monitors · FY {{ fy }}</span>
+          </div>
+          <a class="rpl-card__link" href="{{ collaboration_urls.partners }}">Partner Oversight <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% kpi_strip %}
+          {% kpi_metric %}{% kpi_label %}Delivered{% endkpi_label %}{{ collaboration.partner_delivery.delivered }}<span class="edify-metric__unit"> / {{ collaboration.partner_delivery.planned }}</span>{% kpi_helper %}by {{ collaboration.partner_delivery.partners }} partner{{ collaboration.partner_delivery.partners|pluralize }}{% endkpi_helper %}{% endkpi_metric %}
+          {% kpi_metric %}{% kpi_label %}Late{% endkpi_label %}{{ collaboration.partner_delivery.late }}{% kpi_helper %}past the planned date{% endkpi_helper %}{% endkpi_metric %}
+          {% kpi_metric %}{% kpi_label %}Invoices to confirm{% endkpi_label %}{{ collaboration.partner_delivery.invoices_to_confirm }}{% kpi_helper %}against the plan{% endkpi_helper %}{% endkpi_metric %}
+        {% endkpi_strip %}
+        <div class="rpl-follow-stats">
+          <div class="rpl-follow-stat"><strong>{{ partner_engagement.recorded }}</strong><span>Engagements recorded</span></div>
+          <div class="rpl-follow-stat"><strong>{{ partner_engagement.partners_engaged }}</strong><span>Partners engaged</span></div>
+          <div class="rpl-follow-stat"{% if partner_engagement.follow_ups_due %} data-tone="danger"{% endif %}><strong>{{ partner_engagement.follow_ups_due }}</strong><span>Follow-ups due</span></div>
+        </div>
+        {% if partner_engagement.latest %}
+        <div class="rpl-follow-list" role="list">
+          {% for item in partner_engagement.latest|slice:":5" %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">{% if item.url %}<a href="{{ item.url }}">{% firstof item.partner_name item.partner item.subject %}</a>{% else %}{% firstof item.partner_name item.partner item.subject %}{% endif %}</span>
+              <span class="rpl-follow__due">{% if item.held_on %}{{ item.held_on|date:"j M" }}{% endif %}</span>
+            </div>
+            <span class="rpl-follow__what">{% firstof item.kind_label item.kind %}{% if item.subject %} · {{ item.subject }}{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endif %}
+        {% if collaboration.partner_delivery.invoices_to_confirm %}
+        <div class="rpl-card__footnote"><a href="{{ collaboration_urls.invoices }}">Confirm partner invoices in Fund Approvals</a></div>
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-visits-title" data-pl-visit-requests>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-visits-title" class="rpl-card__title">Visit requests</h2>
+            <span class="rpl-card__subtitle">Visits the Country Director, Impact Assessment or finance asked to make</span>
+          </div>
+          <a class="rpl-card__link" href="{{ collaboration_urls.visit_requests }}">Visit requests <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="rpl-follow-stats">
+          <div class="rpl-follow-stat"{% if collaboration.visit_requests.to_me %} data-tone="danger"{% endif %}><strong>{{ collaboration.visit_requests.to_me }}</strong><span>Into your schools, for you to decide</span></div>
+          <div class="rpl-follow-stat"><strong>{{ collaboration.visit_requests.into_team }}</strong><span>Into your officers' schools</span></div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>

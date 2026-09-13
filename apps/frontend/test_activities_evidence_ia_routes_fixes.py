@@ -157,17 +157,27 @@ class SalesforceIdActionValidationTest(DomainFixturesMixin, TestCase):
 
 class TrainingsLogRealEnumValuesTest(DomainFixturesMixin, TestCase):
     """MEDIUM: TRAINING_TYPES must use real ActivityType enum members, not
-    the fictitious "group_training"/"teachers_training"."""
+    the fictitious "group_training"/"teachers_training".
+
+    Read as a Project Coordinator: since 2026-09-13 a CCEO's trainings open on
+    the My Plan Trainings card and a Programme Lead's on Programme Rollout, so
+    both are redirected (apps/frontend/test_pl_team_leadership.py). The log
+    now matches both owner id forms, so one training carries the People
+    record id.
+    """
 
     def setUp(self):
         self.user = self._make_cceo()
+        self.user.roles = ["ProjectCoordinator"]
+        self.user.active_role = "ProjectCoordinator"
+        self.user.save(update_fields=["roles", "active_role"])
         self.school = self._make_school()
         self.cluster_training = Activity.objects.create(
             school=self.school,
             delivery_type="staff",
             activity_type="cluster_training",
             status="completed",
-            responsible_staff_id=self.user.id,
+            responsible_staff_id="staff-cceo-fix-1",
             planned_date=date(2026, 7, 2),
         )
         self.school_improvement_training = Activity.objects.create(

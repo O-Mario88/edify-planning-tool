@@ -1,19 +1,30 @@
 {% extends "layouts/shell.html" %}
 
-{% block title %}Professional Development Dashboard · Edify{% endblock %}
+{% block title %}{% if team_view %}Team Professional Development{% else %}Professional Development Dashboard{% endif %} · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="performance">
 
   <!-- Header -->
+  {% comment %}A Programme Lead reads this page as their team's development
+  (team_view, Program Lead alignment 2026-09-13): the requests waiting on them
+  and the courses to follow up. HR's page is unchanged.{% endcomment %}
   <div class="edify-page-header">
     <div class="edify-page-header__lead">
+      {% if team_view %}
+      <p class="edify-page-eyebrow">Team performance</p>
+      <h1 class="edify-page-title edify-page-header__title">Team Professional Development</h1>
+      <p class="edify-page-header__description">
+        Your officers' development requests: decide the ones waiting on you, then follow up courses that have stalled — FY {{ fy }}.
+      </p>
+      {% else %}
       <p class="edify-page-eyebrow">People & Culture</p>
       <h1 class="edify-page-title edify-page-header__title">Professional Development Dashboard</h1>
       <p class="edify-page-header__description">
         Oversee course tracking, fund accountability, and HR sign-off across every staff member's PD plan — FY {{ fy }}{% if locked_country %} · {{ locked_country }}{% endif %}.
       </p>
+      {% endif %}
     </div>
     <span class="edify-text-caption font-semibold text-slate-400">Last refreshed {{ last_refreshed|date:"d M Y, H:i" }}</span>
   </div>
@@ -40,6 +51,9 @@
         {% for opt in fy_options %}<option value="{{ opt }}" {% if opt == fy %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
       </select>
     </label>
+    {% comment %}Filters with nothing to choose are hidden: a Programme Lead's
+    team is one role in the lead's own country.{% endcomment %}
+    {% if not team_view or country_options|length > 1 %}
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Country</span>
       {% if locked_country %}
@@ -52,6 +66,8 @@
       </select>
       {% endif %}
     </label>
+    {% endif %}
+    {% if not team_view %}
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Role</span>
       <select aria-label="Role" name="role" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
@@ -59,6 +75,7 @@
         {% for key, label in eligible_roles %}<option value="{{ key }}" {% if key == role_filter %}selected{% endif %}>{{ label }}</option>{% endfor %}
       </select>
     </label>
+    {% endif %}
     <label class="block">
       <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Course Status</span>
       <select aria-label="Status" name="status" class="mt-1 w-full h-9 px-2 rounded-control border text-[12px] font-semibold focus:outline-none edify-surface-muted edify-border edify-text">
@@ -79,8 +96,10 @@
     </label>
   </form>
 
+  {% include "partials/_section_nav.html" %}
+
   <div id="pd-dashboard-body">
-    {% include "partials/hr/pd_dashboard/body.html" %}
+    {% include pd_body_template|default:"partials/hr/pd_dashboard/body.html" %}
   </div>
 
   <!-- Drawer mount point (Adjust Allocation) -->

@@ -75,6 +75,19 @@ class SsaRecord(SoftDeleteModel):
     verified_at = models.DateTimeField(null=True, blank=True)
     qa_reviewed_by_user_id = models.CharField(max_length=30, null=True, blank=True)
     qa_reviewed_at = models.DateTimeField(null=True, blank=True)
+    # The visit the scores were collected on, and why a verifier sent them back
+    # (IA review, 2026-09-13: SSAs keyed by staff or IA wait for a different
+    # verifier, and a returned SSA tells its collector what to fix).
+    source_activity = models.ForeignKey(
+        "activities.Activity",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="collected_ssa_records",
+    )
+    return_reason = models.TextField(blank=True, default="")
+    returned_by_user_id = models.CharField(max_length=30, null=True, blank=True)
+    returned_at = models.DateTimeField(null=True, blank=True)
 
     uploaded_by = models.CharField(max_length=30)  # userId (IA)
 

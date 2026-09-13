@@ -304,13 +304,88 @@ def resolve_context_record(context_type: str | None, context_id: str | None):
         if context_type == "partner_assignment":
             from apps.partners.models import PartnerAssignment
 
-            rec = PartnerAssignment.objects.filter(id=context_id).first()
+            rec = (
+                PartnerAssignment.objects.select_related("partner", "school", "cluster")
+                .filter(id=context_id)
+                .first()
+            )
             if rec:
-                return rec, f"{rec.partner.name} — {rec.school.name}"
+                return rec, _partner_assignment_label(rec)
             return None, f"Partner Assignment {context_id}"
     except Exception:
         pass
     return None, f"{CONTEXT_LABELS.get(context_type, context_type)} {context_id}"
+
+
+def _partner_assignment_label(assignment) -> str:
+    """The partner and the place: "<partner> — <school or cluster>".
+
+    A cluster assignment has no school, and reading `assignment.school.name`
+    raised an AttributeError the resolver swallowed — so every cluster
+    handover was labelled "Partner Assignment <id>" and, in the compose
+    picker, ended the list at the first cluster row (Program Lead alignment,
+    2026-09-13).
+    """
+    partner = getattr(assignment.partner, "name", "") or "Partner"
+    if assignment.school_id and assignment.school is not None:
+        place = assignment.school.name
+    elif assignment.cluster_id and assignment.cluster is not None:
+        place = f"{assignment.cluster.name} (cluster)"
+    else:
+        place = "—"
+    return f"{partner} — {place}"
+
+
+def _partner_assignment_scope_q(user) -> Q | None:
+    """The partner handovers a Programme Lead or officer oversees, as a Q over
+    PartnerAssignment — the Partner Oversight rule
+    (apps.planning.partner_oversight_service): the handover names them or
+    someone they supervise as monitor or assigner, or sits at a school they or
+    their team own. None for the country lens (no narrowing)."""
+    from apps.planning.partner_oversight_service import _resolve_scope
+
+    scope = _resolve_scope(user)
+    if scope["is_country"]:
+        return None
+    ids = scope["staff_ids"]
+    if not ids:
+        return Q(pk__in=[])
+    return (
+        Q(monitoring_staff_id__in=ids)
+        | Q(assigning_staff_id__in=ids)
+        | Q(school__account_owner_id__in=ids)
+    )
+
+
+def _team_staff_ids(user) -> set[str]:
+    """A Programme Lead's own StaffProfile id and their supervisees'."""
+    from apps.core.scoping import resolve_user_scope
+
+    ids = set(resolve_user_scope(user).supervised_staff_ids or [])
+    sp_id = getattr(user, "staff_profile_id", None)
+    if sp_id:
+        ids.add(sp_id)
+    else:
+        sp = getattr(user, "staff_profile", None)
+        if sp is not None:
+            ids.add(sp.id)
+    return {i for i in ids if i}
+
+
+def _team_user_ids(user) -> set[str]:
+    """The User ids behind `_team_staff_ids`, the caller's own included."""
+    from apps.accounts.models import StaffProfile
+
+    staff_ids = _team_staff_ids(user)
+    user_ids = {
+        uid
+        for uid in StaffProfile.objects.filter(id__in=staff_ids).values_list(
+            "user_id", flat=True
+        )
+        if uid
+    }
+    user_ids.add(user.id)
+    return user_ids
 
 
 def can_access_context(user, context_type: str | None, context_id: str | None) -> bool:
@@ -357,18 +432,37 @@ def can_access_context(user, context_type: str | None, context_id: str | None) -
     if cls == "WeeklyFundRequest":
         if role in {"ACCOUNTANT", "CD", "RVP", "IA"}:
             return True
-        # Requesters and their chain
-        return record.responsible_user == user.id or role in {"PL", "CCEO"}
-    if cls == "Leave":
-        if role in {"HR", "CD", "RVP", "PL"}:
+        if record.responsible_user == user.id:
             return True
+        # The approval chain: a Programme Lead reads their team's requests,
+        # which wait on them. Any PL or officer used to open any request in
+        # the deployment (Program Lead alignment, 2026-09-13).
+        if role == "PL":
+            return record.responsible_user in _team_user_ids(user)
+        return False
+    if cls == "Leave":
+        if role in {"HR", "CD", "RVP"}:
+            return True
+        # A Programme Lead approves their team's leave; they are not an HR
+        # function, so another team's leave is not theirs to message about —
+        # the same rule the leave picker below applies.
+        if role == "PL":
+            return record.staff_id in _team_staff_ids(user)
         sp = getattr(user, "staff_profile", None)
         return bool(sp and record.staff_id == sp.id)
     if cls == "PartnerAssignment":
         if role == "PARTNER":
             partner = getattr(user, "partner", None)
             return bool(partner and record.partner_id == partner.id)
-        return role in {"CCEO", "PL", "IA", "PROJECT_COORDINATOR", "CD"}
+        if role in {"CCEO", "PL"}:
+            # Only the handovers in their Partner Oversight scope.
+            from apps.partners.models import PartnerAssignment
+
+            q = _partner_assignment_scope_q(user)
+            if q is None:
+                return True
+            return PartnerAssignment.objects.filter(q, id=record.id).exists()
+        return role in {"IA", "PROJECT_COORDINATOR", "CD"}
     return True
 
 
@@ -625,8 +719,11 @@ def search_context_records(
 
             qs = WeeklyFundRequest.objects.all().order_by("-week_start_date")
             role = _role_slug(user)
-            if role in {"CCEO", "PL"}:
+            if role == "CCEO":
                 qs = qs.filter(responsible_user=user.id)
+            elif role == "PL":
+                # Their own requests and the team's, which wait on them.
+                qs = qs.filter(responsible_user__in=_team_user_ids(user))
             for w in qs[:12]:
                 out.append(
                     {
@@ -648,11 +745,7 @@ def search_context_records(
                 # A PL supervises a team; they are not an HR function. Listing
                 # every staff member's leave to them exposed the team they do
                 # not manage — and the label leaked the leave TYPE with it.
-                from apps.core.scoping import resolve_user_scope
-
-                scope = resolve_user_scope(user)
-                own = [sp.id] if sp else []
-                qs = qs.filter(staff_id__in=[*scope.supervised_staff_ids, *own])
+                qs = qs.filter(staff_id__in=_team_staff_ids(user))
             else:
                 qs = qs.filter(staff=sp) if sp else qs.none()
             for leave in qs[:12]:
@@ -683,18 +776,26 @@ def search_context_records(
         elif context_type == "partner_assignment":
             from apps.partners.models import PartnerAssignment
 
-            qs = PartnerAssignment.objects.select_related("partner", "school")
+            qs = PartnerAssignment.objects.select_related(
+                "partner", "school", "cluster"
+            )
             role = _role_slug(user)
             if role == "PARTNER":
                 partner = getattr(user, "partner", None)
                 qs = qs.filter(partner=partner) if partner else qs.none()
+            elif role in {"CCEO", "PL"}:
+                scope_q = _partner_assignment_scope_q(user)
+                if scope_q is not None:
+                    qs = qs.filter(scope_q)
             if q:
-                qs = qs.filter(school__name__icontains=q)
-            for pa in qs[:12]:
+                qs = qs.filter(
+                    Q(school__name__icontains=q) | Q(cluster__name__icontains=q)
+                )
+            for pa in qs.order_by("-created_at")[:12]:
                 out.append(
                     {
                         "id": pa.id,
-                        "title": f"{pa.partner.name} — {pa.school.name}",
+                        "title": _partner_assignment_label(pa),
                         "meta": pa.expected_activity_type or "Assignment",
                         "status": pa.status,
                     }

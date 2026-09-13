@@ -1,7 +1,7 @@
 <div class="pl-cceo-performance-scroll" data-table-scroll-region>
   <table class="pl-cceo-performance-table w-full border-collapse" data-mobile-table="scroll">
     <caption class="sr-only">
-      Supervised CCEO performance, ordered by highest operational risk and then lowest target achievement.
+      Supervised CCEO performance, ordered by highest operational risk and then lowest target achievement, with the handoffs each officer is waiting on you to decide.
     </caption>
     <thead>
       <tr>
@@ -9,7 +9,7 @@
         <th scope="col" class="text-center">Schools</th>
         <th scope="col">Delivery</th>
         <th scope="col">Exceptions</th>
-        <th scope="col">Route quality</th>
+        <th scope="col">Waiting on you</th>
         <th scope="col">Risk</th>
         <th scope="col" class="text-right">Action</th>
       </tr>
@@ -49,7 +49,7 @@
           </span>
         </td>
         <td>
-          <span class="pl-cceo-status pl-cceo-status--{{ c.route_tone }}">{{ c.route_quality }}</span>
+          <span class="pl-cceo-status pl-cceo-status--{% if c.waiting %}warning{% else %}success{% endif %}">{% if c.waiting %}{{ c.waiting }} to decide{% else %}Nothing{% endif %}</span>
         </td>
         <td>
           <span class="pl-cceo-status pl-cceo-status--{{ c.risk_tone }}">{{ c.risk }}</span>

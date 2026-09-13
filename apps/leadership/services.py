@@ -36,8 +36,7 @@ def boards(principal, query: dict) -> dict:
         boards_data.append(
             {
                 "decisionType": dtype,
-                "canReview": principal.active_role
-                in ("CountryDirector", "Program Lead"),
+                "canReview": principal.active_role == "CountryDirector",
                 "insights": items,
             }
         )

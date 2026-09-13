@@ -1,0 +1,17 @@
+{% comment %}Exceptions requiring attention: the critical and blocked queue rows. One partial for the field
+workbench and the Programme Lead's Today, so the two cannot drift apart.{% endcomment %}
+<section class="edify-surface rounded-surface border {% if exceptions %}border-amber-200{% else %}border-slate-100{% endif %} p-4 sm:p-5" aria-labelledby="exceptions-title">
+  <h2 id="exceptions-title" class="text-[13px] font-bold {% if exceptions %}text-amber-900{% else %}text-slate-800{% endif %}">Exceptions requiring attention</h2>
+  <ul class="mt-2 space-y-1">
+    {% for todo in exceptions %}
+    <li class="rounded-control bg-amber-50/70 px-3 py-2">
+      <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
+        <p class="text-[12px] font-semibold text-amber-900">{{ todo.title }}</p>
+        {% if todo.description %}<p class="edify-text-caption text-amber-700">{{ todo.description }}</p>{% endif %}
+      </a>
+    </li>
+    {% empty %}
+    <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">No exceptions — normal work is being managed automatically.</li>
+    {% endfor %}
+  </ul>
+</section>

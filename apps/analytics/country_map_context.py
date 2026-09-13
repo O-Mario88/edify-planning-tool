@@ -62,7 +62,7 @@ def country_map_context(fy: str | None = None) -> dict[str, Any]:
     from apps.core.cache_utils import stampede_safe_get_or_compute
 
     return stampede_safe_get_or_compute(
-        f"country-map:v2:{fy or 'current'}",
+        f"country-map:v3:{fy or 'current'}",
         lambda: _country_map_context_uncached(fy),
         timeout=settings.COUNTRY_MAP_CACHE_SECONDS,
     )

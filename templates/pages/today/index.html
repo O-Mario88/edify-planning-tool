@@ -9,7 +9,7 @@
     <div class="min-w-0 max-w-3xl edify-page-header__lead">
       <p class="edify-page-eyebrow">{{ today_label }}</p>
       <h1 id="today-title" class="edify-page-title edify-page-header__title">Today</h1>
-      <p class="edify-page-subtitle edify-page-header__description">Your prepared day: the route, the next action, what waits on you, and what needs attention. Everything else stays in the background.</p>
+      <p class="edify-page-subtitle edify-page-header__description">{% if is_program_lead %}What your team and your collaborators are waiting on you to decide, your team in the field today, then your own day.{% else %}Your prepared day: the route, the next action, what waits on you, and what needs attention. Everything else stays in the background.{% endif %}</p>
     </div>
   </header>
 
@@ -17,6 +17,70 @@
     {% for message in messages %}
     <div role="status" class="rounded-surface border px-4 py-3 text-[12px] {% if message.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ message }}</div>
     {% endfor %}
+  {% endif %}
+
+  {% if is_program_lead %}
+  {% comment %}
+  The Programme Lead's day starts with the decisions others are waiting on —
+  leadership handoffs ahead of the lead's own field chores — then the team in
+  the field (owner, 2026-09-13).
+  {% endcomment %}
+  <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="waiting-title" data-today-waiting>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="waiting-title" class="text-[13px] font-bold text-slate-800">Waiting on you</h2>
+      {% if queue_total %}<a href="/todos" class="text-[12px] font-bold edify-primary-text">View all {{ queue_total }} <span aria-hidden="true">&rarr;</span></a>{% endif %}
+    </div>
+    <ul class="mt-2 space-y-1">
+      {% for todo in waiting %}
+      <li class="rounded-control bg-slate-50 px-3 py-2">
+        <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
+          <p class="text-[12px] font-semibold text-slate-700">{{ todo.title }}</p>
+          <p class="edify-text-caption text-slate-400">{{ todo.category }}{% if todo.description %} · {{ todo.description }}{% endif %}</p>
+        </a>
+      </li>
+      {% empty %}
+      <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">Nothing waits on you right now.</li>
+      {% endfor %}
+    </ul>
+  </section>
+
+  <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="team-today-title" data-today-team>
+    <div class="flex flex-wrap items-center justify-between gap-2">
+      <h2 id="team-today-title" class="text-[13px] font-bold text-slate-800">Your team today</h2>
+      <span class="edify-text-caption text-slate-400 tabular-nums">{{ team_today.activity_count }} activit{{ team_today.activity_count|pluralize:"y,ies" }} · {{ team_today.officers }} officer{{ team_today.officers|pluralize }}</span>
+    </div>
+    {% if team_today.completions %}
+    <a href="/pl/review-queue" class="mt-2 flex items-center justify-between gap-2 rounded-control border border-amber-200 bg-amber-50/70 px-3 py-2 text-[12px] font-semibold text-amber-900">
+      <span>{{ team_today.completions }} completion{{ team_today.completions|pluralize }} waiting for your confirmation</span>
+      <span aria-hidden="true">&rarr;</span>
+    </a>
+    {% endif %}
+    {% if team_today.groups %}
+    <div class="mt-3 space-y-3">
+      {% for group in team_today.groups %}
+      <div>
+        <p class="text-[12px] font-bold text-slate-600">{{ group.name }}</p>
+        <ul class="mt-1 space-y-1">
+          {% for activity in group.activities %}
+          <li class="flex flex-wrap items-center justify-between gap-2 rounded-control bg-slate-50 px-3 py-2">
+            <div class="min-w-0">
+              <p class="truncate text-[12px] font-semibold text-slate-700">{{ activity.where }}</p>
+              <p class="edify-text-caption text-slate-400">{{ activity.name }}{% if activity.partner %} · partner delivery{% endif %}</p>
+            </div>
+            <span class="edify-badge" data-tone="info">{{ activity.status }}</span>
+          </li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endfor %}
+    </div>
+    {% if team_today.activity_count > team_today.limit %}<p class="mt-2 edify-text-caption text-slate-400">Showing {{ team_today.limit }} of {{ team_today.activity_count }}. <a href="/team-planning-oversight/" class="font-bold edify-primary-text">Open Team Oversight</a></p>{% endif %}
+    {% else %}
+    <p class="mt-2 text-[12px] text-slate-500">{% if team_today.officers %}None of your officers has work scheduled today.{% else %}No officers are on your team yet.{% endif %}</p>
+    {% endif %}
+  </section>
+
+  {% include "partials/today/exceptions.html" %}
   {% endif %}
 
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="next-activity-title">
@@ -31,10 +95,15 @@
     </div>
     {% else %}
     <h2 id="next-activity-title" class="mt-2 text-[14px] font-bold text-slate-700">Nothing scheduled for today</h2>
-    <p class="mt-1 text-[12px] text-slate-500">A quiet schedule is honest — prepare next week below, or open My Plan to schedule work.</p>
+    <p class="mt-1 text-[12px] text-slate-500">{% if has_own_portfolio %}A quiet schedule is honest — prepare next week below, or open My Plan to schedule work.{% else %}Nothing of your own is scheduled today — open My Plan to schedule your own work.{% endif %}</p>
     {% endif %}
   </section>
 
+  {% if not has_own_portfolio %}
+  {% comment %}A Programme Lead with no schools of their own has no route to
+  walk and no week to prepare, so the two blocks are one line.{% endcomment %}
+  <p class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500" data-today-no-portfolio>No schools are assigned to you directly, so there is no route or proposed week to prepare — your team's field day is above. <a href="/my-plan" class="font-bold edify-primary-text">Open My Plan</a></p>
+  {% else %}
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="route-title">
     <div class="flex flex-wrap items-center justify-between gap-2">
       <p class="edify-text-caption uppercase tracking-wider text-slate-400">Your route · {{ package.activityCount }} activit{{ package.activityCount|pluralize:"y,ies" }}</p>
@@ -65,6 +134,9 @@
     {% endif %}
   </section>
 
+  {% endif %}
+
+  {% if not is_program_lead %}
   <div class="grid gap-5 lg:grid-cols-2">
     <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="waiting-title">
       <h2 id="waiting-title" class="text-[13px] font-bold text-slate-800">Waiting for your confirmation</h2>
@@ -82,23 +154,11 @@
       </ul>
     </section>
 
-    <section class="edify-surface rounded-surface border {% if exceptions %}border-amber-200{% else %}border-slate-100{% endif %} p-4 sm:p-5" aria-labelledby="exceptions-title">
-      <h2 id="exceptions-title" class="text-[13px] font-bold {% if exceptions %}text-amber-900{% else %}text-slate-800{% endif %}">Exceptions requiring attention</h2>
-      <ul class="mt-2 space-y-1">
-        {% for todo in exceptions %}
-        <li class="rounded-control bg-amber-50/70 px-3 py-2">
-          <a href="{{ todo.action_url|default:'/dashboard' }}" class="block">
-            <p class="text-[12px] font-semibold text-amber-900">{{ todo.title }}</p>
-            {% if todo.description %}<p class="edify-text-caption text-amber-700">{{ todo.description }}</p>{% endif %}
-          </a>
-        </li>
-        {% empty %}
-        <li class="rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">No exceptions — normal work is being managed automatically.</li>
-        {% endfor %}
-      </ul>
-    </section>
+    {% include "partials/today/exceptions.html" %}
   </div>
+  {% endif %}
 
+  {% if has_own_portfolio %}
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5" aria-labelledby="proposed-week-title">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <div class="min-w-0">
@@ -141,6 +201,7 @@
     <p class="mt-3 rounded-control border border-dashed border-slate-200 px-3 py-3 text-[12px] text-slate-500">No draft week right now. Prepare one and review it here — SSA-outstanding schools first, grouped into route-coherent days that respect your calendar.</p>
     {% endif %}
   </section>
+  {% endif %}
 
   <section class="edify-surface rounded-surface border border-slate-100 p-4 sm:p-5 sm:flex sm:items-center sm:justify-between sm:gap-4" aria-labelledby="day-completion-title">
     <div class="min-w-0">

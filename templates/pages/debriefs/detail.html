@@ -40,6 +40,14 @@
     </div>
   </header>
 
+  {% if debrief.status == "reviewed" and debrief.review_note %}
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border" data-debrief-review>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Programme Lead's feedback</h2>
+    <p class="edify-text-caption text-slate-400">Reviewed{% if reviewer_name %} by {{ reviewer_name }}{% endif %}{% if debrief.reviewed_at %} · {{ debrief.reviewed_at|date:"d M Y" }}{% endif %}</p>
+    <p class="edify-text-caption edify-text">{{ debrief.review_note|linebreaksbr }}</p>
+  </div>
+  {% endif %}
+
   <!-- Linked activities -->
   {% if activity_links %}
   <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border">
@@ -193,6 +201,31 @@
       <textarea name="suggestion" rows="2" placeholder="Propose a solution…" required class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
       <button type="submit" class="h-8 px-3 rounded-control border edify-text-caption font-bold edify-border edify-text">Propose Solution</button>
     </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  {% if can_review or coaching_drawer_url %}
+  {% comment %}
+  The supervising Programme Lead's review (2026-09-13): read the debrief, answer
+  it with feedback, or turn it into a coaching conversation. Offered only to the
+  Programme Lead this officer reports to.
+  {% endcomment %}
+  <div class="rounded-surface border p-5 space-y-2 edify-surface edify-border" data-debrief-supervision>
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-2 border-b edify-text edify-border">Your review</h2>
+    {% if can_review %}
+    <form method="post" action="/debriefs/action" class="space-y-2">
+      {% csrf_token %}<input type="hidden" name="action" value="mark_reviewed"><input type="hidden" name="debrief_id" value="{{ debrief.id }}">
+      <label for="debrief-review-feedback" class="edify-text-caption font-bold text-slate-400">Feedback for the officer <span aria-hidden="true">*</span></label>
+      <textarea id="debrief-review-feedback" name="feedback" rows="3" required placeholder="What went well, what to change, and any support you will give" class="w-full px-2 py-1.5 rounded-control border edify-text-caption edify-border edify-surface-muted edify-text"></textarea>
+      <div class="flex flex-wrap gap-2">
+        <button type="submit" class="btn btn-primary h-8">Mark reviewed</button>
+        {% if coaching_drawer_url %}<button type="button" class="btn btn-secondary h-8" hx-get="{{ coaching_drawer_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Log coaching</button>{% endif %}
+      </div>
+    </form>
+    {% else %}
+    <p class="edify-text-caption text-slate-400">{% if debrief.status == "reviewed" %}You reviewed this debrief.{% else %}This debrief is not waiting for your review.{% endif %}</p>
+    <button type="button" class="btn btn-secondary h-8" hx-get="{{ coaching_drawer_url }}" hx-target="#drawer-container" hx-swap="innerHTML">Log coaching</button>
     {% endif %}
   </div>
   {% endif %}

@@ -6474,3 +6474,81 @@ main :is(#rpl-workflow-filters, #hr-workflow-filters) .edify-filter-actions {
   align-items: center;
   gap: 0.5rem;
 }
+
+/* Program Lead alignment (2026-09-13): one block per track. */
+/* ── PL alignment · T ── */
+/* ── end T ── */
+/* ── PL alignment · C1 ── */
+/* ── end C1 ── */
+/* ── PL alignment · C2 ── */
+/* ── end C2 ── */
+/* ── PL alignment · P1 ── */
+/* ── end P1 ── */
+/* ── PL alignment · P2 ── */
+/* ── end P2 ── */
+/* ── PL alignment · S1 ── */
+/* ── end S1 ── */
+/* ── PL alignment · S2 ── */
+/* Partner engagement log (2026-09-13): the Regional Lead observations still
+   waiting on work with a partner, one line each with its Follow up control at
+   the line end. */
+.partner-engagement-observations__list {
+  display: grid;
+  gap: 0.25rem;
+  margin-block-start: 0.4rem;
+  padding: 0;
+  list-style: none;
+}
+.partner-engagement-observations__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  min-inline-size: 0;
+}
+.partner-engagement-observations__item > .edify-note__body {
+  margin-block-start: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* ── end S2 ── */
+/* ── PL alignment · D ── */
+/* Program Lead dashboard (2026-09-13): the attention band takes the Regional
+   Lead dashboard's cards and names the responsibility each item comes from;
+   four items share one row on wide screens and two on a laptop. */
+.pl-attention__responsibility {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-micro-size);
+  font-weight: var(--edify-text-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+@media (min-width: 64rem) {
+  .rpl-attention-grid[data-count="4"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 80rem) {
+  .rpl-attention-grid[data-count="4"] {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+/* ── end D ── */
+
+/* IA review (2026-09-13): one block per track. */
+/* ── IA review · IA-N ── */
+/* ── end IA-N ── */
+/* ── IA review · IA-F ── */
+/* ── end IA-F ── */
+/* ── IA review · IA-C ── */
+/* ── end IA-C ── */
+/* ── IA review · IA-P ── */
+/* ── end IA-P ── */
+/* ── IA review · IA-L ── */
+/* ── end IA-L ── */
+/* ── IA review · IA-R ── */
+/* ── end IA-R ── */

@@ -17,6 +17,7 @@ from datetime import date, timedelta
 from django.utils import timezone
 
 from apps.core.fy import fy_options, get_operational_fy
+from apps.core.rbac import EdifyRole
 
 from .field_debrief_service import FieldDebriefService
 from .insight_service import INSIGHT_REVIEWER_ROLES
@@ -29,6 +30,7 @@ from .models import (
 )
 
 PER_PAGE = 10
+_UNSET = object()
 
 
 def _pct_delta(current: int, previous: int) -> dict | None:
@@ -87,15 +89,28 @@ class FieldDebriefDashboardService:
         )
 
         tab = params.get("tab") or "all"
-        table_qs = FieldDebriefDashboardService._apply_tab(principal, current_qs, tab)
+        # The supervising Programme Lead's review queue (2026-09-13). It reads
+        # the whole scoped year, not the date range: a debrief waiting since
+        # last month is still waiting.
+        can_review_team = (
+            getattr(principal, "active_role", "")
+            == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+        )
+        awaiting_qs = FieldDebriefService.awaiting_review(principal, base_qs)
+        awaiting_review_count = awaiting_qs.count() if can_review_team else 0
+        if tab == "awaiting_review":
+            table_qs = awaiting_qs
+        else:
+            table_qs = FieldDebriefDashboardService._apply_tab(
+                principal, current_qs, tab
+            )
         page = max(1, int(params.get("page") or 1))
         total = table_qs.count()
         pages = max(1, (total + PER_PAGE - 1) // PER_PAGE)
         page = min(page, pages)
-        table_rows = [
-            FieldDebriefDashboardService._table_row(d)
-            for d in table_qs.order_by("-date")[(page - 1) * PER_PAGE : page * PER_PAGE]
-        ]
+        table_rows = FieldDebriefDashboardService._table_rows(
+            table_qs.order_by("-date")[(page - 1) * PER_PAGE : page * PER_PAGE]
+        )
         recent_activity = [
             {
                 "name": _display_name(d.submitted_by_user_id),
@@ -130,6 +145,8 @@ class FieldDebriefDashboardService:
             "can_manage_insights": getattr(principal, "active_role", "")
             in INSIGHT_REVIEWER_ROLES,
             "tab": tab,
+            "can_review_team": can_review_team,
+            "awaiting_review_count": awaiting_review_count,
             "table_rows": table_rows,
             "table_total": total,
             "table_page": page,
@@ -469,17 +486,64 @@ class FieldDebriefDashboardService:
         return qs
 
     @staticmethod
-    def _table_row(d) -> dict:
-        link = d.activity_links.first() if hasattr(d, "activity_links") else None
+    def _table_rows(debriefs) -> list[dict]:
+        """One page of the tracker table, read in a fixed number of queries.
+
+        Each row used to look up its author, school and partner one query at a
+        time (plus its first activity link) — four queries per row on every
+        tab (2026-09-13).
+        """
+        from apps.accounts.models import User
+        from apps.partners.models import Partner
+        from apps.schools.models import School
+
+        page = list(debriefs.prefetch_related("activity_links__activity"))
+        names = dict(
+            User.objects.filter(
+                id__in={d.submitted_by_user_id for d in page if d.submitted_by_user_id}
+            ).values_list("id", "name")
+        )
+        partners = dict(
+            Partner.objects.filter(
+                id__in={d.partner_id for d in page if d.partner_id}
+            ).values_list("id", "name")
+        )
+        schools = dict(
+            School.objects.filter(
+                id__in={d.linked_school_ids[0] for d in page if d.linked_school_ids}
+            ).values_list("id", "name")
+        )
+        rows = []
+        for d in page:
+            links = sorted(d.activity_links.all(), key=lambda link: link.pk)
+            target = partners.get(d.partner_id) if d.partner_id else None
+            if not target and d.linked_school_ids:
+                target = schools.get(d.linked_school_ids[0])
+            rows.append(
+                FieldDebriefDashboardService._table_row(
+                    d,
+                    link=links[0] if links else None,
+                    author=names.get(d.submitted_by_user_id) or "—",
+                    target=target or "—",
+                )
+            )
+        return rows
+
+    @staticmethod
+    def _table_row(d, *, link=_UNSET, author=None, target=None) -> dict:
+        if link is _UNSET:
+            link = d.activity_links.first() if hasattr(d, "activity_links") else None
         return {
             "id": d.id,
             "date": d.date,
             "submitted_by": d.submitted_by_role,
-            "submitted_by_name": _display_name(d.submitted_by_user_id),
+            "submitted_by_name": author
+            if author is not None
+            else _display_name(d.submitted_by_user_id),
             "activity_type": link.activity.get_activity_type_display()
             if link and link.activity
             else d.get_kind_display(),
-            "target_label": _target_label(d),
+            "target_label": target if target is not None else _target_label(d),
             "status": d.get_status_display(),
             "status_key": d.status,
             "title": d.title or "(untitled)",

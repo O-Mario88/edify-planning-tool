@@ -59,6 +59,7 @@ from apps.core.scoping import (
     school_queryset,
 )
 from apps.frontend.view_models import SchoolDirectoryViewModel
+from apps.core.fy import fy_options, get_operational_fy
 
 
 def _may_upload_schools(request) -> bool:
@@ -297,7 +298,11 @@ def school_directory_view(request):
 
     # Input parameters
     q = request.GET.get("q", "").strip()
-    fy = request.GET.get("fy", "2026").strip()
+    # The operational year unless a year the platform offers is chosen; the
+    # literal "2026" default froze the directory's SSA progress on one year
+    # (Programme Lead alignment, 2026-09-13).
+    requested_fy = request.GET.get("fy", "").strip()
+    fy = requested_fy if requested_fy in fy_options() else get_operational_fy()
     region_id = request.GET.get("region", "").strip()
     district_id = request.GET.get("district", "").strip()
     sub_county_id = request.GET.get("sub_county", "").strip()
@@ -793,6 +798,7 @@ def school_directory_view(request):
             "hx_include": "#filters-form",
         },
         "selected_fy": fy,
+        "fy_options": fy_options(),
         "selected_region": region_id,
         "selected_district": district_id,
         "selected_sub_county": sub_county_id,
@@ -2365,6 +2371,36 @@ def _lifecycle_response(request, message: str, *, ok: bool = True):
     return local_redirect(came_from, fallback="/schools")
 
 
+def _closed_archive_scope(user) -> Q:
+    """The closures this reader may see, as a filter on SchoolClosure.
+
+    The archive listed every closure in the deployment to anyone holding the
+    page — a CCEO read another country's closed schools, their enrolment and
+    who owned them (Programme Lead alignment, 2026-09-13). It now follows the
+    reader's school scope, in the analytics form that keeps closed schools:
+
+      • country roles → their country; Admin → the deployment;
+      • everyone else → the schools assigned to them (and, for a Programme
+        Lead, to their officers), plus any closure recorded against them or
+        their officers as the school's owner — closing a school leaves its
+        assignment in place, but an older closure may predate one.
+    """
+    from apps.core.scoping import owner_ids, scoped_school_queryset
+    from apps.planning.oversight_service import _both_id_spaces
+
+    scope = resolve_user_scope(user)
+    schools = scoped_school_queryset(scope)
+    if schools is None:  # pragma: no cover - schools app not ready
+        return Q(pk__in=[])
+    in_scope = Q(school_id__in=schools.values("id"))
+    if scope.country_scope or scope.region_scope or scope.can_view_summary_only:
+        return in_scope
+    owners = _both_id_spaces(
+        set(owner_ids(user)) | set(scope.supervised_staff_ids or [])
+    )
+    return in_scope | Q(owner_at_closure__in=owners) if owners else in_scope
+
+
 @require_page_permission("closed_schools")
 def closed_schools_view(request):
     """The archive. Closed schools stay reachable — just not operationally.
@@ -2377,7 +2413,9 @@ def closed_schools_view(request):
     from apps.schools.lifecycle_models import SchoolClosure
 
     closures = (
-        SchoolClosure.objects.filter(reopened_at__isnull=True)
+        SchoolClosure.objects.filter(
+            _closed_archive_scope(request.user), reopened_at__isnull=True
+        )
         .select_related("school", "school__district")
         .order_by("-effective_date")
     )
@@ -2405,7 +2443,13 @@ def closed_schools_view(request):
         for c in closures[:500]
     ]
 
-    totals = lifecycle_service.active_enrollment()
+    # "Active" beside the archive means the same reader's schools, not the
+    # deployment's.
+    from apps.core.scoping import scoped_school_queryset
+
+    totals = lifecycle_service.active_enrollment(
+        scoped_school_queryset(resolve_user_scope(request.user))
+    )
     return render(
         request,
         "pages/schools/closed.html",

@@ -226,14 +226,16 @@ class RolePermissionService:
                 ).exists()
             from apps.core.scoping import owner_ids
 
-            return (
+            if (
                 obj.school_id in scope.school_ids
                 # Either id space — see scoping.owner_ids. Comparing only
                 # against user.id disowned most of a field worker's activities.
                 or obj.responsible_staff_id in owner_ids(user)
                 or getattr(obj, "monitored_by_staff_id", None) in owner_ids(user)
                 or is_covering
-            )
+            ):
+                return True
+            return RolePermissionService._supervised_cluster_activity(user, scope, obj)
 
         elif obj_type in ["CorePlan", "CoreActivitySlot"]:
             if scope.country_scope:
@@ -259,6 +261,40 @@ class RolePermissionService:
             return obj.participants.filter(id=user.id).exists()
 
         return True
+
+    @staticmethod
+    def _supervised_cluster_activity(user, scope, activity) -> bool:
+        """A cluster session run by someone this person supervises.
+
+        A cluster training or meeting has no school, so the school half of the
+        activity rule above never matched it, and the owner half only matches
+        the viewer's own work. A Programme Lead could therefore review a
+        CCEO's cluster completion from the queue and then be refused the
+        record it was about (Programme Lead alignment, 2026-09-13).
+
+        Both halves are required: the cluster must be one the viewer may read
+        (`cluster_in_scope`, which already spans their team's clusters) AND the
+        work must belong to the viewer or someone they supervise. It widens
+        nobody who supervises no one — a CCEO's `supervised_staff_ids` is
+        empty — and it grants reading only; every edit and workflow action
+        keeps asking its own ownership question.
+        """
+        if activity.school_id or not getattr(activity, "cluster_id", None):
+            return False
+        team = scope.supervised_staff_ids or []
+        if not team:
+            return False
+        from apps.core.scoping import cluster_in_scope
+        from apps.planning.oversight_service import _both_id_spaces
+
+        owners = {
+            activity.responsible_staff_id,
+            getattr(activity, "monitored_by_staff_id", None),
+        } - {None, ""}
+        if not owners & _both_id_spaces(team):
+            return False
+        cluster = getattr(activity, "cluster", None)
+        return cluster is not None and cluster_in_scope(scope, cluster)
 
     @staticmethod
     def can_create(user, object_type: str) -> bool:
@@ -528,10 +564,13 @@ class RolePermissionService:
         if role == "CountryDirector":
             return True
         if role == "Program Lead":
-            from apps.core.scoping import resolve_user_scope
+            # The review service's own rule: either id space, the monitor on
+            # partner work, and never the reviewer's own completion. Asking
+            # `supervised_staff_ids` here refused completions filed under a
+            # User id that the queue itself listed (2026-09-13).
+            from apps.pl_review.services import may_review
 
-            scope = resolve_user_scope(user)
-            return activity.responsible_staff_id in scope.supervised_staff_ids
+            return may_review(user, activity)
         return False
 
     @staticmethod

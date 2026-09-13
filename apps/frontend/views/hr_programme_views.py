@@ -17,6 +17,7 @@ from __future__ import annotations
 from django.contrib import messages
 from django.http import Http404
 from django.shortcuts import redirect, render
+from django.utils import timezone
 from django.views.decorators.http import require_http_methods, require_POST
 
 from apps.core.exceptions import BadRequest, ConflictError, Forbidden, NotFoundError
@@ -92,18 +93,33 @@ def _drawer(
 
 
 def _back(request, fallback: str):
-    """Return to the page the drawer was opened from, never off-site."""
+    """Return to the page the drawer was opened from, never off-site.
+
+    A path such as "/\\evil.example" parses with an empty netloc, yet browsers
+    treat it as "//evil.example"; the rebuilt target is therefore checked
+    again with Django's own same-site test before it is followed.
+    """
     target = (request.POST.get("next") or "").strip()
     if target:
         from urllib.parse import urlparse
 
+        from django.utils.http import url_has_allowed_host_and_scheme
+
         parsed = urlparse(target)
-        if parsed.path.startswith("/") and not parsed.netloc.strip():
+        same_site = (
+            parsed.path.startswith("/") and not parsed.netloc.strip()
+        ) or parsed.netloc == request.get_host()
+        if same_site:
             query = f"?{parsed.query}" if parsed.query else ""
-            return redirect(parsed.path + query)
-        if parsed.netloc == request.get_host():
-            query = f"?{parsed.query}" if parsed.query else ""
-            return redirect(parsed.path + query)
+            candidate = parsed.path + query
+            if not candidate.startswith(
+                ("//", "/\\")
+            ) and url_has_allowed_host_and_scheme(
+                candidate,
+                allowed_hosts={request.get_host()},
+                require_https=request.is_secure(),
+            ):
+                return redirect(candidate)
     return redirect(fallback)
 
 
@@ -131,6 +147,30 @@ def _people_options(request, *, include_blank_note=None):
         (p.id, f"{p.user.name} · {p.country}" if p.country else p.user.name)
         for p in profiles[:500]
     ]
+
+
+def _is_hr_or_admin(request) -> bool:
+    return getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
+
+
+def _reviewee_profiles(request):
+    """The people this viewer reviews, never themself, still employed.
+
+    A Programme Lead's People reach is their team AND their own record, and
+    any supervision link — so their recovery-plan picker offered themself and
+    people they do not review (Program Lead alignment, 2026-09-13). Outside
+    HR a formal plan is the reviewer's recommendation, so the reviewer's
+    people are the ones offered.
+    """
+    from apps.hr.review_authority import reviewees_of
+
+    return (
+        reviewees_of(request.user)
+        .exclude(id=getattr(request.user, "staff_profile_id", None))
+        .filter(deleted_at__isnull=True, user__deleted_at__isnull=True)
+        .exclude(onboarding_state="exited")
+        .order_by("user__name")
+    )
 
 
 def _user_options(request):
@@ -2053,16 +2093,18 @@ def _visible_recovery_plan(request, plan_id):
     from apps.hr.models import PerformanceImprovementPlan
     from apps.hr.reach import people_reach, scope_by_staff
 
-    plan = (
-        scope_by_staff(
-            PerformanceImprovementPlan.objects.select_related(
-                "staff__user", "owner__user", "escalated_case"
-            ),
-            people_reach(request.user),
-        )
-        .filter(id=plan_id)
-        .first()
+    plans = scope_by_staff(
+        PerformanceImprovementPlan.objects.select_related(
+            "staff__user", "owner__user", "escalated_case"
+        ),
+        people_reach(request.user),
     )
+    if getattr(request.user, "active_role", "") == "Program Lead":
+        # The lead follows the plans of the people they review. Their reach
+        # also holds their own record, and a draft plan about them is HR's
+        # until it is authorised and shared.
+        plans = plans.filter(staff_id__in=_reviewee_profiles(request).values("id"))
+    plan = plans.filter(id=plan_id).first()
     if plan is None:
         raise Http404("Recovery plan not found.")
     return plan
@@ -2089,7 +2131,9 @@ def recovery_new_drawer(request):
                 "Employee",
                 type="select",
                 required=True,
-                options=_people_options(request),
+                options=_people_options(request)
+                if _is_hr_or_admin(request)
+                else [(p.id, p.user.name) for p in _reviewee_profiles(request)[:500]],
                 blank="Choose the employee",
             ),
             _field(
@@ -2121,6 +2165,12 @@ def recovery_recommend(request):
     data = request.POST
     try:
         staff = _staff_in_reach(request, data.get("staff_id") or "")
+        if (
+            not _is_hr_or_admin(request)
+            and not _reviewee_profiles(request).filter(id=staff.id).exists()
+        ):
+            # Refused in the engine too; said here in the picker's own words.
+            raise Http404("Not someone you review.")
         plan = recommend_pip(
             staff,
             data.get("reason"),
@@ -2129,7 +2179,12 @@ def recovery_recommend(request):
             start=_date(data.get("start_date")),
         )
     except Http404:
-        messages.error(request, "Choose an employee you oversee.")
+        messages.error(
+            request,
+            "Choose an employee you oversee."
+            if _is_hr_or_admin(request)
+            else "Choose someone you review.",
+        )
         return _back(request, RECOVERY_PATH)
     except SERVICE_ERRORS as exc:
         return _refused(request, exc, RECOVERY_PATH)
@@ -2165,13 +2220,94 @@ def recovery_drawer(request, plan_id):
                 if m.due_date
             ),
         },
-        {"label": "Check-ins", "value": str(plan.check_ins.count())},
     ]
+    check_ins = list(plan.check_ins.order_by("-held_on", "-created_at")[:3])
+    facts.append(
+        {
+            "label": "Check-ins",
+            "value": "\n".join(f"{c.held_on:%-d %b %Y}: {c.note}" for c in check_ins)
+            or "None recorded yet",
+        }
+    )
     if plan.escalated_case_id:
         facts.append(
             {"label": "Conduct case", "value": plan.escalated_case.get_status_display()}
         )
     subtitle = f"{plan.get_plan_type_display()} · {plan.get_status_display()}"
+    live = plan.status in (
+        RecoveryStatus.ACTIVE,
+        RecoveryStatus.PROGRESS_REVIEW,
+        RecoveryStatus.EXTENDED,
+    )
+    if not _is_hr_or_admin(request):
+        # Authorising a plan and deciding its outcome are HR's; the drawer
+        # offered those forms to anyone who could open the plan, and the
+        # engine refused them after they had typed (Program Lead alignment,
+        # 2026-09-13). The reviewer records the check-ins the plan promises.
+        from apps.hr.review_authority import is_reviewer_of
+
+        if live and is_reviewer_of(plan.staff, request.user):
+            open_milestones = [m for m in milestones if not m.is_complete]
+            fields = [
+                _field(
+                    "held_on",
+                    "Held on",
+                    type="date",
+                    required=True,
+                    value=f"{timezone.localdate():%Y-%m-%d}",
+                ),
+                _field(
+                    "note",
+                    "What the check-in found",
+                    type="textarea",
+                    required=True,
+                    rows=4,
+                    maxlength=4000,
+                    placeholder="Progress against the action plan, support given, what happens next",
+                ),
+            ]
+            if open_milestones:
+                fields.append(
+                    _field(
+                        "milestone_id",
+                        "Milestone reached",
+                        type="select",
+                        options=[
+                            (
+                                m.id,
+                                f"{m.description} (due {m.due_date:%-d %b})"
+                                if m.due_date
+                                else m.description,
+                            )
+                            for m in open_milestones
+                        ],
+                        blank="None reached at this check-in",
+                        help="Marks the milestone complete with this check-in.",
+                    )
+                )
+            return _drawer(
+                request,
+                title=plan.staff.user.name,
+                subtitle=subtitle,
+                action=f"/recovery-plans/{plan.id}/check-in",
+                submit="Record the check-in",
+                facts=facts,
+                fields=fields,
+            )
+        note = (
+            "HR authorises this plan before anything is shared with the employee."
+            if plan.status == RecoveryStatus.DRAFT
+            else "HR records the outcome at the review date."
+            if live
+            else ""
+        )
+        return _drawer(
+            request,
+            title=plan.staff.user.name,
+            subtitle=subtitle,
+            facts=facts,
+            empty=note,
+        )
     if (
         plan.status == RecoveryStatus.DRAFT
         and plan.plan_type == RecoveryPlanType.FORMAL
@@ -2197,11 +2333,7 @@ def recovery_drawer(request, plan_id):
                 )
             ],
         )
-    if plan.status in (
-        RecoveryStatus.ACTIVE,
-        RecoveryStatus.PROGRESS_REVIEW,
-        RecoveryStatus.EXTENDED,
-    ):
+    if live:
         options = [("completed", "Successfully completed"), ("extended", "Extend")]
         if plan.plan_type == RecoveryPlanType.FORMAL and not plan.escalated_case_id:
             options.append(("escalated", "Escalate to a conduct case"))
@@ -2273,4 +2405,25 @@ def recovery_outcome(request, plan_id):
     except SERVICE_ERRORS as exc:
         return _refused(request, exc, RECOVERY_PATH)
     messages.success(request, f"Outcome recorded for {plan.staff.user.name}.")
+    return _back(request, RECOVERY_PATH)
+
+
+@require_page_permission("recovery_plans")
+@require_POST
+def recovery_check_in(request, plan_id):
+    """The reviewer records a check-in, optionally closing a milestone."""
+    from apps.hr.performance_engine import record_recovery_check_in
+
+    plan = _visible_recovery_plan(request, plan_id)
+    try:
+        record_recovery_check_in(
+            plan,
+            request.user,
+            held_on=_date(request.POST.get("held_on")),
+            note=request.POST.get("note") or "",
+            milestone_id=(request.POST.get("milestone_id") or "").strip() or None,
+        )
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, RECOVERY_PATH)
+    messages.success(request, f"Check-in recorded for {plan.staff.user.name}.")
     return _back(request, RECOVERY_PATH)

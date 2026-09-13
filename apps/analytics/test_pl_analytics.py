@@ -214,23 +214,29 @@ class PLAnalyticsTest(TestCase):
         self.assertEqual(ids, {self.cceo_a1_sp.id})
         self.assertNotIn(self.cceo_b1_sp.id, ids)
 
-    def test_pl_analytics_renders_the_shared_subregion_map(self):
-        data = PLAnalyticsService.get_dashboard(
-            self.pl_a,
-            fy=FY,
-            include_regional_map=True,
-        )
-        self.assertIn("subregion_performance", data)
-        self.assertIn("district_insight", data)
-        self.assertIn("subcounty_insight", data)
-        self.assertEqual(data["map_scope"]["label"], "Country-wide system data")
+    def test_the_cockpit_no_longer_builds_the_country_map(self):
+        """The map moved to the Map view of the home dashboard (owner,
+        2026-09-05), and the cockpit kept computing it for nothing until the
+        Programme Lead alignment (2026-09-13). It builds only what it draws."""
+        data = PLAnalyticsService.get_dashboard(self.pl_a, fy=FY)
+        for unused in (
+            "subregion_performance",
+            "district_insight",
+            "subcounty_insight",
+            "team_performance",
+            "cceo_performance",
+        ):
+            with self.subTest(section=unused):
+                self.assertNotIn(unused, data)
 
         self.client.force_login(self.pl_a)
-        response = self.client.get("/analytics/program-lead", {"fy": FY})
+        with patch(
+            "apps.analytics.country_map_context.country_map_context"
+        ) as country_map:
+            response = self.client.get("/analytics/program-lead", {"fy": FY})
 
         self.assertEqual(response.status_code, 200)
-        # The map moved to the Map view of the home dashboard (owner,
-        # 2026-09-05); the analytics tab opens on its decision cards.
+        country_map.assert_not_called()
         self.assertNotContains(response, "Performance by Sub-Region")
         dashboard = self.client.get("/dashboard", {"fy": FY, "view": "map"})
         self.assertContains(dashboard, "Performance by Sub-Region")
@@ -324,12 +330,15 @@ class PLAnalyticsTest(TestCase):
 
     # ── 7. CCEO performance only supervised CCEOs ────────────────────────────
     def test_pl_cceo_performance_only_supervised_cceos(self):
-        d = self._dash(self.pl_a)
-        names = {r["name"] for r in d["cceo_performance"]["rows"]}
+        # Asked of the service directly: the cockpit no longer draws the
+        # per-CCEO table, but the CCEO drill-down and the To-Dos still read it.
+        rows = PLAnalyticsService.cceo_performance(
+            resolve_pl_scope(self.pl_a), FY, None, {}
+        )["rows"]
+        names = {r["name"] for r in rows}
         self.assertEqual(names, {"Ann A1"})
         self.assertNotIn("Ben B1", names)
-        row = d["cceo_performance"]["rows"][0]
-        self.assertTrue(row["has_target"])
+        self.assertTrue(rows[0]["has_target"])
 
     # ── 8. risk list from real workflow state ────────────────────────────────
     def test_pl_risk_list_generated_from_real_workflow_states(self):
@@ -383,7 +392,11 @@ class PLAnalyticsTest(TestCase):
         # A2 has no SSA → the schools-without-SSA threshold is met.
         todos = PLAnalyticsService.pl_todos(self.pl_a, fy=FY)
         titles = {t["title"] for t in todos}
-        self.assertIn("Schedule SSA Collection", titles)
+        # Supervision wording (Programme Lead alignment, 2026-09-13): the lead
+        # follows up with the officers rather than scheduling in their schools.
+        self.assertIn("Follow up SSA collection with CCEOs", titles)
+        ssa_todo = next(t for t in todos if t["id"] == "pl-analytics-ssa")
+        self.assertEqual(ssa_todo["action_url"], "/programme-rollout?view=ssa")
 
         # And it surfaces through the real To-Do queue for the PL.
         from apps.command_center.todo_service import get_todos
@@ -402,7 +415,7 @@ class PLAnalyticsTest(TestCase):
             id__in=[self.sch_a1.id, self.sch_a2.id, self.sch_a3.id]
         ).update(current_fy_ssa_status="done")
         titles2 = {t["title"] for t in PLAnalyticsService.pl_todos(self.pl_a, fy=FY)}
-        self.assertNotIn("Schedule SSA Collection", titles2)
+        self.assertNotIn("Follow up SSA collection with CCEOs", titles2)
 
 
 class CceoTargetBulkEquivalenceTest(PLAnalyticsTest):

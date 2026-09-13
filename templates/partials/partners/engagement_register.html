@@ -1,0 +1,95 @@
+{% load table_pagination %}
+{% comment %}
+The partner engagement log (owner, 2026-09-13): the meetings, orientations and
+quality follow-ups a Programme Lead or Country Director holds with a training
+partner, the improvements agreed and whether they were followed up. Rendered on
+Partner Oversight and on each partner's profile from
+apps/frontend/views/partner_engagement_views.py `engagement_register`, which
+hands it registered tiles, rows of text cells with a tone, and the drawer each
+row action opens. The table takes the register grammar the CCE leadership pages
+use (plain text, tones, no pills).
+
+`engagement.observations` lists Regional Lead observations of this partner's
+trainings that asked to strengthen or replace them and have no engagement
+since; each opens the record drawer with the observation linked.
+{% endcomment %}
+{% with engagement_title=engagement_title|default:"Partner engagements" %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="partner-engagement-title" data-partner-engagements>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="partner-engagement-title" class="rpl-card__title">{{ engagement_title }}</h2>
+      <span class="rpl-card__subtitle">Meetings, orientations and quality follow-ups that build the partner's capacity</span>
+    </div>
+    {% if engagement.can_record %}
+    <a href="{{ engagement.new_page }}" class="btn btn-primary h-8" hx-get="{{ engagement.new_drawer }}" hx-target="#drawer-container" hx-swap="innerHTML" data-partner-engagement-new>Record engagement</a>
+    {% endif %}
+  </header>
+
+  {% if engagement_show_metrics %}
+  {% include "components/context_metrics.html" with items=engagement.metrics variant="executive" title="Partner engagement at a glance" %}
+  {% endif %}
+
+  {% if engagement.observations %}
+  <div class="edify-note partner-engagement-observations" data-tone="warning" role="status" data-partner-engagement-observations>
+    <p class="edify-note__title">Regional Lead observations waiting on the partner</p>
+    <p class="edify-note__body">The Regional Lead asked for work with {% if engagement.observations_total == 1 %}a partner{% else %}partners{% endif %} after observing {{ engagement.observations_total }} training{{ engagement.observations_total|pluralize }}, and no engagement has been recorded since.</p>
+    <ul class="partner-engagement-observations__list">
+      {% for observation in engagement.observations %}
+      <li class="partner-engagement-observations__item">
+        <span class="edify-note__body">{{ observation.partner_name }} · {{ observation.label }} · observed {{ observation.held_on }}</span>
+        {% if engagement.can_record %}<button type="button" class="rpl-row-link rounded-control" hx-get="{{ observation.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">Follow up</button>{% endif %}
+      </li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  {% paginate engagement.rows engagement.page_param as engagement_pager %}
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Partner engagements; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Partner engagements</caption>
+      {% if engagement_pager.rows %}
+      <thead>
+        <tr>
+          {% for cell in engagement_pager.rows.0.cells %}<th scope="col">{{ cell.heading }}</th>{% endfor %}
+          {% if engagement.has_row_actions %}<th scope="col" class="is-end"><span class="sr-only">Actions</span></th>{% endif %}
+        </tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        {% for row in engagement_pager.rows %}
+        <tr>
+          {% for cell in row.cells %}
+          {% if cell.primary %}
+          <th scope="row" data-record-title><span>{{ cell.text }}</span></th>
+          {% else %}
+          <td data-label="{{ cell.heading }}">{% if cell.tone %}<span data-tone="{{ cell.tone }}">{{ cell.text }}</span>{% else %}{{ cell.text }}{% endif %}</td>
+          {% endif %}
+          {% endfor %}
+          {% if engagement.has_row_actions %}
+          <td class="is-end" data-record-action data-label="Actions">
+            {% for action in row.actions %}
+            <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% endfor %}
+          </td>
+          {% endif %}
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% if engagement.can_record %}
+            {% include "components/empty_state.html" with message="No partner engagements recorded" hint="Record a review meeting, an orientation on Edify's CCE framework or a training quality follow-up once it has happened." compact="true" %}
+            {% else %}
+            {% include "components/empty_state.html" with message="No partner engagements to show" hint="Engagements a Programme Lead or the Country Director records with this partner appear here." compact="true" %}
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=engagement_pager param=engagement.page_param %}
+
+  {% if engagement_autoload %}<div hidden hx-get="{{ engagement_autoload }}" hx-trigger="load" hx-target="#drawer-container" hx-swap="innerHTML" data-partner-engagement-autoload></div>{% endif %}
+</section>
+{% endwith %}

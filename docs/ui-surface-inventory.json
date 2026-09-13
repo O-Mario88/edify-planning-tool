@@ -796,17 +796,6 @@
       "header": "shared"
     },
     {
-      "template": "pages/completed_activities/index.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/completed_activities/index.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
       "template": "pages/core_schools/champion_candidates.html",
       "family": "workspace",
       "inheritance": [
@@ -2086,6 +2075,17 @@
       "header": "shared"
     },
     {
+      "template": "pages/priorities/guidance.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/priorities/guidance.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "family-owned or inherited"
+    },
+    {
       "template": "pages/professional_development/index.html",
       "family": "workspace",
       "inheritance": [
@@ -2101,6 +2101,17 @@
       "family": "workspace",
       "inheritance": [
         "pages/profile/index.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/programme_rollout/index.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/programme_rollout/index.html",
         "layouts/shell.html",
         "base.html"
       ],
@@ -2475,6 +2486,6 @@
     "embedded fragment": 5,
     "print document": 2,
     "public or authentication": 9,
-    "workspace": 210
+    "workspace": 211
   }
 }

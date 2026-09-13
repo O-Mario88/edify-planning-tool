@@ -48,11 +48,11 @@ from apps.evidence.services import (
 )
 from apps.core.enums import ActivityType, EvidenceKind, SsaIntervention
 from apps.pl_review.services import (
-    queue as pl_queue,
     confirm as pl_confirm,
     return_activity as pl_return,
 )
 from apps.activities.models import Activity
+from apps.frontend.views.hr_programme_views import _back, _drawer, _field
 
 
 # One table for the whole platform (apps.core.interventions).
@@ -1190,35 +1190,217 @@ def complete_activity_action(request, activity_id):
     return local_redirect(f"/my-plan/{a.id}")
 
 
-@require_page_permission("planning")
+# ── Completion Reviews (Programme Lead alignment, 2026-09-13) ────────────────
+# The lead confirms the team's completed work before Impact Assessment verifies
+# it. The page, its drawers and its two decisions share one gate
+# (`pl_review_queue`) and one rule (`apps.pl_review.services`): the queue lists
+# exactly what the decisions accept, so no row offers a button that refuses.
+PL_REVIEW_QUEUE_URL = "/pl/review-queue"
+
+
+def _review_refusal(request, activity_id: str, verb: str):
+    """Audit and answer a decision on work this reviewer may not decide."""
+    audit_log(
+        action="unauthorized_mutation_attempt",
+        subject_kind="Activity",
+        subject_id=str(activity_id),
+        actor_id=str(request.user.id),
+        actor_role=request.user.active_role,
+        success=False,
+        reason=(
+            f"Program Lead attempted to {verb} activity completion outside "
+            "their supervision."
+        ),
+    )
+    return HttpResponseForbidden(
+        "Access Denied: You do not supervise the owner of this activity."
+    )
+
+
+@require_page_permission("pl_review_queue")
 def pl_queue_view(request):
-    if request.user.active_role not in ("Program Lead", "Admin"):
-        messages.error(request, "Access restricted to Program Leads.")
-        return redirect("/dashboard")
+    """Completion Reviews: the team's completed work waiting on this lead.
 
-    queue_list = pl_queue(request.user)
-    context = {
-        "queue": queue_list,
-    }
-    return render(request, "pages/my_plan/pl_queue.html", context)
+    A register rather than a stack of cards: one row per completion with the
+    officer, the work, where and when it happened, the intervention, who
+    attended, the evidence, the Salesforce reference and how long it has
+    waited — oldest first. Open shows the whole completion in a drawer,
+    Approve sends it to Impact Assessment, Return sends it back with the
+    reason the officer will read.
+    """
+    from apps.pl_review.services import review_register
+
+    register = review_register(request.user, cceo=request.GET.get("cceo") or "")
+    filters = []
+    # A filter with one officer to choose narrows nothing, so it is not drawn.
+    if len(register["cceo_options"]) > 1 or register["cceo"]:
+        filters.append(
+            {
+                "name": "cceo",
+                "label": "Officer",
+                "value": register["cceo"],
+                "blank": "Every officer",
+                "options": register["cceo_options"],
+            }
+        )
+    # ?open=<activity id> opens that completion's drawer on arrival, so a
+    # To-Do or notification can land on the one completion it names. Only an
+    # id in this reviewer's own rows is honoured.
+    wanted = (request.GET.get("open") or "").strip()
+    autoload = (
+        f"{PL_REVIEW_QUEUE_URL}/{wanted}/drawer"
+        if wanted and any(row["id"] == wanted for row in register["rows"])
+        else ""
+    )
+    return render(
+        request,
+        "pages/my_plan/pl_queue.html",
+        {
+            "rows": register["rows"],
+            "filters": filters,
+            "queue_url": PL_REVIEW_QUEUE_URL,
+            "autoload_drawer": autoload,
+        },
+    )
 
 
-@require_page_permission("planning")
+def _review_facts(activity) -> list[dict]:
+    """What the lead reads before deciding: the completion as submitted.
+
+    Called only with an activity `reviewable_activity` returned, so the
+    reviewer's authority over it is already settled; the evidence is read
+    directly rather than through the evidence service's own reach check, which
+    predates cluster work and would hide a cluster session's files.
+    """
+    from apps.core.interventions import INTERVENTION_LABELS
+    from apps.evidence.models import EvidenceRecord
+    from apps.pl_review.services import _attendance_label, _owning_staff_id, _people
+
+    owner = _owning_staff_id(activity) or ""
+    names, _profile_of = _people([owner])
+    when = activity.actual_delivery_date or activity.planned_date
+    evidence = list(
+        EvidenceRecord.objects.filter(activity_id=activity.id, quarantined=False)
+        .order_by("created_at")
+        .values_list("original_name", "kind")[:20]
+    )
+    where = (
+        activity.school.name
+        if activity.school_id
+        else (activity.cluster.name if activity.cluster_id else activity.venue)
+    )
+    return [
+        {"label": "Officer", "value": names.get(owner, "") or "Unnamed officer"},
+        {
+            "label": "Activity",
+            "value": activity.activity_name_snapshot
+            or activity.get_activity_type_display(),
+        },
+        {"label": "School or cluster", "value": where},
+        {"label": "Delivered", "value": f"{when:%-d %b %Y}" if when else ""},
+        {
+            "label": "Intervention",
+            "value": INTERVENTION_LABELS.get(activity.focus_intervention or "", ""),
+        },
+        {"label": "Attendance", "value": _attendance_label(activity)},
+        {
+            "label": "Evidence",
+            "value": "\n".join(
+                f"{name or 'Unnamed file'} ({kind.replace('_', ' ')})"
+                for name, kind in evidence
+            )
+            or "No files uploaded",
+        },
+        {"label": "Salesforce ID", "value": activity.salesforce_activity_id or ""},
+        {"label": "Purpose", "value": activity.activity_purpose_text or ""},
+        {"label": "Outcome", "value": activity.actual_outcome or ""},
+        {"label": "Observations", "value": activity.actual_observations or ""},
+        {"label": "Follow-up", "value": activity.follow_up_note or ""},
+    ]
+
+
+@require_page_permission("pl_review_queue")
+def pl_review_drawer(request, activity_id):
+    """Open: the whole completion, read-only, with Approve at the foot.
+
+    Read-only by construction — the one form is the review decision itself.
+    The officer's own record carries reschedule and completion controls, so
+    the lead reads the completion here rather than on the officer's page.
+    """
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.pl_review.services import reviewable_activity
+
+    try:
+        activity = reviewable_activity(activity_id, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        return _drawer(
+            request,
+            title="Completion review",
+            subtitle="Not waiting on you",
+            empty=str(getattr(exc, "detail", exc)),
+        )
+    return _drawer(
+        request,
+        title="Completion review",
+        subtitle=activity.activity_name_snapshot
+        or activity.get_activity_type_display(),
+        facts=_review_facts(activity),
+        action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/confirm",
+        submit="Approve completion",
+        note=(
+            "Approving sends this completion to Impact Assessment for "
+            "verification. To send it back to the officer, use Return."
+        ),
+    )
+
+
+@require_page_permission("pl_review_queue")
+def pl_return_drawer(request, activity_id):
+    """Return: the reason is required, and the officer reads it as written."""
+    from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
+    from apps.pl_review.services import reviewable_activity
+
+    try:
+        activity = reviewable_activity(activity_id, request.user)
+    except (BadRequest, Forbidden, NotFoundError) as exc:
+        return _drawer(
+            request,
+            title="Return completion",
+            subtitle="Not waiting on you",
+            empty=str(getattr(exc, "detail", exc)),
+        )
+    facts = [
+        fact
+        for fact in _review_facts(activity)
+        if fact["label"] in ("Officer", "Activity", "School or cluster", "Delivered")
+    ]
+    return _drawer(
+        request,
+        title="Return completion",
+        subtitle=activity.activity_name_snapshot
+        or activity.get_activity_type_display(),
+        facts=facts,
+        action=f"{PL_REVIEW_QUEUE_URL}/{activity.id}/return",
+        submit="Return to officer",
+        fields=[
+            _field(
+                "reason",
+                "What needs correcting",
+                type="textarea",
+                required=True,
+                rows=4,
+                maxlength=512,
+                placeholder="The evidence, attendance or Salesforce detail to fix",
+            )
+        ],
+    )
+
+
+@require_page_permission("pl_review_queue")
 def pl_confirm_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_review_activity(request.user, a):
-        audit_log(
-            action="unauthorized_mutation_attempt",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=False,
-            reason="Program Lead attempted to confirm activity completion outside their supervision.",
-        )
-        return HttpResponseForbidden(
-            "Access Denied: You do not supervise the owner of this activity."
-        )
+        return _review_refusal(request, a.id, "confirm")
 
     if request.method == "POST":
         try:
@@ -1235,27 +1417,16 @@ def pl_confirm_action(request, activity_id):
                 request, "Activity completion approved and routed to IA verification."
             )
         except Exception as e:
-            messages.error(request, f"Error: {e}")
+            messages.error(request, str(getattr(e, "detail", e)))
 
-    return redirect("/pl/review-queue")
+    return _back(request, PL_REVIEW_QUEUE_URL)
 
 
-@require_page_permission("planning")
+@require_page_permission("pl_review_queue")
 def pl_return_action(request, activity_id):
     a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
     if not RolePermissionService.can_review_activity(request.user, a):
-        audit_log(
-            action="unauthorized_mutation_attempt",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=False,
-            reason="Program Lead attempted to return activity completion outside their supervision.",
-        )
-        return HttpResponseForbidden(
-            "Access Denied: You do not supervise the owner of this activity."
-        )
+        return _review_refusal(request, a.id, "return")
 
     if request.method == "POST":
         reason = request.POST.get("reason", "").strip()
@@ -1272,9 +1443,11 @@ def pl_return_action(request, activity_id):
             )
             messages.success(request, "Activity returned to CCEO for corrections.")
         except Exception as e:
-            messages.error(request, f"Error: {e}")
+            # A missing reason is refused by the service in words the lead can
+            # act on; the page says so rather than returning silently.
+            messages.error(request, str(getattr(e, "detail", e)))
 
-    return redirect("/pl/review-queue")
+    return _back(request, PL_REVIEW_QUEUE_URL)
 
 
 @require_page_permission("my_plan")

@@ -193,7 +193,10 @@ class MobileMicroUXContractTest(SimpleTestCase):
 
     def test_dashboard_tables_keep_real_table_modes(self):
         for path, mode in (
-            ("templates/partials/dashboards/pl/backlog_snapshot.html", "fit"),
+            # Team Backlog left the Program Lead dashboard on 2026-09-13; its
+            # views' tables scroll.
+            ("templates/partials/dashboards/pl/team_view.html", "scroll"),
+            ("templates/partials/dashboards/pl/coaching_view.html", "scroll"),
             ("templates/partials/dashboards/pl/cceo_performance.html", "scroll"),
             ("templates/partials/dashboards/urgent_schools_table.html", "scroll"),
             ("templates/partials/dashboards/pl/ssa_intelligence.html", "scroll"),

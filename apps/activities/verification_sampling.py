@@ -93,7 +93,9 @@ def record_outcome(
         raise BadRequest("Say what did not hold up.")
     with transaction.atomic():
         sample = (
-            VerificationSample.objects.select_for_update()
+            # The activity link is nullable since SSA records are sampled too,
+            # and Postgres refuses FOR UPDATE on the nullable side of a join.
+            VerificationSample.objects.select_for_update(of=("self",))
             .select_related("activity")
             .filter(id=sample_id)
             .first()

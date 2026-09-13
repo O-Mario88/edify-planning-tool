@@ -4,10 +4,14 @@ monthly report (owner, 2026-09-13).
 Who may do what:
 
 * The Regional Programme Lead records their own engagements and observations
-  in their region, shares observation feedback with the Programme Lead it
-  concerns, and writes and submits their monthly report.
+  in their region, shares observation feedback — and the notes of a coaching
+  conversation — with the Programme Lead it concerns, and writes and submits
+  their monthly report.
 * The Programme Lead the feedback names acknowledges it and says what they
   will change; their Country Director reads the feedback on their country.
+  Coaching the Regional Lead shares stays between the two of them (owner,
+  2026-09-13: the Programme Lead "partners with regional leads … to build
+  capacity").
 * The RVP reads the reports of the Regional Leads whose countries they
   oversee and acknowledges or returns them.
 * Admin reads everything and writes nothing on another person's behalf.
@@ -58,6 +62,12 @@ EVENT_FEEDBACK_SHARED = "cce_training_feedback_shared"
 EVENT_FEEDBACK_ACKNOWLEDGED = "cce_training_feedback_acknowledged"
 EVENT_REPORT_SUBMITTED = "cce_report_submitted"
 EVENT_REPORT_REVIEWED = "cce_report_reviewed"
+EVENT_PL_COACHING_SHARED = "cce_pl_coaching_shared"
+EVENT_PL_COACHING_ACKNOWLEDGED = "cce_pl_coaching_acknowledged"
+
+# What the Regional Lead hands to a Programme Lead to acknowledge: the feedback
+# on a training they observed, and the notes of a coaching conversation.
+SHAREABLE_KINDS = (EngagementKind.TRAINING_OBSERVATION, EngagementKind.PL_COACHING)
 
 NOT_LIVE_STATUSES = (
     "cancelled",
@@ -153,14 +163,13 @@ class LeadReach:
     directors: list[dict]
 
 
-def lead_reach(principal) -> LeadReach:
-    """The countries a Regional Lead serves and the country leaders in them.
+def reach_countries(principal) -> tuple[list[str], bool]:
+    """The countries a Regional Lead serves, and whether any are assigned.
 
-    The countries are the role's operational reach (apps.core.scoping
-    `_regional_reach`): the countries of the regions assigned to the lead, or
-    every country when none is assigned yet.
+    The role's operational reach (apps.core.scoping `_regional_reach`): the
+    countries of the regions assigned to the lead, or every country when none
+    is assigned yet. Admin reads every country.
     """
-    from apps.accounts.models import StaffProfile
     from apps.core.scoping import resolve_user_scope
 
     if _role(principal) == ADMIN:
@@ -169,11 +178,16 @@ def lead_reach(principal) -> LeadReach:
         countries = sorted(
             {c for c in Region.objects.values_list("country", flat=True) if c}
         )
-        assigned = False
-    else:
-        scope = resolve_user_scope(principal)
-        countries = list(scope.region_countries or ())
-        assigned = bool(scope.region_assigned)
+        return countries, False
+    scope = resolve_user_scope(principal)
+    return list(scope.region_countries or ()), bool(scope.region_assigned)
+
+
+def lead_reach(principal) -> LeadReach:
+    """The countries a Regional Lead serves and the country leaders in them."""
+    from apps.accounts.models import StaffProfile
+
+    countries, assigned = reach_countries(principal)
 
     people = (
         StaffProfile.objects.filter(
@@ -292,6 +306,30 @@ def feedback_visible_to(principal):
     if role == COUNTRY_DIRECTOR:
         country = _staff_country(principal)
         return shared.filter(country=country) if country else qs.none()
+    return qs.none()
+
+
+def regional_coaching_visible_to(principal):
+    """Coaching conversations the Regional Lead held with Programme Leads.
+
+    The Programme Lead reads the ones shared with them, the lead reads their
+    own and Admin reads all. Unlike training feedback, nothing reaches the
+    Country Director: a coaching conversation is about the Programme Lead's
+    own practice, and the engagement log stays the Regional Lead's.
+    """
+    role = _role(principal)
+    qs = RegionalEngagement.objects.filter(kind=EngagementKind.PL_COACHING)
+    if role == ADMIN:
+        return qs
+    if role == REGIONAL_LEAD:
+        return qs.filter(author_id=_uid(principal))
+    if role == PROGRAM_LEAD:
+        staff_id = _staff_id(principal)
+        if not staff_id:
+            return qs.none()
+        return qs.filter(
+            feedback_shared_at__isnull=False, program_lead_ids__contains=[staff_id]
+        )
     return qs.none()
 
 
@@ -526,7 +564,7 @@ def update_engagement(principal, engagement_id: str, data: dict) -> RegionalEnga
     engagement = _own_engagement(principal, engagement_id)
     if engagement.feedback_shared_at:
         raise Forbidden(
-            "This feedback has been shared with the Programme Lead, so it can no longer be changed."
+            "This has been shared with the Programme Lead, so it can no longer be changed."
         )
     cleaned = _clean_engagement(
         principal, {**data, "kind": engagement.kind}, instance=engagement
@@ -539,24 +577,32 @@ def update_engagement(principal, engagement_id: str, data: dict) -> RegionalEnga
 
 
 def share_feedback(principal, engagement_id: str) -> RegionalEngagement:
+    """Hand a training observation's feedback, or a coaching conversation's
+    notes, to the Programme Leads it names. Either way it can no longer be
+    edited, and each lead is asked to acknowledge it."""
     _require_lead(principal)
     with transaction.atomic():
         engagement = _own_engagement(principal, engagement_id)
         engagement = RegionalEngagement.objects.select_for_update().get(
             id=engagement.id
         )
-        if not engagement.is_observation:
-            raise BadRequest("Only a training observation carries feedback to share.")
+        if engagement.kind not in SHAREABLE_KINDS:
+            raise BadRequest(
+                "Only a training observation or a coaching conversation is shared "
+                "with the Programme Lead."
+            )
         if engagement.feedback_shared_at:
-            raise BadRequest("This feedback was already shared.")
+            raise BadRequest("This was already shared with the Programme Lead.")
         if not engagement.program_lead_ids:
             raise BadRequest(
-                "Name the Programme Lead who should receive this feedback before sharing it."
+                "Name the Programme Lead who should receive this before sharing it."
             )
         engagement.feedback_shared_at = timezone.now()
         engagement.save(update_fields=["feedback_shared_at", "updated_at"])
         _audit(
-            "cce.training_feedback_shared",
+            "cce.training_feedback_shared"
+            if engagement.is_observation
+            else "cce.pl_coaching_shared",
             "RegionalEngagement",
             engagement.id,
             principal,
@@ -569,15 +615,34 @@ def share_feedback(principal, engagement_id: str) -> RegionalEngagement:
             "user_id", flat=True
         )
     )
-    _notify(
-        EVENT_FEEDBACK_SHARED,
-        title="Training feedback from your Regional Lead",
-        body=f"{engagement.subject}. {engagement.feedback}",
-        context_type="RegionalEngagement",
-        context_id=engagement.id,
-        recipients=recipients,
-        priority="high",
-    )
+    if engagement.is_observation:
+        _notify(
+            EVENT_FEEDBACK_SHARED,
+            title="Training feedback from your Regional Lead",
+            body=f"{engagement.subject}. {engagement.feedback}",
+            context_type="RegionalEngagement",
+            context_id=engagement.id,
+            recipients=recipients,
+            priority="high",
+        )
+    else:
+        _notify(
+            EVENT_PL_COACHING_SHARED,
+            title="Coaching notes from your Regional Lead",
+            body=" ".join(
+                part
+                for part in (
+                    f"{engagement.subject}.",
+                    engagement.agreed_actions
+                    and f"Agreed actions: {engagement.agreed_actions}",
+                )
+                if part
+            ),
+            context_type="RegionalEngagement",
+            context_id=engagement.id,
+            recipients=recipients,
+            priority="high",
+        )
     return engagement
 
 
@@ -627,7 +692,118 @@ def acknowledge_feedback(
         context_id=engagement.id,
         recipients=[engagement.author_id],
     )
+    _resolve_notice(EVENT_FEEDBACK_SHARED, engagement.id, principal)
     return engagement
+
+
+def acknowledge_regional_coaching(
+    principal, engagement_id: str, response: str
+) -> RegionalEngagement:
+    """The Programme Lead answers a coaching conversation the Regional Lead
+    shared with them: what they will do about the actions agreed."""
+    if _role(principal) != PROGRAM_LEAD:
+        raise Forbidden(
+            "The Programme Lead the coaching was shared with acknowledges it."
+        )
+    response = (response or "").strip()
+    if not response:
+        raise BadRequest("Say what you will do about the actions agreed, and by when.")
+    with transaction.atomic():
+        engagement = (
+            regional_coaching_visible_to(principal).filter(id=engagement_id).first()
+        )
+        if engagement is None:
+            raise NotFoundError("Coaching not found.")
+        engagement = RegionalEngagement.objects.select_for_update().get(
+            id=engagement.id
+        )
+        if engagement.acknowledged_at:
+            raise BadRequest("This coaching was already acknowledged.")
+        engagement.acknowledged_at = timezone.now()
+        engagement.acknowledged_by_id = _uid(principal)
+        engagement.lead_response = response
+        engagement.save(
+            update_fields=[
+                "acknowledged_at",
+                "acknowledged_by_id",
+                "lead_response",
+                "updated_at",
+            ]
+        )
+        _audit(
+            "cce.pl_coaching_acknowledged",
+            "RegionalEngagement",
+            engagement.id,
+            principal,
+        )
+    _notify(
+        EVENT_PL_COACHING_ACKNOWLEDGED,
+        title="A Programme Lead acknowledged your coaching notes",
+        body=f"{engagement.subject}. {response}",
+        context_type="RegionalEngagement",
+        context_id=engagement.id,
+        recipients=[engagement.author_id],
+    )
+    _resolve_notice(EVENT_PL_COACHING_SHARED, engagement.id, principal)
+    return engagement
+
+
+def _resolve_notice(event_type: str, engagement_id: str, principal) -> None:
+    """The acknowledgement closes the notice that asked for it."""
+    try:
+        from apps.notifications.services import resolve_condition
+
+        resolve_condition(
+            event_type,
+            "RegionalEngagement",
+            engagement_id,
+            recipient_ids=[_uid(principal)],
+        )
+    except Exception:  # noqa: BLE001 - never fail the work over a notice
+        pass
+
+
+def delivered_by(activities) -> dict[str, str]:
+    """Who delivered each training, by activity id: the training partner's
+    name for partner delivery, otherwise the responsible officer's name.
+
+    `responsible_staff_id` holds a StaffProfile id as often as a User id, so
+    both are resolved, in one query each however many trainings there are.
+    """
+    from apps.accounts.models import StaffProfile
+    from apps.core.enums import DeliveryType
+    from apps.partners.models import Partner
+
+    activities = [a for a in activities if a is not None]
+    partner_ids = {
+        a.assigned_partner_id
+        for a in activities
+        if a.delivery_type == DeliveryType.PARTNER and a.assigned_partner_id
+    }
+    staff_ids = {
+        a.responsible_staff_id
+        for a in activities
+        if a.delivery_type != DeliveryType.PARTNER and a.responsible_staff_id
+    }
+    partners = (
+        dict(Partner.objects.filter(id__in=partner_ids).values_list("id", "name"))
+        if partner_ids
+        else {}
+    )
+    people: dict[str, str] = {}
+    if staff_ids:
+        for staff_id, user_id, name in StaffProfile.objects.filter(
+            Q(id__in=staff_ids) | Q(user_id__in=staff_ids)
+        ).values_list("id", "user_id", "user__name"):
+            people[staff_id] = people[user_id] = name or ""
+    out = {}
+    for activity in activities:
+        if activity.delivery_type == DeliveryType.PARTNER:
+            name = partners.get(activity.assigned_partner_id, "")
+            out[activity.id] = f"{name} · partner" if name else "Training partner"
+        else:
+            out[activity.id] = people.get(activity.responsible_staff_id, "") or "—"
+    return out
 
 
 # ── Monthly reports ──────────────────────────────────────────────────────────

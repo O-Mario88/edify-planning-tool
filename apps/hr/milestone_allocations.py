@@ -40,6 +40,18 @@ def create_allocation(*, milestone, data: dict, principal) -> MilestoneAllocatio
     allocated_to_type = (data.get("allocatedToType") or "").strip()
     if allocated_to_type not in {"country", "team", "employee", "project"}:
         raise BadRequest("Allocation scope must be country, team, employee or project.")
+    # Program Lead alignment (2026-09-13): a Program Lead receives a team
+    # target from Impact Assessment and divides it within the team. Placing a
+    # target with a country or a project is the distribution authority above
+    # the lead, whatever door the request came through.
+    if getattr(
+        principal, "active_role", ""
+    ) == "Program Lead" and allocated_to_type in {"country", "project"}:
+        raise BadRequest(
+            "Program Leads distribute only the team target they received: country "
+            "and project targets are allocated by the Country Director and Impact "
+            "Assessment."
+        )
     target = data.get("allocatedTarget")
     try:
         target = Decimal(str(target))

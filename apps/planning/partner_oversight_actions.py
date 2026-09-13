@@ -10,7 +10,8 @@ looking at the page.
     the partner is responsible  → remind the partner
     a role queue is             → nudge Impact Assessment or the Accountant
     a named staff member is     → send a TeamAction to the managing CCEO
-    asking has not worked       → escalate to the Country Director
+    asking has not worked       → escalate one level up (a PL to the Country
+                                  Director) through the escalation channel
 
 Nothing here edits a partner's schedule, and nothing here creates a TeamAction
 against a CCEO for work a partner has not done. A TeamAction is a staff
@@ -50,7 +51,15 @@ CCEO_ADDRESSED_RISKS = {
     "salesforce_overdue": "partner_salesforce_overdue",
 }
 
+# The playbook key escalations were once opened under as TeamActions. New
+# escalations go through the escalation channel (escalate_to_country_director);
+# the key stays so TeamActions opened before 2026-09-13 keep their label and
+# route (apps.planning.action_service).
 ESCALATION_KEY = "partner_delivery_escalation"
+
+# The escalation channel's scope for a partner handover, so an open escalation
+# is found again and not raised twice.
+ESCALATION_SCOPE = "PartnerAssignment"
 
 
 def _risk_on(item, risk_key: str) -> dict:
@@ -214,55 +223,86 @@ def escalate_to_country_director(*, sender, item, note: str = ""):
     person who can is the Country Director. It closes by judgement rather than
     by query, because what settles it is somebody deciding the intervention
     worked.
+
+    Recorded through the escalation channel (apps.flags.escalation_service),
+    not as a TeamAction (Program Lead alignment, 2026-09-13). The TeamAction
+    went to the deployment's first Country Director on file — in a
+    multi-country deployment, possibly another country's — and sat in that
+    director's Actions queue, invisible on /escalations where the director
+    decides everything else raised to them. The channel resolves the addressee
+    from the raiser's reporting line (their supervisor holding the Country
+    Director role), else addresses the Country Director role in the raiser's
+    country, carries the decision back to the raiser, and runs the SLA sweep.
+    One level up, as the channel always is: a Programme Lead's escalation goes
+    to the Country Director; an officer's goes to their Programme Lead.
+
+    Returns the LeadershipEscalation.
     """
     if not note.strip():
         raise ActionError(
             "An escalation needs a note saying what has already been tried."
         )
-    if not item.school_id:
+    if not item.school_id and not item.cluster_name:
         raise ActionError("This assignment has no school to escalate against.")
 
-    from apps.accounts.models import StaffProfile
-    from apps.core.rbac import EdifyRole
-    from apps.schools.models import School
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.flags import escalation_service
+    from apps.flags.models import EscalationStatus, LeadershipEscalation
 
-    school = School.objects.filter(id=item.school_id).first()
-    if school is None:
-        raise ActionError("The school on this assignment no longer exists.")
-
-    director = (
-        StaffProfile.objects.filter(
-            user__active_role=EdifyRole.COUNTRY_DIRECTOR.value, user__is_active=True
+    sender_id = getattr(sender, "user_id", None) or getattr(sender, "id", None)
+    already = (
+        LeadershipEscalation.objects.filter(
+            raised_by_user_id=sender_id,
+            scope_type=ESCALATION_SCOPE,
+            scope_id=item.partner_assignment_id,
         )
-        .select_related("user")
-        .order_by("created_at")
-        .first()
+        .exclude(status=EscalationStatus.RESOLVED)
+        .exists()
     )
-    if director is None or not director.user_id:
+    if already:
         raise ActionError(
-            "There is no active Country Director on the system to escalate to."
+            "Already escalated: this handover has an open escalation. Follow it "
+            "on Escalations."
         )
 
-    return send_action(
-        sender=sender,
-        school=school,
-        issue={
-            "key": ESCALATION_KEY,
-            "condition_key": partner_oversight_condition_key(
-                ESCALATION_KEY, assignment_id=item.partner_assignment_id
-            ),
-            "severity": "high",
-            "detail": (
-                f"{item.partner_name or 'The partner'} at {school.name}: "
-                f"{item.next_action}."
-            ),
-            "related_activity_id": item.partner_activity_id,
-        },
-        fy=item.financial_year or "",
-        recipient_staff=director,
-        note=note,
-        month_of_fy=item.month,
-    )
+    partner = item.partner_name or "The partner"
+    place = item.school_name or item.cluster_name or "the assigned school"
+    try:
+        return escalation_service.raise_escalation(
+            {
+                "category": "partner_performance",
+                "severity": "high",
+                "subject": f"{partner} at {place}: {item.next_action}"[:255],
+                "detail": (
+                    f"Partner-delivered work has stalled and asking has not moved it. "
+                    f"{item.next_action} ({item.next_action_owner}).\n\n"
+                    f"What has been tried: {note.strip()}"
+                ),
+                "requested_decision": (
+                    f"Decide how {partner}'s delivery at {place} is recovered — "
+                    "a firm deadline, reassignment or a contract conversation."
+                ),
+                "scope_type": ESCALATION_SCOPE,
+                "scope_id": item.partner_assignment_id,
+                "scope_name": f"{partner} · {place}",
+            },
+            sender,
+        )
+    except (BadRequest, Forbidden) as exc:
+        raise ActionError(str(getattr(exc, "detail", exc))) from exc
+
+
+def escalation_addressee_label(sender) -> str:
+    """Who the Escalate button reaches for this reader, in words: the named
+    Country Director (or Programme Lead) when the reporting line names one,
+    else the role. Empty when the reader cannot escalate."""
+    from apps.flags import escalation_service
+
+    level, _user_id, name = escalation_service.resolve_addressee(sender)
+    if not level:
+        return ""
+    role = escalation_service.ADDRESSEE_LABELS.get(level, "")
+    return f"{name} ({role})" if name else role
 
 
 def nudge_role_queue(*, sender, item, risk_key: str, note: str = ""):

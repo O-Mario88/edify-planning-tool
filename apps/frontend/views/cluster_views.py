@@ -292,7 +292,10 @@ def cluster_list_view(request):
         "staff_profiles": staff_profiles,
         # Selected states
         "q": request.GET.get("q", "").strip(),
-        "selected_fy": request.GET.get("fy", "2026").strip(),
+        # The service validated the year; showing the raw query value let the
+        # selector and the figures disagree (2026-09-13).
+        "selected_fy": data["fy"],
+        "fy_options": data["fy_options"],
         "selected_quarter": request.GET.get("quarter", "").strip(),
         "selected_district": request.GET.get("district", "").strip(),
         "selected_sub_county": request.GET.get("sub_county", "").strip(),

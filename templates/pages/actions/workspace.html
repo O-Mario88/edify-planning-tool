@@ -15,6 +15,13 @@ apart on the details that matter (state labels, due-date tone, tab counts).
   {% include "components/page_header.html" with title=page_title description=page_intro eyebrow=page_eyebrow %}
 
   {% comment %}
+  Actions Sent is a section of the Programme Lead's Team Assignments workspace
+  (with Extra Work, 2026-09-13). My Actions belongs to no workspace, so only the
+  sender's end carries the strip.
+  {% endcomment %}
+  {% if perspective == "sender" %}{% include "partials/_section_nav.html" %}{% endif %}
+
+  {% comment %}
   There is deliberately no KPI strip here. Open / Overdue / Resolved / All are
   already on the tab bar below, and a strip repeating them would be five cards
   of nothing new — 600px of preamble on a phone, where the platform's mobile

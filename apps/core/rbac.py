@@ -573,10 +573,10 @@ ROLE_PERMISSIONS: dict[EdifyRole, list[Permission]] = {
         P.ANALYTICS_VIEW,
         P.EXPORT,
         P.RECRUITMENT_INTELLIGENCE_VIEW,
-        # Supervised-team decision support + review within their scope.
-        P.LEADERSHIP_ENGINE_VIEW,
-        P.LEADERSHIP_DECISION_REVIEW,
-        P.BUDGET_INTELLIGENCE_VIEW,  # supervised-team budget/fund view
+        # Not the leadership decision or budget intelligence engines (Programme
+        # Lead alignment, 2026-09-13): their insights are country- and
+        # region-wide, and holding these let a PL review and rescan them for the
+        # whole deployment. Team signals reach the PL on My Team and the dashboard.
         P.STAFF_PERFORMANCE_VIEW,  # supervised-team roster only (scoped)
         # PL works the operational school directory, including project assignment.
         P.PROJECT_ASSIGN_SCHOOL,

@@ -14,6 +14,7 @@
       </p>
     </div>
     <div class="edify-page-header__controls">
+      {% if back_to_reviews %}<a href="/performance-reviews" class="btn btn-secondary h-8">Performance Reviews</a>{% endif %}
       {% if review %}<span class="edify-badge">FY{{ review.fy }}</span>{% endif %}
       {% if signed %}<span class="edify-badge" data-tone="success">Signed off</span>
       {% elif window_open %}<span class="edify-badge" data-tone="info">Window open</span>
@@ -25,6 +26,36 @@
   {% for m in messages %}
   <div class="rounded-surface border px-4 py-2.5 text-[13px] {% if m.tags == 'error' %}border-rose-200 bg-rose-50 text-rose-700{% else %}border-emerald-200 bg-emerald-50 text-emerald-700{% endif %}">{{ m }}</div>
   {% endfor %}
+  {% endif %}
+
+  {% comment %}Priorities the employee submitted wait on their reviewer, in
+  any window: performance_service.agree_priorities had the rule and no screen
+  (Program Lead alignment, 2026-09-13).{% endcomment %}
+  {% if agreement_waiting %}
+  <section class="edify-surface rounded-surface border border-slate-100 overflow-hidden" aria-labelledby="agree-priorities-title">
+    <div class="px-5 py-4 border-b border-slate-100">
+      <h2 id="agree-priorities-title" class="text-[14px] font-bold text-slate-800">{{ target.user.name }} submitted their priorities for your agreement</h2>
+      <p class="edify-text-caption text-slate-400">Agreeing locks them as the FY{{ review.fy }} agreement the year's conversations are held against.</p>
+    </div>
+    <ul class="divide-y divide-slate-50">
+      {% for p in priorities_to_agree %}
+      <li class="px-5 py-3 flex items-start justify-between gap-4">
+        <span class="text-[13px] text-slate-700">{{ p.sequence }}. {{ p.outcome_statement }}</span>
+        <span class="edify-text-caption text-slate-400 shrink-0">weight {{ p.weight }}%</span>
+      </li>
+      {% empty %}
+      <li class="px-5 py-3 text-[13px] text-slate-400">No priorities are recorded on this agreement.</li>
+      {% endfor %}
+    </ul>
+    <form method="post" action="/performance-conversation/{{ review.id }}/agree-priorities" class="px-5 py-4 border-t border-slate-100 flex flex-col sm:flex-row sm:items-end gap-3">
+      {% csrf_token %}
+      <label class="flex-1 flex flex-col gap-1">
+        <span class="edify-text-caption text-slate-500">Note for the record (optional)</span>
+        <input type="text" name="note" maxlength="500" class="w-full rounded-md border border-slate-200 px-2.5 py-1.5 text-[13px]">
+      </label>
+      <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Agree these priorities</button>
+    </form>
+  </section>
   {% endif %}
 
   {% if not review %}
@@ -171,14 +202,22 @@
   <div class="edify-surface rounded-surface border border-slate-100 p-5 flex items-center justify-between">
     <div>
       <p class="text-[13px] font-bold text-slate-800">Sign off this conversation</p>
+      {% if not reflection_saved %}
+      {% comment %}The reviewer's sign-off waits for the employee's reflection
+      in this window; the engine refuses it with the same words.{% endcomment %}
+      <p class="edify-text-caption text-slate-500" role="status">Sign-off opens once {{ target.user.name }} saves their reflection for this conversation.</p>
+      {% else %}
       <p class="edify-text-caption text-slate-400">Locks the snapshot permanently. Only HR can reopen it, with a reason.</p>
+      {% endif %}
     </div>
+    {% if reflection_saved %}
     <form method="post" action="/performance-conversation/{{ review.id }}/sign-off">
       {% csrf_token %}
       <input type="hidden" name="window" value="{{ window }}">
       {% if staff_param %}<input type="hidden" name="staff" value="{{ staff_param }}">{% endif %}
       <button type="submit" class="edify-primary-solid edify-primary-on-solid rounded-md px-4 py-2 text-[13px] font-bold">Sign off &amp; lock</button>
     </form>
+    {% endif %}
   </div>
   {% endif %}
 

@@ -377,6 +377,28 @@ class LeaveWorkspaceTest(TestCase):
             s["key"]
             for s in build_sections(LEAVE_SECTIONS, user, "/personal-time-off/")
         ]
+        # An approver also gets the team's side of the question: the requests
+        # to decide, the balances and who is away (2026-09-13).
+        self.assertEqual(
+            keys,
+            [
+                "my_leave",
+                "coverage",
+                "holidays",
+                "approvals",
+                "tracker",
+                "availability",
+            ],
+        )
+
+    def test_people_who_approve_no_leave_get_only_their_own_sections(self):
+        from apps.core.navigation import LEAVE_SECTIONS, build_sections
+
+        user = _user("leave-cceo@workspace.test", EdifyRole.CCEO.value)
+        keys = [
+            s["key"]
+            for s in build_sections(LEAVE_SECTIONS, user, "/personal-time-off/")
+        ]
         self.assertEqual(keys, ["my_leave", "coverage", "holidays"])
 
     def test_each_leave_page_carries_the_strip(self):

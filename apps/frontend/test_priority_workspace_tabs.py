@@ -72,10 +72,11 @@ class PriorityWorkspaceTabTest(TestCase):
                 "/target-distribution",
                 ["Priority Setting", "Target Distribution"],
             ),
-            # §13's own workspace is this reader's third view.
+            # §13's own workspace is this reader's third view, and the
+            # guidance the lead issues to the team the fourth (2026-09-13).
             "Program Lead": (
                 "/priorities/master",
-                ["Priority Setting", "Target Distribution", "My Team"],
+                ["Priority Setting", "Target Distribution", "My Team", "Team Guidance"],
             ),
             "RegionalVicePresident": (
                 "/priorities/master",

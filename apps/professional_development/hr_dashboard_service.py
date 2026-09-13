@@ -31,6 +31,7 @@ from apps.professional_development.models import (
     PDStatus,
     PDRoleAllocation,
     ProfessionalDevelopmentAllocation,
+    ProfessionalDevelopmentCertificate,
     ProfessionalDevelopmentRequest,
 )
 
@@ -481,9 +482,18 @@ class HRPDDashboardService:
                 }
             )
 
+        # A Programme Lead reads this page as their team's development (Program
+        # Lead alignment, 2026-09-13): the requests waiting on them, and the
+        # courses to follow up. HR's allocation settings are not computed for
+        # that view — nine counts nobody on it can act on.
+        role = getattr(principal, "active_role", "")
+        team_view = role == "Program Lead"
+
         # ── Role-based allocation settings ───────────────────────────────────
-        role_settings = HRPDDashboardService._role_allocation_settings(
-            fy, country, scoped_ids
+        role_settings = (
+            {"rows": [], "total_staff": 0, "total_allocated": "0"}
+            if team_view
+            else HRPDDashboardService._role_allocation_settings(fy, country, scoped_ids)
         )
 
         # ── Everyone HR is meant to track, not only those who applied ───────
@@ -534,11 +544,17 @@ class HRPDDashboardService:
         completed_this_fy = sum(
             1 for r in all_rows if r.status == PDStatus.COMPLETED_CLOSED
         )
-        certs_verified = sum(
-            1
-            for r in all_rows
-            if r.status == PDStatus.COMPLETED_CLOSED
-            and r.certificates.filter(status="uploaded").exists()
+        # One query for every closed course, not one per course.
+        closed_ids = [r.id for r in all_rows if r.status == PDStatus.COMPLETED_CLOSED]
+        certs_verified = (
+            ProfessionalDevelopmentCertificate.objects.filter(
+                request_id__in=closed_ids, status="uploaded"
+            )
+            .values("request_id")
+            .distinct()
+            .count()
+            if closed_ids
+            else 0
         )
         bamboo_confirmed = sum(
             1
@@ -601,6 +617,10 @@ class HRPDDashboardService:
             "not_applied": not_applied[:15],
             "not_applied_count": len(not_applied),
             "can_adjust_allocation": can_adjust_allocation,
+            # Closing a course releases money: HR's decision alone.
+            "can_sign_off": role in ("HumanResources", "Admin"),
+            "team_view": team_view,
+            "supervisor_queue": HRPDDashboardService.supervisor_queue(principal),
             "status_distribution": status_distribution,
             "status_distribution_total": len(all_rows),
             "fund_utilization": fund_utilization,
@@ -616,6 +636,92 @@ class HRPDDashboardService:
             "overdue_accountability_count": len(overdue_accountability),
             "last_refreshed": timezone.now(),
         }
+
+    @staticmethod
+    def supervisor_queue(principal) -> list[dict]:
+        """Requests waiting at the supervisor stage that this principal may
+        decide now, oldest first.
+
+        The approval services already let a supervisor approve or return a
+        request and no page listed the requests to decide: a Programme Lead
+        learned of one from a notification or not at all (Program Lead
+        alignment, 2026-09-13). The rule is the approval service's —
+        the requester's first supervisor link, or whoever is actively covering
+        that supervisor, never the requester — applied in bulk: four queries
+        whatever the number of requests. Every financial year is listed;
+        waiting is waiting.
+        """
+        from apps.accounts.models import (
+            StaffSupervisorAssignment,
+            TemporaryCoverageAssignment,
+        )
+
+        profile_id = getattr(principal, "staff_profile_id", None)
+        if not profile_id:
+            return []
+        now = timezone.now()
+        covered = set(
+            TemporaryCoverageAssignment.objects.filter(
+                covering_staff_id=profile_id,
+                start_datetime__lte=now,
+                end_datetime__gte=now,
+                status="active",
+            ).values_list("original_staff_id", flat=True)
+        )
+        acting_for = {profile_id} | covered
+        candidate_staff = set(
+            StaffSupervisorAssignment.objects.filter(
+                supervisor_id__in=acting_for
+            ).values_list("supervisee_id", flat=True)
+        )
+        candidate_staff.discard(profile_id)
+        if not candidate_staff:
+            return []
+        waiting = list(
+            ProfessionalDevelopmentRequest.objects.filter(
+                staff_id__in=candidate_staff,
+                status=PDStatus.SUBMITTED_TO_SUPERVISOR,
+            ).order_by("submitted_at", "created_at")
+        )
+        if not waiting:
+            return []
+        # `supervisor_for` takes the requester's first link (lowest id); a
+        # request whose first link names someone else is theirs to decide.
+        first_supervisor: dict[str, str] = {}
+        for supervisee_id, supervisor_id in (
+            StaffSupervisorAssignment.objects.filter(
+                supervisee_id__in={r.staff_id for r in waiting}
+            )
+            .order_by("id")
+            .values_list("supervisee_id", "supervisor_id")
+        ):
+            first_supervisor.setdefault(supervisee_id, supervisor_id)
+        today = date.today()
+        rows = []
+        for req in waiting:
+            if first_supervisor.get(req.staff_id) not in acting_for:
+                continue
+            submitted = req.submitted_at.date() if req.submitted_at else None
+            rows.append(
+                {
+                    "request_id": req.id,
+                    "staff_name": req.staff_name,
+                    "course_name": req.course_name,
+                    "course_type": req.get_course_type_display(),
+                    "fy": req.fy,
+                    "dates": (
+                        f"{req.start_date:%-d %b %Y} – {req.end_date:%-d %b %Y}"
+                        if req.start_date and req.end_date
+                        else "—"
+                    ),
+                    "amount": f"{req.currency} {req.requested_amount_cents / 100:,.0f}",
+                    "exception": bool(req.is_exception),
+                    "conflict": req.conflict_status,
+                    "waited": (today - submitted).days if submitted else None,
+                    "covering": first_supervisor.get(req.staff_id) != profile_id,
+                }
+            )
+        return rows
 
     @staticmethod
     def staff_without_requests(

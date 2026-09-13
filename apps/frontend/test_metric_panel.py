@@ -32,7 +32,11 @@ from .test_design_system_quality import _read
 CONVERTED = (
     "templates/pages/projects/index.html",
     "templates/partials/dashboards/cd/operations.html",
-    "templates/partials/dashboards/pl/operations.html",
+    # The Program Lead's Operations view became the role's views (2026-09-13).
+    "templates/partials/dashboards/pl/team_view.html",
+    "templates/partials/dashboards/pl/coaching_view.html",
+    "templates/partials/dashboards/pl/programmes_view.html",
+    "templates/partials/dashboards/pl/collaboration_view.html",
     "templates/partials/analytics/pl/activity_tracking.html",
     "templates/partials/hr/pd_dashboard/body.html",
     "templates/partials/finance/country_budget/root.html",

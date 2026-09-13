@@ -1888,6 +1888,16 @@ class TeamAvailabilityService:
             country_scope=country_scope,
             week_count=weeks,
         )
+        return TeamAvailabilityService.collision_report_from(matrix)
+
+    @staticmethod
+    def collision_report_from(matrix: list[dict]) -> dict:
+        """The collision report for a heatmap the caller already built.
+
+        The Team Availability page draws the heatmap and the collision panel
+        over the same people and weeks; building the matrix twice doubled every
+        query on the page (Programme Lead alignment, 2026-09-13).
+        """
         rows = []
         for person in matrix:
             hits = [w for w in person["weeks"] if w["stranded_visits"]]

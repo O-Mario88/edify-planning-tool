@@ -21,7 +21,6 @@ class BarChartSystemContractTest(SimpleTestCase):
         "templates/partials/analytics/cd/target_by_pl.html",
         "templates/partials/analytics/performance_overview.html",
         "templates/partials/analytics/pl/staff_partner.html",
-        "templates/partials/analytics/pl/team_performance.html",
         "templates/partials/dashboards/cd/body.html",
         "templates/partials/dashboards/pl/body.html",
         "templates/pages/dashboards/rvp.html",
@@ -65,7 +64,6 @@ class BarChartSystemContractTest(SimpleTestCase):
             "templates/partials/ia/dashboard_body.html",
             "templates/partials/ssa/performance_workspace.html",
             "templates/partials/targets/team/body.html",
-            "templates/partials/analytics/pl/team_performance.html",
             "templates/partials/dashboards/cd/body.html",
             "templates/partials/dashboards/hr/body.html",
             "templates/partials/dashboards/pl/body.html",
@@ -246,7 +244,6 @@ class ChartDefectRegressionTest(SimpleTestCase):
         "templates/partials/dashboards/pl/body.html",
         "templates/partials/analytics/cd/performance_vs_target.html",
         "templates/partials/analytics/performance_overview.html",
-        "templates/partials/analytics/pl/team_performance.html",
     )
 
     def test_legend_swatches_keep_their_series_colour(self):

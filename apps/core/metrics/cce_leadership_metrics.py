@@ -1,8 +1,9 @@
 """Metric definitions for the CCE Regional Lead's registers (owner, 2026-09-13).
 
-The engagement log, the training feedback register and the monthly reports
-render their tiles through ``apps.frontend.views.cce_leadership_views._metric``,
-which only accepts a label the reconciled registry knows. Their definitions
+The engagement log, the training feedback register, Regional Lead coaching
+and the monthly reports render their tiles through
+``apps.frontend.views.cce_leadership_views._metric``, which only accepts a
+label the reconciled registry knows. Their definitions
 live here and are appended to the reconciled rows in reconciled_registry.py.
 """
 
@@ -70,6 +71,12 @@ _FEEDBACK_SCOPE = (
     "Observations shared with the Programme Lead, on the Country Director's "
     "country, or recorded by the Regional Lead (apps.cce_leadership.services)"
 )
+_COACHING_ROLES = ("Program Lead", "RegionalProgramLead", "Admin")
+_COACHING_SCOPE = (
+    "Coaching conversations the Regional Lead shared with the Programme Lead; "
+    "the Regional Lead's own; Admin reads all "
+    "(apps.cce_leadership.services.regional_coaching_visible_to)"
+)
 _REPORT_ROLES = ("RegionalProgramLead", "RegionalVicePresident", "Admin")
 _REPORT_SCOPE = (
     "The Regional Lead's own reports; for the RVP, submitted reports on the "
@@ -79,7 +86,7 @@ _REPORT_SCOPE = (
 CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     _row(
         "Coaching Conversations (30 Days)",
-        line=194,
+        line=241,
         definition="Programme Lead coaching conversations the lead recorded in the last 30 days.",
         question="Is the lead meeting the Programme Leads regularly?",
         numerator="engagements of kind pl_coaching held in the last 30 days",
@@ -92,7 +99,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Trainings Observed This Quarter",
-        line=202,
+        line=249,
         definition="Training observations recorded in the current financial-year quarter.",
         question="Are trainings being observed and critiqued?",
         numerator="engagements of kind training_observation held this quarter",
@@ -106,7 +113,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Country Reviews This Quarter",
-        line=207,
+        line=254,
         definition="Quarterly reviews with a Country Director recorded this quarter.",
         question="Has every country had its quarterly review?",
         numerator="engagements of kind cd_quarterly_review held this quarter",
@@ -119,7 +126,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Engagements Overdue",
-        line=212,
+        line=259,
         definition=(
             "Rows of the role's meeting rhythm that are overdue or missed: "
             "coaching conversations older than a month, check-ins and meetings "
@@ -136,7 +143,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Feedback Awaiting Acknowledgement",
-        line=707,
+        line=895,
         definition="Shared training observations the Programme Lead has not yet acknowledged.",
         question="Which training feedback has not been answered?",
         numerator="observations with feedback_shared_at set and acknowledged_at empty",
@@ -148,7 +155,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Feedback Acknowledged",
-        line=713,
+        line=901,
         definition="Shared training observations the Programme Lead acknowledged with a response.",
         question="How much training feedback has been acted on?",
         numerator="observations with acknowledged_at set",
@@ -160,7 +167,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Average Observation Rating",
-        line=719,
+        line=907,
         definition=(
             "The mean of each observation's average rating across the five "
             "criteria (Biblical integration, SSA need, facilitation, participation, "
@@ -176,8 +183,37 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
         unit="score",
     ),
     _row(
+        "Regional Lead Coaching Awaiting Acknowledgement",
+        line=1172,
+        definition=(
+            "Coaching conversations the Regional Lead shared with a Programme Lead "
+            "that the Programme Lead has not acknowledged."
+        ),
+        question="Which Regional Lead coaching has the Programme Lead not answered?",
+        numerator="pl_coaching engagements with feedback_shared_at set and acknowledged_at empty",
+        models=_ENGAGEMENT,
+        owner_page="cce_training_feedback",
+        roles=_COACHING_ROLES,
+        scope=_COACHING_SCOPE,
+        category="pending_action",
+    ),
+    _row(
+        "Regional Lead Coaching Acknowledged",
+        line=1178,
+        definition=(
+            "Coaching conversations the Programme Lead acknowledged with a response "
+            "to the actions agreed."
+        ),
+        question="How much Regional Lead coaching has been acted on?",
+        numerator="pl_coaching engagements with acknowledged_at set",
+        models=_ENGAGEMENT,
+        owner_page="cce_training_feedback",
+        roles=_COACHING_ROLES,
+        scope=_COACHING_SCOPE,
+    ),
+    _row(
         "Report Drafts",
-        line=875,
+        line=1355,
         definition="Monthly CCE reports started and not yet submitted.",
         question="Which monthly reports are still being written?",
         numerator="reports in status draft",
@@ -188,7 +224,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Reports Awaiting Review",
-        line=877,
+        line=1357,
         definition="Monthly CCE reports submitted and not yet acknowledged or returned.",
         question="Which reports wait for the RVP?",
         numerator="reports in status submitted",
@@ -200,7 +236,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Reports Returned",
-        line=883,
+        line=1363,
         definition="Monthly CCE reports the RVP returned for revision.",
         question="Which reports need revising?",
         numerator="reports in status returned",
@@ -212,7 +248,7 @@ CCE_LEADERSHIP_METRIC_ROWS: tuple[dict, ...] = (
     ),
     _row(
         "Reports Acknowledged",
-        line=889,
+        line=1369,
         definition="Monthly CCE reports the RVP acknowledged.",
         question="Which monthly reports are closed?",
         numerator="reports in status acknowledged",

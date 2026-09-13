@@ -152,6 +152,107 @@ class NotificationLinkResolver:
 
         role = (role or "Staff").lower()
 
+        # Program Lead alignment (2026-09-13): each track routes its own events
+        # in its own block, ahead of the generic prefixes below.
+        # ── PL alignment · T ──
+        # The supervising Programme Lead reviewed an officer's field debrief;
+        # the author opens the debrief and reads the feedback on it.
+        if event_type == "field_debrief_reviewed":
+            return (
+                f"/debriefs/{context_id}" if context_id else "/debriefs",
+                "Read Feedback",
+            )
+        # Business Transformation notices address the BT officer's workspace,
+        # which a Programme Lead cannot open (2026-09-13). A lead's part in BT
+        # is school financial-health support, worked from the school profile;
+        # facility-ledger notices have no Programme Lead surface at all.
+        if event_type.startswith("bt.") and role == "program lead":
+            if event_type.startswith("bt.facility."):
+                return "/dashboard", "View Dashboard"
+            return "/schools", "Open School Support"
+        # ── end T ──
+        # ── PL alignment · C1 ──
+        # Coaching handoffs: the Programme Lead shares coaching with an officer,
+        # who acknowledges it; the Regional Lead shares a coaching conversation
+        # with a Programme Lead, who does the same.
+        if event_type == "cceo_coaching_shared":
+            return "/my-coaching", "Acknowledge Coaching"
+        if event_type == "cceo_coaching_acknowledged":
+            return "/team/coaching", "Open Coaching Log"
+        if event_type == "cce_pl_coaching_shared":
+            return "/cce-leadership/coaching", "Acknowledge Coaching"
+        if event_type == "cce_pl_coaching_acknowledged":
+            return "/cce-leadership/engagements", "Open Engagement Log"
+        # ── end C1 ──
+        # ── PL alignment · C2 ──
+        # HR opened a conversation window: the reviewer lands on the page that
+        # lists the people they review. A reviewer without that page (the RVP,
+        # who reviews Country Directors) lands on the To-Do queue, whose
+        # reviewer rows open each conversation they now hold.
+        if event_type == "performance_window_opened":
+            if role in ("program lead", "countrydirector", "humanresources", "admin"):
+                return "/performance-reviews", "Open Performance Reviews"
+            return "/todos", "Open To-Do"
+        # ── end C2 ──
+        # ── PL alignment · P1 ──
+        # ── end P1 ──
+        # ── PL alignment · P2 ──
+        # A completion waiting on the supervising Programme Lead opens on that
+        # completion's review drawer (Completion Reviews honours ?open= only
+        # for a row in the reader's own queue). IA keeps its route below.
+        if (
+            event_type == "activity_submitted_for_review"
+            and role in ("program lead", "admin")
+            and context_type
+            and context_type.lower() == "activity"
+            and context_id
+        ):
+            return f"/pl/review-queue?open={context_id}", "Review Completion"
+        # ── end P2 ──
+        # ── PL alignment · S1 ──
+        # Team Guidance: the Programme Lead issues guidance on the priorities
+        # and the officer acknowledges it on their own Priorities page, which
+        # opens that piece's drawer from ?guidance=; the acknowledgement brings
+        # the lead back to the Team Guidance register on that piece.
+        if event_type == "team_guidance_issued":
+            return (
+                f"/priorities?guidance={context_id}" if context_id else "/priorities",
+                "Acknowledge Guidance",
+            )
+        if event_type == "team_guidance_acknowledged":
+            return (
+                f"/priorities/guidance?open={context_id}"
+                if context_id
+                else "/priorities/guidance",
+                "Open Team Guidance",
+            )
+        # ── end S1 ──
+        # ── PL alignment · S2 ──
+        # The Country Director's flag loop: the Programme Lead acknowledged or
+        # resolved a flag, and the director reads it on the flag board.
+        if event_type in ("cd_flag_acknowledged", "cd_flag_resolved"):
+            return "/quality-checks", "Open Quality Flags"
+        # A Programme Lead or Country Director shared a partner engagement
+        # with the organisation (context: the Partner): the partner reads it on
+        # its own profile, the one page every partner login may open.
+        if event_type == "partner_engagement_shared":
+            if context_type == "Partner" and context_id:
+                return f"/partners/{context_id}", "Read Engagement"
+            return "/partners", "Open Partners"
+        # ── end S2 ──
+        # ── IA review · IA-N ──
+        # ── end IA-N ──
+        # ── IA review · IA-F ──
+        # ── end IA-F ──
+        # ── IA review · IA-C ──
+        # ── end IA-C ──
+        # ── IA review · IA-P ──
+        # ── end IA-P ──
+        # ── IA review · IA-L ──
+        # ── end IA-L ──
+        # ── IA review · IA-R ──
+        # ── end IA-R ──
+
         # Platform-operations events resolve to the exact affected record, not
         # to a queue the Admin then has to search. A notification that lands on
         # a generic dashboard costs the reader the whole diagnosis.
@@ -286,9 +387,14 @@ class NotificationLinkResolver:
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/planning"
                 label = "Open Planning"
-            elif role in ("program lead", "projectcoordinator", "projectleader"):
-                route = "/my-team"
-                label = "View Team Portfolio"
+            elif role in ("program lead", "projectleader"):
+                # The team's SSA rollout, not the roster (2026-09-13).
+                route = "/programme-rollout?view=ssa"
+                label = "Open SSA Rollout"
+            elif role == "projectcoordinator":
+                # A Project Coordinator has no My Team; they plan the follow-up.
+                route = "/planning"
+                label = "Open Planning"
             elif role == "countrydirector":
                 # The CD's Analytics nav points at the national cockpit, not
                 # the generic page; sending the notification elsewhere landed
@@ -312,16 +418,21 @@ class NotificationLinkResolver:
             elif role == "cceo":
                 route = "/my-plan"
                 label = "Staff My Plan"
-            elif role in ("program lead", "projectcoordinator", "projectleader"):
-                route = "/my-team"
-                label = "Monitoring Dashboard"
+            elif role in ("program lead", "projectleader"):
+                # Partner delivery is monitored on Partner Oversight (2026-09-13).
+                route = "/partner-oversight/"
+                label = "Open Partner Oversight"
+            elif role == "projectcoordinator":
+                route = "/my-plan"
+                label = "Open My Plan"
 
         elif event_type == "evidence_returned":
             if role in ("cceo", "partnerfieldofficer"):
                 route = "/my-plan"
                 label = "Fix Evidence"
             elif role in ("program lead", "projectcoordinator", "projectleader"):
-                route = "/my-team"
+                # The returned-evidence tab both roles can open (2026-09-13).
+                route = "/evidence/?tab=returned"
                 label = "Review Evidence"
             elif role == "impactassessment":
                 route = "/ia/dashboard/"

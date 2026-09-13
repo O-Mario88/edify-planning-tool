@@ -1,0 +1,51 @@
+{% extends "components/drawers/base_drawer.html" %}
+
+{% comment %}
+The schools behind a Programme Rollout figure (owner, 2026-09-13): an officer's,
+a cluster's or the team's schools in one SSA state, or not yet trained this
+year. Read-only — each school opens its profile, where its own officer plans
+it. A request for an officer or cluster outside the lead's team is refused
+with the reason (apps.analytics.programme_rollout_service.school_list).
+{% endcomment %}
+
+{% block drawer_title %}{{ title }}{% endblock %}
+{% block drawer_subtitle %}{{ subtitle }}{% endblock %}
+
+{% block drawer_body %}
+{% if refusal %}
+<div class="edify-note" data-tone="warning" role="alert" data-rollout-refusal>{{ refusal }}</div>
+{% else %}
+<div class="space-y-3" data-rollout-school-list>
+  <p class="rpl-card__subtitle">{{ total }} school{{ total|pluralize }}{% if truncated %}, the first {{ rows|length }} shown{% endif %}</p>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ title }}; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">{{ title }}: {{ subtitle }}</caption>
+      <thead>
+        <tr>
+          <th scope="col">School</th>
+          <th scope="col">Officer</th>
+          <th scope="col">District · cluster</th>
+          <th scope="col">Where it stands</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows|slice:":200" %}
+        <tr>
+          <th scope="row" data-record-title><span><a href="{{ row.url }}">{{ row.name }}</a></span></th>
+          <td data-label="Officer">{{ row.officer|default:"—" }}</td>
+          <td data-label="District · cluster">{{ row.district|default:"—" }}{% if row.cluster %} · {{ row.cluster }}{% endif %}</td>
+          <td data-label="Where it stands">{{ row.detail }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="4">
+            {% include "components/empty_state.html" with message="No school is in this state." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+{% endblock %}

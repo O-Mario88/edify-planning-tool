@@ -856,6 +856,16 @@ def priorities_master_page(request):
     is_scoped_viewer = role in scoped_roles
     my_values: dict[str, Decimal] = {}
     my_status: dict[str, str] = {}
+    # A Program Lead holds two figures per milestone: the team target Impact
+    # Assessment approved for their team, and their own share once they
+    # distribute it (Program Lead alignment, 2026-09-13). One "My Target"
+    # column showed whichever came last, so the lead could not see what the
+    # team received beside what they kept. The CCEO column is unchanged.
+    is_team_lead_viewer = role == EdifyRole.COUNTRY_PROGRAM_LEAD.value
+    team_values: dict[str, Decimal] = {}
+    team_status: dict[str, str] = {}
+    share_values: dict[str, Decimal] = {}
+    share_status: dict[str, str] = {}
     if is_scoped_viewer:
         staff_id = getattr(request.user, "staff_profile_id", None)
         holder = (
@@ -871,6 +881,12 @@ def priorities_master_page(request):
         )
         for allocation in holder:
             key = str(allocation.milestone_id)
+            if allocation.allocated_to_type == "team":
+                team_values[key] = allocation.allocated_target
+                team_status[key] = allocation.status
+            elif str(allocation.employee_id) == str(staff_id):
+                share_values[key] = allocation.allocated_target
+                share_status[key] = allocation.status
             # An employee allocation outranks the team row for the same
             # milestone (a PL holds both once they self-allocate).
             if key in my_values and allocation.allocated_to_type == "team":
@@ -916,6 +932,8 @@ def priorities_master_page(request):
         for m in sorted(priority.milestones.all(), key=lambda x: x.source_order):
             key = str(m.id)
             mine = my_values.get(key)
+            received = team_values.get(key)
+            share = share_values.get(key)
             rows.append(
                 {
                     "milestone": m,
@@ -928,6 +946,18 @@ def priorities_master_page(request):
                         else None
                     ),
                     "my_is_draft": my_status.get(key) == "draft",
+                    "team_value": (
+                        _fmt_number(received, m.target_unit or "")
+                        if received is not None
+                        else None
+                    ),
+                    "team_is_draft": team_status.get(key) == "draft",
+                    "share_value": (
+                        _fmt_number(share, m.target_unit or "")
+                        if share is not None
+                        else None
+                    ),
+                    "share_is_draft": share_status.get(key) == "draft",
                     "is_percent": m.measurement_type == "percentage",
                 }
             )
@@ -942,6 +972,7 @@ def priorities_master_page(request):
             [row["milestone"] for group in groups for row in group["rows"]], fy=fy
         ),
         "is_scoped_viewer": is_scoped_viewer,
+        "is_team_lead_viewer": is_team_lead_viewer,
         "viewer_role": role,
         "fy_options": fy_options(),
         "use_dark_sidebar": True,

@@ -170,6 +170,16 @@ class ProjectSchoolAssignment(TimeStampedModel):
     #: Which mapping's rules this enrolment is measured under. A later change
     #: to the mapping must not rewrite what a finished project meant.
     mapping_version = models.PositiveIntegerField(null=True, blank=True)
+    #: The rule itself, stamped at first verified delivery with its version, so
+    #: republishing a mapping never re-measures an enrolment (IA review,
+    #: 2026-09-13).
+    mapping = models.ForeignKey(
+        "activity_catalogue.ActivityInterventionMapping",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="stamped_enrolments",
+    )
 
     # ── Follow-up ────────────────────────────────────────────────────────
     follow_up_due_on = models.DateField(null=True, blank=True)

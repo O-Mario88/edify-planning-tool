@@ -1,0 +1,65 @@
+{% load table_pagination %}
+{% comment %}
+Development requests waiting at the supervisor stage that the viewer may
+decide now (HRPDDashboardService.supervisor_queue — the approval service's
+rule, resolved in bulk). Approve posts in place; Return opens the one-column
+drawer that asks for the reason. Program Lead alignment, 2026-09-13.
+
+`queue_always` renders the heading and an empty state when nothing waits (the
+team view); HR's page includes this only when a request waits on the viewer.
+{% endcomment %}
+{% if supervisor_queue or queue_always %}
+<section class="rounded-surface border p-5 space-y-3 edify-surface edify-border" aria-labelledby="pd-supervisor-queue-title">
+  <div class="flex items-center justify-between gap-2 pb-3 border-b edify-border">
+    <h2 id="pd-supervisor-queue-title" class="text-[13px] font-bold uppercase tracking-wide edify-text">Waiting for your approval</h2>
+    <span class="edify-text-caption text-slate-400 font-semibold">{{ supervisor_queue|length }} request{{ supervisor_queue|length|pluralize }}</span>
+  </div>
+  {% if supervisor_queue %}
+  <div class="overflow-x-auto">
+    {% paginate supervisor_queue "pd_queue_page" as queue_pager %}
+    <table class="w-full text-left edify-text-caption font-semibold">
+      <caption class="sr-only">Development requests waiting for your approval</caption>
+      <thead>
+        <tr class="border-b edify-border">
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Officer</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Course</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Dates</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Requested</th>
+          <th scope="col" class="py-2 pr-3 edify-text-caption text-slate-400 font-extrabold uppercase">Waiting</th>
+          <th scope="col" class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-right"><span class="sr-only">Decision</span></th>
+        </tr>
+      </thead>
+      <tbody class="divide-y edify-border">
+        {% for r in queue_pager.rows %}
+        <tr>
+          <td class="py-2.5 pr-3 edify-text">{{ r.staff_name }}{% if r.covering %} <span class="text-slate-400">· you are covering</span>{% endif %}</td>
+          <td class="py-2.5 pr-3">
+            <span class="block edify-text">{{ r.course_name }}</span>
+            <span class="edify-text-caption text-slate-400">{{ r.course_type }} · FY {{ r.fy }}</span>
+          </td>
+          <td class="py-2.5 pr-3 text-slate-400 tabular-nums whitespace-nowrap">{{ r.dates }}</td>
+          <td class="py-2.5 pr-3 text-right tabular-nums whitespace-nowrap"{% if r.exception %} data-tone="warning"{% endif %}>{{ r.amount }}{% if r.exception %} · over allocation{% endif %}</td>
+          <td class="py-2.5 pr-3 whitespace-nowrap"{% if r.conflict == "major_conflict" %} data-tone="danger"{% elif r.waited and r.waited > 7 %} data-tone="warning"{% endif %}>
+            {% if r.conflict == "major_conflict" %}Schedule conflict{% elif r.waited is None %}—{% else %}{{ r.waited }} day{{ r.waited|pluralize }}{% endif %}
+          </td>
+          <td class="py-2.5 text-right whitespace-nowrap" data-record-action>
+            <form method="post" action="/cpd-learning/action" class="inline">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="supervisor_approve">
+              <input type="hidden" name="request_id" value="{{ r.request_id }}">
+              <button type="submit" class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold edify-primary-solid edify-primary-on-solid">Approve</button>
+            </form>
+            <button type="button" hx-get="/cpd-learning/return?request_id={{ r.request_id }}" hx-target="#drawer-container" hx-swap="innerHTML"
+              class="px-2.5 py-1 rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Return</button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% include "components/table_pager.html" with pager=queue_pager param="pd_queue_page" %}
+  </div>
+  {% else %}
+  <p class="edify-text-caption text-slate-400 font-semibold py-4 text-center">Nothing is waiting for your approval. A request an officer submits appears here before it goes to HR.</p>
+  {% endif %}
+</section>
+{% endif %}

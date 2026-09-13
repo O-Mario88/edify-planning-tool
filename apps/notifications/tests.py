@@ -60,7 +60,9 @@ class NotificationsWorkflowTest(TestCase):
         )
 
         self.assertEqual(cceo_route, "/planning")
-        self.assertEqual(pl_route, "/my-team")
+        # The team's SSA rollout, not the roster: My Team is the Programme
+        # Lead's people page (2026-09-13).
+        self.assertEqual(pl_route, "/programme-rollout?view=ssa")
         # The CD's own Analytics nav entry points at the national cockpit, so
         # the notification must land there too — /analytics is the generic page
         # and dropped the CD somewhere their sidebar never takes them.
@@ -73,7 +75,7 @@ class NotificationsWorkflowTest(TestCase):
         pl_real_route, _ = NotificationLinkResolver.resolve(
             "critical_school_ssa", "School", "S1", "Program Lead"
         )
-        self.assertEqual(pl_real_route, "/my-team")
+        self.assertEqual(pl_real_route, "/programme-rollout?view=ssa")
 
         rvp_route, _ = NotificationLinkResolver.resolve(
             "critical_school_ssa", "School", "S1", "RegionalVicePresident"

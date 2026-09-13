@@ -35,6 +35,8 @@ def _row(
     unit: str = "count",
     drilldown: str | None = None,
     denominator: str | None = None,
+    roles: tuple[str, ...] = _HR_ROLES,
+    scope: str = "The countries the Regional HR Director oversees (apps.hr.reach)",
 ) -> dict:
     return {
         "key": f"hr_programme_{_slug(label)}",
@@ -51,7 +53,7 @@ def _row(
         "denominator": denominator,
         "date_basis": "not_time_bound",
         "period": "point_in_time",
-        "scope": "The countries the Regional HR Director oversees (apps.hr.reach)",
+        "scope": scope,
         "owner_page": owner_page,
         "filter_behaviour": "partial",
         "drilldown": drilldown,
@@ -59,7 +61,7 @@ def _row(
         if drilldown
         else "The register below the tile lists the records it counts.",
         "notes": "HR programme register rebuilt 2026-09-13.",
-        "roles": _HR_ROLES,
+        "roles": roles,
         "source_location": location,
     }
 
@@ -84,6 +86,25 @@ _PEOPLE = (
 )
 _REVIEWS = ("apps.hr.models.PerformanceReview",)
 _PLANS = ("apps.hr.models.PerformanceImprovementPlan",)
+_REVIEW_PROGRESS = (
+    "apps.hr.models.PerformanceReview",
+    "apps.hr.models.PerformancePriority",
+    "apps.hr.models.PerformanceSnapshot",
+    "apps.hr.models.PerformanceCycle",
+)
+# A Programme Lead reads the recovery register for the people they review
+# (Program Lead alignment, 2026-09-13); HR reads its reach.
+_RECOVERY_SCOPE = (
+    "HR: the countries in apps.hr.reach; a Programme Lead: the people they "
+    "review (apps.hr.review_authority.reviewees_of, never themself)"
+)
+# The Programme Lead's Performance Reviews register counts the conversations
+# they hold as reviewer, not HR's country list, so its tiles are their own rows.
+_TEAM_REVIEW_SCOPE = (
+    "The people the viewer reviews (apps.hr.review_authority.reviewees_of, "
+    "never themself), for the selected FY"
+)
+_TEAM_REVIEW_LOCATION = "apps/frontend/views/hr_views.py:_team_performance_reviews"
 
 HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
     _row(
@@ -153,6 +174,8 @@ HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
         owner_page="recovery_plans",
         location="apps/frontend/views/hr_views.py:recovery_plans_view",
         category="pending_action",
+        roles=(*_HR_ROLES, "Program Lead"),
+        scope=_RECOVERY_SCOPE,
     ),
     _row(
         "Ending in 30 days",
@@ -163,6 +186,8 @@ HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
         owner_page="recovery_plans",
         location="apps/frontend/views/hr_views.py:recovery_plans_view",
         category="pending_action",
+        roles=(*_HR_ROLES, "Program Lead"),
+        scope=_RECOVERY_SCOPE,
     ),
     _row(
         "Awaiting triage",
@@ -408,5 +433,69 @@ HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
         owner_page="policies",
         location="apps/frontend/views/hr_views.py:policies_view",
         category="risk",
+    ),
+    _row(
+        "Officers you review",
+        definition=(
+            "People the viewer is the performance reviewer for under the "
+            "reporting rule, excluding themself and removed accounts."
+        ),
+        question="Whose performance conversations am I responsible for?",
+        numerator="apps.hr.performance_engine.team_review_rows rows",
+        models=_PEOPLE,
+        owner_page="performance_reviews",
+        location=_TEAM_REVIEW_LOCATION,
+        roles=("Program Lead",),
+        scope=_TEAM_REVIEW_SCOPE,
+    ),
+    _row(
+        "Waiting on you as reviewer",
+        definition=(
+            "People whose annual agreement waits on the reviewer to agree "
+            "priorities, or whose open quarterly conversation is not yet "
+            "signed off."
+        ),
+        question="Which conversations need my action as reviewer now?",
+        numerator=(
+            "team_review_rows with agreement_waiting (stage "
+            "priorities_manager_review) or hold_needed (open window snapshot, "
+            "not signed off)"
+        ),
+        models=_REVIEW_PROGRESS,
+        owner_page="performance_reviews",
+        location=_TEAM_REVIEW_LOCATION,
+        category="pending_action",
+        roles=("Program Lead",),
+        scope=_TEAM_REVIEW_SCOPE,
+    ),
+    _row(
+        "Reviews past due",
+        definition=(
+            "People with at least one review for the FY past its due date and "
+            "not closed, acknowledged or archived."
+        ),
+        question="Which of my team's reviews are late?",
+        numerator="team_review_rows with overdue_reviews",
+        models=_REVIEWS,
+        owner_page="performance_reviews",
+        location=_TEAM_REVIEW_LOCATION,
+        category="risk",
+        roles=("Program Lead",),
+        scope=_TEAM_REVIEW_SCOPE,
+    ),
+    _row(
+        "Agreements completed",
+        definition=(
+            "People whose annual agreement for the FY is closed, acknowledged "
+            "by the employee, or signed and archived."
+        ),
+        question="How many of my team's review years are finished?",
+        numerator="team_review_rows whose annual review stage is in REVIEW_DONE_STAGES",
+        models=_REVIEWS,
+        owner_page="performance_reviews",
+        location=_TEAM_REVIEW_LOCATION,
+        category="progress",
+        roles=("Program Lead",),
+        scope=_TEAM_REVIEW_SCOPE,
     ),
 )

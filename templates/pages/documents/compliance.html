@@ -42,6 +42,8 @@
     <button type="submit" class="h-8 px-3.5 rounded-control edify-primary-solid text-white text-[12px] font-bold">Apply</button>
   </form>
 
+  {% include "partials/_section_nav.html" %}
+
   <div class="card overflow-x-auto">
     {% paginate rows "rows_page" as rows_pager %}
 <table class="w-full text-left">

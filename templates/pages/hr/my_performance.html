@@ -29,6 +29,12 @@
   {% endif %}
   {% collect_kpi_items agreement_kpi progress_kpi window_kpi as performance_kpis %}
   {% include "components/context_metrics.html" with items=performance_kpis variant="executive" title="Performance headline" %}
+  {% comment %}PL alignment · S1 (owner, 2026-09-13): guidance the officer's
+  Programme Lead issued on the priorities, acknowledged from a drawer. The
+  panel loads itself (apps/frontend/views/team_guidance_views.py
+  guidance_inbox_panel); ?guidance=<id> from a notification opens that piece.{% endcomment %}
+  {% if request.user.active_role == "CCEO" %}<div hx-get="/priorities/guidance/inbox{% if request.GET.guidance %}?open={{ request.GET.guidance|urlencode }}{% endif %}" hx-trigger="load" hx-swap="outerHTML" aria-busy="true" data-team-guidance-inbox-loader></div>{% endif %}
+  {% comment %}end S1{% endcomment %}
   <form method="get" class="edify-filter-bar">
     <label for="priority-year">Financial year</label>
     <input id="priority-year" name="fy" type="number" min="2000" max="2100" value="{{ fy }}" class="rounded-control border px-3 py-1.5 w-24">

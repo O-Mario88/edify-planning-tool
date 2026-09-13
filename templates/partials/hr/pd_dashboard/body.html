@@ -9,6 +9,11 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
   <!-- KPI Strip -->
   {% include "components/context_metrics.html" with items=kpis variant="executive" title="Professional development context" %}
 
+  {% comment %}Requests at the supervisor stage that wait on the viewer — a
+  Country Director deciding a Programme Lead's request, for instance. Renders
+  nothing when none do.{% endcomment %}
+  {% include "partials/hr/pd_dashboard/supervisor_queue.html" %}
+
   <!-- 1. Staff Professional Development Tracker -->
   <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
     <div class="flex items-center justify-between pb-3 border-b edify-border">
@@ -43,6 +48,9 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
               <span class="block truncate text-slate-400">{{ it.course_name }}</span>
               <span class="block truncate text-slate-500 edify-text-caption">{{ it.due_label }}</span>
             </div>
+            {% comment %}Sign Off closes the course and releases money: HR's
+            decision, so the button is HR's (Program Lead alignment, 2026-09-13).{% endcomment %}
+            {% if it.action != 'sign_off' or can_sign_off %}
             <form method="post" action="/cpd-learning/action" class="shrink-0">
               {% csrf_token %}
               <input type="hidden" name="action" value="{{ it.action }}">
@@ -52,6 +60,7 @@ CountryDirector own country, Program Lead own team).{% endcomment %}
                 {% if it.action == 'sign_off' %}bg-emerald-600 hover:bg-emerald-700 text-white{% else %}border hover:bg-slate-500/10{% endif %}"
                 {% if it.action != 'sign_off' %}style="border-color:var(--edify-border); color:var(--edify-text);"{% endif %}>{{ it.action_label }}</button>
             </form>
+            {% endif %}
           </div>
           {% endfor %}
         </div>

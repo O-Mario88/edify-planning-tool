@@ -293,6 +293,11 @@ class MostSignificantChangeStory(TimeStampedModel):
     reviewed_by = models.CharField(max_length=30, null=True, blank=True)
     reviewed_at = models.DateTimeField(null=True, blank=True)
     return_reason = models.CharField(max_length=512, null=True, blank=True)
+    # Tagged by the Impact Assessment reviewer (2026-09-13) so an approved story
+    # counts as evidence for the outcome it describes.
+    outcome_area = models.CharField(max_length=64, blank=True, default="")
+    intervention = models.CharField(max_length=64, blank=True, default="")
+    country = models.CharField(max_length=64, blank=True, default="")
 
     class Meta:
         db_table = "mscs_story"

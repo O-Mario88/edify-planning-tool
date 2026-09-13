@@ -3,7 +3,7 @@ GROUP 1 — Core Operations Views
 Staff Directory, Staff Profile, Today, Visits, Trainings, Evidence, Targets, My-Team, Notifications, Profile
 """
 
-from apps.core.metrics import render_precomputed_metric_item
+from apps.core.metrics import render_precomputed_metric_for_source
 
 from apps.core.htmx_errors import error_message
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
@@ -69,8 +69,14 @@ def staff_directory_view(request):
     from django.core.paginator import Paginator
     from apps.targets.my_targets import _user_ids
 
+    from apps.hr.reach import TEAM, people_reach
+
     search = request.GET.get("q", "").strip()
-    active_tab = request.GET.get("tab", "all")
+    # A Programme Lead reads their own team here: onboarding is HR's queue and
+    # role tabs over a handful of officers split nothing, so neither is
+    # rendered — and a tab that is not rendered does not filter.
+    team_reach = people_reach(request.user).kind == TEAM
+    active_tab = "all" if team_reach else request.GET.get("tab", "all")
     page_number = request.GET.get("page", 1)
 
     staff_qs = (
@@ -127,21 +133,12 @@ def staff_directory_view(request):
 
     # StaffOnboardingState choices are only pending/active/suspended — "pending"
     # is the real state that represents "not yet onboarded".
-    pending_onboarding = StaffProfile.objects.filter(
-        onboarding_state="pending", user__in=all_staff_qs
-    ).count()
-
-    # Average coverage gap: % of schools org-wide without a completed SSA for
-    # the current FY (School.current_fy_ssa_status == "done" is the same
-    # source of truth used by apps.clusters.services / apps.analytics.services).
-    from apps.schools.lifecycle_service import active_schools
-
-    all_schools_count = active_schools().count()
-    schools_with_ssa = active_schools().filter(current_fy_ssa_status="done").count()
-    average_coverage_gap = (
-        round(100 - (schools_with_ssa / all_schools_count * 100), 1)
-        if all_schools_count
-        else 0.0
+    pending_onboarding = (
+        0
+        if team_reach
+        else StaffProfile.objects.filter(
+            onboarding_state="pending", user__in=all_staff_qs
+        ).count()
     )
 
     # High risk (overdue > 3) - let's count for all staff
@@ -290,9 +287,12 @@ def staff_directory_view(request):
     kpis = {
         "total_active": total_active,
         "pending_onboarding": pending_onboarding,
-        "average_coverage_gap": average_coverage_gap,
         "high_risk": high_risk_count,
     }
+    # The org-wide SSA coverage gap computed here was never rendered, and it
+    # cost two counts over every school in the deployment on each load
+    # (Programme Lead alignment, 2026-09-13). SSA coverage per officer lives on
+    # My Team and Programme Rollout.
 
     context = {
         "staff": staff_list,
@@ -310,11 +310,90 @@ def staff_directory_view(request):
         "pages_list": pages_list,
         # The template printed every email whatever this said.
         "show_email": show_email,
+        # "New Staff Member" opens user administration; offering it to a
+        # reader who cannot open that page was a dead end.
+        "can_add_staff": RolePermissionService.can_view_page(request.user, "users"),
+        "team_reach": team_reach,
     }
     return render(request, "pages/staff/index.html", context)
 
 
 # ─── STAFF PROFILE DETAIL ─────────────────────────────────────────────────────
+
+# The lists a profile is opened from, and what their back link says. A
+# profile names its way back from ?from= or the referring page, so an officer
+# opened from My Team returns there rather than to a directory the lead's
+# sidebar no longer carries (Programme Lead alignment, 2026-09-13).
+PROFILE_BACK_LINKS = {
+    "/my-team": "My Team",
+    "/staff": "People Directory",
+    "/leave/tracker": "Leave Tracker",
+    "/team-planning-oversight/": "Team Oversight",
+    "/team-targets": "Team Targets",
+    "/performance-reviews": "Performance Reviews",
+    "/team/coaching": "Coaching",
+}
+
+
+def _profile_back_link(request) -> tuple[str, str]:
+    """(href, label) for the profile's back link: ?from=, then the referring
+    page, then the viewer's own list. Only known local lists are followed —
+    a crafted ?from= never leaves the page or lands somewhere unlabelled."""
+    from urllib.parse import urlparse
+
+    candidates = [request.GET.get("from") or ""]
+    referrer = request.META.get("HTTP_REFERER") or ""
+    if referrer:
+        parsed = urlparse(referrer)
+        if not parsed.netloc or parsed.netloc == request.get_host():
+            candidates.append(parsed.path)
+    for candidate in candidates:
+        path = urlparse(candidate.strip()).path if candidate else ""
+        if path and not urlparse(candidate.strip()).netloc:
+            for known, label in PROFILE_BACK_LINKS.items():
+                if path.rstrip("/") == known.rstrip("/"):
+                    return known, label
+    if getattr(request.user, "active_role", "") == "Program Lead":
+        return "/my-team", PROFILE_BACK_LINKS["/my-team"]
+    return "/staff", PROFILE_BACK_LINKS["/staff"]
+
+
+def _supervision_panel(request, member, profile) -> dict | None:
+    """The line manager's links for their own officer.
+
+    Offered only when the viewer is the Programme Lead this officer reports to
+    (apps.hr.team_roster.team_members, cover included); HR, the Country
+    Director and the RVP read the same profile without it. Every entry opens
+    the page where the action is taken — nothing is edited here. The facts
+    reuse the My Team roster's definitions so the two pages agree.
+    """
+    from urllib.parse import quote
+
+    from apps.hr import team_roster
+
+    if profile is None or getattr(request.user, "active_role", "") != "Program Lead":
+        return None
+    if not team_roster.is_team_member(request.user, profile.id):
+        return None
+    fy = get_operational_fy()
+    today = timezone.localdate()
+    review = team_roster._reviews([profile.id], fy).get(profile.id)
+    leave = team_roster._leave([profile.id], today)
+    last = team_roster._coaching(request.user, [profile.id]).get(profile.id)
+    return {
+        "facts": [
+            {
+                "heading": "Performance agreement",
+                **team_roster._review_cell(review, fy),
+            },
+            {"heading": "Last coaching", **team_roster._coaching_cell(last)},
+            {"heading": "Leave", **team_roster._leave_cell(leave, profile.id)},
+        ],
+        "conversation_url": f"/performance-conversation?staff={profile.id}",
+        "coaching_url": f"/team/coaching?cceo={profile.id}",
+        "targets_drawer_url": f"/team-targets/staff-drawer?staff={member.id}",
+        "leave_url": f"/leave/tracker?q={quote(member.name or '')}",
+    }
 
 
 @require_page_permission("staff")
@@ -323,8 +402,18 @@ def staff_profile_view(request, user_id):
     member = get_object_or_404(User, id=user_id, deleted_at__isnull=True)
     # "Never trust the URL" — the same rule the team-targets drawer already
     # applies. Holding the page permission is not authority over an arbitrary
-    # employee's 360 profile.
-    if not _directory_scope(request.user, User.objects.filter(id=member.id)).exists():
+    # employee's 360 profile. A Programme Lead covering an absent lead also
+    # reads that lead's officers while the cover lasts — My Team lists them.
+    in_reach = _directory_scope(
+        request.user, User.objects.filter(id=member.id)
+    ).exists()
+    if not in_reach and getattr(request.user, "active_role", "") == "Program Lead":
+        from apps.hr.team_roster import is_team_member
+
+        in_reach = is_team_member(
+            request.user, getattr(getattr(member, "staff_profile", None), "id", None)
+        )
+    if not in_reach:
         return render_access_denied(
             request, "You do not have access to this employee's profile."
         )
@@ -383,6 +472,7 @@ def staff_profile_view(request, user_id):
         account_owner_id__in=member_ids, deleted_at__isnull=True
     )
     staff_progress = get_ssa_progress_by_fy(assigned_schools)
+    back_href, back_label = _profile_back_link(request)
 
     context = {
         "member": member,
@@ -394,6 +484,9 @@ def staff_profile_view(request, user_id):
         "schools_covered": list(schools_covered)[:10],
         "initials": member.name[:2].upper() if member.name else "??",
         "staff_progress": staff_progress,
+        "back_href": back_href,
+        "back_label": back_label,
+        "supervision": _supervision_panel(request, member, profile),
     }
     return render(request, "pages/staff/detail.html", context)
 
@@ -530,8 +623,19 @@ def visits_log_view(request):
 
 @require_page_permission("my_plan")
 def trainings_log_view(request):
-    """All group training sessions for the current user."""
+    """All group training sessions for the current user.
+
+    Not the page a Programme Lead or a CCEO works trainings from (Programme
+    Lead alignment, 2026-09-13): the lead coordinates the team's training
+    rollout on Programme Rollout, and an officer's trainings sit on the My
+    Plan Trainings card. Both are sent there; everyone else keeps the log.
+    """
     user = request.user
+    role = getattr(user, "active_role", "")
+    if role == "Program Lead":
+        return redirect("/programme-rollout?view=trainings")
+    if role == "CCEO":
+        return redirect("/my-plan")
     status_filter = request.GET.get("status", "")
     search = request.GET.get("q", "").strip()
 
@@ -542,7 +646,9 @@ def trainings_log_view(request):
 
     trainings_qs = (
         Activity.objects.filter(
-            responsible_staff_id=user.id,
+            # Both id spaces: matching the User id alone disowned every
+            # training written with the StaffProfile id.
+            responsible_staff_id__in=owner_ids(user),
             activity_type__in=TRAINING_TYPES,
             deleted_at__isnull=True,
         )
@@ -858,104 +964,94 @@ def _build_core_tracker(user):
     return {"rows": rows[:12], "total": len(rows)}
 
 
-@require_page_permission("my_team")
-def my_team_view(request):
-    """Program Lead team overview — all CCEOs under the PL with their activity stats."""
-    from apps.accounts.models import StaffSupervisorAssignment
+# ─── MY TEAM ──────────────────────────────────────────────────────────────────
 
-    user = request.user
-    today = date.today()
+TEAM_METRIC_SOURCE = "apps.frontend.views.staff_views:_team_metric"
 
-    # Get the CCEOs supervised by this PL (StaffSupervisorAssignment is the
-    # "team lens" source of truth — see team_targets_view for the same pattern).
-    sp = getattr(user, "staff_profile", None)
-    supervisee_ids = (
-        list(
-            StaffSupervisorAssignment.objects.filter(supervisor=sp).values_list(
-                "supervisee_id", flat=True
-            )
-        )
-        if sp
-        else []
+
+def _team_metric(label: str, value, helper: str, tone: str = "info") -> dict:
+    """A My Team tile, through the reconciled registry
+    (apps/core/metrics/pl_team_metrics.py holds the definitions)."""
+    return render_precomputed_metric_for_source(
+        TEAM_METRIC_SOURCE, label, value, helper=helper, tone=tone
     )
-    cceos = User.objects.filter(
-        roles__contains=["CCEO"],
-        status="active",
-        deleted_at__isnull=True,
-        staff_profile__id__in=supervisee_ids,
-    ).order_by("name")
 
-    team_data = []
-    for cceo in cceos:
-        # Both id spaces — the directory list already counts this way
-        # (`_user_ids`), so matching on the User id alone here made the row and
-        # its own drill-down disagree, and read as underperformance.
-        cceo_ids = owner_ids(cceo)
-        completed = Activity.objects.filter(
-            responsible_staff_id__in=cceo_ids,
-            status__in=COMPLETED_WORK_STATUSES,
-            deleted_at__isnull=True,
-        ).count()
-        overdue = Activity.objects.filter(
-            responsible_staff_id__in=cceo_ids,
-            planned_date__lt=today,
-            status__in=["scheduled", "in_progress", "completion_started"],
-            deleted_at__isnull=True,
-        ).count()
-        evidence_gap = Activity.objects.filter(
-            responsible_staff_id__in=cceo_ids,
-            status__in=COMPLETED_WORK_STATUSES,
-            evidence__isnull=True,
-            deleted_at__isnull=True,
-        ).count()
-        team_data.append(
-            {
-                "id": cceo.id,
-                "name": cceo.name,
-                "email": cceo.email,
-                "initials": cceo.name[:2].upper() if cceo.name else "??",
-                "completed": completed,
-                "overdue": overdue,
-                "evidence_gap": evidence_gap,
-                "risk": "high" if overdue > 3 else "medium" if overdue > 0 else "low",
-            }
-        )
 
-    total_cceos = len(team_data)
-    with_overdue = sum(1 for m in team_data if m["overdue"] > 0)
-    all_caught_up = total_cceos - with_overdue
-
-    kpi_strip_items = [
-        render_precomputed_metric_item(
-            "frontend_views_staff_views_total_cceos",
-            str(total_cceos),
-            raw_value=total_cceos,
-            helper="On your team",
-            icon="users",
-            variant="primary",
+def _team_metrics(summary: dict) -> list[dict]:
+    team = summary["team_size"]
+    portfolio = summary["ssa_portfolio"]
+    coverage = (
+        f"{round(summary['ssa_assessed'] / portfolio * 100)}%" if portfolio else "—"
+    )
+    return [
+        _team_metric(
+            "Officers on My Team",
+            team,
+            "CCEOs you line-manage",
         ),
-        render_precomputed_metric_item(
-            "frontend_views_staff_views_with_overdue",
-            str(with_overdue),
-            raw_value=with_overdue,
-            helper="CCEOs",
-            icon="warning",
-            variant="danger" if with_overdue > 0 else "success",
+        _team_metric(
+            "Officers On Pace for FY Targets",
+            f"{summary['on_track']} of {team}" if team else "—",
+            "on track, complete or ahead for the year",
+            "success" if team and summary["on_track"] == team else "info",
         ),
-        render_precomputed_metric_item(
-            "frontend_views_staff_views_all_caught_up",
-            str(all_caught_up),
-            raw_value=all_caught_up,
-            helper="CCEOs",
-            icon="check",
-            variant="success",
+        _team_metric(
+            "Officers at Target Risk This Month",
+            summary["at_risk"],
+            "high risk or critical against this month's pace",
+            "danger" if summary["at_risk"] else "success",
+        ),
+        _team_metric(
+            "Team Handoffs Waiting on You",
+            summary["waiting_on_you"],
+            "completions, leave, development, escalations and extra work",
+            "warning" if summary["waiting_on_you"] else "success",
+        ),
+        _team_metric(
+            "Team Exceptions Needing Your Action",
+            summary["needs_action"],
+            "late decisions, missing agreements and uncovered leave",
+            "danger" if summary["needs_action"] else "success",
+        ),
+        _team_metric(
+            "Team Portfolio SSA Coverage This FY",
+            coverage,
+            f"{summary['ssa_assessed']} of {portfolio} schools confirmed"
+            if portfolio
+            else "no portfolio schools",
         ),
     ]
 
+
+@require_page_permission("my_team")
+def my_team_view(request):
+    """The Programme Lead's team home (owner, 2026-09-13).
+
+    "Line-management, supervision, leadership, and support to CCEOs": every
+    officer the lead manages on one row — delivery, targets, SSA coverage,
+    what waits on the lead, review stage, last coaching, leave, overdue
+    policies and risk — under the list of manager-owned exceptions that need
+    the lead now. The rows and the exceptions come from
+    apps.hr.team_roster.build_team_roster, which reads each source once for
+    the whole team. Supervision is read-only here: every link opens the page
+    where the action is taken.
+    """
+    from apps.core.fy import fy_options
+    from apps.hr.team_roster import build_team_roster
+
+    options = fy_options()
+    fy = (request.GET.get("fy") or "").strip()
+    if fy not in options:
+        fy = get_operational_fy()
+    roster = build_team_roster(request.user, fy)
+    summary = roster["summary"]
     context = {
-        "team": team_data,
-        "total": total_cceos,
-        "kpi_strip_items": kpi_strip_items,
+        "rows": roster["rows"],
+        "needs_action": roster["needs_action"],
+        "summary": summary,
+        "kpi_strip_items": _team_metrics(summary),
+        "fy": fy,
+        "fy_options": options,
     }
     return render(request, "pages/my_team/index.html", context)
 

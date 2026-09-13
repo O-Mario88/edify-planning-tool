@@ -204,8 +204,17 @@ def priority_configuration_page(request):
         "can_approve": has_permission(
             request.user, Permission.STRATEGIC_PRIORITIES_APPROVE.value
         ),
+        # Allocating on this page places an approved target with a country,
+        # team, employee or project: the distribution authority, which is
+        # strategicPriorities.allocate. milestones.allocate alone is the Program
+        # Lead's authority to divide their OWN team target on the My Team tab,
+        # so on its own it no longer offers this form (Program Lead alignment,
+        # 2026-09-13: Priority Setting is read-only for the lead).
         "can_allocate": has_permission(
             request.user, Permission.MILESTONES_ALLOCATE.value
+        )
+        and has_permission(
+            request.user, Permission.STRATEGIC_PRIORITIES_ALLOCATE.value
         ),
     }
     context["dashboard_tabs"] = priority_workspace_tabs(
@@ -244,8 +253,12 @@ def milestone_approve_action(request, milestone_id):
     return redirect("/strategic-priorities?fy=" + milestone.priority.fy)
 
 
+# Both permissions, like the form that posts here (see can_allocate above): a
+# Program Lead holds milestones.allocate for their own team distribution and
+# must not reach the country-wide allocation door with it.
 @require_POST
 @_permission(Permission.MILESTONES_ALLOCATE.value)
+@_permission(Permission.STRATEGIC_PRIORITIES_ALLOCATE.value)
 def milestone_allocate_action(request, milestone_id):
     milestone = get_object_or_404(PriorityMilestone, id=milestone_id)
     allocation = create_allocation(

@@ -14,8 +14,11 @@ every authenticated page.
 
 {% block shell_content %}
 <section class="hcos-workspace edify-page-canvas" aria-labelledby="hcos-title" data-mobile-family="performance"{% if workspace.key == "analytics" %} data-analytics-enterprise{% endif %}>
+  {% comment %}A Programme Lead's team register (team_view) sits in Team
+  Performance, not under Human Capital, and "HR overview" is not their page
+  (Program Lead alignment, 2026-09-13).{% endcomment %}
   <nav class="hcos-breadcrumbs" aria-label="Breadcrumb">
-    <a href="/dashboard">Human Capital</a>
+    {% if team_view %}<a href="/my-team">My Team</a>{% else %}<a href="/dashboard">Human Capital</a>{% endif %}
     <span aria-hidden="true">/</span>
     <span aria-current="page">{{ title }}</span>
   </nav>
@@ -42,7 +45,11 @@ every authenticated page.
         <span aria-hidden="true">→</span>
       </a>
       {% endif %}
+      {% if team_view %}
+      <a class="hcos-button hcos-button--secondary" href="/my-team">My Team</a>
+      {% else %}
       <a class="hcos-button hcos-button--secondary" href="/dashboard">HR overview</a>
+      {% endif %}
     </div>
   </header>
 

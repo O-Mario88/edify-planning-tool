@@ -1,0 +1,132 @@
+{% load kpi_metrics %}
+{% comment %}
+Team Professional Development — the Programme Lead's reading of the PD
+dashboard (Program Lead alignment, 2026-09-13), re-rendered by HTMX on filter
+change like HR's body.html. The lead supervises the officers' development:
+decide the requests waiting at the supervisor stage, then follow up the courses
+that stalled. HR's allocation settings, fund charts, notification schedule and
+sign-off snapshot stay on HR's page, and Sign Off is HR's alone.
+{% endcomment %}
+<div class="space-y-4">
+
+  {% include "components/context_metrics.html" with items=kpis variant="executive" title="Team development context" %}
+
+  {% include "partials/hr/pd_dashboard/supervisor_queue.html" with queue_always=True %}
+
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <div class="flex items-center justify-between pb-3 border-b edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Your team's requests</h2>
+      <span class="edify-text-caption text-slate-400 font-semibold">{{ tracker_total }} request{{ tracker_total|pluralize }}</span>
+    </div>
+    <div id="pd-tracker-wrap">
+      {% include "partials/hr/pd_dashboard/tracker_table.html" %}
+    </div>
+  </div>
+
+  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
+    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Follow up with your team</h2>
+    {% comment %}The follow-up queues of HR's Action Center, without HR's sign-off
+    queue. A reminder names the lead as its sender.{% endcomment %}
+    <div class="edify-metric-panel grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+      {% for g in action_center %}{% if g.key != "ready_signoff" %}
+      <div class="edify-metric" data-tone="{% if g.count %}warning{% else %}success{% endif %}">
+        {% kpi_strip %}{% kpi_metric %}{% kpi_label %}{{ g.label }}{% endkpi_label %}{{ g.count }}{% endkpi_metric %}{% endkpi_strip %}
+        {% if g.items %}
+        <div class="edify-metric__body space-y-1.5">
+          {% for it in g.items %}
+          <div class="flex items-center justify-between gap-1.5 edify-text-caption">
+            <div class="min-w-0">
+              <span class="block truncate font-bold edify-text">{{ it.staff_name }}</span>
+              <span class="block truncate text-slate-400">{{ it.course_name }}</span>
+              <span class="block truncate text-slate-500 edify-text-caption">{{ it.due_label }}</span>
+            </div>
+            <form method="post" action="/cpd-learning/action" class="shrink-0">
+              {% csrf_token %}
+              <input type="hidden" name="action" value="send_reminder">
+              <input type="hidden" name="request_id" value="{{ it.id }}">
+              <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}">
+              <button type="submit" class="px-2 py-1 rounded-control edify-text-caption font-extrabold whitespace-nowrap border hover:bg-slate-500/10 transition-colors edify-border edify-text">Send Reminder</button>
+            </form>
+          </div>
+          {% endfor %}
+        </div>
+        {% if g.count > 3 %}<p class="edify-metric__meta">+{{ g.count|add:"-3" }} more</p>{% endif %}
+        <form method="post" action="/cpd-learning/action" class="edify-metric__body pt-1">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="bulk_send_reminders">
+          <input type="hidden" name="bucket" value="{{ g.key }}">
+          <input type="hidden" name="fy" value="{{ fy }}"><input type="hidden" name="country" value="{{ country }}">
+          <button type="submit" class="edify-card-action rounded-control edify-text-caption font-extrabold border hover:bg-slate-500/10 transition-colors edify-border edify-text">Remind All ({{ g.count }})</button>
+        </form>
+        {% else %}
+        <p class="edify-metric__meta edify-metric__body">Nothing here right now.</p>
+        {% endif %}
+      </div>
+      {% endif %}{% endfor %}
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
+      <div class="flex items-center justify-between pb-3 border-b edify-border">
+        <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">Not yet applied</h2>
+        <span class="edify-text-caption text-slate-400 font-semibold">{{ not_applied_count }}</span>
+      </div>
+      {% if not_applied %}
+      <div class="divide-y edify-border">
+        {% for p in not_applied %}
+        <div class="py-2">
+          <span class="block edify-text-caption font-bold edify-text">{{ p.name }}</span>
+          <span class="edify-text-caption text-slate-400">Allocation {{ p.allocation }}</span>
+        </div>
+        {% endfor %}
+        {% if not_applied_count > not_applied|length %}
+        <p class="edify-text-caption text-slate-400 font-semibold pt-2">Showing {{ not_applied|length }} of {{ not_applied_count }}.</p>
+        {% endif %}
+      </div>
+      {% else %}
+      <p class="edify-text-caption text-slate-400 font-semibold py-4 text-center">Everyone on your team has applied for FY {{ fy }} Professional Development.</p>
+      {% endif %}
+    </div>
+
+    <div class="rounded-surface border p-5 space-y-3 edify-surface edify-border">
+      <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Upcoming &amp; overdue courses</h2>
+      <div class="space-y-4">
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="edify-text-caption font-extrabold uppercase text-slate-400">Starting in 30 days</span>
+            <span class="edify-text-caption font-black edify-primary-text">{{ upcoming_30d_count }}</span>
+          </div>
+          {% for r in upcoming_30d %}
+          <div class="edify-text-caption"><span class="font-bold edify-text">{{ r.staff_name }}</span> · <span class="text-slate-400">{{ r.course_name }} · starts {{ r.start_date|date:"d M" }}</span></div>
+          {% empty %}
+          <p class="edify-text-caption text-slate-400 font-semibold">Nothing starting soon.</p>
+          {% endfor %}
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="edify-text-caption font-extrabold uppercase text-rose-500">Ended, no certificate</span>
+            <span class="edify-text-caption font-black text-rose-500">{{ overdue_no_cert_count }}</span>
+          </div>
+          {% for r in overdue_no_cert %}
+          <div class="edify-text-caption"><span class="font-bold edify-text">{{ r.staff_name }}</span> · <span class="text-slate-400">{{ r.course_name }} · ended {{ r.end_date|date:"d M" }}</span></div>
+          {% empty %}
+          <p class="edify-text-caption text-slate-400 font-semibold">Nothing overdue.</p>
+          {% endfor %}
+        </div>
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="edify-text-caption font-extrabold uppercase text-rose-500">Accountability overdue</span>
+            <span class="edify-text-caption font-black text-rose-400">{{ overdue_accountability_count }}</span>
+          </div>
+          {% for r in overdue_accountability %}
+          <div class="edify-text-caption"><span class="font-bold edify-text">{{ r.staff_name }}</span> · <span class="text-slate-400">{{ r.course_name }}</span></div>
+          {% empty %}
+          <p class="edify-text-caption text-slate-400 font-semibold">Nothing overdue.</p>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

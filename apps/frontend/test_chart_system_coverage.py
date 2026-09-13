@@ -28,7 +28,9 @@ CONVERTED = {
     "templates/partials/ssa/performance_workspace.html": "EdifyChartSystem.formBase(",
     "templates/partials/analytics/panels/reports.html": "EdifyChartSystem.comparisonBar()",
     "templates/partials/analytics/cd/budget_finance.html": "EdifyChartSystem.gauge(",
-    "templates/partials/dashboards/pl/funding_execution.html": "EdifyChartSystem.gauge(",
+    # The Program Lead's funding gauge left the dashboard with Funding &
+    # Execution (2026-09-13); its execution chart is the shared mixed trend.
+    "templates/partials/dashboards/pl/programmes_view.html": "EdifyChartSystem.mixedTrend(",
     "templates/pages/partners/index.html": "EdifyChartSystem.donut(",
 }
 

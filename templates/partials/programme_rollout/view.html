@@ -1,0 +1,18 @@
+{% comment %}
+The active Programme Rollout tab (apps/frontend/views/programme_rollout_views.py).
+Its KPI panel belongs to the tab, so a tab click brings its own figures; a tab
+swap also moves the filter bar's hidden view and Reset link out of band, so
+Apply keeps the tab the reader is on.
+{% endcomment %}
+{% if dashboard_tabs_inner %}<input type="hidden" id="rollout-filter-view" name="view" value="{{ view }}" hx-swap-oob="outerHTML">
+<a id="rollout-filter-reset" href="/programme-rollout?view={{ view }}" class="btn btn-secondary h-9" hx-swap-oob="outerHTML">Reset</a>{% endif %}
+<div class="space-y-4" data-rollout-view="{{ view }}">
+  {% include "components/context_metrics.html" with items=metrics variant="executive" title="Rollout at a glance" subtitle="FY "|add:fy %}
+  {% if view == "ssa" %}
+  {% include "partials/programme_rollout/ssa.html" %}
+  {% elif view == "spiritual" %}
+  {% include "partials/programme_rollout/spiritual.html" %}
+  {% else %}
+  {% include "partials/programme_rollout/trainings.html" %}
+  {% endif %}
+</div>

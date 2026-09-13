@@ -675,10 +675,27 @@ def _get_for_execution(activity_id: str, principal) -> Activity:
     return a
 
 
-def _serialize(a: Activity) -> dict:
+def _serialize(a: Activity, *, owner_name: str | None = None) -> dict:
+    """The API shape of one activity.
+
+    `activityTypeLabel`, `clusterName` and `ownerName` exist so a queue built
+    from these rows can name the work, the place and the person (the review
+    To-Do read the first two and always fell back to "Activity at the field").
+    None of the three may cost a query per row, because list endpoints
+    serialise pages of activities: the cluster's name is read only when the
+    caller already joined it (`select_related("cluster")`), and the owner's
+    name only when the caller resolved names in bulk and passed one in.
+    """
     return {
         "id": a.id,
         "activityType": a.activity_type,
+        "activityTypeLabel": a.get_activity_type_display(),
+        "clusterName": (
+            a.cluster.name
+            if a.cluster_id and Activity.cluster.is_cached(a) and a.cluster
+            else None
+        ),
+        "ownerName": owner_name,
         "catalogueItemId": a.catalogue_item_id,
         "trainingCourseId": a.training_course_id,
         "pairedSchoolVisitId": a.paired_school_visit_id,

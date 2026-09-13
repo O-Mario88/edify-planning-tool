@@ -16,6 +16,7 @@ from django.http import (
     HttpResponseForbidden,
 )
 from django.shortcuts import redirect, render
+from django.views.decorators.http import require_POST
 
 from apps.core.redirects import local_redirect
 from apps.accounts.models import Leave, StaffProfile
@@ -109,6 +110,20 @@ def _profile_scope(request):
     return scope_profiles(profiles, people_reach(request.user))
 
 
+def _hr_today_action(request):
+    """The "HR Today" header button, for viewers who may open HR Today.
+
+    Offered unconditionally, it sent anyone who reached these registers
+    without HR Today access (the Programme Lead lost it on 2026-09-13) to a
+    refusal.
+    """
+    from apps.core.permissions import RolePermissionService
+
+    if RolePermissionService.can_view_page(request.user, "hr_today"):
+        return {"label": "HR Today", "href": "/hr-today"}
+    return None
+
+
 def _search_profiles(profiles, query: str):
     if not query:
         return profiles
@@ -134,13 +149,16 @@ def _render_workspace(
     header_actions=None,
     eyebrow="Human Capital Operations",
     notice=None,
+    team_view=False,
 ):
     """Render an HR programme register.
 
     `header_actions` are drawer buttons for creating a record
     ({"label", "drawer"}); a row may carry its own `actions` the same way.
     Rules, permissions and audit stay in the services the drawers call
-    (apps/frontend/views/hr_programme_views.py).
+    (apps/frontend/views/hr_programme_views.py). `team_view` marks a
+    Programme Lead's team register, which sits in Team Performance rather
+    than under Human Capital.
     """
     paginator = Paginator(rows, 25)
     page = paginator.get_page(request.GET.get("page") or 1)
@@ -158,6 +176,7 @@ def _render_workspace(
         "empty_title": empty_title,
         "empty_body": empty_body,
         "search": (request.GET.get("q") or "").strip(),
+        "team_view": team_view,
     }
     return render(request, "pages/hr/module_workspace.html", context)
 
@@ -675,13 +694,22 @@ def cpd_learning_view(request):
         context = HRPDDashboardService.get_dashboard(request.user, params)
     except ValueError:
         return HttpResponseBadRequest("Invalid filter value.")
+    # A Programme Lead reads the page as their team's development: the
+    # requests waiting on them first, then the courses to follow up. HR's
+    # allocation settings, fund charts and sign-off snapshot are HR's work
+    # (Program Lead alignment, 2026-09-13).
+    context["pd_body_template"] = (
+        "partials/hr/pd_dashboard/team_body.html"
+        if context.get("team_view")
+        else "partials/hr/pd_dashboard/body.html"
+    )
     if (
         request.headers.get("HX-Request") == "true"
         and request.GET.get("partial") == "tracker"
     ):
         return render(request, "partials/hr/pd_dashboard/tracker_table.html", context)
     if request.headers.get("HX-Request") == "true":
-        return render(request, "partials/hr/pd_dashboard/body.html", context)
+        return render(request, context["pd_body_template"], context)
     context["topbar_search"] = {
         "placeholder": "Search PD requests…",
         "name": "q",
@@ -764,9 +792,103 @@ def pd_dashboard_adjust_allocation_view(request):
     return local_redirect(f"/cpd-learning?fy={fy}&country={country}")
 
 
+_REMINDER_SENDER = {
+    "HumanResources": "HR",
+    "Program Lead": "your Programme Lead",
+    "CountryDirector": "your Country Director",
+    "RegionalVicePresident": "your Regional Vice President",
+    "Admin": "a platform administrator",
+}
+
+
+def _reminder_sender(request) -> str:
+    """Who a PD reminder says it is from. Every reminder read "Reminder from
+    HR", including the ones a Programme Lead sent their own officers."""
+    return _REMINDER_SENDER.get(getattr(request.user, "active_role", ""), "HR")
+
+
+def _scoped_pd_request(request, request_id):
+    """A PD request inside the viewer's Professional Development scope, or None.
+
+    The single "Send Reminder" looked the request up by id alone, so anyone
+    with the page could post any id and notify any requester in any country
+    under HR's name (Program Lead alignment, 2026-09-13). The bulk reminder
+    already used this scope; the single one now does too.
+    """
+    from apps.professional_development.hr_dashboard_service import _scoped_staff_ids
+    from apps.professional_development.models import ProfessionalDevelopmentRequest
+
+    if not request_id:
+        return None
+    scoped_ids, locked_country = _scoped_staff_ids(request.user)
+    requests = ProfessionalDevelopmentRequest.objects.filter(id=request_id)
+    if scoped_ids is not None:
+        requests = requests.filter(staff_id__in=scoped_ids)
+    if locked_country:
+        requests = requests.filter(country=locked_country)
+    return requests.first()
+
+
+@require_page_permission("cpd_learning")
+def pd_supervisor_return_drawer(request):
+    """The Return drawer for a team request waiting at the supervisor stage."""
+    from apps.frontend.views.hr_programme_views import _drawer, _field
+    from apps.professional_development.approval_service import (
+        PDApprovalRoutingService,
+    )
+    from apps.professional_development.models import (
+        PDStatus,
+        ProfessionalDevelopmentRequest,
+    )
+
+    req = (
+        ProfessionalDevelopmentRequest.objects.filter(
+            id=request.GET.get("request_id") or "",
+            status=PDStatus.SUBMITTED_TO_SUPERVISOR,
+        )
+        .only("id", "staff_id", "status", "staff_name", "course_name", "fy")
+        .first()
+    )
+    if req is None or not PDApprovalRoutingService.can_review(req, request.user):
+        return _drawer(
+            request,
+            title="Return a development request",
+            subtitle="Nothing to return",
+            empty=(
+                "This request is not waiting for your approval. It may already "
+                "have been decided, or it is routed to someone else."
+            ),
+        )
+    return _drawer(
+        request,
+        title=f"Return {req.staff_name}'s request",
+        subtitle=f"{req.course_name} · FY {req.fy}",
+        action="/cpd-learning/action",
+        submit="Return to the officer",
+        note=(
+            "The request goes back to the officer with your reason. They can "
+            "correct it and submit again."
+        ),
+        fields=[
+            _field("action", "", type="hidden", value="supervisor_return"),
+            _field("request_id", "", type="hidden", value=req.id),
+            _field(
+                "reason",
+                "Why it is returned",
+                type="textarea",
+                required=True,
+                rows=4,
+                maxlength=512,
+                placeholder="What needs to change before you can approve it",
+            ),
+        ],
+    )
+
+
 @require_page_permission("cpd_learning")
 def pd_dashboard_action_view(request):
-    """send_reminder / sign_off dispatched from the HR Action Center."""
+    """send_reminder / sign_off dispatched from the HR Action Center, and a
+    supervisor's approve / return from the team's approval list."""
     from apps.core.exceptions import BadRequest, Forbidden
 
     if request.method != "POST":
@@ -779,8 +901,46 @@ def pd_dashboard_action_view(request):
                 PDCourseTrackingService,
             )
 
+            # Closing a course releases money; the page offers it to HR alone
+            # and the service refuses anyone else, so say so plainly here.
+            if not _require_hr(request):
+                raise Forbidden("Only HR signs off a completed course.")
             PDCourseTrackingService.sign_off(request_id, request.user)
             messages.success(request, "Course signed off and closed.")
+        elif action in ("supervisor_approve", "supervisor_return"):
+            # The approval services decide: only the configured supervisor or
+            # their active cover, never for their own request, and a return
+            # needs its reason. The page only routes the decision.
+            from apps.professional_development.approval_service import (
+                PDApprovalRoutingService,
+            )
+            from apps.professional_development.models import (
+                ProfessionalDevelopmentRequest,
+            )
+
+            if not ProfessionalDevelopmentRequest.objects.filter(
+                id=request_id or ""
+            ).exists():
+                raise BadRequest("That development request no longer exists.")
+            if action == "supervisor_approve":
+                req = PDApprovalRoutingService.supervisor_approve(
+                    request_id, request.user
+                )
+                messages.success(
+                    request,
+                    f"{req.staff_name}'s request for “{req.course_name}” is "
+                    "approved and sent to HR.",
+                )
+            else:
+                req = PDApprovalRoutingService.supervisor_return(
+                    request_id,
+                    request.user,
+                    (request.POST.get("reason") or "").strip(),
+                )
+                messages.success(
+                    request,
+                    f"{req.staff_name}'s request was returned with your reason.",
+                )
         elif action in ("send_apply_reminder", "bulk_apply_reminders"):
             # Chasing people who never applied is HR's job, and the bulk set
             # is recomputed server-side from the same definition the panel
@@ -842,17 +1002,17 @@ def pd_dashboard_action_view(request):
             from apps.professional_development.approval_service import (
                 PDApprovalRoutingService,
             )
-            from apps.professional_development.models import (
-                ProfessionalDevelopmentRequest,
-            )
 
-            req = ProfessionalDevelopmentRequest.objects.filter(id=request_id).first()
+            req = _scoped_pd_request(request, request_id)
             if not req or not req.owner_user_id:
                 raise BadRequest("Request not found.")
+            sender = _reminder_sender(request)
             PDApprovalRoutingService._notify(
                 req.owner_user_id,
-                "Reminder from HR",
-                f"HR sent you a reminder about “{req.course_name}” — check My Professional Development for what's due.",
+                f"Reminder from {sender}",
+                f"{request.user.name} ({sender}) sent you a reminder about "
+                f"“{req.course_name}” — check My Professional Development for "
+                "what's due.",
                 req,
             )
             messages.success(request, f"Reminder sent to {req.staff_name}.")
@@ -909,12 +1069,15 @@ def pd_dashboard_action_view(request):
                 due_qs = due_qs.filter(country=reminder_country)
 
             sent = 0
+            sender = _reminder_sender(request)
             for req in due_qs:
                 if req.owner_user_id:
                     PDApprovalRoutingService._notify(
                         req.owner_user_id,
-                        "Reminder from HR",
-                        f"HR sent you a reminder about “{req.course_name}” — check My Professional Development.",
+                        f"Reminder from {sender}",
+                        f"{request.user.name} ({sender}) sent you a reminder "
+                        f"about “{req.course_name}” — check My Professional "
+                        "Development.",
                         req,
                     )
                     sent += 1
@@ -1002,6 +1165,9 @@ def performance_reviews_view(request):
     from apps.core.fy import get_operational_fy
     from apps.hr.models import PerformanceRating, ReviewStage
 
+    if getattr(request.user, "active_role", "") == "Program Lead":
+        return _team_performance_reviews(request)
+    is_hr = _require_hr(request)
     fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
@@ -1034,36 +1200,39 @@ def performance_reviews_view(request):
         overdue = (
             review.stage not in done and review.due_date and review.due_date < today
         )
-        rows.append(
-            {
-                "cells": [
-                    _cell("Team member", review.staff.user.name, primary=True),
-                    _cell(
-                        "Review",
-                        f"{review.get_review_type_display()} · {review.period}",
-                    ),
-                    _cell(
-                        "Manager",
-                        review.manager.user.name
-                        if review.manager_id and review.manager.user_id
-                        else "Not recorded",
-                    ),
-                    _cell("Due", review.due_date),
-                    _cell(
-                        "Manager rating",
-                        ratings.get(review.manager_rating or "", review.manager_rating),
-                    ),
-                    _cell(
-                        "Final rating", ratings.get(review.rating or "", review.rating)
-                    ),
-                    _cell(
-                        "Stage",
-                        "Overdue" if overdue else review.get_stage_display(),
-                        status=True,
-                    ),
-                ]
-            }
-        )
+        cells = [
+            _cell("Team member", review.staff.user.name, primary=True),
+            _cell(
+                "Review",
+                f"{review.get_review_type_display()} · {review.period}",
+            ),
+            _cell(
+                "Manager",
+                review.manager.user.name
+                if review.manager_id and review.manager.user_id
+                else "Not recorded",
+            ),
+            _cell("Due", review.due_date),
+        ]
+        # The review-level manager rating is written only by HR's legacy
+        # assessment path, so outside HR the column was always blank (Program
+        # Lead alignment, 2026-09-13). HR's register keeps it.
+        if is_hr:
+            cells.append(
+                _cell(
+                    "Manager rating",
+                    ratings.get(review.manager_rating or "", review.manager_rating),
+                )
+            )
+        cells += [
+            _cell("Final rating", ratings.get(review.rating or "", review.rating)),
+            _cell(
+                "Stage",
+                "Overdue" if overdue else review.get_stage_display(),
+                status=True,
+            ),
+        ]
+        rows.append({"cells": cells})
     return _render_workspace(
         request,
         title="Performance Reviews",
@@ -1095,11 +1264,142 @@ def performance_reviews_view(request):
             ),
         ],
         rows=rows,
+        # The performance console is HR's; everyone else was offered a button
+        # that refused them.
         primary_action={
             "label": "Open Performance Cycle",
             "href": f"/hr/performance-cycle?fy={fy}",
-        },
+        }
+        if is_hr
+        else None,
         empty_title="No performance reviews in this scope",
+    )
+
+
+def _team_performance_reviews(request):
+    """Performance Reviews for a Programme Lead: the officers they review.
+
+    The lead participates in the performance reviews of the CCEOs assigned to
+    them (the role description, owner 2026-09-13). The register they were
+    given was HR's country list with HR's columns: a stale `review.manager`
+    written once when the cycle opened, a review-level manager rating nothing
+    outside HR ever wrote, and a button to a console that refused them. This
+    is the reviewer's view instead: one row per person the lead reviews
+    (`review_authority.reviewees_of`, never themself), where their agreement
+    stands, the window HR has open, what is saved in that window's
+    conversation, who the rule says reviews them, and a link into it. Rows
+    are apps.hr.performance_engine.team_review_rows, which the reviewer
+    To-Dos read too.
+    """
+    from apps.hr.performance_engine import REVIEW_DONE_STAGES, team_review_rows
+
+    fy = _requested_fy(request)
+    query = (request.GET.get("q") or "").strip().casefold()
+    today = date.today()
+    team = team_review_rows(request.user, fy=fy, today=today)
+    window_open = bool(team and team[0]["window"] not in ("", "none"))
+
+    rows = []
+    for row in team:
+        if query and query not in row["name"].casefold():
+            continue
+        review = row["review"]
+        reviewer = row["reviewer"]
+        if not review:
+            columns, reflection, signed = "—", "—", "—"
+        else:
+            columns = f"{row['manager_saved']} of {row['priorities']}"
+            reflection = "Saved" if row["reflection_saved"] else "Not yet"
+            if row["signed_off_at"]:
+                signed = f"{row['signed_off_at']:%-d %b %Y}"
+            elif not window_open:
+                signed = "No window open"
+            elif not row["snapshot"]:
+                # Agreed after HR froze this window's figures: there is no
+                # record for this window to sign.
+                signed = "Not in this window"
+            else:
+                signed = "Not yet"
+        stage = row["stage_label"] if review else "No agreement"
+        if row["overdue_reviews"]:
+            stage = "Overdue"
+        rows.append(
+            {
+                "cells": [
+                    _cell("CCEO", row["name"], primary=True),
+                    _cell("Agreement", stage, status=True),
+                    _cell(
+                        "Open window",
+                        row["window_label"][:1].upper() + row["window_label"][1:]
+                        if window_open
+                        else "None open",
+                    ),
+                    _cell("Manager columns", columns),
+                    _cell("Reflection", reflection),
+                    _cell("Signed off", signed),
+                    _cell(
+                        "Reviewer",
+                        reviewer.user.name
+                        if reviewer is not None and reviewer.user_id
+                        else "No reviewer recorded",
+                    ),
+                ],
+                "actions": [
+                    {
+                        "label": "Open conversation",
+                        "href": f"/performance-conversation?staff={row['profile'].id}",
+                    }
+                ],
+            }
+        )
+
+    waiting = sum(1 for row in team if row["agreement_waiting"] or row["hold_needed"])
+    overdue = sum(1 for row in team if row["overdue_reviews"])
+    completed = sum(
+        1 for row in team if row["review"] and row["review"].stage in REVIEW_DONE_STAGES
+    )
+    notice = None
+    if team and not window_open:
+        notice = {
+            "tone": "info",
+            "text": (
+                "No conversation window is open. HR opens each quarter's "
+                "window; until then the conversations are read-only."
+            ),
+        }
+    return _render_workspace(
+        request,
+        title="Performance Reviews",
+        eyebrow="Team performance",
+        description=(
+            f"FY {fy}: the officers you review — where each agreement stands, "
+            "what is saved in the open window's conversation, and what is left "
+            "before you sign it off."
+        ),
+        # The lead's own tiles (apps/core/metrics/hr_programme_metrics.py):
+        # HR's "People" and "Manager pending" count HR's country register.
+        metrics=[
+            _metric("Officers you review", len(team), "on your team this FY"),
+            _metric(
+                "Waiting on you as reviewer",
+                waiting,
+                "priorities to agree or conversations to hold",
+                "warning",
+            ),
+            _metric("Reviews past due", overdue, "past the review due date", "danger"),
+            _metric(
+                "Agreements completed", completed, "acknowledged or archived", "success"
+            ),
+        ],
+        rows=rows,
+        primary_action=None,
+        notice=notice,
+        team_view=True,
+        empty_title="Nobody to review",
+        empty_body=(
+            "The officers you supervise appear here once they are assigned to "
+            "you as their reporting manager."
+        ),
     )
 
 
@@ -1116,7 +1416,23 @@ def recovery_plans_view(request):
 
     from apps.hr.models import RecoveryStatus
 
-    visible_ids = _profile_scope(request).values("id")
+    is_hr = _require_hr(request)
+    team_view = getattr(request.user, "active_role", "") == "Program Lead"
+    if team_view:
+        # A Programme Lead's reach includes their own People record, so a
+        # draft plan recommended ABOUT the lead — which HR has not yet
+        # authorised or shared — listed on their own team register. The lead
+        # follows the plans of the people they review (Program Lead
+        # alignment, 2026-09-13).
+        from apps.hr.review_authority import reviewees_of
+
+        visible_ids = (
+            reviewees_of(request.user)
+            .exclude(id=getattr(request.user, "staff_profile_id", None))
+            .values("id")
+        )
+    else:
+        visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
     plans = PerformanceImprovementPlan.objects.filter(
         staff_id__in=visible_ids
@@ -1198,8 +1514,17 @@ def recovery_plans_view(request):
         primary_action={
             "label": "Open Performance Cycle",
             "href": "/hr/performance-cycle",
-        },
+        }
+        if is_hr
+        else None,
+        team_view=team_view,
         empty_title="No recovery plans in this scope",
+        empty_body=(
+            "A plan you recommend for someone you review appears here while HR "
+            "authorises it, and stays while you record its check-ins."
+            if team_view
+            else "New records will appear here as the connected workflow progresses."
+        ),
     )
 
 
@@ -1403,7 +1728,7 @@ def employee_relations_view(request):
         ],
         rows=rows,
         header_actions=[{"label": "Open a case", "drawer": "/employee-relations/new"}],
-        primary_action={"label": "HR Today", "href": "/hr-today"},
+        primary_action=_hr_today_action(request),
         empty_title="No employee-relations cases",
         empty_body=(
             "No case you may see is open. Open a case to record a disciplinary "
@@ -1661,7 +1986,7 @@ def health_safety_view(request):
         header_actions=[
             {"label": "Report an incident", "drawer": "/health-safety/new"}
         ],
-        primary_action={"label": "HR Today", "href": "/hr-today"},
+        primary_action=_hr_today_action(request),
         empty_title="No incidents recorded",
         empty_body=(
             "Report injuries, road traffic incidents, near misses and hazards so "
@@ -2473,7 +2798,7 @@ def hr_audit_log_view(request):
         rows=rows,
         # System Health is Admin-only; the button refused HR (HR audit,
         # 2026-09-12).
-        primary_action={"label": "HR Today", "href": "/hr-today"},
+        primary_action=_hr_today_action(request),
         empty_title="No HR audit events recorded yet",
     )
 
@@ -2612,10 +2937,16 @@ def _resolve_conversation(request):
     caps is the set of channels this viewer may write: any of 'employee',
     'manager', 'functional', 'hr'. Raises PermissionDenied-style responses via
     the caller when the viewer has no relationship at all.
+
+    'manager' is the reviewer the reporting rule names, or their active cover
+    (apps.hr.review_authority.is_reviewer_of). Any supervisor link used to
+    grant it — including the oversight rows the model documents as not the
+    reporting line — while the engine refused the save, so the form offered
+    a column its owner could not write (Program Lead alignment, 2026-09-13).
     """
-    from apps.accounts.models import StaffSupervisorAssignment
     from apps.core.fy import get_operational_fy
     from apps.hr.models import PerformanceReview
+    from apps.hr.review_authority import is_reviewer_of
 
     viewer_sp = getattr(request.user, "staff_profile", None)
     staff_param = (request.GET.get("staff") or request.POST.get("staff") or "").strip()
@@ -2634,6 +2965,16 @@ def _resolve_conversation(request):
             .select_related("user")
             .first()
         )
+        if target is None and viewer_sp:
+            # Someone covering an absent reviewer holds the review for the
+            # cover's window, although the people are not in their own reach.
+            candidate = (
+                StaffProfile.objects.filter(id=staff_param)
+                .select_related("user")
+                .first()
+            )
+            if candidate is not None and is_reviewer_of(candidate, request.user):
+                target = candidate
     else:
         target = viewer_sp
     if target is None:
@@ -2642,12 +2983,7 @@ def _resolve_conversation(request):
     caps: set[str] = set()
     if viewer_sp and target.id == viewer_sp.id:
         caps.add("employee")
-    if (
-        viewer_sp
-        and StaffSupervisorAssignment.objects.filter(
-            supervisee=target, supervisor=viewer_sp
-        ).exists()
-    ):
+    if viewer_sp and target.id != viewer_sp.id and is_reviewer_of(target, request.user):
         caps.add("manager")
     fy = get_operational_fy()
     review = PerformanceReview.objects.filter(
@@ -2730,6 +3066,22 @@ def performance_conversation_view(request):
         contract = snapshot_contract(snap.data)
 
     signed = bool(snap and snap.signed_off_at)
+    # What the reviewer needs to act on without leaving the page: priorities
+    # the employee submitted for agreement (open in any window), and whether
+    # the employee has spoken in this window yet — the reviewer's sign-off
+    # waits for it (Program Lead alignment, 2026-09-13).
+    agreement_waiting = bool(
+        review and "manager" in caps and review.stage == "priorities_manager_review"
+    )
+    reflection_saved = True
+    if review and snap and "manager" in caps and "employee" not in caps:
+        from apps.hr.performance_engine import conversation_progress
+
+        reflection_saved = (
+            conversation_progress([review], window)
+            .get(review.id, {})
+            .get("reflection_saved", False)
+        )
     context = {
         "distributed": contract,
         "review": review,
@@ -2747,8 +3099,50 @@ def performance_conversation_view(request):
         "snapshot": snap,
         "signed": signed,
         "staff_param": target.id if "employee" not in caps else "",
+        "agreement_waiting": agreement_waiting,
+        "priorities_to_agree": list(review.priorities.order_by("sequence"))
+        if agreement_waiting
+        else [],
+        "reflection_saved": reflection_saved,
+        "back_to_reviews": "manager" in caps
+        and getattr(request.user, "active_role", "") == "Program Lead",
     }
     return render(request, "pages/hr/performance_conversation.html", context)
+
+
+@require_page_permission("performance_conversations")
+@require_POST
+def performance_agree_priorities_view(request, review_id):
+    """The reviewer agrees the priorities an employee submitted.
+
+    `performance_service.agree_priorities` held the rule — the reviewer or
+    HR, never the employee, only while the priorities wait on the manager —
+    and no screen called it, so a submitted agreement waited on a manager who
+    had no way to agree it (Program Lead alignment, 2026-09-13). Refusals are
+    the service's words.
+    """
+    from apps.core.exceptions import BadRequest, Forbidden
+    from apps.hr.models import PerformanceReview
+    from apps.hr.performance_service import agree_priorities
+
+    review = (
+        PerformanceReview.objects.filter(id=review_id)
+        .select_related("staff__user")
+        .first()
+    )
+    if review is None:
+        return HttpResponseBadRequest("Unknown review.")
+    try:
+        agree_priorities(
+            review.id, request.user, note=(request.POST.get("note") or "").strip()
+        )
+    except Forbidden as exc:
+        return HttpResponseForbidden(escape(str(exc)))
+    except BadRequest as exc:
+        messages.error(request, str(exc))
+    else:
+        messages.success(request, f"{review.staff.user.name}'s priorities are agreed.")
+    return redirect(f"/performance-conversation?staff={review.staff_id}")
 
 
 def _conversation_redirect(request, target_id, caps):
@@ -2869,17 +3263,13 @@ def performance_signoff_view(request, review_id):
     window = request.POST.get("window", "")
     # Authorize against THIS review's employee — sign_off is a lock with no
     # engine-level relationship check, so a stranger must not reach it by
-    # posting an arbitrary review id. Only the employee, their manager or HR.
-    from apps.accounts.models import StaffSupervisorAssignment
+    # posting an arbitrary review id. Only the employee, their reviewer (the
+    # reporting rule's, not any supervisor link) or HR. The engine refuses
+    # the reviewer until the employee's reflection for the window is saved.
+    from apps.hr.review_authority import is_reviewer_of
 
-    viewer_sp = getattr(request.user, "staff_profile", None)
     is_employee = review.staff.user_id == request.user.id
-    is_manager = (
-        bool(viewer_sp)
-        and StaffSupervisorAssignment.objects.filter(
-            supervisee=review.staff, supervisor=viewer_sp
-        ).exists()
-    )
+    is_manager = not is_employee and is_reviewer_of(review.staff, request.user)
     is_hr = getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
     if not (is_employee or is_manager or is_hr):
         return HttpResponseForbidden("You cannot sign this conversation off.")
@@ -3149,18 +3539,13 @@ def performance_document_view(request, review_id, window):
         return HttpResponseBadRequest("Unknown review.")
 
     # Access is decided against THIS review's employee, not the viewer's own
-    # ambient conversation: relationship (employee / manager / functional / HR)
-    # OR leadership scope grants read; otherwise deny.
-    from apps.accounts.models import StaffSupervisorAssignment
+    # ambient conversation: relationship (employee / reviewer / functional /
+    # HR) OR leadership scope grants read; otherwise deny. The reviewer is the
+    # reporting rule's (apps.hr.review_authority), including active cover.
+    from apps.hr.review_authority import is_reviewer_of
 
-    viewer_sp = getattr(request.user, "staff_profile", None)
     is_employee = review.staff.user_id == request.user.id
-    is_manager = (
-        bool(viewer_sp)
-        and StaffSupervisorAssignment.objects.filter(
-            supervisee=review.staff, supervisor=viewer_sp
-        ).exists()
-    )
+    is_manager = not is_employee and is_reviewer_of(review.staff, request.user)
     is_functional = review.functional_manager_id == request.user.id
     is_hr = getattr(request.user, "active_role", "") in ("HumanResources", "Admin")
     in_scope = _profile_scope(request).filter(id=review.staff_id).exists()

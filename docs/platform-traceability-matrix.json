@@ -463,6 +463,7 @@
         "apps/frontend/views/budget_views.py",
         "apps/frontend/views/closure_views.py",
         "apps/frontend/views/finance_views.py",
+        "apps/frontend/views/hr_programme_views.py",
         "apps/frontend/views/ia_views.py",
         "apps/frontend/views/my_plan_views.py",
         "apps/frontend/views/planning_views.py",
@@ -553,6 +554,7 @@
         "ia_review_workspace",
         "monthly_request",
         "my_plan",
+        "pl_review_queue",
         "planning",
         "reports",
         "weekly_fund_request_disburse"
@@ -1944,6 +1946,7 @@
       "objectGuards": [],
       "notifications": [
         "activity_submitted_for_review",
+        "performance_window_opened",
         "weekly_fund_request_approved",
         "weekly_fund_request_disbursed",
         "weekly_fund_request_ready",
@@ -1964,6 +1967,7 @@
         "hr.strategic_priority_published",
         "hr.targets_synced_from_agreement",
         "notification.activity_submitted_for_review",
+        "notification.performance_window_opened",
         "notification.weekly_fund_request_approved",
         "notification.weekly_fund_request_disbursed",
         "notification.weekly_fund_request_ready",
@@ -2265,6 +2269,7 @@
         "apps/hr/accountability_cache.py",
         "apps/hr/performance_engine.py",
         "apps/hr/reach.py",
+        "apps/hr/review_authority.py",
         "apps/messaging/services.py",
         "apps/professional_development/services.py",
         "apps/targets/apps.py",
@@ -2352,6 +2357,7 @@
         "frontend_views_hr_views_triage",
         "frontend_views_hr_views_vacancies",
         "hr_programme_acknowledgement_rate",
+        "hr_programme_agreements_completed",
         "hr_programme_awaiting_authorisation",
         "hr_programme_awaiting_calibration",
         "hr_programme_awaiting_supervisor",
@@ -2365,6 +2371,7 @@
         "hr_programme_near_misses",
         "hr_programme_no_reporting_line",
         "hr_programme_offers",
+        "hr_programme_officers_you_review",
         "hr_programme_open_incidents",
         "hr_programme_open_roles",
         "hr_programme_open_surveys",
@@ -2376,10 +2383,12 @@
         "hr_programme_ready_for_activation",
         "hr_programme_recognitions",
         "hr_programme_replacements",
+        "hr_programme_reviews_past_due",
         "hr_programme_serious_incidents",
         "hr_programme_turnover_this_fy",
         "hr_programme_under_investigation",
-        "hr_programme_voluntary_exits"
+        "hr_programme_voluntary_exits",
+        "hr_programme_waiting_on_you_as_reviewer"
       ],
       "metricsAffected": []
     },
@@ -2407,6 +2416,7 @@
         "apps/accounts/middleware.py",
         "apps/accounts/models.py",
         "apps/accounts/presence.py",
+        "apps/activities/cluster_attendance.py",
         "apps/activity_catalogue/scheduling_health.py",
         "apps/activity_catalogue/services.py",
         "apps/admin_ops/detection.py",
@@ -2469,6 +2479,7 @@
       ],
       "permissions": [],
       "pages": [
+        "evidence_center",
         "team_planning_oversight",
         "team_targets"
       ],
@@ -3467,9 +3478,9 @@
     }
   ],
   "fingerprint": {
-    "payload": "b83eadb45c451009325957b65ac81c6c11bc5e1f0781d24e251db83c1ccac084",
-    "sources": "36678da6dcf64b3400fd15ec38429be61cb273a562670d85b48a235c3c13f321",
-    "sourceCount": 190,
+    "payload": "a35f6839a3a1ecebad09cdc7ab0b65a035244f2fcd0fd208c729ac53a6bdf6d4",
+    "sources": "b7cdbc3871f41101f933a0c9a07e101df1401b37aeb1fd3ad45b2c9684ef8e57",
+    "sourceCount": 192,
     "note": "Recomputed by apps/system_health/test_traceability_matrix.py on every commit. `payload` catches an artefact edited by hand; `sources` catches the code moving under it. Regenerate with python manage.py build_traceability_matrix -- never by editing these values, which only makes a stale matrix look fresh."
   }
 }

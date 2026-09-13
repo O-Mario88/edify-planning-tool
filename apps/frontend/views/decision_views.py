@@ -4,8 +4,8 @@ Two complete rules engines were shipped without any way to open them:
 
   • The Leadership Decision Engine (apps/leadership) runs five detectors —
     recruitment gaps, staff capacity overload, partner performance, HR risk and
-    regional investment — and CD/RVP/PL all hold leadership.view and
-    leadership.review.
+    regional investment — and the CD and RVP hold leadership.view and
+    leadership.review (the Programme Lead no longer does, 2026-09-13).
   • Budget Intelligence (apps/budget_intelligence) runs four financial
     detectors — aged unaccounted advances, disbursed-vs-accounted cash
     variance, returned cash, and oversized pending advances.

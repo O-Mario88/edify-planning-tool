@@ -1,0 +1,152 @@
+{% load frontend_filters %}
+{% comment %}
+Strategic direction (owner, 2026-09-13): the team's priority contract with the
+plan-linked meters, how far each team target has been distributed and the
+quarterly spreads waiting on the lead, how far officers' plans follow the
+verified SSA, and the guidance the lead has issued to the team.
+{% endcomment %}
+<div class="space-y-4" data-pl-view="priorities">
+  <div class="rpl-columns">
+    <div class="rpl-columns__main">
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-priorities-title" data-pl-priorities>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-priorities-title" class="rpl-card__title">Team priorities</h2>
+            <span class="rpl-card__subtitle">Your team's approved allocations · completed and planned work against each target, FY {{ fy }}{% if priorities.pct is not None %} · {{ priorities.pct|floatformat:"0" }}% verified overall{% endif %}</span>
+          </div>
+          <a class="rpl-card__link" href="{{ priorities.url }}">Priorities <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% if priorities.rows %}
+        <div class="rpl-priorities" role="list">
+          {% for row in priorities.rows|slice:":12" %}
+          <div class="rpl-priority" role="listitem">
+            <div class="rpl-priority__head">
+              <span class="rpl-priority__title">{{ row.title }}</span>
+            </div>
+            <span class="rpl-priority__meta">{{ row.priority }}{% if row.target %} · team target {{ row.target|floatformat:"-2" }} {{ row.unit }}{% endif %}</span>
+            {% include "components/meter.html" with progress=row.progress %}
+          </div>
+          {% endfor %}
+        </div>
+        {% if priorities.rows|length > 12 %}<div class="rpl-card__footnote">Showing 12 of {{ priorities.rows|length }} milestones. Priorities lists every one.</div>{% endif %}
+        {% else %}
+        {% include "components/empty_state.html" with message="No team allocation is approved for this year yet." hint="Your team's priorities appear here once Impact Assessment approves the distribution to your team." compact="true" %}
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-distribution-title" data-pl-distribution>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-distribution-title" class="rpl-card__title">Target distribution</h2>
+            <span class="rpl-card__subtitle">Each team target shared across you and your officers{% if distribution.spreads_waiting %} · {{ distribution.spreads_waiting }} quarterly spread{{ distribution.spreads_waiting|pluralize }} waiting on you{% endif %}</span>
+          </div>
+          <a class="rpl-card__link" href="{{ distribution.url }}">Target Distribution <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Target distribution; scroll sideways for more columns">
+          <table class="rpl-table" data-mobile-table="scroll">
+            <caption class="sr-only">Team targets received this year, how much of each is distributed, and the quarterly spreads waiting for your approval.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Milestone</th>
+                <th scope="col" class="is-num">Team target</th>
+                <th scope="col" class="is-num">Distributed</th>
+                <th scope="col" class="is-num">Officers</th>
+                <th scope="col" class="is-num">Spreads to approve</th>
+                <th scope="col">State</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in distribution.rows|slice:":80" %}
+              <tr>
+                <th scope="row" data-record-title><span>{{ row.milestone }}</span></th>
+                <td class="is-num" data-label="Team target">{% if row.team_target is not None %}{{ row.team_target|floatformat:"-2" }}{% else %}—{% endif %}</td>
+                <td class="is-num" data-label="Distributed">{{ row.distributed|floatformat:"-2" }}</td>
+                <td class="is-num" data-label="Officers">{{ row.members }}</td>
+                <td class="is-num" data-label="Spreads to approve">{% if row.spreads_waiting %}<span data-tone="warning">{{ row.spreads_waiting }}</span>{% else %}0{% endif %}</td>
+                <td data-label="State"><span data-tone="{{ row.tone }}">{{ row.state }}</span></td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="rpl-table__empty">
+                  {% include "components/empty_state.html" with message="No team target has reached you this year." hint="Impact Assessment distributes the country targets to Programme Leads; you then share yours across the team." compact="true" %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+    <div class="rpl-columns__side">
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-guidance-title" data-pl-guidance>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-guidance-title" class="rpl-card__title">Team guidance</h2>
+            <span class="rpl-card__subtitle">How you have communicated the priorities to your officers</span>
+          </div>
+          <a class="rpl-card__link" href="{{ guidance_url }}">Team Guidance <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="rpl-follow-stats">
+          <div class="rpl-follow-stat"><strong>{{ guidance.issued }}</strong><span>Issued</span></div>
+          <div class="rpl-follow-stat"><strong>{{ guidance.open }}</strong><span>Open</span></div>
+          <div class="rpl-follow-stat"{% if guidance.awaiting %} data-tone="danger"{% endif %}><strong>{{ guidance.awaiting }}</strong><span>Awaiting acknowledgement</span></div>
+        </div>
+        {% if guidance.latest %}
+        <div class="rpl-follow-list" role="list">
+          {% for item in guidance.latest|slice:":5" %}
+          <div class="rpl-follow" role="listitem">
+            <div class="rpl-follow__head">
+              <span class="rpl-follow__who">{{ item.title }}</span>
+              <span class="rpl-follow__due">{% if item.issued_at %}{{ item.issued_at|date:"j M" }}{% else %}Draft{% endif %}</span>
+            </div>
+            <span class="rpl-follow__what">{{ item.acknowledged|default:0 }} of {{ item.recipients|default:0 }} acknowledged</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        {% include "components/empty_state.html" with message="No guidance issued yet." hint="Issue guidance on a priority to your officers from Team Guidance; each one acknowledges it." compact="true" %}
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="pl-ssa-informed-title" data-pl-ssa-informed>
+        <header class="rpl-card__header">
+          <div class="rpl-card__heading">
+            <h2 id="pl-ssa-informed-title" class="rpl-card__title">SSA-informed plans</h2>
+            <span class="rpl-card__subtitle">Share of each officer's judged plans the verified SSA informed{% if ssa_informed.rate is not None %} · team {{ ssa_informed.rate }}%{% endif %}</span>
+          </div>
+        </header>
+        <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA-informed plans by officer">
+          <table class="rpl-table" data-mobile-table="scroll">
+            <caption class="sr-only">For each officer, plans judged against the verified SSA this year and the share it informed.</caption>
+            <thead>
+              <tr>
+                <th scope="col">CCEO</th>
+                <th scope="col" class="is-num">Judged plans</th>
+                <th scope="col" class="is-num">SSA-informed</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in ssa_informed.rows|slice:":60" %}
+              <tr>
+                <th scope="row" data-record-title><span>{{ row.name }}</span></th>
+                <td class="is-num" data-label="Judged plans">{{ row.judged }}</td>
+                <td class="is-num" data-label="SSA-informed">{% if row.rate is not None %}<span data-tone="{{ row.tone }}">{{ row.rate }}%</span>{% else %}<span class="rpl-muted">No judged plans</span>{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="rpl-table__empty">
+                  {% include "components/empty_state.html" with message="No officers are on your team yet." compact="true" %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+  </div>
+</div>

@@ -144,12 +144,36 @@ class VerificationSample(TimeStampedModel):
         ("disputed", "Disputed"),
     )
 
+    SUBJECT_CHOICES = (
+        ("activity", "Verified activity"),
+        ("ssa_record", "Confirmed SSA"),
+    )
+    METHOD_CHOICES = (
+        ("desk", "Desk re-check of the record"),
+        ("field", "Field back-check visit"),
+    )
+
     id = CuidField()
+    # IA review (2026-09-13): the SSA scores themselves are sampled too, not
+    # only the activities that collected them.
+    subject_type = models.CharField(
+        max_length=16, choices=SUBJECT_CHOICES, default="activity"
+    )
     activity = models.ForeignKey(
         "activities.Activity",
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name="verification_samples",
     )
+    ssa_record = models.ForeignKey(
+        "ssa.SsaRecord",
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="verification_samples",
+    )
+    method = models.CharField(max_length=8, choices=METHOD_CHOICES, default="desk")
     original_verifier = models.CharField(max_length=30)  # user id
     sampled_at = models.DateTimeField(auto_now_add=True)
     sampled_by = models.CharField(max_length=30, default="system")

@@ -75,7 +75,13 @@
   answer one question.
   {% endcomment %}
     <section aria-labelledby="school-oversight-heading" class="pt-2">
-      <h2 id="school-oversight-heading" class="edify-section-heading text-sm font-bold mb-2">School Oversight</h2>
+      <div class="flex flex-wrap items-baseline justify-between gap-2 mb-2">
+        <h2 id="school-oversight-heading" class="edify-section-heading text-sm font-bold">School Oversight</h2>
+        {% comment %}Completed work still missing its evidence is the other half of
+        "which schools are in trouble" — a link, not a second list, because the
+        Evidence Centre already holds it for whoever may open it.{% endcomment %}
+        {% if can_open_evidence %}<a href="/evidence/?tab=pending" class="rpl-card__link" data-evidence-gaps-link>Evidence gaps</a>{% endif %}
+      </div>
       {% include "partials/oversight/flagged_schools.html" %}
     </section>
   {% endif %}

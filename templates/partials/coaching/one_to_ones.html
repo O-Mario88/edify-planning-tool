@@ -1,0 +1,60 @@
+{% load table_pagination %}
+{% comment %}
+This month's one-to-ones (owner, 2026-09-13): one row per officer on the
+Programme Lead's team with the month's one-to-one, the latest coaching and
+what is still open. Rendered by apps/frontend/views/coaching_views.py
+team_coaching_view as the workspace page's `panel_template`; the "due from the
+tenth" rule is apps.cce_leadership.coaching.monthly_one_to_ones, the same rule
+the To-Do queue reads.
+{% endcomment %}
+{% paginate panel.rows "one_to_one_page" as panel_pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="coaching-one-to-ones-title" data-coaching-one-to-ones>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="coaching-one-to-ones-title" class="rpl-card__title">{{ panel.title }}</h2>
+      <span class="rpl-card__subtitle">{{ panel.subtitle }}</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="{{ panel.title }}; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">{{ panel.title }}</caption>
+      {% if panel_pager.rows %}
+      <thead>
+        <tr>
+          {% for cell in panel_pager.rows.0.cells %}<th scope="col">{{ cell.heading }}</th>{% endfor %}
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      {% endif %}
+      <tbody>
+        {% for row in panel_pager.rows %}
+        <tr>
+          {% for cell in row.cells %}
+          {% if cell.primary %}
+          <th scope="row" data-record-title><span>{{ cell.text }}</span></th>
+          {% else %}
+          <td data-label="{{ cell.heading }}">{% if cell.tone %}<span data-tone="{{ cell.tone }}">{{ cell.text }}</span>{% else %}{{ cell.text }}{% endif %}</td>
+          {% endif %}
+          {% endfor %}
+          <td class="is-end" data-record-action data-label="Actions">
+            {% for action in row.actions %}
+            {% if action.href %}
+            <a href="{{ action.href }}" class="rpl-row-link rounded-control">{{ action.label }}</a>
+            {% else %}
+            <button type="button" class="rpl-row-link rounded-control" hx-get="{{ action.drawer }}" hx-target="#drawer-container" hx-swap="innerHTML">{{ action.label }}</button>
+            {% endif %}
+            {% endfor %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% include "components/empty_state.html" with message=panel.empty_title hint=panel.empty_body compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=panel_pager param="one_to_one_page" %}
+</section>

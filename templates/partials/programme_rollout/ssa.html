@@ -1,0 +1,156 @@
+{% load table_pagination frontend_filters %}
+{% comment %}
+School self-assessments (Programme Rollout, owner 2026-09-13): each portfolio
+school in one state for the year, per officer and per cluster — a confirmed
+SSA, collected and waiting on Impact Assessment, a collection scheduled or
+handed to a partner, or nothing planned — beside the cluster × intervention
+heatmap the Programme Lead dashboard draws (latest confirmed cycle). Every
+list button opens the schools behind the row, read-only. Figures:
+apps.analytics.programme_rollout_service.ssa_rollout.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-ssa-officers-title" data-rollout-ssa-officers>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-ssa-officers-title" class="rpl-card__title">SSA rollout by officer</h2>
+      <span class="rpl-card__subtitle">Where each officer's schools stand on this year's self-assessment · FY {{ fy }}</span>
+    </div>
+    <a class="rpl-card__link" href="/ssa?fy={{ fy }}">SSA performance <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA rollout by officer; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each officer's portfolio schools this year: confirmed SSA, collected and awaiting IA verification, collection scheduled or with a partner, and not yet planned.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Officer</th>
+          <th scope="col" class="is-num">Portfolio schools</th>
+          <th scope="col" class="is-num">Confirmed SSA</th>
+          <th scope="col" class="is-num">Awaiting IA verification</th>
+          <th scope="col" class="is-num">Scheduled or with a partner</th>
+          <th scope="col" class="is-num">Not yet planned</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rollout.officers|slice:":60" %}
+        <tr>
+          <th scope="row" data-record-title><span>{% if row.profile_url %}<a href="{{ row.profile_url }}">{{ row.name }}</a>{% else %}{{ row.name }}{% endif %}</span></th>
+          <td class="is-num" data-label="Portfolio schools">{{ row.portfolio|intcomma }}</td>
+          <td class="is-num" data-label="Confirmed SSA">{% if row.portfolio %}<span data-tone="{% if row.coverage >= 80 %}success{% elif row.coverage >= 50 %}warning{% else %}danger{% endif %}">{{ row.confirmed|intcomma }} · {{ row.coverage }}%</span>{% else %}<span class="rpl-muted">No schools</span>{% endif %}</td>
+          <td class="is-num" data-label="Awaiting IA verification">{{ row.awaiting|intcomma }}</td>
+          <td class="is-num" data-label="Scheduled or with a partner">{{ row.scheduled|intcomma }}</td>
+          <td class="is-num" data-label="Not yet planned">{% if row.not_planned %}<span data-tone="danger">{{ row.not_planned|intcomma }}</span>{% else %}0{% endif %}</td>
+          <td class="is-end" data-record-action data-label="Actions">
+            {% if row.not_planned %}<a href="{{ schools_url }}?kind=ssa_not_planned&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not planned</a>{% endif %}
+            {% if row.awaiting %}<a href="{{ schools_url }}?kind=ssa_awaiting&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_awaiting&amp;member={{ row.staff_id }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Awaiting</a>{% endif %}
+            <a href="{{ row.oversight_url }}" class="rpl-row-link rounded-control">Oversight</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="7">
+            {% include "components/empty_state.html" with message="No officers or portfolio schools on this team yet." hint="Officers appear here once HR records you as their supervisor." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+        {% if rollout.officers %}
+        <tr data-rollout-team-total>
+          <th scope="row" data-record-title><span>Whole team</span></th>
+          <td class="is-num" data-label="Portfolio schools">{{ rollout.summary.portfolio|intcomma }}</td>
+          <td class="is-num" data-label="Confirmed SSA">{{ rollout.summary.confirmed|intcomma }}{% if rollout.summary.coverage is not None %} · {{ rollout.summary.coverage }}%{% endif %}</td>
+          <td class="is-num" data-label="Awaiting IA verification">{{ rollout.summary.awaiting|intcomma }}</td>
+          <td class="is-num" data-label="Scheduled or with a partner">{{ rollout.summary.scheduled|intcomma }}</td>
+          <td class="is-num" data-label="Not yet planned">{{ rollout.summary.not_planned|intcomma }}</td>
+          <td class="is-end" data-record-action data-label="Actions">{% if rollout.summary.not_planned %}<a href="{{ schools_url }}?kind=ssa_not_planned&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not planned</a>{% endif %}</td>
+        </tr>
+        {% endif %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rpl-card__footnote">A school takes the first state it qualifies for. A school two officers share counts in both rows and once in the team total. Awaiting IA verification includes a collection held whose confirmed record has not arrived.</div>
+</section>
+
+{% paginate rollout.clusters "cluster_page" 12 as cluster_pager %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-ssa-clusters-title" data-rollout-ssa-clusters>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-ssa-clusters-title" class="rpl-card__title">SSA rollout by cluster</h2>
+      <span class="rpl-card__subtitle">Lowest coverage first · {{ cluster_pager.total }} cluster{{ cluster_pager.total|pluralize }}</span>
+    </div>
+  </header>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA rollout by cluster; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each cluster holding the team's schools: officers, schools, confirmed SSA coverage, awaiting verification, scheduled and not yet planned.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Cluster</th>
+          <th scope="col">Officers</th>
+          <th scope="col" class="is-num">Schools</th>
+          <th scope="col" class="is-num">Confirmed SSA</th>
+          <th scope="col" class="is-num">Awaiting IA verification</th>
+          <th scope="col" class="is-num">Scheduled or with a partner</th>
+          <th scope="col" class="is-num">Not yet planned</th>
+          <th scope="col" class="is-end"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in cluster_pager.rows %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.name }}</span></th>
+          <td data-label="Officers">{{ row.officers|default:"—" }}</td>
+          <td class="is-num" data-label="Schools">{{ row.portfolio|intcomma }}</td>
+          <td class="is-num" data-label="Confirmed SSA"><span data-tone="{% if row.coverage >= 80 %}success{% elif row.coverage >= 50 %}warning{% else %}danger{% endif %}">{{ row.confirmed|intcomma }} · {{ row.coverage }}%</span></td>
+          <td class="is-num" data-label="Awaiting IA verification">{{ row.awaiting|intcomma }}</td>
+          <td class="is-num" data-label="Scheduled or with a partner">{{ row.scheduled|intcomma }}</td>
+          <td class="is-num" data-label="Not yet planned">{% if row.not_planned %}<span data-tone="danger">{{ row.not_planned|intcomma }}</span>{% else %}0{% endif %}</td>
+          <td class="is-end" data-record-action data-label="Actions">{% if row.not_planned %}<a href="{{ schools_url }}?kind=ssa_not_planned&amp;cluster={{ row.cluster }}&amp;{{ carry_query }}" hx-get="{{ schools_url }}?kind=ssa_not_planned&amp;cluster={{ row.cluster }}&amp;{{ carry_query }}" hx-target="#drawer-container" hx-swap="innerHTML" class="rpl-row-link rounded-control">Not planned</a>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="8">
+            {% include "components/empty_state.html" with message="No portfolio school is in a cluster yet." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=cluster_pager param="cluster_page" %}
+</section>
+
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rollout-ssa-heatmap-title" data-rollout-ssa-heatmap>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rollout-ssa-heatmap-title" class="rpl-card__title">SSA intervention heatmap</h2>
+      <span class="rpl-card__subtitle">Average score out of 10 per cluster, latest confirmed cycle</span>
+    </div>
+  </header>
+  <div class="pl-ssa-matrix-scroll overflow-x-auto" data-table-scroll-region tabindex="0" aria-label="SSA heatmap; scroll sideways for more interventions">
+    <table class="pl-ssa-matrix rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Average SSA score out of 10 for each intervention, by cluster. Cells are shaded from red at 0 to green at 10; the score is stated in every cell, so colour never carries the value alone.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Cluster</th>
+          {% for header in rollout.matrix_headers %}<th scope="col" class="is-num" title="{{ header.name }}">{{ header.code }}</th>{% endfor %}
+          <th scope="col" class="is-num">Overall</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in rollout.matrix.rows|slice:":80" %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ r.name }}</span></th>
+          {% for cell in r.cells %}
+          <td class="pl-ssa-heat is-num" data-heat="{{ cell.heat|default_if_none:'none' }}">{% if cell.score is not None %}{{ cell.score|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}</td>
+          {% endfor %}
+          <td class="pl-ssa-heat pl-ssa-heat--overall is-num" data-heat="{{ r.overall_heat|default_if_none:'none' }}">{% if r.overall is not None %}{{ r.overall|floatformat:1 }}{% else %}<span aria-label="No verified SSA">&mdash;</span>{% endif %}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty" colspan="10">
+            {% include "components/empty_state.html" with message="No confirmed SSA in your clusters yet." hint="The heatmap fills in as Impact Assessment confirms the team's assessments." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

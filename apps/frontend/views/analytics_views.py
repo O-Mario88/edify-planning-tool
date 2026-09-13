@@ -7,7 +7,11 @@ from django.conf import settings
 from django.http import HttpResponse, JsonResponse
 from django.shortcuts import render
 from django.views.decorators.http import require_GET, require_POST
-from apps.core.permissions import require_export_permission, require_page_permission
+from apps.core.permissions import (
+    RolePermissionService,
+    require_export_permission,
+    require_page_permission,
+)
 from django.utils import timezone
 from apps.core.activity_types import COMPLETED_WORK_STATUSES
 from apps.core.fy import get_operational_fy
@@ -209,6 +213,12 @@ def analytics_dashboard_view(request):
         "use_dark_sidebar": False,
         "timestamp": timezone.now().strftime("%B %d, %Y %I:%M %p"),
         "analytics_layout": analytics_layout,
+        # "View reports" is drawn only for readers who may open /reports; the
+        # Programme Lead no longer may (2026-09-13), and a link that answers
+        # "access denied" is worse than none.
+        "can_open_reports": RolePermissionService.can_view_page(
+            request.user, "reports"
+        ),
         # The service has always narrowed schools, activities and SSA by `q`;
         # there was simply no control anywhere on the page to type it into, so
         # the top bar showed the generic global form and a working backend
@@ -304,8 +314,10 @@ def pl_analytics_view(request):
             default=str,
         ).encode()
     ).hexdigest()[:20]
+    # v3: the cockpit stopped carrying the country map and the two sections no
+    # template drew (Programme Lead alignment, 2026-09-13).
     dashboard_key = (
-        f"program-lead-analytics:v2:{request.user.id}:{dashboard_fingerprint}"
+        f"program-lead-analytics:v3:{request.user.id}:{dashboard_fingerprint}"
     )
     from apps.hr.accountability_cache import revision
 
@@ -317,7 +329,6 @@ def pl_analytics_view(request):
             fy=fy,
             quarter=quarter,
             filters=filters,
-            include_regional_map=True,
         ),
         timeout=settings.ANALYTICS_DASHBOARD_CACHE_SECONDS,
     )
@@ -402,10 +413,13 @@ def pl_analytics_drilldown_view(request):
     drill = (request.GET.get("drill") or "").strip()
     fy = (request.GET.get("fy") or "").strip() or None
     quarter = (request.GET.get("quarter") or "").strip() or None
+    # The cockpit's filters, as the tile that opened this drawer was computed
+    # under them (the service appends them to every drill-down link).
     filters = {
         "district": request.GET.get("district"),
         "cluster": request.GET.get("cluster"),
         "cceo": request.GET.get("cceo"),
+        "partner": request.GET.get("partner"),
         "school_type": request.GET.get("school_type"),
         "activity_type": request.GET.get("activity_type"),
     }

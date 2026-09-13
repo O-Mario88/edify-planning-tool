@@ -112,8 +112,7 @@ class="school-filters-form space-y-3"
 <div>
 <span class="edify-filter-label">Fiscal year</span>
 <select aria-label="Fiscal year" name="fy" class="w-full h-9 text-[12px] bg-slate-50 font-bold border border-slate-200 rounded-control focus:outline-none">
-<option value="2026" {% if selected_fy == '2026' %}selected{% endif %}>FY 2026</option>
-<option value="2025" {% if selected_fy == '2025' %}selected{% endif %}>FY 2025</option>
+{% for option in fy_options %}<option value="{{ option }}" {% if selected_fy == option %}selected{% endif %}>FY {{ option }}</option>{% endfor %}
 </select>
 </div>
 <!-- District -->

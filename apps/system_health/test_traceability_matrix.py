@@ -657,8 +657,11 @@ class WhichJourneysReachTheDoorTest(unittest.TestCase):
                 # employee-relations, staffing, compensation, health and
                 # safety, recognition, pulse-survey, policy, compliance,
                 # workforce, reporting-line, review and recovery registers
-                # count what they now measure.
-                "journey-13": 89,
+                # count what they now measure. Ninety-three since the
+                # Programme Lead alignment (2026-09-13): the review register a
+                # reviewer opens counts officers reviewed, reviews waiting on
+                # the reviewer, reviews past due and agreements completed.
+                "journey-13": 93,
                 # Twelve since 2026-09-12: the oversight page gained the
                 # Regional Programme Lead's three region tiles beside the
                 # country and team families it already computed.

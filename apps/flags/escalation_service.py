@@ -431,11 +431,16 @@ def sweep_overdue() -> int:
                 esc,
                 title=f"Overdue escalation ({esc.age_days}d): {esc.subject}",
             )
-            # The CD who raised it is the one waiting; tell them too.
+            # The raiser is the one waiting; tell them too. The channel runs the
+            # whole reporting line now, so the notice names the level it is
+            # actually waiting on — a CCEO's escalation waits on their
+            # Programme Lead, not the RVP (2026-09-13).
+            waiting_on = ADDRESSEE_LABELS.get(esc.addressed_role, "decision-maker")
             _notify_raiser(
                 esc,
                 f"Your escalation is overdue ({esc.age_days}d)",
-                f"“{esc.subject}” has passed its SLA without an RVP decision.",
+                f"“{esc.subject}” has passed its SLA without a decision from the "
+                f"{waiting_on}.",
                 "leadership_escalation_overdue",
             )
             pushed += 1

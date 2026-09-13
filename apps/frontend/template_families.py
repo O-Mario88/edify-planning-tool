@@ -15,10 +15,16 @@ TEMPLATE_FAMILIES: dict[str, tuple[str, ...]] = {
         "templates/partials/dashboards/cd/map_view.html",
         "templates/partials/dashboards/cd/operations.html",
     ),
+    # The Program Lead's views follow the role's five responsibilities since
+    # 2026-09-13; Team inherited the old Operations view's work.
     "templates/partials/dashboards/pl/body.html": (
         "templates/partials/dashboards/pl/view.html",
         "templates/partials/dashboards/pl/map_view.html",
-        "templates/partials/dashboards/pl/operations.html",
+        "templates/partials/dashboards/pl/priorities_view.html",
+        "templates/partials/dashboards/pl/team_view.html",
+        "templates/partials/dashboards/pl/coaching_view.html",
+        "templates/partials/dashboards/pl/programmes_view.html",
+        "templates/partials/dashboards/pl/collaboration_view.html",
     ),
     "templates/pages/dashboards/rvp.html": (
         "templates/partials/dashboards/rvp/view.html",

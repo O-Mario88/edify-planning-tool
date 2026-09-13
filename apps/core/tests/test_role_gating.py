@@ -388,6 +388,14 @@ class PermissionsSecurityAuditFixesTest(RoleGatingPermissionTest):
             password="x",
             is_active=True,
         )
+        # A Country Director assigns flags only to Programme Leads in their own
+        # country (Program Lead alignment, 2026-09-13), so the lead needs a
+        # staff profile in the director's country.
+        StaffProfile.objects.create(
+            user=pl_user,
+            staff_number="ST-FLAG-PL",
+            country=self.cd_profile.country,
+        )
 
         # self.client is DRF's APIClient (APITestCase) — it JSON-encodes dict
         # payloads by default (TEST_REQUEST_DEFAULT_FORMAT="json"), which a

@@ -458,3 +458,67 @@ class PartnerMember(TimeStampedModel):
 
     def __str__(self) -> str:
         return f"{self.name} ({self.get_role_display()})"
+
+
+class PartnerEngagementKind(models.TextChoices):
+    REVIEW_MEETING = "review_meeting", "Partner review meeting"
+    FRAMEWORK_ORIENTATION = (
+        "framework_orientation",
+        "Orientation on Edify's CCE framework",
+    )
+    QUALITY_FOLLOW_UP = "quality_follow_up", "Training quality follow-up"
+    JOINT_PLANNING = "joint_planning", "Joint planning"
+    CAPACITY_BUILDING = "capacity_building", "Capacity-building session"
+
+
+class PartnerEngagement(TimeStampedModel):
+    """The partnership work with a local training organisation (owner,
+    2026-09-13): a Programme Lead "partners with local training organizations
+    to align goals and build capacity". Partner Oversight tracks what a partner
+    delivers; this records the meetings, orientations and quality follow-ups
+    that improve how they deliver, with the improvements agreed and when they
+    are followed up."""
+
+    id = CuidField()
+    author_id = models.CharField(max_length=30, db_index=True)
+    author_role = models.CharField(max_length=32, blank=True, default="")
+    partner = models.ForeignKey(
+        Partner, on_delete=models.CASCADE, related_name="engagements"
+    )
+    kind = models.CharField(max_length=32, choices=PartnerEngagementKind.choices)
+    held_on = models.DateField()
+    fy = models.CharField(max_length=16, db_index=True)
+    country = models.CharField(max_length=64, blank=True, default="")
+    subject = models.CharField(max_length=255)
+    notes = models.TextField(blank=True, default="")
+    agreed_improvements = models.TextField(blank=True, default="")
+    follow_up_due = models.DateField(null=True, blank=True)
+    follow_up_done_at = models.DateTimeField(null=True, blank=True)
+    follow_up_note = models.TextField(blank=True, default="")
+    # The Regional Lead's training observation that prompted it, if any.
+    source_engagement = models.ForeignKey(
+        "cce_leadership.RegionalEngagement",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="partner_engagements",
+    )
+    shared_with_partner_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "partner_engagement"
+        ordering = ["-held_on", "-created_at"]
+        indexes = [
+            models.Index(
+                fields=["partner", "held_on"], name="idx_partner_engagement_partner"
+            ),
+            models.Index(
+                fields=["author_id", "held_on"], name="idx_partner_engagement_author"
+            ),
+            models.Index(
+                fields=["country", "held_on"], name="idx_partner_engagement_country"
+            ),
+        ]
+
+    def __str__(self) -> str:
+        return f"{self.partner} · {self.get_kind_display()} · {self.held_on}"

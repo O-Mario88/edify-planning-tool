@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from collections import defaultdict
 from apps.core.enums import SsaIntervention, VerificationStatus, ssa_score_band
-from apps.core.fy import fy_options, get_operational_fy, get_quarter_for_date
+from apps.core.fy import fy_options, get_operational_fy
 from apps.core.permissions import RolePermissionService
 from apps.core.scoping import resolve_user_scope
 from apps.schools.models import School
@@ -29,6 +29,25 @@ HIGH_RISK_SCORE = 4.0
 QUARTERS = ("Q1", "Q2", "Q3", "Q4")
 IMPROVEMENT_BASELINE_FY = "2026"
 IMPROVEMENT_COMPARISON_FY = "2027"
+#: The period value that reads the whole financial year. The default
+#: (Programme Lead alignment, 2026-09-13): SSA is an annual assessment, and a
+#: quarter view opened on the current quarter showed most portfolios as barely
+#: assessed while their schools held a confirmed SSA from earlier in the year.
+FULL_YEAR = "fy"
+QUARTER_MONTHS = {
+    "Q1": "Oct–Dec",
+    "Q2": "Jan–Mar",
+    "Q3": "Apr–Jun",
+    "Q4": "Jul–Sep",
+}
+PERIOD_OPTIONS = ((FULL_YEAR, "Full financial year"),) + tuple(
+    (quarter, f"{quarter} · {QUARTER_MONTHS[quarter]}") for quarter in QUARTERS
+)
+
+
+def _period_label(period: str) -> str:
+    return "Full financial year" if period == FULL_YEAR else period
+
 
 RECOMMENDED_ACTIONS = {
     SsaIntervention.CHRISTLIKE_BEHAVIOUR.value: "Values coaching and follow-up",
@@ -84,7 +103,13 @@ def _latest(rows: list[dict], key_fields: tuple[str, ...]) -> list[dict]:
     return result
 
 
-def _previous_period(fy: str, quarter: str) -> tuple[str, str, str]:
+def _previous_period(fy: str, quarter: str) -> tuple[str, str | None, str]:
+    """The period a selection is compared with: the quarter before, or for a
+    full year the year before. The middle value is the quarter to read, None
+    for a whole year."""
+    if quarter == FULL_YEAR:
+        previous_fy = str(int(fy) - 1)
+        return previous_fy, None, _fy_label(previous_fy)
     index = QUARTERS.index(quarter)
     if index:
         previous_quarter = QUARTERS[index - 1]
@@ -497,9 +522,13 @@ def build_dashboard(principal, query: dict) -> dict:
     selected_fy = str(query.get("fy") or get_operational_fy())
     if not selected_fy.isdigit():
         selected_fy = get_operational_fy()
-    selected_quarter = str(query.get("quarter") or get_quarter_for_date())
+    # The full financial year unless a quarter is asked for by name. The
+    # latest confirmed record per school across the year, records with no
+    # quarter included (`_record_rows` with no quarter reads every one).
+    selected_quarter = str(query.get("quarter") or FULL_YEAR)
     if selected_quarter not in QUARTERS:
-        selected_quarter = get_quarter_for_date()
+        selected_quarter = FULL_YEAR
+    record_quarter = None if selected_quarter == FULL_YEAR else selected_quarter
 
     region_options = list(
         schools_qs.values("region_id", "region__name")
@@ -547,7 +576,7 @@ def build_dashboard(principal, query: dict) -> dict:
     schools_by_id = {row["id"]: row for row in schools}
     school_ids = list(schools_by_id)
 
-    latest_records = _record_rows(school_ids, selected_fy, selected_quarter)
+    latest_records = _record_rows(school_ids, selected_fy, record_quarter)
     record_ids = [row["id"] for row in latest_records]
     scores_by_record = _scores_by_record(record_ids)
 
@@ -867,6 +896,8 @@ def build_dashboard(principal, query: dict) -> dict:
             "fy": selected_fy,
             "fy_label": _fy_label(selected_fy),
             "quarter": selected_quarter,
+            "period_label": _period_label(selected_quarter),
+            "is_full_year": selected_quarter == FULL_YEAR,
             "region": selected_region,
             "region_name": selected_region_name,
             "district": selected_district,
@@ -875,6 +906,7 @@ def build_dashboard(principal, query: dict) -> dict:
                 {"value": value, "label": _fy_label(value)} for value in all_fy_options
             ],
             "quarters": QUARTERS,
+            "period_options": PERIOD_OPTIONS,
             "regions": region_options,
             "districts": district_options,
         },
