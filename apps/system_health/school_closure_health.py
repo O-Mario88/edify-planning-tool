@@ -211,7 +211,7 @@ def _locked_activities_awaiting_closure_review() -> dict:
             }
             for c in pending[:10]
         ],
-        route="/finance/accountability",
+        route="/accounts/accountability",
     )
 
 

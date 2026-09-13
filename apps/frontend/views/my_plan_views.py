@@ -1326,7 +1326,7 @@ def ia_confirm_action(request, activity_id):
         except Exception as e:
             messages.error(request, f"Error verifying: {e}")
 
-    return redirect("/ia/verification-queue")
+    return redirect("/ia/verification/")
 
 
 @require_page_permission("ia_verification_queue")
@@ -1365,7 +1365,7 @@ def ia_return_action(request, activity_id):
         except Exception as e:
             messages.error(request, f"Error returning: {e}")
 
-    return redirect("/ia/verification-queue")
+    return redirect("/ia/verification/")
 
 
 @require_page_permission("my_plan")

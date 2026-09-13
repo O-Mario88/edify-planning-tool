@@ -1453,7 +1453,7 @@ METRIC_REGISTRY: tuple[MetricSpec, ...] = (
         owner_page="team_planning_oversight",
         secondary_pages=("country_planning_oversight",),
         filter_behaviour=FilterBehaviour.FILTERED,
-        drilldown="/ia/verification-queue",
+        drilldown="/ia/verification/",
         refresh_events=("activity_submitted_for_review", "activity_verified"),
         notes=(
             "The actor is a queue, not a person: no officer is assigned a "

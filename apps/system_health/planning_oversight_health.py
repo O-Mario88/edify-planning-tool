@@ -853,7 +853,7 @@ def _locked_withdrawal_without_amendment() -> dict:
             }
             for w in rows[:10]
         ],
-        route="/budget/amendments",
+        route="/accounts/budget-amendments",
     )
 
 

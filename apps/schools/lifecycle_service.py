@@ -487,7 +487,7 @@ def _notify_accountant(closure) -> None:
             context_type="SchoolClosure",
             context_id=closure.id,
             event_key="school_closure.locked_finance",
-            route="/finance/accountability",
+            route="/accounts/accountability",
             action_label="Review committed funds",
             priority="high",
         )

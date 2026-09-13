@@ -389,7 +389,7 @@ def _ia_verification_overdue(item, today: date) -> PlanningRisk | None:
             "unverified, so the work earns no credit and cannot be paid."
         ),
         recommended_action="Verify the submission",
-        route="/ia/verification-queue",
+        route="/ia/verification/",
         responsible_role="ImpactAssessment",
         owner_name=ROLE_LABELS["ImpactAssessment"],
         due_date=due,

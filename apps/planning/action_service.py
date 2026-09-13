@@ -824,7 +824,7 @@ def cancel(action: TeamAction, actor, reason: str = "") -> TeamAction:
             f"{action.requested_action.lower()} at {_school_name(action.school_id)}."
         ),
         action_id=action.id,
-        route="/planning/my-actions",
+        route="/actions/mine",
         event="school_action_cancelled",
     )
     return action

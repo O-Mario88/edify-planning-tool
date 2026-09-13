@@ -298,7 +298,7 @@ def _ia_verification_overdue(item, today: date) -> PartnerRisk | None:
         ),
         responsible="Impact Assessment",
         recommended_action="Verify the partner's submission",
-        route="/ia/verification-queue",
+        route="/ia/verification/",
         responsible_role="ImpactAssessment",
         due_date=due,
     )
