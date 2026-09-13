@@ -27,16 +27,7 @@ from collections import Counter, defaultdict
 from django.core.management.base import BaseCommand
 
 from apps.core.fy import get_operational_fy
-
-LIVE_PLAN_STATUSES = (
-    "planned",
-    "scheduled",
-    "assigned_to_partner",
-    "partner_scheduled",
-    "awaiting_owner_approval",
-    "in_progress",
-    "completion_started",
-)
+from apps.ssa.plan_alignment import LIVE_PLAN_STATUSES
 
 
 class Command(BaseCommand):
@@ -79,43 +70,9 @@ class Command(BaseCommand):
 
     # ── Verdicts ─────────────────────────────────────────────────────────────
     def _stamp(self, fy: str, limit: int) -> None:
-        from apps.activities.models import Activity
-        from apps.ssa import plan_alignment
+        from apps.ssa.plan_alignment import judge_unjudged_plans
 
-        plans = (
-            Activity.objects.filter(
-                deleted_at__isnull=True, fy=fy, status__in=LIVE_PLAN_STATUSES
-            )
-            .filter(ssa_alignment="")
-            .select_related("school", "catalogue_item")
-            .order_by("planned_date", "id")
-        )
-        stamped = linked = 0
-        for activity in plans.iterator(chunk_size=200):
-            modes = (
-                set(
-                    activity.catalogue_item.intervention_mappings.filter(
-                        active=True
-                    ).values_list("mapping_mode", flat=True)
-                )
-                if activity.catalogue_item_id
-                else set()
-            )
-            evidence = plan_alignment.assess(
-                activity_type=activity.activity_type,
-                focus=activity.focus_intervention,
-                mapping_modes=modes,
-                school=activity.school,
-                cluster_id=None if activity.school_id else activity.cluster_id,
-                focus_source="planner",
-                collects_ssa=activity.ssa_collection_expected,
-            )
-            evidence.evidence["backfilled"] = True
-            plan_alignment.stamp(activity, evidence, link=False)
-            linked += plan_alignment.link_recommendations(activity)
-            stamped += 1
-            if limit and stamped >= limit:
-                break
+        stamped, linked = judge_unjudged_plans(fy, limit=limit or None)
         self.stdout.write(
             f"Verdicts: {stamped} live plan(s) judged, {linked} recommendation(s) linked."
         )

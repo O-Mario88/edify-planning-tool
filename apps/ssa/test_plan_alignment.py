@@ -282,6 +282,30 @@ class SsaInformedAuditCommandTest(StandardSupportBase):
         self.assertIn("SSA informed: 1 (100%)", report)
 
 
+class NightlySyncJudgesUnjudgedPlansTest(StandardSupportBase):
+    def test_the_nightly_job_judges_a_live_plan_that_has_no_verdict(self):
+        from unittest.mock import patch
+
+        from apps.realtime import jobs
+
+        planned = _schedulable_date()
+        activity = Activity.objects.create(
+            activity_type="school_visit",
+            school=self.school,
+            fy=get_operational_fy(planned),
+            quarter="Q1",
+            planned_date=planned,
+            scheduled_date=_at(planned),
+            status="scheduled",
+            focus_intervention=SsaIntervention.LEADERSHIP,
+        )
+        with patch("apps.core.fy.get_operational_fy", return_value=activity.fy):
+            jobs._do_ssa_recommendation_sync()
+        activity.refresh_from_db()
+        self.assertEqual(activity.ssa_alignment, SsaAlignment.PRIORITY)
+        self.assertTrue(activity.recommendation_source["ssa"]["backfilled"])
+
+
 class BulkPlanningIsScopedAndSsaInformedTest(StandardSupportBase):
     def setUp(self):
         super().setUp()

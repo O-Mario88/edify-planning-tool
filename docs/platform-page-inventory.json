@@ -69488,7 +69488,7 @@
           "hour": 3,
           "minute": 30
         },
-        "description": "Records SSA recommendations for schools whose latest confirmed assessment has none, and links live plans to the needs they answer.",
+        "description": "Records SSA recommendations for schools whose latest confirmed assessment has none, judges live plans that carry no SSA verdict, and links live plans to the needs they answer.",
         "expected_runtime_seconds": 180,
         "idempotency_note": "Generation converges on each need's condition_key under a partial unique constraint, and linking only moves open recommendations \u2014 a re-run creates and moves nothing.",
         "idempotent": true,

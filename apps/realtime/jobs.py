@@ -697,10 +697,15 @@ def data_quality_scan_job():
 def _do_ssa_recommendation_sync() -> int:
     """Converge SSA recommendations with assessments and live plans."""
 
+    from apps.core.fy import get_operational_fy
+    from apps.ssa.plan_alignment import judge_unjudged_plans
     from apps.ssa.recommendation_service import sync_recommendations
 
     result = sync_recommendations()
-    return result["created"] + result["linked"]
+    # Plans that predate planning-time verdicts, or came in through a path
+    # that skipped them, are judged here so no live plan stays unjudged.
+    judged, linked = judge_unjudged_plans(get_operational_fy())
+    return result["created"] + result["linked"] + judged + linked
 
 
 def ssa_recommendation_sync_job():

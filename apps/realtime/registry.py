@@ -336,7 +336,8 @@ JOB_REGISTRY: list[JobSpec] = [
         name="ssa_recommendation_sync",
         description=(
             "Records SSA recommendations for schools whose latest confirmed "
-            "assessment has none, and links live plans to the needs they answer."
+            "assessment has none, judges live plans that carry no SSA verdict, "
+            "and links live plans to the needs they answer."
         ),
         cron="daily 03:30 Africa/Nairobi",
         cron_kwargs={"hour": 3, "minute": 30},

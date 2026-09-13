@@ -643,6 +643,68 @@ def rejudge(activity, *, focus_source: str = "planner") -> PlanEvidence:
     return evidence
 
 
+LIVE_PLAN_STATUSES = (
+    "planned",
+    "scheduled",
+    "assigned_to_partner",
+    "partner_scheduled",
+    "awaiting_owner_approval",
+    "in_progress",
+    "completion_started",
+)
+
+
+def judge_unjudged_plans(fy: str, *, limit: int | None = None) -> tuple[int, int]:
+    """Judge live plans that carry no verdict yet, and link what they answer.
+
+    Plans made before plans were judged at planning time have no verdict. They
+    are judged against the SSA as it stands today and marked as backfilled;
+    completed history is never re-judged, because what informed finished work
+    is what was known when it was planned. Run nightly after recommendations
+    are synced, and by ``audit_ssa_informed_plans --stamp``. Returns
+    (plans judged, recommendations linked).
+    """
+    from apps.activities.models import Activity
+
+    plans = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            fy=fy,
+            status__in=LIVE_PLAN_STATUSES,
+            ssa_alignment="",
+        )
+        .select_related("school", "catalogue_item")
+        .order_by("planned_date", "id")
+    )
+    stamped = linked = 0
+    for activity in plans.iterator(chunk_size=200):
+        modes = (
+            set(
+                activity.catalogue_item.intervention_mappings.filter(
+                    active=True
+                ).values_list("mapping_mode", flat=True)
+            )
+            if activity.catalogue_item_id
+            else set()
+        )
+        evidence = assess(
+            activity_type=activity.activity_type,
+            focus=activity.focus_intervention,
+            mapping_modes=modes,
+            school=activity.school,
+            cluster_id=None if activity.school_id else activity.cluster_id,
+            focus_source="planner",
+            collects_ssa=activity.ssa_collection_expected,
+        )
+        evidence.evidence["backfilled"] = True
+        stamp(activity, evidence, link=False)
+        linked += link_recommendations(activity)
+        stamped += 1
+        if limit and stamped >= limit:
+            break
+    return stamped, linked
+
+
 def _audit_recommendations(action: str, activity, ids) -> None:
     try:
         from apps.audit.services import log as audit_log
