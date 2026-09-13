@@ -21,6 +21,8 @@ FIXES = (
     "debrief-drafts",
     "core-recommendations",
     "cluster-meeting-cost-key",
+    "planning-source",
+    "partner-monitor",
 )
 SCANS = (
     "duplicate-partner-payments",
@@ -58,6 +60,10 @@ class Command(BaseCommand):
             self._fix_core_recommendations(apply)
         if wants("cluster-meeting-cost-key"):
             self._fix_cluster_meeting_cost_key(apply)
+        if wants("planning-source"):
+            self._fix_planning_source(apply)
+        if wants("partner-monitor"):
+            self._fix_partner_monitor(apply)
         if wants("duplicate-partner-payments"):
             self._scan_duplicate_partner_payments()
         if wants("paid-without-partner-payment"):
@@ -303,14 +309,17 @@ class Command(BaseCommand):
         from apps.activities.models import ActivityScheduleCostLine
         from apps.budget.models import CostSetting
 
+        from apps.daily_visit_batches.pricing import KEY_LABELS as day_pool_keys
+
         canonical_key = "cluster_meeting_participant_meal_cost_per_head"
         canonical = CostSetting.objects.filter(key=canonical_key).first()
+        # Pooled field-day lines belong to the day, not the meeting.
         candidates = ActivityScheduleCostLine.objects.filter(
             activity__activity_type__in=[
                 "cluster_meeting",
                 "cluster_meeting_ssa_review",
             ]
-        ).exclude(cost_setting_key=canonical_key)
+        ).exclude(cost_setting_key__in=[canonical_key, *day_pool_keys])
 
         eligible_ids = []
         ambiguous = 0
@@ -360,6 +369,121 @@ class Command(BaseCommand):
             "cluster-meeting-cost-key: "
             f"{len(eligible_ids)} deterministic rename(s); "
             f"{ambiguous} manual-review row(s)"
+        )
+
+    def _fix_planning_source(self, apply):
+        """Stamp the planning workflow on activities written without one.
+
+        The classification is the one ``activities.services.create`` applies
+        at planning time, and migration 0032 applied to the rows that existed
+        then: core types, then the partner assignment that produced the work,
+        then a project, a cluster or a school link. Rows written after that
+        migration by paths that skipped the stamp (the local seed's history,
+        the partner scheduling path before it stamped) kept failing the
+        ``activity_without_planning_source`` health check. A row with no
+        relation to classify by is reported, never guessed.
+        """
+        from apps.activities.models import Activity
+
+        core_types = ("core_visit", "core_training", "core_assessment_visit")
+        rows = (
+            Activity.objects.filter(deleted_at__isnull=True, planning_source="")
+            .select_related("originating_partner_assignment")
+            .only(
+                "id",
+                "activity_type",
+                "project_id",
+                "cluster_id",
+                "school_id",
+                "originating_partner_assignment__id",
+            )
+        )
+        stamped = unclassified = 0
+        for activity in rows.iterator(chunk_size=500):
+            assignment = getattr(activity, "originating_partner_assignment", None)
+            if activity.activity_type in core_types:
+                source, context = "core_planning", "school"
+            elif activity.activity_type == "programme_event":
+                source, context = "manual_work_plan", "programme"
+            elif assignment is not None:
+                source = "partner_assignment"
+                context = (
+                    "school"
+                    if activity.school_id
+                    else "cluster"
+                    if activity.cluster_id
+                    else ""
+                )
+            elif activity.project_id:
+                source, context = "project_planning", "project"
+            elif activity.cluster_id:
+                source, context = "cluster_planning", "cluster"
+            elif activity.school_id:
+                source, context = "school_planning", "school"
+            else:
+                unclassified += 1
+                continue
+            stamped += 1
+            if apply:
+                Activity.objects.filter(id=activity.id, planning_source="").update(
+                    planning_source=source, activity_context_type=context
+                )
+                self._audit(
+                    "planning_source",
+                    "Activity",
+                    activity.id,
+                    {"planning_source": ""},
+                    {"planning_source": source, "activity_context_type": context},
+                )
+        self.stdout.write(
+            f"planning-source: {stamped} activit(y/ies) classified; "
+            f"{unclassified} MANUAL REVIEW (no school, cluster, project or "
+            "partner assignment to classify by)"
+        )
+
+    def _fix_partner_monitor(self, apply):
+        """Name the staff monitor on partner work from its own assignment.
+
+        Partner-delivered work with no monitor reaches nobody's My Plan. The
+        partner assignment that produced it records who watches the delivery
+        (``monitoring_staff_id``, else the person who handed it over), the
+        same fallback the scheduling path applies. Work with no assignment to
+        read that from is reported for manual review.
+        """
+        from django.db.models import Q
+
+        from apps.activities.models import Activity
+
+        rows = (
+            Activity.objects.filter(deleted_at__isnull=True, delivery_type="partner")
+            .filter(Q(monitored_by_staff_id__isnull=True) | Q(monitored_by_staff_id=""))
+            .select_related("originating_partner_assignment")
+        )
+        named = unresolved = 0
+        for activity in rows.iterator(chunk_size=500):
+            assignment = getattr(activity, "originating_partner_assignment", None)
+            monitor = assignment and (
+                assignment.monitoring_staff_id or assignment.assigning_staff_id
+            )
+            if not monitor:
+                unresolved += 1
+                continue
+            named += 1
+            if apply:
+                Activity.objects.filter(id=activity.id).filter(
+                    Q(monitored_by_staff_id__isnull=True) | Q(monitored_by_staff_id="")
+                ).update(monitored_by_staff_id=monitor)
+                self._audit(
+                    "partner_monitor",
+                    "Activity",
+                    activity.id,
+                    {"monitored_by_staff_id": None},
+                    {"monitored_by_staff_id": monitor},
+                )
+        self.stdout.write(
+            f"partner-monitor: {named} partner activit(y/ies) given their "
+            f"assignment's monitor; {unresolved} MANUAL REVIEW (no assignment "
+            "names a monitor)"
         )
 
     # ── scans (report-only; ambiguity → manual review) ───────────────────────

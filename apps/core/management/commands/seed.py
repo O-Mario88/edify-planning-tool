@@ -1128,6 +1128,18 @@ class Command(BaseCommand):
                     # `assigned_partner_id` is a plain CharField, not an FK —
                     # there is no `assigned_partner` to assign.
                     assigned_partner_id=partner.id if partner else None,
+                    # The planning workflow and the monitor every write path
+                    # records; without them the history failed the platform's
+                    # planning-source and partner-monitoring health checks.
+                    planning_source=(
+                        "partner_assignment"
+                        if partner
+                        else "cluster_planning"
+                        if cluster
+                        else "school_planning"
+                    ),
+                    activity_context_type="cluster" if cluster else "school",
+                    monitored_by_staff_id=cceo.user.user_id if partner else None,
                     status="completed",
                 )
 

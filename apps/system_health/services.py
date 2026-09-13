@@ -9,7 +9,7 @@ any signal that local-test data has leaked into a production deployment.
 from __future__ import annotations
 
 from django.conf import settings
-from django.db.models import Count, F, Q, Sum
+from django.db.models import Count, Exists, F, OuterRef, Prefetch, Q, Sum
 
 from apps.core.enums import PlanningReadiness
 from apps.core.models import DataSource
@@ -414,8 +414,16 @@ def missing_cost_lines_count() -> int:
     from apps.activities.models import Activity
 
     active = Activity.objects.filter(deleted_at__isnull=True)
+    # A visit request awaiting its school owner is priced when the owner
+    # approves it (apps.planning.visit_requests._price), so it has no lines yet.
     scheduled = active.exclude(
-        status__in=["not_planned", "cancelled", "deferred", "rejected"]
+        status__in=[
+            "not_planned",
+            "cancelled",
+            "deferred",
+            "rejected",
+            "awaiting_owner_approval",
+        ]
     ).exclude(paired_in_school_training__isnull=False)
     return (
         scheduled.annotate(cost_line_count=Count("schedule_cost_lines"))
@@ -492,26 +500,50 @@ def _workflow_issues() -> dict:
     from apps.core.private_storage import file_exists
     from apps.evidence.services import EVIDENCE_NAMESPACE
 
+    # Each probe is a round trip to the object store (a HEAD request on
+    # Spaces), so the report checks the most recent uploads, not every file
+    # ever stored: probing the whole archive grew with every upload and could
+    # hold a web worker for minutes on a cold cache.
+    evidence_probe_limit = int(
+        getattr(settings, "SYSTEM_HEALTH_EVIDENCE_PROBE_LIMIT", 300) or 300
+    )
     missing_evidence_files = 0
-    for evidence in EvidenceRecord.objects.filter(quarantined=False).only("uri"):
+    evidence_checked = 0
+    for evidence in EvidenceRecord.objects.filter(quarantined=False).order_by(
+        "-created_at"
+    ).only("uri")[:evidence_probe_limit]:
+        evidence_checked += 1
         try:
             present = file_exists(EVIDENCE_NAMESPACE, evidence.uri)
         except BadRequest:
             present = False
         if not present:
             missing_evidence_files += 1
+    evidence_total = (
+        EvidenceRecord.objects.filter(quarantined=False).count()
+        if evidence_checked >= evidence_probe_limit
+        else evidence_checked
+    )
 
     # ── Finance-integrity checks ─────────────────────────────────────────────
-    # Activity total ≠ sum of its budget lines (a reconciliation break).
-    line_sum_mismatch = 0
-    for act in scheduled.exclude(est_cost_cents=0).only("id", "est_cost_cents"):
-        line_total = sum(line.amount for line in act.schedule_cost_lines.all())
-        if line_total and line_total != act.est_cost_cents:
-            line_sum_mismatch += 1
+    # Activity total ≠ sum of its budget lines (a reconciliation break). One
+    # grouped read; this loaded every priced activity's lines one at a time.
+    line_sum_mismatch = sum(
+        1
+        for line_total, estimate in scheduled.exclude(est_cost_cents=0)
+        .annotate(line_total=Sum("schedule_cost_lines__amount"))
+        .values_list("line_total", "est_cost_cents")
+        if line_total and line_total != estimate
+    )
 
     # Cluster meetings carry only the participant-snacks line.  The check is
     # deliberately key-based so a legacy venue/facilitation/mobilisation row
     # is caught too, not only the three historic keys listed here previously.
+    # A staff meeting also carries its share of the owner's shared field day
+    # (transport, lunch and the secondary-district nights) when it joins that
+    # day's batch; those pooled lines are the day's cost, not the meeting's.
+    from apps.daily_visit_batches.pricing import KEY_LABELS as _DAY_POOL_KEYS
+
     cluster_meeting_with_wrong_cost = (
         ActivityScheduleCostLine.objects.filter(
             activity__activity_type__in=[
@@ -519,7 +551,12 @@ def _workflow_issues() -> dict:
                 "cluster_meeting_ssa_review",
             ]
         )
-        .exclude(cost_setting_key="cluster_meeting_participant_meal_cost_per_head")
+        .exclude(
+            cost_setting_key__in=[
+                "cluster_meeting_participant_meal_cost_per_head",
+                *_DAY_POOL_KEYS,
+            ]
+        )
         .count()
     )
 
@@ -578,10 +615,15 @@ def _workflow_issues() -> dict:
     cceo_ids = StaffProfile.objects.filter(
         user__active_role="CCEO", deleted_at__isnull=True
     ).values_list("id", flat=True)
-    cceos_without_supervisor = sum(
-        1
-        for cid in cceo_ids
-        if not StaffSupervisorAssignment.objects.filter(supervisee_id=cid).exists()
+    cceos_without_supervisor = (
+        StaffProfile.objects.filter(id__in=cceo_ids)
+        .annotate(
+            supervised=Exists(
+                StaffSupervisorAssignment.objects.filter(supervisee_id=OuterRef("id"))
+            )
+        )
+        .filter(supervised=False)
+        .count()
     )
 
     # ── Performance-integrity checks ─────────────────────────────────────────
@@ -616,10 +658,22 @@ def _workflow_issues() -> dict:
         .count()
     )
 
-    # Accounts cleared before IA verified
+    # Accounts cleared before IA verified. Only where money was involved: the
+    # checklist marks work that needs no finance as cleared by definition,
+    # which counted unpriced visit requests as cleared ahead of IA. Accountant
+    # confirmation follows IA verification in the chain, so it is not early.
     accounts_clearance_before_ia = (
-        active.filter(closure_checklist__accounts_cleared=True)
-        .exclude(status__in=[ActivityStatus.IA_VERIFIED, ActivityStatus.CLOSED])
+        active.filter(
+            closure_checklist__accounts_cleared=True,
+            closure_checklist__finance_required=True,
+        )
+        .exclude(
+            status__in=[
+                ActivityStatus.IA_VERIFIED,
+                ActivityStatus.ACCOUNTANT_CONFIRMED,
+                ActivityStatus.CLOSED,
+            ]
+        )
         .count()
     )
 
@@ -949,8 +1003,15 @@ def _workflow_issues() -> dict:
         district_type__isnull=True
     ).count()
 
-    # Batch-eligible staff visits scheduled but never assigned a batch.
-    scheduled_visits_missing_batch = scheduled.filter(
+    # Batch-eligible staff visits scheduled but never assigned a batch. Only
+    # a dated plan that is still ahead of delivery can join one: an undated
+    # plan has no day to pool, a visit request is priced and pooled when its
+    # owner approves it (apps.planning.visit_requests._price), and delivered
+    # work has already drawn its money, so counting those reported a defect
+    # nobody could correct.
+    scheduled_visits_missing_batch = active.filter(
+        status__in=("planned", "scheduled", "in_progress"),
+        planned_date__isnull=False,
         activity_type__in=DAILY_BATCH_ELIGIBLE_TYPES,
         delivery_type="staff",
         school__isnull=False,
@@ -963,14 +1024,21 @@ def _workflow_issues() -> dict:
     budget_changed_after_approval = 0
     from apps.fund_requests.models import WeeklyFundRequest as _WFR
 
-    for _batch in DailyVisitBatch.objects.all().only(
-        "id", "district_type", "school_count", "responsible_user", "visit_date"
+    # Members and their districts come with the batches in one prefetch; per
+    # batch this was a member query plus a district query per school.
+    _live_members = Prefetch(
+        "activities",
+        queryset=Activity.objects.filter(deleted_at__isnull=True)
+        .exclude(status="cancelled")
+        .select_related("school__district"),
+        to_attr="_live_members",
+    )
+    for _batch in (
+        DailyVisitBatch.objects.all()
+        .only("id", "district_type", "school_count", "responsible_user", "visit_date")
+        .prefetch_related(_live_members)
     ):
-        _member_activities = (
-            _batch.activities.filter(deleted_at__isnull=True)
-            .exclude(status="cancelled")
-            .select_related("school")
-        )
+        _member_activities = _batch._live_members
         _live_district_ids = set()
         _live_types = set()
         for _a in _member_activities:
@@ -1154,7 +1222,12 @@ def _workflow_issues() -> dict:
         blockers.append(f"{missing_rates} scheduled activities are missing cost rates.")
     if missing_evidence_files:
         blockers.append(
-            f"{missing_evidence_files} evidence records point to missing files."
+            f"{missing_evidence_files} evidence records point to missing files"
+            + (
+                f" (the {evidence_checked} most recent of {evidence_total} checked)."
+                if evidence_total > evidence_checked
+                else "."
+            )
         )
     if line_sum_mismatch:
         blockers.append(

@@ -371,10 +371,16 @@ def _scheduled_activities_without_a_cost() -> dict:
     """Scheduled work that cannot enter a fund request."""
     from apps.activities.models import Activity, ActivityScheduleCostLine
 
-    scheduled = Activity.objects.filter(
-        deleted_at__isnull=True,
-        status__in=("scheduled", "partner_scheduled", "planned"),
-    ).exclude(paired_in_school_training__isnull=False)
+    # An undated plan is not priced yet by design: the costing writer prices
+    # a plan when it gets its date, so only dated plans can be missing a cost.
+    scheduled = (
+        Activity.objects.filter(deleted_at__isnull=True)
+        .filter(
+            Q(status__in=("scheduled", "partner_scheduled"))
+            | Q(status="planned", planned_date__isnull=False)
+        )
+        .exclude(paired_in_school_training__isnull=False)
+    )
     costed = set(
         ActivityScheduleCostLine.objects.filter(
             activity_id__in=scheduled.values("id")

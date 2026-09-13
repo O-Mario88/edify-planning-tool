@@ -28,10 +28,18 @@ class ClosureEligibilityService:
             # Check 1: Activity Executed
             executed = activity.status not in [
                 "not_planned",
+                # A visit request waiting on the school owner is not yet a
+                # plan, and work that was declined, cancelled or put off never
+                # happened; each read as executed, and with no cost lines its
+                # finance also read as cleared (2026-09-13 ecosystem audit).
+                "awaiting_owner_approval",
                 "planned",
                 "scheduled",
                 "assigned_to_partner",
                 "partner_scheduled",
+                "rejected",
+                "cancelled",
+                "deferred",
             ]
 
             # Check 2: Evidence Uploaded
