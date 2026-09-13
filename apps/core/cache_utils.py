@@ -46,7 +46,7 @@ def cached_role_dashboard(kind: str, user, parts, build):
     timeout = int(getattr(settings, "DASHBOARD_CACHE_SECONDS", 0) or 0)
     if timeout <= 0:
         return build()
-    signature = hashlib.sha1(
+    signature = hashlib.sha256(
         repr(
             (getattr(user, "id", ""), getattr(user, "active_role", ""), parts)
         ).encode()
