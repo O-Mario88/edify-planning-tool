@@ -6,20 +6,20 @@ Django==5.2.17
 # require 0.6.0. Pin it explicitly so a reused environment cannot retain the
 # vulnerable transitive version.
 sqlparse==0.6.0
-djangorestframework==3.17.2
+djangorestframework==3.18.0
 django-filter==26.1
 django-cors-headers==4.9.0
 django-environ==0.14.0
 dj-database-url==3.1.2
 whitenoise==6.12.0
 django-storages[s3]==1.14.6
-boto3==1.43.57
+boto3==1.43.85
 drf-spectacular==0.30.0
-drf-nested-routers==0.95.0
+drf-nested-routers==0.95.3
 django-apscheduler==0.7.0
 
 # Postgres driver (the NestJS backend ran on Postgres via Prisma).
-psycopg[binary]==3.3.4
+psycopg[binary]==3.3.5
 
 # Cache client for django.core.cache.backends.redis (config/settings/base.py).
 #
@@ -45,20 +45,20 @@ bcrypt==5.0.0
 
 # ASGI server for streaming SSE + the in-process scheduler.
 daphne==4.2.3
-uvicorn==0.51.0
-gunicorn==26.0.0
+uvicorn==0.52.4
+gunicorn==26.2.0
 # Transitive via autobahn (daphne's WebSocket layer) and CacheControl. Pinned
 # forward explicitly because the resolver otherwise settles on 1.1.2, which
 # carries GHSA-6v7p-g79w-8964 (out-of-bounds read on malformed input) — the
 # container scan fails the build on it.
-msgpack==1.2.1
+msgpack==1.2.2
 
 # AES-256-GCM field-level encryption (port of field-crypto.ts).
 #
 # Held at >=50.0.0: 48.0.1 carries CVE-2026-69247, -69248 and -69249, and only
 # 50.0.0 closes all three (49.0.0 leaves -69247 open). pip-audit --strict is a
 # required check, so this is a build gate, not advice.
-cryptography==50.0.0
+cryptography==50.0.1
 
 # Transitive, via Twisted's tls extra for the ASGI stack, and pinned here only
 # because its range decides which cryptography can be installed: 26.2.0 caps at
@@ -83,7 +83,7 @@ python-dateutil==2.9.0.post0
 # Statistical impact analytics (apps.analytics.impact_engine): correlation,
 # significance testing, cost-effectiveness. Batch/service-layer only — the
 # request path stays on ORM aggregation.
-numpy==2.5.1
+numpy==2.5.2
 pandas==3.0.5
-scipy==1.18.0
-fpdf2==2.8.7
+scipy==1.18.1
+fpdf2==2.8.8
