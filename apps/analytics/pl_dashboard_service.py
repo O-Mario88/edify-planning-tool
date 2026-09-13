@@ -1105,23 +1105,32 @@ class ProgramLeadDashboardService:
                 "columns": [c[1] for c in cols],
                 "codes": [c[2] for c in cols],
             }
+        # Two grouped reads for the whole matrix. Per cluster this read the
+        # member schools, their records, the intervention averages and the
+        # overall average: four queries a row on every dashboard load.
+        records = SsaRecord.objects.filter(
+            school__in=schools.exclude(cluster_id__isnull=True).exclude(cluster_id=""),
+            verification_status="confirmed",
+            fy=latest_fy,
+        )
+        by_cluster_int: dict = {}
+        for r in (
+            SsaScore.objects.filter(ssa_record__in=records)
+            .values("ssa_record__school__cluster_id", "intervention")
+            .annotate(a=Avg("score"))
+            .order_by()
+        ):
+            by_cluster_int.setdefault(r["ssa_record__school__cluster_id"], {})[
+                r["intervention"]
+            ] = r["a"]
+        overall_by_cluster = {
+            r["school__cluster_id"]: r["a"]
+            for r in records.values("school__cluster_id")
+            .annotate(a=Avg("average_score"))
+            .order_by()
+        }
         for cid in cluster_ids:
-            c_school_ids = list(
-                schools.filter(cluster_id=cid).values_list("id", flat=True)
-            )
-            record_ids = list(
-                SsaRecord.objects.filter(
-                    school_id__in=c_school_ids,
-                    verification_status="confirmed",
-                    fy=latest_fy,
-                ).values_list("id", flat=True)
-            )
-            by_int = {
-                r["intervention"]: r["a"]
-                for r in SsaScore.objects.filter(ssa_record_id__in=record_ids)
-                .values("intervention")
-                .annotate(a=Avg("score"))
-            }
+            by_int = by_cluster_int.get(cid, {})
             cells = []
             for v, label, code in cols:
                 score = _ssa_score(by_int.get(v))
@@ -1140,11 +1149,7 @@ class ProgramLeadDashboardService:
                         else max(0, min(10, round(score))),
                     }
                 )
-            overall = _ssa_score(
-                SsaRecord.objects.filter(id__in=record_ids).aggregate(
-                    a=Avg("average_score")
-                )["a"]
-            )
+            overall = _ssa_score(overall_by_cluster.get(cid))
             oband = ssa_band(overall)
             rows.append(
                 {

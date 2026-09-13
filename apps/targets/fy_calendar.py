@@ -85,13 +85,31 @@ class FinancialYearCalendarService:
         SAME dates — 372 of the 471 queries on Team Targets. Holidays cannot
         change within one request, so the answer is memoized for its duration
         (and not at all outside a request; see apps.core.request_cache)."""
+        from apps.core.fy import get_fy_date_range, get_operational_fy
         from apps.core.request_cache import memoize
         from apps.hr.leave_services import PublicHolidayService
 
-        return memoize(
-            ("holidays", start, end),
-            lambda: frozenset(PublicHolidayService.get_holidays_in_range(start, end)),
+        fy = get_operational_fy(start)
+        fy_start, fy_end = (d.date() for d in get_fy_date_range(fy))
+        if not (fy_start <= start and end < fy_end):
+            return memoize(
+                ("holidays", start, end),
+                lambda: frozenset(
+                    PublicHolidayService.get_holidays_in_range(start, end)
+                ),
+            )
+        # A page asks for a month, four quarters and the year, and each window
+        # read both holiday tables again. Holidays are whole days, so the
+        # year's set read once answers every window inside it.
+        year = memoize(
+            ("holidays_fy", fy),
+            lambda: frozenset(
+                PublicHolidayService.get_holidays_in_range(
+                    fy_start, fy_end - timedelta(days=1)
+                )
+            ),
         )
+        return frozenset(day for day in year if start <= day <= end)
 
     @staticmethod
     def _all_leave_days(sp_id: str) -> frozenset:

@@ -199,10 +199,22 @@ class PLTeamTargetsService:
         m_end,
         is_current_fy,
         metric_areas=None,
+        prepared=None,
     ):
-        TargetAchievementService.rebuild(user, fy)
-        targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
-        achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
+        if prepared is None:
+            TargetAchievementService.rebuild(user, fy)
+            targets = MyTargetQueryService.monthly_targets(user, fy, areas=areas)
+            achieved = MyTargetQueryService.monthly_achievements(user, fy, areas=areas)
+        else:
+            # The roster was rebuilt and read once by the caller; answer this
+            # member from those rows exactly as the single-person reads would.
+            explicit, profile, ledger_rows = prepared
+            areas = list(areas)
+            area_keys = {area.key for area in areas}
+            targets = MyTargetQueryService._targets_from(areas, explicit, profile)
+            achieved = MyTargetQueryService._achievements_from(
+                areas, [row for row in ledger_rows if row.area.key in area_keys]
+            )
         metric_areas = list(metric_areas or areas)
         pace = (
             Cal.expected_pace_pct(m_start, m_end, today, user) if is_current_fy else 100
@@ -492,6 +504,25 @@ class PLTeamTargetsService:
                 continue
             team.append(user)
 
+        # One ledger rebuild and one read of targets, profiles and validated
+        # credit for the whole roster. Per member this was a rebuild (four
+        # source reads and its writes) and three target reads on every load.
+        TargetAchievementService.rebuild_many(team, fy)
+        roster_area_keys = sorted(
+            {
+                area.key
+                for user in team
+                for area in priority_areas_by_user.get(str(user.id), [])
+            }
+        )
+        roster_targets = MyTargetQueryService._explicit_targets(
+            team, fy, roster_area_keys
+        )
+        roster_profiles = MyTargetQueryService._target_profiles(team, fy)
+        roster_ledger = MyTargetQueryService._validated_ledger(
+            team, fy, roster_area_keys
+        )
+
         members = []
         for user in team:
             user_areas = priority_areas_by_user.get(str(user.id), [])
@@ -511,6 +542,11 @@ class PLTeamTargetsService:
                     m_end,
                     is_current_fy,
                     metric_areas=user_metric_areas,
+                    prepared=(
+                        roster_targets.get(user.id, {}),
+                        roster_profiles.get(getattr(user, "staff_profile_id", None)),
+                        roster_ledger.get(user.id, ()),
+                    ),
                 )
             )
         team_ids = [i for m in members for i in _user_ids(m["user"])]
