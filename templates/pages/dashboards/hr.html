@@ -1,82 +1,72 @@
 {% extends "layouts/shell.html" %}
 {% load frontend_filters %}
 
-{% block title %}HR Director Dashboard · Edify{% endblock %}
+{% block title %}Regional HR Director Dashboard · Edify{% endblock %}
 {% block feature_head_js %}{% include "partials/vendor/apexcharts.html" %}{% endblock %}
 {% block feature_css %}{% include "partials/vendor/dashboard_map.html" %}{% endblock %}
 
 {% block shell_content %}
-<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]">
+{% comment %}
+The Regional HR Director's home (owner role description, 2026-09-12). The
+director works with the Regional Vice President and the Country Directors to
+staff, develop and care for Edify's people, and administers the HR programmes
+by name. The page follows that description: the people pulse and what needs
+leadership attention, then staffing and retention, performance and talent,
+employee relations and wellbeing, policy and compliance, and leave, pay and
+benefits. Every figure is bounded by apps.hr.reach; the filters narrow it.
+{% endcomment %}
+<div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-hr-director-dashboard>
 
-  {% include "components/mobile_role_home.html" with eyebrow="People operations" headline="People decision desk" description="Clear the most urgent people blocker, then review workforce health and upcoming deadlines." period_label="FY "|add:fy status_label=reviews_due primary_action=mobile_primary_action %}
+  {% include "components/mobile_role_home.html" with eyebrow="Regional people leadership" headline="People decision desk" description="Start with what needs leadership attention, then check staffing, wellbeing and compliance across your countries." period_label="FY "|add:fy status_label=attention|length primary_action=mobile_primary_action %}
 
-  <!-- Header — premium glass band -->
   <div class="edify-page-header mobile-home-hide">
     <div class="edify-page-header__lead">
-      <div class="flex items-center gap-2">
-        <h1 class="edify-page-title edify-page-header__title">HR Director Dashboard</h1>
-        <span class="inline-flex h-2.5 w-2.5 items-center justify-center rounded-pill edify-primary-solid" title="Human Capital Operating System"></span>
-      </div>
-      <p class="edify-page-header__description">Human capital overview across East Africa region. Monitor workforce health, performance and culture.</p>
+      <h1 class="edify-page-title edify-page-header__title">Regional HR Director Dashboard</h1>
+      <p class="edify-page-header__description">Staffing, performance, employee relations, wellbeing and employment-law compliance across the countries you oversee, with their Country Directors and the RVP.</p>
     </div>
-
     <div class="edify-page-header__controls">
-      <!-- Export button -->
-      <a href="{% querystring export='csv' %}"
-         class="h-8 px-3 inline-flex items-center gap-1.5 text-white text-[12px] font-semibold rounded-control transition-colors shadow-sm edify-primary-solid">
-        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
-        Export Report
+      <span class="hrd-reach" data-hr-reach>
+        <span class="hrd-reach__dot" aria-hidden="true"></span>
+        <span>{{ scope_label }} · {{ staffing.headcount }} staff</span>
+      </span>
+      <a href="{% querystring export='csv' view=None %}" class="btn btn-secondary h-8" data-hr-export>
+        <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        Export report
+      </a>
+      <a href="/hr-today" class="btn btn-primary h-8" data-hr-today-link>
+        Open HR Today{% if hr_today.total %} <span class="hrd-count-pill">{{ hr_today.total }}</span>{% endif %}
       </a>
     </div>
   </div>
 
-      <form hx-get="/dashboard" hx-target="#hr-dashboard-body" hx-swap="innerHTML" hx-trigger="change"
-            class="edify-filter-bar" aria-label="HR dashboard filters">
-        <input type="hidden" name="view" value="{{ dashboard_view }}">
+  {% comment %}A plain GET form: the export link and the reach chip above read the
+  same filters, so the page reloads whole rather than swapping a body that
+  would leave them describing the old scope.{% endcomment %}
+  <form method="get" action="/dashboard" class="edify-filter-bar" aria-label="HR dashboard filters" data-hr-filters x-data>
+    <input type="hidden" name="view" value="{{ dashboard_view }}">
+    <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
+    <select aria-label="Fiscal year" name="fy" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+      {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">FY {{ opt }}</option>{% endfor %}
+    </select>
+    {% if country_options|length > 1 or country %}
+    <span class="h-4 w-px bg-white/15" aria-hidden="true"></span>
+    <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Country</span>
+    <select aria-label="Country" name="country" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+      <option value="" class="edify-text">All your countries</option>
+      {% for name in country_options %}<option value="{{ name }}" {% if country == name %}selected{% endif %} class="edify-text">{{ name }}</option>{% endfor %}
+    </select>
+    {% endif %}
+    {% if department_options or department %}
+    <span class="h-4 w-px bg-white/15" aria-hidden="true"></span>
+    <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Department</span>
+    <select aria-label="Department" name="department" @change="$el.form.requestSubmit()" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] edify-text">
+      <option value="" class="edify-text">All departments</option>
+      {% for name in department_options %}<option value="{{ name }}" {% if department == name %}selected{% endif %} class="edify-text">{{ name }}</option>{% endfor %}
+    </select>
+    {% endif %}
+  </form>
 
-        <!-- FY Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">FY</span>
-        <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
-          {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %} class="edify-text">{{ opt }}</option>{% endfor %}
-        </select>
-
-        <span class="h-4 w-px bg-white/15"></span>
-
-        <!-- Month Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Month</span>
-        <select aria-label="Month" name="month" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
-          <option value="" class="edify-text">All</option>
-          {% for v, lbl in month_options %}<option value="{{ v }}" {% if month|stringformat:"s" == v %}selected{% endif %} class="edify-text">{{ lbl }}</option>{% endfor %}
-        </select>
-
-        <span class="h-4 w-px bg-white/15"></span>
-
-        <!-- Country Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Country</span>
-        <select aria-label="Country" name="country" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
-          <option value="" class="edify-text">All Countries</option>
-          <option value="Uganda" {% if country == "Uganda" %}selected{% endif %} class="edify-text">Uganda</option>
-          <option value="Rwanda" {% if country == "Rwanda" %}selected{% endif %} class="edify-text">Rwanda</option>
-          <option value="Kenya" {% if country == "Kenya" %}selected{% endif %} class="edify-text">Kenya</option>
-          <option value="Ethiopia" {% if country == "Ethiopia" %}selected{% endif %} class="edify-text">Ethiopia</option>
-        </select>
-
-        <span class="h-4 w-px bg-white/15"></span>
-
-        <!-- Department Select -->
-        <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-muted">Dept</span>
-        <select aria-label="Department" name="department" class="bg-transparent focus:outline-none cursor-pointer font-bold text-[12px] border-none p-0 focus:ring-0 edify-text">
-          <option value="" class="edify-text">All Departments</option>
-          <option value="Program Operations" {% if department == "Program Operations" %}selected{% endif %} class="edify-text">Program Operations</option>
-          <option value="School Support" {% if department == "School Support" %}selected{% endif %} class="edify-text">School Support</option>
-          <option value="Finance & Admin" {% if department == "Finance & Admin" %}selected{% endif %} class="edify-text">Finance &amp; Admin</option>
-          <option value="Monitoring & Quality" {% if department == "Monitoring & Quality" %}selected{% endif %} class="edify-text">Monitoring &amp; Quality</option>
-          <option value="HR & People" {% if department == "HR & People" %}selected{% endif %} class="edify-text">HR &amp; People</option>
-        </select>
-      </form>
-
-  <!-- Body (HTMX swap target) -->
-  <div id="hr-dashboard-body">
+  <div id="hr-dashboard-body" class="space-y-4">
     {% include "partials/dashboards/hr/body.html" %}
   </div>
 </div>

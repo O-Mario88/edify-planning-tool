@@ -146,9 +146,11 @@ class InventoryTests(SimpleTestCase):
 
     def test_registered_payload_groups_are_audited_before_rendering(self):
         self.assertGreater(len(self.inventory.payload_groups), 30)
+        # 190 since 2026-09-13: the Regional HR Director's panel went from
+        # twelve tiles to eight, the rest moving into the dashboard's cards.
         self.assertGreater(
             sum(group.source_item_count for group in self.inventory.payload_groups),
-            200,
+            190,
         )
         for group in self.inventory.payload_groups:
             with self.subTest(group=group.audit_id):

@@ -16,7 +16,6 @@ from apps.hr.models import (
     PerformanceReview,
     ComplianceRequirement,
     EmployeeComplianceRecord,
-    PayrollReadinessRecord,
 )
 from apps.accounts.hr_dashboard_service import HRDashboardService
 
@@ -103,6 +102,9 @@ class HRDashboardServiceTestCase(TestCase):
         self.staff_profile = StaffProfile.objects.create(
             user=self.staff_user, title="CCEO"
         )
+        # The Regional HR Director reads the countries of their region; with no
+        # region assigned, the country on their own People record.
+        StaffProfile.objects.create(user=self.user, title="HR", country="Uganda")
 
         # Create vacancies
         Vacancy.objects.create(
@@ -126,7 +128,7 @@ class HRDashboardServiceTestCase(TestCase):
         self.assertIn("workforce_overview", data)
         self.assertIn("workforce_by_country", data)
         self.assertIn("headcount_by_department", data)
-        self.assertIn("upcoming_reviews", data)
+        self.assertIn("deadlines", data)
         self.assertIn("compliance_status", data)
 
         # Verify values
@@ -135,9 +137,9 @@ class HRDashboardServiceTestCase(TestCase):
             for item in data["kpi_strip_items"]
             if item["label"] == "Open Positions"
         )
-        self.assertEqual(
-            open_positions, "1"
-        )  # Since we created 1 Open and 1 Approved vacancy
+        # One open Ugandan vacancy; the Rwandan one is approved, not open, and
+        # outside the director's country in any case.
+        self.assertEqual(open_positions, "1")
 
 
 class HRDashboardViewTestCase(TestCase):
@@ -213,30 +215,27 @@ class HRDashboardNoMockDataTestCase(TestCase):
         )
 
     def test_kpis_are_honest_zeros_with_no_hr_data_seeded(self):
-        """With zero Vacancy/OnboardingPlan/PerformanceReview/PIP/CPD/Payroll
-        rows in the DB, count KPIs must be real zeroes and readiness KPIs with
-        no denominator must be explicitly unavailable — never a fabricated
-        fallback such as 412, 18, 14, 12, 16, 72, 96, 68 or 95."""
+        """With no HR records at all, count KPIs must be real zeroes and
+        figures with no denominator must be explicitly unavailable — never a
+        fabricated fallback such as 412, 18, 14, 12, 16, 72, 96, 68 or 95."""
         data = HRDashboardService.get_dashboard(self.hr_user)
         by_label = {k["label"]: k["value"] for k in data["kpi_strip_items"]}
 
-        # Previously "<real query> or <hardcoded number>".
+        self.assertEqual(by_label["Active Employees"], "1")
         self.assertEqual(by_label["Open Positions"], "0")
-        self.assertEqual(by_label["New Hires Onboarding"], "0")
-        self.assertEqual(by_label["High-Risk Staff"], "0")
         self.assertEqual(by_label["Performance Reviews Due"], "0")
-        # Previously a bare literal with no query at all.
-        self.assertEqual(by_label["Staff On Track"], "0%")
-        self.assertEqual(by_label["Payroll Readiness"], "—")
-        # Previously fell back to a hardcoded percentage when empty.
+        self.assertEqual(by_label["Open ER Cases"], "0")
+        self.assertEqual(by_label["Open Safety Incidents"], "0")
+        # Nothing to measure is not zero per cent.
+        self.assertEqual(by_label["Staff Morale"], "—")
         self.assertEqual(by_label["Compliance Completion"], "—")
-        self.assertEqual(by_label["CPD Completion"], "—")
+        # One person employed all year and nobody left: a measured 0%.
+        self.assertEqual(by_label["Staff Turnover"], "0%")
 
         # Previously entirely-fabricated data structures must now be honest
         # empty states, not fictional content.
-        self.assertEqual(data["upcoming_reviews"], [])
+        self.assertEqual(data["deadlines"], [])
         self.assertEqual(data["compliance_status"], [])
-        self.assertEqual(data["job_levels"], [])
         self.assertTrue(all(row["count"] == 0 for row in data["recruitment_funnel"]))
         # The viewer is themselves a staff record, so their own country shows
         # a headcount of one — with every derived figure an honest zero.
@@ -244,15 +243,14 @@ class HRDashboardNoMockDataTestCase(TestCase):
         own_country = data["workforce_by_country"][0]
         self.assertEqual(own_country["country"], "Kenya")
         self.assertEqual(own_country["headcount"], 1)
-        self.assertEqual(own_country["on_track"], 0)
-        self.assertEqual(own_country["at_risk"], 0)
+        self.assertEqual(own_country["leavers"], 0)
+        self.assertEqual(own_country["open_roles"], 0)
 
-        # Leadership-attention banner values must also be real, not the old
-        # "4"/"2"/"16"/"5"/"27"/"8" static HTML.
+        # The attention band is empty rather than invented.
+        self.assertEqual(data["attention"], [])
         self.assertEqual(data["open_positions"], 0)
         self.assertEqual(data["reviews_due"], 0)
         self.assertEqual(data["documents_expiring"], 0)
-        self.assertEqual(data["high_risk_countries"], [])
 
     def test_upcoming_reviews_reflects_real_staff_not_fictional_employees(self):
         """A real, not-completed PerformanceReview for a real staff member
@@ -280,8 +278,8 @@ class HRDashboardNoMockDataTestCase(TestCase):
 
         data = HRDashboardService.get_dashboard(self.hr_user)
 
-        self.assertEqual(len(data["upcoming_reviews"]), 1)
-        row = data["upcoming_reviews"][0]
+        self.assertEqual(len(data["deadlines"]), 1)
+        row = data["deadlines"][0]
         self.assertEqual(row["name"], "Real Reviewee")
         self.assertEqual(row["country"], "Kenya")
         self.assertEqual(row["status"], "Due Soon")
@@ -294,36 +292,33 @@ class HRDashboardNoMockDataTestCase(TestCase):
         ):
             self.assertNotEqual(row["name"], fake_name)
 
-    def test_payroll_readiness_pct_is_computed_from_real_records(self):
-        """hr_dashboard_service.py:112 used to hardcode 95% with no query at
-        all (PayrollReadinessRecord was imported but never referenced)."""
-        u1 = User.objects.create_user(
-            email="payroll1@edify.org",
+    def test_turnover_is_computed_from_real_exits(self):
+        """Turnover replaced payroll readiness on the panel (2026-09-13): the
+        role description names staffing and retention, and no screen writes a
+        payroll readiness record. One leaver out of two people is 50%."""
+        from apps.core.fy import get_fy_date_range, get_operational_fy
+        from apps.hr.models import OffboardingPlan
+
+        leaver_user = User.objects.create_user(
+            email="leaver@edify.org",
             password="x",
-            name="Payroll One",
+            name="Leaver One",
             roles=["CCEO"],
             active_role="CCEO",
         )
-        sp1 = StaffProfile.objects.create(user=u1, title="CCEO", country="Kenya")
-        u2 = User.objects.create_user(
-            email="payroll2@edify.org",
-            password="x",
-            name="Payroll Two",
-            roles=["CCEO"],
-            active_role="CCEO",
+        leaver = StaffProfile.objects.create(
+            user=leaver_user, title="CCEO", country="Kenya"
         )
-        sp2 = StaffProfile.objects.create(user=u2, title="CCEO", country="Kenya")
-        period = date.today().strftime("%Y-%m")
-        PayrollReadinessRecord.objects.create(
-            staff=sp1, payroll_period=period, is_payroll_ready=True
-        )
-        PayrollReadinessRecord.objects.create(
-            staff=sp2, payroll_period=period, is_payroll_ready=False
+        start, _end = get_fy_date_range(get_operational_fy())
+        last_day = max(start.date(), date.today() - timedelta(days=1))
+        OffboardingPlan.objects.create(
+            staff=leaver, last_working_day=last_day, exit_reason="resignation"
         )
 
         data = HRDashboardService.get_dashboard(self.hr_user)
         by_label = {k["label"]: k["value"] for k in data["kpi_strip_items"]}
-        self.assertEqual(by_label["Payroll Readiness"], "50%")
+        self.assertEqual(by_label["Staff Turnover"], "50%")
+        self.assertEqual(data["staffing"]["voluntary"], 1)
 
     def test_workforce_by_country_and_department_reflect_real_staffprofile_fields(self):
         """workforce_by_country / headcount_by_department used to be fully

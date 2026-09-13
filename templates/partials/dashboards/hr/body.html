@@ -1,3 +1,50 @@
+{% load frontend_filters %}
+{% comment %}
+The fixed part of the Regional HR Director Dashboard: scope, the people pulse
+and what needs leadership attention, then the Operations | Map rail (owner,
+2026-09-05). Every figure is bounded by the director's reach; naming that scope
+is not decoration, since the same page once reported organisation-wide numbers
+under whatever country the filter bar showed.
+{% endcomment %}
+{% if scope_warning %}
+<div class="edify-note" data-tone="warning" role="status" data-hr-scope-warning>{{ scope_warning }}</div>
+{% elif not reach_assigned %}
+<div class="edify-note" data-tone="info" role="status" data-hr-unassigned>
+  No region is assigned to your account yet, so this dashboard covers {{ scope_label }}, the country on your staff record.
+  An administrator assigns your region on your staff record, under geography.
+</div>
+{% endif %}
+
+{% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="People pulse" %}
+
+<section class="hrd-section" aria-labelledby="hrd-attention-title" data-hr-attention>
+  <div class="hrd-section__head">
+    <h2 id="hrd-attention-title" class="hrd-section__title">Leadership Attention Required</h2>
+    <span class="hrd-section__lede">The people matters to take up this week, most serious first · {{ scope_label }}</span>
+  </div>
+  {% if attention %}
+  <div class="hrd-attention-grid" data-count="{{ attention|length }}">
+    {% for item in attention %}
+    <article class="hrd-attention" data-tone="{{ item.tone }}">
+      <h3 class="hrd-attention__title">{{ item.title }}</h3>
+      <span class="hrd-attention__body">{{ item.body }}</span>
+      <a href="{{ item.url }}" class="hrd-attention__link">{{ item.action }} <span aria-hidden="true">&rarr;</span></a>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="edify-note" data-tone="success" role="status" data-hr-attention-clear>Nothing needs leadership attention in {{ scope_label }} right now.</div>
+  {% endif %}
+  <nav class="hrd-queues" aria-label="HR Today queues">
+    {% for group in hr_today.groups %}
+    <a class="hrd-queue" href="/hr-today#queue-{{ group.key }}" data-tone="{% if group.count %}{% if group.key == 'people_risk' %}danger{% else %}warning{% endif %}{% else %}neutral{% endif %}">
+      <span class="hrd-queue__label">{{ group.label }}</span>
+      <strong class="hrd-queue__value">{{ group.count }}</strong>
+    </a>
+    {% endfor %}
+  </nav>
+</section>
+
 {% comment %}
 Two views (owner, 2026-09-05): the HR operations the director works from,
 and the country map one tab away. The rail and the view swap together.

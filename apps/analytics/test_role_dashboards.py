@@ -123,9 +123,9 @@ class RoleDashboardsTest(TestCase):
             name="Independence Day", date=date.today() + timedelta(days=30)
         )
         d = HRDashboardService.get_dashboard(self.hr)
-        by = {k["label"]: k["value"] for k in d["kpi_strip_items"]}
-        self.assertEqual(by["Pending Leave Approvals"], "1")
-        self.assertEqual(by["On Leave Today"], "1")
+        # Leave moved from the headline panel into the dashboard's Leave card.
+        self.assertEqual(d["leave"]["pending"], 1)
+        self.assertEqual(d["leave"]["on_leave_today"], 1)
         self.assertEqual(d["holidays"][0]["name"], "Independence Day")
         self.assertTrue(any(r["count"] for r in d["roles"]))
 
@@ -154,10 +154,7 @@ class RoleDashboardsTest(TestCase):
         )
         d = HRDashboardService.get_dashboard(self.hr)
         self.assertEqual(
-            {k["label"]: k["value"] for k in d["kpi_strip_items"]}[
-                "Coverage Clashes (7d)"
-            ],
-            "0",
+            d["leave"]["coverage_clashes"], 0
         )  # leave alone is not a clash
         Activity.objects.create(
             school=school,
@@ -173,12 +170,7 @@ class RoleDashboardsTest(TestCase):
             ),
         )
         d2 = HRDashboardService.get_dashboard(self.hr)
-        self.assertEqual(
-            {k["label"]: k["value"] for k in d2["kpi_strip_items"]}[
-                "Coverage Clashes (7d)"
-            ],
-            "1",
-        )
+        self.assertEqual(d2["leave"]["coverage_clashes"], 1)
 
     # ── RVP dashboard ────────────────────────────────────────────────────────
     def test_rvp_dashboard_queues_submitted_budgets(self):

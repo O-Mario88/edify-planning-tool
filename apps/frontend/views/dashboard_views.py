@@ -27,32 +27,70 @@ from apps.frontend.views.dashboard_view_state import (
 )
 
 
-def _export_hr_dashboard_csv(data, *, fy, month, country, department):
-    """Export the same live, role-scoped HR metrics shown on the dashboard."""
+def _export_hr_dashboard_csv(data, *, fy, country, department):
+    """Export the dashboard's figures as they were computed for this viewer.
+
+    Aggregates only: the file carries counts per section and per country, never
+    a named person, because a CSV leaves the platform's access rules behind.
+    """
     response = HttpResponse(content_type="text/csv")
-    response["Content-Disposition"] = 'attachment; filename="hr_dashboard_report.csv"'
-    writer = csv.writer(response)
-    writer.writerow(["Section", "Metric", "Value", "Context"])
-    # The Context column used to echo back whatever filters were REQUESTED,
-    # while the figures behind them were organisation-wide — the file
-    # misrepresented its own scope. It now reports the scope actually applied.
-    filters = ", ".join(
-        value
-        for value in (
-            data.get("scope_label", ""),
-            f"FY {fy}" if fy else "",
-            f"month {month}" if month else "",
-        )
-        if value
+    response["Content-Disposition"] = (
+        f'attachment; filename="hr_director_dashboard_fy{fy}.csv"'
     )
+    writer = csv.writer(response)
+    # The Context column reports the scope actually applied, never the scope
+    # requested: the figures behind it once were organisation-wide.
+    context = " · ".join(
+        value for value in (data.get("scope_label", ""), f"FY {fy}") if value
+    )
+    writer.writerow(["Section", "Metric", "Value", "Context"])
     for item in data.get("kpi_strip_items", []):
         writer.writerow(
-            ["Workforce KPI", item.get("label", ""), item.get("value", ""), filters]
+            ["People pulse", item.get("label", ""), item.get("value", ""), context]
         )
-    for item in data.get("pending_actions", []):
+    for row in data.get("workforce_by_country", []):
+        where = f"{context} · {row['country']}"
+        for label, key in (
+            ("Headcount", "headcount"),
+            ("Joiners this FY", "joiners"),
+            ("Leavers this FY", "leavers"),
+            ("Voluntary exits this FY", "voluntary"),
+            ("Turnover this FY (%)", "turnover"),
+            ("Leaving soon", "leaving_soon"),
+        ):
+            value = row.get(key)
+            writer.writerow(
+                ["Staffing by country", label, "" if value is None else value, where]
+            )
+    for stage in data.get("recruitment_funnel", []):
         writer.writerow(
-            ["Pending action", item.get("label", ""), item.get("count", 0), filters]
+            ["Recruitment pipeline", stage["stage"], stage["count"], context]
         )
+    for stage in data.get("performance", {}).get("stages", []):
+        writer.writerow(["Review cycle", stage["label"], stage["count"], context])
+    for row in data.get("motivation_rows", []):
+        where = f"{context} · {row['country']}"
+        morale = row.get("morale") or {}
+        for label, value in (
+            ("Morale score (of 5)", morale.get("score", "")),
+            ("Sick-leave days this FY", row["sick_days"]),
+            ("Open grievances and disputes", row["grievances"]),
+            ("Open disciplinary matters", row["disciplinary"]),
+            ("Open safety incidents", row["safety_open"]),
+            ("Recognitions this FY", row["recognitions"]),
+        ):
+            writer.writerow(["Wellbeing by country", label, value, where])
+    for row in data.get("compliance_status", []):
+        where = f"{context} · {row['country']}"
+        for label in ("compliant", "due_soon", "expired", "missing"):
+            writer.writerow(
+                [
+                    "Employment compliance",
+                    f"{row['requirement']}: {label.replace('_', ' ')}",
+                    row[label],
+                    where,
+                ]
+            )
     return response
 
 
@@ -552,63 +590,55 @@ def dashboard_view(request):
         return response
 
     elif role == "HumanResources":
-        # HR People-Operations Dashboard
+        # The Regional HR Director Dashboard (owner role description,
+        # 2026-09-12): staffing and retention, performance and talent,
+        # employee relations and wellbeing, policy and compliance, leave, pay
+        # and benefits, all bounded by apps.hr.reach.
         from apps.accounts.hr_dashboard_service import HRDashboardService
         from apps.core.fy import fy_options, get_operational_fy
 
         fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
-        month = (request.GET.get("month") or "").strip() or None
+        if fy not in fy_options():
+            fy = get_operational_fy()
+        options = HRDashboardService.filter_options(request.user)
         country = (request.GET.get("country") or "").strip() or None
+        if country and country not in options["countries"]:
+            country = None
         department = (request.GET.get("department") or "").strip() or None
+        if department and department not in options["departments"]:
+            department = None
 
         data = HRDashboardService.get_dashboard(
-            request.user, fy=fy, month=month, country=country, department=department
+            request.user, fy=fy, country=country, department=department
         )
         if request.GET.get("export") == "csv":
             return _export_hr_dashboard_csv(
-                data,
-                fy=fy,
-                month=month,
-                country=country,
-                department=department,
+                data, fy=fy, country=country, department=department
             )
-        _fy_months = [
-            "Oct",
-            "Nov",
-            "Dec",
-            "Jan",
-            "Feb",
-            "Mar",
-            "Apr",
-            "May",
-            "Jun",
-            "Jul",
-            "Aug",
-            "Sep",
-        ]
+        # The phone opening names the most serious matter, then the review
+        # cycle, then the director's own queue.
+        if data.get("attention"):
+            first = data["attention"][0]
+            mobile_action = {"label": first["action"], "url": first["url"]}
+        elif data.get("reviews_due"):
+            mobile_action = {
+                "label": "Open performance reviews",
+                "url": "/performance-reviews",
+            }
+        else:
+            mobile_action = {"label": "Open HR Today", "url": "/hr-today"}
         context = {
             **data,
             "role": role,
             "user_name": user.name,
             "avatar_initials": avatar_initials,
             "fy": fy,
-            "month": month,
             "country": country,
             "department": department,
             "fy_options": fy_options(),
-            "month_options": [(str(i + 1), lbl) for i, lbl in enumerate(_fy_months)],
-            "mobile_primary_action": {
-                "label": "Review overdue performance"
-                if data.get("reviews_due")
-                else (
-                    "Open recruitment pipeline"
-                    if data.get("open_positions")
-                    else "Open people directory"
-                ),
-                "url": "/performance-reviews"
-                if data.get("reviews_due")
-                else ("/recruitment" if data.get("open_positions") else "/staff"),
-            },
+            "country_options": options["countries"],
+            "department_options": options["departments"],
+            "mobile_primary_action": mobile_action,
         }
         dashboard_view, view_explicit = resolve_dashboard_view(
             request, role_key="hr", default="operations"
@@ -623,11 +653,11 @@ def dashboard_view(request):
                 (
                     "operations",
                     "Operations",
-                    "People, policy compliance and workforce planning",
+                    "Staffing, performance, relations, wellbeing and compliance",
                 ),
                 ("map", "Map", "The country map and its distribution table"),
             ],
-            keep=("fy", "month", "country", "department"),
+            keep=("fy", "country", "department"),
         )
         if dashboard_view == "map":
             from apps.analytics.country_map_context import country_map_context

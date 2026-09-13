@@ -1254,7 +1254,6 @@ class SidebarAndDashboardIntegrationTests(FieldDebriefTestBase):
             self.cceo,
             self.pl,
             self.cd,
-            self.hr,
             self.ia,
             self.rvp,
             self.pc,
@@ -1262,6 +1261,17 @@ class SidebarAndDashboardIntegrationTests(FieldDebriefTestBase):
         ):
             resp = self._client(u).get("/debriefs")
             self.assertContains(resp, ">Field Debrief<", html=False)
+
+    def test_hr_reads_field_signals_on_their_dashboard_not_the_sidebar(self):
+        """The Regional HR Director's sidebar follows their role description
+        (2026-09-13); field debriefs are a field submission tool. HR still
+        opens the page, and reads its people and capacity signals on the HR
+        dashboard."""
+        resp = self._client(self.hr).get("/debriefs")
+        self.assertEqual(resp.status_code, 200)
+        self.assertNotContains(resp, ">Field Debrief<", html=False)
+        dashboard = self._client(self.hr).get("/dashboard?view=operations")
+        self.assertContains(dashboard, "Field capacity signals")
 
     def test_team_targets_dashboard_carries_field_debrief_intel(self):
         from apps.targets.team_targets import PLTeamTargetsService

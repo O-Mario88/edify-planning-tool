@@ -1,407 +1,634 @@
 {% load frontend_filters %}
-{% load static %}
-
 {% comment %}
-Every figure below is bounded by the viewer's people scope. Naming that scope
-is not decoration: the same page used to report organisation-wide numbers
-under whatever country the filter bar happened to show.
+The Operations view of the Regional HR Director Dashboard. Sections follow the
+role description in order: staffing, recruiting and retention; performance,
+talent and development; employee relations, safety, recognition and morale;
+policy and employment-law compliance; leave, pay and benefits; then the next
+deadlines and the programme actions the director starts from here.
+
+Tables are plain ink with toned figures (the platform's table normaliser
+strips fills and bars inside tables); bars and charts live outside tables.
+Every card links to the register where the work is done.
 {% endcomment %}
-<p class="mb-3 edify-text-caption font-semibold edify-text-muted">
-  Showing <span class="font-bold edify-text">{{ scope_label }}</span>
-</p>
-{% if scope_warning %}
-  <p class="mb-3 rounded-control border border-amber-300 bg-amber-50 px-3 py-2 text-[13px] font-semibold text-amber-900">
-    {{ scope_warning }}
-  </p>
-{% endif %}
+<div class="hrd-operations" data-hr-operations>
 
-<!-- KPI Strip -->
-{% include "components/context_metrics.html" with items=kpi_strip_items variant="executive" title="People pulse" %}
-
-<!-- Leadership Attention Alert Banner -->
-<div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
-  <div class="flex items-center gap-1.5 pb-2 border-b edify-border">
-    <span class="text-rose-500 flex shrink-0">
-      <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/></svg>
-    </span>
-    <h2 class="text-[13px] font-extrabold uppercase tracking-wide edify-text">Leadership Attention Required</h2>
-  </div>
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
-    <!-- Item 1 -->
-    <a href="/recruitment" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
-      <div class="h-8 w-8 rounded-pill bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
-      </div>
-      <div>
-        <span class="edify-text-caption font-bold block edify-text">{{ open_positions }} Open Position{{ open_positions|pluralize }}</span>
-        <span class="edify-text-caption text-rose-500 font-extrabold">View recruitment pipeline &rarr;</span>
-      </div>
-    </a>
-    <!-- Item 2 -->
-    <a href="/analytics/country-director" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
-      <div class="h-8 w-8 rounded-pill bg-amber-500/10 text-amber-500 flex items-center justify-center shrink-0">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 002 2h2.945M11 20.935V19a2 2 0 00-2-2h-1a2 2 0 01-2-2v-1a2 2 0 00-2-2H3m8.01 0a9.01 9.01 0 0110.87-3.213M12 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>
-      </div>
-      <div>
-        <span class="edify-text-caption font-bold block edify-text">{{ high_risk_countries|length }} High-Risk Countr{{ high_risk_countries|length|pluralize:"y,ies" }}</span>
-        <span class="edify-text-caption text-slate-400 font-bold">{{ high_risk_countries_label }}</span>
-      </div>
-    </a>
-    <!-- Item 3 -->
-    <a href="/performance-reviews" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
-      <div class="h-8 w-8 rounded-pill bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>
-      </div>
-      <div>
-        <span class="edify-text-caption font-bold block edify-text">{{ reviews_due }} Review{{ reviews_due|pluralize }} Overdue</span>
-        <span class="edify-text-caption text-rose-500 font-extrabold">Calibration pending &rarr;</span>
-      </div>
-    </a>
-    <!-- Item 4 -->
-    <a href="/compliance-register" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
-      <div class="h-8 w-8 rounded-pill bg-rose-500/10 text-rose-500 flex items-center justify-center shrink-0">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
-      </div>
-      <div>
-        <span class="edify-text-caption font-bold block edify-text">{{ documents_expiring }} Document{{ documents_expiring|pluralize }} Expiring</span>
-        <span class="edify-text-caption text-slate-400 font-bold">Action required next 30d</span>
-      </div>
-    </a>
-    <!-- Item 5 -->
-    <a href="/leave/coverage" class="flex items-center gap-3 p-2.5 rounded-surface border transition hover:-translate-y-0.5 edify-surface-muted edify-border">
-      <div class="h-8 w-8 rounded-pill edify-primary-tint-10 edify-primary-text flex items-center justify-center shrink-0">
-        <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
-      </div>
-      <div>
-        <span class="edify-text-caption font-bold block edify-text">{{ employees_on_leave }} Staff on Leave</span>
-        <span class="edify-text-caption text-amber-500 font-bold">{{ coverage_conflicts }} missing coverage conflict{{ coverage_conflicts|pluralize }}</span>
-      </div>
-    </a>
-  </div>
-</div>
-
-{% comment %}
-Packing columns, not a plain row: the workforce chart is far taller than the
-country summary beside it, so a fixed row left a blank block under the
-summary. The right column now stacks the country table and the department
-donut, which fills that height with the next card instead of with air. The
-numbered headings still read 1, 2, 3 … down and across.
-{% endcomment %}
-<!-- Row 1: Workforce Overview Charts -->
-<div class="edify-pack-cols grid grid-cols-1 lg:grid-cols-3 gap-4">
-  <!-- Chart Card -->
-  <div class="edify-pack-col lg:col-span-2">
-  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
-    <div class="flex items-center justify-between pb-3 border-b edify-border">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">1. Workforce Overview</h2>
-      <span class="edify-text-caption px-2 py-0.5 rounded-pill bg-slate-100/10 text-slate-400 font-bold">Last 6 Months</span>
+  {# ── Staffing, recruiting and retention ───────────────────────────────── #}
+  <section class="hrd-section" aria-labelledby="hrd-staffing-title" data-hr-section="staffing">
+    <div class="hrd-section__head">
+      <h2 id="hrd-staffing-title" class="hrd-section__title">Staffing and retention</h2>
+      <span class="hrd-section__lede">Planning ahead for growth and replacing turnover quickly, with each country's leadership · FY {{ fy }} to date</span>
     </div>
-    <div id="chart-workforce-overview" class="min-h-[250px]"></div>
-  </div>
-  </div>
 
-  <div class="edify-pack-col">
-  <!-- Country Summary Table Card -->
-  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
-    <div class="flex items-center justify-between pb-3 border-b edify-border">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">2. Workforce by Country</h2>
-      <a href="/staff" class="edify-text-caption font-bold edify-primary-text hover:underline">View details &rarr;</a>
-    </div>
-    <div class="overflow-x-auto">
-      <table class="w-full text-left edify-text-caption font-semibold">
-        <thead>
-          <tr class="border-b edify-border">
-            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase">Country</th>
-            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Headcount</th>
-            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">On Track</th>
-            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">At Risk</th>
-            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Leave</th>
-            <th class="py-2 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Vacancies</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y edify-border">
-          {% for item in workforce_by_country %}
-          <tr class="hover:bg-slate-50/5">
-            <td class="py-2.5 flex items-center gap-1.5">
-              <span>{{ item.flag }}</span>
-              <span class="edify-text">{{ item.country }}</span>
-            </td>
-            <td class="py-2.5 text-center tabular-nums text-slate-400">{{ item.headcount }}</td>
-            <td class="py-2.5 text-center text-emerald-400">{{ item.on_track }}%</td>
-            <td class="py-2.5 text-center text-rose-400">{{ item.at_risk }}</td>
-            <td class="py-2.5 text-center edify-primary-text">{{ item.on_leave }}</td>
-            <td class="py-2.5 text-center text-amber-400">{{ item.vacancies }}</td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-    <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
-      <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">3. Headcount by Department</h2>
-      <div id="chart-department-headcount" class="min-h-[180px]"></div>
-    </div>
-  </div>
-</div>
-
-<!-- Row 2: Distribution Metrics (Donuts & Bars) -->
-<div class="edify-card-row grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-
-  <!-- Job Level distribution progress bar/pyramid list -->
-  <div class="rounded-surface border p-4 space-y-3 edify-surface edify-border">
-    <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">4. Job Level Distribution</h2>
-    <div class="space-y-2 mt-2">
-      {% for jl in job_levels %}
-      <div class="flex items-center justify-between edify-text-caption font-semibold">
-        <span class="text-slate-400">{{ jl.label }}</span>
-        <div class="flex-1 mx-2 h-2.5 bg-slate-100/10 rounded-pill overflow-hidden">
-          <div class="h-full edify-primary-solid" style="width: {{ jl.pct }}%"></div>
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-countries-title" data-hr-country-staffing>
+      <header class="hrd-card__header">
+        <div class="hrd-card__heading">
+          <h3 id="hrd-countries-title" class="hrd-card__title">Staffing by country</h3>
+          <span class="hrd-card__subtitle">Headcount, joiners, leavers and turnover this FY, with the vacancies open to replace or grow</span>
         </div>
-        <span class="edify-text" class="tabular-nums w-8 text-right">{{ jl.count }} <span class="edify-text-caption text-slate-400">({{ jl.pct }}%)</span></span>
+        <a class="hrd-card__link" href="/workforce-planning">Workforce planning <span aria-hidden="true">&rarr;</span></a>
+      </header>
+      <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Staffing by country; scroll sideways for more columns">
+        <table class="hrd-table" data-mobile-table="scroll">
+          <caption class="sr-only">Staffing, turnover and vacancies for each country you oversee, FY {{ fy }} to date.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Country</th>
+              <th scope="col" class="is-num">Headcount</th>
+              <th scope="col" class="is-num">Joined</th>
+              <th scope="col" class="is-num">Left</th>
+              <th scope="col" class="is-num">Voluntary</th>
+              <th scope="col" class="is-num">Turnover</th>
+              <th scope="col" class="is-num">Leaving soon</th>
+              <th scope="col" class="is-num">Open roles</th>
+              <th scope="col" class="is-num">Awaiting approval</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in workforce_by_country %}
+            <tr>
+              <th scope="row" data-record-title>{{ row.country }}</th>
+              <td class="is-num" data-label="Headcount">{{ row.headcount }}</td>
+              <td class="is-num" data-label="Joined">{{ row.joiners }}</td>
+              <td class="is-num" data-label="Left">{{ row.leavers }}</td>
+              <td class="is-num" data-label="Voluntary">{{ row.voluntary }}</td>
+              <td class="is-num" data-label="Turnover">{% if row.turnover is not None %}<span class="hrd-ink" data-tone="{{ row.tone }}">{{ row.turnover|floatformat:"-1" }}%</span>{% else %}<span class="hrd-muted">No staff</span>{% endif %}</td>
+              <td class="is-num" data-label="Leaving soon">{% if row.leaving_soon %}<span class="hrd-ink" data-tone="warning">{{ row.leaving_soon }}</span>{% else %}0{% endif %}</td>
+              <td class="is-num" data-label="Open roles">{{ row.open_roles }}</td>
+              <td class="is-num" data-label="Awaiting approval">{% if row.awaiting_approval %}<span class="hrd-ink" data-tone="warning">{{ row.awaiting_approval }}</span>{% else %}0{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="hrd-table__empty">
+                {% include "components/empty_state.html" with message="No country is in your reach yet." hint="Countries appear once your staff record names your region or country." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
       </div>
-      {% empty %}
-      {% comment %}
-        A card that renders nothing says nothing — this one drew an empty
-        void the height of its neighbours' charts. Job levels come from
-        staff records, so the honest line names what is missing and where
-        it comes from rather than leaving the reader to guess whether the
-        page is broken or the data is.
-      {% endcomment %}
-      {% include "components/empty_state.html" with title="No job levels recorded" message="Levels appear once staff records carry one." compact="true" %}
-      {% endfor %}
+    </section>
+
+    <div class="edify-card-row hrd-grid hrd-grid--wide-narrow">
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-trend-title">
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-trend-title" class="hrd-card__title">Workforce through the year</h3>
+            <span class="hrd-card__subtitle">Headcount at each month end, with joiners and leavers · FY {{ fy }}</span>
+          </div>
+        </header>
+        {% if workforce_overview.months %}
+        <div id="chart-workforce-overview" class="hrd-chart hrd-chart--tall" role="img" aria-label="Headcount, joiners and leavers by month for FY {{ fy }}"></div>
+        {% else %}
+        {% include "components/empty_state.html" with message="This fiscal year has not started yet." compact="true" %}
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-recruitment-title" data-hr-recruitment>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-recruitment-title" class="hrd-card__title">Recruitment</h3>
+            <span class="hrd-card__subtitle">Roles open, requests awaiting the Country Director, and candidates in selection</span>
+          </div>
+          <a class="hrd-card__link" href="/candidate-pipeline">Pipeline <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures">
+          <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label">Open roles</span><strong class="hrd-figure__value">{{ recruitment.open }}</strong><span class="hrd-figure__meta">{{ recruitment.replacements }} replacement{{ recruitment.replacements|pluralize }}</span></a>
+          <a class="hrd-figure" href="/recruitment"><span class="hrd-figure__label">Awaiting approval</span><strong class="hrd-figure__value" {% if recruitment.pending_approval %}data-tone="warning"{% endif %}>{{ recruitment.pending_approval }}</strong><span class="hrd-figure__meta">requests with the CD</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label">Hired this FY</span><strong class="hrd-figure__value">{{ recruitment.hired }}</strong><span class="hrd-figure__meta">{% if recruitment.median_days_to_hire is not None %}median {{ recruitment.median_days_to_hire }} day{{ recruitment.median_days_to_hire|pluralize }} to hire{% else %}no hires yet{% endif %}</span></div>
+        </div>
+        {% if recruitment.in_pipeline or recruitment.hired %}
+        <div id="chart-recruitment-funnel" class="hrd-chart" role="img" aria-label="Candidates at each recruitment stage"></div>
+        {% else %}
+        <span class="hrd-card__footnote">No candidates are in selection. They appear here as you record them against an open role.</span>
+        {% endif %}
+      </section>
     </div>
-  </div>
+  </section>
 
-  <!-- Leave Overview Donut -->
-  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
-    <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">5. Leave Overview</h2>
-    <div id="chart-leave-overview" class="min-h-[180px]"></div>
-  </div>
-
-  <!-- Performance Overview stacked bars -->
-  <div class="rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border">
-    <h2 class="text-[12px] font-bold uppercase tracking-wide text-slate-400">6. Performance Overview</h2>
-    <div id="chart-performance-overview" class="min-h-[180px]"></div>
-  </div>
-</div>
-
-<!-- Row 3: Reviews, Compliance, Funnel -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-3 gap-4">
-  <!-- Upcoming Reviews table -->
-  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
-    <div class="flex items-center justify-between pb-3 border-b edify-border">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">7. Upcoming Reviews &amp; Probations</h2>
-      <a href="/performance-reviews" class="edify-text-caption font-bold edify-primary-text hover:underline">View all &rarr;</a>
+  {# ── Performance, talent and development ──────────────────────────────── #}
+  <section class="hrd-section" aria-labelledby="hrd-performance-title" data-hr-section="performance">
+    <div class="hrd-section__head">
+      <h2 id="hrd-performance-title" class="hrd-section__title">Performance and talent</h2>
+      <span class="hrd-section__lede">The review cycle, recovery plans and professional development · FY {{ fy }}</span>
     </div>
-    <div class="overflow-x-auto overflow-y-auto max-h-[220px]">
-      <table class="w-full text-left edify-text-caption font-semibold">
-        <thead>
-          <tr class="border-b edify-border">
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Employee</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Type</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Due Date</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-right">Status</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y edify-border">
-          {% for r in upcoming_reviews %}
-          <tr class="hover:bg-slate-50/5">
-            <td class="py-2.5">
-              <span class="block edify-text">{{ r.name }}</span>
-              <span class="edify-text-caption text-slate-400">{{ r.role }} · {{ r.country }}</span>
-            </td>
-            <td class="py-2.5 text-slate-400">{{ r.type }}</td>
-            <td class="py-2.5 text-slate-400 tabular-nums">{{ r.due_date }}</td>
-            <td class="py-2.5 text-right">
-              <span class="px-1.5 py-0.5 rounded-pill edify-text-caption font-extrabold {{ r.status_class }}">{{ r.status }}</span>
-            </td>
-          </tr>
+
+    <div class="edify-card-row hrd-grid hrd-grid--halves">
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-cycle-title" data-hr-review-cycle>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-cycle-title" class="hrd-card__title">Review cycle</h3>
+            <span class="hrd-card__subtitle">{% if performance.total %}{{ performance.complete }} of {{ performance.total }} complete · <span class="hrd-ink" data-tone="{% if performance.overdue %}danger{% else %}success{% endif %}">{{ performance.overdue }} overdue</span>{% else %}No reviews for FY {{ fy }} yet{% endif %}</span>
+          </div>
+          <a class="hrd-card__link" href="/hr/performance-cycle">Performance cycle <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% if performance.total %}
+        <div class="hrd-bars" role="list">
+          {% for stage in performance.stages %}
+          <div class="hrd-bars__row" role="listitem" data-stage="{{ stage.key }}">
+            <span class="hrd-bars__label">{{ stage.label }}</span>
+            <span class="hrd-bars__track" role="img" aria-label="{{ stage.count }} of {{ performance.total }} reviews"><span class="hrd-bars__fill" data-tone="{% if stage.key == 'complete' %}success{% else %}primary{% endif %}" style="inline-size: {{ stage.pct }}%"></span></span>
+            <span class="hrd-bars__value"><strong>{{ stage.count }}</strong> · {{ stage.pct }}%</span>
+          </div>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
+        </div>
+        {% else %}
+        {% include "components/empty_state.html" with message="No performance reviews are open for this year." hint="Reviews appear when the performance cycle opens for your countries." compact="true" %}
+        {% endif %}
+      </section>
 
-  <!-- Compliance Status table -->
-  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
-    <div class="flex items-center justify-between pb-3 border-b edify-border">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">8. Compliance Status</h2>
-      <a href="/compliance-register" class="edify-text-caption font-bold edify-primary-text hover:underline">Register &rarr;</a>
-    </div>
-    <div class="overflow-x-auto overflow-y-auto max-h-[220px]">
-      <table class="w-full text-left edify-text-caption font-semibold">
-        <thead>
-          <tr class="border-b edify-border">
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase">Requirement</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center text-emerald-400">Compliant</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center text-amber-400">Due Soon</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center text-rose-400">Expired</th>
-            <th class="py-1 edify-text-caption text-slate-400 font-extrabold uppercase text-center">Total</th>
-          </tr>
-        </thead>
-        <tbody class="divide-y edify-border">
-          {% for c in compliance_status %}
-          <tr class="hover:bg-slate-50/5">
-            <td class="py-2.5 text-slate-300">{{ c.requirement }}</td>
-            <td class="py-2.5 text-center text-emerald-400 tabular-nums">{{ c.compliant }}</td>
-            <td class="py-2.5 text-center text-amber-400 tabular-nums">{{ c.due_soon }}</td>
-            <td class="py-2.5 text-center text-rose-400 tabular-nums">{{ c.expired }}</td>
-            <td class="py-2.5 text-center text-slate-400 tabular-nums">{{ c.total }}</td>
-          </tr>
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-ratings-title" data-hr-ratings>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-ratings-title" class="hrd-card__title">Final ratings</h3>
+            <span class="hrd-card__subtitle">Calibrated ratings by country: exceeds, met, or below priority</span>
+          </div>
+          <a class="hrd-card__link" href="/performance-reviews">Reviews <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% if performance.rated %}
+        <div class="hrd-legend" role="list">
+          {% for rating in performance.ratings %}
+          <span class="hrd-legend__item" role="listitem" data-rating="{{ rating.key }}"><span class="hrd-legend__swatch" aria-hidden="true"></span>{{ rating.label }} <strong>{{ rating.count }}</strong> · {{ rating.pct }}%</span>
           {% endfor %}
-        </tbody>
-      </table>
+        </div>
+        <div id="chart-performance-overview" class="hrd-chart" role="img" aria-label="Share of final ratings that exceed, meet or fall below priority, by country"></div>
+        {% else %}
+        {% include "components/empty_state.html" with message="No review has a final rating yet." hint="Ratings appear once reviews pass calibration." compact="true" %}
+        {% endif %}
+      </section>
     </div>
-  </div>
 
-  <!-- Recruitment Funnel ApexChart -->
-  <div class="rounded-surface border p-5 space-y-4 flex flex-col justify-between edify-surface edify-border">
-    <div class="flex items-center justify-between pb-3 border-b edify-border">
-      <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">9. Recruitment Funnel</h2>
-      <a href="/recruitment" class="edify-text-caption font-bold edify-primary-text hover:underline">Pipeline &rarr;</a>
+    <div class="edify-card-row hrd-grid hrd-grid--halves">
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-recovery-title" data-hr-recovery>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-recovery-title" class="hrd-card__title">Recovery plans</h3>
+            <span class="hrd-card__subtitle">People being supported back to performance</span>
+          </div>
+          <a class="hrd-card__link" href="/recovery-plans">Recovery plans <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures">
+          <div class="hrd-figure"><span class="hrd-figure__label">Active</span><strong class="hrd-figure__value">{{ performance.recovery_active }}</strong><span class="hrd-figure__meta">{{ performance.recovery_formal }} formal · {{ performance.recovery_informal }} informal</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Ending in 30 days</span><strong class="hrd-figure__value" {% if performance.recovery_ending_soon %}data-tone="warning"{% endif %}>{{ performance.recovery_ending_soon }}</strong><span class="hrd-figure__meta">outcome to decide</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Past end date</span><strong class="hrd-figure__value" {% if performance.recovery_past_end %}data-tone="danger"{% endif %}>{{ performance.recovery_past_end }}</strong><span class="hrd-figure__meta">still open</span></div>
+        </div>
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-development-title" data-hr-development>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-development-title" class="hrd-card__title">Professional development</h3>
+            <span class="hrd-card__subtitle">Training, courses and certification · {% if development.participation is not None %}{{ development.participation }}% of staff developing this FY{% else %}FY {{ fy }}{% endif %}</span>
+          </div>
+          <a class="hrd-card__link" href="/cpd-learning">CPD &amp; Learning <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures">
+          <a class="hrd-figure" href="/cpd-learning"><span class="hrd-figure__label">Awaiting HR</span><strong class="hrd-figure__value" {% if development.awaiting_hr or development.awaiting_signoff %}data-tone="warning"{% endif %}>{{ development.awaiting_hr|add:development.awaiting_signoff }}</strong><span class="hrd-figure__meta">{{ development.awaiting_hr }} to approve · {{ development.awaiting_signoff }} to sign off</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label">In progress</span><strong class="hrd-figure__value">{{ development.in_progress }}</strong><span class="hrd-figure__meta">courses under way</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Completed</span><strong class="hrd-figure__value" {% if development.completed %}data-tone="success"{% endif %}>{{ development.completed }}</strong><span class="hrd-figure__meta">of {{ development.requests }} request{{ development.requests|pluralize }}</span></div>
+        </div>
+      </section>
     </div>
-    <div id="chart-recruitment-funnel" class="min-h-[200px]"></div>
+  </section>
+
+  {# ── Employee relations, safety, recognition and morale ───────────────── #}
+  <section class="hrd-section" aria-labelledby="hrd-wellbeing-title" data-hr-section="wellbeing">
+    <div class="hrd-section__head">
+      <h2 id="hrd-wellbeing-title" class="hrd-section__title">Employee relations and wellbeing</h2>
+      <span class="hrd-section__lede">What may be demotivating staff, and what is inspiring them, to take up with the Country Directors and the RVP</span>
+    </div>
+
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-motivation-title" data-hr-motivation>
+      <header class="hrd-card__header">
+        <div class="hrd-card__heading">
+          <h3 id="hrd-motivation-title" class="hrd-card__title">Motivation signals by country</h3>
+          <span class="hrd-card__subtitle">Morale from the latest pulse survey (shown from {{ morale.min_responses }} answers), sick leave, open grievances and disciplinary matters, safety and recognition</span>
+        </div>
+        <a class="hrd-card__link" href="/pulse-surveys">Pulse surveys <span aria-hidden="true">&rarr;</span></a>
+      </header>
+      <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Motivation signals by country; scroll sideways for more columns">
+        <table class="hrd-table" data-mobile-table="scroll">
+          <caption class="sr-only">Morale, sick leave, employee-relations cases, safety incidents, voluntary exits and recognitions for each country, FY {{ fy }} to date.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Country</th>
+              <th scope="col" class="is-num">Morale</th>
+              <th scope="col">Lowest statement</th>
+              <th scope="col" class="is-num">Sick days per head</th>
+              <th scope="col" class="is-num">Grievances and disputes</th>
+              <th scope="col" class="is-num">Disciplinary</th>
+              <th scope="col" class="is-num">Safety incidents</th>
+              <th scope="col" class="is-num">Voluntary exits</th>
+              <th scope="col" class="is-num">Recognitions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in motivation_rows %}
+            <tr>
+              <th scope="row" data-record-title>{{ row.country }}</th>
+              <td class="is-num" data-label="Morale">{% if row.morale %}<span class="hrd-ink" data-tone="{{ row.morale.tone }}" title="{{ row.morale.survey }} · {{ row.morale.responses }} answers">{{ row.morale.score|floatformat:1 }} of 5</span>{% else %}<span class="hrd-muted">No result</span>{% endif %}</td>
+              <td data-label="Lowest statement">{% if row.morale.lowest %}<span title="{{ row.morale.lowest.statement }}">{{ row.morale.lowest.statement|truncatechars:48 }} · {{ row.morale.lowest.score|floatformat:1 }}</span>{% else %}<span class="hrd-muted">—</span>{% endif %}</td>
+              <td class="is-num" data-label="Sick days per head">{% if row.sick_days_per_head is not None %}{{ row.sick_days_per_head|floatformat:"-1" }}{% else %}<span class="hrd-muted">—</span>{% endif %}</td>
+              <td class="is-num" data-label="Grievances and disputes">{% if row.grievances %}<span class="hrd-ink" data-tone="warning">{{ row.grievances }}</span>{% else %}0{% endif %}</td>
+              <td class="is-num" data-label="Disciplinary">{% if row.disciplinary %}<span class="hrd-ink" data-tone="warning">{{ row.disciplinary }}</span>{% else %}0{% endif %}</td>
+              <td class="is-num" data-label="Safety incidents">{% if row.safety_open %}<span class="hrd-ink" data-tone="danger">{{ row.safety_open }}</span>{% else %}0{% endif %}</td>
+              <td class="is-num" data-label="Voluntary exits">{{ row.voluntary_exits }}</td>
+              <td class="is-num" data-label="Recognitions">{% if row.recognitions %}<span class="hrd-ink" data-tone="success">{{ row.recognitions }}</span>{% else %}0{% endif %}</td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="9" class="hrd-table__empty">
+                {% include "components/empty_state.html" with message="No country is in your reach yet." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="edify-card-row hrd-grid hrd-grid--halves">
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-relations-title" data-hr-relations>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-relations-title" class="hrd-card__title">Employee relations</h3>
+            <span class="hrd-card__subtitle">Disciplinary matters, disputes and investigations{% if relations.oldest_days is not None %} · oldest open {{ relations.oldest_days }} day{{ relations.oldest_days|pluralize }}{% endif %}</span>
+          </div>
+          <a class="hrd-card__link" href="/employee-relations">Cases <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <div class="hrd-figure"><span class="hrd-figure__label">Awaiting triage</span><strong class="hrd-figure__value" {% if relations.awaiting_triage %}data-tone="danger"{% endif %}>{{ relations.awaiting_triage }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Investigating</span><strong class="hrd-figure__value">{{ relations.investigating }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Action or appeal</span><strong class="hrd-figure__value">{{ relations.deciding }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Resolved this FY</span><strong class="hrd-figure__value">{{ relations.closed_fy }}</strong></div>
+        </div>
+        <span class="hrd-card__footnote">{{ relations.disciplinary }} disciplinary · {{ relations.grievances }} grievance{{ relations.grievances|pluralize }} or dispute{{ relations.grievances|pluralize }} · {{ relations.serious }} high or critical. Confidential cases are counted, never named.</span>
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-safety-title" data-hr-safety>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-safety-title" class="hrd-card__title">Health and safety</h3>
+            <span class="hrd-card__subtitle">Incidents, near misses and hazards · FY {{ fy }} to date</span>
+          </div>
+          <a class="hrd-card__link" href="/health-safety">Incidents <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <div class="hrd-figure"><span class="hrd-figure__label">Open</span><strong class="hrd-figure__value" {% if safety.open %}data-tone="warning"{% endif %}>{{ safety.open }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Serious open</span><strong class="hrd-figure__value" {% if safety.serious %}data-tone="danger"{% endif %}>{{ safety.serious }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Reported this FY</span><strong class="hrd-figure__value">{{ safety.reported_fy }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Days lost this FY</span><strong class="hrd-figure__value">{{ safety.days_lost_fy }}</strong></div>
+        </div>
+        <span class="hrd-card__footnote">{{ safety.near_misses_fy }} near miss{{ safety.near_misses_fy|pluralize:"es" }} reported this FY. A near miss reported is an injury prevented.</span>
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-morale-title" data-hr-morale>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-morale-title" class="hrd-card__title">Morale and recognition</h3>
+            <span class="hrd-card__subtitle">{% if morale.overall %}{{ morale.overall.survey }} · {{ morale.overall.responses }} anonymous answers{% else %}No pulse survey has {{ morale.min_responses }} answers yet{% endif %}</span>
+          </div>
+          <a class="hrd-card__link" href="/recognition">Recognition <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <a class="hrd-figure" href="/pulse-surveys"><span class="hrd-figure__label">Morale</span><strong class="hrd-figure__value" {% if morale.overall %}data-tone="{{ morale.overall.tone }}"{% endif %}>{% if morale.overall %}{{ morale.overall.score|floatformat:1 }}<span class="hrd-figure__unit"> of 5</span>{% else %}—{% endif %}</strong></a>
+          <a class="hrd-figure" href="/pulse-surveys"><span class="hrd-figure__label">Open surveys</span><strong class="hrd-figure__value">{{ morale.open_surveys }}</strong><span class="hrd-figure__meta">{{ morale.open_answers }} answer{{ morale.open_answers|pluralize }} so far</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label">Recognitions this FY</span><strong class="hrd-figure__value" {% if recognition.fy %}data-tone="success"{% endif %}>{{ recognition.fy }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">People recognised</span><strong class="hrd-figure__value">{{ recognition.people }}</strong></div>
+        </div>
+        {% if morale.overall.statements %}
+        <div class="hrd-statements" role="list" aria-label="Average score for each pulse statement">
+          {% for row in morale.overall.statements %}
+          <div class="hrd-statements__row" role="listitem"><span class="hrd-statements__text">{{ row.statement }}</span><strong class="hrd-ink" data-tone="{% if row.score < 3 %}danger{% elif row.score < 3.5 %}warning{% else %}success{% endif %}">{{ row.score|floatformat:1 }}</strong></div>
+          {% endfor %}
+        </div>
+        {% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-field-title" data-hr-field-signals>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-field-title" class="hrd-card__title">Field capacity signals</h3>
+            <span class="hrd-card__subtitle">What staff and partners raise in their field debriefs · last {{ field_debrief_intel.days }} days</span>
+          </div>
+          <a class="hrd-card__link" href="/debriefs">Field Debrief <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <div class="hrd-figure"><span class="hrd-figure__label">Debriefs filed</span><strong class="hrd-figure__value">{{ field_debrief_intel.total }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Critical risk</span><strong class="hrd-figure__value" {% if field_debrief_intel.critical %}data-tone="danger"{% endif %}>{{ field_debrief_intel.critical }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Action required</span><strong class="hrd-figure__value" {% if field_debrief_intel.action_required %}data-tone="warning"{% endif %}>{{ field_debrief_intel.action_required }}</strong></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Escalated</span><strong class="hrd-figure__value" {% if field_debrief_intel.escalated %}data-tone="danger"{% endif %}>{{ field_debrief_intel.escalated }}</strong></div>
+        </div>
+        <span class="hrd-card__footnote">{% if field_debrief_intel.top_challenge %}Most reported challenge: {{ field_debrief_intel.top_challenge }} ({{ field_debrief_intel.top_challenge_count }} debrief{{ field_debrief_intel.top_challenge_count|pluralize }}).{% else %}No field debriefs filed in this window.{% endif %}</span>
+      </section>
+    </div>
+  </section>
+
+  {# ── Policy and employment-law compliance ─────────────────────────────── #}
+  <section class="hrd-section" aria-labelledby="hrd-compliance-title" data-hr-section="compliance">
+    <div class="hrd-section__head">
+      <h2 id="hrd-compliance-title" class="hrd-section__title">Policy and compliance</h2>
+      <span class="hrd-section__lede">Compliance with each country's employment law, and the policies staff have acknowledged</span>
+    </div>
+
+    <div class="edify-card-row hrd-grid hrd-grid--wide-narrow">
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-requirements-title" data-hr-compliance>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-requirements-title" class="hrd-card__title">Employment compliance by requirement</h3>
+            <span class="hrd-card__subtitle">{% if compliance.completion is not None %}{{ compliance.completion }}% of {{ compliance.obligations }} obligation{{ compliance.obligations|pluralize }} met{% else %}No requirement is set for your countries{% endif %}</span>
+          </div>
+          <a class="hrd-card__link" href="/compliance-register">Register <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Employment compliance by requirement; scroll sideways for more columns">
+          <table class="hrd-table hrd-table--compact" data-mobile-table="scroll">
+            <caption class="sr-only">Employees compliant, due soon, expired and missing evidence for each employment-law requirement.</caption>
+            <thead>
+              <tr>
+                <th scope="col">Requirement</th>
+                <th scope="col">Country</th>
+                <th scope="col" class="is-num">Compliant</th>
+                <th scope="col" class="is-num">Due soon</th>
+                <th scope="col" class="is-num">Expired</th>
+                <th scope="col" class="is-num">Missing</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for row in compliance_status|slice:":12" %}
+              <tr>
+                <th scope="row" data-record-title>{{ row.requirement }}</th>
+                <td data-label="Country">{% if row.country == "All" %}Every country{% else %}{{ row.country }}{% endif %}</td>
+                <td class="is-num" data-label="Compliant">{% if row.compliant %}<span class="hrd-ink" data-tone="success">{{ row.compliant }}</span>{% else %}0{% endif %}</td>
+                <td class="is-num" data-label="Due soon">{% if row.due_soon %}<span class="hrd-ink" data-tone="warning">{{ row.due_soon }}</span>{% else %}0{% endif %}</td>
+                <td class="is-num" data-label="Expired">{% if row.expired %}<span class="hrd-ink" data-tone="danger">{{ row.expired }}</span>{% else %}0{% endif %}</td>
+                <td class="is-num" data-label="Missing">{% if row.missing %}<span class="hrd-ink" data-tone="danger">{{ row.missing }}</span>{% else %}0{% endif %}</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="hrd-table__empty">
+                  {% include "components/empty_state.html" with message="No employment-law requirement is set for your countries." hint="Add each country's requirements on the Employment Compliance register, then record each employee's evidence." compact="true" %}
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        {% if compliance_status|length > 12 %}<span class="hrd-card__footnote">Showing 12 of {{ compliance_status|length }} requirements. The register lists every one.</span>{% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-policies-title" data-hr-policies>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-policies-title" class="hrd-card__title">Policies</h3>
+            <span class="hrd-card__subtitle">Published policies and manuals, and who has acknowledged them</span>
+          </div>
+          <a class="hrd-card__link" href="/policies">Policies <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <div class="hrd-figure"><span class="hrd-figure__label">Published</span><strong class="hrd-figure__value">{{ policies.published }}</strong><span class="hrd-figure__meta">{{ policies.in_review }} in review</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Acknowledged</span><strong class="hrd-figure__value" {% if policies.acknowledgement_rate is not None %}data-tone="{% if policies.acknowledgement_rate >= 90 %}success{% elif policies.acknowledgement_rate >= 70 %}warning{% else %}danger{% endif %}"{% endif %}>{% if policies.acknowledgement_rate is not None %}{{ policies.acknowledgement_rate }}%{% else %}—{% endif %}</strong><span class="hrd-figure__meta">{{ policies.acknowledged }} of {{ policies.asked }}</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Reviews due</span><strong class="hrd-figure__value" {% if policies.reviews_due %}data-tone="warning"{% endif %}>{{ policies.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Disagreements</span><strong class="hrd-figure__value" {% if policies.disagreed %}data-tone="danger"{% endif %}>{{ policies.disagreed }}</strong><span class="hrd-figure__meta">staff who did not agree</span></div>
+        </div>
+      </section>
+    </div>
+  </section>
+
+  {# ── Leave, pay and benefits ──────────────────────────────────────────── #}
+  <section class="hrd-section" aria-labelledby="hrd-rewards-title" data-hr-section="rewards">
+    <div class="hrd-section__head">
+      <h2 id="hrd-rewards-title" class="hrd-section__title">Leave, pay and benefits</h2>
+      <span class="hrd-section__lede">Leave taken and awaiting decision, compensation reviews and benefit cover</span>
+    </div>
+
+    <div class="edify-card-row hrd-grid hrd-grid--thirds">
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-leave-title" data-hr-leave>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-leave-title" class="hrd-card__title">Leave</h3>
+            <span class="hrd-card__subtitle">{{ leave.days_fy }} day{{ leave.days_fy|pluralize }} of approved leave this FY, by type</span>
+          </div>
+          <a class="hrd-card__link" href="/leave/tracker">Leave tracker <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <a class="hrd-figure" href="/leave/approvals"><span class="hrd-figure__label">Awaiting decision</span><strong class="hrd-figure__value" {% if leave.pending %}data-tone="warning"{% endif %}>{{ leave.pending }}</strong></a>
+          <a class="hrd-figure" href="/leave/tracker"><span class="hrd-figure__label">Out today</span><strong class="hrd-figure__value">{{ leave.on_leave_today }}</strong></a>
+          <a class="hrd-figure" href="/leave/coverage"><span class="hrd-figure__label">Coverage clashes</span><strong class="hrd-figure__value" {% if leave.coverage_clashes %}data-tone="danger"{% endif %}>{{ leave.coverage_clashes }}</strong><span class="hrd-figure__meta">in the next 7 days</span></a>
+          <div class="hrd-figure"><span class="hrd-figure__label">Sick days this FY</span><strong class="hrd-figure__value">{{ leave.sick_days_fy }}</strong><span class="hrd-figure__meta">approved sick leave</span></div>
+        </div>
+        {% if leave.by_type.counts %}
+        <div id="chart-leave-overview" class="hrd-chart" role="img" aria-label="Days of approved leave by type this FY"></div>
+        {% else %}
+        <span class="hrd-card__footnote">No approved leave this fiscal year.</span>
+        {% endif %}
+        {% if holidays %}<span class="hrd-card__footnote">Next public holiday: {{ holidays.0.name }}, {{ holidays.0.date|date:"j M" }}</span>{% endif %}
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-pay-title" data-hr-compensation>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-pay-title" class="hrd-card__title">Compensation and benefits</h3>
+            <span class="hrd-card__subtitle">Pay reviews and benefit cover for active staff; amounts stay on the register</span>
+          </div>
+          <a class="hrd-card__link" href="/compensation-benefits">Register <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        <div class="hrd-figures hrd-figures--two">
+          <div class="hrd-figure"><span class="hrd-figure__label">Pay reviews due</span><strong class="hrd-figure__value" {% if compensation.reviews_due %}data-tone="warning"{% endif %}>{{ compensation.reviews_due }}</strong><span class="hrd-figure__meta">within 60 days</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Reviews overdue</span><strong class="hrd-figure__value" {% if compensation.reviews_overdue %}data-tone="danger"{% endif %}>{{ compensation.reviews_overdue }}</strong><span class="hrd-figure__meta">past the review date</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">Medical cover</span><strong class="hrd-figure__value">{% if compensation.medical_cover is not None %}{{ compensation.medical_cover }}%{% else %}—{% endif %}</strong><span class="hrd-figure__meta">of active staff</span></div>
+          <div class="hrd-figure"><span class="hrd-figure__label">No record yet</span><strong class="hrd-figure__value" {% if compensation.without_record %}data-tone="warning"{% endif %}>{{ compensation.without_record }}</strong><span class="hrd-figure__meta">{{ compensation.in_review }} in HR review</span></div>
+        </div>
+      </section>
+
+      <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-roles-title" data-hr-roles>
+        <header class="hrd-card__header">
+          <div class="hrd-card__heading">
+            <h3 id="hrd-roles-title" class="hrd-card__title">Headcount by role</h3>
+            <span class="hrd-card__subtitle">Active staff in {{ scope_label }}</span>
+          </div>
+          <a class="hrd-card__link" href="/org-structure">Organisation <span aria-hidden="true">&rarr;</span></a>
+        </header>
+        {% if headcount_by_role.rows %}
+        <div class="hrd-bars" role="list">
+          {% for row in headcount_by_role.rows|slice:":8" %}
+          <div class="hrd-bars__row" role="listitem">
+            <span class="hrd-bars__label" title="{{ row.label }}">{{ row.label }}</span>
+            <span class="hrd-bars__track" role="img" aria-label="{{ row.count }} of {{ staffing.headcount }} staff"><span class="hrd-bars__fill" data-tone="primary" style="inline-size: {{ row.pct }}%"></span></span>
+            <span class="hrd-bars__value"><strong>{{ row.count }}</strong> · {{ row.pct }}%</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% if headcount_by_role.rows|length > 8 %}<span class="hrd-card__footnote">{{ headcount_by_role.rows|length|add:"-8" }} more role{{ headcount_by_role.rows|length|add:"-8"|pluralize }} on the organisation structure.</span>{% endif %}
+        {% else %}
+        {% include "components/empty_state.html" with message="No active staff in this scope." compact="true" %}
+        {% endif %}
+      </section>
+    </div>
+  </section>
+
+  {# ── Deadlines and programme actions ──────────────────────────────────── #}
+  <div class="edify-card-row hrd-grid hrd-grid--wide-narrow">
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-deadlines-title" data-hr-deadlines>
+      <header class="hrd-card__header">
+        <div class="hrd-card__heading">
+          <h3 id="hrd-deadlines-title" class="hrd-card__title">Upcoming people deadlines</h3>
+          <span class="hrd-card__subtitle">Reviews, probation decisions, recovery outcomes, document expiries and last working days in the next 30 days</span>
+        </div>
+        <a class="hrd-card__link" href="/hr-today">HR Today <span aria-hidden="true">&rarr;</span></a>
+      </header>
+      <div class="hrd-table-scroll" data-table-scroll-region tabindex="0" aria-label="Upcoming people deadlines">
+        <table class="hrd-table hrd-table--compact" data-mobile-table="scroll">
+          <caption class="sr-only">The next people deadlines across your countries, soonest first.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Employee</th>
+              <th scope="col">Deadline</th>
+              <th scope="col">Date</th>
+              <th scope="col">Status</th>
+              <th scope="col" class="is-end"><span class="sr-only">Open</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in deadlines %}
+            <tr>
+              <th scope="row" data-record-title><span>{{ row.name }}</span>{% if row.country %}<span>{{ row.country }}</span>{% endif %}</th>
+              <td data-label="Deadline">{{ row.type }}</td>
+              <td data-label="Date">{{ row.due_date }}</td>
+              <td data-label="Status"><span class="hrd-ink" data-tone="{{ row.tone }}">{{ row.status }}</span></td>
+              <td class="is-end" data-label="Open"><a class="hrd-row-link" href="{{ row.url }}">Open<span class="sr-only"> {{ row.type }} for {{ row.name }}</span></a></td>
+            </tr>
+            {% empty %}
+            <tr>
+              <td colspan="5" class="hrd-table__empty">
+                {% include "components/empty_state.html" with message="No people deadlines in the next 30 days." compact="true" %}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card" aria-labelledby="hrd-actions-title" data-hr-quick-actions>
+      <header class="hrd-card__header">
+        <div class="hrd-card__heading">
+          <h3 id="hrd-actions-title" class="hrd-card__title">Start a programme action</h3>
+          <span class="hrd-card__subtitle">Each opens the form the register uses and brings you back here</span>
+        </div>
+      </header>
+      <div class="hrd-actions">
+        {% for action in quick_actions %}
+        {% if action.drawer %}
+        <button type="button" class="hrd-action" hx-get="{{ action.url }}" hx-target="#drawer-container" hx-swap="innerHTML">
+          <span class="hrd-action__icon">{% include "partials/analytics/pl/_icon.html" with name=action.icon %}</span>
+          <span class="hrd-action__label">{{ action.label }}</span>
+        </button>
+        {% else %}
+        <a class="hrd-action" href="{{ action.url }}">
+          <span class="hrd-action__icon">{% include "partials/analytics/pl/_icon.html" with name=action.icon %}</span>
+          <span class="hrd-action__label">{{ action.label }}</span>
+        </a>
+        {% endif %}
+        {% endfor %}
+      </div>
+    </section>
   </div>
 </div>
 
-<!-- Row 4: Action Panels -->
-<div class="edify-card-row grid grid-cols-1 lg:grid-cols-2 gap-4">
-  <!-- Pending Actions List -->
-  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
-    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Pending HR Actions</h2>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      {% for pa in pending_actions %}
-      <a href="{{ pa.url }}" class="flex items-center justify-between p-3 rounded-surface border transition hover:-translate-y-0.5 hover:shadow-sm edify-surface-muted edify-border">
-        <span class="edify-text-caption font-extrabold edify-text">{{ pa.label }}</span>
-        <span class="px-2 py-0.5 bg-rose-500/10 text-rose-400 border border-rose-500/20 rounded-pill edify-text-caption font-black tabular-nums">{{ pa.count }}</span>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-
-  <!-- Quick Actions Grid -->
-  <div class="rounded-surface border p-5 space-y-4 edify-surface edify-border">
-    <h2 class="text-[13px] font-bold uppercase tracking-wide pb-3 border-b edify-text edify-border">Quick Actions</h2>
-    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-      {% for qa in quick_actions %}
-      <a href="{{ qa.url }}" class="rounded-surface border hover:shadow-sm p-3.5 flex flex-col items-center justify-center text-center gap-1.5 transition-all hover:-translate-y-0.5 edify-surface-muted edify-border">
-        <span class="h-8 w-8 rounded-pill edify-primary-tint-10 edify-primary-text border edify-primary-border-alpha-20 flex items-center justify-center">
-          {% include "partials/analytics/pl/_icon.html" with name=qa.icon %}
-        </span>
-        <span class="edify-text-caption font-extrabold leading-tight edify-text">{{ qa.label }}</span>
-      </a>
-      {% endfor %}
-    </div>
-  </div>
-</div>
-
-<!-- Row 5: Field Debrief People & Capacity Signals -->
-<a href="/debriefs" class="block rounded-surface border p-5 space-y-3 transition hover:-translate-y-0.5 hover:shadow-sm edify-surface edify-border">
-  <div class="flex items-center justify-between pb-3 border-b edify-border">
-    <h2 class="text-[13px] font-bold uppercase tracking-wide edify-text">People &amp; Capacity Signals from Field Debriefs <span class="normal-case font-medium edify-text-caption edify-text-muted">(last {{ field_debrief_intel.days }} days)</span></h2>
-    <span class="edify-text-caption font-bold edify-primary-text">Open Field Debriefs &rarr;</span>
-  </div>
-  <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-    <div class="rounded-surface p-3 text-center edify-surface-muted">
-      <p class="text-[16px] font-bold tabular-nums edify-text">{{ field_debrief_intel.total }}</p>
-      <p class="edify-text-caption font-semibold edify-text-muted">Debriefs Filed</p>
-    </div>
-    <div class="rounded-surface p-3 text-center {% if field_debrief_intel.critical %}bg-rose-500/10{% else %}{% endif %}" style="{% if not field_debrief_intel.critical %}background:var(--edify-surface-muted);{% endif %}">
-      <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.critical %}text-rose-400{% else %}{% endif %}" {% if not field_debrief_intel.critical %}style="color:var(--edify-text);"{% endif %}>{{ field_debrief_intel.critical }}</p>
-      <p class="edify-text-caption font-semibold edify-text-muted">Critical Risk</p>
-    </div>
-    <div class="rounded-surface p-3 text-center {% if field_debrief_intel.action_required %}bg-amber-500/10{% endif %}" style="{% if not field_debrief_intel.action_required %}background:var(--edify-surface-muted);{% endif %}">
-      <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.action_required %}text-amber-400{% endif %}" {% if not field_debrief_intel.action_required %}style="color:var(--edify-text);"{% endif %}>{{ field_debrief_intel.action_required }}</p>
-      <p class="edify-text-caption font-semibold edify-text-muted">Action Required</p>
-    </div>
-    <div class="rounded-surface p-3 text-center {% if field_debrief_intel.escalated %}bg-rose-500/10{% endif %}" style="{% if not field_debrief_intel.escalated %}background:var(--edify-surface-muted);{% endif %}">
-      <p class="text-[16px] font-bold tabular-nums {% if field_debrief_intel.escalated %}text-rose-400{% endif %}" {% if not field_debrief_intel.escalated %}style="color:var(--edify-text);"{% endif %}>{{ field_debrief_intel.escalated }}</p>
-      <p class="edify-text-caption font-semibold edify-text-muted">Escalated</p>
-    </div>
-  </div>
-  {% if field_debrief_intel.top_challenge %}
-  <p class="edify-text-caption font-medium edify-text-muted">Most reported field challenge: <span class="font-bold edify-text">{{ field_debrief_intel.top_challenge }}</span> ({{ field_debrief_intel.top_challenge_count }} debriefs)</p>
-  {% else %}
-  <p class="edify-text-caption font-medium edify-text-muted">No field debriefs filed in this window.</p>
-  {% endif %}
-</a>
-
-{{ headcount_by_department.labels|json_script:"hr-dept-labels" }}
-{{ leave_overview.labels|json_script:"hr-leave-labels" }}
-<!-- ApexCharts initialization script -->
+{{ workforce_overview|json_script:"hr-workforce-trend" }}
+{{ leave_overview|json_script:"hr-leave-overview" }}
+{{ performance_overview|json_script:"hr-performance-overview" }}
+{{ recruitment_funnel|json_script:"hr-recruitment-funnel" }}
 <script>
-  (function() {
-    // Operator-supplied names (free-text department, leave labels)
-    // arrive via json_script: rendered raw through |safe, a department
-    // named with a closing script tag would break out of this block.
-    var hrDeptLabels = JSON.parse(document.getElementById('hr-dept-labels').textContent);
-    var hrLeaveLabels = JSON.parse(document.getElementById('hr-leave-labels').textContent);
-    // 1. Workforce Overview Chart (headcount exits/hires)
-    var woOptions = window.EdifyChartSystem.formBase({});
-    woOptions.series = [
-      { name: 'Total Headcount', type: 'line', data: {{ workforce_overview.headcount|safe }} },
-      { name: 'New Hires', type: 'column', data: {{ workforce_overview.new_hires|safe }} },
-      { name: 'Exits', type: 'column', data: {{ workforce_overview.exits|safe }} }
-    ];
-    woOptions.chart.type = 'line';
-    woOptions.chart.height = 260;
-    woOptions.stroke = { width: [2.25, 0, 0], curve: 'straight' };
-    /* The platform's mixed-chart convention: the LINE takes green, and its
-       two bar series follow the shared comparison order, Blue then Orange.
-       (An earlier pass reordered this on the mistaken belief that the ramp
-       would paint exits green — exits were already orange; green was on the
-       headcount line. test_bar_chart_system pins the convention.) */
-    woOptions.colors = ['var(--edify-chart-green)', 'var(--edify-chart-blue)', 'var(--edify-chart-orange)'];
-    woOptions.xaxis.categories = {{ workforce_overview.months|safe }};
-    woOptions.legend.position = 'bottom';
-    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-workforce-overview"), woOptions);
+  (function () {
+    // Every array arrives through json_script: role, leave, month and country
+    // labels are operator-supplied text, and rendered raw through |safe a
+    // label holding a closing script tag would break out of this block.
+    function read(id) {
+      var node = document.getElementById(id);
+      return node ? JSON.parse(node.textContent) : null;
+    }
+    // ApexCharts and the chart system load deferred: on a first page load
+    // this script runs before them, so it mounts on DOMContentLoaded; after a
+    // view swap they are already there and it mounts at once.
+    function mount() {
+    if (!window.EdifyChartSystem) return;
 
-    // 2. Department Headcount Donut Chart
-    var dhOptions = window.EdifyChartSystem.donut('Staff');
-    dhOptions.series = {{ headcount_by_department.counts|safe }};
-    dhOptions.labels = hrDeptLabels;
-    dhOptions.chart.height = 220;
-    /* Quarter-width card: the legend keeps the reference's value-and-share
-       text but sits below the ring, where six department names fit. */
-    dhOptions.legend.position = 'bottom';
-    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-department-headcount"), dhOptions);
+    // Workforce through the year: headcount line with joiners and leavers.
+    var trend = read('hr-workforce-trend');
+    var trendNode = document.querySelector('#chart-workforce-overview');
+    if (trend && trendNode) {
+      var wo = window.EdifyChartSystem.formBase({});
+      wo.series = [
+        { name: 'Headcount', type: 'line', data: trend.headcount },
+        { name: 'Joined', type: 'column', data: trend.new_hires },
+        { name: 'Left', type: 'column', data: trend.exits }
+      ];
+      wo.chart.type = 'line';
+      wo.chart.height = 260;
+      wo.stroke = { width: [2.25, 0, 0], curve: 'straight' };
+      /* The platform's mixed-chart convention: the LINE takes green, and its
+         two bar series follow the shared comparison order, Blue then Orange
+         (test_bar_chart_system pins the convention). */
+      wo.colors = ['var(--edify-chart-green)', 'var(--edify-chart-blue)', 'var(--edify-chart-orange)'];
+      wo.xaxis.categories = trend.months;
+      wo.legend.position = 'bottom';
+      window.EdifyChartSystem.renderDetached(trendNode, wo);
+    }
 
-    // 3. Leave Overview Donut
-    var loOptions = window.EdifyChartSystem.donut('On leave');
-    loOptions.series = {{ leave_overview.counts|safe }};
-    loOptions.labels = hrLeaveLabels;
-    loOptions.chart.height = 220;
-    loOptions.legend.position = 'bottom';
-    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-leave-overview"), loOptions);
+    // Recruitment: candidates at each stage.
+    var funnel = read('hr-recruitment-funnel');
+    var funnelNode = document.querySelector('#chart-recruitment-funnel');
+    if (funnel && funnelNode) {
+      var rf = window.EdifyChartSystem.rankedBar({});
+      rf.series = [{ name: 'Candidates', data: funnel.map(function (s) { return s.count; }) }];
+      rf.chart.height = 200;
+      rf.xaxis.categories = funnel.map(function (s) { return s.stage; });
+      rf.xaxis.labels = { show: false };
+      rf.tooltip.y = { formatter: function (val) { return val + ' candidate' + (val === 1 ? '' : 's'); } };
+      window.EdifyChartSystem.renderDetached(funnelNode, rf);
+    }
 
-    // 4. Performance Overview stacked columns
-    var poOptions = window.EdifyChartSystem.formBase({});
-    poOptions.series = [
-      { name: 'Strong (70-100%)', data: {{ performance_overview.strong|safe }} },
-      { name: 'Fair (50-69%)', data: {{ performance_overview.fair|safe }} },
-      { name: 'At Risk (<50%)', data: {{ performance_overview.at_risk|safe }} }
-    ];
-    poOptions.chart.type = 'bar';
-    poOptions.chart.height = 180;
-    poOptions.chart.stacked = true;
-    poOptions.chart.stackType = '100%';
-    /* 100% stacked fills the whole row, so the track would never show —
-       turn it off rather than paint it under an opaque bar. Strong / Fair /
-       At Risk is a severity ladder: status colours stay. */
-    poOptions.plotOptions = { bar: { horizontal: true, colors: { backgroundBarOpacity: 0 } } };
-    poOptions.xaxis.categories = {{ performance_overview.categories|safe }};
-    poOptions.colors = ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
-    poOptions.legend.show = false;
-    poOptions.grid = { show: false };
-    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-performance-overview"), poOptions);
+    // Final ratings: a severity ladder, so the status colours stay.
+    var ratings = read('hr-performance-overview');
+    var ratingsNode = document.querySelector('#chart-performance-overview');
+    if (ratings && ratingsNode) {
+      var po = window.EdifyChartSystem.formBase({});
+      po.series = [
+        { name: 'Exceeds', data: ratings.strong },
+        { name: 'Met', data: ratings.fair },
+        { name: 'Below', data: ratings.at_risk }
+      ];
+      po.chart.type = 'bar';
+      po.chart.height = Math.max(140, 44 * ratings.categories.length + 40);
+      po.chart.stacked = true;
+      po.chart.stackType = '100%';
+      /* 100% stacked fills the whole row, so the track would never show:
+         turn it off rather than paint it under an opaque bar. */
+      po.plotOptions = { bar: { horizontal: true, colors: { backgroundBarOpacity: 0 } } };
+      po.xaxis.categories = ratings.categories;
+      po.colors = ['var(--edify-chart-green)', 'var(--edify-chart-amber)', 'var(--edify-chart-red)'];
+      po.legend.show = false;
+      po.grid = { show: false };
+      window.EdifyChartSystem.renderDetached(ratingsNode, po);
+    }
 
-    // 5. Recruitment Funnel horizontal bar chart
-    var rfOptions = window.EdifyChartSystem.rankedBar({});
-    rfOptions.series = [{ name: 'Candidates', data: [{% for stage in recruitment_funnel %}{{ stage.count }}, {% endfor %}] }];
-    rfOptions.chart.height = 180;
-    rfOptions.xaxis.categories = [{% for stage in recruitment_funnel %}'{{ stage.stage }}', {% endfor %}];
-    rfOptions.xaxis.labels = { show: false };
-    rfOptions.tooltip.y = { formatter: function (val) { return val + ' candidates'; } };
-    window.EdifyChartSystem.renderDetached(document.querySelector("#chart-recruitment-funnel"), rfOptions);
+    // Leave taken this FY, in days, by type.
+    var leave = read('hr-leave-overview');
+    var leaveNode = document.querySelector('#chart-leave-overview');
+    if (leave && leaveNode) {
+      var lo = window.EdifyChartSystem.donut('Days');
+      lo.series = leave.counts;
+      lo.labels = leave.labels;
+      lo.chart.height = 220;
+      lo.legend.position = 'bottom';
+      window.EdifyChartSystem.renderDetached(leaveNode, lo);
+    }
+
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', mount, { once: true });
+    } else {
+      mount();
+    }
   })();
 </script>

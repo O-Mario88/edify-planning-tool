@@ -5654,6 +5654,601 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   font-size: var(--edify-text-label-size);
 }
 
+/* Regional HR Director dashboard ---------------------------------------------
+   The HR director's home (owner role description, 2026-09-12). The same
+   surface grammar as the Regional Programme Lead's: cards take the platform
+   surface utilities and these rules lay them out; every tone comes from the
+   semantic tokens so light, dark and blue themes resolve. */
+.hrd-reach {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-pill);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  white-space: nowrap;
+}
+
+.hrd-reach__dot {
+  inline-size: 0.375rem;
+  block-size: 0.375rem;
+  border-radius: var(--radius-pill);
+  background: var(--edify-success);
+}
+
+.hrd-count-pill {
+  display: inline-flex;
+  min-inline-size: 1.25rem;
+  justify-content: center;
+  margin-inline-start: 0.25rem;
+  padding: 0 0.375rem;
+  border-radius: var(--radius-pill);
+  background: rgb(255 255 255 / 0.22);
+  font-variant-numeric: tabular-nums;
+}
+
+.hrd-operations {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.hrd-section {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.hrd-section__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.75rem;
+  row-gap: 0.125rem;
+}
+
+.hrd-section__title {
+  color: var(--edify-text);
+  font-size: var(--edify-text-title-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-title-leading);
+}
+
+.hrd-section__lede {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.4;
+}
+
+.hrd-attention-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.75rem;
+}
+
+@media (min-width: 48rem) {
+  .hrd-attention-grid:not([data-count="1"]) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 80rem) {
+  .hrd-attention-grid:is([data-count="3"], [data-count="5"], [data-count="6"]) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hrd-attention {
+  --hrd-tone-ink: var(--edify-warning-text);
+  --hrd-tone-fill: var(--edify-warning-light);
+  --hrd-tone-edge: var(--edify-warning-border);
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid var(--hrd-tone-edge);
+  border-radius: var(--radius-surface);
+  background: var(--hrd-tone-fill);
+}
+
+.hrd-attention[data-tone="danger"] {
+  --hrd-tone-ink: var(--edify-danger-text);
+  --hrd-tone-fill: var(--edify-danger-light);
+  --hrd-tone-edge: var(--edify-danger-border);
+}
+
+.hrd-attention__title {
+  color: var(--hrd-tone-ink);
+  font-size: var(--edify-text-body-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: 1.35;
+}
+
+.hrd-attention__body {
+  color: var(--edify-text-secondary);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.4;
+}
+
+.hrd-attention__link {
+  align-self: flex-start;
+  margin-block-start: 0.125rem;
+  color: var(--hrd-tone-ink);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.hrd-attention__link:hover,
+.hrd-attention__link:focus-visible,
+.hrd-card__link:hover,
+.hrd-card__link:focus-visible,
+.hrd-row-link:hover,
+.hrd-row-link:focus-visible {
+  text-decoration: underline;
+}
+
+/* HR Today's four queues, one hairline-divided strip. */
+.hrd-queues {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-divider);
+}
+
+@media (min-width: 48rem) {
+  .hrd-queues {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.hrd-queue {
+  display: flex;
+  min-inline-size: 0;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--edify-surface);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+}
+
+.hrd-queue:hover,
+.hrd-queue:focus-visible {
+  background: var(--edify-surface-hover);
+}
+
+.hrd-queue__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hrd-queue__value {
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  font-weight: var(--edify-text-title-weight);
+  font-variant-numeric: tabular-nums;
+}
+
+.hrd-queue[data-tone="warning"] .hrd-queue__value {
+  color: var(--edify-warning-text);
+}
+
+.hrd-queue[data-tone="danger"] .hrd-queue__value {
+  color: var(--edify-danger-text);
+}
+
+/* Card rows. */
+.hrd-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+}
+
+@media (min-width: 64rem) {
+  .hrd-grid--halves {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hrd-grid--thirds {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .hrd-grid--wide-narrow {
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+  }
+}
+
+@media (min-width: 80rem) {
+  .hrd-grid--thirds {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.hrd-card {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+}
+
+.hrd-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.hrd-card__heading {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.hrd-card__title {
+  color: var(--edify-text);
+  font-size: var(--edify-text-body-size);
+  font-weight: var(--edify-text-title-weight);
+  line-height: var(--edify-text-title-leading);
+}
+
+.hrd-card__subtitle,
+.hrd-card__footnote {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  line-height: 1.4;
+}
+
+.hrd-card__link,
+.hrd-row-link {
+  flex-shrink: 0;
+  color: var(--edify-primary);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  white-space: nowrap;
+}
+
+/* Figures: a hairline-divided grid of labelled values. */
+.hrd-figures {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1px;
+  overflow: hidden;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-divider);
+}
+
+.hrd-figures--two {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.hrd-figures--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: 29.99rem) {
+  .hrd-figures {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* Three figures on two columns: the last takes the row, so no empty cell
+     shows the divider colour through. */
+  .hrd-figures > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+.hrd-figure {
+  display: flex;
+  min-inline-size: 0;
+  flex-direction: column;
+  gap: 0.125rem;
+  padding: 0.625rem 0.75rem;
+  background: var(--edify-surface);
+}
+
+a.hrd-figure:hover,
+a.hrd-figure:focus-visible {
+  background: var(--edify-surface-hover);
+}
+
+.hrd-figure__label {
+  overflow: hidden;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hrd-figure__value {
+  color: var(--edify-text);
+  font-size: var(--edify-text-tile-value-size);
+  font-weight: var(--edify-text-title-weight);
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.hrd-figure__unit,
+.hrd-figure__meta {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+}
+
+.hrd-figure__value[data-tone="success"],
+.hrd-ink[data-tone="success"] {
+  color: var(--edify-success-text);
+}
+
+.hrd-figure__value[data-tone="warning"],
+.hrd-ink[data-tone="warning"] {
+  color: var(--edify-warning-text);
+}
+
+.hrd-figure__value[data-tone="danger"],
+.hrd-ink[data-tone="danger"] {
+  color: var(--edify-danger-text);
+}
+
+.hrd-ink {
+  font-weight: var(--edify-text-title-weight);
+}
+
+.hrd-ink[data-tone="neutral"],
+.hrd-muted {
+  color: var(--edify-text-muted);
+}
+
+/* Tables: plain ink, 32px desktop rows. */
+.hrd-table-scroll {
+  max-inline-size: 100%;
+  margin-inline: -1.25rem;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+}
+
+.hrd-table {
+  inline-size: 100%;
+  min-inline-size: 48rem;
+  border-collapse: collapse;
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.hrd-table--compact {
+  min-inline-size: 32rem;
+}
+
+.hrd-table :is(th, td) {
+  padding: 0.375rem 0.75rem;
+  vertical-align: middle;
+  text-align: start;
+  white-space: nowrap;
+}
+
+.hrd-table :is(th, td):first-child {
+  padding-inline-start: 1.25rem;
+}
+
+.hrd-table :is(th, td):last-child {
+  padding-inline-end: 1.25rem;
+}
+
+.hrd-table thead th {
+  border-block: 1px solid var(--edify-border);
+  background: var(--edify-surface-muted);
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-label-weight);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.hrd-table tbody tr:not(:last-child) :is(th, td) {
+  border-block-end: 1px solid var(--edify-divider);
+}
+
+.hrd-table tbody tr:hover {
+  background: var(--edify-surface-hover);
+}
+
+.hrd-table tbody th {
+  font-weight: inherit;
+}
+
+.hrd-table .is-num,
+.hrd-table .is-end {
+  text-align: end;
+}
+
+.hrd-table__empty {
+  white-space: normal;
+}
+
+/* Review-cycle stage bars. */
+.hrd-bars {
+  display: flex;
+  flex-direction: column;
+}
+
+.hrd-bars__row {
+  display: grid;
+  grid-template-columns: minmax(9rem, 1.1fr) minmax(5rem, 2fr) 5.5rem;
+  align-items: center;
+  gap: 0.75rem;
+  min-block-size: 2rem;
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.hrd-grid--thirds .hrd-bars__row {
+  grid-template-columns: minmax(0, 1.3fr) minmax(3rem, 1fr) auto;
+}
+
+.hrd-bars__row:not(:last-child) {
+  border-block-end: 1px solid var(--edify-divider);
+}
+
+.hrd-bars__label {
+  overflow: hidden;
+  color: var(--edify-text);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.hrd-bars__track {
+  position: relative;
+  display: block;
+  block-size: 0.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+  background: var(--edify-surface-muted);
+  box-shadow: inset 0 0 0 1px var(--edify-divider);
+}
+
+.hrd-bars__fill {
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  border-radius: inherit;
+  background: var(--edify-primary);
+}
+
+.hrd-bars__fill[data-tone="success"] {
+  background: var(--edify-success);
+}
+
+.hrd-bars__value {
+  color: var(--edify-text-muted);
+  text-align: end;
+  white-space: nowrap;
+}
+
+.hrd-bars__value strong {
+  color: var(--edify-text);
+  font-weight: var(--edify-text-title-weight);
+}
+
+/* Final-rating legend, matching the chart's severity ramp. */
+.hrd-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem 1rem;
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.hrd-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.hrd-legend__item strong {
+  color: var(--edify-text);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.hrd-legend__swatch {
+  inline-size: 0.625rem;
+  block-size: 0.625rem;
+  border-radius: 2px;
+  background: var(--edify-chart-green);
+}
+
+.hrd-legend__item[data-rating="met"] .hrd-legend__swatch {
+  background: var(--edify-chart-amber);
+}
+
+.hrd-legend__item[data-rating="below"] .hrd-legend__swatch {
+  background: var(--edify-chart-red);
+}
+
+/* Pulse statements, lowest first reads naturally as a list of five. */
+.hrd-statements {
+  display: flex;
+  flex-direction: column;
+}
+
+.hrd-statements__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding-block: 0.25rem;
+  font-size: var(--edify-text-label-size);
+  font-variant-numeric: tabular-nums;
+}
+
+.hrd-statements__row:not(:last-child) {
+  border-block-end: 1px solid var(--edify-divider);
+}
+
+.hrd-statements__text {
+  min-inline-size: 0;
+  color: var(--edify-text-secondary);
+}
+
+.hrd-chart {
+  min-block-size: 12rem;
+}
+
+.hrd-chart--tall {
+  min-block-size: 16.25rem;
+}
+
+/* Programme actions: drawer launchers, two to a row. */
+.hrd-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.hrd-action {
+  display: flex;
+  min-inline-size: 0;
+  min-block-size: 2.5rem;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.375rem 0.625rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  text-align: start;
+}
+
+.hrd-action:hover,
+.hrd-action:focus-visible {
+  border-color: var(--edify-primary);
+  background: var(--edify-surface-hover);
+}
+
+.hrd-action__icon {
+  display: inline-flex;
+  flex-shrink: 0;
+  color: var(--edify-primary);
+}
+
+.hrd-action__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* SSA performance by staff, cluster and partner needs the full row: it is a
    seven-column table, and the third grid track squeezed it to initials. */
 .sp-dashboard-grid > .sp-breakdowns-card {
