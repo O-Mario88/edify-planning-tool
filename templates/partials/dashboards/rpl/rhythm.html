@@ -1,0 +1,42 @@
+{% comment %}
+The meeting rhythm the CCE Regional Lead's role description sets — Programme
+Lead coaching every month, the VP of CCE every two weeks, the Regional Leads
+and the RVP every month, cross-region convenings and Country Director reviews
+every quarter, and each country's annual budget input — checked against the
+engagements the lead has recorded (apps/cce_leadership/cadence.py). Worst
+first. Shared by the dashboard and the engagement log.
+{% endcomment %}
+{% with limit=rhythm_limit|default:6 %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-rhythm-title" data-rpl-rhythm>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-rhythm-title" class="rpl-card__title">Engagement rhythm</h2>
+      <span class="rpl-card__subtitle">The meetings your role sets, against what you have recorded</span>
+    </div>
+    <a class="rpl-card__link" href="/cce-leadership/engagements">Engagement log <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-follow-stats">
+    <div class="rpl-follow-stat"{% if rhythm.counts.attention %} data-tone="danger"{% endif %}><strong>{{ rhythm.counts.attention }}</strong><span>Overdue or missed</span></div>
+    <div class="rpl-follow-stat"><strong>{{ rhythm.counts.due_soon }}</strong><span>Due soon</span></div>
+    <div class="rpl-follow-stat"><strong>{{ rhythm.counts.done }}</strong><span>On rhythm</span></div>
+  </div>
+  <div class="rpl-follow-list" role="list">
+    {% for r in rhythm.rows %}
+    {% if forloop.counter <= limit %}
+    <div class="rpl-follow" role="listitem" data-rhythm-state="{{ r.state }}">
+      <div class="rpl-follow__head">
+        <span class="rpl-follow__who">{{ r.label }} · {{ r.subject }}</span>
+        <span class="rpl-follow__due" data-tone="{{ r.tone }}">{{ r.state_label }}</span>
+      </div>
+      <span class="rpl-follow__what">{{ r.expectation }}{% if r.last_held %} · last held {{ r.last_held|date:"j M Y" }}{% else %} · not held yet{% endif %}{% if r.due_by and r.state != "done" %} · due by {{ r.due_by|date:"j M" }}{% endif %}{% if r.note and r.last_held %} · {{ r.note }}{% endif %}</span>
+    </div>
+    {% endif %}
+    {% empty %}
+    {% include "components/empty_state.html" with message="No rhythm to keep yet." hint="Programme Leads and countries appear here once your region is assigned." compact="true" %}
+    {% endfor %}
+  </div>
+  {% if rhythm.rows|length > limit %}
+  <div class="rpl-card__footnote">Showing the {{ limit }} most urgent of {{ rhythm.rows|length }}. The engagement log lists every one.</div>
+  {% endif %}
+</section>
+{% endwith %}

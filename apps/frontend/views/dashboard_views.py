@@ -288,10 +288,26 @@ def _regional_lead_dashboard(request):
     fy = (request.GET.get("fy") or "").strip()
     if not fy.isdigit():
         fy = get_operational_fy()
+    # The lead's own engagements and reports feed the rhythm, report and
+    # training sections; keying the snapshot on their last change shows a
+    # conversation just logged or a report just submitted at once, instead of
+    # after the five-minute snapshot expires.
+    from django.db.models import Max
+
+    from apps.cce_leadership.models import RegionalCceReport, RegionalEngagement
+
+    own_records = tuple(
+        str(
+            model.objects.filter(author_id=user.id).aggregate(last=Max("updated_at"))[
+                "last"
+            ]
+        )
+        for model in (RegionalEngagement, RegionalCceReport)
+    )
     data = cached_role_dashboard(
         "rpl",
         user,
-        (fy,),
+        (fy, *own_records),
         lambda: RegionalLeadDashboardService.get_dashboard(user, fy=fy),
     )
     countries = data["reach"]["countries"]

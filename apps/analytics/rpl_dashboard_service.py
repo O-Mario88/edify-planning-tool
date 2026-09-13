@@ -16,6 +16,15 @@ The page answers those four, in that order. It is a READ. The role plans,
 approves and verifies nothing (apps/core/rbac.py), so every control here is a
 link into the page where that work is done, never an action of its own.
 
+The full role description followed (owner, 2026-09-13), and the page grew the
+parts of it the platform holds data for: the SSA needs of each country's
+schools and how far plans answer them ("using SSA data ... identify new
+training priorities"), training quality from the lead's own observations and
+the trainings delivered against each need, school networks and PLCs, the
+meeting rhythm with Programme Leads, Country Directors, the RVP and the VP of
+CCE, and the monthly report. The records behind the last three belong to the
+lead (apps.cce_leadership) and carry no cost and no plan.
+
 Every delivery figure is a fold of ``oversight_service.build_items``, the rows
 Team Oversight lists, so a number on this page cannot disagree with the page
 it drills into.
@@ -25,6 +34,8 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 from datetime import date
+
+from django.db.models import Q
 
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -267,7 +278,9 @@ def _lead_directory(item_lead_ids: set[str], countries: list[str]) -> dict:
     return leads
 
 
-def _lead_roster(pairs, *, countries, fy, follow_ups_by_lead) -> dict:
+def _lead_roster(
+    pairs, *, countries, fy, follow_ups_by_lead, last_coaching=None
+) -> dict:
     by_lead: dict[str, list] = defaultdict(list)
     for item, country in pairs:
         by_lead[item.supervising_pl_id or ""].append((item, country))
@@ -295,6 +308,7 @@ def _lead_roster(pairs, *, countries, fy, follow_ups_by_lead) -> dict:
                 "tone": tone,
                 "tone_label": _TONE_LABELS[tone],
                 "open_follow_ups": follow_ups_by_lead.get(staff_id, 0),
+                "last_coaching": (last_coaching or {}).get(staff_id),
                 "oversight_url": (
                     f"/team-planning-oversight/?program_lead={staff_id}&fy={fy}"
                 ),
@@ -523,9 +537,356 @@ def _follow_ups(user, *, fy: str) -> dict:
     }
 
 
+# ── SSA needs and training priorities ────────────────────────────────────────
+TOP_NEEDS = 3
+NEEDS_PER_COUNTRY = 3
+
+
+def _ssa_needs(reach: dict, fy: str) -> dict:
+    """What each country's schools most need, and how far plans answer it.
+
+    A school's needs are its three weakest interventions on its latest
+    confirmed SSA, read by the one bulk rule every list view uses
+    (`bulk_weakest`). A country's priorities are the interventions most often
+    among its schools' needs; its plans are the year's live plans, judged when
+    they were made (apps.ssa.plan_alignment).
+    """
+    from apps.activities.models import Activity
+    from apps.cce_leadership.services import activities_in_countries
+    from apps.core.interventions import INTERVENTION_LABELS, intervention_abbr
+    from apps.schools.models import School
+    from apps.ssa.plan_alignment import INFORMED, LIVE_PLAN_STATUSES
+    from apps.ssa.recommendation_engine import bulk_weakest
+    from apps.ssa.recommendation_models import RecommendationState, SsaRecommendation
+
+    countries = reach["countries"]
+    country_of = (
+        dict(
+            School.objects.filter(
+                deleted_at__isnull=True, region_id__in=reach["region_ids"]
+            ).values_list("id", "region__country")
+        )
+        if reach["region_ids"]
+        else {}
+    )
+    schools_by_country: Counter = Counter(c or "" for c in country_of.values())
+    assessed: Counter = Counter()
+    needs: dict[str, Counter] = defaultdict(Counter)
+    for school_id, weakest in bulk_weakest(list(country_of), n=TOP_NEEDS).items():
+        country = country_of.get(school_id) or ""
+        assessed[country] += 1
+        for row in weakest:
+            needs[country][row["intervention"]] += 1
+
+    plans: dict[str, Counter] = defaultdict(Counter)
+    if countries:
+        for alignment, school_country, cluster_country, region_country in (
+            Activity.objects.filter(
+                activities_in_countries(countries),
+                deleted_at__isnull=True,
+                fy=fy,
+                status__in=LIVE_PLAN_STATUSES,
+            )
+            .exclude(ssa_alignment="")
+            .values_list(
+                "ssa_alignment",
+                "school__region__country",
+                "cluster__district__region__country",
+                "cluster__region__country",
+            )
+        ):
+            country = school_country or cluster_country or region_country or ""
+            plans[country]["judged"] += 1
+            plans[country]["informed"] += alignment in INFORMED
+            plans[country][alignment] += 1
+
+    open_needs: Counter = Counter()
+    if countries:
+        open_needs.update(
+            country or ""
+            for country in SsaRecommendation.objects.filter(
+                school__region__country__in=countries,
+                state__in=(
+                    RecommendationState.GENERATED,
+                    RecommendationState.ACCEPTED,
+                    RecommendationState.DEFERRED,
+                ),
+            ).values_list("school__region__country", flat=True)
+        )
+
+    def priorities(counter: Counter, base: int) -> list[dict]:
+        ranked = sorted(counter.items(), key=lambda kv: (-kv[1], kv[0]))
+        return [
+            {
+                "code": code,
+                "label": INTERVENTION_LABELS.get(code, code),
+                "abbr": intervention_abbr(code),
+                "schools": count,
+                "share": round(count * 100 / base) if base else 0,
+            }
+            for code, count in ranked[:NEEDS_PER_COUNTRY]
+        ]
+
+    rows = []
+    for country in countries:
+        judged = plans[country]["judged"]
+        rows.append(
+            {
+                "country": country,
+                "schools": schools_by_country.get(country, 0),
+                "assessed": assessed.get(country, 0),
+                "priorities": priorities(needs[country], assessed.get(country, 0)),
+                "plans_judged": judged,
+                "informed_pct": (
+                    round(plans[country]["informed"] * 100 / judged) if judged else None
+                ),
+                "off_priority": plans[country]["off_priority"],
+                "no_focus": plans[country]["no_focus"],
+                "open_recommendations": open_needs.get(country, 0),
+            }
+        )
+    region_needs: Counter = Counter()
+    for counter in needs.values():
+        region_needs.update(counter)
+    judged = sum(plans[c]["judged"] for c in countries)
+    informed = sum(plans[c]["informed"] for c in countries)
+    total_assessed = sum(assessed.values())
+    return {
+        "rows": rows,
+        "region": {
+            "assessed": total_assessed,
+            "schools": sum(schools_by_country.values()),
+            "priorities": priorities(region_needs, total_assessed),
+            "plans_judged": judged,
+            "informed_pct": round(informed * 100 / judged) if judged else None,
+            "off_priority": sum(plans[c]["off_priority"] for c in countries),
+            "open_recommendations": sum(open_needs.values()),
+        },
+    }
+
+
+# ── Training quality ─────────────────────────────────────────────────────────
+def _training_quality(user, reach: dict, fy: str) -> dict:
+    """Trainings planned and delivered against each SSA need, and what the
+    lead's own observations say about their quality."""
+    from apps.activities.models import Activity
+    from apps.cce_leadership.models import ObservationRecommendation
+    from apps.cce_leadership.services import (
+        activities_in_countries,
+        observation_summary,
+        training_label,
+    )
+    from apps.core.activity_types import COMPLETED_WORK_STATUSES, TRAINING_TYPES
+    from apps.core.interventions import INTERVENTION_LABELS
+    from apps.ssa.plan_alignment import LIVE_PLAN_STATUSES
+
+    by_focus: dict[str, Counter] = defaultdict(Counter)
+    if reach["countries"]:
+        for focus, status in (
+            Activity.objects.filter(
+                activities_in_countries(reach["countries"]),
+                deleted_at__isnull=True,
+                fy=fy,
+                activity_type__in=[str(t) for t in TRAINING_TYPES],
+            )
+            .filter(
+                Q(status__in=LIVE_PLAN_STATUSES) | Q(status__in=COMPLETED_WORK_STATUSES)
+            )
+            .values_list("focus_intervention", "status")
+        ):
+            key = focus or ""
+            by_focus[key]["planned"] += 1
+            by_focus[key]["delivered"] += status in COMPLETED_WORK_STATUSES
+    rows = [
+        {
+            "code": code,
+            "label": INTERVENTION_LABELS.get(code, "No intervention named"),
+            "planned": counts["planned"],
+            "delivered": counts["delivered"],
+            "delivered_pct": (
+                round(counts["delivered"] * 100 / counts["planned"])
+                if counts["planned"]
+                else 0
+            ),
+        }
+        for code, counts in sorted(
+            by_focus.items(), key=lambda kv: (kv[0] == "", -kv[1]["planned"], kv[0])
+        )
+    ]
+    observations = observation_summary(user, fy=fy)
+    labels = dict(ObservationRecommendation.choices)
+    latest = [
+        {
+            "id": o.id,
+            "held_on": o.held_on,
+            "training": training_label(o.activity) if o.activity_id else o.subject,
+            "country": o.country,
+            "average_rating": o.average_rating,
+            "recommendation": labels.get(o.recommendation, ""),
+            "state": (
+                "Acknowledged"
+                if o.acknowledged_at
+                else "Shared"
+                if o.feedback_shared_at
+                else "Not shared yet"
+            ),
+            "tone": (
+                "success"
+                if o.acknowledged_at
+                else "warning"
+                if o.feedback_shared_at
+                else "neutral"
+            ),
+        }
+        for o in observations["rows"]
+    ]
+    return {
+        "rows": rows,
+        "planned": sum(r["planned"] for r in rows),
+        "delivered": sum(r["delivered"] for r in rows),
+        "observed": observations["count"],
+        "average_rating": observations["average_rating"],
+        "unshared": observations["unshared"],
+        "awaiting_acknowledgement": observations["awaiting_acknowledgement"],
+        "recommendations": [
+            {"label": labels[value], "count": count}
+            for value, count in observations["recommendations"].items()
+            if count
+        ],
+        "latest": latest,
+    }
+
+
+# ── School networks and PLCs ─────────────────────────────────────────────────
+NETWORK_ACTIVE_DAYS = 90
+
+
+def _networks(reach: dict, *, today: date) -> dict:
+    """Clusters are the platform's school networks and professional learning
+    communities: whether each country's clusters are meeting, and how many
+    schools come."""
+    from datetime import timedelta
+
+    from django.db.models import Count
+
+    from apps.activities.models import Activity, ClusterActivityAttendance
+    from apps.clusters.models import Cluster
+    from apps.core.activity_types import CLUSTER_MEETING_TYPES, COMPLETED_WORK_STATUSES
+    from apps.core.enums import ActivityType, ClusterRecordStatus
+    from apps.schools.models import School
+
+    countries = reach["countries"]
+    if not countries:
+        return {"rows": [], "region": None, "days": NETWORK_ACTIVE_DAYS}
+    in_countries = Q(district__region__country__in=countries) | Q(
+        district__isnull=True, region__country__in=countries
+    )
+    clusters = {
+        cluster_id: district_country or region_country or ""
+        for cluster_id, district_country, region_country in Cluster.objects.filter(
+            in_countries,
+            deleted_at__isnull=True,
+            status=ClusterRecordStatus.ACTIVE,
+        ).values_list("id", "district__region__country", "region__country")
+    }
+    session_types = [str(t) for t in CLUSTER_MEETING_TYPES] + [
+        ActivityType.CLUSTER_TRAINING.value,
+        ActivityType.CLUSTER_TRAINING_SSA_COLLECTION.value,
+    ]
+    sessions = list(
+        Activity.objects.filter(
+            cluster_id__in=list(clusters),
+            deleted_at__isnull=True,
+            activity_type__in=session_types,
+            status__in=COMPLETED_WORK_STATUSES,
+            planned_date__gte=today - timedelta(days=NETWORK_ACTIVE_DAYS),
+            planned_date__lte=today,
+        ).values_list("id", "cluster_id")
+    )
+    attended = dict(
+        ClusterActivityAttendance.objects.filter(
+            activity_id__in=[sid for sid, _c in sessions], attended=True
+        )
+        .values("activity_id")
+        .annotate(n=Count("id"))
+        .order_by()
+        .values_list("activity_id", "n")
+    )
+    schools = defaultdict(Counter)
+    for country, status in School.objects.filter(
+        deleted_at__isnull=True, region_id__in=reach["region_ids"]
+    ).values_list("region__country", "cluster_status"):
+        schools[country or ""]["total"] += 1
+        schools[country or ""]["clustered"] += status == "clustered"
+
+    def fold(country_filter):
+        ids = {cid for cid, country in clusters.items() if country_filter(country)}
+        country_sessions = [(sid, cid) for sid, cid in sessions if cid in ids]
+        meeting = {cid for _sid, cid in country_sessions}
+        counts = [attended.get(sid, 0) for sid, _cid in country_sessions]
+        with_attendance = [n for n in counts if n]
+        return {
+            "clusters": len(ids),
+            "meeting": len(meeting),
+            "quiet": len(ids) - len(meeting),
+            "sessions": len(country_sessions),
+            "average_schools": (
+                round(sum(with_attendance) / len(with_attendance), 1)
+                if with_attendance
+                else None
+            ),
+        }
+
+    rows = []
+    for country in countries:
+        total = schools[country]["total"]
+        rows.append(
+            {
+                "country": country,
+                **fold(lambda c, country=country: c == country),
+                "schools": total,
+                "clustered_pct": (
+                    round(schools[country]["clustered"] * 100 / total)
+                    if total
+                    else None
+                ),
+            }
+        )
+    total = sum(schools[c]["total"] for c in countries)
+    return {
+        "rows": rows,
+        "region": {
+            **fold(lambda c: True),
+            "schools": total,
+            "clustered_pct": (
+                round(sum(schools[c]["clustered"] for c in countries) * 100 / total)
+                if total
+                else None
+            ),
+        },
+        "days": NETWORK_ACTIVE_DAYS,
+    }
+
+
 # ── Attention ────────────────────────────────────────────────────────────────
-def _attention(*, summary, roster, follow_ups, fy) -> list[dict]:
+def _attention(
+    *, summary, roster, follow_ups, fy, rhythm=None, report=None
+) -> list[dict]:
     cards = []
+    if report and report["previous_overdue"]:
+        period = report["previous_period"]
+        cards.append(
+            {
+                "tone": "danger",
+                "title": f"{period:%B} CCE report not submitted",
+                "body": (
+                    f"It was due to the RVP and the VP of CCE by "
+                    f"{report['previous_due_by']:%-d %B}."
+                ),
+                "action": "Open monthly reports",
+                "url": "/cce-leadership/reports",
+            }
+        )
     worst = next((r for r in roster["rows"] if r["tone"] == "danger"), None)
     if worst:
         cards.append(
@@ -542,6 +903,22 @@ def _attention(*, summary, roster, follow_ups, fy) -> list[dict]:
                 ),
                 "action": "Open their team plan",
                 "url": worst["oversight_url"],
+            }
+        )
+    if rhythm and rhythm["counts"]["attention"]:
+        slipped = [r for r in rhythm["rows"] if r["state"] in ("overdue", "missed")]
+        first = slipped[0]
+        count = len(slipped)
+        cards.append(
+            {
+                "tone": "danger",
+                "title": f"{count} engagement{'s' if count != 1 else ''} overdue",
+                "body": (
+                    f"{first['label']} · {first['subject']}"
+                    + (f": {first['note']}." if first["note"] else ".")
+                ),
+                "action": "Open the engagement log",
+                "url": "/cce-leadership/engagements",
             }
         )
     if follow_ups["overdue"]:
@@ -600,16 +977,22 @@ class RegionalLeadDashboardService:
     def get_dashboard(user, *, fy: str) -> dict:
         from apps.analytics.ssa_performance_service import regional_ssa_headline
 
+        from apps.cce_leadership.services import report_state, rhythm
+
+        today = date.today()
         reach = _reach(user)
         items = oversight.build_items(user, fy=fy)
         pairs = list(zip(items, _item_countries(items)))
         summary = oversight.summarize(items)
         follow_ups = _follow_ups(user, fy=fy)
+        engagement_rhythm = rhythm(user, today=today)
+        report = report_state(user, today=today)
         roster = _lead_roster(
             pairs,
             countries=reach["countries"],
             fy=fy,
             follow_ups_by_lead=follow_ups["by_lead"],
+            last_coaching=engagement_rhythm["last_coaching"],
         )
         ssa = regional_ssa_headline(user, fy=fy)
         return {
@@ -617,9 +1000,19 @@ class RegionalLeadDashboardService:
             "reach": reach,
             "summary": summary,
             "attention": _attention(
-                summary=summary, roster=roster, follow_ups=follow_ups, fy=fy
+                summary=summary,
+                roster=roster,
+                follow_ups=follow_ups,
+                fy=fy,
+                rhythm=engagement_rhythm,
+                report=report,
             ),
             "roster": roster,
+            "rhythm": engagement_rhythm,
+            "report": report,
+            "ssa_needs": _ssa_needs(reach, fy),
+            "training_quality": _training_quality(user, reach, fy),
+            "networks": _networks(reach, today=today),
             "delivery_mix": _delivery_mix(items),
             "countries": _countries(
                 pairs,

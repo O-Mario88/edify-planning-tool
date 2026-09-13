@@ -1,0 +1,36 @@
+{% load frontend_filters %}
+{% comment %}
+School networks and professional learning communities: the platform's
+clusters. "Support Program Leads to strengthen and expand Christ-centered
+school networks ... and their work with Professional Learning Communities"
+(CCE Regional Lead, 2026-09-13). A cluster is meeting when a delivered
+cluster meeting or cluster training took place in the last {{ networks.days }} days.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-networks-title" data-rpl-networks>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-networks-title" class="rpl-card__title">School networks and PLCs</h2>
+      <span class="rpl-card__subtitle">Clusters meeting in the last {{ networks.days }} days</span>
+    </div>
+  </header>
+  {% if networks.region %}
+  <div class="rpl-follow-stats">
+    <div class="rpl-follow-stat"><strong>{{ networks.region.clusters }}</strong><span>Active clusters</span></div>
+    <div class="rpl-follow-stat"><strong>{{ networks.region.meeting }}</strong><span>Meeting</span></div>
+    <div class="rpl-follow-stat"{% if networks.region.quiet %} data-tone="danger"{% endif %}><strong>{{ networks.region.quiet }}</strong><span>Quiet</span></div>
+  </div>
+  <div class="rpl-countries" role="list">
+    {% for row in networks.rows %}
+    <div class="rpl-country" role="listitem">
+      <div class="rpl-country__head">
+        <span class="rpl-country__name">{{ row.country }}</span>
+        {% if row.clustered_pct is not None %}<span class="rpl-country__execution" data-tone="{% if row.clustered_pct >= 60 %}success{% elif row.clustered_pct >= 30 %}warning{% else %}neutral{% endif %}">{{ row.clustered_pct }}% of schools clustered</span>{% endif %}
+      </div>
+      <span class="rpl-country__meta">{{ row.clusters }} cluster{{ row.clusters|pluralize }} · {{ row.meeting }} meeting · {{ row.sessions }} session{{ row.sessions|pluralize }}{% if row.average_schools %} · {{ row.average_schools }} schools a session{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% else %}
+  {% include "components/empty_state.html" with message="No country is in your region yet." compact="true" %}
+  {% endif %}
+</section>

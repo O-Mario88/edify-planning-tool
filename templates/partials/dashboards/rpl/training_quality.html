@@ -1,0 +1,83 @@
+{% comment %}
+Training quality: this year's trainings against the SSA need each targets,
+and the lead's own observations of them — "observe and constructively
+critique trainings, empowering Program Leads to make necessary changes"
+(CCE Regional Lead, 2026-09-13). The efficacy of trainings against SSA change
+is Impact Analytics' correlation analysis, linked rather than repeated.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-training-title" data-rpl-training-quality>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-training-title" class="rpl-card__title">Training quality</h2>
+      <span class="rpl-card__subtitle">Trainings against each SSA need, and what your observations found · FY {{ fy }}</span>
+    </div>
+    <div class="rpl-card__actions">
+      <a class="rpl-card__link" href="/cce-leadership/engagements" hx-get="/cce-leadership/engagements/new?kind=training_observation" hx-target="#drawer-container" hx-swap="innerHTML">Observe a training</a>
+      <a class="rpl-card__link" href="/impact">Impact analytics <span aria-hidden="true">&rarr;</span></a>
+    </div>
+  </header>
+  <div class="rpl-impact rpl-impact--four">
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Trainings planned</span>
+      <strong class="rpl-impact__value">{{ training_quality.planned }}</strong>
+      <span class="rpl-impact__meta">{{ training_quality.delivered }} delivered</span>
+    </div>
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Observed</span>
+      <strong class="rpl-impact__value">{{ training_quality.observed }}</strong>
+      <span class="rpl-impact__meta">{% if training_quality.unshared %}{{ training_quality.unshared }} not shared yet{% else %}All shared{% endif %}</span>
+    </div>
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Average rating</span>
+      <strong class="rpl-impact__value">{% if training_quality.average_rating %}{{ training_quality.average_rating }}<span class="rpl-impact__unit">/4</span>{% else %}No data{% endif %}</strong>
+      <span class="rpl-impact__meta">Five criteria, Biblical integration first</span>
+    </div>
+    <div class="rpl-impact__figure"{% if training_quality.awaiting_acknowledgement %} data-tone="warning"{% endif %}>
+      <span class="rpl-impact__label">Awaiting a Programme Lead</span>
+      <strong class="rpl-impact__value">{{ training_quality.awaiting_acknowledgement }}</strong>
+      <span class="rpl-impact__meta">Feedback not yet acknowledged</span>
+    </div>
+  </div>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Trainings by SSA need; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">This year's trainings in your region by the SSA intervention each targets, planned and delivered.</caption>
+      <thead>
+        <tr>
+          <th scope="col">SSA need targeted</th>
+          <th scope="col" class="is-num">Planned</th>
+          <th scope="col" class="is-num">Delivered</th>
+          <th scope="col" class="is-num">Share delivered</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in training_quality.rows|slice:":12" %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.label }}</span></th>
+          <td class="is-num" data-label="Planned">{{ row.planned }}</td>
+          <td class="is-num" data-label="Delivered">{{ row.delivered }}</td>
+          <td class="is-num" data-label="Share delivered">{{ row.delivered_pct }}%</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% include "components/empty_state.html" with message="No training is planned in your region this year." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% if training_quality.latest %}
+  <div class="rpl-follow-list rpl-card__list" role="list" aria-label="Latest observations">
+    {% for o in training_quality.latest %}
+    <div class="rpl-follow" role="listitem">
+      <div class="rpl-follow__head">
+        <span class="rpl-follow__who">{{ o.training }}</span>
+        <span class="rpl-follow__due" data-tone="{{ o.tone }}">{{ o.state }}</span>
+      </div>
+      <span class="rpl-follow__what">{{ o.held_on|date:"j M" }}{% if o.country %} · {{ o.country }}{% endif %}{% if o.average_rating %} · rated {{ o.average_rating }} of 4{% endif %}{% if o.recommendation %} · {{ o.recommendation }}{% endif %}</span>
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+</section>

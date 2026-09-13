@@ -256,6 +256,21 @@ class NotificationLinkResolver:
         if event_type == "strategy_note_issued":
             return "/dashboard", "Open Strategic Guidance"
 
+        # The CCE Regional Lead's handoffs (2026-09-13): training feedback goes
+        # to the Programme Lead and comes back to the lead; the monthly report
+        # goes to the RVP and comes back to the lead.
+        if event_type == "cce_training_feedback_shared":
+            return "/cce-leadership/feedback", "Acknowledge Feedback"
+
+        if event_type == "cce_training_feedback_acknowledged":
+            return "/cce-leadership/engagements", "Open Engagement Log"
+
+        if event_type == "cce_report_submitted":
+            return "/cce-leadership/reports", "Review Report"
+
+        if event_type == "cce_report_reviewed":
+            return "/cce-leadership/reports", "Open Monthly Reports"
+
         if event_type == "fiscal_year_priority_setting":
             if role in ("humanresources", "admin"):
                 route = "/hr/performance-cycle"

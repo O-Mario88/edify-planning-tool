@@ -5654,6 +5654,94 @@ html.theme-dark .tt-page :is(.tt-filter-panel, .tt-panel, .tt-signal-strip, .tt-
   font-size: var(--edify-text-label-size);
 }
 
+/* CCE Regional Lead records and dashboard sections (2026-09-13). The engagement
+   log, training feedback and monthly reports share the dashboard's card and
+   table grammar; these rules add what the new sections need. */
+.rpl-card__actions {
+  display: flex;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+}
+
+button.rpl-card__link,
+button.rpl-row-link {
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.rpl-card__list {
+  padding-block-start: 0.25rem;
+  border-block-start: 1px solid var(--edify-divider);
+}
+
+.rpl-impact--three {
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.rpl-impact--four {
+  grid-template-columns: repeat(auto-fit, minmax(8.5rem, 1fr));
+}
+
+.rpl-impact__value--text {
+  overflow: hidden;
+  font-size: var(--edify-text-title-size);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rpl-impact__figure[data-tone="warning"] .rpl-impact__value {
+  color: var(--edify-warning-text);
+}
+
+.rpl-follow__due[data-tone="warning"] {
+  color: var(--edify-warning-text);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.rpl-follow__due[data-tone="success"] {
+  color: var(--edify-success-text);
+  font-weight: var(--edify-text-title-weight);
+}
+
+.cce-eyebrow {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cce-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cce-filter__label {
+  color: var(--edify-text-muted);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cce-filter__select {
+  min-block-size: 2rem;
+  padding-inline: 0.5rem;
+  border: 1px solid var(--edify-border);
+  border-radius: var(--radius-control);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+  font-weight: var(--edify-text-title-weight);
+}
+
 /* Regional HR Director dashboard ---------------------------------------------
    The HR director's home (owner role description, 2026-09-12). The same
    surface grammar as the Regional Programme Lead's: cards take the platform

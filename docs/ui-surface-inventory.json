@@ -708,6 +708,17 @@
       "header": "shared"
     },
     {
+      "template": "pages/cce_leadership/workspace.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/cce_leadership/workspace.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
       "template": "pages/closure/activity_closure_detail.html",
       "family": "workspace",
       "inheritance": [
@@ -2464,6 +2475,6 @@
     "embedded fragment": 5,
     "print document": 2,
     "public or authentication": 9,
-    "workspace": 209
+    "workspace": 210
   }
 }

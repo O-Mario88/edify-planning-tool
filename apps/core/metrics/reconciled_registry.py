@@ -11031,12 +11031,16 @@ from apps.core.metrics.hr_programme_metrics import (  # noqa: E402
     HR_PROGRAMME_METRIC_ROWS,
 )
 from apps.core.metrics.ssa_plan_metrics import SSA_PLAN_METRIC_ROWS  # noqa: E402
+from apps.core.metrics.cce_leadership_metrics import (  # noqa: E402
+    CCE_LEADERSHIP_METRIC_ROWS,
+)
 
 RECONCILED_METRIC_ROWS = (
     RECONCILED_METRIC_ROWS
     + HR_PROGRAMME_METRIC_ROWS
     + HR_DIRECTOR_METRIC_ROWS
     + SSA_PLAN_METRIC_ROWS
+    + CCE_LEADERSHIP_METRIC_ROWS
 )
 
 RECONCILED_METRICS: tuple[MetricSpec, ...] = tuple(

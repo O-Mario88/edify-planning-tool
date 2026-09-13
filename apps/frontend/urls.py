@@ -35,6 +35,7 @@ from .views import (
     leave_views,
     hr_programme_views,
     hr_views,
+    cce_leadership_views,
     pd_views,
     debrief_views,
     escalation_views,
@@ -2316,6 +2317,79 @@ urlpatterns = [
         name="recovery_drawer",
     ),
     path("recovery-plans", hr_views.recovery_plans_view, name="recovery_plans"),
+    # The CCE Regional Lead's own records (owner, 2026-09-13): the engagement
+    # log, the training feedback a Programme Lead acknowledges, and the monthly
+    # report the RVP reviews. Literal paths before the <id> ones.
+    path(
+        "cce-leadership/engagements/new",
+        cce_leadership_views.engagement_new_drawer,
+        name="cce_engagement_new_drawer",
+    ),
+    path(
+        "cce-leadership/engagements/record",
+        cce_leadership_views.engagement_record,
+        name="cce_engagement_record",
+    ),
+    path(
+        "cce-leadership/engagements/<str:engagement_id>/update",
+        cce_leadership_views.engagement_update,
+        name="cce_engagement_update",
+    ),
+    path(
+        "cce-leadership/engagements/<str:engagement_id>",
+        cce_leadership_views.engagement_drawer,
+        name="cce_engagement_drawer",
+    ),
+    path(
+        "cce-leadership/engagements",
+        cce_leadership_views.engagements_view,
+        name="cce_engagements",
+    ),
+    path(
+        "cce-leadership/feedback/<str:engagement_id>/acknowledge",
+        cce_leadership_views.feedback_acknowledge,
+        name="cce_feedback_acknowledge",
+    ),
+    path(
+        "cce-leadership/feedback/<str:engagement_id>",
+        cce_leadership_views.feedback_drawer,
+        name="cce_feedback_drawer",
+    ),
+    path(
+        "cce-leadership/feedback",
+        cce_leadership_views.feedback_view,
+        name="cce_training_feedback",
+    ),
+    path(
+        "cce-leadership/reports/new",
+        cce_leadership_views.report_new_drawer,
+        name="cce_report_new_drawer",
+    ),
+    path(
+        "cce-leadership/reports/start",
+        cce_leadership_views.report_start,
+        name="cce_report_start",
+    ),
+    path(
+        "cce-leadership/reports/<str:report_id>/save",
+        cce_leadership_views.report_save,
+        name="cce_report_save",
+    ),
+    path(
+        "cce-leadership/reports/<str:report_id>/review",
+        cce_leadership_views.report_review,
+        name="cce_report_review",
+    ),
+    path(
+        "cce-leadership/reports/<str:report_id>",
+        cce_leadership_views.report_drawer,
+        name="cce_report_drawer",
+    ),
+    path(
+        "cce-leadership/reports",
+        cce_leadership_views.reports_view,
+        name="cce_reports",
+    ),
     path(
         "culture-engagement",
         hr_views.culture_engagement_view,

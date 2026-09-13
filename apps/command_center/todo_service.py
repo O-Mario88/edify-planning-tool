@@ -18,6 +18,7 @@ single source of truth for "what's the next action on this activity".
 from __future__ import annotations
 
 import hashlib
+import logging
 from datetime import date
 
 from django.conf import settings
@@ -28,6 +29,8 @@ from django.utils import timezone
 from apps.core.cache_utils import stampede_safe_get_or_compute
 from apps.core.fy import get_operational_fy
 from apps.core.scoping import resolve_user_scope
+
+logger = logging.getLogger(__name__)
 
 # Actions from compute_next_action that require the owner to act now.
 ACTIONABLE = {
@@ -2126,6 +2129,157 @@ def _strategy_note_todos(principal, role):
         return []
 
 
+def _cce_leadership_todos(principal, role, today):
+    """The CCE Regional Lead's handoffs (owner, 2026-09-13).
+
+    The lead's overdue monthly report and slipped meeting rhythm, and feedback
+    they wrote but have not shared; the Programme Lead's training feedback to
+    acknowledge; the RVP's submitted reports to review.
+    """
+    if role not in ("RegionalProgramLead", "Program Lead", "RegionalVicePresident"):
+        return []
+    try:
+        from apps.cce_leadership import services as cce
+        from apps.cce_leadership.models import ReportStatus
+
+        def row(
+            key,
+            *,
+            title,
+            description,
+            priority,
+            url,
+            action,
+            due=None,
+            linked,
+            status_key="waiting_me",
+        ):
+            return {
+                "id": key,
+                "title": title,
+                "description": description[:180],
+                "category": "CCE leadership",
+                "priority": priority,
+                "status_key": status_key,
+                "status_label": "Overdue"
+                if status_key == "overdue"
+                else "Waiting on Me",
+                "status_tone": "danger" if status_key == "overdue" else "warning",
+                "due_label": f"{due:%-d %b}" if due else "—",
+                "due_tone": "danger"
+                if status_key == "overdue"
+                else ("warning" if due else "neutral"),
+                "linked": linked,
+                "action_label": action,
+                "action_url": url,
+                "actionable": True,
+                "source": "CCE leadership",
+                "_due_sort": due or today,
+            }
+
+        out = []
+        if role == "RegionalProgramLead":
+            state = cce.report_state(principal, today=today)
+            previous = state["previous"]
+            if state["previous_overdue"]:
+                out.append(
+                    row(
+                        f"cce-report-due-{state['previous_period']:%Y-%m}",
+                        title=f"Submit the {state['previous_period']:%B} CCE report",
+                        description="The monthly report to the RVP and the VP of CCE is past its due date.",
+                        priority="critical",
+                        url="/cce-leadership/reports",
+                        action="Open reports",
+                        due=state["previous_due_by"],
+                        linked="Monthly report",
+                        status_key="overdue",
+                    )
+                )
+            for report in cce.reports_visible_to(principal).filter(
+                status=ReportStatus.RETURNED
+            )[:4]:
+                if previous and report.id == previous.id and state["previous_overdue"]:
+                    continue
+                out.append(
+                    row(
+                        f"cce-report-returned-{report.id}",
+                        title=f"Revise the {report.period:%B} CCE report",
+                        description=report.review_note
+                        or "The RVP returned the report for revision.",
+                        priority="high",
+                        url="/cce-leadership/reports",
+                        action="Revise",
+                        linked="Monthly report",
+                    )
+                )
+            rhythm = cce.rhythm(principal, today=today)
+            for entry in [
+                r for r in rhythm["rows"] if r["state"] in ("overdue", "missed")
+            ][:5]:
+                out.append(
+                    row(
+                        f"cce-rhythm-{entry['kind']}-{entry['subject']}",
+                        title=f"{entry['label']} · {entry['subject']}",
+                        description=entry["note"] or entry["expectation"],
+                        priority="high",
+                        url="/cce-leadership/engagements",
+                        action="Log it",
+                        due=entry["due_by"],
+                        linked="Engagement rhythm",
+                        status_key="overdue",
+                    )
+                )
+            for observation in cce.feedback_visible_to(principal).filter(
+                feedback_shared_at__isnull=True
+            )[:5]:
+                out.append(
+                    row(
+                        f"cce-feedback-draft-{observation.id}",
+                        title="Share training feedback",
+                        description=observation.subject,
+                        priority="medium",
+                        url="/cce-leadership/engagements",
+                        action="Open log",
+                        linked=observation.country or "Training observation",
+                    )
+                )
+        elif role == "Program Lead":
+            for observation in cce.feedback_visible_to(principal).filter(
+                acknowledged_at__isnull=True
+            )[:8]:
+                out.append(
+                    row(
+                        f"cce-feedback-{observation.id}",
+                        title="Acknowledge training feedback",
+                        description=observation.subject,
+                        priority="high",
+                        url="/cce-leadership/feedback",
+                        action="Acknowledge",
+                        linked=observation.country or "Training feedback",
+                    )
+                )
+        else:
+            for report in cce.reports_visible_to(principal).filter(
+                status=ReportStatus.SUBMITTED
+            )[:8]:
+                out.append(
+                    row(
+                        f"cce-report-review-{report.id}",
+                        title=f"Review the {report.period:%B} CCE report",
+                        description=report.executive_summary
+                        or "A Regional Lead submitted a monthly report.",
+                        priority="high",
+                        url="/cce-leadership/reports",
+                        action="Review",
+                        linked=", ".join(report.countries) or "Region",
+                    )
+                )
+        return out
+    except Exception:  # noqa: BLE001 - one source never breaks the queue
+        logger.exception("CCE leadership To-Dos failed")
+        return []
+
+
 def _core_school_todos(principal, role):
     """Core package To-Dos — the next missing slot per assigned core school,
     plus returned core work. Derived live: scheduling or fixing the slot makes
@@ -3480,6 +3634,7 @@ def _get_todos(principal) -> dict:
     todos += _core_school_todos(principal, role)
     todos += _rvp_todos(principal, role)
     todos += _strategy_note_todos(principal, role)
+    todos += _cce_leadership_todos(principal, role, today)
     todos += _pd_todos(principal, role)
     todos += _field_debrief_todos(principal, role)
     todos += _business_transformation_todos(principal, role, today)

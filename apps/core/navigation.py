@@ -144,6 +144,13 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
     # The Regional Programme Lead sends follow-ups to Programme Leads from
     # Team Oversight, and the confirmation says they are tracked here.
     "actions_sent": {PL, IA, CD, RVP, RPL, ADMIN},
+    # The CCE Regional Lead's own records (owner, 2026-09-13): the engagement
+    # log is theirs, training feedback reaches the Programme Lead it names and
+    # that Lead's Country Director, and the monthly report goes to the RVP.
+    # apps.cce_leadership.services decides which rows each role reads.
+    "cce_engagements": {RPL, ADMIN},
+    "cce_training_feedback": {PL, CD, RPL, ADMIN},
+    "cce_reports": {RPL, RVP, ADMIN},
     # IA holds My Targets since 2026-09-03: assessment visits and verifications
     # are measured work, not just planned work.
     "my_target": {CCEO, PL, PROJECT_COORDINATOR, PARTNER, ADMIN, IA},
@@ -452,6 +459,9 @@ PAGE_PERMISSIONS: dict[str, set[str]] = {
         IA,
         CD,
         RVP,
+        # "Using correlation analysis ... work with the Impact Assessment team
+        # to monitor the efficacy of trainings" (CCE Regional Lead, 2026-09-13).
+        RPL,
         ACCOUNTANT,
         PROJECT_COORDINATOR,
         ADMIN,
@@ -711,6 +721,9 @@ ICONS.update(
         "partner_oversight": ICONS["partners"],
         "my_actions": ICONS["todos"],
         "actions_sent": ICONS["escalations"],
+        "cce_engagements": ICONS["todos"],
+        "cce_reports": ICONS["reports"],
+        "cce_training_feedback": ICONS["escalations"],
         "uploads": ICONS["ia_upload_center"],
         "closed_schools": ICONS["completed_archive"],
         "leave_tracker": ICONS["team_availability"],
@@ -1332,6 +1345,29 @@ SIDEBAR_ITEMS = [
                 "url": "/actions/sent",
                 "page_key": "actions_sent",
                 "visible_to": {PL, IA, CD, RVP, RPL},
+            },
+            {
+                # The CCE Regional Lead's coaching conversations, meetings,
+                # visits and training observations (owner, 2026-09-13).
+                "label": "Engagement Log",
+                "url": "/cce-leadership/engagements",
+                "page_key": "cce_engagements",
+                "visible_to": {RPL},
+            },
+            {
+                "label": "CCE Reports",
+                "url": "/cce-leadership/reports",
+                "page_key": "cce_reports",
+                "visible_to": {RPL, RVP},
+            },
+            {
+                # Where a Programme Lead acknowledges the Regional Lead's
+                # observation of their team's training; the Country Director
+                # reads the feedback on their country.
+                "label": "Training Feedback",
+                "url": "/cce-leadership/feedback",
+                "page_key": "cce_training_feedback",
+                "visible_to": {PL, CD},
             },
             {
                 "label": "Upload Center",

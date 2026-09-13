@@ -7231,6 +7231,186 @@
    "view": "apps.frontend.views.hr_programme_views.application_record"
   },
   {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements",
+   "route_name": "cce_engagements",
+   "view": "apps.frontend.views.cce_leadership_views.engagements_view"
+  },
+  {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements/<str:engagement_id>",
+   "route_name": "cce_engagement_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.engagement_drawer"
+  },
+  {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements/<str:engagement_id>/update",
+   "route_name": "cce_engagement_update",
+   "view": "apps.frontend.views.cce_leadership_views.engagement_update"
+  },
+  {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements/new",
+   "route_name": "cce_engagement_new_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.engagement_new_drawer"
+  },
+  {
+   "page_permission": "cce_engagements",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/engagements/record",
+   "route_name": "cce_engagement_record",
+   "view": "apps.frontend.views.cce_leadership_views.engagement_record"
+  },
+  {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/feedback",
+   "route_name": "cce_training_feedback",
+   "view": "apps.frontend.views.cce_leadership_views.feedback_view"
+  },
+  {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/feedback/<str:engagement_id>",
+   "route_name": "cce_feedback_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.feedback_drawer"
+  },
+  {
+   "page_permission": "cce_training_feedback",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "CountryDirector",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/feedback/<str:engagement_id>/acknowledge",
+   "route_name": "cce_feedback_acknowledge",
+   "view": "apps.frontend.views.cce_leadership_views.feedback_acknowledge"
+  },
+  {
+   "page_permission": "cce_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/reports",
+   "route_name": "cce_reports",
+   "view": "apps.frontend.views.cce_leadership_views.reports_view"
+  },
+  {
+   "page_permission": "cce_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/reports/<str:report_id>",
+   "route_name": "cce_report_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.report_drawer"
+  },
+  {
+   "page_permission": "cce_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/reports/<str:report_id>/review",
+   "route_name": "cce_report_review",
+   "view": "apps.frontend.views.cce_leadership_views.report_review"
+  },
+  {
+   "page_permission": "cce_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/reports/<str:report_id>/save",
+   "route_name": "cce_report_save",
+   "view": "apps.frontend.views.cce_leadership_views.report_save"
+  },
+  {
+   "page_permission": "cce_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/reports/new",
+   "route_name": "cce_report_new_drawer",
+   "view": "apps.frontend.views.cce_leadership_views.report_new_drawer"
+  },
+  {
+   "page_permission": "cce_reports",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "RegionalVicePresident",
+    "RegionalProgramLead",
+    "Admin"
+   ],
+   "route": "/cce-leadership/reports/start",
+   "route_name": "cce_report_start",
+   "view": "apps.frontend.views.cce_leadership_views.report_start"
+  },
+  {
    "page_permission": "clusters",
    "required_permissions": [],
    "role_exclusive": false,
@@ -10473,6 +10653,7 @@
     "Program Lead",
     "CountryDirector",
     "RegionalVicePresident",
+    "RegionalProgramLead",
     "ImpactAssessment",
     "Accountant",
     "ProjectCoordinator",
@@ -15523,26 +15704,26 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 392,
-  "Admin": 833,
+  "Admin": 847,
   "BusinessTransformationOfficer": 220,
   "CCEO": 496,
-  "CountryDirector": 632,
+  "CountryDirector": 635,
   "HumanResources": 316,
   "ImpactAssessment": 509,
   "MfiLoanOfficer": 118,
   "MfiPartnerAdmin": 121,
   "PartnerAdmin": 205,
   "PartnerFieldOfficer": 205,
-  "Program Lead": 565,
+  "Program Lead": 568,
   "ProjectCoordinator": 415,
-  "RegionalProgramLead": 258,
-  "RegionalVicePresident": 313
+  "RegionalProgramLead": 273,
+  "RegionalVicePresident": 319
  },
  "summary": {
-  "page_keys_declared": 156,
-  "page_keys_in_navigation": 174,
-  "routes_guarded": 930,
-  "routes_total": 1119,
+  "page_keys_declared": 159,
+  "page_keys_in_navigation": 177,
+  "routes_guarded": 944,
+  "routes_total": 1133,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },

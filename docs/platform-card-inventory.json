@@ -1,13 +1,13 @@
 {
  "summary": {
-  "titled_cards": 633,
-  "templates": 234,
-  "distinct_titles": 601,
+  "titled_cards": 638,
+  "templates": 239,
+  "distinct_titles": 606,
   "with_card_key": 13,
-  "untitled_surfaces": 783,
+  "untitled_surfaces": 784,
   "untitled_chrome": 179,
   "untitled_nested": 252,
-  "untitled_headless": 352,
+  "untitled_headless": 353,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 25,
   "ambiguous_titles": 1
@@ -4965,9 +4965,54 @@
    "branch_path": []
   },
   {
+   "template": "templates/partials/dashboards/rpl/networks.html",
+   "line": 9,
+   "title": "School networks and PLCs",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
    "template": "templates/partials/dashboards/rpl/priorities.html",
    "line": 6,
    "title": "Regional priorities",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/report.html",
+   "line": 5,
+   "title": "Monthly report",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/rhythm.html",
+   "line": 10,
+   "title": "Engagement rhythm",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/ssa_needs.html",
+   "line": 9,
+   "title": "SSA needs and training priorities",
+   "heading_level": 2,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/rpl/training_quality.html",
+   "line": 8,
+   "title": "Training quality",
    "heading_level": 2,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card",

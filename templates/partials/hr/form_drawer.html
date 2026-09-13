@@ -2,7 +2,9 @@
 
 {% comment %}
 One drawer for every HR programme action (2026-09-13): open a case, request a
-vacancy, record a candidate, close an offboarding. Each view hands it a title,
+vacancy, record a candidate, close an offboarding. The CCE Regional Lead's
+engagement, feedback and report drawers use it too, with `multiselect` for
+choosing several Programme Leads. Each view hands it a title,
 the POST target, optional read-only facts about the record, and a list of
 fields built by apps/frontend/views/hr_programme_views.py `_field`. The form is
 one column, as every platform drawer is.
@@ -42,6 +44,12 @@ one column, as every platform drawer is.
     <label for="hr-field-{{ field.name }}">{{ field.label }}{% if field.required %} <span aria-hidden="true">*</span>{% endif %}</label>
     {% if field.type == "textarea" %}
     <textarea id="hr-field-{{ field.name }}" name="{{ field.name }}" rows="{{ field.rows|default:4 }}"{% if field.required %} required{% endif %}{% if field.maxlength %} maxlength="{{ field.maxlength }}"{% endif %}{% if field.placeholder %} placeholder="{{ field.placeholder }}"{% endif %}>{{ field.value|default:"" }}</textarea>
+    {% elif field.type == "multiselect" %}
+    <select id="hr-field-{{ field.name }}" name="{{ field.name }}" multiple size="{{ field.rows|default:5 }}"{% if field.required %} required{% endif %}>
+      {% for option in field.options %}
+      <option value="{{ option.0 }}"{% if option.0 in field.value %} selected{% endif %}>{{ option.1 }}</option>
+      {% endfor %}
+    </select>
     {% elif field.type == "select" %}
     <select id="hr-field-{{ field.name }}" name="{{ field.name }}"{% if field.required %} required{% endif %}>
       {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}

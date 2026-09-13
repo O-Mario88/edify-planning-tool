@@ -1,0 +1,70 @@
+{% load frontend_filters %}
+{% comment %}
+"Using SSA data, work with the Program Leads, RVP, and VP of CCE to identify
+new training priorities" (CCE Regional Lead, 2026-09-13). Each country's most
+common SSA needs — the three weakest interventions on each school's latest
+confirmed assessment — and how far this year's live plans answer the needs
+their schools have (apps.ssa.plan_alignment).
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-ssa-needs-title" data-rpl-ssa-needs>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-ssa-needs-title" class="rpl-card__title">SSA needs and training priorities</h2>
+      <span class="rpl-card__subtitle">What schools most need, and whether plans answer it · FY {{ fy }}</span>
+    </div>
+    <a class="rpl-card__link" href="/ssa?fy={{ fy }}">SSA performance <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-impact rpl-impact--three">
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Schools with a confirmed SSA</span>
+      <strong class="rpl-impact__value">{{ ssa_needs.region.assessed|intcomma }}<span class="rpl-impact__unit"> of {{ ssa_needs.region.schools|intcomma }}</span></strong>
+      <span class="rpl-impact__meta">Latest confirmed assessment per school</span>
+    </div>
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Plans informed by the SSA</span>
+      <strong class="rpl-impact__value">{% if ssa_needs.region.informed_pct is not None %}{{ ssa_needs.region.informed_pct }}<span class="rpl-impact__unit">%</span>{% else %}No data{% endif %}</strong>
+      <span class="rpl-impact__meta">{{ ssa_needs.region.plans_judged|intcomma }} live plan{{ ssa_needs.region.plans_judged|pluralize }} judged · {{ ssa_needs.region.off_priority }} off-priority</span>
+    </div>
+    <div class="rpl-impact__figure">
+      <span class="rpl-impact__label">Top regional need</span>
+      {% with top=ssa_needs.region.priorities.0 %}
+      <strong class="rpl-impact__value rpl-impact__value--text">{% if top %}{{ top.label }}{% else %}No data{% endif %}</strong>
+      <span class="rpl-impact__meta">{% if top %}Among the three weakest for {{ top.share }}% of assessed schools{% else %}No confirmed assessment yet{% endif %}</span>
+      {% endwith %}
+    </div>
+  </div>
+  <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="SSA needs by country; scroll sideways for more columns">
+    <table class="rpl-table" data-mobile-table="scroll">
+      <caption class="sr-only">Each country's most common SSA needs and how far live plans answer them, FY {{ fy }}.</caption>
+      <thead>
+        <tr>
+          <th scope="col">Country</th>
+          <th scope="col" class="is-num">Assessed</th>
+          <th scope="col">Most common needs</th>
+          <th scope="col" class="is-num">Plans informed</th>
+          <th scope="col" class="is-num">Off-priority</th>
+          <th scope="col" class="is-num">Needs not yet planned</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in ssa_needs.rows|slice:":30" %}
+        <tr>
+          <th scope="row" data-record-title><span>{{ row.country }}</span></th>
+          <td class="is-num" data-label="Assessed">{{ row.assessed|intcomma }} of {{ row.schools|intcomma }}</td>
+          <td data-label="Most common needs" title="{% for p in row.priorities %}{{ p.label }}: {{ p.schools }} schools{% if not forloop.last %}; {% endif %}{% endfor %}">{% for p in row.priorities %}{{ p.abbr }} {{ p.share }}%{% if not forloop.last %} · {% endif %}{% empty %}No confirmed SSA{% endfor %}</td>
+          <td class="is-num" data-label="Plans informed">{% if row.informed_pct is not None %}<span data-tone="{% if row.informed_pct >= 80 %}success{% elif row.informed_pct >= 50 %}warning{% else %}danger{% endif %}">{{ row.informed_pct }}%</span>{% else %}<span class="rpl-muted">No plans judged</span>{% endif %}</td>
+          <td class="is-num" data-label="Off-priority">{% if row.off_priority %}<span data-tone="warning">{{ row.off_priority }}</span>{% else %}0{% endif %}</td>
+          <td class="is-num" data-label="Needs not yet planned">{{ row.open_recommendations|intcomma }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td class="rpl-table__empty">
+            {% include "components/empty_state.html" with message="No country is in your region yet." compact="true" %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="rpl-card__footnote">Needs are the three weakest interventions on each school's latest confirmed SSA. "Needs not yet planned" are SSA recommendations no plan answers yet.</div>
+</section>

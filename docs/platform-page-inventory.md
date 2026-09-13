@@ -4,18 +4,18 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **651**
-- All registered routes: **1119**
+- Routed product surfaces: **665**
+- All registered routes: **1133**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
 - Scheduled jobs: **28**
 - Activity states: **24**
-- Shared component templates: **413**
-- Full pages: **241**
-- Partials and drawers: **200**
-- Permission-gated surfaces: **636**
-- Referenced by automated tests: **596**
+- Shared component templates: **418**
+- Full pages: **244**
+- Partials and drawers: **205**
+- Permission-gated surfaces: **650**
+- Referenced by automated tests: **605**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -165,6 +165,20 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-ADA2C3F609 | /candidate-pipeline/<str:application_id>/hire | Application Hire | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-47512B11CB | /candidate-pipeline/new | Application Record Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-97B63C8157 | /candidate-pipeline/record | Application Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-2E4680907A | /cce-leadership/engagements | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-25A966DD45 | /cce-leadership/engagements/<str:engagement_id> | Cce Engagement Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-7F791A0768 | /cce-leadership/engagements/<str:engagement_id>/update | Cce Engagement Update | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-CA7A0F3D7E | /cce-leadership/engagements/new | Cce Engagement New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-F2073D5760 | /cce-leadership/engagements/record | Cce Engagement Record | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-C06F37F541 | /cce-leadership/feedback | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-5E89771C22 | /cce-leadership/feedback/<str:engagement_id> | Cce Feedback Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-CA794D4BE6 | /cce-leadership/feedback/<str:engagement_id>/acknowledge | Cce Feedback Acknowledge | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-39F66F81DE | /cce-leadership/reports | · Edify | report | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-B963DCB361 | /cce-leadership/reports/<str:report_id> | Cce Report Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-82FE3278FB | /cce-leadership/reports/<str:report_id>/review | Cce Report Review | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-04A4E954F7 | /cce-leadership/reports/<str:report_id>/save | Cce Report Save | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
+| UI-PAGE-01E1012D38 | /cce-leadership/reports/new | Cce Report New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-86BCA6686D | /cce-leadership/reports/start | Cce Report Start | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
 | UI-PAGE-D3BB0CD510 | /change-password | Set a new password | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-6297FE3532 | /clusters | Clusters | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-ED202C2D52 | /clusters/<str:cluster_id> | Cluster details | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

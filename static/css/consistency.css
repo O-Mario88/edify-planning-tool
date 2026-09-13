@@ -4300,7 +4300,7 @@ main textarea,
 }
 @media (min-width: 48rem) {
   :root :is(.drawer-surface, .edify-popup-dialog__surface)
-    :is(input[type="text"], input[type="email"], input[type="number"], input[type="tel"], input[type="date"], select) {
+    :is(input[type="text"], input[type="email"], input[type="number"], input[type="tel"], input[type="date"], select:not([multiple])) {
     min-height: 2.25rem !important;
     min-block-size: 2.25rem !important;
     height: 2.25rem !important;
@@ -4310,6 +4310,12 @@ main textarea,
   .drawer-surface .cluster-create-basics { gap: .875rem; }
 }
 /* The cluster-create basics stay one column at every width — drawers stack like the sign-in form (owner, 2026-09-12). */
+/* A multi-select lists its options: it takes the rows it asks for, not the one-line control height (CCE engagement drawers, 2026-09-13). */
+:root :is(.drawer-surface, .edify-popup-dialog__surface) select[multiple] {
+  height: auto !important;
+  min-height: 7.5rem !important;
+  padding-block: .375rem !important;
+}
 
 /* Short, wide laptops need less structural whitespace, not smaller text. */
 @media (min-width: 64rem) and (max-height: 50rem) {

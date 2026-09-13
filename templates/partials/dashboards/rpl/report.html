@@ -1,0 +1,29 @@
+{% comment %}
+The monthly report to the RVP and the VP of CCE: last month's, due by the
+tenth, and this month's, drafted as the month goes.
+{% endcomment %}
+<section class="edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm rpl-card" aria-labelledby="rpl-report-title" data-rpl-report>
+  <header class="rpl-card__header">
+    <div class="rpl-card__heading">
+      <h2 id="rpl-report-title" class="rpl-card__title">Monthly report</h2>
+      <span class="rpl-card__subtitle">To the RVP and the VP of CCE</span>
+    </div>
+    <a class="rpl-card__link" href="/cce-leadership/reports">Monthly reports <span aria-hidden="true">&rarr;</span></a>
+  </header>
+  <div class="rpl-follow-list" role="list">
+    <div class="rpl-follow" role="listitem">
+      <div class="rpl-follow__head">
+        <span class="rpl-follow__who">{{ report.previous_period|date:"F Y" }}</span>
+        <span class="rpl-follow__due" data-tone="{% if report.previous_overdue %}danger{% elif report.previous %}{% if report.previous.status == 'acknowledged' %}success{% elif report.previous.status == 'submitted' %}warning{% else %}neutral{% endif %}{% elif report.previous_required %}warning{% else %}neutral{% endif %}">{% if report.previous %}{{ report.previous.get_status_display }}{% elif report.previous_required %}Not started{% else %}Not required{% endif %}</span>
+      </div>
+      <span class="rpl-follow__what">{% if report.previous_required or report.previous %}Due by {{ report.previous_due_by|date:"j F" }}{% if report.previous_overdue %} · overdue{% endif %}{% else %}Monthly reports start with {{ report.reporting_starts|date:"F Y" }}{% endif %}</span>
+    </div>
+    <div class="rpl-follow" role="listitem">
+      <div class="rpl-follow__head">
+        <span class="rpl-follow__who">{{ report.current_period|date:"F Y" }}</span>
+        <span class="rpl-follow__due" data-tone="neutral">{% if report.current %}{{ report.current.get_status_display }}{% else %}Not started{% endif %}</span>
+      </div>
+      <span class="rpl-follow__what">Draft it as the month goes; the figures are frozen when you submit.</span>
+    </div>
+  </div>
+</section>

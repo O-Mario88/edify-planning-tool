@@ -11,9 +11,11 @@ reporting to the country programme teams of their region. Read-only by role:
 every control is a link into the page where the work is done.
 
 Order follows the role description: the regional pulse and what needs the
-lead today, the Programme Leads they coach, how training, follow-up and
-coaching are being delivered, then regional priorities, programme impact and
-the follow-ups they have sent.
+lead today, the Programme Leads they coach, the SSA needs that set training
+priorities, training quality, how training, follow-up and coaching are being
+delivered, and regional priorities; beside them the meeting rhythm, the
+monthly report, school networks and PLCs, programme impact and the follow-ups
+they have sent (full role description, 2026-09-13).
 {% endcomment %}
 <div class="edify-page-canvas space-y-4 text-[color:var(--edify-text)]" data-rpl-dashboard>
 
@@ -73,10 +75,15 @@ the follow-ups they have sent.
 
   <div class="rpl-columns">
     <div class="rpl-columns__main">
+      {% include "partials/dashboards/rpl/ssa_needs.html" %}
+      {% include "partials/dashboards/rpl/training_quality.html" %}
       {% include "partials/dashboards/rpl/delivery_mix.html" %}
       {% include "partials/dashboards/rpl/priorities.html" %}
     </div>
     <div class="rpl-columns__side">
+      {% include "partials/dashboards/rpl/rhythm.html" %}
+      {% include "partials/dashboards/rpl/report.html" %}
+      {% include "partials/dashboards/rpl/networks.html" %}
       {% include "partials/dashboards/rpl/impact.html" %}
       {% include "partials/dashboards/rpl/follow_ups.html" %}
     </div>

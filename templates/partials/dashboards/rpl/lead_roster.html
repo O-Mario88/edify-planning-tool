@@ -10,7 +10,10 @@ coaching first. Each figure is a fold of that Lead's Team Oversight rows, and
       <h2 id="rpl-leads-title" class="rpl-card__title">Programme Lead coaching</h2>
       <span class="rpl-card__subtitle">Each country Programme Lead's team delivery, most in need of coaching first · FY {{ fy }}</span>
     </div>
-    <a class="rpl-card__link" href="/team-planning-oversight/?fy={{ fy }}">All team plans <span aria-hidden="true">&rarr;</span></a>
+    <div class="rpl-card__actions">
+      <a class="rpl-card__link" href="/cce-leadership/engagements" hx-get="/cce-leadership/engagements/new?kind=pl_coaching" hx-target="#drawer-container" hx-swap="innerHTML">Log a coaching conversation</a>
+      <a class="rpl-card__link" href="/team-planning-oversight/?fy={{ fy }}">All team plans <span aria-hidden="true">&rarr;</span></a>
+    </div>
   </header>
   <div class="rpl-table-scroll" data-table-scroll-region tabindex="0" aria-label="Programme Lead coaching table; scroll sideways for more columns">
     <table class="rpl-table" data-mobile-table="scroll">
@@ -24,6 +27,7 @@ coaching first. Each figure is a fold of that Lead's Team Oversight rows, and
           <th scope="col" class="is-num">At risk</th>
           <th scope="col" class="is-num">Awaiting IA</th>
           <th scope="col" class="is-num">Follow-ups</th>
+          <th scope="col">Last coaching</th>
           <th scope="col">Status</th>
           <th scope="col" class="is-end"><span class="sr-only">Team plan</span></th>
         </tr>
@@ -38,12 +42,13 @@ coaching first. Each figure is a fold of that Lead's Team Oversight rows, and
           <td class="is-num" data-label="At risk">{% if lead.at_risk %}<span data-tone="danger">{{ lead.at_risk }}</span>{% else %}0{% endif %}</td>
           <td class="is-num" data-label="Awaiting IA">{% if lead.awaiting_verification %}<span data-tone="warning">{{ lead.awaiting_verification }}</span>{% else %}0{% endif %}</td>
           <td class="is-num" data-label="Follow-ups">{% if lead.open_follow_ups %}<a class="rpl-row-link" href="/actions/sent">{{ lead.open_follow_ups }} open</a>{% else %}<span class="rpl-muted">None</span>{% endif %}</td>
+          <td data-label="Last coaching" title="{% if lead.last_coaching %}Last coaching conversation {{ lead.last_coaching|date:"j F Y" }}{% else %}No coaching conversation recorded{% endif %}">{% if lead.last_coaching %}{{ lead.last_coaching|date:"j M" }}{% else %}<span class="rpl-muted">None</span>{% endif %}</td>
           <td data-label="Status"><span data-tone="{{ lead.tone }}">{{ lead.tone_label }}</span></td>
           <td class="is-end" data-label="Team plan"><a class="rpl-row-link" href="{{ lead.oversight_url }}">Open plan<span class="sr-only"> for {{ lead.name }}</span></a></td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="9" class="rpl-table__empty">
+          <td colspan="10" class="rpl-table__empty">
             {% include "components/empty_state.html" with message="No Programme Leads work in your region yet." hint="A Programme Lead appears here once their staff record names a country in your region." compact="true" %}
           </td>
         </tr>

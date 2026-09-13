@@ -128,6 +128,7 @@ INSTALLED_APPS = [
     "apps.professional_development",
     "apps.analytics",
     "apps.leadership",
+    "apps.cce_leadership",
     "apps.budget_intelligence",
     "apps.audit",
     "apps.realtime",
