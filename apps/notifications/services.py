@@ -258,7 +258,7 @@ class NotificationLinkResolver:
 
         if event_type == "fiscal_year_priority_setting":
             if role in ("humanresources", "admin"):
-                route = "/hr/performance"
+                route = "/hr/performance-cycle"
                 label = "Open Priority Cycle"
             elif role in ("regionalvicepresident", "countrydirector"):
                 route = "/strategic-priorities"
