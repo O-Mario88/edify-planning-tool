@@ -31,7 +31,6 @@ from apps.activities.services import (
     submit_for_review,
     record_attendance,
     ia_confirm,
-    ia_return,
     sf_kind,
     is_partner_ssa_support_activity,
 )
@@ -1276,96 +1275,6 @@ def pl_return_action(request, activity_id):
             messages.error(request, f"Error: {e}")
 
     return redirect("/pl/review-queue")
-
-
-@require_page_permission("ia_verification_queue")
-def ia_queue_view(request):
-    # Query all activities awaiting IA verification
-    activities = Activity.objects.filter(
-        deleted_at__isnull=True, status="awaiting_ia_verification"
-    ).order_by("-updated_at")
-    from apps.activities.services import _serialize
-
-    serialized_queue = [_serialize(a) for a in activities.select_related("school")]
-
-    context = {
-        "queue": serialized_queue,
-    }
-    return render(request, "pages/my_plan/ia_queue.html", context)
-
-
-@require_page_permission("ia_verification_queue")
-def ia_confirm_action(request, activity_id):
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
-    if not RolePermissionService.can_verify_ia(request.user, a):
-        audit_log(
-            action="unauthorized_mutation_attempt",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=False,
-            reason="User attempted to perform IA verification without IA permissions.",
-        )
-        return HttpResponseForbidden(
-            "Access Denied: You are not authorized to verify activities."
-        )
-
-    if request.method == "POST":
-        try:
-            ia_confirm(activity_id, principal=request.user)
-            audit_log(
-                action="ia_verify_completion",
-                subject_kind="Activity",
-                subject_id=str(a.id),
-                actor_id=str(request.user.id),
-                actor_role=request.user.active_role,
-                success=True,
-            )
-            messages.success(request, "Activity completion verified successfully.")
-        except Exception as e:
-            messages.error(request, f"Error verifying: {e}")
-
-    return redirect("/ia/verification/")
-
-
-@require_page_permission("ia_verification_queue")
-def ia_return_action(request, activity_id):
-    a = get_object_or_404(Activity, id=activity_id, deleted_at__isnull=True)
-    if not RolePermissionService.can_verify_ia(request.user, a):
-        audit_log(
-            action="unauthorized_mutation_attempt",
-            subject_kind="Activity",
-            subject_id=str(a.id),
-            actor_id=str(request.user.id),
-            actor_role=request.user.active_role,
-            success=False,
-            reason="User attempted to perform IA return without IA permissions.",
-        )
-        return HttpResponseForbidden(
-            "Access Denied: You are not authorized to return activities."
-        )
-
-    if request.method == "POST":
-        reason = request.POST.get("reason", "").strip()
-        try:
-            ia_return(activity_id, {"reason": reason}, request.user)
-            audit_log(
-                action="ia_return_completion",
-                subject_kind="Activity",
-                subject_id=str(a.id),
-                actor_id=str(request.user.id),
-                actor_role=request.user.active_role,
-                success=True,
-                payload={"reason": reason},
-            )
-            messages.success(
-                request, "Activity returned to CCEO/partner for correction."
-            )
-        except Exception as e:
-            messages.error(request, f"Error returning: {e}")
-
-    return redirect("/ia/verification/")
 
 
 @require_page_permission("my_plan")

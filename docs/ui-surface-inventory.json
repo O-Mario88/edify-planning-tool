@@ -563,11 +563,10 @@
       "family": "public or authentication",
       "inheritance": [
         "pages/auth/change_password.html",
-        "layouts/auth.html",
-        "base.html"
+        "layouts/login.html"
       ],
       "shared_design_system": true,
-      "header": "family-owned or inherited"
+      "header": "shared"
     },
     {
       "template": "pages/auth/login.html",
@@ -911,6 +910,17 @@
       "family": "workspace",
       "inheritance": [
         "pages/dashboards/pl.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
+      "template": "pages/dashboards/rpl.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/dashboards/rpl.html",
         "layouts/shell.html",
         "base.html"
       ],
@@ -1452,6 +1462,17 @@
       "header": "shared"
     },
     {
+      "template": "pages/hr/pulse_respond.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/hr/pulse_respond.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
       "template": "pages/hr/ssa_mapping.html",
       "family": "workspace",
       "inheritance": [
@@ -1795,17 +1816,6 @@
       "family": "workspace",
       "inheritance": [
         "pages/my_plan/evidence_packet.html",
-        "layouts/shell.html",
-        "base.html"
-      ],
-      "shared_design_system": true,
-      "header": "shared"
-    },
-    {
-      "template": "pages/my_plan/ia_queue.html",
-      "family": "workspace",
-      "inheritance": [
-        "pages/my_plan/ia_queue.html",
         "layouts/shell.html",
         "base.html"
       ],
@@ -2263,6 +2273,17 @@
       "header": "shared"
     },
     {
+      "template": "pages/settings/two_step_app.html",
+      "family": "workspace",
+      "inheritance": [
+        "pages/settings/two_step_app.html",
+        "layouts/shell.html",
+        "base.html"
+      ],
+      "shared_design_system": true,
+      "header": "shared"
+    },
+    {
       "template": "pages/ssa/index.html",
       "family": "workspace",
       "inheritance": [
@@ -2443,6 +2464,6 @@
     "embedded fragment": 5,
     "print document": 2,
     "public or authentication": 9,
-    "workspace": 207
+    "workspace": 209
   }
 }
