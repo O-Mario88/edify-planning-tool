@@ -867,6 +867,27 @@ def schedule_modal_view(request):
             {"id": s.id, "name": s.name, "school_id": s.school_id, "invited": True}
             for s in active_schools(cluster.id)
         ]
+        # Owner, 2026-09-13: cluster sessions are SSA informed too. The drawer
+        # used to offer a course or a meeting with no member evidence at all;
+        # it now shows the verified need across the member schools, puts the
+        # courses that answer a cluster priority first, and preselects the
+        # weakest intervention for a meeting (apps.ssa.plan_alignment).
+        from apps.ssa.plan_alignment import cluster_need
+
+        ssa_need = cluster_need(cluster.id)
+        need_by_code = {row["intervention"]: row for row in ssa_need.rows}
+        for option in training_options:
+            row = need_by_code.get(option.get("ssaIntervention"))
+            option["addressesPriority"] = (
+                option.get("ssaIntervention") in ssa_need.priorities
+            )
+            option["clusterAverage"] = row["average"] if row else None
+            option["label"] = (
+                f"{option['label']} · priority need"
+                if option["addressesPriority"]
+                else option["label"]
+            )
+        training_options.sort(key=lambda option: not option["addressesPriority"])
 
         context = {
             "cluster": cluster,
@@ -889,6 +910,18 @@ def schedule_modal_view(request):
             ),
             "planning_priority": planning_priority,
             "priority_allocation_id": priority_allocation_id,
+            "ssa_need": ssa_need,
+            "ssa_need_rows": ssa_need.rows[:4],
+            "ssa_priority_rows": [
+                row for row in ssa_need.rows if row["intervention"] in ssa_need.priorities
+            ],
+            "selected_focus_intervention": (
+                ssa_need.priorities[0] if action == "meeting" and ssa_need.priorities else ""
+            ),
+            "intervention_need_options": [
+                (code, label, need_by_code.get(code))
+                for code, label in SsaIntervention.choices
+            ],
         }
         return render(
             request, "partials/planning/schedule_cluster_drawer.html", context
@@ -1007,10 +1040,18 @@ def schedule_modal_view(request):
         for value, label in ActivityType.choices
         if value in selectable_activity_types
     ]
+    # The focus a standard purpose opens on is the need the SSA ranks first.
+    # It used to be the first NAMED catalogue suggestion's target, which is a
+    # lower need whenever the top one has no school-level course — the drawer
+    # then headed itself "Top SSA recommendation: Financial Health" while the
+    # focus select read Leadership (2026-09-13).
+    from apps.ssa.plan_alignment import school_need
+
+    ranked_need = school_need(school)
     recommended_focus_intervention = (
-        first_catalogue_item["targetIntervention"]
-        if first_catalogue_item
-        else request.GET.get("focus_intervention", "")
+        request.GET.get("focus_intervention", "")
+        or (ranked_need.priorities[0] if ranked_need.priorities else "")
+        or (first_catalogue_item["targetIntervention"] if first_catalogue_item else "")
     )
     recommended_visit_purpose = normalise_visit_purpose(
         None,
@@ -2043,7 +2084,23 @@ def bulk_action_view(request):
     if not school_ids:
         return HttpResponse("No schools selected", status=400)
 
-    schools = School.objects.filter(school_id__in=school_ids)
+    from apps.core.scoping import resolve_user_scope, school_queryset
+
+    # The Planning table's own scope. Every bulk action used to accept any
+    # school code posted to it: the export wrote out schools in other
+    # portfolios and countries, and the partner action assigned work there
+    # (2026-09-13). The schedule action's funnel checked scope per school; the
+    # other two never did.
+    schools = school_queryset(
+        resolve_user_scope(request.user), direct_only=True
+    ).filter(deleted_at__isnull=True, school_id__in=school_ids)
+    if schools.count() != len(set(school_ids)):
+        return HttpResponse(
+            '<div class="p-3 bg-rose-50 text-rose-700 rounded-surface text-[12px] font-bold">'
+            "One or more selected schools are outside your planning portfolio."
+            "</div>",
+            status=403,
+        )
 
     if action == "export":
         # CSV Export simple response
@@ -2177,6 +2234,11 @@ def bulk_action_view(request):
 
         try:
             with transaction.atomic():
+                from apps.activity_catalogue.services import (
+                    resolve_item_for_workflow_kind,
+                )
+
+                standard_visit = resolve_item_for_workflow_kind("school_visit")
                 for school in schools:
                     result = recommend_activities(
                         school=school,
@@ -2184,24 +2246,47 @@ def bulk_action_view(request):
                         executor_type="staff",
                         limit=1,
                     )
-                    if not result["primary"]:
+                    recommendation = result["primary"][0] if result["primary"] else None
+                    unmet = result.get("unmetPriority")
+                    if (
+                        standard_visit is not None
+                        and result.get("hasApplicableSsa")
+                        and (recommendation is None or unmet)
+                    ):
+                        # SSA informed: when no named school-level activity
+                        # answers the school's top need, a standard school
+                        # visit targets that need rather than a named activity
+                        # for a lesser one (or a refusal).
+                        need = result["priority"]
+                        payload = {
+                            "catalogueItemId": standard_visit.id,
+                            "focusIntervention": need["intervention"],
+                            "recommendationReason": (
+                                f"{need['label']} is {need['band']} at "
+                                f"{need['score']}/10, the school's top SSA need."
+                            ),
+                        }
+                    elif recommendation is not None:
+                        payload = {
+                            "catalogueItemId": recommendation["catalogueItemId"],
+                            "focusIntervention": recommendation["targetIntervention"],
+                            "recommendationReason": recommendation[
+                                "recommendationReason"
+                            ],
+                        }
+                    else:
                         raise BadRequest(
                             f"No staff-deliverable Catalogue Activity is eligible for {school.name}."
                         )
-                    recommendation = result["primary"][0]
                     create_activity(
                         {
-                            "catalogueItemId": recommendation["catalogueItemId"],
+                            **payload,
                             "requireCatalogue": True,
                             "schoolId": school.school_id,
                             "scheduledDate": scheduled_date_raw,
                             "activityPurposeText": request.POST.get(
                                 "activity_goal", "Bulk-scheduled visit"
                             ),
-                            "focusIntervention": recommendation["targetIntervention"],
-                            "recommendationReason": recommendation[
-                                "recommendationReason"
-                            ],
                             "deliveryType": "staff",
                         },
                         principal=request.user,

@@ -325,3 +325,92 @@ def open_recommendations(*, school_ids=None, fy=None, owner_id=None):
     return query.select_related("school", "recommended_item").order_by(
         "rank", "score", "school__name"
     )
+
+
+def sync_recommendations(*, fy: str | None = None, limit: int | None = None) -> dict:
+    """Converge recorded recommendations with the assessments and the plans.
+
+    Recommendations were generated only when a confirmation event fired, so a
+    school whose SSA was confirmed before generation existed, or whose event
+    was lost, had none; and a plan made before its school's recommendations
+    existed was never linked to them (2026-09-13). Run nightly by the
+    scheduler, and by ``audit_ssa_informed_plans --generate``. Idempotent: the
+    need's key converges generation, and linking only moves open needs.
+    """
+    from django.db.models import Exists, OuterRef
+
+    from apps.activities.models import Activity
+    from apps.core.fy import get_operational_fy
+    from apps.schools.models import School
+    from apps.ssa.models import SsaRecord
+    from apps.ssa.plan_alignment import link_recommendations
+
+    fy = fy or get_operational_fy()
+    latest = (
+        SsaRecord.objects.filter(
+            school_id=OuterRef("pk"),
+            verification_status="confirmed",
+            deleted_at__isnull=True,
+        )
+        .order_by("-date_of_ssa", "-created_at")
+        .values("id")[:1]
+    )
+    schools = (
+        School.objects.filter(deleted_at__isnull=True)
+        .annotate(latest_ssa_id=latest)
+        .exclude(latest_ssa_id=None)
+        .annotate(
+            recorded=Exists(
+                SsaRecommendation.objects.filter(ssa_record_id=OuterRef("latest_ssa_id"))
+            )
+        )
+        .filter(recorded=False)
+        .order_by("school_id")
+    )
+    created = refreshed = schools_done = 0
+    for school in schools.iterator(chunk_size=200):
+        record_fy = (
+            SsaRecord.objects.filter(id=school.latest_ssa_id)
+            .values_list("fy", flat=True)
+            .first()
+        ) or fy
+        supersede_stale(school, fy=record_fy)
+        result = generate_for_school(school, fy=record_fy)
+        created += result.get("created", 0)
+        refreshed += result.get("refreshed", 0)
+        schools_done += 1
+        if limit and schools_done >= limit:
+            break
+
+    live_plans = (
+        Activity.objects.filter(
+            deleted_at__isnull=True,
+            fy=fy,
+            status__in=(
+                "planned",
+                "scheduled",
+                "assigned_to_partner",
+                "partner_scheduled",
+                "in_progress",
+                "completion_started",
+            ),
+        )
+        .exclude(focus_intervention__isnull=True)
+        .exclude(focus_intervention="")
+        .annotate(
+            answering=Exists(
+                SsaRecommendation.objects.filter(planned_activity_id=OuterRef("pk"))
+            )
+        )
+        .filter(answering=False)
+        .only("id", "school_id", "cluster_id", "focus_intervention", "ssa_recommendation_id")
+    )
+    linked = 0
+    for activity in live_plans.iterator(chunk_size=200):
+        linked += link_recommendations(activity)
+    return {
+        "schools": schools_done,
+        "created": created,
+        "refreshed": refreshed,
+        "linked": linked,
+    }

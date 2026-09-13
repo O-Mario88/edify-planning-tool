@@ -132,6 +132,10 @@ class InSchoolTrainingPairTest(StandardSupportBase):
         visit = Activity.objects.get(id=result["pairedSchoolVisitId"])
         self.assertIsNone(training.focus_intervention)
         self.assertIsNone(visit.focus_intervention)
+        # Not school-improvement work, and the companion visit says the same
+        # rather than being handed the school's weakest intervention.
+        self.assertEqual(training.ssa_alignment, "not_applicable")
+        self.assertEqual(visit.ssa_alignment, "not_applicable")
 
     def test_pair_carries_one_visit_equivalent_cost_on_the_training(self):
         self.cost_snapshot.side_effect = apply_real_cost_snapshot

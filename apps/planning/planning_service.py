@@ -745,14 +745,22 @@ class PlanningDashboardService:
             Q(cluster_id__isnull=True) | Q(cluster_id="")
         ).exclude(id__in=cleanup_qs.values_list("id", flat=True))
 
+        # Bounded by the schools on this page. Both sets read every activity
+        # and assignment in the organisation into memory to test membership
+        # for this person's schools, and the two counts below reported the
+        # organisation's partner backlog and scheduled work as this person's
+        # (2026-09-13).
         scheduled_schools_ids_fy = set(
-            Activity.objects.filter(deleted_at__isnull=True, fy=fy)
+            Activity.objects.filter(
+                deleted_at__isnull=True, fy=fy, school_id__in=all_school_ids
+            )
             .exclude(status="cancelled")
             .values_list("school_id", flat=True)
         )
 
         partner_pending_ids = set(
             PartnerAssignment.objects.filter(
+                school_id__in=all_school_ids,
                 status__in=[
                     "assigned",
                     "pending_scheduling",
@@ -782,19 +790,62 @@ class PlanningDashboardService:
                 baseline_required_count += 1
 
         partner_pending_schedule_count = PartnerAssignment.objects.filter(
+            school_id__in=all_school_ids,
             status__in=[
                 "assigned",
                 "pending_scheduling",
                 "partner_pending_schedule",
                 "assigned_to_partner_pending_scheduling",
-            ]
+            ],
         ).count()
 
-        in_my_plan_count = Activity.objects.filter(
-            deleted_at__isnull=True,
-            status__in=["scheduled", "in_progress", "completed", "ia_verified"],
-            fy=fy,
-        ).count()
+        scoped_cluster_ids = list(
+            base_schools_qs.exclude(Q(cluster_id__isnull=True) | Q(cluster_id=""))
+            .values_list("cluster_id", flat=True)
+            .distinct()
+        )
+        in_scope_activity = Q(school_id__in=all_school_ids) | Q(
+            school__isnull=True, cluster_id__in=scoped_cluster_ids
+        )
+        in_my_plan_count = (
+            Activity.objects.filter(
+                deleted_at__isnull=True,
+                status__in=["scheduled", "in_progress", "completed", "ia_verified"],
+                fy=fy,
+            )
+            .filter(in_scope_activity)
+            .count()
+        )
+
+        # SSA informed (owner, 2026-09-13): of the live plans on these schools
+        # and clusters, the share whose recorded verdict follows the verified
+        # SSA (apps.ssa.plan_alignment). Unjudged legacy rows are left out of
+        # the denominator rather than counted as failures.
+        from apps.core.metrics.ratio import percentage
+        from apps.ssa.plan_alignment import INFORMED
+
+        verdicts = dict(
+            Activity.objects.filter(
+                deleted_at__isnull=True,
+                fy=fy,
+                status__in=[
+                    "planned",
+                    "scheduled",
+                    "assigned_to_partner",
+                    "partner_scheduled",
+                    "awaiting_owner_approval",
+                    "in_progress",
+                    "completion_started",
+                ],
+            )
+            .filter(in_scope_activity)
+            .exclude(ssa_alignment="")
+            .values_list("ssa_alignment")
+            .annotate(n=Count("id"))
+        )
+        judged_plans = sum(verdicts.values())
+        informed_plans = sum(verdicts.get(value, 0) for value in INFORMED)
+        informed_share = percentage(informed_plans, judged_plans)
 
         core_package_gaps_count = (
             base_schools_qs.filter(school_type__in=["core", "champion"])
@@ -805,11 +856,6 @@ class PlanningDashboardService:
             .count()
         )
 
-        scoped_cluster_ids = list(
-            base_schools_qs.exclude(Q(cluster_id__isnull=True) | Q(cluster_id=""))
-            .values_list("cluster_id", flat=True)
-            .distinct()
-        )
         planned_cluster_ids = Activity.objects.filter(
             cluster_id__in=scoped_cluster_ids, deleted_at__isnull=True, fy=fy
         ).values_list("cluster_id", flat=True)
@@ -885,6 +931,18 @@ class PlanningDashboardService:
                 helper="Scheduled activities",
                 icon="calendar",
                 variant="blue",
+            ),
+            render_precomputed_metric_item(
+                "planning_ssa_informed_plans",
+                f"{informed_share}%" if informed_share is not None else "—",
+                raw_value=informed_share,
+                helper=(
+                    f"{judged_plans - informed_plans} of {judged_plans} need attention"
+                    if judged_plans
+                    else "no live plans yet"
+                ),
+                icon="target",
+                variant="success",
             ),
             render_precomputed_metric_item(
                 "planning_planning_service_cost_blocked",

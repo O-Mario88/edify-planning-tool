@@ -111,6 +111,18 @@ class GenerationTests(AutopilotFixture):
         self.assertEqual(first.school_name, "Needs SSA")
         self.assertIn("SSA outstanding", first.reason)
 
+    def test_the_most_urgent_assessed_school_leads_and_its_need_is_named(self):
+        """SSA informed (owner, 2026-09-13): among schools assessed this year,
+        the weakest verified need leads the draft, and the reason names it."""
+        self._school("Able School", self.sub_a, current_fy_ssa_status="done")
+        weak = self._school("Weak School", self.sub_a, current_fy_ssa_status="done")
+        _confirmed_ssa(weak, score=3.0)
+        plan = generate_week_proposal(self.staff, week_start=WEEK)
+        first = plan.items.order_by("proposed_date", "id").first()
+        self.assertEqual(first.school_name, "Weak School")
+        self.assertIn("SSA need:", first.reason)
+        self.assertIn("3/10 (Critical)", first.reason)
+
     def test_days_are_route_coherent_by_sub_county(self):
         for index in range(2):
             self._school(f"Area A {index}", self.sub_a)
@@ -226,6 +238,9 @@ class AcceptanceTests(AutopilotFixture):
             activity = Activity.objects.get(id=activity_id)
             self.assertEqual(activity.status, "scheduled")
             self.assertEqual(activity.responsible_staff_id, str(self.staff.id))
+            # The school has no assessment this year: the visit collects it.
+            self.assertTrue(activity.ssa_collection_expected)
+            self.assertEqual(activity.ssa_alignment, "ssa_collection")
 
     def test_fy_consumed_client_entitlement_is_never_proposed(self):
         # A client school visited earlier in the FY carries no remaining

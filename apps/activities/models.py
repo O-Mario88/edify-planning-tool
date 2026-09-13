@@ -22,6 +22,7 @@ from apps.core.enums import (
     PaymentStatus,
     ProgrammeActivityType,
     ProgrammeDeliveryMode,
+    SsaAlignment,
     SsaIntervention,
     VerificationStatus,
 )
@@ -93,6 +94,15 @@ class Activity(SoftDeleteModel):
         max_digits=4, decimal_places=2, null=True, blank=True
     )
     source_classification = models.CharField(max_length=32, null=True, blank=True)
+    #: Whether this plan was informed by the verified SSA, decided when it was
+    #: planned (apps.ssa.plan_alignment). Blank on rows planned before plans
+    #: were judged; `audit_ssa_informed_plans --stamp` judges the live ones.
+    ssa_alignment = models.CharField(
+        max_length=24,
+        blank=True,
+        default="",
+        choices=SsaAlignment.choices,
+    )
     recommendation_reason = models.TextField(blank=True)
     recommendation_source = models.JSONField(default=dict, blank=True)
 
@@ -396,6 +406,7 @@ class Activity(SoftDeleteModel):
             models.Index(fields=["cluster"]),
             models.Index(fields=["catalogue_item", "fy", "status"]),
             models.Index(fields=["catalogue_item", "focus_intervention"]),
+            models.Index(fields=["fy", "ssa_alignment"], name="idx_activity_fy_ssa_alignment"),
             models.Index(fields=["fy", "quarter"]),
             models.Index(fields=["responsible_staff_id"]),
             # The exact filter TargetAchievementService.rebuild() runs once

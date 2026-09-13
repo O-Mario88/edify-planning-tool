@@ -9,13 +9,13 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
-- Scheduled jobs: **26**
+- Scheduled jobs: **27**
 - Activity states: **24**
 - Shared component templates: **413**
 - Full pages: **241**
 - Partials and drawers: **198**
 - Permission-gated surfaces: **631**
-- Referenced by automated tests: **589**
+- Referenced by automated tests: **591**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -318,7 +318,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-B35FAC1878 | /health-safety | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-EE2DB868E6 | /health-safety/<str:incident_id> | Incident Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-6EA9145F97 | /health-safety/<str:incident_id>/advance | Incident Advance | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-31B9AC3451 | /health-safety/new | Incident New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-31B9AC3451 | /health-safety/new | Incident New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-61DDBE7AA2 | /health-safety/report | Incident Report | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-61030068A3 | /help | Knowledge Center · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7A2D19730D | /help/articles/<slug:slug> | · Knowledge Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
@@ -569,7 +569,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-EEB299FBB6 | /pulse-surveys | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-0B32E25CA5 | /pulse-surveys/<str:survey_id> | Pulse Results Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-0DC6435DA6 | /pulse-surveys/<str:survey_id>/close | Pulse Close | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | coverage review required |
-| UI-PAGE-AD000D654D | /pulse-surveys/new | Pulse New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
+| UI-PAGE-AD000D654D | /pulse-surveys/new | Pulse New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-52E8522123 | /pulse-surveys/open | Pulse Open | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-525708C2CC | /pulse/<str:survey_id> | · Edify | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | coverage review required |
 | UI-PAGE-734A2B48B5 | /quality-checks | Quality Checks | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |

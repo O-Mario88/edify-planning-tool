@@ -694,6 +694,21 @@ def data_quality_scan_job():
     run_tracked_job("data_quality_scan", _do_data_quality_scan)
 
 
+def _do_ssa_recommendation_sync() -> int:
+    """Converge SSA recommendations with assessments and live plans."""
+
+    from apps.ssa.recommendation_service import sync_recommendations
+
+    result = sync_recommendations()
+    return result["created"] + result["linked"]
+
+
+def ssa_recommendation_sync_job():
+    if not _enabled():
+        return
+    run_tracked_job("ssa_recommendation_sync", _do_ssa_recommendation_sync)
+
+
 # ── 16. Durable outbox drain ─────────────────────────────────────────────────
 def _do_outbox_drain() -> int:
     """One drain pass over the durable event backbone (roadmap Phase 2)."""

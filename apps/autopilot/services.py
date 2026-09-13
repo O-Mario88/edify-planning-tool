@@ -110,22 +110,50 @@ def _candidate_schools(staff, *, limit: int = 30) -> list[dict]:
         .select_related("sub_county")
         .order_by("name")[: limit * 2]
     )
+    # SSA informed (owner, 2026-09-13): among schools assessed this year the
+    # most urgent verified need leads, and every reason names it. Ordering by
+    # name put a school scoring 8/10 ahead of one scoring 3/10.
+    from apps.core.enums import SsaIntervention, ssa_score_band
+    from apps.ssa.recommendation_engine import bulk_weakest
+    from apps.ssa.services import latest_applicable_records
+
+    schools = list(schools)
+    latest = latest_applicable_records(schools)
+    weakest = bulk_weakest([school.id for school in schools], n=1)
+    labels = dict(SsaIntervention.choices)
     rows = []
     for school in schools:
         ssa_outstanding = school.current_fy_ssa_status != "done"
+        record = latest.get(school.id)
+        top = (weakest.get(school.id) or [None])[0]
+        need = (
+            f"{labels.get(top['intervention'], top['intervention'])} "
+            f"{top['score']:g}/10 ({ssa_score_band(top['score'])[0]})"
+            if top
+            else ""
+        )
+        if ssa_outstanding:
+            reason = "SSA outstanding this FY: collect the assessment" + (
+                f"; last need {need}" if need else ""
+            )
+        elif need:
+            reason = f"SSA need: {need}"
+        else:
+            reason = "No support activity this month"
+        average = getattr(record, "average_score", None)
         rows.append(
             {
                 "school": school,
                 "area": school.sub_county.name if school.sub_county_id else "",
                 "ssa_outstanding": ssa_outstanding,
-                "reason": (
-                    "SSA outstanding this FY"
-                    if ssa_outstanding
-                    else "No support activity this month"
-                ),
+                "reason": reason[:255],
+                # Weakest first; a school with no score sorts after the scored.
+                "urgency": average if average is not None else 99.0,
             }
         )
-    rows.sort(key=lambda row: (not row["ssa_outstanding"], row["school"].name))
+    rows.sort(
+        key=lambda row: (not row["ssa_outstanding"], row["urgency"], row["school"].name)
+    )
     return rows[:limit]
 
 
@@ -216,6 +244,13 @@ def accept_plan(plan: ProposedPlan, *, principal) -> dict:
             id__in=[item.school_id for item in plan.items.all()]
         ).values_list("id", "school_id")
     )
+    # A school still without this year's assessment is visited to collect it:
+    # read at acceptance, since an SSA may have been confirmed since the draft.
+    outstanding = set(
+        School.objects.filter(id__in=[item.school_id for item in plan.items.all()])
+        .exclude(current_fy_ssa_status="done")
+        .values_list("id", flat=True)
+    )
     created, refused = [], []
     for item in plan.items.all():
         catalogue_item = ActivityCatalogueItem.objects.filter(
@@ -232,6 +267,11 @@ def accept_plan(plan: ProposedPlan, *, principal) -> dict:
                     "scheduledDate": item.proposed_date.isoformat(),
                     "activityPurposeText": (f"Accepted weekly plan — {item.reason}"),
                     "purposeType": "weekly_plan",
+                    **(
+                        {"ssaCollectionExpected": True}
+                        if item.school_id in outstanding
+                        else {}
+                    ),
                     **catalogue_ref,
                 },
                 principal=principal,

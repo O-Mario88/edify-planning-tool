@@ -41,6 +41,30 @@ x-data="{
 <!-- Form Error Messages container -->
 <div id="form-errors"></div>
 
+{% comment %}
+Cluster SSA need (owner, 2026-09-13): the verified weakness across the member
+schools' latest confirmed assessments, so the session is chosen from evidence.
+There is no cluster SSA; the averages are of member schools' scores.
+{% endcomment %}
+<section class="rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3" aria-labelledby="cluster-ssa-need-title" data-cluster-ssa-need>
+  <p class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">SSA intelligence</p>
+  {% if ssa_need.assessed %}
+  <h3 id="cluster-ssa-need-title" class="mt-0.5 text-[13px] font-extrabold text-slate-800">Cluster need · {{ ssa_need.assessed_schools }} of {{ ssa_need.member_count }} schools assessed</h3>
+  <ul class="mt-2 space-y-1.5" role="list">
+    {% for row in ssa_priority_rows %}
+    <li class="flex items-center justify-between gap-2 text-[12px]">
+      <span class="font-bold text-slate-700">{{ row.label }}</span>
+      <span class="font-semibold text-slate-500 tabular-nums">avg {{ row.average }}/10 · {{ row.schoolsBelow }} of {{ row.schoolsAssessed }} below 5.5 · <span class="{% if row.band == 'Critical' %}edify-danger-text{% elif row.band == 'Warning' %}text-amber-700{% else %}text-emerald-700{% endif %}">{{ row.band }}</span></span>
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="mt-2 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Priorities first. Courses that answer one are listed first and marked.</p>
+  {% else %}
+  <h3 id="cluster-ssa-need-title" class="mt-0.5 text-[13px] font-extrabold text-amber-700">No member school has a verified SSA</h3>
+  <p class="mt-1 font-medium text-slate-600">Collect the member schools' assessments so this session can target a measured need.</p>
+  {% endif %}
+</section>
+
 <!-- Date -->
 <div>
 <label class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400 mb-1">Scheduled Date</label>
@@ -431,6 +455,23 @@ aria-describedby="cluster-training-help"
     <strong class="mt-1 block text-[13px] text-slate-800" x-text="selectedActivity ? selectedActivity.ssaIndicator : ''"></strong>
   </div>
 </div>
+</div>
+{% endif %}
+
+{% if action == 'meeting' %}
+<div>
+<label for="meeting_focus_intervention" class="block edify-text-caption font-bold uppercase tracking-wider text-slate-400">Focus Intervention</label>
+<select
+name="focus_intervention"
+id="meeting_focus_intervention"
+class="w-full h-10 px-3 rounded-control border border-slate-200 bg-slate-50 mt-1 focus:outline-none focus:ring-2 edify-primary-focus cursor-pointer"
+>
+<option value="">No specific intervention</option>
+{% for code, label, need in intervention_need_options %}
+<option value="{{ code }}" {% if code == selected_focus_intervention %}selected{% endif %}>{{ label }}{% if need %} · avg {{ need.average }}/10{% endif %}</option>
+{% endfor %}
+</select>
+<p class="mt-1.5 edify-text-caption font-medium normal-case tracking-normal text-slate-400">Which SSA intervention this meeting is meant to move. Pre-selected from the weakest verified cluster need.</p>
 </div>
 {% endif %}
 

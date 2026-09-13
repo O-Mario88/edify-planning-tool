@@ -788,12 +788,33 @@ def recommend_cluster_activities(
 ) -> dict:
     """Aggregate verified member-school need without inventing a Cluster SSA.
 
-    Each member is evaluated by the same canonical school recommendation
-    service. Results are then merged deterministically, preserving every
-    contributing SSA in the returned recommendation source.
-    """
-    from apps.schools.models import School
+    Each member's need is ranked by the same canonical engine the school
+    recommendation uses, and the results are merged deterministically,
+    preserving every contributing SSA in the returned recommendation source.
 
+    The catalogue side is the same for every member of one cluster, so it is
+    read once. This used to run the whole single-school recommendation per
+    member (catalogue query, prefetches, conflict subqueries and follow-up
+    lookups each time): 103 queries and 1.4 s for a six-school cluster, so a
+    thirty-school cluster held a web worker for several seconds on every
+    cluster scheduling drawer and every named cluster training saved
+    (2026-09-13).
+    """
+    from apps.activities.models import Activity
+    from apps.core.request_cache import scoped
+    from apps.schools.models import School
+    from apps.ssa.recommendation_engine import (
+        prime_recommendation_inputs,
+        prioritized_interventions,
+    )
+    from apps.ssa.services import (
+        latest_applicable_record,
+        prime_latest_applicable_records,
+    )
+
+    project = _project_from_context(project)
+    on_date = timezone.localdate()
+    fy = get_operational_fy(on_date)
     # School.cluster_id is a bare CharField (no FK — see apps/schools/models),
     # so membership filters on the id, never a relation lookup.
     members = list(
@@ -801,40 +822,167 @@ def recommend_cluster_activities(
             "school_id"
         )
     )
+
+    items = effective_items(on_date).prefetch_related("intervention_mappings")
+    if executor_type == DeliveryType.PARTNER:
+        items = items.filter(partner_delivery_allowed=True)
+    else:
+        items = items.filter(staff_delivery_allowed=True)
+    items = items.filter(cluster_delivery_allowed=True)
+    if project:
+        items = items.filter(
+            project_mappings__project=project,
+            project_mappings__active=True,
+        )
+    # "Already planned or delivered for this cluster", read once per item. A
+    # cluster session has no school, so the single-school subqueries this
+    # replaced could never find one.
+    items = items.annotate(
+        has_active_conflict=Exists(
+            Activity.objects.filter(
+                catalogue_item_id=OuterRef("pk"),
+                cluster_id=cluster.id,
+                fy=fy,
+                deleted_at__isnull=True,
+                status__in=ACTIVE_SUPPORT_STATUSES,
+            )
+        ),
+        delivered_recently=Exists(
+            Activity.objects.filter(
+                catalogue_item_id=OuterRef("pk"),
+                cluster_id=cluster.id,
+                deleted_at__isnull=True,
+                status__in=COMPLETED_SUPPORT_STATUSES,
+                scheduled_date__gte=timezone.now() - timedelta(days=180),
+            )
+        ),
+    ).distinct()
+    catalogue = [
+        item
+        for item in items
+        if not (item.requires_cluster and cluster is None)
+        and item.activity_type != CatalogueActivityType.ADMIN
+    ]
+    fixed_items = []
+    followup_items = []
+    for item in catalogue:
+        modes = {m.mapping_mode for m in item.intervention_mappings.all() if m.active}
+        if modes & {MappingMode.FIXED, MappingMode.MULTIPLE_ALLOWED}:
+            fixed_items.append(item)
+        if MappingMode.INHERIT_FROM_SOURCE_ACTIVITY in modes:
+            followup_items.append(item)
+    source_activity = None
+    if followup_items:
+        source_activity = (
+            Activity.objects.filter(
+                cluster=cluster,
+                deleted_at__isnull=True,
+                status__in=COMPLETED_SUPPORT_STATUSES,
+            )
+            .exclude(focus_intervention__isnull=True)
+            .exclude(focus_intervention="")
+            .select_related("source_ssa")
+            .order_by("-planned_date", "-created_at")
+            .first()
+        )
+
     merged: dict[str, dict] = {}
     schools_with_ssa = 0
-    for school in members:
-        result = recommend_activities(
-            school=school,
-            principal=principal,
-            project=project,
-            cluster=cluster,
-            executor_type=executor_type,
-            limit=100,
+
+    def merge(suggestion, school, source_ssa):
+        code = suggestion["stableCode"]
+        row = merged.get(code)
+        context = {
+            "schoolId": school.id,
+            "schoolCode": school.school_id,
+            "ssaId": getattr(source_ssa, "id", None),
+            "intervention": suggestion["targetIntervention"],
+            "score": suggestion["currentScore"],
+            "classification": suggestion["classification"],
+        }
+        if row is None:
+            row = {**suggestion, "schoolContexts": [], "schoolsMatched": 0}
+            merged[code] = row
+        row["schoolContexts"].append(context)
+        row["schoolsMatched"] += 1
+        row["rank"] = min(row["rank"], suggestion["rank"])
+        row["existingSupportConflict"] = (
+            row["existingSupportConflict"] or suggestion["existingSupportConflict"]
         )
-        if not result["hasApplicableSsa"]:
-            continue
-        schools_with_ssa += 1
-        for suggestion in [*result["primary"], *result["otherEligible"]]:
-            code = suggestion["stableCode"]
-            row = merged.get(code)
-            context = {
-                "schoolId": school.id,
-                "schoolCode": school.school_id,
-                "ssaId": result["sourceSsaId"],
-                "intervention": suggestion["targetIntervention"],
-                "score": suggestion["currentScore"],
-                "classification": suggestion["classification"],
+
+    with scoped():
+        prime_latest_applicable_records(members)
+        prime_recommendation_inputs(members)
+        for school in members:
+            source_ssa = latest_applicable_record(school)
+            ranked_needs = prioritized_interventions(school) if source_ssa else []
+            if source_ssa is None or not ranked_needs:
+                continue
+            schools_with_ssa += 1
+            rank_by_intervention = {
+                need["intervention"]: index for index, need in enumerate(ranked_needs)
             }
-            if row is None:
-                row = {**suggestion, "schoolContexts": [], "schoolsMatched": 0}
-                merged[code] = row
-            row["schoolContexts"].append(context)
-            row["schoolsMatched"] += 1
-            row["rank"] = min(row["rank"], suggestion["rank"])
-            row["existingSupportConflict"] = (
-                row["existingSupportConflict"] or suggestion["existingSupportConflict"]
-            )
+            need_by_intervention = {need["intervention"]: need for need in ranked_needs}
+            for item in fixed_items:
+                mappings = [
+                    m
+                    for m in item.intervention_mappings.all()
+                    if m.active
+                    and m.mapping_mode
+                    in (MappingMode.FIXED, MappingMode.MULTIPLE_ALLOWED)
+                    and m.intervention in rank_by_intervention
+                ]
+                if not mappings:
+                    continue
+                mapping = min(
+                    mappings,
+                    key=lambda m: (
+                        rank_by_intervention[m.intervention],
+                        m.priority,
+                        m.intervention,
+                    ),
+                )
+                need = need_by_intervention[mapping.intervention]
+                merge(
+                    _suggestion(
+                        item,
+                        mapping.intervention,
+                        source_ssa,
+                        f"{need['label']} is {need['band']} at {need['score']}/10.",
+                        rank=rank_by_intervention[mapping.intervention],
+                        need=need,
+                    ),
+                    school,
+                    source_ssa,
+                )
+            for item in followup_items:
+                if source_activity is not None:
+                    target = source_activity.focus_intervention
+                    need = need_by_intervention.get(target)
+                    reason = (
+                        f"Follow up {source_activity.activity_name_snapshot or source_activity.get_activity_type_display()} "
+                        f"and inherit its {target.replace('_', ' ').title()} intervention."
+                    )
+                    source_for_suggestion = source_activity.source_ssa or source_ssa
+                else:
+                    need = ranked_needs[0]
+                    target = need["intervention"]
+                    reason = (
+                        f"No completed source support is available. Address the "
+                        f"current unresolved {need['label']} need at {need['score']}/10."
+                    )
+                    source_for_suggestion = source_ssa
+                row = _suggestion(
+                    item,
+                    target,
+                    source_for_suggestion,
+                    reason,
+                    rank=(rank_by_intervention.get(target, 999) + 20),
+                    need=need,
+                )
+                if source_activity is not None:
+                    row["sourceActivityId"] = source_activity.id
+                merge(row, school, source_ssa)
 
     suggestions = list(merged.values())
     for row in suggestions:

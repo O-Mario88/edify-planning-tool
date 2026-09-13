@@ -11,3 +11,4 @@ class SsaConfig(AppConfig):
         # Registration only: importing the handler binds it to its event type
         # and touches no database.
         from . import handlers  # noqa: F401
+        from . import signals  # noqa: F401

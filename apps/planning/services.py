@@ -741,9 +741,23 @@ def schedule_in_school_training_pair(data: dict, principal) -> dict:
         # and visit evidence at the same time; pricing it again would double
         # the staff day pool or the partner visit lump sum.
         skip_cost_snapshot=True,
+        # The course decided the mission's intervention, including none for an
+        # administrative course; the companion visit must not name another.
+        ssa_default_focus=False,
     )
     training.paired_school_visit_id = visit_result["id"]
     training.save(update_fields=["paired_school_visit", "updated_at"])
+    # One mission, one SSA verdict: the visit carries the training's.
+    visit = Activity.objects.get(id=visit_result["id"])
+    visit.ssa_alignment = training.ssa_alignment
+    visit.recommendation_source = {
+        **(visit.recommendation_source or {}),
+        "ssa": {
+            **((training.recommendation_source or {}).get("ssa") or {}),
+            "pairedWithActivityId": training.id,
+        },
+    }
+    visit.save(update_fields=["ssa_alignment", "recommendation_source", "updated_at"])
 
     return {
         **training_result,

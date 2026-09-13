@@ -1,15 +1,15 @@
 {
  "summary": {
-  "titled_cards": 625,
-  "templates": 233,
-  "distinct_titles": 594,
+  "titled_cards": 633,
+  "templates": 234,
+  "distinct_titles": 601,
   "with_card_key": 13,
-  "untitled_surfaces": 789,
+  "untitled_surfaces": 785,
   "untitled_chrome": 179,
-  "untitled_nested": 256,
+  "untitled_nested": 252,
   "untitled_headless": 354,
   "templates_with_same_title_twice": 0,
-  "titles_in_several_templates": 24,
+  "titles_in_several_templates": 25,
   "ambiguous_titles": 1
  },
  "same_page_duplicate_titles": {},
@@ -66,7 +66,8 @@
   ],
   "professional development": [
    "templates/pages/hr/my_performance.html",
-   "templates/pages/system_health/index.html"
+   "templates/pages/system_health/index.html",
+   "templates/partials/dashboards/hr/operations.html"
   ],
   "public holidays": [
    "templates/pages/leave/leave_policies.html",
@@ -75,7 +76,6 @@
   "quick actions": [
    "templates/pages/partners/index.html",
    "templates/partials/dashboards/admin/operations.html",
-   "templates/partials/dashboards/hr/operations.html",
    "templates/partials/messages/context_panel.html",
    "templates/partials/professional_development/body.html"
   ],
@@ -86,6 +86,10 @@
   "recent activity": [
    "templates/pages/profile/index.html",
    "templates/partials/debriefs/dashboard_body.html"
+  ],
+  "recovery plans": [
+   "templates/partials/dashboards/hr/operations.html",
+   "templates/partials/targets/team/body.html"
   ],
   "regional performance": [
    "templates/partials/dashboards/cd/operations.html",
@@ -4675,109 +4679,172 @@
   {
    "template": "templates/partials/dashboards/hr/operations.html",
    "line": 22,
-   "title": "Leadership Attention Required",
-   "heading_level": 2,
+   "title": "Staffing by country",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-4 space-y-3 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 94,
-   "title": "1. Workforce Overview",
-   "heading_level": 2,
+   "line": 72,
+   "title": "Workforce through the year",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 105,
-   "title": "2. Workforce by Country",
-   "heading_level": 2,
+   "line": 86,
+   "title": "Recruitment",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 140,
-   "title": "3. Headcount by Department",
-   "heading_level": 2,
+   "line": 116,
+   "title": "Review cycle",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 151,
-   "title": "4. Job Level Distribution",
-   "heading_level": 2,
+   "line": 139,
+   "title": "Final ratings",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-4 space-y-3 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 161,
+   "title": "Recovery plans",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
    "line": 176,
-   "title": "5. Leave Overview",
-   "heading_level": 2,
+   "title": "Professional development",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 182,
-   "title": "6. Performance Overview",
-   "heading_level": 2,
+   "line": 200,
+   "title": "Motivation signals by country",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-4 space-y-3 flex flex-col justify-between edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 191,
-   "title": "7. Upcoming Reviews &amp; Probations",
-   "heading_level": 2,
+   "line": 250,
+   "title": "Employee relations",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 226,
-   "title": "8. Compliance Status",
-   "heading_level": 2,
+   "line": 267,
+   "title": "Health and safety",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 258,
-   "title": "9. Recruitment Funnel",
-   "heading_level": 2,
+   "line": 284,
+   "title": "Morale and recognition",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 flex flex-col justify-between edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 270,
-   "title": "Pending HR Actions",
-   "heading_level": 2,
+   "line": 307,
+   "title": "Field capacity signals",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
    "template": "templates/partials/dashboards/hr/operations.html",
-   "line": 283,
-   "title": "Quick Actions",
-   "heading_level": 2,
+   "line": 334,
+   "title": "Employment compliance by requirement",
+   "heading_level": 3,
    "has_card_key": false,
-   "classes": "rounded-surface border p-5 space-y-4 edify-surface edify-border",
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 378,
+   "title": "Policies",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 404,
+   "title": "Leave",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 426,
+   "title": "Compensation and benefits",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 442,
+   "title": "Headcount by role",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 470,
+   "title": "Upcoming people deadlines",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
+   "branch_path": []
+  },
+  {
+   "template": "templates/partials/dashboards/hr/operations.html",
+   "line": 511,
+   "title": "Start a programme action",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "edify-surface rounded-surface border border-[var(--edify-border)] shadow-sm hrd-card",
    "branch_path": []
   },
   {
@@ -6002,6 +6069,20 @@
    "has_card_key": false,
    "classes": "edify-popup-dialog__surface edify-surface rounded-surface border border-slate-200 shadow-xl w-full max-w-lg overflow-hidden animate-fade-in",
    "branch_path": []
+  },
+  {
+   "template": "templates/partials/planning/schedule_cluster_drawer.html",
+   "line": 49,
+   "title": "Cluster need \u00b7 of schools assessed",
+   "heading_level": 3,
+   "has_card_key": false,
+   "classes": "rounded-surface border border-[var(--edify-border)] bg-slate-50/70 p-3",
+   "branch_path": [
+    [
+     5,
+     0
+    ]
+   ]
   },
   {
    "template": "templates/partials/planning/schedule_drawer.html",

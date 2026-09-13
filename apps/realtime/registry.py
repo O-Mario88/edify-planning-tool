@@ -314,6 +314,25 @@ JOB_REGISTRY: list[JobSpec] = [
         max_retries=2,
     ),
     JobSpec(
+        name="ssa_recommendation_sync",
+        description=(
+            "Records SSA recommendations for schools whose latest confirmed "
+            "assessment has none, and links live plans to the needs they answer."
+        ),
+        cron="daily 03:30 Africa/Nairobi",
+        cron_kwargs={"hour": 3, "minute": 30},
+        expected_runtime_seconds=180,
+        max_interval_minutes=1560,
+        idempotent=True,
+        idempotency_note=(
+            "Generation converges on each need's condition_key under a partial "
+            "unique constraint, and linking only moves open recommendations — "
+            "a re-run creates and moves nothing."
+        ),
+        retryable=True,
+        max_retries=2,
+    ),
+    JobSpec(
         name="interaction_rollup",
         description=(
             "Sessionises yesterday's interaction events into per-person-day "

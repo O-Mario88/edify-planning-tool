@@ -1420,6 +1420,7 @@ def create(
     skip_cost_snapshot: bool = False,
     core_slot_verified: bool = False,
     training_course=None,
+    ssa_default_focus: bool = True,
 ) -> dict:
     """Create and cost one governed Activity.
 
@@ -1427,6 +1428,10 @@ def create(
     scheduling policy, duplicate prevention, and Cost Catalogue readiness are
     authoritative gates. A dated Activity is persisted only when its cost
     snapshot can be written in the same transaction.
+
+    ``ssa_default_focus=False`` lets a caller that pairs this activity with
+    another keep the intervention it was given, even none, rather than have the
+    SSA name one (the In-school Training's companion School Visit).
 
     ``skip_cost_snapshot`` and ``core_slot_verified`` are trusted,
     internal-caller flags (the Daily Visit Batch service and the Core Schools
@@ -1468,6 +1473,12 @@ def create(
 
     p_type = data.get("purposeType")
     focus = data.get("focusIntervention")
+    # Where the plan's target intervention came from, recorded with the SSA
+    # verdict (apps.ssa.plan_alignment): the planner, a course, a project, a
+    # source session, the catalogue mapping, or the SSA itself.
+    focus_source = (
+        "planner" if (focus or data.get("purposeIntervention")) else ""
+    )
     if training_course is not None:
         if not getattr(training_course, "is_training_course", False):
             raise BadRequest("Select a training from the governed Training Catalogue.")
@@ -1479,6 +1490,7 @@ def create(
             training_course,
             requested_intervention=focus or None,
         )
+        focus_source = "course" if focus else focus_source
         data = {
             **data,
             "focusIntervention": focus,
@@ -1801,6 +1813,7 @@ def create(
             )
         if not focus and not data.get("purposeIntervention") and primary_target:
             focus = primary_target
+            focus_source = "project"
             data = {
                 **data,
                 "focusIntervention": focus,
@@ -1821,6 +1834,7 @@ def create(
 
     source_ssa = None
     source_activity = None
+    mapping_modes: set = set()
     catalogue_cluster = _catalogue_cluster(cluster_id) if cluster_id else None
     is_school_training_follow_up = bool(
         school is not None
@@ -1835,6 +1849,21 @@ def create(
         )
     governed_recommendation_reason = data.get("recommendationReason", "")
     governed_recommendation_source = {}
+    # Owner, 2026-09-13: every school activity plan is SSA informed. The need
+    # is read once here, defaults the target of any-intervention support the
+    # planner left open, and is what the plan is judged against after it is
+    # written (apps.ssa.plan_alignment). Nothing is refused on it.
+    from apps.ssa import plan_alignment
+
+    ssa_school_need = None
+    ssa_cluster_need = None
+    if not non_school:
+        if school is not None:
+            ssa_school_need = plan_alignment.school_need(school)
+        elif cluster_id:
+            ssa_cluster_need = plan_alignment.cluster_need(
+                cluster_id, data.get("invitedSchoolIds") or None
+            )
     if catalogue_item:
         from apps.activity_catalogue.models import MappingMode
         from apps.activity_catalogue.services import (
@@ -1907,6 +1936,7 @@ def create(
                 # The source session, not a free-form browser field, owns the
                 # intervention and its lineage.
                 focus = inherited_focus
+                focus_source = "source_activity"
                 data = {
                     **data,
                     "focusIntervention": inherited_focus,
@@ -1918,6 +1948,38 @@ def create(
                 "mapping_mode", flat=True
             )
         )
+        if training_course is not None:
+            # The course owns the SSA association (see above): its own mapping
+            # decides whether this plan targets an intervention at all, not the
+            # standard In-school Training profile that prices it.
+            mapping_modes = set(
+                training_course.intervention_mappings.filter(
+                    active=True
+                ).values_list("mapping_mode", flat=True)
+            )
+        if (
+            ssa_default_focus
+            and training_course is None
+            and not non_school
+            and not (focus or data.get("purposeIntervention"))
+        ):
+            ssa_focus = plan_alignment.default_focus(
+                activity_type=activity_type,
+                mapping_modes=mapping_modes,
+                school=school,
+                cluster_id=None if school is not None else cluster_id,
+                school_need_=ssa_school_need,
+                cluster_need_=ssa_cluster_need,
+                collects_ssa=is_ssa_activity,
+            )
+            if ssa_focus:
+                focus = ssa_focus
+                focus_source = "ssa_default"
+                data = {
+                    **data,
+                    "focusIntervention": ssa_focus,
+                    "purposeIntervention": ssa_focus,
+                }
         validate_context(
             catalogue_item,
             school=school,
@@ -2343,6 +2405,25 @@ def create(
                 activity,
                 data["invitedSchoolIds"],
                 actor_id=str(getattr(principal, "id", "") or ""),
+            )
+        if not non_school:
+            if not focus_source and activity.focus_intervention:
+                # A named course or item fixed the intervention itself.
+                focus_source = "catalogue"
+            plan_alignment.stamp(
+                activity,
+                plan_alignment.assess(
+                    activity_type=activity_type,
+                    focus=activity.focus_intervention,
+                    mapping_modes=mapping_modes,
+                    school=school,
+                    cluster_id=None if school is not None else cluster_id,
+                    school_ids=data.get("invitedSchoolIds") or None,
+                    focus_source=focus_source or "planner",
+                    school_need_=ssa_school_need,
+                    cluster_need_=ssa_cluster_need,
+                    collects_ssa=is_ssa_activity,
+                ),
             )
         # Daily Visit Batch scheduling (apps.daily_visit_batches.services) creates
         # each school's Activity via this function, then prices the whole batch in
@@ -3993,6 +4074,50 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 "school" if pa.school_id else "cluster" if pa.cluster_id else ""
             ),
         )
+        from apps.ssa import plan_alignment
+
+        partner_modes = (
+            set(
+                catalogue_item.intervention_mappings.filter(active=True).values_list(
+                    "mapping_mode", flat=True
+                )
+            )
+            if catalogue_item
+            else set()
+        )
+        partner_school_need = (
+            plan_alignment.school_need(pa.school) if pa.school_id else None
+        )
+        partner_cluster_need = (
+            plan_alignment.cluster_need(pa.cluster_id)
+            if pa.cluster_id and not pa.school_id
+            else None
+        )
+        partner_focus = pa.focus_intervention
+        partner_focus_source = "planner" if partner_focus else ""
+        if not partner_focus and not pa.source_activity_id:
+            # The assignment named no target: the SSA as it stands on the day
+            # the partner dates the work decides it, as it would for staff.
+            partner_focus = plan_alignment.default_focus(
+                activity_type=_sched_activity_type,
+                mapping_modes=partner_modes,
+                school=pa.school,
+                cluster_id=None if pa.school_id else pa.cluster_id,
+                school_need_=partner_school_need,
+                cluster_need_=partner_cluster_need,
+                collects_ssa=activity.ssa_collection_expected,
+            )
+            if partner_focus:
+                partner_focus_source = "ssa_default"
+                activity.focus_intervention = partner_focus
+                activity.purpose_intervention = partner_focus
+                activity.save(
+                    update_fields=[
+                        "focus_intervention",
+                        "purpose_intervention",
+                        "updated_at",
+                    ]
+                )
         if catalogue_item:
             from apps.activity_catalogue.services import apply_catalogue_snapshot
 
@@ -4001,10 +4126,28 @@ def _partner_schedule_from_assignment(activity_id: str, data: dict, principal) -
                 item=catalogue_item,
                 source_ssa=pa.source_ssa,
                 recommendation_reason=pa.recommendation_reason,
-                requested_intervention=pa.focus_intervention,
+                requested_intervention=partner_focus,
                 source_activity=pa.source_activity,
                 override_reason=pa.override_reason,
             )
+        plan_alignment.stamp(
+            activity,
+            plan_alignment.assess(
+                activity_type=_sched_activity_type,
+                focus=activity.focus_intervention,
+                mapping_modes=partner_modes,
+                school=pa.school,
+                cluster_id=None if pa.school_id else pa.cluster_id,
+                focus_source=(
+                    "source_activity"
+                    if pa.source_activity_id
+                    else partner_focus_source or "catalogue"
+                ),
+                school_need_=partner_school_need,
+                cluster_need_=partner_cluster_need,
+                collects_ssa=activity.ssa_collection_expected,
+            ),
+        )
 
         pa.status = "partner_scheduled"
         pa.scheduled_date = scheduled_date.date()

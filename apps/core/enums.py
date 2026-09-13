@@ -127,6 +127,24 @@ class SsaIntervention(models.TextChoices):
 # Improving 7-7.9 / Strong 8-10. Everything that classifies an SSA score
 # (dashboards, analytics, services) must derive from here — never redefine
 # thresholds locally.
+class SsaAlignment(models.TextChoices):
+    """Whether a plan was informed by the verified SSA (owner, 2026-09-13).
+
+    Decided at planning time by apps.ssa.plan_alignment and stored on the
+    Activity, so "did this plan follow the SSA?" has a recorded answer.
+    """
+
+    PRIORITY = "priority", "Targets an SSA priority"
+    OFF_PRIORITY = (
+        "off_priority",
+        "Targets an intervention the SSA does not prioritise",
+    )
+    NO_FOCUS = "no_focus", "Names no SSA intervention"
+    NO_SSA = "no_ssa", "No verified SSA to inform it"
+    SSA_COLLECTION = "ssa_collection", "Collects the SSA"
+    NOT_APPLICABLE = "not_applicable", "Not school-improvement work"
+
+
 def ssa_score_band(score: float | None) -> tuple[str, str, str]:
     """Classify a 0-10 SSA score into (label, hex, tone)."""
     if score is None:

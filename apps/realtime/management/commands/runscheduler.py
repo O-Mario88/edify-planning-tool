@@ -77,6 +77,7 @@ class Command(BaseCommand):
             "mfa_challenge_purge": jobs.mfa_challenge_purge_job,
             "interaction_rollup": jobs.interaction_rollup_job,
             "data_quality_scan": jobs.data_quality_scan_job,
+            "ssa_recommendation_sync": jobs.ssa_recommendation_sync_job,
             "outbox_drain": jobs.outbox_drain_job,
             "autopilot_weekly_proposals": jobs.autopilot_weekly_proposals_job,
             "scheduler_watchdog": jobs.scheduler_watchdog_job,
