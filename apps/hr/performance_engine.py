@@ -1653,6 +1653,20 @@ def pip_outcome(plan, outcome, note, principal):
     valid = {"completed", "extended", "escalated"}
     if outcome not in valid:
         raise BadRequest(f"PIP outcome must be one of {sorted(valid)}.")
+    if outcome == "escalated":
+        # One way to turn a performance concern into a conduct case: this used
+        # to create its own case, confidential with a default country and no
+        # severity, beside employee_relations_service.escalate_recovery_plan,
+        # which opens the case through the case service (2026-09-13).
+        from apps.hr.employee_relations_service import escalate_recovery_plan
+
+        escalate_recovery_plan(plan.id, principal, reason=note)
+        plan.refresh_from_db()
+        plan.outcome = outcome
+        plan.closed_at = timezone.now()
+        plan.save(update_fields=["outcome", "closed_at", "updated_at"])
+        _audit_pip(plan, "hr.pip_outcome", principal, {"outcome": outcome})
+        return plan
     plan.status = outcome
     plan.outcome = outcome
     plan.outcome_note = note or ""

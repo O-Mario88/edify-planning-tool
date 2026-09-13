@@ -14049,6 +14049,71 @@
    "view": "apps.frontend.views.hr_views.recovery_plans_view"
   },
   {
+   "page_permission": "recovery_plans",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recovery-plans/<str:plan_id>",
+   "route_name": "recovery_drawer",
+   "view": "apps.frontend.views.hr_programme_views.recovery_drawer"
+  },
+  {
+   "page_permission": "recovery_plans",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recovery-plans/<str:plan_id>/activate",
+   "route_name": "recovery_activate",
+   "view": "apps.frontend.views.hr_programme_views.recovery_activate"
+  },
+  {
+   "page_permission": "recovery_plans",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recovery-plans/<str:plan_id>/outcome",
+   "route_name": "recovery_outcome",
+   "view": "apps.frontend.views.hr_programme_views.recovery_outcome"
+  },
+  {
+   "page_permission": "recovery_plans",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recovery-plans/new",
+   "route_name": "recovery_new_drawer",
+   "view": "apps.frontend.views.hr_programme_views.recovery_new_drawer"
+  },
+  {
+   "page_permission": "recovery_plans",
+   "required_permissions": [],
+   "role_exclusive": false,
+   "roles": [
+    "Program Lead",
+    "HumanResources",
+    "Admin"
+   ],
+   "route": "/recovery-plans/recommend",
+   "route_name": "recovery_recommend",
+   "view": "apps.frontend.views.hr_programme_views.recovery_recommend"
+  },
+  {
    "page_permission": "recruitment",
    "required_permissions": [],
    "role_exclusive": false,
@@ -15458,17 +15523,17 @@
  ],
  "routes_reachable_by_role": {
   "Accountant": 392,
-  "Admin": 828,
+  "Admin": 833,
   "BusinessTransformationOfficer": 220,
   "CCEO": 496,
   "CountryDirector": 632,
-  "HumanResources": 311,
+  "HumanResources": 316,
   "ImpactAssessment": 509,
   "MfiLoanOfficer": 118,
   "MfiPartnerAdmin": 121,
   "PartnerAdmin": 205,
   "PartnerFieldOfficer": 205,
-  "Program Lead": 560,
+  "Program Lead": 565,
   "ProjectCoordinator": 415,
   "RegionalProgramLead": 258,
   "RegionalVicePresident": 313
@@ -15476,8 +15541,8 @@
  "summary": {
   "page_keys_declared": 156,
   "page_keys_in_navigation": 174,
-  "routes_guarded": 925,
-  "routes_total": 1114,
+  "routes_guarded": 930,
+  "routes_total": 1119,
   "routes_unguarded": 189,
   "surfaces_no_role_can_reach": 0
  },

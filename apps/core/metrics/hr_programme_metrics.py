@@ -78,7 +78,89 @@ _DOCUMENTS = (
     "apps.documents.models.DocumentAcknowledgement",
 )
 
+_PEOPLE = ("apps.accounts.models.StaffProfile", "apps.accounts.models.StaffSupervisorAssignment")
+_REVIEWS = ("apps.hr.models.PerformanceReview",)
+_PLANS = ("apps.hr.models.PerformanceImprovementPlan",)
+
 HR_PROGRAMME_METRIC_ROWS: tuple[dict, ...] = (
+    _row(
+        "No reporting line",
+        definition=(
+            "People not exited, below the country leadership roles, with no "
+            "supervisor recorded."
+        ),
+        question="Who has no reporting line for leave, reviews and oversight?",
+        numerator="staff profiles without a StaffSupervisorAssignment as supervisee",
+        models=_PEOPLE,
+        owner_page="org_structure",
+        location="apps/frontend/views/hr_views.py:org_structure_view",
+        category="risk",
+    ),
+    _row(
+        "Open roles",
+        definition="Vacancies open for recruitment in the director's countries.",
+        question="How many roles are being recruited for?",
+        numerator="vacancies with status open",
+        models=_VACANCY,
+        owner_page="workforce_planning",
+        location="apps/frontend/views/hr_views.py:workforce_planning_view",
+        category="pending_action",
+    ),
+    _row(
+        "Leaving in 90 days",
+        definition="People whose offboarding records a last working day in the next 90 days.",
+        question="Who is about to leave?",
+        numerator="open offboarding plans with a last working day within 90 days",
+        models=_OFFBOARDING,
+        owner_page="workforce_planning",
+        location="apps/frontend/views/hr_views.py:workforce_planning_view",
+        category="risk",
+    ),
+    _row(
+        "Turnover this FY",
+        definition=(
+            "People whose last working day fell in the fiscal year so far, as a "
+            "share of the active headcount plus those leavers."
+        ),
+        question="How many of our people have left this year?",
+        numerator="offboarding plans with a last working day in the FY up to today",
+        denominator="active headcount plus the year's leavers",
+        models=_OFFBOARDING,
+        owner_page="workforce_planning",
+        location="apps/frontend/views/hr_views.py:workforce_planning_view",
+        category="risk",
+        unit="percent",
+    ),
+    _row(
+        "Awaiting calibration",
+        definition="Reviews in calibration, HR quality review or ready for SLT calibration.",
+        question="How many reviews wait on calibration?",
+        numerator="reviews with stage calibration, hr_quality_review or ready_for_slt_calibration",
+        models=_REVIEWS,
+        owner_page="performance_reviews",
+        location="apps/frontend/views/hr_views.py:performance_reviews_view",
+        category="pending_action",
+    ),
+    _row(
+        "Awaiting authorisation",
+        definition="Formal improvement plans recommended and not yet authorised by HR.",
+        question="Which formal plans wait on HR's decision?",
+        numerator="recovery plans with status draft",
+        models=_PLANS,
+        owner_page="recovery_plans",
+        location="apps/frontend/views/hr_views.py:recovery_plans_view",
+        category="pending_action",
+    ),
+    _row(
+        "Ending in 30 days",
+        definition="Live recovery plans whose review date falls in the next 30 days.",
+        question="Which plans need an outcome soon?",
+        numerator="active, progress-review or extended plans ending within 30 days",
+        models=_PLANS,
+        owner_page="recovery_plans",
+        location="apps/frontend/views/hr_views.py:recovery_plans_view",
+        category="pending_action",
+    ),
     _row(
         "Awaiting triage",
         definition=(

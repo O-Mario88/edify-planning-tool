@@ -2043,3 +2043,230 @@ def compliance_evidence_save(request):
         f"{staff.user.name}: {record.requirement.name} is {record.get_status_display().lower()}.",
     )
     return _back(request, COMPLIANCE_PATH)
+
+
+# ── Recovery plans ───────────────────────────────────────────────────────────
+RECOVERY_PATH = "/recovery-plans"
+
+
+def _visible_recovery_plan(request, plan_id):
+    from apps.hr.models import PerformanceImprovementPlan
+    from apps.hr.reach import people_reach, scope_by_staff
+
+    plan = (
+        scope_by_staff(
+            PerformanceImprovementPlan.objects.select_related(
+                "staff__user", "owner__user", "escalated_case"
+            ),
+            people_reach(request.user),
+        )
+        .filter(id=plan_id)
+        .first()
+    )
+    if plan is None:
+        raise Http404("Recovery plan not found.")
+    return plan
+
+
+@require_page_permission("recovery_plans")
+@require_http_methods(["GET"])
+def recovery_new_drawer(request):
+    from apps.hr.models import RecoveryCause
+
+    return _drawer(
+        request,
+        title="Recommend a formal plan",
+        subtitle="A draft improvement plan, authorised separately by HR",
+        action="/recovery-plans/recommend",
+        submit="Recommend",
+        note=(
+            "A score never starts a formal plan on its own. Record the evidence "
+            "and the cause; HR authorises it before anything is shared."
+        ),
+        fields=[
+            _field(
+                "staff_id",
+                "Employee",
+                type="select",
+                required=True,
+                options=_people_options(request),
+                blank="Choose the employee",
+            ),
+            _field(
+                "cause",
+                "Cause",
+                type="select",
+                required=True,
+                options=RecoveryCause.choices,
+                blank="Choose the cause",
+            ),
+            _field(
+                "reason",
+                "Evidence and reason",
+                type="textarea",
+                required=True,
+                rows=4,
+                placeholder="What has been observed, over what period, and the support already given",
+            ),
+            _field("start_date", "Start date", type="date"),
+        ],
+    )
+
+
+@require_page_permission("recovery_plans")
+@require_POST
+def recovery_recommend(request):
+    from apps.hr.performance_engine import recommend_pip
+
+    data = request.POST
+    try:
+        staff = _staff_in_reach(request, data.get("staff_id") or "")
+        plan = recommend_pip(
+            staff,
+            data.get("reason"),
+            request.user,
+            cause=(data.get("cause") or "other"),
+            start=_date(data.get("start_date")),
+        )
+    except Http404:
+        messages.error(request, "Choose an employee you oversee.")
+        return _back(request, RECOVERY_PATH)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, RECOVERY_PATH)
+    messages.success(
+        request,
+        f"Formal plan recommended for {plan.staff.user.name}. It waits for HR "
+        "authorisation.",
+    )
+    return _back(request, RECOVERY_PATH)
+
+
+@require_page_permission("recovery_plans")
+@require_http_methods(["GET"])
+def recovery_drawer(request, plan_id):
+    from apps.hr.models import RecoveryPlanType, RecoveryStatus
+
+    plan = _visible_recovery_plan(request, plan_id)
+    milestones = list(plan.milestones.all())
+    facts = [
+        {"label": "Cause", "value": plan.get_cause_display()},
+        {"label": "Evidence", "value": plan.cause_evidence or ""},
+        {"label": "Action plan", "value": plan.action_plan or ""},
+        {"label": "Support offered", "value": plan.support_offered or ""},
+        {
+            "label": "Review window",
+            "value": f"{plan.start_date:%-d %b %Y} to {plan.end_date:%-d %b %Y}",
+        },
+        {
+            "label": "Milestones",
+            "value": "; ".join(
+                f"{m.description} ({m.due_date:%-d %b}{', done' if m.is_complete else ''})"
+                for m in milestones
+                if m.due_date
+            ),
+        },
+        {"label": "Check-ins", "value": str(plan.check_ins.count())},
+    ]
+    if plan.escalated_case_id:
+        facts.append(
+            {"label": "Conduct case", "value": plan.escalated_case.get_status_display()}
+        )
+    subtitle = f"{plan.get_plan_type_display()} · {plan.get_status_display()}"
+    if plan.status == RecoveryStatus.DRAFT and plan.plan_type == RecoveryPlanType.FORMAL:
+        return _drawer(
+            request,
+            title=plan.staff.user.name,
+            subtitle=subtitle,
+            action=f"/recovery-plans/{plan.id}/activate",
+            submit="Authorise the plan",
+            facts=facts,
+            note=(
+                "Authorising starts a 90-day plan with 30, 60 and 90-day "
+                "reviews."
+            ),
+            fields=[
+                _field(
+                    "action_plan",
+                    "Agreed action plan",
+                    type="textarea",
+                    required=True,
+                    rows=4,
+                    value="" if plan.action_plan.startswith("(") else plan.action_plan,
+                )
+            ],
+        )
+    if plan.status in (
+        RecoveryStatus.ACTIVE,
+        RecoveryStatus.PROGRESS_REVIEW,
+        RecoveryStatus.EXTENDED,
+    ):
+        options = [("completed", "Successfully completed"), ("extended", "Extend")]
+        if plan.plan_type == RecoveryPlanType.FORMAL and not plan.escalated_case_id:
+            options.append(("escalated", "Escalate to a conduct case"))
+        return _drawer(
+            request,
+            title=plan.staff.user.name,
+            subtitle=subtitle,
+            action=f"/recovery-plans/{plan.id}/outcome",
+            submit="Record the outcome",
+            facts=facts,
+            fields=[
+                _field(
+                    "outcome",
+                    "Outcome",
+                    type="select",
+                    required=True,
+                    options=options,
+                    blank="Choose the outcome",
+                ),
+                _field(
+                    "note",
+                    "Decision note",
+                    type="textarea",
+                    required=True,
+                    rows=3,
+                    placeholder="What the review found and what happens next",
+                ),
+            ],
+        )
+    return _drawer(request, title=plan.staff.user.name, subtitle=subtitle, facts=facts)
+
+
+@require_page_permission("recovery_plans")
+@require_POST
+def recovery_activate(request, plan_id):
+    from apps.hr.performance_engine import activate_pip
+
+    plan = _visible_recovery_plan(request, plan_id)
+    action_plan = (request.POST.get("action_plan") or "").strip()
+    if not action_plan:
+        messages.error(request, "Record the agreed action plan before authorising.")
+        return _back(request, RECOVERY_PATH)
+    try:
+        activate_pip(plan, request.user, action_plan=action_plan)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, RECOVERY_PATH)
+    messages.success(request, f"Improvement plan authorised for {plan.staff.user.name}.")
+    return _back(request, RECOVERY_PATH)
+
+
+@require_page_permission("recovery_plans")
+@require_POST
+def recovery_outcome(request, plan_id):
+    from django.db import transaction
+
+    from apps.hr.performance_engine import pip_outcome
+
+    plan = _visible_recovery_plan(request, plan_id)
+    outcome = (request.POST.get("outcome") or "").strip()
+    note = (request.POST.get("note") or "").strip()
+    if not note:
+        messages.error(request, "Record a decision note with the outcome.")
+        return _back(request, RECOVERY_PATH)
+    try:
+        with transaction.atomic():
+            pip_outcome(plan, outcome, note, request.user)
+    except SERVICE_ERRORS as exc:
+        return _refused(request, exc, RECOVERY_PATH)
+    messages.success(request, f"Outcome recorded for {plan.staff.user.name}.")
+    return _back(request, RECOVERY_PATH)

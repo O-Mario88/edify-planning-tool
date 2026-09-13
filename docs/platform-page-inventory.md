@@ -4,8 +4,8 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 
 ## Summary
 
-- Routed product surfaces: **646**
-- All registered routes: **1114**
+- Routed product surfaces: **651**
+- All registered routes: **1119**
 - API routes: **359**
 - Roles: **15**
 - Permission keys: **112**
@@ -13,9 +13,9 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 - Activity states: **24**
 - Shared component templates: **413**
 - Full pages: **241**
-- Partials and drawers: **198**
-- Permission-gated surfaces: **631**
-- Referenced by automated tests: **591**
+- Partials and drawers: **200**
+- Permission-gated surfaces: **636**
+- Referenced by automated tests: **596**
 - Findings: critical **0**, high **0**, medium **0**, low **0**
 
 > Automated scores are provisional evidence derived from explicit findings and state coverage. A page is not complete until manual visual, responsive and accessibility scores are recorded.
@@ -577,6 +577,11 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-AFA78C6AFC | /recognition/award | Recognition Award | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-A5D728E4C3 | /recognition/new | Recognition New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-D604B8E968 | /recovery-plans | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-6B94343F03 | /recovery-plans/<str:plan_id> | Recovery Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-F7493D9C99 | /recovery-plans/<str:plan_id>/activate | Recovery Activate | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-4C2F727116 | /recovery-plans/<str:plan_id>/outcome | Recovery Outcome | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
+| UI-PAGE-BC7352DF7A | /recovery-plans/new | Recovery New Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-D425322BE8 | /recovery-plans/recommend | Recovery Recommend | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-F9822D4383 | /recruitment | · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-2DAE9D7F72 | /recruitment/<str:vacancy_id> | Vacancy Drawer | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-66C48F3393 | /recruitment/<str:vacancy_id>/decide | Vacancy Decide | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
@@ -626,7 +631,7 @@ Generated from the live Django URL resolver, role permissions, navigation, view 
 | UI-PAGE-3E5F73B47D | /ssa/upload/<str:batch_id>/result/ | SSA Import Result | planning-or-creation | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-3DD88F7C5C | /ssa/upload/template | Ssa Template Download | report | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |
 | UI-PAGE-8387F7ABC9 | /ssa/verification/ | IA SSA Verification Queue | approval-or-verification | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
-| UI-PAGE-3B44A1E272 | /staff | Human Resource Dashboard - Edify Command Center | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
+| UI-PAGE-3B44A1E272 | /staff | People Directory · Edify | operational-queue | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-7F963ACD27 | /staff/<str:user_id> | Staff Profile | record-detail | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-37C6B437D7 | /strategic-priorities | Priority Setting Dashboard · Edify | interaction-fragment | pass automated contract / pass automated contract | pass automated contract / pass automated contract | 0 | referenced by automated test |
 | UI-PAGE-8EA7B066B3 | /strategic-priorities/action | Strategic Priority Action | interaction-fragment | not applicable nonvisual / not applicable nonvisual | not applicable nonvisual / not applicable nonvisual | 0 | referenced by automated test |

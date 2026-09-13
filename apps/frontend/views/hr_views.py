@@ -164,32 +164,69 @@ def _render_workspace(
 
 @require_page_permission("org_structure")
 def org_structure_view(request):
+    """Who reports to whom, by department and country.
+
+    The page was titled for reporting lines and showed none: it listed name,
+    role, department, country and lifecycle (HR audit, 2026-09-13). It now
+    names each person's supervisor and direct reports from
+    StaffSupervisorAssignment, and counts the people with no recorded line, the
+    data gap that breaks leave approval, reviews and oversight downstream.
+    """
+    from apps.accounts.models import StaffSupervisorAssignment
+
     profiles = _search_profiles(
         _profile_scope(request), (request.GET.get("q") or "").strip()
-    )
-    rows = [
-        {
-            "cells": [
-                _cell("Team member", profile.user.name, primary=True),
-                _cell("Role", profile.title or profile.user.active_role),
-                _cell("Department", profile.department),
-                _cell("Country", profile.country),
-                _cell("Lifecycle", profile.get_onboarding_state_display(), status=True),
-            ]
-        }
-        for profile in profiles.order_by("department", "user__name")
-    ]
+    ).exclude(onboarding_state="exited")
+    profile_ids = profiles.values("id")
+    supervisors: dict[str, list[str]] = {}
+    reports: dict[str, int] = {}
+    for supervisee_id, supervisor_name, supervisor_id in (
+        StaffSupervisorAssignment.objects.filter(supervisee_id__in=profile_ids)
+        .select_related("supervisor__user")
+        .values_list("supervisee_id", "supervisor__user__name", "supervisor_id")
+    ):
+        supervisors.setdefault(supervisee_id, []).append(supervisor_name)
+    for supervisor_id, count in (
+        StaffSupervisorAssignment.objects.filter(supervisor_id__in=profile_ids)
+        .values_list("supervisor_id")
+        .annotate(n=Count("id"))
+    ):
+        reports[supervisor_id] = count
+    # The top of each country's structure reports outside the platform.
+    top_roles = {"CountryDirector", "RegionalVicePresident", "Admin"}
+    rows = []
+    unlined = 0
+    for profile in profiles.select_related("user").order_by("department", "user__name"):
+        lines = supervisors.get(profile.id, [])
+        if not lines and profile.user.active_role not in top_roles:
+            unlined += 1
+        rows.append(
+            {
+                "cells": [
+                    _cell("Team member", profile.user.name, primary=True),
+                    _cell("Role", profile.title or profile.user.active_role),
+                    _cell("Reports to", ", ".join(sorted(lines)) or "No line recorded"),
+                    _cell("Direct reports", reports.get(profile.id, 0)),
+                    _cell("Department", profile.department),
+                    _cell("Country", profile.country),
+                    _cell(
+                        "Lifecycle",
+                        profile.get_onboarding_state_display(),
+                        status=True,
+                    ),
+                ]
+            }
+        )
     return _render_workspace(
         request,
         title="Organization Structure",
-        description="A live, role-scoped directory of reporting capacity, departments, countries, and staff lifecycle state.",
+        eyebrow="People and staffing",
+        description=(
+            "Reporting lines across the countries you oversee: who each person "
+            "reports to, who reports to them, and where a line is missing."
+        ),
         metrics=[
-            _metric(
-                "People in scope",
-                profiles.count(),
-                "active and onboarding profiles",
-                "info",
-            ),
+            _metric("People in scope", profiles.count(), "not exited", "info"),
             _metric(
                 "Active",
                 profiles.filter(onboarding_state="active").count(),
@@ -206,73 +243,123 @@ def org_structure_view(request):
                 "represented in this scope",
             ),
             _metric(
-                "Countries",
-                profiles.values("country").distinct().count(),
-                "operating footprint",
+                "No reporting line",
+                unlined,
+                "leave, reviews and oversight need one",
+                "warning" if unlined else "success",
             ),
         ],
         rows=rows,
         primary_action={"label": "Open People Directory", "href": "/staff"},
+        empty_title="No people in this scope",
     )
 
 
 @require_page_permission("workforce_planning")
 def workforce_planning_view(request):
+    """Staffing by country and department: who is here, who is leaving, and
+    the roles open or awaiting approval to replace or grow.
+
+    "Vacancies" counted "Approved", "Open" and "Screening" across the whole
+    organisation, strings a vacancy never stores, so it read 0 (HR audit,
+    2026-09-13). Everything is now bounded by the director's reach.
+    """
+    from datetime import timedelta
+
+    from apps.core.fy import get_fy_date_range, get_operational_fy
+    from apps.hr.models import OffboardingPlan, VacancyStatus
+    from apps.hr.reach import people_reach, scope_by_country
+
     profiles = _search_profiles(
         _profile_scope(request), (request.GET.get("q") or "").strip()
     )
-    grouped = (
-        profiles.values("department", "country")
+    today = date.today()
+    fy = get_operational_fy()
+    fy_start = get_fy_date_range(fy)[0].date()
+    horizon = today + timedelta(days=90)
+    grouped = {
+        (item["country"], item["department"] or ""): item
+        for item in profiles.exclude(onboarding_state="exited")
+        .values("department", "country")
         .annotate(
-            headcount=Count("id"),
-            active=Count("id", filter=Q(onboarding_state="active")),
+            headcount=Count("id", filter=Q(user__is_active=True)),
             pending=Count("id", filter=Q(onboarding_state="pending")),
         )
-        .order_by("country", "department")
-    )
+    }
+    leaving: dict[tuple, int] = {}
+    left: dict[tuple, int] = {}
+    for country, department, last_day, status in OffboardingPlan.objects.filter(
+        staff_id__in=profiles.values("id"), last_working_day__isnull=False
+    ).values_list("staff__country", "staff__department", "last_working_day", "status"):
+        key = (country, department or "")
+        if today <= last_day <= horizon and status != "Closed":
+            leaving[key] = leaving.get(key, 0) + 1
+        if fy_start <= last_day <= today:
+            left[key] = left.get(key, 0) + 1
+    vacancies = scope_by_country(Vacancy.objects.all(), people_reach(request.user))
+    open_roles: dict[tuple, int] = {}
+    awaiting: dict[tuple, int] = {}
+    for country, department, status in vacancies.values_list(
+        "country", "department", "status"
+    ):
+        key = (country, department or "")
+        status = (status or "").lower()
+        if status == VacancyStatus.OPEN:
+            open_roles[key] = open_roles.get(key, 0) + 1
+        elif status == VacancyStatus.PENDING_APPROVAL:
+            awaiting[key] = awaiting.get(key, 0) + 1
+    keys = sorted(set(grouped) | set(open_roles) | set(awaiting) | set(leaving))
     rows = [
         {
             "cells": [
-                _cell("Department", item["department"] or "Unassigned", primary=True),
-                _cell("Country", item["country"]),
-                _cell("Headcount", item["headcount"]),
-                _cell("Active", item["active"]),
-                _cell(
-                    "Pending activation", item["pending"], status=item["pending"] > 0
-                ),
+                _cell("Department", key[1] or "Unassigned", primary=True),
+                _cell("Country", key[0]),
+                _cell("Headcount", grouped.get(key, {}).get("headcount", 0)),
+                _cell("Pending activation", grouped.get(key, {}).get("pending", 0)),
+                _cell("Left this FY", left.get(key, 0)),
+                _cell("Leaving in 90 days", leaving.get(key, 0)),
+                _cell("Open roles", open_roles.get(key, 0)),
+                _cell("Awaiting approval", awaiting.get(key, 0)),
             ]
         }
-        for item in grouped
+        for key in keys
     ]
+    headcount = sum(item["headcount"] for item in grouped.values())
+    leavers = sum(left.values())
+    population = headcount + leavers
     return _render_workspace(
         request,
-        title="Workforce Planning & Capacity",
-        description="A truthful headcount and activation view derived from the current people directory—without forecast or budget values that have not been configured.",
+        title="Workforce Planning",
+        eyebrow="People and staffing",
+        description=(
+            "Staffing by country and department: headcount, who has left and "
+            "who is leaving, and the roles open or awaiting approval to replace "
+            "or grow."
+        ),
         metrics=[
-            _metric("Headcount", profiles.count(), "people in your access scope"),
+            _metric("Headcount", headcount, "active people in your countries"),
             _metric(
-                "Active",
-                profiles.filter(onboarding_state="active").count(),
-                "available workforce",
-                "success",
+                "Open roles",
+                sum(open_roles.values()),
+                f"{sum(awaiting.values())} awaiting approval",
+                "info",
             ),
             _metric(
-                "Pending",
-                profiles.filter(onboarding_state="pending").count(),
-                "awaiting activation",
-                "warning",
+                "Leaving in 90 days",
+                sum(leaving.values()),
+                "last working day ahead",
+                "warning" if leaving else "success",
             ),
             _metric(
-                "Vacancies",
-                Vacancy.objects.filter(
-                    status__in=["Approved", "Open", "Screening"]
-                ).count(),
-                "approved or recruiting",
+                "Turnover this FY",
+                f"{round(leavers * 100 / population, 1):g}%" if population else "—",
+                f"{leavers} left since {fy_start:%b %Y}",
                 "info",
             ),
         ],
         rows=rows,
-        primary_action={"label": "Review Recruitment", "href": "/recruitment"},
+        header_actions=[{"label": "Request a vacancy", "drawer": "/recruitment/new"}],
+        primary_action={"label": "Open Recruitment", "href": "/recruitment"},
         empty_title="No workforce profiles in this scope",
     )
 
@@ -905,62 +992,108 @@ def succession_planning_view(request):
 
 @require_page_permission("performance_reviews")
 def performance_reviews_view(request):
+    """This fiscal year's reviews by stage, with final ratings once calibrated.
+
+    The register read the legacy ``status`` strings ("Completed", "Manager
+    Review Pending") and a ``score`` nothing calibrates, while ``stage`` is the
+    authority, so its tiles described records that no longer move that way
+    (HR audit, 2026-09-13).
+    """
+    from apps.core.fy import get_operational_fy
+    from apps.hr.models import PerformanceRating, ReviewStage
+
+    fy = (request.GET.get("fy") or "").strip() or get_operational_fy()
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
-    reviews = PerformanceReview.objects.filter(staff_id__in=visible_ids).select_related(
-        "staff__user"
-    )
+    reviews = PerformanceReview.objects.filter(
+        staff_id__in=visible_ids
+    ).filter(Q(fy=fy) | Q(fy__isnull=True)).select_related("staff__user", "manager__user")
     if query:
         reviews = reviews.filter(
             Q(staff__user__name__icontains=query)
             | Q(period__icontains=query)
             | Q(review_type__icontains=query)
-            | Q(status__icontains=query)
+            | Q(stage__icontains=query)
         )
-    rows = [
-        {
-            "cells": [
-                _cell("Team member", review.staff.user.name, primary=True),
-                _cell("Period", review.period),
-                _cell("Review type", review.review_type),
-                _cell("Due", review.due_date),
-                _cell("Score", f"{review.score:.0f}%"),
-                _cell("Status", review.status, status=True),
-            ]
-        }
-        for review in reviews.order_by("due_date", "staff__user__name")
-    ]
+    done = (
+        ReviewStage.CLOSED,
+        ReviewStage.EMPLOYEE_ACKNOWLEDGED,
+        ReviewStage.SIGNED_AND_ARCHIVED,
+    )
+    calibrating = (
+        ReviewStage.CALIBRATION,
+        ReviewStage.HR_QUALITY_REVIEW,
+        ReviewStage.READY_FOR_SLT_CALIBRATION,
+    )
+    ratings = dict(PerformanceRating.choices)
+    today = date.today()
+    rows = []
+    for review in reviews.order_by("due_date", "staff__user__name"):
+        overdue = review.stage not in done and review.due_date and review.due_date < today
+        rows.append(
+            {
+                "cells": [
+                    _cell("Team member", review.staff.user.name, primary=True),
+                    _cell(
+                        "Review",
+                        f"{review.get_review_type_display()} · {review.period}",
+                    ),
+                    _cell(
+                        "Manager",
+                        review.manager.user.name
+                        if review.manager_id and review.manager.user_id
+                        else "Not recorded",
+                    ),
+                    _cell("Due", review.due_date),
+                    _cell(
+                        "Manager rating",
+                        ratings.get(review.manager_rating or "", review.manager_rating),
+                    ),
+                    _cell(
+                        "Final rating", ratings.get(review.rating or "", review.rating)
+                    ),
+                    _cell(
+                        "Stage",
+                        "Overdue" if overdue else review.get_stage_display(),
+                        status=True,
+                    ),
+                ]
+            }
+        )
     return _render_workspace(
         request,
         title="Performance Reviews",
-        description="A period-aware review register connected to staff identity, due dates, calibrated scores, and review state.",
+        eyebrow="Performance and talent",
+        description=(
+            f"FY {fy} reviews for the people you oversee: where each one is in "
+            "the cycle, the manager's rating and the final rating once "
+            "calibrated."
+        ),
         metrics=[
-            _metric("Reviews", reviews.count(), "records in access scope"),
+            _metric("Reviews", reviews.count(), f"FY {fy}"),
             _metric(
                 "Completed",
-                reviews.filter(status__in=["Completed", "Closed"]).count(),
-                "finished reviews",
+                reviews.filter(stage__in=done).count(),
+                "acknowledged or archived",
                 "success",
             ),
             _metric(
-                "Manager pending",
-                reviews.filter(status="Manager Review Pending").count(),
-                "awaiting supervisor",
-                "warning",
+                "Overdue",
+                reviews.exclude(stage__in=done).filter(due_date__lt=today).count(),
+                "past due and not complete",
+                "danger",
             ),
             _metric(
-                "Average score",
-                f"{(sum(r.score for r in reviews) / reviews.count()):.0f}%"
-                if reviews.count()
-                else "0%",
-                "across visible reviews",
-                "info",
+                "Awaiting calibration",
+                reviews.filter(stage__in=calibrating).count(),
+                "HR or SLT to calibrate",
+                "warning",
             ),
         ],
         rows=rows,
         primary_action={
-            "label": "Open Team Oversight",
-            "href": "/team-planning-oversight/?view=targets",
+            "label": "Open Performance Cycle",
+            "href": f"/hr/performance-cycle?fy={fy}",
         },
         empty_title="No performance reviews in this scope",
     )
@@ -968,6 +1101,17 @@ def performance_reviews_view(request):
 
 @require_page_permission("recovery_plans")
 def recovery_plans_view(request):
+    """Performance recovery plans: authorise, follow and close them.
+
+    The tiles counted "Active", "Progress Review", "Escalated" and "Successfully
+    Completed", but a plan stores lowercase codes, so every tile read 0; rows
+    printed raw codes; and no screen could authorise a formal plan or record
+    its outcome although the services could (HR audit, 2026-09-13).
+    """
+    from datetime import timedelta
+
+    from apps.hr.models import RecoveryStatus
+
     visible_ids = _profile_scope(request).values("id")
     query = (request.GET.get("q") or "").strip()
     plans = PerformanceImprovementPlan.objects.filter(
@@ -979,46 +1123,76 @@ def recovery_plans_view(request):
             | Q(cause__icontains=query)
             | Q(status__icontains=query)
         )
-    rows = [
-        {
-            "cells": [
-                _cell("Team member", plan.staff.user.name, primary=True),
-                _cell("Cause", plan.cause),
-                _cell("Start", plan.start_date),
-                _cell("Review by", plan.end_date),
-                _cell("Status", plan.status, status=True),
-            ]
-        }
-        for plan in plans.order_by("end_date")
-    ]
+    today = date.today()
+    live = (
+        RecoveryStatus.ACTIVE,
+        RecoveryStatus.PROGRESS_REVIEW,
+        RecoveryStatus.EXTENDED,
+    )
+    rows = []
+    for plan in plans.order_by("status", "end_date"):
+        past_end = plan.status in live and plan.end_date and plan.end_date < today
+        rows.append(
+            {
+                "cells": [
+                    _cell("Team member", plan.staff.user.name, primary=True),
+                    _cell("Plan", plan.get_plan_type_display()),
+                    _cell("Cause", plan.get_cause_display()),
+                    _cell("Start", plan.start_date),
+                    _cell("Review by", plan.end_date),
+                    _cell(
+                        "Status",
+                        "Past review date" if past_end else plan.get_status_display(),
+                        status=True,
+                    ),
+                ],
+                "actions": [{"label": "Open", "drawer": f"/recovery-plans/{plan.id}"}],
+            }
+        )
     return _render_workspace(
         request,
         title="Performance Recovery Plans",
-        description="Active and completed improvement plans with explicit causes, time windows, and escalation state.",
+        eyebrow="Performance and talent",
+        description=(
+            "Informal recovery plans and formal improvement plans: the cause, "
+            "the support offered, the review date, and the decision at the end."
+        ),
         metrics=[
-            _metric("Plans", plans.count(), "visible recovery records"),
+            _metric(
+                "Awaiting authorisation",
+                plans.filter(status=RecoveryStatus.DRAFT).count(),
+                "formal plans to authorise",
+                "warning",
+            ),
             _metric(
                 "Active",
-                plans.filter(status__in=["Active", "Progress Review"]).count(),
-                "under active review",
+                plans.filter(status__in=live).count(),
+                "under recovery",
+                "info",
+            ),
+            _metric(
+                "Ending in 30 days",
+                plans.filter(
+                    status__in=live,
+                    end_date__gte=today,
+                    end_date__lte=today + timedelta(days=30),
+                ).count(),
+                "outcome to decide",
                 "warning",
             ),
             _metric(
                 "Escalated",
-                plans.filter(status="Escalated").count(),
-                "requiring leadership",
+                plans.filter(status=RecoveryStatus.ESCALATED).count(),
+                "became conduct cases",
                 "danger",
-            ),
-            _metric(
-                "Completed",
-                plans.filter(status__in=["Successfully Completed", "Closed"]).count(),
-                "closed outcomes",
-                "success",
             ),
         ],
         rows=rows,
+        header_actions=[
+            {"label": "Recommend a formal plan", "drawer": "/recovery-plans/new"}
+        ],
         primary_action={
-            "label": "Review Performance Cycle",
+            "label": "Open Performance Cycle",
             "href": "/hr/performance-cycle",
         },
         empty_title="No recovery plans in this scope",

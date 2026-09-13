@@ -64,7 +64,8 @@ def _directory_scope(user, qs):
 
 @require_page_permission("staff_directory")
 def staff_directory_view(request):
-    """Staff directory — all users in the system with role, district, and school count."""
+    """People Directory: the people in the viewer's reach, with role, place,
+    reporting line, onboarding state and field workload."""
     from django.core.paginator import Paginator
     from apps.targets.my_targets import _user_ids
 
@@ -114,17 +115,21 @@ def staff_directory_view(request):
 
     staff_list = []
 
-    # KPIs calculation across all active staff (not filtered by tab)
-    all_staff_qs = User.objects.filter(
-        status="active", deleted_at__isnull=True
-    ).prefetch_related("staff_profile")
+    # KPIs across the directory's own scope (not filtered by tab). They counted
+    # every active user, pending profile and overdue activity in the
+    # organisation, whatever country the viewer reads (2026-09-13).
+    all_staff_qs = _directory_scope(
+        request.user,
+        User.objects.filter(status="active", deleted_at__isnull=True),
+    )
     total_active = all_staff_qs.count()
-    pending_onboarding = 0
     high_risk_count = 0
 
     # StaffOnboardingState choices are only pending/active/suspended — "pending"
     # is the real state that represents "not yet onboarded".
-    pending_onboarding = StaffProfile.objects.filter(onboarding_state="pending").count()
+    pending_onboarding = StaffProfile.objects.filter(
+        onboarding_state="pending", user__in=all_staff_qs
+    ).count()
 
     # Average coverage gap: % of schools org-wide without a completed SSA for
     # the current FY (School.current_fy_ssa_status == "done" is the same
@@ -141,11 +146,18 @@ def staff_directory_view(request):
 
     # High risk (overdue > 3) - let's count for all staff
     today = date.today()
+    scoped_owner_ids = [
+        owner_id
+        for pair in all_staff_qs.values_list("id", "staff_profile__id")
+        for owner_id in pair
+        if owner_id
+    ]
     overdue_counts = (
         Activity.objects.filter(
             planned_date__lt=today,
             status__in=["scheduled", "in_progress", "completion_started"],
             deleted_at__isnull=True,
+            responsible_staff_id__in=scoped_owner_ids,
         )
         .values("responsible_staff_id")
         .annotate(overdue_count=Count("id"))
@@ -208,10 +220,47 @@ def staff_directory_view(request):
             if owner:
                 completed_visits_by_user[owner.id] += row["c"]
 
+    from apps.accounts.hr_dashboard_service import ROLE_LABELS
+    from apps.accounts.models import StaffSupervisorAssignment
+
+    # Reporting lines for the page in one query.
+    reports_to: dict[str, list[str]] = {}
+    for supervisee_id, supervisor_name in StaffSupervisorAssignment.objects.filter(
+        supervisee__user__in=page_staff
+    ).values_list("supervisee_id", "supervisor__user__name"):
+        reports_to.setdefault(supervisee_id, []).append(supervisor_name)
+    # ROLE_LABELS names roles in the plural for headcounts; one person is one.
+    singular = {
+        "CCEO": "CCEO",
+        "Program Lead": "Programme Lead",
+        "RegionalProgramLead": "Regional Programme Lead",
+        "CountryDirector": "Country Director",
+        "RegionalVicePresident": "Regional Vice President",
+        "ImpactAssessment": "Impact Assessment",
+        "Accountant": "Accountant",
+        "HumanResources": "Regional HR Director",
+        "ProjectCoordinator": "Project Coordinator",
+        "PartnerFieldOfficer": "Partner Field Officer",
+        "PartnerAdmin": "Partner Admin",
+        "BusinessTransformationOfficer": "Business Transformation Officer",
+        "MfiPartnerAdmin": "MFI Partner Admin",
+        "MfiLoanOfficer": "MFI Loan Officer",
+        "Admin": "Administrator",
+    }
+
     for u in page_staff:
         profile = getattr(u, "staff_profile", None)
         school_count = len(school_ids_by_user.get(u.id, ()))
         completed_visits = completed_visits_by_user.get(u.id, 0)
+        where = " · ".join(
+            part
+            for part in (
+                district_names.get(profile.primary_district_id) if profile else None,
+                getattr(profile, "country", "") if profile else "",
+                getattr(profile, "department", "") if profile else "",
+            )
+            if part
+        )
 
         staff_list.append(
             {
@@ -220,9 +269,11 @@ def staff_directory_view(request):
                 "email": u.email,
                 "roles": u.roles or [],
                 "active_role": u.active_role,
-                "district": district_names.get(profile.primary_district_id, "Unknown")
-                if profile
-                else "Unknown",
+                "role_label": singular.get(
+                    u.active_role, ROLE_LABELS.get(u.active_role, u.active_role)
+                ),
+                "district": where,
+                "reports_to": ", ".join(sorted(reports_to.get(getattr(profile, "id", None), []))),
                 "status": u.status,
                 "profile_id": profile.id if profile else None,
                 "onboarding_state": getattr(profile, "onboarding_state", "unknown")
@@ -255,6 +306,8 @@ def staff_directory_view(request):
         "kpis": kpis,
         "page_obj": page_obj,
         "pages_list": pages_list,
+        # The template printed every email whatever this said.
+        "show_email": show_email,
     }
     return render(request, "pages/staff/index.html", context)
 

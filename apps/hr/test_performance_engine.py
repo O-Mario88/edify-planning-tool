@@ -1081,6 +1081,9 @@ class PipWorkflowTests(EngineFixture):
             recommend_pip,
         )
 
+        # Escalation opens the case through the case service, which holds the
+        # director to the countries they oversee (2026-09-13).
+        StaffProfile.objects.create(user=self.hr, country="Uganda")
         plan = recommend_pip(self.sp, "Behind", self.hr)
         activate_pip(plan, self.hr)
         pip_outcome(plan, "escalated", "No improvement after 90 days", self.hr)

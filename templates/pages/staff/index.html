@@ -1,7 +1,7 @@
 {% extends "layouts/shell.html" %}
 {% load kpi_metrics %}
 
-{% block title %}Human Resource Dashboard - Edify Command Center{% endblock %}
+{% block title %}People Directory · Edify{% endblock %}
 
 {% block shell_content %}
 <div class="px-4 sm:px-6 py-5 space-y-4 max-w-[1500px] mx-auto" data-mobile-family="directory">
@@ -9,8 +9,8 @@
 <!-- Page Header -->
 <div class="edify-page-header">
 <div class="edify-page-header__lead">
-<h1 class="edify-page-title edify-page-header__title">Human Resource Dashboard</h1>
-<p class="edify-page-header__description">Manage personnel, onboarding status, and performance metrics across the organization.</p>
+<h1 class="edify-page-title edify-page-header__title">People Directory</h1>
+<p class="edify-page-header__description">The people in your scope: role, place, reporting line, onboarding status and field workload.</p>
 </div>
 
 <div class="edify-page-header__controls">
@@ -21,9 +21,10 @@ New Staff Member
 </div>
 </div>
 
+{% legacy_kpi_item "People" kpis.total_active helper="active in your scope" tone="neutral" icon="users" as people_kpi %}
 {% legacy_kpi_item "Pending onboarding" kpis.pending_onboarding helper="Needs HR completion" tone="warning" icon="clock" as onboarding_kpi %}
-{% legacy_kpi_item "High-risk staff" kpis.high_risk helper="Needs intervention" tone="danger" icon="warning" as risk_kpi %}
-{% collect_kpi_items onboarding_kpi risk_kpi as workforce_kpis %}
+{% legacy_kpi_item "Overdue field work" kpis.high_risk helper="people with more than 3 overdue activities" tone="danger" icon="warning" as risk_kpi %}
+{% collect_kpi_items people_kpi onboarding_kpi risk_kpi as workforce_kpis %}
 {% include "components/context_metrics.html" with items=workforce_kpis variant="executive" density="compact" title="Workforce attention" %}
 
 <!-- Main Content Card -->
@@ -58,7 +59,7 @@ Admin & Support
 <tr class="border-b border-[var(--edify-border)] edify-text-caption font-bold text-slate-400 uppercase tracking-wider bg-slate-50/30">
 <th class="px-6 py-4 w-12 text-center"><input type="checkbox" aria-label="Select all staff" class="rounded-control text-[var(--edify-accent)] focus:ring-[var(--edify-accent)] border-slate-300"></th>
 <th class="px-6 py-4">Staff Member</th>
-<th class="px-6 py-4">Role & District</th>
+<th class="px-6 py-4">Role and place</th>
 <th class="px-6 py-4 text-center">Assigned Schools</th>
 <th class="px-6 py-4 text-center">Completed Visits</th>
 <th class="px-6 py-4">Onboarding Status</th>
@@ -75,13 +76,13 @@ Admin & Support
 <div class="h-9 w-9 rounded-pill edify-primary-soft edify-primary-text font-bold text-[14px] grid place-items-center shrink-0">{{ s.initials }}</div>
 <div>
 <p class="font-bold text-[var(--edify-accent)] text-[14px] leading-tight">{{ s.name }}</p>
-<p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ s.email }}</p>
+{% if show_email %}<p class="edify-text-caption text-slate-500 font-semibold mt-0.5">{{ s.email }}</p>{% endif %}
 </div>
 </div>
 </td>
 <td class="px-6 py-4">
-<p class="font-bold text-slate-800">{{ s.active_role }}</p>
-<p class="text-[12px] text-slate-500 font-semibold">{{ s.district|default:"No District" }}</p>
+<p class="font-bold text-slate-800">{{ s.role_label }}</p>
+<p class="text-[12px] text-slate-500 font-semibold">{{ s.district|default:"No place recorded" }}{% if s.reports_to %} · reports to {{ s.reports_to }}{% endif %}</p>
 </td>
 <td class="px-6 py-4 text-center font-semibold">{{ s.school_count }}</td>
 <td class="px-6 py-4 text-center font-semibold text-emerald-600">{{ s.completed_visits }}</td>

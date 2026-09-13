@@ -2290,6 +2290,31 @@ urlpatterns = [
         hr_views.performance_reviews_view,
         name="performance_reviews",
     ),
+    path(
+        "recovery-plans/new",
+        hr_programme_views.recovery_new_drawer,
+        name="recovery_new_drawer",
+    ),
+    path(
+        "recovery-plans/recommend",
+        hr_programme_views.recovery_recommend,
+        name="recovery_recommend",
+    ),
+    path(
+        "recovery-plans/<str:plan_id>/activate",
+        hr_programme_views.recovery_activate,
+        name="recovery_activate",
+    ),
+    path(
+        "recovery-plans/<str:plan_id>/outcome",
+        hr_programme_views.recovery_outcome,
+        name="recovery_outcome",
+    ),
+    path(
+        "recovery-plans/<str:plan_id>",
+        hr_programme_views.recovery_drawer,
+        name="recovery_drawer",
+    ),
     path("recovery-plans", hr_views.recovery_plans_view, name="recovery_plans"),
     path(
         "culture-engagement",
