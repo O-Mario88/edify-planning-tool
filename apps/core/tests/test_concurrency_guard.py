@@ -80,13 +80,21 @@ class ConcurrencyGuardTest(SimpleTestCase):
         self.assertEqual(waited.status_code, 200)
 
     @override_settings(WEB_MAX_CONCURRENT_REQUESTS=1, WEB_QUEUE_TIMEOUT_SECONDS=0.2)
-    def test_liveness_and_the_realtime_stream_never_wait(self):
+    def test_health_probes_and_the_realtime_stream_never_wait(self):
         view, entered, release = self._holding_view()
         guard = DatabaseConcurrencyGuardMiddleware(view)
         thread, _first = self._hold_one_slot(guard, entered)
         release.set()  # the exempt requests below must not block on the view
         try:
-            for path in ("/api/health/live", "/api/realtime/stream"):
+            # The platform health check asks /api/health/ready with a 10s
+            # timeout: queued behind a busy process it would fail, and five
+            # failures restart a process that was only busy.
+            for path in (
+                "/api/health/live",
+                "/api/health/ready",
+                "/api/health",
+                "/api/realtime/stream",
+            ):
                 with self.subTest(path=path):
                     self.assertEqual(guard(self.factory.get(path)).status_code, 200)
         finally:

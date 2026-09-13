@@ -19,9 +19,11 @@ page retries itself. Waiting holds no connection: Django opens one lazily, on
 the first query, which only happens once the request is past this point.
 
 Exempt: the realtime stream (long-lived, polls the bus rather than holding a
-query) and the liveness probe (answers without the database, and must keep
-answering while the process is busy, or the orchestrator restarts a healthy
-process under load). Static files never reach here: WhiteNoise answers them.
+query) and the health probes. App Platform's health check asks
+/api/health/ready every 15 seconds with a 10-second timeout; a probe queued
+behind a busy process would time out, and five in a row restart a process
+that was only busy, dropping every request it was serving at the worst
+moment. Static files never reach here: WhiteNoise answers them.
 
 Zero disables the guard (the development and test default).
 """
@@ -39,7 +41,7 @@ logger = logging.getLogger("edify.concurrency")
 
 DEFAULT_EXEMPT_PREFIXES = (
     "/api/realtime/",
-    "/api/health/live",
+    "/api/health",
     "/static/",
     "/favicon",
 )

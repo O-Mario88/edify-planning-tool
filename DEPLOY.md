@@ -253,7 +253,8 @@ past the limit waits its turn, in order, for up to `WEB_QUEUE_TIMEOUT_SECONDS`
 (20). A request that waited a second or more carries an `X-Edify-Queue-Wait`
 header. One that waits the full timeout gets a 503 with `Retry-After: 5`, and
 the page retries itself instead of showing a database error. The realtime
-stream and the liveness probe are exempt, so a busy worker is never restarted
+stream and the health probes (`/api/health*`, including the App Platform
+check on `/api/health/ready`) are exempt, so a busy worker is never restarted
 as unhealthy.
 
 Size it against the database, not the web tier:
