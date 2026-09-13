@@ -1,0 +1,44 @@
+name: Browser Matrix
+
+# The cross-browser and device matrix — Firefox, WebKit, and the phone and
+# tablet emulations — against main every night. CI keeps Chromium and the role
+# route audit on every push; this used to run there too, one project after
+# another, until the job outgrew its thirty minutes and was cancelled on every
+# run from c7d11383 (2026-09-09). Each project is its own job, with its own
+# database and server. This workflow is not named CI, so a red engine never
+# blocks the Deploy workflow; it shows on the Actions tab and notifies like
+# any failed scheduled run. Run it by hand before a release that changes
+# layout.
+on:
+  schedule:
+    - cron: "23 1 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: browser-matrix-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  browsers:
+    name: Browser matrix
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - project: firefox-desktop
+            browsers: chromium firefox
+          - project: webkit-desktop
+            browsers: chromium webkit
+          - project: android-360
+            browsers: chromium
+          - project: iphone-390
+            browsers: chromium webkit
+          - project: tablet-768
+            browsers: chromium webkit
+    uses: $/.github/workflows/browser-suite.yml
+    with:
+      project: ${{ matrix.project }}
+      browsers: ${{ matrix.browsers }}
