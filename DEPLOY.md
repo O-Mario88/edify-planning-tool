@@ -226,15 +226,45 @@ invitation and password-reset emails build their links from.
 
 ## 3a-bis. Web workers: why one is not enough
 
-Django's ASGI handler runs every synchronous view on one thread per worker
-process. With `WEB_CONCURRENCY=1` the whole site serves one page at a time:
-a one-second dashboard makes every other person wait a second, and a
-deploy's first request used to wait seven seconds of imports on top (now
-paid at boot by `config/warmup.py`). A worker is about 200 MB, so the
-1 GB instance runs two comfortably and the Dockerfile's default of three
-with headroom to spare. Set `WEB_CONCURRENCY` to 2 on the live spec (3 on
-a 2 GB instance). Keep `REDIS_URL` unset only while the instance count is
-one; the per-process cache is fine at one instance and wrong at two.
+Django's ASGI handler gives each request its own thread inside a worker
+process (asgiref's `ThreadSensitiveContext`), so one worker does serve
+requests side by side, but they share one interpreter lock: rendering a
+heavy dashboard holds every other page in that worker until it yields on a
+database read. More workers are what spread rendering across the CPU. A
+deploy's first request also used to wait seven seconds of imports (now paid
+at boot by `config/warmup.py`). A worker is about 200 MB, so the 1 GB
+instance runs two comfortably and the Dockerfile's default of three with
+headroom to spare. Set `WEB_CONCURRENCY` to 2 on the live spec (3 on a 2 GB
+instance). Keep `REDIS_URL` unset only while the instance count is one; the
+per-process cache is fine at one instance and wrong at two.
+
+## 3a-ter. Peak load: requests are bounded before they reach the database
+
+Because every request runs on its own thread and `CONN_MAX_AGE=0` gives each
+thread its own connection, simultaneous requests used to become simultaneous
+Postgres connections with nothing in between. Past the cluster's limit
+Postgres refuses new connections and every page fails together, the same
+failure as the 2026-09-12 outage from another angle.
+
+`apps.core.concurrency.DatabaseConcurrencyGuardMiddleware` holds each worker
+process to `WEB_MAX_CONCURRENT_REQUESTS` requests at a time. Production
+defaults it to 6 per process (12 when `DB_USE_PGBOUNCER` is on). A request
+past the limit waits its turn, in order, for up to `WEB_QUEUE_TIMEOUT_SECONDS`
+(20). A request that waited a second or more carries an `X-Edify-Queue-Wait`
+header. One that waits the full timeout gets a 503 with `Retry-After: 5`, and
+the page retries itself instead of showing a database error. The realtime
+stream and the liveness probe are exempt, so a busy worker is never restarted
+as unhealthy.
+
+Size it against the database, not the web tier:
+`WEB_CONCURRENCY × WEB_MAX_CONCURRENT_REQUESTS × instances`, plus the
+scheduler's connection and a few for migrations and the console, must stay
+under the cluster's connection limit (`SHOW max_connections;` minus the
+reserved slots). With the 1 GB database (about 22 usable connections),
+2 workers × 6 = 12 leaves room for everything else. Behind a DigitalOcean
+connection pool (PgBouncer, transaction mode) set `DB_USE_PGBOUNCER=true`
+and the limit rises with the pool size. Set `WEB_MAX_CONCURRENT_REQUESTS=0`
+only to switch the guard off while diagnosing.
 
 ## 3b. Deploys follow CI, not the push
 

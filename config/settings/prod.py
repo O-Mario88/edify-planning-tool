@@ -27,6 +27,16 @@ DEBUG = False
 # max-age=0 (measured 2026-09-12). Hashed names carry their own immutable
 # header; this is for the unhashed build/css/*.css and geojson references.
 WHITENOISE_MAX_AGE = 60 * 60 * 24 * 30
+# Requests past the database at once, per web process (apps.core.concurrency).
+# Every ASGI request runs on its own thread with its own connection, and the
+# managed cluster refuses connections past its limit (22 usable on the 1 GB
+# node), which fails every page at once. Two web workers at six each leave room
+# for the scheduler, the migrate job and a rolling deploy's overlap. Raise it
+# only with a connection pool in front of Postgres (DB_USE_PGBOUNCER).
+WEB_MAX_CONCURRENT_REQUESTS = _as_int(
+    os.environ.get("WEB_MAX_CONCURRENT_REQUESTS"), 12 if DB_USE_PGBOUNCER else 6
+)
+
 # Under prod settings the process identity IS production — never trust the
 # env var to say otherwise (a missing ENVIRONMENT must not weaken the stamp
 # guard on a production host).

@@ -168,6 +168,10 @@ MIDDLEWARE = [
     # crafted URL.
     "apps.core.middleware.ContentSecurityPolicyMiddleware",
     "corsheaders.middleware.CorsMiddleware",  # before CommonMiddleware
+    # Before the first thing that can touch the database (the session): a
+    # request waiting here for a slot holds no connection. Off unless
+    # WEB_MAX_CONCURRENT_REQUESTS is set; production sets it (prod.py).
+    "apps.core.concurrency.DatabaseConcurrencyGuardMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     # Directly after SessionMiddleware so its response phase runs directly
     # before it: the session is touched, and SessionMiddleware then saves the
@@ -314,6 +318,12 @@ DATABASES["default"]["CONN_MAX_AGE"] = (
 # Surfaced as a boot warning (apps/core/boot_gates.py) so a lifetime set on a
 # direct connection is visible rather than silently ignored.
 DB_CONN_MAX_AGE_IGNORED = bool(DB_CONN_MAX_AGE_REQUESTED and not DB_USE_PGBOUNCER)
+
+# How many requests one web process lets past to the database at once
+# (apps.core.concurrency). Zero turns the guard off, which is right for
+# development and tests; production sets a bound in prod.py.
+WEB_MAX_CONCURRENT_REQUESTS = _as_int(os.environ.get("WEB_MAX_CONCURRENT_REQUESTS"), 0)
+WEB_QUEUE_TIMEOUT_SECONDS = _as_int(os.environ.get("WEB_QUEUE_TIMEOUT_SECONDS"), 20)
 
 # ── Database timeouts ────────────────────────────────────────────────────────
 # Postgres defaults all three of these to "wait forever", which is the wrong
