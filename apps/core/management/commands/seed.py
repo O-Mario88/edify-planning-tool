@@ -95,6 +95,11 @@ DEMO_ACCOUNTS = [
     ),
 ]
 
+# Demo CCEO accounts in the order they are created. The first, cceo@edify.org
+# (Paul N.), holds the sample portfolio and is the CCEO the browser suite signs
+# in as.
+DEMO_CCEO_EMAILS = ("cceo@edify.org", *(f"cceo{i}@edify.org" for i in range(1, 20)))
+
 # Realistic Uganda geography (reference admin boundaries) — local-test seed only.
 GEOGRAPHY = [
     {
@@ -395,8 +400,7 @@ class Command(BaseCommand):
             "Sarah N.",
         ]
         cceos = []
-        for i in range(20):
-            email = "cceo@edify.org" if i == 0 else f"cceo{i}@edify.org"
+        for i, email in enumerate(DEMO_CCEO_EMAILS):
             name = CCEO_NAMES[i] if i < len(CCEO_NAMES) else f"CCEO {i + 1}"
             u, _ = User.objects.update_or_create(
                 email=email,
@@ -582,10 +586,22 @@ class Command(BaseCommand):
         from apps.accounts.models import StaffProfile, StaffSchoolAssignment
         from apps.core.enums import AccountOwnerStatus
 
-        cceos = list(
+        # Demo accounts first, in the order they were made, then any other CCEO
+        # — sorted in Python, never by the database. This was
+        # order_by("user__email"), and Postgres collations disagree about
+        # "cceo@…" against "cceo1@…": macOS's en_US puts cceo@edify.org first,
+        # glibc's en_US and C put it after cceo19@edify.org. On Linux — every
+        # CI runner — the whole sample portfolio went to cceo10@edify.org, and
+        # the account the demo and the browser suite sign in as had no schools.
+        demo_order = {email: i for i, email in enumerate(DEMO_CCEO_EMAILS)}
+        cceos = sorted(
             StaffProfile.objects.filter(
                 user__active_role=EdifyRole.CCEO.value
-            ).order_by("user__email")
+            ).select_related("user"),
+            key=lambda profile: (
+                demo_order.get(profile.user.email, len(demo_order)),
+                profile.user.email,
+            ),
         )
 
         mukono_district = District.objects.filter(name__iexact="Mukono").first()
@@ -1064,6 +1080,7 @@ class Command(BaseCommand):
         )
 
         # Seed 13 activities per CCEO
+        seeded_activity_ids = []
         for cceo_idx, cceo in enumerate(cceos):
             for act_idx in range(13):
                 date_day = rnd.randint(1, 28)
@@ -1189,7 +1206,31 @@ class Command(BaseCommand):
                     },
                     responsible_user_id=cceo.user.user_id,
                 )
+                seeded_activity_ids.append(act.id)
+
+        # Scheduling builds each owner's weekly fund request from the lines it
+        # has just priced (weekly_service.sync_weekly_requests_for_activity).
+        # The seed prices its work directly and skipped that step, so the
+        # finance queues stayed empty until a Program Lead happened to open Fund
+        # Approvals, whose self-heal built them: what the Accountant's workspace
+        # showed on a fresh database depended on which pages had been opened
+        # first.
+        from apps.activities.models import ActivityScheduleCostLine
+        from apps.fund_requests.models import WeeklyFundRequest
+        from apps.fund_requests.weekly_service import generate_weekly_fund_request
+
+        for owner, week_start in (
+            ActivityScheduleCostLine.objects.filter(activity_id__in=seeded_activity_ids)
+            .order_by()
+            .values_list("responsible_user", "week_start_date")
+            .distinct()
+        ):
+            if owner and week_start:
+                generate_weekly_fund_request(owner, week_start.isoformat())
 
         self.stdout.write(
             f"  sample activities: {Activity.objects.count()} (local only)"
+        )
+        self.stdout.write(
+            f"  sample weekly fund requests: {WeeklyFundRequest.objects.count()} (local only)"
         )
