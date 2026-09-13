@@ -37,9 +37,16 @@ ENV NODE_ENV=production \
 # This is deliberately narrow rather than `apt-get upgrade`: upgrading
 # everything in the runtime image changes more than the finding asks for, on a
 # production image nobody can re-test between build and deploy.
+#
+# The same happened again on 2026-09-13 (CI run for 1a422442): Debian published
+# fixes for gzip (CVE-2026-41992), PCRE2 (CVE-2026-86145, -89161), SQLite
+# (CVE-2026-11822, -11824) and perl-base (CVE-2026-13221 and six more) while
+# the base tag still froze the vulnerable versions, so those four packages are
+# named for the same reason the OpenSSL ones are.
 RUN apt-get update -y && apt-get install -y --no-install-recommends \
     libpq5 libexpat1 curl \
     libssl3t64 openssl openssl-provider-legacy \
+    gzip libpcre2-8-0 libsqlite3-0 perl-base \
     libreoffice --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 # Site-packages from the build stage.
