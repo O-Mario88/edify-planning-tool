@@ -317,3 +317,41 @@ class BulkPlanningIsScopedAndSsaInformedTest(StandardSupportBase):
         )
         self.assertEqual(response.status_code, 403)
         self.assertNotIn(b"Another Portfolio School", response.content)
+
+
+class EditedFocusIsRejudgedTest(StandardSupportBase):
+    def test_changing_a_plans_intervention_moves_its_verdict_and_recommendation(self):
+        from apps.activities.services import patch_activity
+
+        generate_for_school(self.school, fy=get_operational_fy())
+        activity = Activity.objects.get(
+            id=self.schedule(
+                schoolId=self.school.school_id,
+                catalogueItemId=self.item("STANDARD_SCHOOL_VISIT").id,
+            )["id"]
+        )
+        financial = SsaRecommendation.objects.get(
+            school=self.school, intervention=SsaIntervention.FINANCIAL_HEALTH
+        )
+        self.assertEqual(financial.state, RecommendationState.PLANNED)
+
+        patch_activity(
+            activity.id,
+            {"focusIntervention": SsaIntervention.CHRISTLIKE_BEHAVIOUR},
+            self.user,
+        )
+        activity.refresh_from_db()
+        financial.refresh_from_db()
+        self.assertEqual(activity.ssa_alignment, SsaAlignment.OFF_PRIORITY)
+        self.assertEqual(financial.state, RecommendationState.ACCEPTED)
+        self.assertIsNone(financial.planned_activity_id)
+
+        patch_activity(activity.id, {"focusIntervention": SsaIntervention.LEADERSHIP}, self.user)
+        activity.refresh_from_db()
+        self.assertEqual(activity.ssa_alignment, SsaAlignment.PRIORITY)
+        self.assertEqual(
+            SsaRecommendation.objects.get(
+                school=self.school, intervention=SsaIntervention.LEADERSHIP
+            ).state,
+            RecommendationState.PLANNED,
+        )

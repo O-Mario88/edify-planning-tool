@@ -594,6 +594,55 @@ def settle_recommendations(activity) -> int:
     return len(delivered) + len(released)
 
 
+def rejudge(activity, *, focus_source: str = "planner") -> PlanEvidence:
+    """Judge a live plan again after its target intervention changed.
+
+    A plan's intervention can be edited after it was made; the verdict and the
+    recommendation it answered were then describing the old target. The
+    recommendations planned against the old target go back to the queue, and
+    the plan is judged, and linked, as it now stands.
+    """
+    from apps.ssa.recommendation_models import RecommendationState, SsaRecommendation
+
+    now = timezone.now()
+    stale = SsaRecommendation.objects.filter(
+        planned_activity_id=activity.id, state=RecommendationState.PLANNED
+    ).exclude(intervention=activity.focus_intervention or "")
+    released = list(stale.values_list("id", flat=True))
+    if released:
+        SsaRecommendation.objects.filter(id__in=released).update(
+            state=RecommendationState.ACCEPTED,
+            planned_activity_id=None,
+            decided_at=now,
+            updated_at=now,
+            decision_reason="The planned activity now targets another intervention.",
+        )
+        _audit_recommendations("ssa.recommendation_released", activity, released)
+        if activity.ssa_recommendation_id in released:
+            activity.ssa_recommendation_id = None
+            activity.save(update_fields=["ssa_recommendation", "updated_at"])
+    modes = (
+        set(
+            activity.catalogue_item.intervention_mappings.filter(active=True).values_list(
+                "mapping_mode", flat=True
+            )
+        )
+        if activity.catalogue_item_id
+        else set()
+    )
+    evidence = assess(
+        activity_type=activity.activity_type,
+        focus=activity.focus_intervention,
+        mapping_modes=modes,
+        school=activity.school if activity.school_id else None,
+        cluster_id=None if activity.school_id else activity.cluster_id,
+        focus_source=focus_source,
+        collects_ssa=activity.ssa_collection_expected,
+    )
+    stamp(activity, evidence)
+    return evidence
+
+
 def _audit_recommendations(action: str, activity, ids) -> None:
     try:
         from apps.audit.services import log as audit_log

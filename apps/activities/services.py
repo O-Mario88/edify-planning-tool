@@ -24,7 +24,7 @@ from apps.core.enums import (
     PARTNER_EXECUTOR_TYPES,
     SsaIntervention,
 )
-from apps.core.activity_types import VISIT_TYPES
+from apps.core.activity_types import COMPLETED_WORK_STATUSES, VISIT_TYPES
 from apps.core.exceptions import BadRequest, Forbidden, NotFoundError
 from apps.core.fy import get_operational_fy, get_quarter_for_date
 from apps.core.scoping import (
@@ -4574,6 +4574,13 @@ _COST_DRIVER_PATCH_FIELDS = (
 def patch_activity(activity_id: str, data: dict, principal) -> dict:
     a = _get_for_execution(activity_id, principal)
     update_fields = []
+    previous_focus = a.focus_intervention
+    if "focusIntervention" in data and data["focusIntervention"] not in (
+        None,
+        "",
+        *SsaIntervention.values,
+    ):
+        raise BadRequest("Choose one of the eight SSA interventions.")
     if "activityPurposeText" in data:
         a.activity_purpose_text = data["activityPurposeText"]
         update_fields.append("activity_purpose_text")
@@ -4628,6 +4635,17 @@ def patch_activity(activity_id: str, data: dict, principal) -> dict:
             ):
                 _apply_schedule_cost_snapshot(a, {}, principal=principal)
                 a.save(update_fields=["est_cost_cents", "cost_missing", "updated_at"])
+            if (
+                "focus_intervention" in update_fields
+                and (a.focus_intervention or None) != (previous_focus or None)
+                and a.status not in COMPLETED_WORK_STATUSES
+                and a.status not in ("cancelled", "rejected", "deferred")
+            ):
+                # The verdict and the recommendation it answered described the
+                # old target (apps.ssa.plan_alignment.rejudge).
+                from apps.ssa.plan_alignment import rejudge
+
+                rejudge(a)
     return _serialize(a)
 
 
