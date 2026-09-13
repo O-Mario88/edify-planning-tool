@@ -2503,10 +2503,11 @@ select:not([multiple]):not(.select-native) {
     flex-wrap: nowrap !important;
   }
 
-  #planning-main-container #filters-form {
-    flex-wrap: nowrap !important;
-  }
-
+  /* The Planning filter row is no longer held on one line here. It was, from
+     1280px, when it carried four filters; with seven (FY, SSA and Group since)
+     that line ran past the workspace at 1280px — by 15px under the dark
+     theme's wider scrollbar. It now wraps like every other filter toolbar
+     (consistency.css: filters wrap, they never scroll sideways). */
   #planning-main-container #filters-form > div:nth-of-type(2) select,
   #planning-main-container #filters-form > div:nth-of-type(3) select {
     inline-size: 8.4375rem !important;
