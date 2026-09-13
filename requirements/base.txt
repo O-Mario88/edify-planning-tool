@@ -33,7 +33,7 @@ psycopg[binary]==3.3.4
 # rather than globally, and nothing is shared between the web instances or with
 # the scheduler. That makes it a correctness dependency for running more than
 # one instance, not a performance one.
-redis==7.1.0
+redis==8.1.0
 
 # JWT auth — access tokens signed with JWT_SECRET + rotating refresh tokens.
 # We use PyJWT directly (custom issuance) for parity with NestJS @nestjs/jwt.
