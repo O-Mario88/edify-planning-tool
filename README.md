@@ -89,6 +89,30 @@ through the admin user-management workflow.
 | `cceo@edify.org`, `cceo1..19@edify.org` | CCEO |
 | `domario@edify.org` | super-admin (password from `SUPER_ADMIN_PASSWORD` env only) |
 
+## Browser tests (Playwright)
+
+The journeys and the role route audit in `e2e/` run against a real server on a
+demo-seeded database, the way CI runs them:
+
+```bash
+python manage.py migrate && python manage.py seed --demo
+RATE_LIMIT_LOGIN_PER_MIN=1000 python manage.py runserver 127.0.0.1:8000 --noreload
+npx playwright test --project=chromium-desktop           # or one spec: npx playwright test e2e/<name>.spec.js
+```
+
+- Every browser project depends on the `seeded-accounts` setup project, which
+  signs each seeded account in once and clears its first-login agreements, so
+  any spec, shard or project can run on its own. It runs in Chromium, and only
+  against a server on this machine.
+- Sign-in allows 10 attempts a minute per address. A browser run needs far more,
+  so raise `RATE_LIMIT_LOGIN_PER_MIN` for the test server; otherwise the sign-in
+  helper waits out each window.
+- CI runs `chromium-desktop` (journeys and the authenticated route audit) in two
+  shards on every push, each with its own database and server
+  (`.github/workflows/browser-suite.yml`). Firefox, WebKit and the phone and
+  tablet projects run nightly in **Browser Matrix**
+  (`.github/workflows/browser-matrix.yml`), which can also be started by hand.
+
 ## Domain apps (`apps/`)
 
 | App | Purpose |
