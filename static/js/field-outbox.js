@@ -351,7 +351,10 @@
 
   // Deferred script: the document is parsed by the time this runs.
   retitle();
-  refresh().then(replay);
+  // Settles once whatever was queued when the page loaded has been replayed.
+  // replay() answers at once while another replay is running, so without this
+  // nothing outside can tell when the page's own replay is over.
+  var ready = refresh().then(replay);
 
-  window.EdifyFieldOutbox = Object.freeze({ replay: replay, refresh: refresh });
+  window.EdifyFieldOutbox = Object.freeze({ replay: replay, refresh: refresh, ready: ready });
 })();

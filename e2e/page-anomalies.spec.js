@@ -43,6 +43,9 @@ test('empty-state icons and priority cards remain contained and actions open',as
 test('pending uploads works without external assets and preserves retry order',async({page,context},info)=>{
  await page.route('**/static/**',r=>r.abort());
  await page.goto('/offline');
+ // The page replays whatever was queued when it loaded. Let that settle before queueing the fixtures, or it can send
+ // the first one itself (Firefox's slower IndexedDB made that visible) and every retry count below is off by one.
+ await page.evaluate(()=>EdifyFieldOutbox.ready);
  await expect(page.locator('[data-offline-title]')).toHaveText('Pending uploads');
  await expect(page.locator('[data-offline-title]')).toHaveCSS('font-size','20px');
  const requests=[];let available=false;
