@@ -50,6 +50,11 @@ for (const file of files) {
   }, Selector(selector) {
     return walk(selector, node => {
       const op = node.operation;
+      // [class~="x"] is the class selector .x under another name, but Blink
+      // cannot build an invalidation set from an attribute selector: any class
+      // change on an ancestor then restyles its whole subtree (11ms per toggle
+      // on /analytics against 0.6ms without them, 2026-09-14).
+      if(node.type==='attribute'&&node.name==='class'&&op?.operator==='includes'&&op.caseSensitivity==='case-sensitive'&&op.value&&!/\s/.test(op.value)) return {type:'class',name:op.value};
       if(node.type!=='attribute'||node.name!=='class'||op?.operator!=='substring'||op.caseSensitivity!=='case-sensitive'||!op.value||/\s/.test(op.value)) return node;
       if(!matches.has(op.value)) matches.set(op.value, names.filter(name=>name.includes(op.value)));
       const values = matches.get(op.value);

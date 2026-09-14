@@ -20,7 +20,7 @@ money movement), so for the Accountant the activity stays plain text.
 {% with can_open_activity_record=request.user|can_open:"/activities/0" %}
 <div class="space-y-3 pt-2">
   {% for group in owner_groups %}
-  <details class="edify-record-group rounded-surface border edify-border" aria-labelledby="owner-{{ forloop.counter }}" {% if request.GET|get_item:group.page_param %}open{% endif %}>
+  <details class="edify-record-group rounded-surface border edify-border" aria-labelledby="owner-{{ forloop.counter }}" {% if forloop.first or request.GET|get_item:group.page_param %}open{% endif %}>
     <summary class="flex flex-wrap items-center justify-between gap-2 px-3 py-2 border-b edify-border">
       <h3 id="owner-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h3>
       <p class="edify-text-caption edify-text-muted">

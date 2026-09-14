@@ -53,7 +53,7 @@ is "Send to <CCEO>", which creates a TeamAction and changes no activity.
   {% if groups %}
   <div class="space-y-3">
     {% for group in groups %}
-    <details class="edify-record-group card p-0 overflow-hidden" aria-labelledby="group-{{ forloop.counter }}" {% if request.GET|get_item:group.page_param %}open{% endif %}>
+    <details class="edify-record-group card p-0 overflow-hidden" aria-labelledby="group-{{ forloop.counter }}" {% if forloop.first or request.GET|get_item:group.page_param %}open{% endif %}>
       <summary class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
         <div class="min-w-0">
           <h2 id="group-{{ forloop.counter }}" class="text-sm font-semibold">{{ group.name }}</h2>
