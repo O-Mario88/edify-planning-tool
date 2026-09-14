@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% comment %}
 The Completed Work tab: the permanent ledger of closed activities. The
 workspace header, the scope filter row, the tiles and the tablist stay fixed
@@ -29,7 +30,7 @@ above (owner, 2026-09-05: one Analytics page, tabs swap only the panel).
 </td>
 <!-- School -->
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity act.school.name|default:"Cluster-wide" act.school.id %}</div>
 </td>
 <!-- Owner -->
 <td class="px-6 py-4" data-label="Owner">

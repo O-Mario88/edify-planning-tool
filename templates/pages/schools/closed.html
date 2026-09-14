@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load kpi_metrics %}
 
 {% load frontend_filters table_pagination %}
@@ -83,7 +84,7 @@ school's future, not its history.
           {% for row in pager.rows %}
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5">
-              <span class="font-semibold">{{ row.school.name }}</span>
+              <span class="font-semibold">{% school_identity row.school.name row.school.id %}</span>
               <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}</span>
             </td>
             <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>

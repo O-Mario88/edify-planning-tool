@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load frontend_filters %}
 
 {% block title %}Business Transformation — Edify{% endblock %}
@@ -51,7 +52,7 @@
           {% for case in cases %}
           <tr>
             <td class="tabular-nums" data-label="ID">{{ case.school.school_id }}</td>
-            <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{{ case.school.name }}</a></td>
+            <td data-record-title><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' case.school.school_id %}">{% school_identity case.school.name case.school.id %}</a></td>
             <td data-label="Location">{{ case.school.district.name|default:"District not set" }} · {{ case.school.region.name|default:"Region not set" }}</td>
             <td data-label="Recommendation">
               {% for recommendation in case.recommendations.all|slice:":2" %}<span class="block text-xs">{{ recommendation.get_kind_display }}</span>{% empty %}<span class="text-slate-500">No open recommendation</span>{% endfor %}

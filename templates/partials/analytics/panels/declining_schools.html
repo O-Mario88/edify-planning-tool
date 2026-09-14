@@ -1,3 +1,4 @@
+{% load school_identity %}
 
 {% load kpi_metrics %}
 {% load table_pagination %}
@@ -107,7 +108,7 @@ of them is the part anyone reads.
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 tabular-nums text-slate-500">{{ s.code|default:"—" }}</td>
 <td class="px-4 py-3">
-<span class="font-bold text-slate-900 block leading-tight">{{ s.name }}</span>
+<span class="font-bold text-slate-900 block leading-tight">{% school_identity s.name s.schoolId %}</span>
 </td>
 <td class="px-4 py-3 text-slate-600">{{ s.district }}</td>
 <td class="px-4 py-3 text-right tabular-nums text-slate-500">{{ s.prevScore }}</td>

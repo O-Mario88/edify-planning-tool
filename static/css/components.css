@@ -5309,6 +5309,12 @@ main .budget-ledger table.fund-breakdown-table tbody th[scope="row"] { font-weig
   white-space: nowrap;
 }
 
+/* School-list identity mirrors the directory's ID followed by its name. */
+.school-list-identity { display: inline-flex; align-items: baseline; gap: .5rem; max-inline-size: 100%; }
+.school-list-id { color: var(--edify-text-muted); font-size: var(--edify-text-micro-size); font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.school-list-name { min-inline-size: 0; }
+.pl-urgent-table { min-inline-size: 76rem; }
+
 /* Theme-safe neutral separators, including legacy Tailwind divide utilities.
    Rules organize content; focus rings and input boundaries remain stronger. */
 :root:is(.theme-blue, .theme-dark) :is(main, .drawer-body) :where(hr, thead, tbody, tfoot, tr, th, td) {

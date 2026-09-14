@@ -649,6 +649,7 @@ def ia_returned_view(request):
             {
                 "id": a.id,
                 "activity_type_label": a.get_activity_type_display(),
+                "school_id": a.school_id,
                 "school_name": a.school.name if a.school else "Cluster",
                 "responsible_staff_name": _returned_names.get(
                     a.responsible_staff_id, a.responsible_staff_id or "Unassigned"
@@ -689,6 +690,7 @@ def ia_history_view(request):
         {
             "id": e.activity.id,
             "activity_type": e.activity.get_activity_type_display(),
+            "school_id": e.activity.school_id,
             "school": e.activity.school.name
             if e.activity.school_id
             else "Cluster-wide",

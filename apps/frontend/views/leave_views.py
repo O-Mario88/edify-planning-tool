@@ -245,6 +245,7 @@ def personal_time_off_view(request):
                 {
                     "id": act.id,
                     "type": act.activity_type.replace("_", " ").title(),
+                    "school_id": act.school_id,
                     "school": act.school.name
                     if act.school
                     else (act.cluster.name if act.cluster else "General"),

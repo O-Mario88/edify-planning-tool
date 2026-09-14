@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% load frontend_filters table_pagination %}
 {% comment %}
 Flagged schools, grouped by the person who owns them.
@@ -63,7 +64,7 @@ is the answer to half the questions this page gets asked.
             {% for row in flagged_page.rows %}
             <tr class="border-t edify-border">
               <td class="px-3 py-2.5">
-                <span class="font-semibold">{{ row.name }}</span>
+                <span class="font-semibold">{% school_identity row.name row.school_id %}</span>
                 {% if row.district %}<span class="block edify-text-caption edify-text-muted">{{ row.district }}</span>{% endif %}
               </td>
               <td class="px-3 py-2.5">
@@ -84,7 +85,7 @@ is the answer to half the questions this page gets asked.
       <ul class="hidden divide-y edify-border border-t edify-border">
         {% for row in flagged_page.rows %}
         <li class="py-3 space-y-1">
-          <p class="font-semibold text-sm">{{ row.name }}</p>
+          <p class="font-semibold text-sm">{% school_identity row.name row.school_id %}</p>
           <p class="edify-text-caption edify-text-muted">
             {% if row.district %}{{ row.district }} · {% endif %}
             {% if row.planned_date %}{{ row.planned_date|date:"j M" }}{% else %}No date{% endif %}

@@ -1302,6 +1302,7 @@ class CDDashboardService:
                 rows.append(
                     {
                         "id": s.id,
+                        "school_id": s.id,
                         "school": s.name,
                         "region": (
                             s.district.name

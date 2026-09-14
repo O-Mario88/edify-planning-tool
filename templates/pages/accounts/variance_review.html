@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load frontend_filters %}
 
 {% block title %}Variance Review - Edify Command Center{% endblock %}
@@ -48,7 +49,7 @@ Review activities where the actual spend differs from the approved/disbursed amo
 </td>
 <!-- School -->
 <td class="px-6 py-4" data-label="School / Scope">
-<div class="font-semibold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.activity.school.name|default:"Cluster-wide" item.activity.school.id %}</div>
 </td>
 <!-- Budgeted -->
 <td class="px-6 py-4 text-center" data-label="Budgeted">

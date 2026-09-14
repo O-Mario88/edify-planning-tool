@@ -1,3 +1,4 @@
+{% load school_identity %}
 
 {% load kpi_metrics %}
 {% load frontend_filters table_pagination %}
@@ -106,7 +107,7 @@ loses focus mid-interaction.
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5 text-sm tabular-nums edify-text-muted">{{ row.school.school_id }}</td>
             <td class="px-4 py-2.5">
-              <span class="font-semibold">{{ row.school.name }}</span>
+              <span class="font-semibold">{% school_identity row.school.name row.school.id %}</span>
             </td>
             <td class="px-4 py-2.5 text-sm">{{ row.district|default:"—" }}</td>
             <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>
@@ -234,7 +235,7 @@ loses focus mid-interaction.
           {% for row in reopened_pager.rows %}
           <tr class="border-t edify-border">
             <td class="px-4 py-2.5">
-              <a href="/schools/{{ row.school.school_id }}" class="font-semibold hover:underline edify-primary-text">{{ row.school.name }}</a>
+              <a href="/schools/{{ row.school.school_id }}" class="font-semibold hover:underline edify-primary-text">{% school_identity row.school.name row.school.id %}</a>
               <span class="block edify-text-caption edify-text-muted">{{ row.school.school_id }}{% if row.district %} · {{ row.district }}{% endif %}</span>
             </td>
             <td class="px-4 py-2.5 text-sm whitespace-nowrap">{{ row.closure.effective_date|date:"j M Y" }}</td>

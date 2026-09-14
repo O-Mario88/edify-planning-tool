@@ -1,0 +1,63 @@
+{% load frontend_filters table_pagination %}
+{% for section in detail_tables %}
+<section class="work-plan-detail-group" aria-labelledby="work-plan-{{ section.key }}-title">
+  <div class="flex flex-wrap items-center justify-between gap-2 px-4 py-3">
+    <h3 id="work-plan-{{ section.key }}-title" class="text-[13px] font-semibold">{{ section.title }}</h3>
+    <span class="edify-text-caption edify-text-muted">{{ section.rows|length }} activities</span>
+  </div>
+  {% paginate section.rows section.page_param as section_pager %}
+  <div class="overflow-x-auto">
+    <table class="edify-record-table edify-data-table work-plan-table work-plan-table--{{ section.key }} w-full text-[12px]" data-mobile-table="scroll" data-table-fit="scroll">
+      <caption class="sr-only">{{ section.title }} — {{ period_label }}</caption>
+      <thead><tr>
+      {% if section.key == 'school' %}
+        <th scope="col">Visit Date</th><th scope="col">School ID</th><th scope="col">School Name</th><th scope="col">Visit Purpose</th><th scope="col">SSA Intervention</th><th scope="col">Delivery Mode</th><th scope="col">Responsible Person</th><th scope="col">Cost</th><th scope="col">Planned Period</th><th scope="col">Status</th><th scope="col">Action</th>
+      {% elif section.key == 'cluster' %}
+        <th scope="col">Activity Date</th><th scope="col">Activity</th><th scope="col">Cluster Name</th><th scope="col"># Schools Invited</th><th scope="col"># Teachers</th><th scope="col"># School Leaders</th><th scope="col"># Others</th><th scope="col">Venue</th><th scope="col">Cost</th><th scope="col">Planned Period</th><th scope="col">Status</th><th scope="col">Action</th>
+      {% else %}
+        <th scope="col">Activity Date</th><th scope="col">Activity</th><th scope="col">Venue</th><th scope="col">Cost</th><th scope="col">Status</th><th scope="col">Action</th>
+      {% endif %}
+      </tr></thead>
+      <tbody>
+      {% for r in section_pager.rows %}
+        <tr class="align-top">
+          <td class="whitespace-nowrap">{{ r.date_label }}</td>
+          {% if section.key == 'school' %}
+          <td class="whitespace-nowrap edify-text-muted">{{ r.school_code|default:"Not recorded" }}</td>
+          <th scope="row" data-record-title>{{ r.school_name }}</th>
+          <td><strong>{{ r.name }}</strong>{% if r.purpose %}<small class="block edify-text-muted">{{ r.purpose }}</small>{% endif %}</td>
+          <td>{{ r.focus_intervention|default:"Not linked" }}</td>
+          <td>{{ r.programme_delivery_mode|default:r.responsibility_type }}</td>
+          <td>{{ r.responsible_person|default:r.responsible }}{% if r.partner_name %}<small class="block edify-text-muted">{{ r.partner_name }}</small>{% endif %}</td>
+          {% elif section.key == 'cluster' %}
+          <th scope="row" data-record-title>{{ r.programme_activity_type }}{% if r.name != r.programme_activity_type %}<small class="block edify-text-muted">{{ r.name }}</small>{% endif %}</th>
+          <td>{{ r.cluster_name }}</td>
+          <td class="tabular-nums">{{ r.schools_invited|default_if_none:"Not recorded" }}</td>
+          <td class="tabular-nums">{{ r.teachers_invited|default_if_none:"Not recorded" }}</td>
+          <td class="tabular-nums">{{ r.leaders_invited|default_if_none:"Not recorded" }}</td>
+          <td class="tabular-nums">{{ r.others_invited|default_if_none:"Not recorded" }}</td>
+          <td>{{ r.detail_venue|default:"Not recorded" }}</td>
+          {% else %}
+          <th scope="row" data-record-title>{{ r.name }}</th>
+          <td>{{ r.detail_venue|default:"Not recorded" }}</td>
+          {% endif %}
+          <td class="whitespace-nowrap tabular-nums">{% if r.cost_missing %}Cost setup required{% else %}UGX {{ r.cost|intcomma }}{% endif %}
+            {% if r.cost_lines %}<details><summary class="edify-text-caption edify-primary-text">Breakdown</summary><ul>{% for line in r.cost_lines %}<li>{{ line.label }}: UGX {{ line.amount|intcomma }}</li>{% endfor %}</ul></details>{% endif %}
+          </td>
+          {% if section.key != 'non_school' %}<td>{{ r.planned_period }}</td>{% endif %}
+          <td>{% include "components/badge.html" with tone=r.delivery_status_tone label=r.delivery_status %}<small class="block edify-text-muted">{{ r.status_label }}</small></td>
+          <td data-record-action>
+            <a href="{{ r.table_action.url }}" {% if r.table_action.drawer %}hx-get="{{ r.table_action.url }}" hx-target="#drawer-container" hx-swap="innerHTML"{% endif %} class="btn btn-secondary" title="{{ r.table_action.description }}">{{ r.table_action.text }}</a>
+            <a href="/my-plan/{{ r.id }}" class="block edify-text-caption edify-primary-text mt-1">View details</a>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="{% if section.key == 'school' %}11{% elif section.key == 'cluster' %}12{% else %}6{% endif %}">{% include "components/empty_state.html" with title="No activities in this group" message="No matching activities are planned in the selected period." compact="true" %}</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% include "components/table_pager.html" with pager=section_pager param=section.page_param %}
+  {% if section.key == 'cluster' %}<p class="px-4 py-2 edify-text-caption edify-text-muted">Participant columns show planned invitations, not attendance. Missing historical counts are marked “Not recorded”.</p>{% endif %}
+</section>
+{% endfor %}

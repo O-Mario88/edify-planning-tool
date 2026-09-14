@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load table_pagination %}
 
 {% block title %}Budget Amendments · Edify{% endblock %}
@@ -38,7 +39,7 @@
           {% for amendment in amendments_pager.rows %}
           <tr class="border-t border-slate-100 align-top">
             <td class="py-2.5 pr-3 font-semibold text-slate-700" data-record-title>{{ amendment.activity.activity_type }}</td>
-            <td class="py-2.5 pr-3 text-slate-600" data-label="School">{{ amendment.activity.school.name|default:"—" }}</td>
+            <td class="py-2.5 pr-3 text-slate-600" data-label="School">{% school_identity amendment.activity.school.name|default:"—" amendment.activity.school.id %}</td>
             <td class="py-2.5 pr-3 text-slate-600" data-label="Move">{{ amendment.original_date|date:"d M Y"|default:"—" }} → <strong>{{ amendment.new_date|date:"d M Y" }}</strong><br><span class="text-slate-400">{{ amendment.original_fy }} {{ amendment.original_quarter }} → {{ amendment.new_fy }} {{ amendment.new_quarter }}</span></td>
             <td class="py-2.5 pr-3 text-slate-600" data-label="Amount (UGX)">{{ amendment.original_amount }}</td>
             <td class="py-2.5 pr-3 text-slate-600 max-w-[260px]" data-label="Reason">{{ amendment.reason }}</td>

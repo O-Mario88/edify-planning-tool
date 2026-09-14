@@ -175,6 +175,7 @@ def _row(activity, partner_names, project_names, principal, today):
     )
     return {
         "id": activity.id,
+        "school_id": activity.school_id,
         "school": activity.school.name
         if activity.school_id
         else (activity.cluster.name if activity.cluster_id else "Unassigned"),

@@ -1,6 +1,7 @@
+{% load school_identity %}
 <tr id="dq-issue-{{ issue.id }}" class="hover:bg-slate-50/40">
 <td class="px-4 py-3 font-semibold text-slate-800">
-{{ issue.school.name }}
+{% school_identity issue.school.name issue.school.id %}
 {% if issue.current_value %}<span class="block edify-text-caption text-slate-400 font-semibold mt-0.5">{{ issue.field_name }}: {{ issue.current_value }}</span>{% endif %}
 </td>
 <td class="px-4 py-3 text-slate-500 font-semibold">{{ issue.suggested_fix|default:"—" }}</td>

@@ -1670,6 +1670,7 @@ def get_plan_sources(principal, filters=None):
             {
                 "activity_id": a.id,
                 "activity_type": a.get_activity_type_display(),
+                "school_id": a.school_id,
                 "school": a.school.name if a.school_id else "—",
                 "staff": names.get(li.responsible_user, "—"),
                 "planned_date": a.planned_date,
@@ -2015,6 +2016,7 @@ def _create_snapshot(principal, budget, source):
                 if li.planned_date
                 else None,
                 "delivery_type": li.activity.delivery_type,
+                "school_id": li.activity.school_id,
                 "school": li.activity.school.name if li.activity.school_id else None,
             }
         )

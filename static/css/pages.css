@@ -454,7 +454,7 @@
    one-word-per-line stacks. Keep a readable minimum table width and let the
    shared scroll wrapper expose the remaining columns. */
 @media (max-width: 48rem) {
-  .pl-urgent-table { min-inline-size: 760px; table-layout: auto; }
+  .pl-urgent-table { min-inline-size: 76rem; table-layout: auto; }
 }
 
 .pl-dashboard-stack .pl-ssa-matrix {
@@ -485,12 +485,12 @@
 }
 
 /* School, District, Priority issue, Scheduling, Recommended response, Action. */
-.pl-dashboard-stack .pl-urgent-table th:nth-child(1) { inline-size: 20%; }
-.pl-dashboard-stack .pl-urgent-table th:nth-child(2) { inline-size: 10%; }
-.pl-dashboard-stack .pl-urgent-table th:nth-child(3) { inline-size: 12%; }
-.pl-dashboard-stack .pl-urgent-table th:nth-child(4) { inline-size: 15%; }
-.pl-dashboard-stack .pl-urgent-table th:nth-child(5) { inline-size: 21%; }
-.pl-dashboard-stack .pl-urgent-table th:nth-child(6) { inline-size: 22%; }
+
+
+
+
+
+
 
 /* Row actions take the "View Calendar" control's proportions — 36px tall,
    12px semibold — rather than the platform's full-size action button, which
@@ -6545,6 +6545,31 @@ main :is(#rpl-workflow-filters, #hr-workflow-filters) .edify-filter-actions {
 /* ── IA review · IA-F ── */
 /* ── end IA-F ── */
 /* ── IA review · IA-C ── */
+/* Sample checks and the SSA queues: row forms sit inline in the action cell
+   and wrap under each other on a phone. */
+.ia-sample-form {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.375rem;
+  margin: 0;
+}
+.ia-sample-form__note {
+  height: 2rem;
+  min-width: 10rem;
+  padding: 0 0.5rem;
+  border: 1px solid var(--edify-border);
+  background: var(--edify-surface);
+  color: var(--edify-text);
+  font-size: var(--edify-text-label-size);
+}
+@media (max-width: 47.99rem) {
+  .ia-sample-form__note {
+    height: 2.75rem;
+    width: 100%;
+  }
+}
 /* ── end IA-C ── */
 /* ── IA review · IA-P ── */
 /* ── end IA-P ── */
@@ -6552,6 +6577,13 @@ main :is(#rpl-workflow-filters, #hr-workflow-filters) .edify-filter-actions {
 /* ── end IA-L ── */
 /* ── IA review · IA-R ── */
 /* ── end IA-R ── */
+
+/* The three work-plan ledgers retain readable columns within a scroll region. */
+.work-plan-detail-group { border-block-start: 1px solid var(--edify-border); min-inline-size: 0; }
+.work-plan-table--school, .work-plan-table--cluster { min-inline-size: 90rem; }
+.work-plan-table--non_school { min-inline-size: 48rem; }
+.work-plan-detail-group th[scope="row"] { min-inline-size: 12rem; }
+.work-plan-detail-group td { overflow-wrap: anywhere; }
 
 /* Compact dashboard side panels adapt to their own width, not the viewport. */
 .rpl-mix { container-type: inline-size; }

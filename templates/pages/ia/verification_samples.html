@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load table_pagination %}
 
 {% block title %}Sample Checks · Edify{% endblock %}
@@ -37,7 +38,7 @@
           {% paginate samples "samples_page" as samples_pager %}
 {% for s in samples_pager.rows %}
           <tr>
-            <td class="px-6 py-3" data-record-title><a href="/ia/verification/{{ s.activity_id }}/" class="font-semibold edify-primary-text">{{ s.school }}</a><p class="edify-text-caption text-slate-500">{{ s.activity_type }}</p></td>
+            <td class="px-6 py-3" data-record-title><a href="/ia/verification/{{ s.activity_id }}/" class="font-semibold edify-primary-text">{% school_identity s.school s.school_code %}</a><p class="edify-text-caption text-slate-500">{{ s.activity_type }}</p></td>
             <td class="px-6 py-3" data-label="Original verifier">{{ s.original_verifier }}</td>
             <td class="px-6 py-3 tabular-nums" data-label="Drawn">{{ s.sampled_at|date:"d M Y" }}</td>
             <td class="px-6 py-3" data-label="Outcome">

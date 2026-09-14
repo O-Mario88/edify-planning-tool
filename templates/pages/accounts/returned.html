@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 
 {% block title %}Returned Items - Edify Command Center{% endblock %}
 
@@ -47,7 +48,7 @@ Track finance items returned to staff or partners for correction of receipts, am
 </td>
 <!-- School -->
 <td class="px-6 py-4" data-label="School / Scope">
-<div class="font-semibold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.activity.school.name|default:"Cluster-wide" item.activity.school.id %}</div>
 </td>
 <!-- Amount -->
 <td class="px-6 py-4 text-right font-bold text-slate-800 tabular-nums" data-label="Amount">

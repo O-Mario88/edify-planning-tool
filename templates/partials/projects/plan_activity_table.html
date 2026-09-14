@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% load table_pagination %}
 {% comment %}Project My-Plan activity table. Params: title, rows, empty, readonly{% endcomment %}
 <div class="card overflow-hidden">
@@ -21,7 +22,7 @@
       <tbody class="divide-y divide-slate-50">
         {% for r in rows_pager.rows %}
         <tr class="hover:bg-slate-50/50">
-          <td class="px-5 py-2.5" data-record-title><span class="text-[12px] font-bold text-slate-700">{{ r.school }}</span><span class="block edify-text-caption font-semibold text-slate-400">{{ r.district }}</span></td>
+          <td class="px-5 py-2.5" data-record-title><span class="text-[12px] font-bold text-slate-700">{% school_identity r.school r.school_id %}</span><span class="block edify-text-caption font-semibold text-slate-400">{{ r.district }}</span></td>
           <td class="px-3 py-2.5 edify-text-caption font-semibold text-slate-500 whitespace-nowrap" data-label="Project">{{ r.project }}</td>
           <td class="px-3 py-2.5 edify-text-caption font-semibold text-slate-500 whitespace-nowrap" data-label="Date">{% if r.planned_date %}{{ r.planned_date|date:"M j" }}{% else %}—{% endif %}</td>
           <td class="px-3 py-2.5 edify-text-caption font-semibold text-slate-600" data-label="Purpose">{{ r.purpose|truncatechars:30 }}</td>

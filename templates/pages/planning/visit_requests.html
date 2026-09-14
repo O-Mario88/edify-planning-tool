@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load frontend_filters %}
 
 {% block title %}Visit Requests - Edify Planning Tool{% endblock %}
@@ -40,7 +41,7 @@
     <tbody>
     {% for a in mine %}
       <tr class="border-t edify-border" data-visit-request-row="{{ a.id }}">
-        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{{ a.school.name }}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
+        <td class="px-4 py-2.5 font-semibold text-slate-800">{% if a.school %}{% school_identity a.school.name a.school.id %}{% else %}&mdash;{% endif %}<p class="edify-text-caption font-medium edify-text-muted">{{ a.get_activity_type_display }}</p></td>
         <td class="px-4 py-2.5 tabular-nums">{% if a.planned_date %}{{ a.planned_date|date:"j M Y" }}{% else %}&mdash;{% endif %}</td>
         <td class="px-4 py-2.5">{{ a.owner_name }}</td>
         <td class="px-4 py-2.5">

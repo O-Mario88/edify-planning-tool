@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load kpi_metrics table_pagination %}
 
 
@@ -131,7 +132,7 @@ Project
   <tbody>
     {% for sa in schools_pager.rows %}
     <tr>
-      <td data-record-title>{{ sa.school.name }}</td>
+      <td data-record-title>{% school_identity sa.school.name sa.school.id %}</td>
       <td>{{ sa.school.school_id|default:"—" }}</td>
       <td data-record-action><a href="/schools/{{ sa.school_id }}" class="btn btn-secondary">View Profile</a></td>
     </tr>

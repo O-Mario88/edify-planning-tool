@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load frontend_filters static table_pagination %}
 
 {% block title %}Loans — Edify{% endblock %}
@@ -82,7 +83,7 @@
         <tbody>
           {% for application in applications_pager.rows %}
           <tr>
-            <td data-record-title><strong>{{ application.school.name }}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.school.school_id }} · {{ application.school.account_owner_name_raw|default:"No portfolio owner" }}</small></td>
+            <td data-record-title><strong>{% school_identity application.school.name application.school.id %}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.school.school_id }} · {{ application.school.account_owner_name_raw|default:"No portfolio owner" }}</small></td>
             <td data-label="Request"><strong>{{ application.requested_amount|ugx }}</strong><small class="block text-[var(--edify-text-muted)]">{{ application.purpose.label }} · {{ application.get_repayment_frequency_display }} · {{ application.requested_term_months }} months</small></td>
             <td data-label="Applicant">{{ application.applicant_name }}<small class="block text-[var(--edify-text-muted)]">{{ application.applicant_phone }}</small></td>
             <td data-label="Submitted">{{ application.submitted_at|date:"d M Y" }}</td>
@@ -96,7 +97,7 @@
                   {% csrf_token %}
                   <select name="status" required class="w-full text-sm">{% for value, label in application.allowed_status_choices %}<option value="{{ value }}" {% if application.status == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select>
                   <input name="nextFollowUpOn" type="date" value="{{ application.next_follow_up_on|date:'Y-m-d' }}" class="w-full text-sm" aria-label="Next follow-up date">
-                  <select name="linkedLoanId" class="w-full text-sm" aria-label="Linked processed loan"><option value="">No linked loan</option>{% for loan in loans %}<option value="{{ loan.id }}" {% if application.linked_loan_id == loan.id %}selected{% endif %}>{{ loan.school.name }} · {{ loan.external_loan_reference }}</option>{% endfor %}</select>
+                  <select name="linkedLoanId" class="w-full text-sm" aria-label="Linked processed loan"><option value="">No linked loan</option>{% for loan in loans %}<option value="{{ loan.id }}" {% if application.linked_loan_id == loan.id %}selected{% endif %}>{% school_identity loan.school.name loan.school.id %} · {{ loan.external_loan_reference }}</option>{% endfor %}</select>
                   <textarea name="note" required rows="2" class="w-full text-sm" placeholder="Follow-up note"></textarea>
                   <button type="submit" class="btn btn-primary h-8 w-full">Save follow-up</button>
                 </form>
@@ -354,7 +355,7 @@
           {% for loan in loans_pager.rows %}
           <tr>
             <td data-record-title><strong>{{ loan.external_loan_reference }}</strong>{% if loan.assigned_officer_reference %}<small class="block text-[var(--edify-text-muted)]">Officer {{ loan.assigned_officer_reference }}</small>{% endif %}</td>
-            <td data-label="School"><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{{ loan.school.name }}</a><small class="block text-[var(--edify-text-muted)]"><span class="tabular-nums">{{ loan.school.school_id }}</span> · {{ loan.school.district.name|default:"District not set" }}{% if loan.school.region %} · {{ loan.school.region.name }}{% endif %}</small></td>
+            <td data-label="School"><a class="font-bold text-[var(--edify-accent-text)] hover:underline" href="{% url 'frontend:school_detail' loan.school.school_id %}">{% school_identity loan.school.name loan.school.id %}</a><small class="block text-[var(--edify-text-muted)]"><span class="tabular-nums">{{ loan.school.school_id }}</span> · {{ loan.school.district.name|default:"District not set" }}{% if loan.school.region %} · {{ loan.school.region.name }}{% endif %}</small></td>
             <td data-label="MFI"><strong>{{ loan.mfi.name }}</strong></td>
             <td data-label="Purpose">{{ loan.purpose.label }}{% if loan.purpose.is_edtech %}<span class="ml-2">{% include "components/badge.html" with tone="info" label="EdTech" %}</span>{% endif %}</td>
             <td data-label="Amount"><span class="font-semibold">{% if loan.disbursed_amount is not None %}{{ loan.disbursed_amount|ugx }}{% else %}Not disbursed{% endif %}</span><small class="block text-[var(--edify-text-muted)]">Approved {% if loan.approved_amount is not None %}{{ loan.approved_amount|ugx }}{% else %}—{% endif %}</small></td>

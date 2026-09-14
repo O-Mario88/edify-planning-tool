@@ -1,3 +1,4 @@
+{% load school_identity %}
 
 {% load kpi_metrics %}
 {% load table_pagination %}
@@ -84,7 +85,7 @@ runs the form's own validation where submit() skips it.{% endcomment %}
 {% for s in stalled_pager.rows %}
 <tr class="hover:bg-slate-50/40">
 <td class="px-5 py-3 tabular-nums text-slate-500">{{ s.code }}</td>
-<td class="px-4 py-3 font-bold text-slate-800" data-record-title>{{ s.school }}<span class="block edify-text-caption text-slate-400 font-semibold">{{ s.district }}</span></td>
+<td class="px-4 py-3 font-bold text-slate-800" data-record-title>{% school_identity s.school s.code %}<span class="block edify-text-caption text-slate-400 font-semibold">{{ s.district }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="Slot">{{ s.slot }}<span class="block edify-text-caption text-slate-400">{{ s.intervention|title }}</span></td>
 <td class="px-4 py-3 text-slate-600" data-label="Owner">{{ s.assignedTo }}</td>
 <td class="px-5 py-3" data-label="Blocked on"><span class="edify-text-caption font-extrabold px-2 py-0.5 rounded-pill bg-rose-50 text-rose-700">{{ s.blocker }}</span></td>

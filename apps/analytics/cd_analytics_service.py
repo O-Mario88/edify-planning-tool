@@ -3416,6 +3416,7 @@ class CDAnalyticsService:
             qs = schools.exclude(current_fy_ssa_status="done")[:200]
             rows = [
                 {
+                    "school_id": s.id,
                     "school": s.name,
                     "district": (
                         s.district.name if s.district_id and s.district else "—"
@@ -3434,6 +3435,7 @@ class CDAnalyticsService:
             for s in School.objects.filter(id__in=list(low_ids)):
                 rows.append(
                     {
+                        "school_id": s.id,
                         "school": s.name,
                         "district": (
                             s.district.name if s.district_id and s.district else "—"
@@ -3452,6 +3454,7 @@ class CDAnalyticsService:
             for s in School.objects.filter(id__in=miss):
                 rows.append(
                     {
+                        "school_id": s.id,
                         "school": s.name,
                         "district": (
                             s.district.name if s.district_id and s.district else "—"

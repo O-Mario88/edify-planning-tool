@@ -736,6 +736,7 @@ def funding_impact(
             )
             quadrants[key].append(
                 {
+                    "school_id": row["school_id"] if show_names else "",
                     "school": school_names.get(row["school_id"], "School")
                     if show_names
                     else "(school withheld)",

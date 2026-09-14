@@ -29,6 +29,7 @@ from urllib.parse import urlencode
 
 from django.db.models import Q
 
+from apps.frontend.work_plan_tables import detail_fields, grouped_tables, work_plan_action
 from apps.activities.models import Activity
 from apps.core.activity_types import (
     CLUSTER_MEETING_TYPES,
@@ -382,6 +383,7 @@ def build_work_plan_context(user, params) -> dict:
             project_ids.add(a.project_id)
 
     name_map: dict[str, str] = {}
+    recipient_map: dict[str, str] = {}
     if staff_ids:
         from apps.accounts.models import StaffProfile, User
 
@@ -393,6 +395,9 @@ def build_work_plan_context(user, params) -> dict:
             if display:
                 name_map[profile.id] = display
                 if profile.user_id:
+                    recipient_map[profile.id] = profile.user_id
+                    recipient_map[profile.user_id] = profile.user_id
+                if profile.user_id:
                     name_map[profile.user_id] = display
         unresolved = staff_ids - set(name_map)
         if unresolved:
@@ -400,6 +405,7 @@ def build_work_plan_context(user, params) -> dict:
                 id__in=unresolved
             ).values_list("id", "name"):
                 name_map[user_id] = user_name or "Staff"
+                recipient_map[user_id] = user_id
 
     partner_map: dict[str, str] = {}
     if partner_ids:
@@ -456,6 +462,14 @@ def build_work_plan_context(user, params) -> dict:
         "url": _query_string(query_state, flag=None),
     }
     window_month_set = set(window_months)
+
+    period_label = {
+        "month": f"{calendar.month_name[period]} {_month_year(fy_int, period)}"
+        if view == "month"
+        else "",
+        "quarter": f"{period} FY{fy}",
+        "fy": f"FY{fy}",
+    }[view] or f"FY{fy}"
 
     rows: list[dict] = []
     period_budget = 0
@@ -575,6 +589,13 @@ def build_work_plan_context(user, params) -> dict:
                 "description": "",
             }
 
+        recipient_id = a.monitored_by_staff_id if a.delivery_type == "partner" else a.responsible_staff_id
+        table_action = work_plan_action(
+            a, owned=owned, enabled=actions_enabled,
+            recipient=recipient_map.get(recipient_id),
+            recipient_name=name_map.get(recipient_id, "responsible person"),
+        )
+
         place = (
             a.venue
             or (a.school.name if a.school_id else "")
@@ -607,6 +628,9 @@ def build_work_plan_context(user, params) -> dict:
                 "id": a.id,
                 "date_label": _date_label(anchor, a.end_date),
                 "band_month": band_month,
+                **detail_fields(a, group_key, period_label),
+                "table_action": table_action or action,
+                "responsible_person": name_map.get(recipient_id, "Unassigned"),
                 "group": group_key,
                 "group_label": group_label,
                 "name": a.activity_name_snapshot or a.get_activity_type_display(),
@@ -714,13 +738,7 @@ def build_work_plan_context(user, params) -> dict:
     )
     activities_this_month = base_qs.filter(_window_q(month_start, month_end)).count()
 
-    period_label = {
-        "month": f"{calendar.month_name[period]} {_month_year(fy_int, period)}"
-        if view == "month"
-        else "",
-        "quarter": f"{period} FY{fy}",
-        "fy": f"FY{fy}",
-    }[view] or f"FY{fy}"
+
 
     # Every tile is bound to its registry entry (apps.core.metrics): the
     # definition, unit, period and drilldown live with the metric, not in this
@@ -888,6 +906,7 @@ def build_work_plan_context(user, params) -> dict:
         "groups": groups,
         "fy_totals": fy_totals,
         "rows": rows,
+        "detail_tables": grouped_tables(rows),
         "rows_visible": rows_visible,
         "total_activities": len(activities),
         "completed_activities": completed_count,

@@ -165,6 +165,7 @@ MIDDLEWARE = [
     # writes the body, which is what GZipMiddleware requires. Skips streams;
     # see StreamSafeGZipMiddleware for why that matters here.
     "apps.core.middleware.StreamSafeGZipMiddleware",
+    "apps.core.school_identity_middleware.SchoolIdentityMiddleware",
     # Content-Security-Policy. Sits early so every response carries it,
     # including error pages — the ones most likely to be reached with a
     # crafted URL.

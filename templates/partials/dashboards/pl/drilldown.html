@@ -1,4 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% load school_identity %}
 {% load table_pagination %}
 {% load frontend_filters %}
 
@@ -41,7 +42,7 @@
       <tbody class="divide-y divide-slate-50">
         {% for a in activities_pager.rows %}
         <tr><td class="py-2 px-3 edify-text-caption font-semibold text-slate-700">{{ a.type }}</td>
-          <td class="py-2 px-3 edify-text-caption text-slate-500">{{ a.school }}</td>
+          <td class="py-2 px-3 edify-text-caption text-slate-500">{% school_identity a.school a.school_id %}</td>
           <td class="py-2 px-3 edify-text-caption text-slate-500">{{ a.owner }}</td>
           <td class="py-2 px-3 edify-text-caption font-semibold text-slate-600">{{ a.status }}</td></tr>
         {% empty %}<tr><td colspan="4" class="py-6 text-center text-[12px] text-slate-400 font-semibold">Nothing here.</td></tr>{% endfor %}

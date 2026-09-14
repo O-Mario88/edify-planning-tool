@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load frontend_filters %}
 {% load table_pagination %}
 
@@ -144,7 +145,7 @@ The MOU pays partners in two instalments: 50% of the planned activity cost up fr
 </div>
 </td>
 <td class="px-6 py-3" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity act.school.name|default:"Cluster-wide" act.school.id %}</div>
 </td>
 <td class="px-6 py-3 text-slate-500 font-medium" data-label="Activity Date">
 {{ act.scheduled_date|date:"M d, Y" }}
@@ -213,7 +214,7 @@ Pay 50% Advance
 </td>
 <!-- School -->
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity act.school.name|default:"Cluster-wide" act.school.id %}</div>
 </td>
 <!-- Staff -->
 <td class="px-6 py-4" data-label="Assigned Staff">

@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% comment %}
   School Visit Effectiveness workspace — one canonical analysis, role-scoped
   emphasis. All figures come from SchoolVisitEffectivenessAnalyticsService;
@@ -222,7 +223,7 @@
       <div class="flex flex-wrap items-start justify-between gap-2">
         <div>
           <p class="text-[13px] font-bold edify-text">
-            {% if item.can_link_school %}<a class="edify-primary-text hover:underline" href="/schools/{{ item.school_id }}">{{ item.school_name }}</a>{% else %}{{ item.school_name }}{% endif %}
+            {% if item.can_link_school %}<a class="edify-primary-text hover:underline" href="/schools/{{ item.school_id }}">{% school_identity item.school_name item.school_id %}</a>{% else %}{% school_identity item.school_name item.school_id %}{% endif %}
           </p>
           <p class="edify-text-caption edify-text-muted font-semibold">{{ item.location|default:"Location not recorded" }} · {{ item.activity.get_activity_type_display }} · {{ item.activity_date|date:"j M Y"|default:"Date not recorded" }}</p>
         </div>

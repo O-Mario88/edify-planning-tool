@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load kpi_metrics %}
 
 {% load frontend_filters %}
@@ -115,7 +116,7 @@
             <td class="px-4 py-3 font-semibold text-slate-800">{{ item.label }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.category }}</td>
             <td class="px-3 py-3 text-slate-600">{{ item.staff }}</td>
-            <td class="px-3 py-3 text-slate-600">{{ item.school|default:"—" }}</td>
+            <td class="px-3 py-3 text-slate-600">{% school_identity item.school|default:"—" item.school_id %}</td>
             <td class="px-3 py-3 text-slate-500">{{ item.planned_date|date:"j M Y" }}</td>
 {% if country_envelope.strategicReserveRequested %}            <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-800">{{ item.reference_amount_fmt }}</td>{% endif %}
             <td class="px-4 py-3 text-right font-bold tabular-nums text-slate-700">{{ item.operational_amount_fmt }}</td>

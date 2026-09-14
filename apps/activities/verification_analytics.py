@@ -119,6 +119,7 @@ def verification_analytics(principal, window_days: int | None = None) -> dict:
             {
                 "decided_at": d.decided_at,
                 "activity_id": a.id,
+                "school_id": a.school_id,
                 "school": a.school.name if a.school_id else "Cluster-wide",
                 "activity_type": a.get_activity_type_display(),
                 "submitter_id": key,

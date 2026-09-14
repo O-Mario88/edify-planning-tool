@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load table_pagination %}
 
 {% block title %}Returned Activities · Edify{% endblock %}
@@ -41,7 +42,7 @@
 </td>
 <!-- School -->
 <td class="px-6 py-4" data-label="School / Cluster">
-<div class="font-semibold text-slate-800 text-[12px]">{{ item.school_name }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.school_name item.school_id %}</div>
 </td>
 <!-- Owner -->
 <td class="px-6 py-4" data-label="CCEO / Staff">

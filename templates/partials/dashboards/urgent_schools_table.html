@@ -1,23 +1,16 @@
 {% load table_pagination %}
-{% comment %}
-Columns: School, District, Priority issue, Shipping address, Recommended
-response, Action.
+{% load school_identity %}
 
-The scheduling state ("scheduled for 9 Jul") sat next to the recommended
-response ("School Visit: 9 Jul") and repeated its date, so the column carries
-the school's shipping address instead. District has its own column rather than
-sitting as a caption under the school name, and the gap ("No SSA") is plain red
-text rather than an outlined pill — eight identical red badges down a column
-read as decoration rather than emphasis.
-{% endcomment %}
 <div class="pl-urgent-table-scroll overflow-x-auto">
   {% paginate urgent_schools "urgent_schools_page" as urgent_schools_pager %}
 <table class="pl-urgent-table w-full border-collapse text-left edify-text-caption" data-mobile-table="scroll">
     <caption class="sr-only">Schools needing urgent attention, what is already scheduled, and the next available workflow action</caption>
     <thead>
       <tr class="font-semibold uppercase tracking-[0.05em]">
-        <th scope="col" class="px-2.5 py-2">School</th>
         <th scope="col" class="px-2.5 py-2">District</th>
+        <th scope="col" class="px-2.5 py-2">School ID</th>
+        <th scope="col" class="px-2.5 py-2">School Name</th>
+        <th scope="col" class="px-2.5 py-2">Staff Name</th>
         <th scope="col" class="px-2.5 py-2">Priority issue</th>
         <th scope="col" class="px-2.5 py-2">Shipping address</th>
         <th scope="col" class="px-2.5 py-2">Recommended response</th>
@@ -27,17 +20,12 @@ read as decoration rather than emphasis.
     <tbody>
       {% for row in urgent_schools_pager.rows %}
       <tr>
+        <td class="px-2.5 py-2.5 align-top edify-text-muted">{{ row.district|default:"Not recorded" }}</td>
+        <td class="px-2.5 py-2.5 align-top">{% school_code row.school_id %}</td>
         <th scope="row" class="px-2.5 py-2.5 align-top">
           <a href="/schools/{{ row.school_id }}" class="font-semibold no-underline edify-text">{{ row.school }}</a>
-          {% if urgent_action_mode == "pl" %}
-          <span class="mt-1 inline-flex items-center rounded-pill px-1.5 py-0.5 font-semibold"
-                class="text-[12px] {% if row.owner_kind == 'pl' %}edify-info-soft edify-info-text{% else %}bg-[var(--edify-purple-light)] text-[var(--edify-purple-text)]{% endif %}">
-            {% if row.owner_kind == "pl" %}My portfolio{% else %}{{ row.owner_name }} · supervised{% endif %}
-          </span>
-          {% endif %}
         </th>
-
-        <td class="px-2.5 py-2.5 align-top edify-text-muted">{{ row.district }}</td>
+        <td class="px-2.5 py-2.5 align-top">{{ row.owner_name|default:"Unassigned" }}</td>
 
         <td class="px-2.5 py-2.5 align-top">
           <span class="font-bold edify-danger-text">{{ row.issue }}</span>
@@ -110,7 +98,7 @@ read as decoration rather than emphasis.
       </tr>
       {% empty %}
       <tr>
-        <td colspan="6" class="px-4 py-8 text-center font-semibold edify-text-muted">
+        <td colspan="8" class="px-4 py-8 text-center font-semibold edify-text-muted">
           No schools require urgent action in your portfolio.
         </td>
       </tr>

@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% load kpi_metrics table_pagination %}
 <div class="space-y-4" data-ia-outcome-workspace>
   <form id="ia-outcome-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="flex flex-wrap items-end gap-2.5 edify-surface p-3 border border-[var(--edify-border)] rounded-surface shadow-sm">
@@ -112,9 +113,9 @@
         <caption class="sr-only">Project-school evidence and collection actions</caption>
         <thead><tr><th scope="col">School / project</th><th scope="col">Domain</th><th scope="col">SSA scores</th><th scope="col">Evidence</th><th scope="col">Follow-up due</th><th scope="col">Account owner</th><th scope="col">Action</th></tr></thead>
         <tbody>{% for row in ia_evidence_page %}<tr>
-          <td><a class="block font-semibold edify-primary-text" href="/schools/{{ row.school_id }}">{{ row.school }}</a><span class="edify-text-muted" aria-hidden="true"> · </span><a class="block edify-text-caption edify-text-muted mt-1" href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
+          <td><a class="block font-semibold edify-primary-text" href="/schools/{{ row.school_id }}">{% school_identity row.school row.school_id %}</a><span class="edify-text-muted" aria-hidden="true"> · </span><a class="block edify-text-caption edify-text-muted mt-1" href="/projects/{{ row.project_id }}">{{ row.project }}</a></td>
           <td>{{ row.intervention }}</td><td title="Baseline → follow-up" class="tabular-nums">{{ row.baseline|default_if_none:"Missing" }} → {{ row.follow_up|default_if_none:"Missing" }}</td>
-          <td>{% if row.state == "overdue" or row.state == "declined" %}{% include "components/badge.html" with label=row.status tone="danger" %}{% elif row.measured %}{% include "components/badge.html" with label=row.status tone="success" %}{% else %}{% include "components/badge.html" with label=row.status tone="warning" %}{% endif %}</td><td>{{ row.due|default:"Not scheduled" }}</td><td>{{ row.owner }}</td><td><a class="btn btn-secondary h-8" title="{{ row.action }}" aria-label="{{ row.action }} — {{ row.school }}" href="/schools/{{ row.school_id }}">Review</a></td>
+          <td>{% if row.state == "overdue" or row.state == "declined" %}{% include "components/badge.html" with label=row.status tone="danger" %}{% elif row.measured %}{% include "components/badge.html" with label=row.status tone="success" %}{% else %}{% include "components/badge.html" with label=row.status tone="warning" %}{% endif %}</td><td>{{ row.due|default:"Not scheduled" }}</td><td>{{ row.owner }}</td><td><a class="btn btn-secondary h-8" title="{{ row.action }}" aria-label="{{ row.action }} — {% school_identity row.school row.school_id %}" href="/schools/{{ row.school_id }}">Review</a></td>
         </tr>{% empty %}<tr><td colspan="7">{% include "components/empty_state.html" with title="No matching records" message="No assessment records match this selection." hint="Choose another project or collection need to review its evidence." compact="true" %}</td></tr>{% endfor %}</tbody>
       </table></div></div>
       {% paginate ia_evidence_page.paginator.object_list "page" 25 as evidence_pager %}

@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% comment %}
 Team Core Oversight — read-only by construction.
 
@@ -41,7 +42,7 @@ that ask is re-derived server-side before it is written.
             {% for r in oversight_rows %}
               <tr>
                 <th scope="row" class="core-oversight-table__school" data-label="School" data-record-title>
-                  <span class="core-oversight-table__name">{{ r.name }}</span>
+                  <span class="core-oversight-table__name">{% school_identity r.name r.school_id %}</span>
                   <span class="core-oversight-caption edify-text-caption edify-text-muted">{{ r.district_name }}</span>
                 </th>
                 <td data-label="Responsible CCEO">{{ r.responsible_cceo }}</td>

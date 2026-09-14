@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% comment %}
 The action board. Carries `edify-record-table` so it keeps the shared
 horizontally scrollable table behavior
@@ -53,7 +54,7 @@ the transition took.
         {% for r in rows %}
         <tr>
           <th scope="row" class="px-3 py-2.5 align-top" data-record-title>
-            <a href="/schools/{{ r.school_pk }}" class="font-semibold no-underline edify-text">{{ r.school }}</a>
+            <a href="/schools/{{ r.school_pk }}" class="font-semibold no-underline edify-text">{% school_identity r.school r.school_pk %}</a>
             <span class="block edify-text-caption edify-text-subtle mt-0.5">{{ r.district }}</span>
           </th>
           {% comment %}

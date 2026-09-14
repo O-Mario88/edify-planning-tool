@@ -394,6 +394,10 @@ def _compose_context(request, *, draft=None, forward_thread=None):
             if (u := users.get(rid))
         ]
 
+    allowed_recipients = services.recipients(request.user)
+    if not draft and request.GET.get("to"):
+        pre_to = [u for u in allowed_recipients if str(u["id"]) == request.GET["to"]]
+
     import json
 
     return {
@@ -409,7 +413,7 @@ def _compose_context(request, *, draft=None, forward_thread=None):
         "pre_body": body,
         "pre_category": category,
         "categories": services.categories_for_role(request.user),
-        "recipients": services.recipients(request.user),
+        "recipients": allowed_recipients,
         "suggested": suggestions,
         "draft": draft,
         "drafts": services.drafts_for_user(request.user),

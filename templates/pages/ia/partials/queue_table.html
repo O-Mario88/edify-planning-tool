@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% load frontend_filters %}
 <div data-component="data-table" class="edify-data-table rounded-surface border border-[var(--edify-border)] overflow-hidden">
   <div class="overflow-x-auto">
@@ -25,7 +26,7 @@
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">FY {{ act.fy }} · {{ act.quarter }}</span>
           </td>
           <td>
-            <strong class="block">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+            <strong class="block">{% school_identity act.schoolName|default:"Cluster-wide" act.schoolId %}</strong>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.clusterName|default:"No cluster" }}</span>
           </td>
           <td>{{ act.activityType|title|replace_underscore }}</td>
@@ -73,7 +74,7 @@
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">{{ act.activityType|title|replace_underscore }}</a>
-          <strong class="block truncate">{{ act.schoolName|default:"Cluster-wide" }}</strong>
+          <strong class="block truncate">{% school_identity act.schoolName|default:"Cluster-wide" act.schoolId %}</strong>
           <span class="block edify-text-caption text-[var(--edify-text-muted)]">#{{ act.id|slice:":8" }} · {{ act.age_label }} old</span>
         </div>
         <span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span>

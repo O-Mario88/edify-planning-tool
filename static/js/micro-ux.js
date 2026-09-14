@@ -589,6 +589,7 @@
     var list = [];
     tables.forEach(function (table) {
       if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
+      if (table.dataset.tableFit === 'scroll') { unfitTable(table); return; }
       if (table.closest('table') !== table) return;
       var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
       if (!region) return;
@@ -982,6 +983,7 @@
     var region = table.closest('.edify-table-scroll-region') || scrollAncestor(table);
     if (!region || !desktopShell.matches) return;
     if (table.matches('.sr-only, .edify-visually-hidden, .sr-distribution-table')) return;
+      if (table.dataset.tableFit === 'scroll') { unfitTable(table); return; }
     unfitTable(table);
     var plan = columnPlan(table, region);
     if (!plan || !plan.fits) return;

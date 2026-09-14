@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load table_pagination %}
 
 {% block title %}Blocked Items - Edify Command Center{% endblock %}
@@ -52,7 +53,7 @@ Review activities that are currently gated because of missing compliance items. 
 </td>
 <!-- School -->
 <td class="px-6 py-4" data-label="School / Scope">
-<div class="font-semibold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.activity.school.name|default:"Cluster-wide" item.activity.school.id %}</div>
 </td>
 <!-- Blocked Reason -->
 <td class="px-6 py-4" data-label="Blocked Reason(s)">

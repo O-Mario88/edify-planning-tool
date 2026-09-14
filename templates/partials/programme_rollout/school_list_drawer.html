@@ -1,4 +1,5 @@
 {% extends "components/drawers/base_drawer.html" %}
+{% load school_identity %}
 
 {% comment %}
 The schools behind a Programme Rollout figure (owner, 2026-09-13): an officer's,
@@ -31,7 +32,7 @@ with the reason (apps.analytics.programme_rollout_service.school_list).
       <tbody>
         {% for row in rows|slice:":200" %}
         <tr>
-          <th scope="row" data-record-title><span><a href="{{ row.url }}">{{ row.name }}</a></span></th>
+          <th scope="row" data-record-title><span><a href="{{ row.url }}">{% school_identity row.name row.school_id %}</a></span></th>
           <td data-label="Officer">{{ row.officer|default:"—" }}</td>
           <td data-label="District · cluster">{{ row.district|default:"—" }}{% if row.cluster %} · {{ row.cluster }}{% endif %}</td>
           <td data-label="Where it stands">{{ row.detail }}</td>

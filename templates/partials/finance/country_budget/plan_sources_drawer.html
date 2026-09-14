@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% load table_pagination %}
 {% comment %}View Plan Sources drawer. Params: fy, month, month_label, rows, count{% endcomment %}
 <div x-data="{ active: true }" x-show="active" x-cloak
@@ -36,7 +37,7 @@
           <tr class="hover:bg-slate-50/50 text-[12px]">
             <td class="px-4 py-2.5">
               <p class="font-bold text-slate-800">{{ r.activity_type }}</p>
-              <p class="edify-text-caption font-semibold text-slate-400">{{ r.school }} · {{ r.planned_date|date:"M j, Y"|default:"—" }} · {{ r.delivery_type|title }}</p>
+              <p class="edify-text-caption font-semibold text-slate-400">{% school_identity r.school r.school_id %} · {{ r.planned_date|date:"M j, Y"|default:"—" }} · {{ r.delivery_type|title }}</p>
             </td>
             <td class="px-3 py-2.5 font-semibold text-slate-600">{{ r.staff }}</td>
             <td class="px-3 py-2.5 text-right font-bold text-slate-700 tabular-nums">{{ r.operational_cost_fmt }}</td>

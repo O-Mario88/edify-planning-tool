@@ -1,4 +1,5 @@
 {% extends "layouts/shell.html" %}
+{% load school_identity %}
 {% load frontend_filters %}
 
 {% block title %}Advances Queue - Edify Command Center{% endblock %}
@@ -78,7 +79,7 @@ Process approved fund requests ready for disbursement. These advances are releas
 <!-- School -->
 <td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2 max-xl:text-right" data-label="School / Cluster">
 <span class="xl:hidden edify-text-caption uppercase text-slate-400">School / Cluster</span>
-<div class="font-semibold text-slate-800 text-[12px]">{{ act.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity act.school.name|default:"Cluster-wide" act.school.id %}</div>
 </td>
 <!-- Type -->
 <td class="px-6 py-4 max-xl:flex max-xl:items-center max-xl:justify-between max-xl:gap-4 max-xl:px-0 max-xl:py-2" data-label="Activity Type">

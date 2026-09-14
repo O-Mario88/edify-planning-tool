@@ -1,3 +1,4 @@
+{% load school_identity %}
 
 {% load kpi_metrics %}
 {% load static %}
@@ -56,7 +57,7 @@ Verification Quality tab has no Map view, so they belong here for it.
               {% if item.is_overdue %}<span class="ia-status ia-status--danger">SLA risk</span>{% else %}<span class="ia-status ia-status--warning">Pending</span>{% endif %}
             </td>
             <td class="ia-queue-row__school">
-              <strong>{{ item.school }}</strong>
+              <strong>{% school_identity item.school item.school_id %}</strong>
               <span>{{ item.district }} · {{ item.activity_type }}</span>
             </td>
             <td class="ia-queue-row__owner">

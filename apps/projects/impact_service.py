@@ -870,6 +870,7 @@ def get_analytics(
             )
             adoption_rows.append(
                 {
+                    "school_id": school_id,
                     "school": school_objects[school_id].name
                     if school_id in school_objects
                     else "School",

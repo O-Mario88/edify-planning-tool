@@ -1,3 +1,4 @@
+{% load school_identity %}
 {% load frontend_filters %}
 {% comment %}
 The Publishing tab: which verified records have reached official reporting
@@ -29,7 +30,7 @@ panel).
 </td>
 <!-- School -->
 <td class="px-6 py-4">
-<div class="font-semibold text-slate-800 text-[12px]">{{ item.activity.school.name|default:"Cluster-wide" }}</div>
+<div class="font-semibold text-slate-800 text-[12px]">{% school_identity item.activity.school.name|default:"Cluster-wide" item.activity.school.id %}</div>
 </td>
 <!-- Type -->
 <td class="px-6 py-4">
