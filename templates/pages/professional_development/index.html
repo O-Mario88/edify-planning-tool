@@ -35,13 +35,18 @@
     </div>
   </div>
 
+  {% comment %}The compact short filter field the platform's filter bars use —
+  it was a bare "FY" word beside a borderless select, the word sitting below
+  the select's baseline (owner, 2026-09-14). Outside #pd-body, so the swap
+  never replaces it.{% endcomment %}
   <form hx-get="/my-professional-development" hx-target="#pd-body" hx-swap="innerHTML" hx-trigger="change" hx-push-url="true"
-        class="edify-filter-bar" aria-label="Professional development filters">
-    <span class="uppercase tracking-wider edify-text-caption">FY</span>
-    <select aria-label="Fiscal year" name="fy" class="bg-transparent focus:outline-none cursor-pointer font-semibold">
+        class="edify-filter-bar" data-component="filter-toolbar" aria-label="Professional development filters">
+    <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="pd-fy" class="edify-filter-label">Financial year</label>
+    <select id="pd-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
       {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}
-    </select>
+    </select></div>
   </form>
+
 
   <div id="pd-body">
     {% include "partials/professional_development/body.html" %}

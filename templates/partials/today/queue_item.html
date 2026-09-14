@@ -41,11 +41,11 @@ snoozed.
     <a href="{{ todo.action_url|default:'/todos' }}" class="btn btn-ghost h-8">{% if todo.today.operations %}Open{% else %}{{ todo.action_label|default:"Open" }}{% endif %}</a>
     <details class="relative today-snooze">
       <summary class="list-none cursor-pointer btn btn-ghost h-8" aria-label="Snooze {{ todo.title }}">Snooze</summary>
-      <div class="absolute right-0 z-20 mt-1 w-44 rounded-surface border border-slate-200 edify-surface shadow-lg p-1">
+      <div class="absolute right-0 z-20 mt-1 w-44 rounded-surface border border-slate-200 edify-surface shadow-lg p-1" role="menu">
         {% for choice, label in snooze_choices %}
         <form hx-post="/today/snooze" hx-target="#{{ todo.today.slug }}" hx-swap="outerHTML" class="m-0">
           <input type="hidden" name="todo" value="{{ todo.id }}"><input type="hidden" name="choice" value="{{ choice }}"><input type="hidden" name="title" value="{{ todo.title }}">
-          <button type="submit" class="w-full text-left rounded-control px-2 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">{{ label }}</button>
+          <button type="submit" role="menuitem" class="w-full text-left rounded-control px-2 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50">{{ label }}</button>
         </form>
         {% endfor %}
       </div>

@@ -14,6 +14,30 @@ them, so a view it is not looking at costs nothing and finds nothing.
 <script defer src="{% static 'js/target-distribution.js' %}?v=20260824envelope1"></script>
 <script>
 (() => {
+  /* The view panel is focusable (tabindex="0") so a keyboard reader can land
+     on it. A mouse click on its blank space focuses it as well, and the next
+     arrow or Page Down then drew the platform focus ring round a page-tall
+     panel: two stray blue lines down the content's left and right edges
+     (owner, 2026-09-14). Focus that arrived by pointer is marked so
+     ia-master.css can drop that ring; focus that arrived by keyboard keeps it.
+     Delegated on `document` — a tab press replaces the panel element. */
+  const PANEL_ID = 'priority-workspace-view';
+  let viaPointer = false;
+  document.addEventListener('pointerdown', () => { viaPointer = true; }, true);
+  document.addEventListener('keydown', (event) => { if (event.key === 'Tab') viaPointer = false; }, true);
+  document.addEventListener('focusin', (event) => {
+    const panel = event.target;
+    if (!(panel instanceof HTMLElement) || panel.id !== PANEL_ID) return;
+    if (viaPointer) panel.dataset.pointerFocus = '';
+    else delete panel.dataset.pointerFocus;
+  });
+  document.addEventListener('focusout', (event) => {
+    if (event.target instanceof HTMLElement && event.target.id === PANEL_ID) delete event.target.dataset.pointerFocus;
+  });
+})();
+</script>
+<script>
+(() => {
   /* Priorities is one page with two tabs (owner, 2026-09-07), and a tab press
      replaces this view's whole panel. So every element is looked up when it is
      USED, never captured once at load: a reference taken here would point at a

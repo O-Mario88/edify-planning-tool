@@ -43,7 +43,7 @@ filter with nothing to choose is not drawn. Tabs are links (?view=…); the old
     <input type="hidden" name="view" value="{{ filters.view }}">
     {% for field in filters.fields %}
     {% if field.options %}
-    <label class="cce-filter">
+    <label class="cce-filter platform-filter-compact">
       <span class="cce-filter__label">{{ field.label }}</span>
       <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
         {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}

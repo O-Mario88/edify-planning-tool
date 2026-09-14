@@ -71,9 +71,14 @@
     {% kpi_metric %}{% kpi_label %}Schedule conflicts{% endkpi_label %}{{ upcoming_conflicts_count }}{% kpi_helper %}{% if upcoming_conflicts_count %}Review before requesting leave{% else %}Calendar clear{% endif %}{% endkpi_helper %}{% endkpi_metric %}
     {% kpi_metric %}{% kpi_label %}Team availability{% endkpi_label %}{{ avg_team_availability }}%{% kpi_helper %}Current team capacity{% endkpi_helper %}{% endkpi_metric %}
   {% endkpi_strip %}
-  <details class="analytics-context-disclosure">
-    <summary>Leave guidance and policy</summary>
-    <p>{% if upcoming_conflicts_count %}Resolve planning conflicts before confirming time away.{% elif pending_requests_count %}Your request is in the approval flow. Coverage activates after approval.{% else %}Review your balance and team calendar before requesting leave.{% endif %}{% if can_view_leave_policies %} <a href="{% url 'frontend:leave_policies' %}">View leave policy</a>{% endif %}</p>
+  {% comment %}The platform disclosure panel (Team Oversight's owner group): a padded
+  summary and a padded body inside one card — it was a bare summary line with
+  its sentence flush to the page edge (owner, 2026-09-14).{% endcomment %}
+  <details class="edify-record-group card p-0 overflow-hidden" aria-labelledby="pto-guidance-title">
+    <summary class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
+      <h2 id="pto-guidance-title" class="text-sm font-semibold">Leave guidance and policy</h2>
+    </summary>
+    <p class="px-4 py-3">{% if upcoming_conflicts_count %}Resolve planning conflicts before confirming time away.{% elif pending_requests_count %}Your request is in the approval flow. Coverage activates after approval.{% else %}Review your balance and team calendar before requesting leave.{% endif %}{% if can_view_leave_policies %} <a href="{% url 'frontend:leave_policies' %}">View leave policy</a>{% endif %}</p>
   </details>
 
   <div class="pto-workspace">

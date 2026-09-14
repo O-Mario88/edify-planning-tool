@@ -43,7 +43,7 @@ which files an owner-approved visit request — nothing is scheduled here.
     </header>
 
     <form method="get" class="edify-filter-bar" aria-label="Sample filters" x-data>
-      <label class="cce-filter">
+      <label class="cce-filter platform-filter-compact">
         <span class="cce-filter__label">Outcome</span>
         <select name="status" @change="$el.form.requestSubmit()" class="cce-filter__select">
           <option value="">All outcomes</option>
@@ -52,7 +52,7 @@ which files an owner-approved visit request — nothing is scheduled here.
           <option value="disputed"{% if status == "disputed" %} selected{% endif %}>Disputed</option>
         </select>
       </label>
-      <label class="cce-filter">
+      <label class="cce-filter platform-filter-compact">
         <span class="cce-filter__label">Record</span>
         <select name="subject" @change="$el.form.requestSubmit()" class="cce-filter__select">
           <option value="">Activities and SSA</option>

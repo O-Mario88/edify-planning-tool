@@ -197,10 +197,20 @@ class="platform-filter-bar grid grid-cols-2 md:grid-cols-4 gap-2.5"
 </form>
 </div>
 
-<details class="rounded-control border border-slate-200 p-3">
-<summary class="text-sm font-semibold cursor-pointer">Request totals and approval status</summary>
+{% comment %}The platform disclosure panel (Team Oversight's owner group): title over
+a muted caption in a padded summary, the totals in a padded body. It was a
+bare triangle and a bold line in a thin box (owner, 2026-09-14).{% endcomment %}
+<details class="edify-record-group card p-0 overflow-hidden" aria-labelledby="fund-requests-totals-title">
+<summary class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
+<div class="min-w-0">
+<h2 id="fund-requests-totals-title" class="text-sm font-semibold">Request totals and approval status</h2>
+<p class="edify-text-caption edify-text-muted">This month's requested, awaiting, approved and ready-to-disburse amounts.</p>
+</div>
+</summary>
+<div class="p-4">
 <div id="fund-requests-kpis">
 {% include "partials/fund_requests/kpis.html" %}
+</div>
 </div>
 </details>
 

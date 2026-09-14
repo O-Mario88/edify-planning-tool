@@ -14,19 +14,28 @@ drops this markup into whichever host page the reader is on, and the
 stylesheet is scoped to this class. Left on the page around the rail it
 styled only the view you happened to enter from.{% endcomment %}
 <div class="ia-master team-distribution-workspace space-y-5" aria-labelledby="team-distribution-title">
-  <header class="edify-page-header ia-master__header">
+  {% comment %}The canonical page header, the same as the Target Distribution
+  view beside it: state chips in the controls slot, and the year below it as
+  the compact short filter field rather than a full-width box (owner,
+  2026-09-14).{% endcomment %}
+  <header class="edify-page-header">
     <div class="edify-page-header__lead"><p class="edify-page-eyebrow">{% if can_allocate %}Program Lead · Team Target Distribution{% else %}Platform oversight · Team Target Distribution{% endif %}</p><h1 id="team-distribution-title" class="edify-page-title edify-page-header__title">Team Priority Distribution</h1><p class="edify-page-subtitle edify-page-header__description">{% if can_allocate %}Every figure below is exactly what Impact Assessment approved for your team. Allocate it across yourself and your supervised CCEOs, then monitor quarterly spread and delivery without changing the received target.{% else %}Inspect approved team targets and delivery. Only the responsible Program Lead can allocate targets or approve quarterly spreads.{% endif %}</p></div>
-    <div class="ia-master__header-tools">
+    <div class="edify-page-header__controls">
       {% if latestUpdated %}<span class="ia-trust-chip" title="Latest database update"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Updated {{ latestUpdated|date:"j M · H:i" }}</span>{% endif %}
       <span class="ia-master__state">{% if can_allocate %}PL governed view{% else %}Read-only oversight{% endif %}</span>
     </div>
   </header>
 
   {% if cycle_years %}
-  <form method="get" action="/target-distribution/team" class="edify-filter-bar" aria-label="Team distribution filters"><label class="ia-master__fy" for="team-distribution-fy">Financial year<select id="team-distribution-fy" name="fy">{% for year in cycle_years %}<option value="{{ year }}" {% if year == fy %}selected{% endif %}>FY{{ year }}</option>{% endfor %}</select></label></form>
+  <form method="get" action="/target-distribution/team" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Team distribution filters">
+    <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="team-distribution-fy" class="edify-filter-label">Financial year</label>
+    <select id="team-distribution-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+      {% for year in cycle_years %}<option value="{{ year }}" {% if year == fy %}selected{% endif %}>FY{{ year }}</option>{% endfor %}
+    </select></div>
+  </form>
   {% endif %}
 
-  {% if messages %}<div class="space-y-2" aria-live="polite">{% for message in messages %}<div class="edify-alert" data-tone="{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
+  {% if messages %}<div class="space-y-2" aria-live="polite">{% for message in messages %}<div class="edify-note" data-tone="{% if message.tags == 'error' %}danger{% else %}{{ message.tags|default:'info' }}{% endif %}">{{ message }}</div>{% endfor %}</div>{% endif %}
 
   {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   {% if rows %}
@@ -72,6 +81,6 @@ styled only the view you happened to enter from.{% endcomment %}
   <dialog id="team-allocation-dialog" class="ia-dialog team-allocation-dialog" aria-labelledby="team-allocation-dialog-title"><div class="ia-dialog__shell"><header class="ia-dialog__header"><div class="ia-dialog__title"><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-8 0v2M12 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M19 8v6m-3-3h6"/></svg></span><div><h2 id="team-allocation-dialog-title">Team priority distribution</h2><small data-team-dialog-subtitle>Received from IA · PL + CCEOs</small></div></div><button type="button" class="ia-dialog__close" data-team-dialog-close aria-label="Close team distribution workspace">×</button></header><div id="team-allocation-dialog-body" class="ia-dialog__body"></div></div></dialog>
 
   {% else %}
-  <section class="ia-workspace ia-master-empty" aria-labelledby="no-team-targets-title"><strong id="no-team-targets-title">No approved team priorities for FY{{ fy }}</strong><p>Your priorities appear here after Impact Assessment distributes and approves the Uganda annual allocations. Nothing is invented in the meantime.</p></section>
+  {% with fy_text=fy|stringformat:"s" %}{% include "components/empty_state.html" with title="No approved team priorities for FY"|add:fy_text message="Your priorities appear here after Impact Assessment distributes and approves the Uganda annual allocations. Nothing is invented in the meantime." %}{% endwith %}
   {% endif %}
 </div>

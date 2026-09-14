@@ -10,7 +10,7 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 <input type="hidden" name="period" value="{{ period }}">
 
 <!-- FY Filter -->
-<div class="flex flex-col min-w-[90px]">
+<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[90px]">
 <span class="edify-filter-label">Fiscal year</span>
 <select name="fy" aria-label="Filter by fiscal year" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 <option value="2023" {% if fy == "2023" %}selected{% endif %}>FY 2023</option>
@@ -21,7 +21,7 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 </div>
 
 <!-- Quarter Filter -->
-<div class="flex flex-col min-w-[100px]">
+<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[100px]">
 <span class="edify-filter-label">Quarter</span>
 <select name="quarter" aria-label="Filter by quarter" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 {% for q in quarters %}
@@ -31,7 +31,7 @@ class="max-lg:hidden flex flex-wrap items-center gap-2.5 edify-surface p-3 borde
 </div>
 
 <!-- Month Filter -->
-<div class="flex flex-col min-w-[110px]">
+<div class="platform-filter-compact edify-filter-field--short flex flex-col min-w-[110px]">
 <span class="edify-filter-label">Month</span>
 <select name="month" aria-label="Filter by month" hx-trigger="change" class="h-9 px-3 text-[12px] font-semibold bg-slate-50 border border-slate-200 rounded-control edify-focus-surface focus:outline-none transition-all">
 {% for m in months %}

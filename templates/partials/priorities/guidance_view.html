@@ -45,7 +45,7 @@ notification link asked for (?open=…); it opens once the panel is on screen.
     <form method="get" action="/priorities/guidance" class="edify-filter-bar" aria-label="Team guidance filters" x-data>
       {% for field in guidance_filters %}
       {% if field.options|length > 1 %}
-      <label class="cce-filter">
+      <label class="cce-filter platform-filter-compact">
         <span class="cce-filter__label">{{ field.label }}</span>
         <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
           {% if field.blank %}<option value="">{{ field.blank }}</option>{% endif %}

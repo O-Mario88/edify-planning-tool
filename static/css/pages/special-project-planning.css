@@ -177,3 +177,8 @@
 }
 @media (prefers-reduced-motion: reduce) { .spp * { scroll-behavior: auto !important; transition-duration: .01ms !important; } }
 @media (prefers-contrast: more) { .spp-filter-panel, .spp-card, .spp-kpi, .spp-band { border-color: var(--edify-text-muted); } }
+
+/* Rail card headers stack their eyebrow over the title like the queue and
+   delivery titlebars; a flex row set "Project Planning Intelligence" and
+   "Selected school" side by side in two sizes. */
+.spp-intelligence > header, .spp-bulk > header { flex-direction: column; align-items: flex-start; gap: 2px; }

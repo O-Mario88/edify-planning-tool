@@ -31,7 +31,7 @@ filter drawn reaches the view and a filter with nothing to choose is not drawn.
   <form method="get" class="edify-filter-bar" aria-label="Impact report filters" x-data>
     {% for field in filters %}
     {% if field.options|length > 1 %}
-    <label class="cce-filter">
+    <label class="cce-filter platform-filter-compact">
       <span class="cce-filter__label">{{ field.label }}</span>
       <select name="{{ field.name }}" @change="$el.form.requestSubmit()" class="cce-filter__select">
         <option value="">{{ field.blank }}</option>

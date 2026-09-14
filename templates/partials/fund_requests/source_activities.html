@@ -1,11 +1,13 @@
 <!-- Source Activities Card -->
-<div class="edify-surface rounded-surface border border-slate-100 shadow-sm p-5 space-y-4 text-slate-700" id="fund-requests-source-activities">
-<div class="flex items-center justify-between border-b border-slate-100 pb-2">
-<h3 class="text-[14px] font-semibold text-slate-800">Source Activities from My Plan</h3>
+{% comment %}Card header, padded body and footer, and the platform empty state
+(owner, 2026-09-14).{% endcomment %}
+<div class="card p-0 overflow-hidden text-[var(--edify-text)]" id="fund-requests-source-activities">
+<div class="flex items-center justify-between gap-3 px-4 py-3 border-b edify-border">
+<h3 class="text-sm font-semibold">Source Activities from My Plan</h3>
 <a href="/my-plan" class="text-[12px] font-bold text-[var(--edify-chart-blue)] hover:underline">View All</a>
 </div>
 
-<div class="space-y-4">
+<div class="space-y-4 p-4">
 {% if source_activities %}
 {% for act in source_activities %}
 <div class="flex items-start gap-3">
@@ -34,13 +36,11 @@
 </div>
 {% endfor %}
 {% else %}
-<p class="text-[12px] text-slate-400 font-semibold italic text-center py-6">
-No activities scheduled in this week.
-</p>
+{% include "components/empty_state.html" with message="No activities scheduled in this week." compact="true" %}
 {% endif %}
 </div>
 
-<div class="border-t border-slate-100 pt-3 flex justify-between items-center text-[12px] font-bold">
+<div class="px-4 py-3 border-t edify-border flex justify-between items-center gap-3 text-[12px] font-bold">
 <span class="text-slate-400 font-semibold">Showing {{ source_activities|length }} of {{ source_activities|length }} source activities</span>
 <a href="/my-plan" class="text-[var(--edify-chart-blue)] hover:underline flex items-center gap-0.5">
 Open My Plan

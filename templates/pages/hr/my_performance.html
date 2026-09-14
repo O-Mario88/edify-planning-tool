@@ -35,11 +35,13 @@
   guidance_inbox_panel); ?guidance=<id> from a notification opens that piece.{% endcomment %}
   {% if request.user.active_role == "CCEO" %}<div hx-get="/priorities/guidance/inbox{% if request.GET.guidance %}?open={{ request.GET.guidance|urlencode }}{% endif %}" hx-trigger="load" hx-swap="outerHTML" aria-busy="true" data-team-guidance-inbox-loader></div>{% endif %}
   {% comment %}end S1{% endcomment %}
-  <form method="get" class="edify-filter-bar">
-    <label for="priority-year">Financial year</label>
-    <input id="priority-year" name="fy" type="number" min="2000" max="2100" value="{{ fy }}" class="rounded-control border px-3 py-1.5 w-24">
+  {% comment %}The platform's compact short filter field; it was a bare label, a
+  number box and Apply laid out as loose inline text (owner, 2026-09-14).{% endcomment %}
+  <form method="get" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Priority year">
+    <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="priority-year" class="edify-filter-label">Financial year</label>
+    <input id="priority-year" name="fy" type="number" min="2000" max="2100" value="{{ fy }}" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface"></div>
     <input type="hidden" name="tab" value="{{ tab }}">
-    <button class="btn btn-secondary" type="submit">Apply</button>
+    <button class="btn btn-secondary h-8 self-end" type="submit">Apply</button>
   </form>
   <nav data-edify-tablist class="flex flex-wrap" aria-label="Priority sections">
     {% for key, label in tab_defs %}
@@ -47,10 +49,12 @@
     {% endfor %}
   </nav>
   {% if tab == 'distributed' %}
-  <section class="edify-surface rounded-surface border overflow-hidden" aria-labelledby="distributed-title">
-    <header class="px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-      <h2 id="distributed-title" class="font-bold">Distributed priorities ({{ distributed.rows|length }})</h2>
-      <span class="edify-text-caption">{% if overall_pct is not None %}{{ overall_pct }}% verified achievement{% else %}Verified score awaits configured targets and weights{% endif %}</span>
+  <section class="card p-0 overflow-hidden" aria-labelledby="distributed-title">
+    <header class="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-b edify-border">
+      <div class="min-w-0">
+        <h2 id="distributed-title" class="text-sm font-semibold">Distributed priorities ({{ distributed.rows|length }})</h2>
+        <p class="edify-text-caption edify-text-muted">{% if overall_pct is not None %}{{ overall_pct }}% verified achievement{% else %}Verified score awaits configured targets and weights{% endif %}</p>
+      </div>
     </header>
     {% if distributed.rows %}
     <div class="overflow-x-auto" data-table-scroll-region tabindex="0" role="region" aria-label="Distributed priorities">
@@ -68,25 +72,32 @@
       </table>
     </div>
     {% else %}
-    <div class="p-5"><p class="font-semibold">No approved priorities distributed for FY{{ fy }}.</p><p class="edify-text-caption mt-1">Assigned targets appear here automatically after IA and your Program Lead approve the distribution.</p></div>
+    <div class="p-4">{% with fy_text=fy|stringformat:"s" %}{% with empty_message="No approved priorities distributed for FY"|add:fy_text|add:"." %}{% include "components/empty_state.html" with message=empty_message hint="Assigned targets appear here automatically after IA and your Program Lead approve the distribution." compact="true" %}{% endwith %}{% endwith %}</div>
     {% endif %}
   </section>
   <p class="edify-text-caption">Completion updates as work is completed. Verified achievement updates after verification; returned work is removed from achievement.</p>
   {% elif tab == 'values' or tab == 'spiritual' %}
-  <section class="edify-surface rounded-surface border overflow-hidden">
-    <header class="px-4 py-3"><h2 class="font-bold">{% if tab == 'values' %}Core Values{% else %}Spiritual Formation{% endif %}</h2><p class="edify-text-caption">Personal commitments and reflections, agreed in your performance conversation.</p></header>
+  <section class="card p-0 overflow-hidden">
+    <header class="px-4 py-3 border-b edify-border"><h2 class="text-sm font-semibold">{% if tab == 'values' %}Core Values{% else %}Spiritual Formation{% endif %}</h2><p class="edify-text-caption edify-text-muted">Personal commitments and reflections, agreed in your performance conversation.</p></header>
     <ul class="divide-y">{% if tab == 'values' %}{% for v in values %}{% include "partials/hr/_value_commitment_row.html" %}{% empty %}<li class="p-4">Commitments become available when your performance cycle opens.</li>{% endfor %}{% else %}{% for v in spiritual %}{% include "partials/hr/_value_commitment_row.html" %}{% empty %}<li class="p-4">Commitments become available when your performance cycle opens.</li>{% endfor %}{% endif %}</ul>
   </section>
   {% elif tab == 'development' %}
-  <section class="edify-surface rounded-surface border overflow-hidden">
-    <header class="px-4 py-3 flex items-center justify-between gap-2"><h2 class="font-bold">Professional Development</h2><a href="/my-professional-development" class="btn btn-secondary">Manage development</a></header>
+  <section class="card p-0 overflow-hidden">
+    <header class="px-4 py-3 flex flex-wrap items-center justify-between gap-3 border-b edify-border"><h2 class="text-sm font-semibold">Professional Development</h2><a href="/my-professional-development" class="btn btn-secondary h-8">Manage development</a></header>
     <ul class="divide-y">{% for d in development %}<li class="p-4"><strong>{{ d.description }}</strong><p class="edify-text-caption">{{ d.expected_impact|default:'' }}</p></li>{% empty %}<li class="p-4">Your professional development plans appear here.</li>{% endfor %}</ul>
   </section>
   {% endif %}
   {% if review %}
-  <details class="edify-surface rounded-surface border p-4">
-    <summary class="cursor-pointer font-semibold">Conversation records and amendments</summary>
-    <ul class="divide-y mt-2">
+  {% comment %}The platform disclosure panel (Team Oversight's owner group): title over
+  caption in a padded summary, the body in its own padded list.{% endcomment %}
+  <details class="edify-record-group card p-0 overflow-hidden" aria-labelledby="conversation-records-title">
+    <summary class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
+      <div class="min-w-0">
+        <h2 id="conversation-records-title" class="text-sm font-semibold">Conversation records and amendments</h2>
+        <p class="edify-text-caption edify-text-muted">Frozen conversation snapshots and the amendments made since.</p>
+      </div>
+    </summary>
+    <ul class="divide-y divide-[var(--edify-border)] px-4">
       {% for row in snapshots %}<li class="py-2 flex flex-wrap items-center justify-between gap-2"><span>{{ row.label }} · {{ row.snap.taken_at|date:"j M Y" }}</span><a class="btn btn-secondary" href="/performance-conversation/{{ review.id }}/document/{{ row.snap.window }}">View record</a></li>{% empty %}<li class="py-2 edify-text-caption">No conversation snapshots yet.</li>{% endfor %}
       {% for a in amendments %}<li class="py-2"><strong>{{ a.priority.outcome_statement }}</strong><p>{{ a.reason }} · {{ a.status|capfirst }} · {{ a.created_at|date:"j M Y" }}</p></li>{% endfor %}
     </ul>

@@ -167,3 +167,16 @@ main [data-oversight-workspace] form.oversight-period-filter > label.edify-page-
   #main-content [data-oversight-workspace] [data-team-send] :is(select, button) { min-height: 44px !important; }
   [data-oversight-workspace] [data-team-send] select { flex: 1 1 9rem; min-width: 0; }
 }
+
+/* The advanced Filters disclosure opens as a popover under its button. As an
+   in-flow flex item the <details> shrank to its summary's width, so the open
+   form was a 60px column of wrapped labels and squeezed selects, and it pushed
+   Export CSV to the middle of its height. */
+.oversight-filters { position: relative; }
+.oversight-filters > .card {
+  position: absolute;
+  inset-inline-start: 0;
+  z-index: 30;
+  inline-size: min(22rem, calc(100vw - 2rem));
+  box-shadow: var(--edify-shadow-lg) !important;
+}

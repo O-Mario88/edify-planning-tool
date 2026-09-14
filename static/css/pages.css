@@ -6605,3 +6605,17 @@ main :is(#rpl-workflow-filters, #hr-workflow-filters) .edify-filter-actions {
   .rpl-mix__meta { grid-column: 1 / -1; text-align: end; }
   .rpl-mix__label { white-space: normal; overflow-wrap: anywhere; }
 }
+
+/* ── UI consistency: lane C ── */
+/* A short-value selector (financial year, quarter, month) in a filter toolbar
+   keeps the compact width the Planning and Team Oversight toolbars show. The
+   toolbar contract grows every field to share the row, so a bar holding two or
+   three fields stretched "FY 2026" across a third of the page — and a bar
+   holding one (the Program Lead Dashboard) across all of it. The :is() carries
+   an id arm so this outranks the contract's compact rule in consistency.css. */
+main :is(#filters-form, .edify-filter-bar, [data-component="filter-toolbar"]) > .edify-filter-field.platform-filter-compact.edify-filter-field--short {
+  flex: 0 1 10rem !important;
+  min-inline-size: 7.5rem !important;
+  max-inline-size: 10rem !important;
+}
+/* ── end lane C ── */

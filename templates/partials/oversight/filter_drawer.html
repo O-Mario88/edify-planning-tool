@@ -23,7 +23,7 @@ selection can return an empty page and read as a broken one.
   {% if program_lead %}<input type="hidden" name="program_lead" value="{{ program_lead }}">{% endif %}
 
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">Activity type</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Activity type</span>
     <select name="activity_type" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Any</option>
       {% for value in filter_options.activity_types %}
@@ -33,7 +33,7 @@ selection can return an empty page and read as a broken one.
   </label>
 
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">Executed by</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Executed by</span>
     <select name="executor_type" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Anyone</option>
       <option value="staff" {% if advanced.executor_type == "staff" %}selected{% endif %}>Staff</option>
@@ -43,7 +43,7 @@ selection can return an empty page and read as a broken one.
 
   {% if filter_options.partners %}
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">Partner</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Partner</span>
     <select name="partner_id" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Any partner</option>
       {% for id, name in filter_options.partners %}
@@ -55,7 +55,7 @@ selection can return an empty page and read as a broken one.
 
   {% if filter_options.districts %}
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">District</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">District</span>
     <select name="district_id" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Any district</option>
       {% for id, name in filter_options.districts %}
@@ -66,7 +66,7 @@ selection can return an empty page and read as a broken one.
   {% endif %}
 
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">Context</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Context</span>
     <select name="context" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Any</option>
       <option value="school" {% if advanced.context == "school" %}selected{% endif %}>School work</option>
@@ -77,7 +77,7 @@ selection can return an empty page and read as a broken one.
   </label>
 
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">Status</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Status</span>
     <select name="status" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Any</option>
       {% for value in filter_options.statuses %}
@@ -87,7 +87,7 @@ selection can return an empty page and read as a broken one.
   </label>
 
   <label class="block">
-    <span class="block text-sm font-semibold mb-1">Risk</span>
+    <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Risk</span>
     <select name="risk" class="h-9 w-full px-3 rounded-control border edify-border text-sm">
       <option value="">Any</option>
       <option value="any" {% if advanced.risk == "any" %}selected{% endif %}>Has any risk</option>
@@ -97,9 +97,9 @@ selection can return an empty page and read as a broken one.
     </select>
   </label>
 
-  <div class="flex items-center gap-2 pt-1">
+  <div class="flex items-center justify-end gap-2 pt-1">
     <button type="submit" class="btn btn-primary h-8">Apply filters</button>
     <a href="{{ target_url }}?period={{ period }}&fy={{ fy }}&week={{ week }}&month={{ selected_month }}&quarter={{ selected_quarter }}{% if owner %}&owner={{ owner }}{% endif %}{% if program_lead %}&program_lead={{ program_lead }}{% endif %}"
-       class="btn h-8 inline-flex items-center">Clear</a>
+       class="btn btn-ghost h-8 inline-flex items-center">Clear</a>
   </div>
 </form>

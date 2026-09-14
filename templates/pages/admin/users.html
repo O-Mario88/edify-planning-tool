@@ -46,7 +46,7 @@ class="btn btn-secondary min-h-9"
 <button
 type="button"
 @click="showAddModal = true"
-class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hover text-white edify-text-caption font-semibold uppercase tracking-wider rounded-control shadow-sm transition-all focus:outline-none"
+class="btn btn-primary h-8 inline-flex items-center gap-1.5"
 >
 <svg class="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
 <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
@@ -135,10 +135,10 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
                 <input type="hidden" name="partner_id" value="{{ partner.id }}">
                 {% if partner.active_status %}
                 <input type="hidden" name="action" value="deactivate_partner">
-                <button type="submit" class="inline-flex min-h-9 items-center px-3 border border-amber-200 text-amber-700 hover:bg-amber-50 rounded-control edify-text-caption font-semibold uppercase transition-colors" aria-label="Deactivate {{ partner.name }}">Deactivate</button>
+                <button type="submit" class="btn btn-secondary h-8" aria-label="Deactivate {{ partner.name }}">Deactivate</button>
                 {% else %}
                 <input type="hidden" name="action" value="activate_partner">
-                <button type="submit" class="inline-flex min-h-9 items-center px-3 border border-emerald-200 text-emerald-700 hover:bg-emerald-50 rounded-control edify-text-caption font-semibold uppercase transition-colors" aria-label="Activate {{ partner.name }}">Activate</button>
+                <button type="submit" class="btn btn-secondary h-8" aria-label="Activate {{ partner.name }}">Activate</button>
                 {% endif %}
               </form>
               {% endif %}
@@ -154,7 +154,7 @@ class="flex items-center gap-1.5 px-3 py-2 edify-primary-solid edify-primary-hov
                   partnerToDeleteHasHistory = $el.dataset.partnerHistory === '1';
                   showPartnerDeleteModal = true
                 "
-                class="inline-flex min-h-9 items-center px-3 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-control edify-text-caption font-semibold uppercase transition-colors"
+                class="inline-flex min-h-8 items-center px-3 border border-rose-200 text-rose-600 hover:bg-rose-50 rounded-control edify-text-caption font-semibold transition-colors"
                 aria-label="Delete {{ partner.name }} permanently"
               >
                 Delete
@@ -267,7 +267,7 @@ Needs Real Email
 <td class="px-5 py-3.5 text-right space-x-1.5" data-record-action>
 <a
 href="{% url 'frontend:admin_user_detail' u.id %}"
-class="inline-flex items-center px-2.5 py-1 border border-slate-200 edify-primary-border-hover edify-primary-text-hover rounded-control edify-text-caption font-semibold uppercase transition-all edify-surface"
+class="btn btn-secondary h-8"
 >
 Configure
 </a>
@@ -320,7 +320,7 @@ aria-describedby="delete-partner-description"
         <input type="hidden" name="action" value="purge_partner">
         <input type="hidden" name="partner_id" :value="partnerToDelete">
         <button type="button" @click="showPartnerDeleteModal = false" class="btn btn-secondary min-h-11">Cancel</button>
-        <button type="submit" :disabled="partnerToDeleteHasHistory" class="inline-flex min-h-11 items-center justify-center rounded-control bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 text-[12px] font-bold uppercase tracking-wider text-white transition-colors">Delete Permanently</button>
+        <button type="submit" :disabled="partnerToDeleteHasHistory" class="inline-flex min-h-11 items-center justify-center rounded-control bg-rose-600 hover:bg-rose-700 disabled:opacity-50 disabled:cursor-not-allowed px-4 text-[12px] font-bold text-white transition-colors">Delete Permanently</button>
       </form>
     </div>
   </div>
@@ -531,13 +531,13 @@ class="rounded-control border-slate-300 edify-primary-text edify-primary-focus h
 <button
 type="button"
 @click="showAddModal = false"
-class="h-8 px-4 border border-slate-200 edify-surface hover:bg-slate-50 rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="btn btn-secondary h-8"
 >
 Cancel
 </button>
 <button
 type="submit"
-class="h-8 px-4 edify-primary-solid edify-primary-hover text-white rounded-control edify-text-caption font-semibold uppercase tracking-wider shadow-sm transition-all focus:outline-none"
+class="btn btn-primary h-8"
 >
 Provision & Set Password
 </button>

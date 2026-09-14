@@ -1,40 +1,45 @@
 {% load table_pagination %}
-<details class="ia-workspace" {% if selected_import_batch %}open{% endif %}>
-  <summary class="ia-workspace__header">
-    <span class="ia-workspace__title">
-      <strong>Import country priorities</strong>
-      <small>Impact Assessment stages and validates; the Country Director still confirms and publishes.</small>
-    </span>
-    <span class="ia-button ia-button--secondary">Upload / review</span>
+{% comment %}The platform disclosure panel (the Team Oversight owner group):
+title over a muted description in a padded summary, the platform +/−
+marker as the only affordance (the "Upload / review" pseudo-button is gone),
+and every part of the open body inside its own padded wrapper so nothing
+meets the card edge (owner, 2026-09-14).{% endcomment %}
+<details class="edify-record-group card p-0 overflow-hidden" aria-labelledby="priority-import-title" {% if selected_import_batch %}open{% endif %}>
+  {% comment %}No flex-wrap: the only other item is the +/− marker, and a
+  wrapping row dropped it onto a line of its own under a phone-width
+  description.{% endcomment %}
+  <summary class="flex items-center justify-between gap-3 px-4 py-3 border-b edify-border">
+    <div class="min-w-0 flex-1">
+      <h2 id="priority-import-title" class="text-sm font-semibold">Import country priorities</h2>
+      <p class="edify-text-caption edify-text-muted">Impact Assessment stages and validates; the Country Director still confirms and publishes.</p>
+    </div>
   </summary>
 
-  <form method="post" action="/target-distribution/import" enctype="multipart/form-data" class="ia-confirm-form">
+  <form method="post" action="/target-distribution/import" enctype="multipart/form-data" class="space-y-3 p-4">
     {% csrf_token %}
     <input type="hidden" name="fy" value="{{ fy }}">
-    <fieldset class="ia-confirm-form__wide">
-      <legend>Priority source file</legend>
-      <label for="priority-import-file">CSV or XLSX file
-        <input id="priority-import-file" type="file" name="priority_file" accept=".csv,.xlsx,.xlsm,text/csv" required aria-describedby="priority-import-help">
-      </label>
-      <p id="priority-import-help">Maximum 5 MB. The file is staged first; an upload never publishes or overwrites an approved master.</p>
-    </fieldset>
-    <div class="ia-confirm-form__actions">
-      <a class="ia-button ia-button--ghost" href="/target-distribution/import/template">Download template</a>
-      <button type="submit" class="ia-button ia-button--primary">Validate upload</button>
+    <label for="priority-import-file" class="block">
+      <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Priority source file · CSV or XLSX</span>
+      <input id="priority-import-file" class="ia-import-file" type="file" name="priority_file" accept=".csv,.xlsx,.xlsm,text/csv" required aria-describedby="priority-import-help">
+      <span id="priority-import-help" class="mt-1 block text-xs text-[var(--edify-text-muted)]">Maximum 5 MB. The file is staged first; an upload never publishes or overwrites an approved master.</span>
+    </label>
+    <div class="flex flex-wrap items-center justify-end gap-2">
+      {% include "components/button.html" with variant="ghost" label="Download template" href="/target-distribution/import/template" %}
+      {% include "components/button.html" with variant="primary" type="submit" label="Validate upload" %}
     </div>
   </form>
 
   {% if selected_import_batch %}
-  <section aria-labelledby="priority-import-preview-title">
-    <header class="ia-workspace__header">
-      <div class="ia-workspace__title">
-        <h3 id="priority-import-preview-title">{{ selected_import_batch.original_file_name }}</h3>
-        <p>{{ selected_import_batch.total_rows }} rows · {{ selected_import_batch.valid_rows }} valid · {{ selected_import_batch.invalid_rows }} blocked · status {{ selected_import_batch.get_status_display }}</p>
+  <section class="border-t edify-border" aria-labelledby="priority-import-preview-title">
+    <header class="flex flex-wrap items-center justify-between gap-3 px-4 py-3 border-b edify-border">
+      <div class="min-w-0">
+        <h3 id="priority-import-preview-title" class="text-sm font-semibold">{{ selected_import_batch.original_file_name }}</h3>
+        <p class="edify-text-caption edify-text-muted">{{ selected_import_batch.total_rows }} rows · {{ selected_import_batch.valid_rows }} valid · {{ selected_import_batch.invalid_rows }} blocked · status {{ selected_import_batch.get_status_display }}</p>
       </div>
       {% if selected_import_batch.status == "validated" %}
       <form method="post" action="/target-distribution/import/{{ selected_import_batch.id }}/commit">
         {% csrf_token %}
-        <button type="submit" class="ia-button ia-button--primary">Commit draft master</button>
+        {% include "components/button.html" with variant="primary" type="submit" label="Commit draft master" %}
       </form>
       {% endif %}
     </header>
@@ -60,6 +65,6 @@
     {% include "components/table_pager.html" with pager=import_rows param="import_rows_page" %}
   </section>
   {% elif import_batches %}
-  <p>Most recent: <a href="?fy={{ fy }}&import={{ import_batches.0.id }}">{{ import_batches.0.original_file_name }}</a> · {{ import_batches.0.get_status_display }}</p>
+  <p class="border-t edify-border px-4 py-3 edify-text-caption edify-text-muted">Most recent: <a class="edify-primary-text font-semibold" href="?fy={{ fy }}&import={{ import_batches.0.id }}">{{ import_batches.0.original_file_name }}</a> · {{ import_batches.0.get_status_display }}</p>
   {% endif %}
 </details>

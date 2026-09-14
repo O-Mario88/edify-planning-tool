@@ -26,14 +26,15 @@ register grammar of the CCE leadership pages (rpl-card, rpl-table).
     </div>
   </div>
 
+  {% comment %}The compact short filter field the platform's filter bars use, on the
+  canvas under the header — the year select had grown to the full page width on
+  a row of its own (owner, 2026-09-14).{% endcomment %}
   {% if fy_options|length > 1 %}
-  <form method="get" class="edify-filter-bar" aria-label="My Team filters" x-data>
-    <label class="cce-filter">
-      <span class="cce-filter__label">Financial year</span>
-      <select name="fy" @change="$el.form.requestSubmit()" class="cce-filter__select">
-        {% for option in fy_options %}<option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY {{ option }}</option>{% endfor %}
-      </select>
-    </label>
+  <form method="get" class="edify-filter-bar" data-component="filter-toolbar" aria-label="My Team filters" x-data>
+    <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="my-team-fy" class="edify-filter-label">Financial year</label>
+    <select id="my-team-fy" name="fy" @change="$el.form.requestSubmit()" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
+      {% for option in fy_options %}<option value="{{ option }}"{% if option == fy %} selected{% endif %}>FY {{ option }}</option>{% endfor %}
+    </select></div>
   </form>
   {% endif %}
 

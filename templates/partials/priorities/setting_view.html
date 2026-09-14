@@ -32,9 +32,11 @@ styled only the view you happened to enter from.{% endcomment %}
         {% if can_author %}Turn the FY{{ fy }} regional direction into measurable, approved and allocated priorities. Source wording stays intact until an authorized owner completes the definition.{% else %}The priority groups and milestones for FY{{ fy }} as the RVP and Country Director set them, with each milestone's progress from the plan.{% if not can_define and not can_approve and not can_allocate %} Your own targets come from the distribution on the other tabs.{% endif %}{% endif %}
       </p>
     </div>
-    <div class="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end">
+    {% comment %}The cycle state in the header's controls slot, as a plain
+    badge rather than a 36px stretched block (owner, 2026-09-14).{% endcomment %}
+    <div class="edify-page-header__controls">
       {% if cycle %}
-      <span class="edify-badge h-9 self-start px-3 sm:self-end" {% if cycle.status == "approved" or cycle.status == "active" or cycle.status == "allocated" %}data-tone="success"{% elif cycle.status == "rvp_review" %}data-tone="info"{% else %}data-tone="warning"{% endif %}>{{ cycle.get_status_display }}</span>
+      <span class="edify-badge" {% if cycle.status == "approved" or cycle.status == "active" or cycle.status == "allocated" %}data-tone="success"{% elif cycle.status == "rvp_review" %}data-tone="info"{% else %}data-tone="warning"{% endif %}>{{ cycle.get_status_display }}</span>
       {% endif %}
     </div>
   </header>
@@ -42,12 +44,13 @@ styled only the view you happened to enter from.{% endcomment %}
   {% if cycle_years %}
   {% comment %}Auto-submits on change, the same way the calendar filter form
   does. The empty x-data gives Alpine a scope to bind @change in; without it
-  the directive is inert.{% endcomment %}
-  <form method="get" action="/strategic-priorities" class="edify-filter-bar" aria-label="Priority filters" x-data @change="$el.submit()">
-    <label for="priority-fy" class="mb-1 block text-[12px] font-semibold text-slate-500">Financial year</label>
-    <select id="priority-fy" name="fy" class="h-9 rounded-control border border-slate-200 edify-surface px-3 text-[12px] font-semibold text-slate-700">
+  the directive is inert. The compact short field the other Priorities views
+  use, not a stacked label over a hand-sized select (owner, 2026-09-14).{% endcomment %}
+  <form method="get" action="/strategic-priorities" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Priority filters" x-data @change="$el.submit()">
+    <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="priority-fy" class="edify-filter-label">Financial year</label>
+    <select id="priority-fy" name="fy" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
       {% for year in cycle_years %}<option value="{{ year }}" {% if year == fy %}selected{% endif %}>FY{{ year }}</option>{% endfor %}
-    </select>
+    </select></div>
   </form>
   {% endif %}
 
@@ -207,10 +210,6 @@ styled only the view you happened to enter from.{% endcomment %}
 
   {% else %}
   {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
-  <section class="edify-surface rounded-surface border border-slate-100 p-8 text-center" aria-labelledby="no-cycle-title">
-    <span class="mx-auto flex h-11 w-11 items-center justify-center rounded-control bg-slate-100 text-slate-500" aria-hidden="true"><svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M7 3.5h8l4 4V20H7z"/><path d="M15 3.5V8h4"/></svg></span>
-    <h2 id="no-cycle-title" class="mt-3 text-[14px] font-bold text-slate-800">No governed priority cycle for FY{{ fy }}</h2>
-    <p class="mx-auto mt-1 max-w-xl text-[12px] leading-5 text-slate-500">Choose an available financial year above. Draft source priorities are never invented or copied across years automatically.</p>
-  </section>
+  {% with fy_text=fy|stringformat:"s" %}{% include "components/empty_state.html" with title="No governed priority cycle for FY"|add:fy_text message="Choose an available financial year above. Draft source priorities are never invented or copied across years automatically." %}{% endwith %}
   {% endif %}
 </div>

@@ -23,23 +23,19 @@ styled only the view you happened to enter from.{% endcomment %}
     </div>
   </div>
 
-  <form method="get"
-        class="platform-filter-bar flex items-center gap-2"
-        data-component="filter-toolbar"
-        x-data>
-    <label for="priorities-fy" class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Financial year</label>
-    <select id="priorities-fy" name="fy" @change="$el.form.submit()"
-            class="h-9 rounded-control border border-slate-200 edify-surface px-2.5 text-[12px] font-semibold">
+  {% comment %}The compact short filter field the other Priorities views use —
+  it was a bare inline label beside a hand-sized select (owner,
+  2026-09-14).{% endcomment %}
+  <form method="get" class="edify-filter-bar" data-component="filter-toolbar" aria-label="Priority plan filters" x-data>
+    <div class="edify-filter-field platform-filter-compact edify-filter-field--short"><label for="priorities-fy" class="edify-filter-label">Financial year</label>
+    <select id="priorities-fy" name="fy" @change="$el.form.submit()" class="h-9 px-3 text-[12px] font-semibold edify-surface border border-[var(--edify-border)] rounded-control edify-focus-surface">
       {% for option in fy_options %}<option value="{{ option }}" {% if option == fy %}selected{% endif %}>FY{{ option }}</option>{% endfor %}
-    </select>
+    </select></div>
   </form>
 
   {% if dashboard_tabs %}{% include "partials/dashboards/_view_tabs_nav.html" %}{% endif %}
   {% if not groups %}
-  <div class="rounded-surface border border-dashed border-slate-300 edify-surface p-16 text-center">
-    <p class="text-[15px] font-bold text-slate-800">No priority plan for FY {{ fy }}</p>
-    <p class="mt-1 text-[12px] font-semibold text-slate-500">The master plan appears here once it is seeded and confirmed.</p>
-  </div>
+  {% with fy_text=fy|stringformat:"s" %}{% include "components/empty_state.html" with title="No priority plan for FY "|add:fy_text message="The master plan appears here once it is seeded and confirmed." %}{% endwith %}
   {% else %}
   <div class="edify-surface rounded-surface border border-slate-100 shadow-sm overflow-hidden">
     <div class="overflow-x-auto">

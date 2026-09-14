@@ -40,7 +40,7 @@ The dashboard is a read — every control opens the page where the work is done.
         class="edify-filter-bar" aria-label="Program lead dashboard filters">
     <input type="hidden" id="pl-filter-view" name="view" value="{{ dashboard_view }}">
     {% if fy_options|length > 1 %}
-    <div class="edify-page-header-control">
+    <div class="edify-page-header-control platform-filter-compact edify-filter-field--short">
       <span class="text-[12px] font-semibold tracking-[0.06em] uppercase edify-text-subtle">FY</span>
       <select aria-label="Fiscal year" name="fy" class="focus:outline-none">
         {% for opt in fy_options %}<option value="{{ opt }}" {% if fy == opt %}selected{% endif %}>FY {{ opt }}</option>{% endfor %}

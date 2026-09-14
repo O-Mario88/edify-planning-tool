@@ -18,7 +18,7 @@ was measured. Tables are plain text: a status is a word with a tone.
   <form id="ia-collection-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="edify-filter-bar" aria-label="Collection filters" x-data>
     <input type="hidden" name="view" value="collection">
     {% if options.states %}
-    <label class="cce-filter"><span class="cce-filter__label">Collection need</span>
+    <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">Collection need</span>
       <select name="state" class="cce-filter__select" @change="$el.form.requestSubmit()">
         <option value="">Every school needing work</option>
         {% for o in options.states %}<option value="{{ o.value }}"{% if chosen.state == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
@@ -26,7 +26,7 @@ was measured. Tables are plain text: a status is a word with a tone.
     </label>
     {% endif %}
     {% if options.districts %}
-    <label class="cce-filter"><span class="cce-filter__label">District</span>
+    <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">District</span>
       <select name="district" class="cce-filter__select" @change="$el.form.requestSubmit()">
         <option value="">Every district</option>
         {% for o in options.districts %}<option value="{{ o.value }}"{% if chosen.district == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
@@ -34,7 +34,7 @@ was measured. Tables are plain text: a status is a word with a tone.
     </label>
     {% endif %}
     {% if options.owners %}
-    <label class="cce-filter"><span class="cce-filter__label">Account owner</span>
+    <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">Account owner</span>
       <select name="owner" class="cce-filter__select" @change="$el.form.requestSubmit()">
         <option value="">Every owner</option>
         {% for o in options.owners %}<option value="{{ o.value }}"{% if chosen.owner == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
@@ -46,7 +46,7 @@ was measured. Tables are plain text: a status is a word with a tone.
       <summary class="list-none cursor-pointer inline-flex items-center gap-1.5 h-8 px-3 rounded-control border border-slate-200 edify-surface text-[12px] font-bold text-slate-600 hover:bg-slate-50">More filters</summary>
       <div class="absolute right-0 z-20 mt-1 w-64 p-3 rounded-surface border border-slate-200 edify-surface shadow-lg space-y-3">
         {% if options.school_types %}
-        <label class="cce-filter"><span class="cce-filter__label">School type</span>
+        <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">School type</span>
           <select name="school_type" class="cce-filter__select" @change="$el.form.requestSubmit()">
             <option value="">Every type</option>
             {% for o in options.school_types %}<option value="{{ o.value }}"{% if chosen.school_type == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
@@ -54,7 +54,7 @@ was measured. Tables are plain text: a status is a word with a tone.
         </label>
         {% endif %}
         {% if options.projects %}
-        <label class="cce-filter"><span class="cce-filter__label">Special project</span>
+        <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">Special project</span>
           <select name="project" class="cce-filter__select" @change="$el.form.requestSubmit()">
             <option value="">Every school</option>
             {% for o in options.projects %}<option value="{{ o.value }}"{% if chosen.project == o.value %} selected{% endif %}>{{ o.label }}</option>{% endfor %}
@@ -114,14 +114,14 @@ was measured. Tables are plain text: a status is a word with a tone.
   <form id="ia-outcome-filters" method="get" action="/ia/dashboard/" data-component="filter-toolbar" class="edify-filter-bar" aria-label="Outcome filters" x-data>
     <input type="hidden" name="view" value="{{ dashboard_view }}">
     {% if dashboard_view == "outcomes" and ia_outcomes.fy_options %}
-    <label class="cce-filter"><span class="cce-filter__label">Financial year</span>
+    <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">Financial year</span>
       <select id="ia-outcome-fy" name="fy" class="cce-filter__select" @change="$el.form.requestSubmit()">
         {% for option in ia_outcomes.fy_options %}<option value="{{ option }}"{% if option == ia_outcomes.fy %} selected{% endif %}>FY{{ option }} against FY{{ option|add:"-1" }}</option>{% endfor %}
       </select>
     </label>
     {% endif %}
     {% if ia_outcomes.projects %}
-    <label class="cce-filter"><span class="cce-filter__label">Project cohort</span>
+    <label class="cce-filter platform-filter-compact"><span class="cce-filter__label">Project cohort</span>
       <select id="ia-outcome-project" name="project" class="cce-filter__select" @change="$el.form.requestSubmit()">
         <option value="">All accessible projects</option>
         {% for project in ia_outcomes.projects %}<option value="{{ project.project_id }}"{% if ia_outcomes.project == project.project_id %} selected{% endif %}>{{ project.project__name }}</option>{% endfor %}

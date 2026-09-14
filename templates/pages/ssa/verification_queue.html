@@ -39,14 +39,14 @@ opens a one-column drawer for the reason, which the collector is sent.
   </header>
 
   <form method="get" class="edify-filter-bar" aria-label="SSA verification filters" x-data>
-    <label class="cce-filter">
+    <label class="cce-filter platform-filter-compact">
       <span class="cce-filter__label">Records</span>
       <select name="status" @change="$el.form.requestSubmit()" class="cce-filter__select">
         <option value="pending"{% if status == "pending" %} selected{% endif %}>Waiting for verification</option>
         <option value="returned"{% if status == "returned" %} selected{% endif %}>Returned for correction</option>
       </select>
     </label>
-    <label class="cce-filter">
+    <label class="cce-filter platform-filter-compact">
       <span class="cce-filter__label">Collected by</span>
       <select name="mine" @change="$el.form.requestSubmit()" class="cce-filter__select">
         <option value="">Anyone</option>

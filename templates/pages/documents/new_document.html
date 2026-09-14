@@ -12,99 +12,127 @@
     </div>
   </header>
 
-  <form method="post" enctype="multipart/form-data" class="card p-4 space-y-3.5">
+  {% comment %}
+  The platform form: a card whose header states what is being filled in, every
+  section inside its own padded body, labels in the form-field grammar
+  (components/form_field.html — a bold muted label over the control, help
+  under it), short values in short controls, the file input in the drawers'
+  soft file button, and the actions right-aligned in a footer that never meets
+  the card edge (owner, 2026-09-14). It was one flat column of uppercase
+  captions, a full-width title, bare fieldsets and a native file picker.
+  {% endcomment %}
+  <form method="post" enctype="multipart/form-data" class="card p-0 overflow-hidden">
     {% csrf_token %}
-    <label class="flex flex-col gap-1">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Title</span>
-      <input name="title" required maxlength="255" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
-    </label>
-    <label class="flex flex-col gap-1">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Description</span>
-      <textarea name="description" rows="3" required placeholder="What this is, in plain language. Readers see this in the Help Center and on the agreement page."
-                class="px-2.5 py-2 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"></textarea>
-    </label>
-    <label class="flex flex-col gap-1">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Document type</span>
-      <select name="document_type" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
-        {% for value, label in document_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
-      </select>
-    </label>
-    <fieldset class="flex flex-col gap-1">
-      <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Who is this for?</legend>
-      <p class="edify-text-caption font-semibold text-slate-400 mb-1">A document with no audience reaches nobody — it is not published to everyone by default.</p>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-        {% for value, label in roles %}
-        <label class="flex items-center gap-1.5 text-[12px] font-semibold text-slate-600">
-          <input type="checkbox" name="target_roles" value="{{ value }}"> {{ label }}
+    <header class="px-4 py-3 border-b edify-border">
+      <h2 class="text-sm font-semibold">Document details</h2>
+      <p class="edify-text-caption edify-text-muted">What it is, who it is for and the file readers open.</p>
+    </header>
+
+    <div class="p-4 space-y-4">
+      <div class="grid gap-3 lg:grid-cols-2">
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Title</span>
+          <input name="title" required maxlength="255" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
         </label>
-        {% endfor %}
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Document type</span>
+          <select name="document_type" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
+            {% for value, label in document_types %}<option value="{{ value }}">{{ label }}</option>{% endfor %}
+          </select>
+        </label>
       </div>
-    </fieldset>
-    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Effective date</span>
-        <input type="date" name="effective_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      <label class="block">
+        <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Description</span>
+        <textarea name="description" rows="3" required placeholder="What this is, in plain language. Readers see this in the Help Center and on the agreement page."
+                  class="w-full px-3 py-2 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]"></textarea>
       </label>
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Review date</span>
-        <input type="date" name="review_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
-      </label>
-      {% comment %}
-      The nightly expiry job and the System Health check both read this field,
-      and no form ever posted it — so expire_documents() always returned zero
-      and a lapsed policy stayed effective indefinitely.
-      {% endcomment %}
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Expiry date</span>
-        <input type="date" name="expiry_date" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+      <fieldset>
+        <legend class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Who is this for?</legend>
+        <p class="mb-2 edify-text-caption edify-text-muted">A document with no audience reaches nobody — it is not published to everyone by default.</p>
+        <div class="grid grid-cols-2 sm:grid-cols-3 gap-x-3 gap-y-1.5">
+          {% for value, label in roles %}
+          <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]">
+            <input type="checkbox" name="target_roles" value="{{ value }}"> {{ label }}
+          </label>
+          {% endfor %}
+        </div>
+      </fieldset>
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Effective date</span>
+          <input type="date" name="effective_date" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Review date</span>
+          <input type="date" name="review_date" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
+        </label>
+        {% comment %}
+        The nightly expiry job and the System Health check both read this field,
+        and no form ever posted it — so expire_documents() always returned zero
+        and a lapsed policy stayed effective indefinitely.
+        {% endcomment %}
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Expiry date</span>
+          <input type="date" name="expiry_date" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
+        </label>
+      </div>
+      <label class="block">
+        <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">File</span>
+        <input type="file" name="file" required class="block w-full rounded-control border border-dashed border-[var(--edify-border)] p-2 edify-text-caption text-[var(--edify-text-muted)] file:mr-3 file:py-1.5 file:px-3 file:rounded-control file:border-0 file:edify-text-caption file:font-semibold edify-primary-file-soft edify-primary-file-text edify-primary-file-soft-hover cursor-pointer">
+        <span class="mt-1 block text-xs text-[var(--edify-text-muted)]">PDF, Word, PowerPoint or an image. The original is preserved; a PDF preview is generated for reading in Edify.</span>
       </label>
     </div>
-    <label class="flex flex-col gap-1">
-      <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">File</span>
-      <input type="file" name="file" required class="text-[13px] font-semibold">
-      <span class="edify-text-caption font-semibold text-slate-400">PDF, Word, PowerPoint or an image. The original is preserved; a PDF preview is generated for reading in Edify.</span>
-    </label>
 
     {% if not is_training %}
-    <fieldset class="space-y-2 pt-3 border-t border-slate-50">
-      <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Acknowledgement</legend>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="acknowledgement_required"> Readers must acknowledge this</label>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="agreement_required"> Readers must Agree or Disagree</label>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="comment_required"> A comment is required</label>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="blocks_application_access"> Required onboarding document: readers are taken through it in turn</label>
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Why acknowledgement is required</span>
-        <input name="acknowledgement_reason" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Days to respond</span>
-        <input type="number" name="acknowledgement_due_days" min="1" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface w-32">
-      </label>
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Required active reading time</span>
-        <span class="edify-text-caption font-semibold text-slate-400">Set the minimum time a reader must actively spend with this policy or manual. This remains separate from whether they agree.</span>
+    <fieldset class="p-4 space-y-2 border-t edify-border">
+      <legend class="float-left w-full mb-2">
+        <span class="block text-sm font-semibold">Acknowledgement</span>
+        <span class="block edify-text-caption edify-text-muted">What a reader must do before this counts as read.</span>
+      </legend>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)] clear-left"><input type="checkbox" name="acknowledgement_required"> Readers must acknowledge this</label>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]"><input type="checkbox" name="agreement_required"> Readers must Agree or Disagree</label>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]"><input type="checkbox" name="comment_required"> A comment is required</label>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]"><input type="checkbox" name="blocks_application_access"> Required onboarding document: readers are taken through it in turn</label>
+      <div class="grid gap-3 pt-2 lg:grid-cols-2">
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Why acknowledgement is required</span>
+          <input name="acknowledgement_reason" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
+        </label>
+        <label class="block">
+          <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Days to respond</span>
+          <input type="number" name="acknowledgement_due_days" min="1" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)] max-w-32">
+        </label>
+      </div>
+      <label class="block">
+        <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Required active reading time</span>
         <span class="flex items-center gap-2">
           <input type="number" name="required_reading_minutes" min="1" max="180" value="1" required
-                 class="h-9 w-24 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface"
-                 aria-describedby="reading-time-unit">
-          <span id="reading-time-unit" class="text-[12px] font-semibold text-slate-500">minutes</span>
+                 class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)] max-w-24"
+                 aria-describedby="reading-time-unit reading-time-help">
+          <span id="reading-time-unit" class="text-[13px] text-[var(--edify-text-muted)]">minutes</span>
         </span>
+        <span id="reading-time-help" class="mt-1 block text-xs text-[var(--edify-text-muted)]">Set the minimum time a reader must actively spend with this policy or manual. This remains separate from whether they agree.</span>
       </label>
     </fieldset>
     {% endif %}
 
-    <fieldset class="space-y-2 pt-3 border-t border-slate-50">
-      <legend class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Delivery</legend>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="download_allowed" checked> Download allowed</label>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="print_allowed" checked> Print allowed</label>
-      <label class="flex items-center gap-2 text-[12px] font-semibold text-slate-600"><input type="checkbox" name="help_visible" checked> Show in the Help Center</label>
-      <label class="flex flex-col gap-1">
-        <span class="edify-text-caption font-bold uppercase tracking-wider text-slate-400">Help keywords (comma separated)</span>
-        <input name="help_keywords" class="h-9 px-2.5 rounded-control border border-slate-200 text-[13px] font-semibold edify-surface">
+    <fieldset class="p-4 space-y-2 border-t edify-border">
+      <legend class="float-left w-full mb-2">
+        <span class="block text-sm font-semibold">Delivery</span>
+        <span class="block edify-text-caption edify-text-muted">How readers may take the document away, and where it is found.</span>
+      </legend>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)] clear-left"><input type="checkbox" name="download_allowed" checked> Download allowed</label>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]"><input type="checkbox" name="print_allowed" checked> Print allowed</label>
+      <label class="flex items-center gap-2 text-[13px] text-[var(--edify-text)]"><input type="checkbox" name="help_visible" checked> Show in the Help Center</label>
+      <label class="block pt-2">
+        <span class="mb-1 block text-xs font-bold text-[var(--edify-text-muted)]">Help keywords (comma separated)</span>
+        <input name="help_keywords" class="w-full h-9 px-3 rounded-control border border-[var(--edify-border)] edify-surface text-[13px] text-[var(--edify-text)]">
       </label>
     </fieldset>
 
-    <button type="submit" class="h-8 px-4 rounded-control edify-primary-solid text-white text-[13px] font-bold">Save draft</button>
+    <footer class="flex flex-wrap items-center justify-end gap-2 px-4 py-3 border-t edify-border">
+      {% include "components/button.html" with variant="primary" type="submit" label="Save draft" %}
+    </footer>
   </form>
 </div>
 {% endblock %}
