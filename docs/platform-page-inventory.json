@@ -2187,7 +2187,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 2987,
+      "bytes": 3506,
       "deprecated_alternatives": [],
       "example_pages": [
         "/analytics/schedule-report"
@@ -2759,7 +2759,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 3787,
+      "bytes": 3827,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters"
@@ -3004,7 +3004,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 5639,
+      "bytes": 5902,
       "deprecated_alternatives": [],
       "example_pages": [
         "/clusters/planner-drawer",
@@ -3296,7 +3296,7 @@
       "accessibility_requirements": [
         "accessible name and label"
       ],
-      "bytes": 8155,
+      "bytes": 8171,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -3414,7 +3414,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 15220,
+      "bytes": 15483,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-training"
@@ -3442,7 +3442,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 16464,
+      "bytes": 16727,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools/schedule-visit"
@@ -3519,7 +3519,7 @@
         "accessible name and label",
         "announced dynamic state"
       ],
-      "bytes": 10328,
+      "bytes": 10344,
       "deprecated_alternatives": [],
       "example_pages": [
         "/core-schools"
@@ -8516,7 +8516,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 24846,
+      "bytes": 25109,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning/schedule-modal"
@@ -8545,7 +8545,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 35033,
+      "bytes": 35296,
       "deprecated_alternatives": [],
       "example_pages": [
         "/my-plan/<str:activity_id>/reschedule-drawer",
@@ -8620,7 +8620,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 15731,
+      "bytes": 16442,
       "deprecated_alternatives": [],
       "example_pages": [
         "/planning"
@@ -9684,7 +9684,7 @@
         "accessible name and label",
         "keyboard focus visibility"
       ],
-      "bytes": 12140,
+      "bytes": 12403,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools/<str:school_id>/assign-to-project"
@@ -10027,7 +10027,7 @@
         "keyboard focus visibility",
         "announced dynamic state"
       ],
-      "bytes": 6393,
+      "bytes": 7446,
       "deprecated_alternatives": [],
       "example_pages": [
         "/schools"
@@ -11101,6 +11101,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11188,6 +11189,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11275,6 +11277,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11364,6 +11367,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11453,6 +11457,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11543,6 +11548,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11630,6 +11636,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11710,6 +11717,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11890,6 +11898,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -11979,6 +11988,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12066,6 +12076,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12152,6 +12163,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12238,6 +12250,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12324,6 +12337,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12363,7 +12377,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.batch_payments_view",
       "card_count": 0,
@@ -12377,7 +12391,7 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -12392,7 +12406,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "disbursements",
-      "primary_action": "Review operational workspace",
+      "primary_action": "Export selected",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Batch Payments Page.",
       "remediation": "No automated remediation outstanding",
@@ -12404,12 +12418,15 @@
       "route": "/accounts/batch-payments",
       "route_name": "finance_batch_payments",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        ""
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12419,7 +12436,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
         "loading": false
@@ -12449,7 +12466,7 @@
       "api_endpoints": [],
       "app": "frontend",
       "audit_events": true,
-      "automated_quality_score": 9.6,
+      "automated_quality_score": 9.7,
       "backend_module": "apps.frontend.views.finance_operating_views",
       "backend_view": "apps.frontend.views.finance_operating_views.batch_payments_view",
       "card_count": 0,
@@ -12463,7 +12480,7 @@
       "filters": "none",
       "findings": [],
       "fix_status": "fixed",
-      "forms": false,
+      "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [],
       "implementation_status": "existing-routed-surface",
@@ -12478,7 +12495,7 @@
       "page_type": "operational-queue",
       "per_page_css": [],
       "permission_key": "disbursements",
-      "primary_action": "Review operational workspace",
+      "primary_action": "Export selected",
       "primary_user_decision": "Which queued record should be handled next?",
       "purpose": "Batch Payments Page.",
       "remediation": "No automated remediation outstanding",
@@ -12490,12 +12507,15 @@
       "route": "/accounts/batch-payments/",
       "route_name": "",
       "search": "shared topbar search or none",
-      "secondary_actions": [],
+      "secondary_actions": [
+        ""
+      ],
       "services_and_models": [
         "apps.accounts.models",
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12505,7 +12525,7 @@
         "layouts/shell.html"
       ],
       "state_coverage": {
-        "disabled": false,
+        "disabled": true,
         "empty": true,
         "error": false,
         "loading": false
@@ -12582,6 +12602,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12668,6 +12689,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12756,6 +12778,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12841,6 +12864,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -12922,6 +12946,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13008,6 +13033,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13102,6 +13128,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13200,6 +13227,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13297,6 +13325,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13385,6 +13414,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13465,6 +13495,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13549,6 +13580,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13639,6 +13671,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13725,6 +13758,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13805,6 +13839,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13885,6 +13920,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -13965,6 +14001,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14046,6 +14083,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14132,6 +14170,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14217,6 +14256,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14298,6 +14338,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14384,6 +14425,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14470,6 +14512,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -14556,6 +14599,7 @@
         "apps.activities.models",
         "apps.budget.models",
         "apps.budget.services",
+        "apps.core.scoping",
         "apps.evidence.models",
         "apps.fund_requests.models",
         "apps.geography.models",
@@ -19993,7 +20037,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -20095,7 +20139,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -20198,7 +20242,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -20283,7 +20327,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -20927,7 +20971,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -21020,7 +21064,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -21286,7 +21330,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -21373,7 +21417,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -21453,7 +21497,7 @@
         "test:referenced-by-automated-test",
         "permission:analytics"
       ],
-      "filters": "none",
+      "filters": "filter controls detected; parent/context review",
       "findings": [],
       "fix_status": "fixed",
       "forms": true,
@@ -21562,7 +21606,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -21650,7 +21694,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -21747,7 +21791,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -27177,7 +27221,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -27913,7 +27957,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -33443,7 +33487,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -33538,7 +33582,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -33624,7 +33668,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -49685,7 +49729,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard",
         "GET /impact",
         "GET /impact?fy={{ dashboard.filters.fy }}&group_by={{ dashboard.filters.group_by }}&group_page={{ dashboard.grouped_driver_pagination.previous_page }}",
@@ -72582,7 +72626,7 @@
       "forms": false,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard"
       ],
       "implementation_status": "existing-routed-surface",
@@ -75781,7 +75825,7 @@
       "forms": true,
       "header_variant": "canonical-page-header-anatomy",
       "htmx_endpoints": [
-        "GET /analytics/schedule-report",
+        "GET /analytics/schedule-report{% if request.GET.urlencode %}?{{ request.GET.urlencode }}{% endif %}",
         "GET /analytics/customize-dashboard",
         "GET /ssa"
       ],

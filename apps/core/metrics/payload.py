@@ -15,7 +15,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from apps.core.metrics.registry import get_metric
-from apps.core.metrics.spec import MetricSpec, Unit
+from apps.core.metrics.spec import MetricSpec, Unit, user_explanation
 from apps.core.metrics.states import DEFAULT_STATE_TEXT, DataState, MetricValue
 
 
@@ -242,7 +242,7 @@ def render_metric(
         period=spec.period.value,
         scope=spec.scope,
         data_state=measured.state.value,
-        definition=spec.definition,
+        definition=user_explanation(spec),
         accessible_description=accessible_description(spec, measured),
         drilldown_url=drilldown_url,
         denominator=measured.denominator,
@@ -347,7 +347,7 @@ def render_precomputed_metric_item(
         "period": spec.period.value,
         "scope": spec.scope,
         "data_state": state.value,
-        "definition": spec.definition,
+        "definition": user_explanation(spec),
         "accessible_description": f"{spec.label}: {rendered_display}.",
         "drilldown_url": route,
         "denominator": None,

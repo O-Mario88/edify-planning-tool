@@ -173,3 +173,89 @@ class DisbursementNotificationMoneyUnitTest(TestCase):
         ).latest("created_at")
         self.assertIn("450000 UGX", note.body)
         self.assertNotIn("4500 UGX", note.body)  # the old, wrong /100 value
+
+
+class BatchPaymentsSelectionTest(TestCase):
+    """A payout file holds exactly the ticked payments (controls audit F-01,
+    2026-09-14): selected ids are re-checked against eligibility and scope."""
+
+    def setUp(self):
+        self.accountant = User.objects.create_user(
+            email="accountant-selection@test.org",
+            name="Selection Accountant",
+            roles=[EdifyRole.PROGRAM_ACCOUNTANT.value],
+            active_role=EdifyRole.PROGRAM_ACCOUNTANT.value,
+            password="password",
+            is_active=True,
+        )
+        StaffProfile.objects.create(
+            user=self.accountant, title="Accountant", country="Uganda"
+        )
+        uganda = Region.objects.create(name="Selection Region", country="Uganda")
+        kenya = Region.objects.create(name="Selection Kenya", country="Kenya")
+        self.school = School.objects.create(
+            school_id="SEL-UG",
+            name="Selection School",
+            region=uganda,
+            district=District.objects.create(name="Selection District", region=uganda),
+        )
+        foreign = School.objects.create(
+            school_id="SEL-KE",
+            name="Foreign School",
+            region=kenya,
+            district=District.objects.create(name="Foreign District", region=kenya),
+        )
+
+        def partner_payment(amount, school=None, payment_status="ia_confirmed"):
+            return Activity.objects.create(
+                school=school or self.school,
+                delivery_type="partner",
+                activity_type=ActivityType.SCHOOL_VISIT,
+                status="ia_verified",
+                payment_status=payment_status,
+                assigned_partner_id="sel-partner",
+                est_cost_cents=amount,
+            )
+
+        self.a = partner_payment(100000)
+        self.b = partner_payment(200000)
+        self.c = partner_payment(300000)
+        self.paid = partner_payment(400000, payment_status="paid")
+        self.foreign = partner_payment(500000, school=foreign)
+        self.client.force_login(self.accountant)
+
+    def _export(self, **params):
+        return self.client.get(
+            "/accounts/batch-payments/", {"export": "partners", **params}
+        )
+
+    def _ids(self, response):
+        lines = response.content.decode().strip().splitlines()[1:]
+        return sorted(line.split(",")[0] for line in lines)
+
+    def test_the_file_holds_exactly_the_selected_payments(self):
+        response = self._export(scope="selected", activity_ids=[self.a.id, self.c.id])
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(self._ids(response), sorted([self.a.id, self.c.id]))
+        self.assertIn("batch_partners_selected.csv", response["Content-Disposition"])
+
+    def test_a_stale_paid_or_foreign_id_refuses_the_file(self):
+        for bad in (self.paid.id, self.foreign.id, "not-an-activity"):
+            with self.subTest(bad=bad):
+                response = self._export(scope="selected", activity_ids=[self.a.id, bad])
+                self.assertEqual(response.status_code, 400)
+                self.assertIn(b"no longer eligible", response.content)
+
+    def test_an_empty_selection_is_refused_and_export_all_is_explicit(self):
+        self.assertEqual(self._export(scope="selected").status_code, 400)
+        everything = self._export()
+        self.assertEqual(
+            self._ids(everything), sorted([self.a.id, self.b.id, self.c.id])
+        )
+
+    def test_the_page_offers_named_selection_and_export_all(self):
+        page = self.client.get("/accounts/batch-payments/")
+        self.assertContains(page, 'name="activity_ids"')
+        self.assertContains(page, "Export selected")
+        self.assertContains(page, "Export all eligible (3)")
+        self.assertNotContains(page, "Foreign School")

@@ -1,0 +1,42 @@
+control_id,template,line,triage,evidence_or_next_check
+CONTROL-00015,templates/components/context_metrics.html,60,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-00059,templates/layouts/shell.html,318,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-00088,templates/pages/accounts/batch_payments.html,56,Confirmed defect,F-01: checkbox has no submitted ID/model; export link and backend ignore selection.
+CONTROL-00090,templates/pages/accounts/batch_payments.html,80,Confirmed defect,F-01: checkbox has no submitted ID/model; export link and backend ignore selection.
+CONTROL-00322,templates/pages/business_transformation/loans.html,74,Explained by source,"Read-only public URL field, intended for copying rather than form submission."
+CONTROL-01274,templates/pages/staff/index.html,70,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01275,templates/pages/staff/index.html,83,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01439,templates/partials/analytics/regional_performance.html,205,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01454,templates/partials/analytics/target_by_district.html,91,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01476,templates/partials/business_transformation/school_portfolio_row.html,4,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01518,templates/partials/clusters/cluster_action_planner_drawer.html,366,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-01524,templates/partials/clusters/cluster_card.html,132,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01533,templates/partials/clusters/cluster_schools_table.html,24,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01576,templates/partials/clusters/planned_date_field.html,128,Explained by source,Day button receives x-text day; full-date accessible names and calendar keyboard behavior remain review gaps.
+CONTROL-01588,templates/partials/core_schools/assign_partner_drawer.html,91,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01638,templates/partials/core_schools/schedule_training_drawer.html,78,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01641,templates/partials/core_schools/schedule_training_drawer.html,191,Explained by source,Date trigger receives formatDate(selectedDate) text; calendar semantic/keyboard review remains necessary.
+CONTROL-01644,templates/partials/core_schools/schedule_training_drawer.html,242,Explained by source,Day button receives x-text day; full-date accessible names and calendar keyboard behavior remain review gaps.
+CONTROL-01653,templates/partials/core_schools/schedule_visit_drawer.html,77,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01656,templates/partials/core_schools/schedule_visit_drawer.html,177,Explained by source,Date trigger receives formatDate(selectedDate) text; calendar semantic/keyboard review remains necessary.
+CONTROL-01659,templates/partials/core_schools/schedule_visit_drawer.html,228,Explained by source,Day button receives x-text day; full-date accessible names and calendar keyboard behavior remain review gaps.
+CONTROL-01669,templates/partials/core_schools/school_row.html,12,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-01946,templates/partials/finance/country_budget/root.html,60,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-01947,templates/partials/finance/country_budget/root.html,66,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-02158,templates/partials/hr/target_distribution_form.html,55,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-02168,templates/partials/hr/team_target_distribution_form.html,47,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-02252,templates/partials/leave/impact_panel.html,135,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-02253,templates/partials/leave/impact_panel.html,142,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-02254,templates/partials/leave/impact_panel.html,149,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-02255,templates/partials/leave/impact_panel.html,156,Explained by source,Disabled informational control; no action is expected. Consider plain read-only content.
+CONTROL-02583,templates/partials/planning/schedule_cluster_drawer.html,143,Explained by source,Date trigger receives formatDate(selectedDate) text; calendar semantic/keyboard review remains necessary.
+CONTROL-02586,templates/partials/planning/schedule_cluster_drawer.html,194,Explained by source,Day button receives x-text day; full-date accessible names and calendar keyboard behavior remain review gaps.
+CONTROL-02606,templates/partials/planning/schedule_drawer.html,447,Explained by source,Date trigger receives formatDate(selectedDate) text; calendar semantic/keyboard review remains necessary.
+CONTROL-02609,templates/partials/planning/schedule_drawer.html,498,Explained by source,Day button receives x-text day; full-date accessible names and calendar keyboard behavior remain review gaps.
+CONTROL-02617,templates/partials/planning/school_row.html,14,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-02623,templates/partials/planning/school_table.html,56,Confirmed defect,"F-04: icon-only expander lacks accessible name, expanded state and controls relationship."
+CONTROL-02665,templates/partials/priorities/distribution_view.html,261,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-02666,templates/partials/priorities/distribution_view.html,262,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.
+CONTROL-02944,templates/partials/schools/assign_to_project_drawer.html,224,Explained by source,Date trigger receives formatDate(selectedDate) text; calendar semantic/keyboard review remains necessary.
+CONTROL-02947,templates/partials/schools/assign_to_project_drawer.html,275,Explained by source,Day button receives x-text day; full-date accessible names and calendar keyboard behavior remain review gaps.
+CONTROL-02966,templates/partials/schools/directory_row.html,20,Explained by source,Dynamic Alpine text/accessible label or delegated binding present; not a functional pass.

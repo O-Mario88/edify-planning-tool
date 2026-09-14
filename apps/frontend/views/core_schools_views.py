@@ -114,11 +114,9 @@ def core_schools_view(request):
     per_page = _core_page_size(request)
     paginator = Paginator(core_schools_qs, per_page)
     page_obj = paginator.get_page(page_num)
-    pages_list = list(
-        page_obj.paginator.get_elided_page_range(
-            page_obj.number, on_each_side=1, on_ends=1
-        )
-    )
+    from apps.core.pagination import elided_page_numbers
+
+    pages_list = elided_page_numbers(page_obj)
 
     # 4. Retrieve service-processed context
     matrix_rows = CorePackageProgressService.get_matrix_data(page_obj.object_list, fy)

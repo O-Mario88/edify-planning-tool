@@ -1,0 +1,17 @@
+control_id,template,line,functional_status
+CONTROL-00055,templates/layouts/shell.html,251,Browser: RPL messages drawer opened with empty state; no message sent.
+CONTROL-00056,templates/layouts/shell.html,267,Browser: RPL notifications drawer opened and closed with empty state.
+CONTROL-00060,templates/layouts/shell.html,336,Browser: RPL account menu opened and logout completed.
+CONTROL-00085,templates/pages/accounts/batch_payments.html,26,Finance browser: default Advances panel rendered; separate tab-click return not executed.
+CONTROL-00086,templates/pages/accounts/batch_payments.html,34,Finance browser: clicking Partner Payments opened the matching panel.
+CONTROL-00088,templates/pages/accounts/batch_payments.html,56,F-01: source and isolated export reproduction confirm selected IDs ignored; no eligible advances in live fixture.
+CONTROL-00089,templates/pages/accounts/batch_payments.html,74,F-01: browser export link unchanged after selection; isolated export reproduction confirmed all rows included. No live download.
+CONTROL-00090,templates/pages/accounts/batch_payments.html,80,"F-01: browser checkbox selected; export binding absent, confirmed by isolated reproduction."
+CONTROL-00471,templates/pages/dashboards/rpl.html,46,Browser: RPL FY changed from 2026 to 2025; Programmes tab retained and data updated.
+CONTROL-00472,templates/pages/dashboards/rpl.html,50,Browser: RPL Apply filters completed for FY2025; data and links updated.
+CONTROL-01169,templates/pages/schools/index.html,121,Browser: RPL School Directory district Abim produced 3 schools and refreshed dependent sub-county choices.
+CONTROL-01173,templates/pages/schools/index.html,159,Browser: RPL Clear Filters restored 703-school scope.
+CONTROL-01696,templates/partials/dashboards/_view_tabs.html,51,Browser: RPL Overview/Coaching/Programmes/Reporting reached correct panels. Other roles not individually clicked. F-08 affects non-live cached dashboards.
+CONTROL-03014,templates/partials/schools/table.html,110,F-02: browser ellipsis submitted page=… and returned page 1; isolated template reproduction confirms interactive gap.
+CONTROL-03015,templates/partials/schools/table.html,122,Browser: RPL Next moved School Directory from rows 1–15 to 16–30.
+CONTROL-03017,templates/partials/schools/tabs.html,24,Browser: RPL Unclustered under Abim produced 0 records; F-03 incorrect empty-state message.

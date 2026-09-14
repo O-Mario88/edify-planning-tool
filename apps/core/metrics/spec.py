@@ -25,6 +25,8 @@ inconsistently, and each is checked by a guard test.
 
 from __future__ import annotations
 
+import re
+
 from dataclasses import dataclass
 from enum import Enum
 
@@ -209,3 +211,35 @@ class MetricSpec:
 
     def approved_pages(self) -> tuple[str, ...]:
         return (self.owner_page, *self.secondary_pages)
+
+
+# ── What a reader is told a figure means ────────────────────────────────────
+# A definition documents a metric for the people who maintain it: many name
+# the service that computes it, the Python display expression and the query
+# provenance. Staff hovering a tile were shown exactly that (controls audit
+# F-05, 2026-09-14). The reader gets the definition with the provenance taken
+# out, or the metric's own question when nothing readable is left.
+_PROVENANCE_PAREN = re.compile(r"\s*\([^()]*(?:apps\.|`|\.py\b|__)[^()]*\)")
+_PROVENANCE = re.compile(
+    r"apps\.[a-z_.]+|`|\b[a-z_]+\.py\b|provenance|display expression|"
+    r"\b[a-z]+__[a-z_]+\b|\b[A-Z]+_[A-Z_]+\b|\b[a-z_]+\(|:="
+)
+
+
+def user_explanation(spec) -> str:
+    """The definition a user reads on a tile: no module paths, expressions or
+    query provenance."""
+    explicit = getattr(spec, "user_explanation", "") or ""
+    if explicit:
+        return explicit
+    text = _PROVENANCE_PAREN.sub("", getattr(spec, "definition", "") or "")
+    sentences = re.split(r"(?<=[.;])\s+", text)
+    kept = [
+        sentence.rstrip(";").strip()
+        for sentence in sentences
+        if sentence.strip() and not _PROVENANCE.search(sentence)
+    ]
+    readable = " ".join(
+        sentence if sentence.endswith(".") else f"{sentence}." for sentence in kept
+    )
+    return readable or getattr(spec, "question", "") or getattr(spec, "label", "")

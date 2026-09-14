@@ -1,12 +1,12 @@
 {
  "summary": {
-  "titled_cards": 694,
-  "templates": 259,
-  "distinct_titles": 660,
+  "titled_cards": 693,
+  "templates": 258,
+  "distinct_titles": 659,
   "with_card_key": 13,
-  "untitled_surfaces": 775,
+  "untitled_surfaces": 776,
   "untitled_chrome": 175,
-  "untitled_nested": 253,
+  "untitled_nested": 254,
   "untitled_headless": 347,
   "templates_with_same_title_twice": 0,
   "titles_in_several_templates": 26,
@@ -244,15 +244,6 @@
    "heading_level": 3,
    "has_card_key": false,
    "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm space-y-4",
-   "branch_path": []
-  },
-  {
-   "template": "templates/pages/accounts/batch_payments.html",
-   "line": 45,
-   "title": "Batch Advances ready for payment file",
-   "heading_level": 3,
-   "has_card_key": false,
-   "classes": "edify-surface rounded-surface border border-slate-100 p-6 shadow-sm",
    "branch_path": []
   },
   {

@@ -15,8 +15,8 @@
               <div class="flex items-start gap-4 min-w-0 flex-1">
                 <!-- Cluster Group Icon -->
                 <div
-                  @click="expanded = !expanded"
-                  class="shrink-0 w-11 h-11 rounded-surface flex items-center justify-center bg-slate-50 text-[var(--edify-accent-text)] border border-slate-100 shadow-inner group-hover:scale-105 transition-transform cursor-pointer"
+                  aria-hidden="true"
+                  class="shrink-0 w-11 h-11 rounded-surface flex items-center justify-center bg-slate-50 text-[var(--edify-accent-text)] border border-slate-100 shadow-inner"
                 >
                   <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -25,11 +25,18 @@
 
                 <div class="min-w-0 space-y-1">
                   <div class="flex items-center gap-2 flex-wrap">
-                    <h3
-                      @click="expanded = !expanded"
-                      class="font-semibold text-slate-800 text-[15px] leading-tight hover:text-[var(--edify-accent-text)] transition-colors cursor-pointer truncate"
-                    >
-                      {{ c.name }}
+                    {% comment %}One semantic control opens the card (controls audit
+                    F-04, 2026-09-14): the icon, heading and chevron were three
+                    click targets, none of them named or keyboard-announced.{% endcomment %}
+                    <h3 class="font-semibold text-slate-800 text-[15px] leading-tight truncate">
+                      <button
+                        type="button"
+                        @click="expanded = !expanded"
+                        :aria-expanded="expanded.toString()"
+                        aria-expanded="false"
+                        aria-controls="planning-cluster-panel-{{ forloop.counter }}"
+                        class="text-left hover:text-[var(--edify-accent-text)] transition-colors rounded-control edify-primary-focus"
+                      >{{ c.name }}</button>
                     </h3>
                   </div>
                   <p class="text-[13px] text-slate-500 font-medium flex items-center gap-1.5">
@@ -53,9 +60,13 @@
               </div>
 
               <div class="flex items-center gap-3 shrink-0">
+                {# A pointer shortcut only; the cluster name is the one control. #}
                 <button
+                  type="button"
+                  tabindex="-1"
+                  aria-hidden="true"
                   @click="expanded = !expanded"
-                  class="p-1 rounded-control hover:bg-slate-100 text-slate-400 hover:text-slate-600 focus:outline-none transition-colors"
+                  class="p-1 rounded-control hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   <svg
                     class="w-5 h-5 transition-transform duration-300"
@@ -73,6 +84,7 @@
 
             <!-- Expandable details -->
             <div
+              id="planning-cluster-panel-{{ forloop.counter }}"
               x-show="expanded"
               x-transition.opacity.duration.150ms
               class="border-t border-slate-100 mt-4 pt-4 space-y-4 text-[12px] font-semibold text-slate-600"

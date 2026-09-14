@@ -143,6 +143,23 @@ def make_pagination_window(
     return pages
 
 
+#: The token a page list uses for a gap. Django's elided range yields its own
+#: Unicode ellipsis; the directory, staff, cluster and core-school pagers
+#: compare against this ASCII token, so a gap rendered as a page button that
+#: submitted page=… and reset the list (controls audit F-02, 2026-09-14).
+PAGE_GAP = "..."
+
+
+def elided_page_numbers(page_obj, *, on_each_side: int = 1, on_ends: int = 1):
+    """The page numbers to show around `page_obj`, gaps as PAGE_GAP."""
+    return [
+        number if isinstance(number, int) else PAGE_GAP
+        for number in page_obj.paginator.get_elided_page_range(
+            page_obj.number, on_each_side=on_each_side, on_ends=on_ends
+        )
+    ]
+
+
 # ── Table pagination (server-rendered pages, not the DRF envelope above) ─────
 #
 # Started on My Plan and now shared. A table with no bound grows with the data

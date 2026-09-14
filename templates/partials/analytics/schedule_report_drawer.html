@@ -11,6 +11,7 @@
       hx-swap="outerHTML"
       class="space-y-5 text-[12px]">
   {% csrf_token %}
+  {% for key, value in filters.items %}<input type="hidden" name="{{ key }}" value="{{ value }}">{% endfor %}
   {% if form.non_field_errors %}
   <div class="rounded-control border border-rose-200 bg-rose-50 p-3 text-rose-700" role="alert">{{ form.non_field_errors }}</div>
   {% endif %}
@@ -32,6 +33,11 @@
     </div>
     {% if form.categories.errors %}<p class="text-rose-600" role="alert">{{ form.categories.errors|join:", " }}</p>{% endif %}
   </fieldset>
+
+  <div class="rounded-control border border-slate-200 p-3 text-slate-600" data-snapshot-scope>
+    <p class="font-bold text-slate-700">Report scope</p>
+    <p class="mt-1 edify-text-caption">{% if filters %}{% for key, value in filters.items %}{{ key|capfirst }}: {{ value }}{% if not forloop.last %} · {% endif %}{% endfor %}{% else %}Your full analytics scope (no filters applied){% endif %}</p>
+  </div>
 
   <div class="rounded-control border border-sky-100 bg-sky-50/50 p-3 text-slate-600">
     The snapshot is generated now from your authorized data scope. Open Analytics from the message to review live data or download CSV. No scheduler worker or email provider is involved.

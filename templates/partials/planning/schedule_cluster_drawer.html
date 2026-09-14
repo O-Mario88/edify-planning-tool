@@ -78,7 +78,7 @@ months: ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August
 days: [],
 init() {
 if (this.selectedDate) {
-let d = new Date(this.selectedDate);
+/* A saved date is a calendar day, not an instant: read its parts, so a reader west of UTC is not shown the previous month (controls audit F-07, 2026-09-14). */ let parts = String(this.selectedDate).slice(0, 10).split('-').map(Number); let d = new Date(parts[0], (parts[1] || 1) - 1, parts[2] || 1);
 if (!isNaN(d.getTime())) {
 this.currentYear = d.getFullYear();
 this.currentMonth = d.getMonth();

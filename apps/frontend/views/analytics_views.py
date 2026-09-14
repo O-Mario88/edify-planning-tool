@@ -25,25 +25,31 @@ from apps.analytics.analytics_dashboard_service import AnalyticsDashboardService
 from apps.core.cache_utils import stampede_safe_get_or_compute
 
 
-def _analytics_filters(request):
-    """Return the supported analytics filters from the current request."""
-    return {
-        "fy": request.GET.get("fy"),
-        "quarter": request.GET.get("quarter"),
-        "month": request.GET.get("month"),
-        "region": request.GET.get("region"),
-        "pl": request.GET.get("pl"),
-        "cceo": request.GET.get("cceo"),
-        "sub_region": request.GET.get("sub_region"),
-        "district": request.GET.get("district"),
-        "sub_county": request.GET.get("sub_county"),
-        "cluster": request.GET.get("cluster"),
-        "staff": request.GET.get("staff"),
-        "partner": request.GET.get("partner"),
-        "school_type": request.GET.get("school_type"),
-        "activity_type": request.GET.get("activity_type"),
-        "q": request.GET.get("q"),
-    }
+#: The filters Analytics understands; anything else a request carries is ignored.
+ANALYTICS_FILTER_KEYS = (
+    "fy",
+    "quarter",
+    "month",
+    "region",
+    "pl",
+    "cceo",
+    "sub_region",
+    "district",
+    "sub_county",
+    "cluster",
+    "staff",
+    "partner",
+    "school_type",
+    "activity_type",
+    "q",
+)
+
+
+def _analytics_filters(request, source=None):
+    """Return the supported analytics filters from the current request (or
+    from `source`, a submitted form's data)."""
+    data = request.GET if source is None else source
+    return {key: data.get(key) for key in ANALYTICS_FILTER_KEYS}
 
 
 def analytics_scope_kpis(request) -> dict:
@@ -700,6 +706,16 @@ def analytics_schedule_report_view(request):
     from apps.analytics.report_delivery import send_analytics_snapshot
     from apps.audit.services import log as audit_log
 
+    # The snapshot is the report on screen (controls audit F-06, 2026-09-14):
+    # the drawer opens with the page's filters and posts them back, and the
+    # delivery reads the same canonical filters the CSV export reads. The
+    # service still applies the reader's own permission scope.
+    source = request.POST if request.method == "POST" else request.GET
+    filters = {
+        key: value
+        for key, value in _analytics_filters(request, source).items()
+        if value
+    }
     if request.method == "POST":
         form = AnalyticsInboxSnapshotForm(request.POST)
         if form.is_valid():
@@ -707,6 +723,7 @@ def analytics_schedule_report_view(request):
                 thread = send_analytics_snapshot(
                     user=request.user,
                     categories=form.cleaned_data["categories"],
+                    filters=filters,
                 )
             except RuntimeError:
                 form.add_error(
@@ -723,6 +740,7 @@ def analytics_schedule_report_view(request):
                     reason="User sent an analytics snapshot to their private inbox",
                     payload={
                         "categories": form.cleaned_data["categories"],
+                        "filters": filters,
                         "recipient_user_id": str(request.user.id),
                         "channel": "in_app",
                     },
@@ -741,6 +759,7 @@ def analytics_schedule_report_view(request):
     context = {
         "drawer_size": "sm",
         "form": form,
+        "filters": filters,
     }
     return render(request, "partials/analytics/schedule_report_drawer.html", context)
 

@@ -224,11 +224,9 @@ def cluster_list_view(request):
     paginator = Paginator(cards, 5)
     page_number = request.GET.get("page", 1)
     page_obj = paginator.get_page(page_number)
-    pages_list = list(
-        page_obj.paginator.get_elided_page_range(
-            page_obj.number, on_each_side=1, on_ends=1
-        )
-    )
+    from apps.core.pagination import elided_page_numbers
+
+    pages_list = elided_page_numbers(page_obj)
 
     # Export handling
     export_format = request.GET.get("export", "").strip()

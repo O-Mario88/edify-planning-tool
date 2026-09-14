@@ -46,8 +46,8 @@ class="h-8 w-8 rounded-control border border-slate-200 edify-surface flex items-
 </button>
 {% endif %}
 {% for page_num in pages_list %}
-{% if page_num == "..." %}
-<span class="w-8 text-center text-slate-400 font-bold">...</span>
+{% if page_num == "..." or page_num == "…" %}
+<span class="w-8 text-center text-slate-400 font-bold" aria-hidden="true">…</span>
 {% elif page_obj.number == page_num %}
 <span aria-current="page" class="h-8 w-8 rounded-control btn-premium-primary text-white flex items-center justify-center font-bold">{{ page_num }}</span>
 {% else %}

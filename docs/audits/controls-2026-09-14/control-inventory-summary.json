@@ -1,0 +1,13 @@
+{
+  "templates_scanned": 684,
+  "control_declarations": 3125,
+  "by_kind": {
+    "button": 1020,
+    "link": 887,
+    "disclosure": 67,
+    "field": 1097,
+    "tab": 54
+  },
+  "declarations_needing_binding_review": 41,
+  "method": "Static declarations, including shared components and template branches. Counts are not unique rendered controls or passed tests."
+}

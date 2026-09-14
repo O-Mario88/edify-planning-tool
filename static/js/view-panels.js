@@ -163,20 +163,42 @@
   );
 
   /* htmx replaces the whole shell — rail and panel together — so a panel that
-     is to survive has to leave before the swap and be recorded after it. */
+     is to survive has to leave before the swap and be recorded after it.
+
+     Only a swap that will happen parks anything (controls audit F-08,
+     2026-09-14): htmx fires beforeSwap for a failed response too, with
+     shouldSwap false, and parking then left the reader an empty workspace.
+     A swap cancelled by a later listener is caught after the request, and
+     the last good panel goes back where it was. */
+  var parkedForSwap = null;
+
   document.addEventListener("htmx:beforeSwap", function (event) {
-    var target = event.detail && event.detail.target;
+    var detail = event.detail || {};
+    var target = detail.target;
     if (!target || !target.matches("[data-dashboard-view-shell]")) return;
+    if (detail.shouldSwap === false || detail.isError) return;
+    parkedForSwap = current;
     park(current);
   });
 
   document.addEventListener("htmx:afterSettle", function (event) {
     var target = event.detail && event.detail.target;
     if (!target || !target.matches("[data-dashboard-view-shell]")) return;
+    parkedForSwap = null;
     /* The rail that just arrived is the server's, so it is honest again. */
     current = currentView() || viewOf(window.location.href);
     /* The view that just arrived is in the shell, not in the map. */
     if (current) parked.delete(current);
+  });
+
+  document.addEventListener("htmx:afterRequest", function (event) {
+    var target = event.detail && event.detail.target;
+    if (!target || !target.matches("[data-dashboard-view-shell]")) return;
+    if (!parkedForSwap || panelOf(shell())) return;
+    /* The swap never landed: put the last good panel and its tab back. */
+    var view = parkedForSwap;
+    parkedForSwap = null;
+    if (show(view)) markRail(view);
   });
 
   /* The address bar can move without a press — the back button. Whatever it

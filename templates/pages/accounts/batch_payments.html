@@ -44,51 +44,85 @@ Partner Payments ({{ partners|length }})
 <!-- Batch Panels -->
 <div class="edify-surface rounded-surface border border-slate-100 p-6 shadow-sm">
 <!-- Advances Panel -->
-<div id="batch-panel-advances" role="tabpanel" x-show="activeTab === 'advances'" class="space-y-4">
-<div class="flex items-center justify-between border-b border-slate-50 pb-3">
+<div id="batch-panel-advances" role="tabpanel" aria-labelledby="batch-tab-advances" x-show="activeTab === 'advances'" class="space-y-4">
+{% comment %}
+A payout file holds exactly the ticked rows (controls audit F-01, 2026-09-14):
+the ids go with the export and the server re-checks each against eligibility
+and country scope. Exporting everything eligible is its own, named action.
+{% endcomment %}
+<form method="get" action="" class="space-y-3" data-batch-export="advances"
+      x-data="{ picked: [], amounts: {}, get total() { return this.picked.reduce((sum, id) => sum + (this.amounts[id] || 0), 0); }, toggleAll(on) { this.picked = on ? Object.keys(this.amounts) : []; } }">
+<input type="hidden" name="export" value="advances">
+<input type="hidden" name="scope" value="selected">
+<div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Advances ready for payment file</h3>
-<a href="?export=advances" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Advances CSV</a>
+<div class="flex flex-wrap items-center gap-2">
+<p class="edify-text-caption font-semibold text-slate-500 tabular-nums" aria-live="polite" x-text="picked.length ? picked.length + ' selected · UGX ' + total.toLocaleString() : 'None selected'">None selected</p>
+<button type="submit" class="btn btn-primary h-8" :disabled="!picked.length" disabled><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export selected</button>
+<a href="?export=advances" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export all eligible ({{ advances|length }})</a>
 </div>
+</div>
+{% if advances %}
+<label class="flex items-center gap-2 edify-text-caption font-semibold text-slate-600"><input type="checkbox" class="w-4 h-4 rounded-control border-slate-300 edify-primary-focus" @change="toggleAll($event.target.checked)" :checked="picked.length && picked.length === Object.keys(amounts).length"> Select all in this list</label>
+{% endif %}
 <div class="divide-y divide-slate-50">
 {% for act in advances %}
-<div class="py-3 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<input type="checkbox" aria-label="Select advance {{ act.id|slice:':8' }}" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
-<div>
+<div class="py-3 flex items-center justify-between" x-init="amounts['{{ act.id }}'] = {{ act.amount_ugx|default:0 }}">
+<label class="flex items-center gap-3">
+<input type="checkbox" name="activity_ids" value="{{ act.id }}" x-model="picked" aria-label="Select advance {{ act.id|slice:':8' }}" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
+<span>
 <span class="font-semibold text-[12px] text-slate-800 block">#{{ act.id|slice:":8" }} &bull; {{ act.get_activity_type_display }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ act.school.name|default:"Cluster-wide" }}</span>
-</div>
-</div>
+</span>
+</label>
 <span class="font-semibold text-slate-800 text-[12px]">{{ act.amount_ugx|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending advances for batch payment.</p>
 {% endfor %}
 </div>
+</form>
 </div>
 
 <!-- Partner Panel -->
-<div id="batch-panel-partners" role="tabpanel" x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
-<div class="flex items-center justify-between border-b border-slate-50 pb-3">
+<div id="batch-panel-partners" role="tabpanel" aria-labelledby="batch-tab-partners" x-show="activeTab === 'partners'" class="space-y-4" style="display: none;">
+{% comment %}
+A payout file holds exactly the ticked rows (controls audit F-01, 2026-09-14):
+the ids go with the export and the server re-checks each against eligibility
+and country scope. Exporting everything eligible is its own, named action.
+{% endcomment %}
+<form method="get" action="" class="space-y-3" data-batch-export="partners"
+      x-data="{ picked: [], amounts: {}, get total() { return this.picked.reduce((sum, id) => sum + (this.amounts[id] || 0), 0); }, toggleAll(on) { this.picked = on ? Object.keys(this.amounts) : []; } }">
+<input type="hidden" name="export" value="partners">
+<input type="hidden" name="scope" value="selected">
+<div class="flex flex-wrap items-center justify-between gap-2 border-b border-slate-50 pb-3">
 <h3 class="text-[14px] font-semibold text-slate-800">Batch Partner Payments ready for payment file</h3>
-<a href="?export=partners" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export Partner Payments CSV</a>
+<div class="flex flex-wrap items-center gap-2">
+<p class="edify-text-caption font-semibold text-slate-500 tabular-nums" aria-live="polite" x-text="picked.length ? picked.length + ' selected · UGX ' + total.toLocaleString() : 'None selected'">None selected</p>
+<button type="submit" class="btn btn-primary h-8" :disabled="!picked.length" disabled><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export selected</button>
+<a href="?export=partners" class="h-8 px-3 edify-surface border border-slate-200 rounded-control edify-text-caption font-semibold hover:bg-slate-50 flex items-center gap-1.5 shadow-sm"><svg class="inline-block h-[1em] w-[1em] align-[-0.12em]" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.9" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v8m0 0l-3-3m3 3l3-3M4 13h3l2 3h6l2-3h3M5 21h14a2 2 0 002-2v-6l-2.5-8A2 2 0 0016.6 4H7.4a2 2 0 00-1.9 1.4L3 13v6a2 2 0 002 2z"/></svg> Export all eligible ({{ partners|length }})</a>
 </div>
+</div>
+{% if partners %}
+<label class="flex items-center gap-2 edify-text-caption font-semibold text-slate-600"><input type="checkbox" class="w-4 h-4 rounded-control border-slate-300 edify-primary-focus" @change="toggleAll($event.target.checked)" :checked="picked.length && picked.length === Object.keys(amounts).length"> Select all in this list</label>
+{% endif %}
 <div class="divide-y divide-slate-50">
 {% for act in partners %}
-<div class="py-3 flex items-center justify-between">
-<div class="flex items-center gap-3">
-<input type="checkbox" aria-label="Select Partner payment {{ act.id|slice:':8' }}" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
-<div>
+<div class="py-3 flex items-center justify-between" x-init="amounts['{{ act.id }}'] = {{ act.amount_ugx|default:0 }}">
+<label class="flex items-center gap-3">
+<input type="checkbox" name="activity_ids" value="{{ act.id }}" x-model="picked" aria-label="Select Partner payment {{ act.id|slice:':8' }}" class="w-4 h-4 rounded-control edify-primary-text border-slate-300 edify-primary-focus">
+<span>
 <span class="font-semibold text-[12px] text-slate-800 block">{{ act.assigned_partner_id }} &bull; #{{ act.id|slice:":8" }}</span>
 <span class="edify-text-caption text-slate-500 block">{{ act.get_activity_type_display }}</span>
-</div>
-</div>
+</span>
+</label>
 <span class="font-semibold text-slate-800 text-[12px]">{{ act.amount_ugx|ugx }}</span>
 </div>
 {% empty %}
 <p class="text-[12px] text-slate-400 font-semibold py-8 text-center">No pending partner payments for batch payout.</p>
 {% endfor %}
 </div>
+</form>
 </div>
 
 </div>

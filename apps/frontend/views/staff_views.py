@@ -113,11 +113,9 @@ def staff_directory_view(request):
     # headcount grows.
     paginator = Paginator(staff_qs, 20)
     page_obj = paginator.get_page(page_number)
-    pages_list = list(
-        page_obj.paginator.get_elided_page_range(
-            page_obj.number, on_each_side=1, on_ends=1
-        )
-    )
+    from apps.core.pagination import elided_page_numbers
+
+    pages_list = elided_page_numbers(page_obj)
 
     staff_list = []
 

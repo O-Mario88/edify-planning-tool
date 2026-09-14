@@ -60,9 +60,20 @@
       <svg class="h-12 w-12 text-slate-300 mx-auto shadow-inner bg-slate-100 p-2.5 rounded-surface" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
         <path stroke-linecap="round" stroke-linejoin="round" d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
       </svg>
-      <p class="text-[14px] font-semibold text-slate-500">No schools uploaded yet.</p>
+      {% comment %}Why the table is empty (controls audit F-03, 2026-09-14): the
+      registry, the reader's reach, or the filters chosen.{% endcomment %}
+      {% if directory_empty_state == "no_matches" or not directory_empty_state and request.GET %}
+      <p class="text-[14px] font-semibold text-slate-500" data-directory-empty="no_matches">No schools match these filters.</p>
+      <p class="edify-text-caption text-slate-400">Change the search, tab or filters, or clear them to see every school in your reach.</p>
+      <a href="/schools" class="btn btn-secondary inline-flex h-8 px-4 items-center justify-center">Clear filters</a>
+      {% elif directory_empty_state == "scope_empty" %}
+      <p class="text-[14px] font-semibold text-slate-500" data-directory-empty="scope_empty">No schools are assigned to you yet.</p>
+      <p class="edify-text-caption text-slate-400">Schools appear here once they are assigned to your portfolio.</p>
+      {% else %}
+      <p class="text-[14px] font-semibold text-slate-500" data-directory-empty="registry_empty">No schools uploaded yet.</p>
       <p class="edify-text-caption text-slate-400">Upload schools to build the directory registry.</p>
       {% if can_open_upload_center %}<a href="/uploads" class="edify-primary-solid edify-primary-on-solid inline-flex h-8 px-4 rounded-control text-[12px] font-semibold items-center justify-center shadow-sm hover:opacity-90 transition-all">Open Upload Center</a>{% endif %}
+      {% endif %}
     </div>
   </div>
 {% endif %}
@@ -102,8 +113,8 @@ Previous
 <!-- List page numbers -->
 <div class="flex items-center gap-1 text-[12px]">
 {% for num in pages_list %}
-{% if num == "..." %}
-<span class="w-8 text-center text-slate-400 font-bold">...</span>
+{% if num == "..." or num == "…" %}
+<span class="w-8 text-center text-slate-400 font-bold" aria-hidden="true">…</span>
 {% elif num == page_obj.number %}
 <span class="h-8 w-8 rounded-pill btn-premium-primary text-white font-semibold flex items-center justify-center shadow-sm edify-primary-solid">{{ num }}</span>
 {% else %}

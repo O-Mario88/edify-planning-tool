@@ -626,11 +626,9 @@ def school_directory_view(request):
         }
     paginator = Paginator(schools_qs, per_page)
     page_obj = paginator.get_page(page_number)
-    pages_list = list(
-        page_obj.paginator.get_elided_page_range(
-            page_obj.number, on_each_side=1, on_ends=1
-        )
-    )
+    from apps.core.pagination import elided_page_numbers
+
+    pages_list = elided_page_numbers(page_obj)
 
     clusters_dict = {
         c.id: c.name for c in Cluster.objects.filter(deleted_at__isnull=True)
@@ -759,7 +757,20 @@ def school_directory_view(request):
         )
     projects = projects.distinct().order_by("name")
 
+    # An empty table says why it is empty (controls audit F-03, 2026-09-14):
+    # a filter with no matches used to tell the reader no schools had ever
+    # been uploaded. Only asked when there is nothing to show.
+    directory_empty_state = ""
+    if not page_obj.object_list:
+        if not School.objects.filter(deleted_at__isnull=True).exists():
+            directory_empty_state = "registry_empty"
+        elif not base_qs.exists():
+            directory_empty_state = "scope_empty"
+        else:
+            directory_empty_state = "no_matches"
+
     context = {
+        "directory_empty_state": directory_empty_state,
         "page_obj": page_obj,
         "pages_list": pages_list,
         "per_page": per_page,

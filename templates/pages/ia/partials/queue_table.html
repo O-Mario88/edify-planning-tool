@@ -1,5 +1,6 @@
 {% load school_identity %}
 {% load frontend_filters %}
+{# act.schoolId is already the school's display ID (joined by the view), so it is passed as code= and the page needs no school lookup after rendering: the queue's query budget in apps/frontend/test_ia_performance.py counts on it. #}
 {% if drilldowns %}
 <div class="flex flex-wrap items-center gap-2 mb-3" aria-label="Applied from the dashboard">
   {% for chip in drilldowns %}
@@ -37,7 +38,7 @@
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">FY {{ act.fy }} · {{ act.quarter }}</span>
           </td>
           <td>
-            <strong class="block">{% school_identity act.schoolName|default:"Cluster-wide" act.schoolId %}</strong>
+            <strong class="block">{% school_identity act.schoolName|default:"Cluster-wide" code=act.schoolId %}</strong>
             <span class="block edify-text-caption text-[var(--edify-text-muted)]">{{ act.clusterName|default:"No cluster" }}</span>
           </td>
           <td>{{ act.activityType|title|replace_underscore }}</td>
@@ -85,7 +86,7 @@
       <div class="flex items-start justify-between gap-3">
         <div class="min-w-0">
           <a class="font-semibold text-[var(--edify-accent)]" href="/ia/verification/{{ act.id }}/">{{ act.activityType|title|replace_underscore }}</a>
-          <strong class="block truncate">{% school_identity act.schoolName|default:"Cluster-wide" act.schoolId %}</strong>
+          <strong class="block truncate">{% school_identity act.schoolName|default:"Cluster-wide" code=act.schoolId %}</strong>
           <span class="block edify-text-caption text-[var(--edify-text-muted)]">#{{ act.id|slice:":8" }} · {{ act.age_label }} old</span>
         </div>
         <span class="status-pill {% if act.risk_label == 'Critical' %}danger{% elif act.risk_label == 'High' %}warning{% else %}info{% endif %}">{{ act.risk_label }}</span>

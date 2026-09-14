@@ -172,6 +172,50 @@ class AnalyticsDashboardTest(TestCase):
         self.assertTrue(thread.messages.filter(body__contains="SSA Average").exists())
         self.assertEqual(response.headers["HX-Trigger"], "close-drawer")
 
+    def test_the_snapshot_carries_the_filters_on_screen(self):
+        """Controls audit F-06 (2026-09-14): Send to Inbox delivered the default
+        report whatever the page was filtered to."""
+        from unittest.mock import patch
+
+        from apps.messaging.models import MessageThread
+
+        self.client.login(email="cd@edify.org", password="testpassword")
+        drawer = self.client.get(
+            reverse("frontend:analytics_schedule_report"),
+            {"fy": "2025", "district": "abim", "bogus": "x"},
+        )
+        self.assertContains(drawer, '<input type="hidden" name="fy" value="2025">')
+        self.assertContains(
+            drawer, '<input type="hidden" name="district" value="abim">'
+        )
+        self.assertNotContains(drawer, 'name="bogus"')
+        self.assertContains(drawer, "Report scope")
+
+        from apps.analytics.analytics_dashboard_service import (
+            AnalyticsDashboardService,
+        )
+
+        real = AnalyticsDashboardService.get_analytics_data
+        seen = []
+
+        def spy(user, filters):
+            seen.append(dict(filters))
+            return real(user, filters)
+
+        with patch.object(AnalyticsDashboardService, "get_analytics_data", spy):
+            self.client.post(
+                reverse("frontend:analytics_schedule_report"),
+                {"categories": ["reach"], "fy": "2025", "district": "abim"},
+                HTTP_HX_REQUEST="true",
+            )
+        self.assertEqual(seen, [{"fy": "2025", "district": "abim"}])
+        thread = MessageThread.objects.get(
+            context_type="system", context_id=f"analytics-{self.user.id}"
+        )
+        body = thread.messages.first().body
+        self.assertIn("Filters: fy 2025, district abim", body)
+        self.assertIn("/analytics?fy=2025&district=abim", body)
+
     def test_dashboard_preferences_are_persisted_and_applied(self):
         from apps.analytics.models import AnalyticsDashboardPreference
 

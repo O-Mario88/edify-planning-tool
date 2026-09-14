@@ -420,6 +420,22 @@ def _redis_host_for_log(url: str) -> str:
 _redis_url = os.environ.get("REDIS_URL", "redis://127.0.0.1:6379/0")
 _use_redis = False
 _redis_failure = ""
+# Test runs never touch the application's cache (controls audit G-02,
+# 2026-09-14). Django isolates test databases, not caches: parallel workers
+# shared one Redis, invalidated each other's revision keys, and a suite's
+# cache.clear() flushed the development server's sessions. A run uses a
+# private per-process cache unless EDIFY_TEST_REDIS_URL names a Redis kept
+# for tests alone, which may not be the application's own REDIS_URL.
+_test_redis_url = os.environ.get("EDIFY_TEST_REDIS_URL", "").strip()
+if _is_testing:
+    if _test_redis_url and _test_redis_url == _redis_url:
+        from django.core.exceptions import ImproperlyConfigured
+
+        raise ImproperlyConfigured(
+            "EDIFY_TEST_REDIS_URL must not be the application's REDIS_URL: a test "
+            "run clears its cache."
+        )
+    _redis_url = _test_redis_url
 try:
     import redis
 except ImportError as exc:
@@ -433,6 +449,8 @@ except ImportError as exc:
     _redis_failure = f"the redis client library is not installed ({exc})"
 else:
     try:
+        if not _redis_url:
+            raise ConnectionError("tests use a private per-process cache")
         # A generous bound, and deliberately not the 2s used for live traffic
         # below: this runs once per process against a cold connection, and a
         # managed cache speaks TLS — a handshake alone can outlast a 1s budget
@@ -478,7 +496,11 @@ else:
     CACHES = {
         "default": {
             "BACKEND": "django.core.cache.backends.locmem.LocMemCache",
-            "LOCATION": "edify-pm-locmem-cache",
+            # One cache per test process, so parallel workers cannot see or
+            # clear each other's entries.
+            "LOCATION": (
+                f"edify-tests-{os.getpid()}" if _is_testing else "edify-pm-locmem-cache"
+            ),
         }
     }
 

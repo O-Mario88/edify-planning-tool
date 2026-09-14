@@ -848,18 +848,45 @@ def activity_finance_detail_view(request, activity_id):
     return render(request, "pages/accounts/activity_finance_detail.html", context)
 
 
+#: The columns of each payout file.
+_BATCH_COLUMNS = {
+    "advances": [
+        "Activity ID",
+        "Type",
+        "School",
+        "Responsible Staff ID",
+        "Amount (UGX)",
+    ],
+    "partners": ["Activity ID", "Type", "School", "Partner ID", "Amount (UGX)"],
+}
+
+
 @require_page_permission("disbursements")
 @require_export_permission
 def batch_payments_view(request):
-    """Batch Payments Page."""
-    from django.db.models import F
+    """Batch Payments Page.
 
+    A payout file holds exactly what the accountant chose (controls audit
+    F-01, 2026-09-14): the ticked rows' ids are sent with the export and
+    re-checked here against the same eligibility and country scope the page
+    lists, so a stale or foreign id refuses the file rather than widening it.
+    "Export all eligible" is its own action, and nothing is capped silently.
+    """
+    import csv
+
+    from django.db.models import F
+    from django.http import HttpResponseBadRequest
+
+    from apps.core.scoping import activity_country_q, resolve_user_scope
+
+    in_country = activity_country_q(resolve_user_scope(request.user))
     advances = (
         Activity.objects.filter(
             deleted_at__isnull=True,
             delivery_type="staff",
             advance_requests__status=AdvanceRequestStatus.CONFIRMED_FOR_ADVANCE,
         )
+        .filter(in_country)
         .exclude(payment_status__in=PARTNER_PAID_STATUSES)
         .select_related("school")
         # est_cost_cents holds plain UGX despite its name -- no /100 here.
@@ -873,52 +900,49 @@ def batch_payments_view(request):
             status="ia_verified",
             payment_status__in=PARTNER_PAYABLE_STATUSES,
         )
+        .filter(in_country)
         .select_related("school")
         .annotate(amount_ugx=F("est_cost_cents"))
     )
-    # CSV payout-file exports per tab.
     export = request.GET.get("export", "").strip()
-    if export in ("advances", "partners"):
-        import csv
-        from django.http import HttpResponse
+    if export in _BATCH_COLUMNS:
+        rows = advances if export == "advances" else partners
+        selected = [i for i in request.GET.getlist("activity_ids") if i.strip()]
+        if request.GET.get("scope") == "selected" and not selected:
+            return HttpResponseBadRequest(
+                "Tick at least one payment to export, or use Export all eligible."
+            )
+        if selected:
+            chosen = rows.filter(id__in=selected)
+            found = set(chosen.values_list("id", flat=True))
+            missing = [i for i in selected if i not in found]
+            if missing:
+                return HttpResponseBadRequest(
+                    f"{len(missing)} selected payment"
+                    f"{'s are' if len(missing) != 1 else ' is'} no longer eligible "
+                    "or outside your reach. Refresh the page and select again."
+                )
+            rows = chosen
 
         response = HttpResponse(content_type="text/csv")
-        response["Content-Disposition"] = f'attachment; filename="batch_{export}.csv"'
+        suffix = "selected" if selected else "all"
+        response["Content-Disposition"] = (
+            f'attachment; filename="batch_{export}_{suffix}.csv"'
+        )
         writer = csv.writer(response)
-        if export == "advances":
+        writer.writerow(_BATCH_COLUMNS[export])
+        for a in rows.order_by("id").iterator(chunk_size=500):
             writer.writerow(
                 [
-                    "Activity ID",
-                    "Type",
-                    "School",
-                    "Responsible Staff ID",
-                    "Amount (UGX)",
+                    a.id,
+                    a.get_activity_type_display(),
+                    a.school.name if a.school else "Cluster-wide",
+                    a.responsible_staff_id
+                    if export == "advances"
+                    else a.assigned_partner_id,
+                    a.amount_ugx or 0,
                 ]
             )
-            for a in advances[:5000]:
-                writer.writerow(
-                    [
-                        a.id,
-                        a.get_activity_type_display(),
-                        a.school.name if a.school else "Cluster-wide",
-                        a.responsible_staff_id,
-                        a.amount_ugx or 0,
-                    ]
-                )
-        elif export == "partners":
-            writer.writerow(
-                ["Activity ID", "Type", "School", "Partner ID", "Amount (UGX)"]
-            )
-            for a in partners[:5000]:
-                writer.writerow(
-                    [
-                        a.id,
-                        a.get_activity_type_display(),
-                        a.school.name if a.school else "Cluster-wide",
-                        a.assigned_partner_id,
-                        a.amount_ugx or 0,
-                    ]
-                )
         return response
 
     context = {

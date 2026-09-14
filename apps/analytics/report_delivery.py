@@ -27,10 +27,17 @@ CARD_CATEGORY = {
 }
 
 
-def send_analytics_snapshot(*, user, categories: list[str], now=None):
-    """Create a private analytics Message and Notification immediately."""
+def send_analytics_snapshot(*, user, categories: list[str], filters=None, now=None):
+    """Create a private analytics Message and Notification immediately.
+
+    `filters` are the Analytics page's own (fy, district, ...): the snapshot is
+    the report the reader was looking at, inside their permission scope
+    (controls audit F-06, 2026-09-14)."""
+    from urllib.parse import urlencode
+
+    filters = {key: value for key, value in (filters or {}).items() if value}
     generated_at = now or timezone.now()
-    dashboard = AnalyticsDashboardService.get_analytics_data(user, {})
+    dashboard = AnalyticsDashboardService.get_analytics_data(user, filters)
     cards = [
         card
         for card in dashboard.get("kpi_strip_items", [])
@@ -48,9 +55,19 @@ def send_analytics_snapshot(*, user, categories: list[str], now=None):
         subject="Analytics snapshot",
         body=(
             f"Your analytics snapshot is ready.\n"
-            f"Generated: {generated}\n\n"
-            f"{metric_lines or 'No metrics matched the selected categories.'}\n\n"
-            "Open Analytics to review the live dashboard or download the current CSV."
+            f"Generated: {generated}\n"
+            + (
+                "Filters: "
+                + ", ".join(
+                    f"{key.replace('_', ' ')} {value}" for key, value in filters.items()
+                )
+                + "\n"
+                if filters
+                else "Filters: none (your full analytics scope)\n"
+            )
+            + f"\n{metric_lines or 'No metrics matched the selected categories.'}\n\n"
+            "Open Analytics to review the live dashboard or download the current CSV: "
+            f"/analytics{'?' + urlencode(filters) if filters else ''}"
         ),
         recipient_ids=[str(user.id)],
         category="Strategic report",

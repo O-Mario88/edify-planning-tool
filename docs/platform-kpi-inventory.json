@@ -2308,7 +2308,7 @@
    "audit_id": "KPI-SOURCE-116",
    "kind": "other",
    "module": "apps/frontend/views/analytics_views.py",
-   "line": 227,
+   "line": 233,
    "label": "Search analytics by school, School ID, cluster or staff",
    "keys": [
     "hx_get",
@@ -2984,7 +2984,7 @@
    "audit_id": "KPI-SOURCE-155",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 882,
+   "line": 880,
    "label": null,
    "keys": [
     "label",
@@ -3020,7 +3020,7 @@
    "audit_id": "KPI-SOURCE-157",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/cluster_views.py",
-   "line": 511,
+   "line": 509,
    "label": null,
    "keys": [
     "label",
@@ -3596,7 +3596,7 @@
    "audit_id": "KPI-SOURCE-190",
    "kind": "other",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 327,
+   "line": 325,
    "label": "Search Core Schools by name, ID, district or owner",
    "keys": [
     "hx_get",
@@ -3843,7 +3843,7 @@
    "audit_id": "KPI-SOURCE-203",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1360,
+   "line": 1384,
    "label": "Week",
    "keys": [
     "label",
@@ -3860,7 +3860,7 @@
    "audit_id": "KPI-SOURCE-204",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1361,
+   "line": 1385,
    "label": "Amount",
    "keys": [
     "label",
@@ -3877,7 +3877,7 @@
    "audit_id": "KPI-SOURCE-205",
    "kind": "breakdown-row",
    "module": "apps/frontend/views/finance_operating_views.py",
-   "line": 1362,
+   "line": 1386,
    "label": "Name",
    "keys": [
     "label",
@@ -8754,7 +8754,7 @@
    "audit_id": "KPI-SOURCE-485",
    "kind": "other",
    "module": "apps/frontend/views/school_views.py",
-   "line": 782,
+   "line": 793,
    "label": "Search schools by name, School ID, district, sub-county, cluster or assigned owner",
    "keys": [
     "hx_get",
@@ -9117,7 +9117,7 @@
    "audit_id": "KPI-SOURCE-506",
    "kind": "other",
    "module": "apps/frontend/views/staff_views.py",
-   "line": 765,
+   "line": 763,
    "label": null,
    "keys": [
     "achieved",
@@ -39676,7 +39676,7 @@
   {
    "audit_id": "KPI-PAYLOAD-010",
    "module": "apps/frontend/views/core_schools_views.py",
-   "line": 203,
+   "line": 201,
    "function": "core_schools_view",
    "target": "kpi_strip_items",
    "source_item_count": 7,
